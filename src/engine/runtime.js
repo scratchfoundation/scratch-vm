@@ -92,23 +92,26 @@ const ArgumentTypeMap = (() => {
  * cloud variable.
  */
 const cloudDataManager = () => {
-    let cloudVariableLimit = 8;
+    const limit = 8;
+    let count = 0;
 
-    const canAddNewCloudVariable = () => {
-        if (cloudVariableLimit > 0) {
-            cloudVariableLimit--;
-            return true;
-        }
-        return false;
+    const canAddCloudVariable = () => count < limit;
+
+    const addCloudVariable = () => {
+        count++;
     };
 
-    const removeExistingCloudVariable = () => {
-        cloudVariableLimit++;
+    const removeCloudVariable = () => {
+        count--;
     };
+
+    const hasCloudVariables = () => count > 0;
 
     return {
-        canAddNewCloudVariable,
-        removeExistingCloudVariable
+        canAddCloudVariable,
+        addCloudVariable,
+        removeCloudVariable,
+        hasCloudVariables
     };
 };
 
@@ -325,13 +328,15 @@ class Runtime extends EventEmitter {
          */
         this.profiler = null;
 
-        /**
-         * Whether this runtime uses/interacts with cloud data.
-         * @type {boolean}
-         */
-        this.hasCloudData = false;
-
         const newCloudDataManager = cloudDataManager();
+
+        /**
+         * Check wether the runtime has any cloud data.
+         * @type {function}
+         * @return {boolean} Whether or not the runtime currently has any
+         * cloud variables.
+         */
+        this.hasCloudData = newCloudDataManager.hasCloudVariables();
 
         /**
          * A function which checks whether a new cloud variable can be added
@@ -340,14 +345,20 @@ class Runtime extends EventEmitter {
          * @return {boolean} Whether or not a new cloud variable can be added
          * to the runtime.
          */
-        this.canAddNewCloudVariable = newCloudDataManager.canAddNewCloudVariable;
+        this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
+
+        /**
+         * A function that tracks a new cloud variable in the runtime,
+         * updating the cloud variable limit.
+         */
+        this.addCloudVariable = newCloudDataManager.addCloudVariable;
 
         /**
          * A function which updates the runtime's cloud variable limit
          * when removing a cloud variable.
          * @type {function}
          */
-        this.removeExistingCloudVariable = newCloudDataManager.removeExistingCloudVariable;
+        this.removeCloudVariable = newCloudDataManager.removeCloudVariable();
     }
 
     /**
@@ -1461,10 +1472,11 @@ class Runtime extends EventEmitter {
         this.ioDevices.cloud.clear();
 
         // Reset runtime cloud data info
-        this.hasCloudData = false;
         const newCloudDataManager = cloudDataManager();
-        this.canAddNewCloudVariable = newCloudDataManager.canAddNewCloudVariable;
-        this.removeExistingCloudVariable = newCloudDataManager.removeExistingCloudVariable;
+        this.hasCloudData = newCloudDataManager.hasCloudVariables;
+        this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
+        this.addCloudVariable = newCloudDataManager.addCloudVariable;
+        this.removeCloudVariable = newCloudDataManager.removeCloudVariable;
 
     }
 

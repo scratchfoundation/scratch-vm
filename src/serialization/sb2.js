@@ -474,17 +474,14 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // - the project says it's a cloud variable, and
             // - it's a stage variable, and
             // - the runtime can support another cloud variable
-            const isCloud = variable.isPersistent && topLevel &&
-                // It's important that this part of the check goes last
-                // because it will update the cloud variable limit counter.
-                runtime.canAddNewCloudVariable();
+            const isCloud = variable.isPersistent && topLevel && runtime.canAddCloudVariable();
             const newVariable = new Variable(
                 getVariableId(variable.name, Variable.SCALAR_TYPE),
                 variable.name,
                 Variable.SCALAR_TYPE,
                 isCloud
             );
-            if (isCloud && !runtime.hasCloudData) runtime.hasCloudData = true;
+            if (isCloud) runtime.addCloudVariable();
             newVariable.value = variable.value;
             target.variables[newVariable.id] = newVariable;
         }

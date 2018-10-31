@@ -135,29 +135,39 @@ test('Cloud variable limit allows only 8 cloud variables', t => {
 
     const rt = new Runtime();
 
+    t.equal(rt.hasCloudData(), false);
+
     for (let i = 0; i < 8; i++) {
-        t.equal(rt.canAddNewCloudVariable(), true);
+        t.equal(rt.canAddCloudVariable(), true);
+        rt.addCloudVariable();
+        // Adding a cloud variable should change the
+        // result of the hasCloudData check
+        t.equal(rt.hasCloudData(), true);
     }
 
+
     // We should be at the cloud variable limit now
-    t.equal(rt.canAddNewCloudVariable(), false);
+    t.equal(rt.canAddCloudVariable(), false);
 
     // Removing a cloud variable should allow the addition of exactly one more
     // when we are at the cloud variable limit
-    rt.removeExistingCloudVariable();
+    rt.removeCloudVariable();
 
-    t.equal(rt.canAddNewCloudVariable(), true);
-    t.equal(rt.canAddNewCloudVariable(), false);
+    t.equal(rt.canAddCloudVariable(), true);
+    t.equal(rt.canAddCloudVariable(), false);
 
     // Disposing of the runtime should reset the cloud variable limitations
     rt.dispose();
+    t.equal(rt.hasCloudData(), false);
 
     for (let i = 0; i < 8; i++) {
-        t.equal(rt.canAddNewCloudVariable(), true);
+        t.equal(rt.canAddCloudVariable(), true);
+        rt.addCloudVariable();
+        t.equal(rt.hasCloudData(), true);
     }
 
     // We should be at the cloud variable limit now
-    t.equal(rt.canAddNewCloudVariable(), false);
+    t.equal(rt.canAddCloudVariable(), false);
 
     t.end();
 

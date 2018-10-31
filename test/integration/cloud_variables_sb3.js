@@ -24,7 +24,7 @@ test('importing an sb3 project with cloud variables', t => {
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(cloudVarSimple).then(() => {
-        t.equal(vm.runtime.hasCloudData, true);
+        t.equal(vm.runtime.hasCloudData(), true);
 
         const stage = vm.runtime.targets[0];
         const stageVars = Object.values(stage.variables);
@@ -49,7 +49,7 @@ test('importing an sb3 project with cloud variables at the limit for a project',
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(cloudVarLimit).then(() => {
-        t.equal(vm.runtime.hasCloudData, true);
+        t.equal(vm.runtime.hasCloudData(), true);
 
         const stage = vm.runtime.targets[0];
         const stageVars = Object.values(stage.variables);
@@ -74,7 +74,7 @@ test('importing an sb3 project with cloud variables exceeding the limit for a pr
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(cloudVarExceededLimit).then(() => {
-        t.equal(vm.runtime.hasCloudData, true);
+        t.equal(vm.runtime.hasCloudData(), true);
 
         const stage = vm.runtime.targets[0];
         const stageVars = Object.values(stage.variables);
@@ -97,7 +97,7 @@ test('importing one project after the other resets cloud variable limit', t => {
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(cloudVarExceededLimit).then(() => {
-        t.equal(vm.runtime.canAddNewCloudVariable(), false);
+        t.equal(vm.runtime.canAddCloudVariable(), false);
 
         vm.loadProject(cloudVarSimple).then(() => {
             const stage = vm.runtime.targets[0];
@@ -109,7 +109,7 @@ test('importing one project after the other resets cloud variable limit', t => {
             t.equal(Number(variable.value), 100);
             t.equal(variable.isCloud, true);
 
-            t.equal(vm.runtime.canAddNewCloudVariable(), true);
+            t.equal(vm.runtime.canAddCloudVariable(), true);
 
             t.end();
         });
@@ -128,7 +128,7 @@ test('local cloud variables get imported as regular variables', t => {
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(cloudVarLocal).then(() => {
-        t.equal(vm.runtime.hasCloudData, false);
+        t.equal(vm.runtime.hasCloudData(), false);
 
         const stage = vm.runtime.targets[0];
         const stageVars = Object.values(stage.variables);
