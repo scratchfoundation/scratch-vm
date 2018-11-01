@@ -71,7 +71,19 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
         return Promise.resolve(null);
     }
 
-    if (!zip) { // Zip will not be provided if loading project json from server
+    if (costume.asset) {
+        // When uploading a sprite from an image file, the asset data will be provided
+        // @todo Cache the asset data somewhere and pull it out here
+        return Promise.resolve(storage.createAsset(
+            costume.asset.assetType,
+            costume.asset.dataFormat,
+            new Uint8Array(Object.keys(costume.asset.data).map(key => costume.asset.data[key])),
+            costume.asset.assetId
+        ));
+    }
+
+    if (!zip) {
+        // Zip will not be provided if loading project json from server
         return Promise.resolve(null);
     }
 
