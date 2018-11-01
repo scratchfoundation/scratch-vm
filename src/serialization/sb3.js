@@ -823,6 +823,9 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     const costumePromises = (object.costumes || []).map(costumeSource => {
         // @todo: Make sure all the relevant metadata is being pulled out.
         const costume = {
+            // costumeSource only has an asset if an image is being uploaded as
+            // a sprite
+            asset: costumeSource.asset,
             assetId: costumeSource.assetId,
             skinId: null,
             name: costumeSource.name,
