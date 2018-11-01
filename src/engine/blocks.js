@@ -340,7 +340,7 @@ class Blocks {
                 // Drag blocks onto another sprite
                 if (e.isOutside) {
                     const newBlocks = adapter(e);
-                    optRuntime.emitBlockEndDrag(newBlocks);
+                    optRuntime.emitBlockEndDrag(newBlocks, e.blockId);
                 }
             }
             break;

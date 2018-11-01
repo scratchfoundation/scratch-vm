@@ -1857,9 +1857,10 @@ class Runtime extends EventEmitter {
     /**
      * Emit event to indicate that the block drag has ended with the blocks outside the blocks workspace
      * @param {Array.<object>} blocks The set of blocks dragged to the GUI
+     * @param {string} topBlockId The original id of the top block being dragged
      */
-    emitBlockEndDrag (blocks) {
-        this.emit(Runtime.BLOCK_DRAG_END, blocks);
+    emitBlockEndDrag (blocks, topBlockId) {
+        this.emit(Runtime.BLOCK_DRAG_END, blocks, topBlockId);
     }
 
     /**
