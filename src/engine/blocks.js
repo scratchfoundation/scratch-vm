@@ -63,7 +63,14 @@ class Blocks {
              * execute.
              * @type {object.<string, object>}
              */
-            _executeCached: {}
+            _executeCached: {},
+
+            /**
+             * A cache of block IDs and targets to start threads on as they are
+             * actively monitored.
+             * @type {Array<{blockId: string, target: Target}>}
+             */
+            _monitored: null
         };
 
         /**
@@ -491,6 +498,7 @@ class Blocks {
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
+        this._cache._monitored = null;
     }
 
     /**
@@ -667,12 +675,23 @@ class Blocks {
      * @param {!object} runtime Runtime to run all blocks in.
      */
     runAllMonitored (runtime) {
-        Object.keys(this._blocks).forEach(blockId => {
-            if (this.getBlock(blockId).isMonitored) {
-                const targetId = this.getBlock(blockId).targetId;
-                runtime.addMonitorScript(blockId, targetId ? runtime.getTargetById(targetId) : null);
-            }
-        });
+        if (this._cache._monitored === null) {
+            this._cache._monitored = Object.keys(this._blocks)
+                .filter(blockId => this.getBlock(blockId).isMonitored)
+                .map(blockId => {
+                    const targetId = this.getBlock(blockId).targetId;
+                    return {
+                        blockId,
+                        target: targetId ? runtime.getTargetById(targetId) : null
+                    };
+                });
+        }
+
+        const monitored = this._cache._monitored;
+        for (let i = 0; i < monitored.length; i++) {
+            const {blockId, target} = monitored[i];
+            runtime.addMonitorScript(blockId, target);
+        }
     }
 
     /**
