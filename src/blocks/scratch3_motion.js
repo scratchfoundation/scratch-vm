@@ -270,6 +270,7 @@ class Scratch3MotionBlocks {
         return util.target.direction;
     }
 
+    // This corresponds to snapToInteger in Scratch 2's
     limitPrecision (coordinate) {
         const rounded = Math.round(coordinate);
         const delta = coordinate - rounded;
