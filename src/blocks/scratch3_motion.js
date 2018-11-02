@@ -274,9 +274,9 @@ class Scratch3MotionBlocks {
     limitPrecision (coordinate) {
         const rounded = Math.round(coordinate);
         const delta = coordinate - rounded;
-        const preciseCoord = (Math.abs(delta) < 1e-9) ? rounded : coordinate;
+        const limitedCoord = (Math.abs(delta) < 1e-9) ? rounded : coordinate;
 
-        return preciseCoord;
+        return limitedCoord;
     }
 }
 
