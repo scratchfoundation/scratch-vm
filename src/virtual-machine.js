@@ -18,7 +18,7 @@ const Variable = require('./engine/variable');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
-const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
+const {collectAssets, serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 require('canvas-toBlob');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
@@ -334,6 +334,13 @@ class VirtualMachine extends EventEmitter {
                 level: 6 // Tradeoff between best speed (1) and best compression (9)
             }
         });
+    }
+
+    /*
+     * @type {Array<object>} Array of all costumes and sounds currently in the runtime
+     */
+    get assets () {
+        return collectAssets(this.runtime);
     }
 
     _addFileDescsToZip (fileDescs, zip) {
