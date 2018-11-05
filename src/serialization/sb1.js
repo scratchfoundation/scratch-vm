@@ -49,7 +49,7 @@ class Field {
     }
 }
 
-class Value : Field {
+class Value extends Field {
     constructor (classId, value) {
         super(classId);
         this.value = value;
@@ -60,27 +60,27 @@ class Value : Field {
     }
 }
 
-class Header : Field {
+class Header extends Field {
     constructor (classId, size) {
         super(classId);
         this.size = size;
     }
 }
 
-class Reference : Field {
+class Reference extends Field {
     constructor (classId, index) {
         super(classId);
         this.index = index;
     }
 }
 
-class BuiltinObjectHeader : Header {
+class BuiltinObjectHeader extends Header {
     constructor (classId) {
         super(classId, 0);
     }
 }
 
-class ExtendedObjectHeader : Header {
+class ExtendedObjectHeader extends Header {
     constructor (classId, version, size) {
         super(classId, size);
         this.version = version;
@@ -140,7 +140,7 @@ const asciiString = function (iter) {
     return str;
 };
 
-const uint8 (iter, count) {
+const uint8 = function (iter, count) {
     const value = new Uint8Array(iter.buffer, iter.position, count);
     iter.position += count;
     return value;
@@ -233,7 +233,11 @@ class SB1Iterator {
         this.buffer = buffer;
         this.uint8 = new Uint8Array(buffer);
         this.view = new DataView(buffer);
-        this.position = 0;
+        this.position = 20;
+    }
+
+    [Symbol.iterator] () {
+        return this;
     }
 
     next () {
@@ -355,3 +359,7 @@ class SB1Iterator {
         }
     }
 }
+
+window.SB1Iterator = SB1Iterator;
+
+module.exports = SB1Iterator;
