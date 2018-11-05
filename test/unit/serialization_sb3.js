@@ -221,3 +221,14 @@ test('deserializeBlocks on already deserialized input', t => {
             t.end();
         });
 });
+
+test('getExtensionIdForOpcode', t => {
+    t.equal(sb3.getExtensionIdForOpcode('wedo_loopy'), 'wedo');
+
+    // does not consider CORE to be extensions
+    t.false(sb3.getExtensionIdForOpcode('control_loopy'));
+
+    // only considers things before the first underscore
+    t.equal(sb3.getExtensionIdForOpcode('hello_there_loopy'), 'hello');
+    t.end();
+});
