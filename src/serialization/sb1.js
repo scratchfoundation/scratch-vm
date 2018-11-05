@@ -72,6 +72,10 @@ class Reference extends Field {
         super(classId);
         this.index = index;
     }
+
+    valueOf () {
+        return `Ref(${this.index})`;
+    }
 }
 
 class BuiltinObjectHeader extends Header {
@@ -229,11 +233,11 @@ const extended = function (iter, classId) {
 };
 
 class SB1Iterator {
-    constructor (buffer) {
+    constructor (buffer, position) {
         this.buffer = buffer;
         this.uint8 = new Uint8Array(buffer);
         this.view = new DataView(buffer);
-        this.position = 20;
+        this.position = position;
     }
 
     [Symbol.iterator] () {
@@ -340,9 +344,9 @@ class SB1Iterator {
 
         default:
             if (classId < TYPES.OBJECT_REF) {
-                return builtin(this);
+                return builtin(this, classId);
             } else {
-                return extended(this);
+                return extended(this, classId);
             }
         }
 
@@ -361,5 +365,177 @@ class SB1Iterator {
 }
 
 window.SB1Iterator = SB1Iterator;
+
+const objectArray = function (objectIterator, header) {
+    const array = [];
+
+    for (let i = 0; i < header.size; i++) {
+        array.push(objectIterator._next().value);
+    }
+
+    return array;
+};
+
+const objectDictionary = function (objectIterator, header) {
+    const dict = [];
+
+    for (let i = 0; i < header.size; i += 2) {
+        dict.push(objectIterator._next().value);
+        dict.push(objectIterator._next().value);
+    }
+
+    return dict;
+};
+
+const objectPoint = function (objectIterator, header) {
+    return {
+        x: objectIterator._next().value,
+        y: objectIterator._next().value
+    };
+};
+
+const objectRectangle = function (objectIterator, header) {
+    return {
+        x: objectIterator._next().value,
+        y: objectIterator._next().value,
+        width: objectIterator._next().value,
+        height: objectIterator._next().value
+    };
+};
+
+const objectImage = function (objectIterator, header) {
+    return {
+        width: objectIterator._next().value,
+        height: objectIterator._next().value,
+        encoding: objectIterator._next().value,
+        something: objectIterator._next().value,
+        bytes: objectIterator._next().value,
+        colormap: header.classId === TYPES.SQUEAK ? objectIterator._next().value : null
+    };
+};
+
+const objectBuiltin = function (objectIterator, header) {
+    return {
+        classId: header.classId,
+        value: objectIterator.read(header, header.classId).value
+    };
+};
+
+const objectExtended = function (objectIterator, header) {
+    const fields = [];
+
+    for (let i = 0; i < header.size; i++) {
+        fields.push(objectIterator._next().value);
+    }
+
+    return {
+        classId: header.classId,
+        value: null,
+        version: header.version,
+        fields,
+    };
+};
+
+class SB1ObjectIterator {
+    constructor (valueIterator, length) {
+        this.valueIterator = valueIterator;
+        this.length = length;
+    }
+
+    [Symbol.iterator] () {
+        return this;
+    }
+
+    read (header, classId) {
+        let value = header;
+
+        switch (classId) {
+        case TYPES.ARRAY:
+        case TYPES.ORDERED_COLLECTION:
+        case TYPES.SET:
+        case TYPES.IDENTITY_SET:
+            value = objectArray(this, header);
+            break;
+
+        case TYPES.DICTIONARY:
+        case TYPES.IDENTITY_DICTIONARY:
+            value = objectDictionary(this, header);
+            break;
+
+        case TYPES.POINT:
+            value = objectPoint(this, header);
+            break;
+
+        case TYPES.RECTANGLE:
+            value = objectRectangle(this, header);
+            break;
+
+        case TYPES.FORM:
+        case TYPES.SQUEAK:
+            value = objectImage(this, header);
+            break;
+
+        default:
+            if (header instanceof ExtendedObjectHeader) {
+                value = objectExtended(this, header);
+            }
+        }
+
+        return {
+            value,
+            done: false
+        };
+    }
+
+    _next () {
+        const nextHeader = this.valueIterator.next();
+        if (nextHeader.done) {
+            return {
+                value: null,
+                done: true
+            };
+        }
+
+        const header = nextHeader.value;
+
+        return this.read(header, header.classId);
+    }
+
+    next () {
+        if (this.length === 0) {
+            return {
+                value: null,
+                done: true
+            };
+        }
+        this.length--;
+
+        return this._next();
+    }
+}
+
+window.SB1ObjectIterator = SB1ObjectIterator;
+
+class SB1File {
+    constructor (buffer) {
+        this.buffer = buffer;
+        this.uint8 = new Uint8Array(buffer);
+        this.infoPosition = 14;
+        this.infoLength = int32BE(this.uint8, this.infoPosition + 10);
+        this.dataPosition = int32BE(this.uint8, 10) + 14;
+        this.dataLength = int32BE(this.uint8, this.dataPosition + 10);
+        console.log(this.infoLength, this.dataLength);
+    }
+
+    info () {
+        return new SB1ObjectIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength);
+    }
+
+    data () {
+        return new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength);
+    }
+}
+
+window.SB1File = SB1File;
 
 module.exports = SB1Iterator;
