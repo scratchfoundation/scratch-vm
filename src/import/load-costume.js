@@ -152,21 +152,31 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostume = function (md5ext, costume, runtime, optVersion) {
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load costume asset: ', md5ext);
-        return Promise.resolve(costume);
+    let costumePromise;
+    if (costume.asset) {
+        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or sb file
+        costumePromise = Promise.resolve(costume.asset);
+    } else {
+        // Need to load the costume from storage. The server should have a reference to this md5.
+        if (!runtime.storage) {
+            log.error('No storage module present; cannot load costume asset: ', md5ext);
+            return Promise.resolve(costume);
+        }
+
+        const AssetType = runtime.storage.AssetType;
+        const idParts = StringUtil.splitFirst(md5ext, '.');
+        const md5 = idParts[0];
+        const ext = idParts[1].toLowerCase();
+        const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
+        costume.dataFormat = ext;
+        costumePromise = runtime.storage.load(assetType, md5, ext);
+        if (!costumePromise) {
+            log.error(`Couldn't fetch costume asset: ${md5ext}`);
+            return;
+        }
     }
 
-    const AssetType = runtime.storage.AssetType;
-    const idParts = StringUtil.splitFirst(md5ext, '.');
-    const md5 = idParts[0];
-    const ext = idParts[1].toLowerCase();
-    const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
-    costume.dataFormat = ext;
-    return (
-        (costume.asset && Promise.resolve(costume.asset)) ||
-        runtime.storage.load(assetType, md5, ext)
-    ).then(costumeAsset => {
+    return costumePromise.then(costumeAsset => {
         costume.asset = costumeAsset;
         return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
     })

@@ -79,7 +79,10 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
             costume.asset.dataFormat,
             new Uint8Array(Object.keys(costume.asset.data).map(key => costume.asset.data[key])),
             costume.asset.assetId
-        ));
+        ))
+        .then(asset => {
+            costume.asset = asset;
+        });
     }
 
     if (!zip) {
@@ -112,7 +115,10 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName) {
         costumeFormat,
         data,
         assetId
-    ));
+    ))
+    .then(asset => {
+        costume.asset = asset;
+    });
 };
 
 module.exports = {
