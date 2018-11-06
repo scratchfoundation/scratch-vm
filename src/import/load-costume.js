@@ -153,7 +153,11 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
  */
 const loadCostume = function (md5ext, costume, runtime, optVersion) {
     let costumePromise;
+    let textLayerPromise;
     if (costume.asset) {
+        // TODO if text asset exists, merge the 2 assets, put it back in storage, clean up text layer
+        // data from costume and return the costume with merged asset here.
+
         // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or sb file
         costumePromise = Promise.resolve(costume.asset);
     } else {
@@ -174,10 +178,19 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
             log.error(`Couldn't fetch costume asset: ${md5ext}`);
             return;
         }
+
+        if (costume.textLayerMD5) {
+            textLayerPromise = runtime.storage.load(AssetType.ImageBitmap, costume.textLayerMD5, 'png');
+        } else {
+            textLayerPromise = Promise.resolve(null);
+        }
     }
 
-    return costumePromise.then(costumeAsset => {
-        costume.asset = costumeAsset;
+    return Promise.all(costumePromise, textLayerPromise).then(assetArray => {
+        costume.asset = assetArray[0];
+        if (assetArray[1]) {
+            costume.textLayerAsset = assetArray[1];
+        }
         return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
     })
         .catch(e => {
