@@ -86,8 +86,7 @@ const fetchBitmapCanvas_ = function (costume, rotationCenter) {
             loadedOne = true;
         }
         baseImageElement.src = costume.asset.encodeDataURI();
-    })
-    .then(imageElements => {
+    }).then(imageElements => {
         const [baseImageElement, textImageElement] = imageElements;
 
         const canvas = document.createElement('canvas');
@@ -118,12 +117,12 @@ const fetchBitmapCanvas_ = function (costume, rotationCenter) {
             assetMatchesBase: scale !== 1 || textImageElement.src
         };
     })
-    .catch(e => Promise.reject(e))
-    .finally(() => {
-        // Clean up the costume object
-        delete costume.textLayerMD5;
-        delete costume.textLayerAsset;
-    });
+        .catch(e => Promise.reject(e))
+        .finally(() => {
+            // Clean up the costume object
+            delete costume.textLayerMD5;
+            delete costume.textLayerAsset;
+        });
 };
 
 const loadBitmap_ = function (costume, runtime, rotationCenter) {
@@ -148,22 +147,22 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
         }
         resolve(fetched.canvas);
     }))
-    .catch(e => Promise.reject(e))
-    .then(canvas => {
-        // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
-        costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
-        const renderSize = runtime.renderer.getSkinSize(costume.skinId);
-        costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
+        .catch(e => Promise.reject(e))
+        .then(canvas => {
+            // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
+            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
+            const renderSize = runtime.renderer.getSkinSize(costume.skinId);
+            costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
 
-        if (!rotationCenter) {
-            rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
-            // Actual rotation center, since all bitmaps are resolution 2
-            costume.rotationCenterX = rotationCenter[0] * 2;
-            costume.rotationCenterY = rotationCenter[1] * 2;
-            costume.bitmapResolution = 2;
-        }
-        return costume;
-    });
+            if (!rotationCenter) {
+                rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
+                // Actual rotation center, since all bitmaps are resolution 2
+                costume.rotationCenterX = rotationCenter[0] * 2;
+                costume.rotationCenterY = rotationCenter[1] * 2;
+                costume.bitmapResolution = 2;
+            }
+            return costume;
+        });
 };
 
 /**

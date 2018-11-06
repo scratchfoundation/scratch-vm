@@ -81,8 +81,7 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
             costume.asset.dataFormat,
             new Uint8Array(Object.keys(costume.asset.data).map(key => costume.asset.data[key])),
             costume.asset.assetId
-        ))
-        .then(asset => {
+        )).then(asset => {
             costume.asset = asset;
         });
     }
@@ -123,31 +122,31 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
             return Promise.resolve(null);
         }
         textLayerFilePromise = textLayerFile.async('uint8array')
-        .then(data => storage.createAsset(
-            storage.AssetType.ImageBitmap,
-            'png',
-            data,
-            costume.textLayerMD5
-        ))
-        .then(asset => {
-            costume.textLayerAsset = asset;
-        });
+            .then(data => storage.createAsset(
+                storage.AssetType.ImageBitmap,
+                'png',
+                data,
+                costume.textLayerMD5
+            ))
+            .then(asset => {
+                costume.textLayerAsset = asset;
+            });
     } else {
         textLayerFilePromise = Promise.resolve(null);
     }
 
     return Promise.all([textLayerFilePromise,
         costumeFile.async('uint8array')
-        .then(data => storage.createAsset(
-            assetType,
-            // TODO eventually we want to map non-png's to their actual file types?
-            costumeFormat,
-            data,
-            assetId
-        ))
-        .then(asset => {
-            costume.asset = asset;
-        })
+            .then(data => storage.createAsset(
+                assetType,
+                // TODO eventually we want to map non-png's to their actual file types?
+                costumeFormat,
+                data,
+                assetId
+            ))
+            .then(asset => {
+                costume.asset = asset;
+            })
     ]);
 };
 
