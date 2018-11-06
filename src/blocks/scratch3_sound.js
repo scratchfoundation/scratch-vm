@@ -146,7 +146,8 @@ class Scratch3SoundBlocks {
     getMonitored () {
         return {
             sound_volume: {
-                getId: () => 'volume'
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_volume`
             }
         };
     }
