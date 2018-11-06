@@ -883,9 +883,10 @@ class Scratch3MusicBlocks {
         }
 
         const engine = util.runtime.audioEngine;
-        const chain = engine.createEffectChain();
-        chain.setEffectsFromTarget(util.target);
-        player.connect(chain);
+        const context = engine.audioContext;
+        const volumeGain = context.createGain();
+        volumeGain.gain.setValueAtTime(util.target.volume / 100, engine.currentTime);
+        volumeGain.connect(engine.getInputNode());
 
         this._concurrencyCounter++;
         player.once('stop', () => {
@@ -893,6 +894,10 @@ class Scratch3MusicBlocks {
         });
 
         player.play();
+        // Connect the player to the gain node.
+        player.connect({getInputNode () {
+            return volumeGain;
+        }});
     }
 
     /**
