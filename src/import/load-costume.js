@@ -228,11 +228,11 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     let costumePromise;
     let textLayerPromise;
     if (costume.asset) {
-        // TODO if text asset exists, merge the 2 assets, put it back in storage, clean up text layer
-        // data from costume and return the costume with merged asset here.
-
-        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or sb file
+        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or file
         costumePromise = Promise.resolve(costume.asset);
+        if (costume.textLayerPromise) {
+            textLayerPromise = Promise.resolve(costume.textLayerAsset);
+        }
     } else {
         // Need to load the costume from storage. The server should have a reference to this md5.
         if (!runtime.storage) {
