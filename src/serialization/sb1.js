@@ -389,6 +389,7 @@ const objectDictionary = function (objectIterator, header) {
 
 const objectPoint = function (objectIterator, header) {
     return {
+        classId: TYPES.POINT,
         x: objectIterator._next().value,
         y: objectIterator._next().value
     };
@@ -396,6 +397,7 @@ const objectPoint = function (objectIterator, header) {
 
 const objectRectangle = function (objectIterator, header) {
     return {
+        classId: TYPES.RECTANGLE,
         x: objectIterator._next().value,
         y: objectIterator._next().value,
         width: objectIterator._next().value,
@@ -405,6 +407,7 @@ const objectRectangle = function (objectIterator, header) {
 
 const objectImage = function (objectIterator, header) {
     return {
+        classId: header.classId,
         width: objectIterator._next().value,
         height: objectIterator._next().value,
         encoding: objectIterator._next().value,
@@ -421,6 +424,343 @@ const objectBuiltin = function (objectIterator, header) {
     };
 };
 
+class ExtendedData {
+    constructor ({classId, value, version, fields}) {
+        this.classId = classId;
+        this.value = value;
+        this.version = version;
+        this.fields = fields;
+    }
+
+    string (field) {
+        return '' + this.fields[field];
+    }
+
+    number (field) {
+        return +this.fields[field];
+    }
+
+    boolean (field) {
+        return !!this.fields[field];
+    }
+}
+
+const POINT_FIELDS = {
+    X: 0,
+    Y: 1
+};
+
+class PointData extends ExtendedData {
+    get x () {
+        return this.fields[POINT_FIELDS.X];
+    }
+
+    get y () {
+        return this.fields[POINT_FIELDS.Y];
+    }
+}
+
+const RECTANGLE_FIELDS = {
+    X: 0,
+    Y: 1,
+    WIDTH: 2,
+    HEIGHT: 3
+};
+
+class RectangleData extends ExtendedData {
+    get x () {
+        return this.fields[RECTANGLE_FIELDS.X];
+    }
+
+    get y () {
+        return this.fields[RECTANGLE_FIELDS.Y];
+    }
+
+    get width () {
+        return this.fields[RECTANGLE_FIELDS.WIDTH];
+    }
+
+    get height () {
+        return this.fields[RECTANGLE_FIELDS.HEIGHT];
+    }
+}
+
+const IMAGE_FIELDS = {
+    WIDTH: 0,
+    HEIGHT: 1,
+    ENCODING: 2,
+    SOMETHING: 3,
+    BYTES: 4,
+    COLORMAP: 5
+};
+
+class ImageData extends ExtendedData {
+    get width () {
+        return this.fields[IMAGE_FIELDS.WIDTH];
+    }
+
+    get height () {
+        return this.fields[IMAGE_FIELDS.HEIGHT];
+    }
+
+    get encoding () {
+        return this.fields[IMAGE_FIELDS.ENCODING];
+    }
+
+    get something () {
+        return this.fields[IMAGE_FIELDS.SOMETHING];
+    }
+
+    get bytes () {
+        return this.fields[IMAGE_FIELDS.BYTES];
+    }
+
+    get colormap () {
+        return this.fields[IMAGE_FIELDS.COLORMAP];
+    }
+}
+
+const STAGE_FIELDS = {
+    OBJ_NAME: 6,
+    VARS: 7,
+    BLOCKS_BIN: 8,
+    IS_CLONE: 9,
+    MEDIA: 10,
+    CURRENT_COSTUME: 11,
+    ZOOM: 12,
+    H_PAN: 13,
+    V_PAN: 14,
+    OBSOLETE_SAVED_STATE: 15,
+    SPRITE_ORDER_IN_LIBRARY: 16,
+    VOLUME: 17,
+    TEMPO_BPM: 18,
+    SCENE_STATES: 19,
+    LISTS: 20
+};
+
+class StageData extends ExtendedData {
+    get objName () {
+        return '' + this.fields[STAGE_FIELDS.OBJ_NAME];
+    }
+
+    get vars () {
+        return this.fields[STAGE_FIELDS.VARS];
+    }
+
+    get blocksBin () {
+        return this.fields[STAGE_FIELDS.BLOCKS_BIN];
+    }
+
+    get media () {
+        return this.fields[STAGE_FIELDS.MEDIA];
+    }
+
+    get currentCostume () {
+        return this.fields[STAGE_FIELDS.CURRENT_COSTUME];
+    }
+
+    get spriteOrderInLibrary () {
+        return this.fields[STAGE_FIELDS.SPRITE_ORDER_IN_LIBRARY] || null;
+    }
+
+    get tempoBPM () {
+        return this.fields[STAGE_FIELDS.TEMPO_BPM] || 0;
+    }
+
+    get lists () {
+        return this.fields[STAGE_FIELDS.LISTS] || [];
+    }
+}
+
+const SPRITE_FIELDS = {
+    OBJ_NAME: 6,
+    VARS: 7,
+    BLOCKS_BIN: 8,
+    IS_CLONE: 9,
+    MEDIA: 10,
+    CURRENT_COSTUME: 11,
+    VISIBILITY: 12,
+    SCALE_POINT: 13,
+    ROTATION_DEGREES: 14,
+    ROTATION_STYLE: 15,
+    VOLUME: 16,
+    TEMPO_BPM: 17,
+    DRAGGABLE: 18,
+    SCENE_STATES: 19,
+    LISTS: 20
+};
+
+class SpriteData extends ExtendedData {
+    get objName () {
+        return '' + this.fields[SPRITE_FIELDS.OBJ_NAME];
+    }
+
+    get vars () {
+        return this.fields[SPRITE_FIELDS.VARS];
+    }
+
+    get blocksBin () {
+        return this.fields[SPRITE_FIELDS.BLOCKS_BIN];
+    }
+
+    get media () {
+        return this.fields[SPRITE_FIELDS.MEDIA];
+    }
+
+    get currentCostume () {
+        return this.fields[SPRITE_FIELDS.CURRENT_COSTUME];
+    }
+
+    get visibility () {
+        return +this.fields[SPRITE_FIELDS.VISIBILITY];
+    }
+
+    get scalePoint () {
+        return this.fields[SPRITE_FIELDS.SCALE_POINT];
+    }
+
+    get rotationDegrees () {
+        return this.fields[SPRITE_FIELDS.ROTATION_DEGREES];
+    }
+
+    get rotationStyle () {
+        return this.fields[SPRITE_FIELDS.ROTATION_STYLE];
+    }
+
+    get volume () {
+        return this.fields[SPRITE_FIELDS.VOLUME];
+    }
+
+    get tempoBPM () {
+        return this.fields[SPRITE_FIELDS.TEMPO_BPM] || 0;
+    }
+
+    get draggable () {
+        return this.fields[SPRITE_FIELDS.DRAGGABLE];
+    }
+
+    get lists () {
+        return this.fields[SPRITE_FIELDS.LISTS] || [];
+    }
+}
+
+const TEXT_DETAILS_FIELDS = {
+    RECTANGLE: 0,
+    FONT: 8,
+    COLOR: 9,
+    LINES: 11
+};
+
+class TextDetailsData extends ExtendedData {
+    get rectangle () {
+        return this.fields[IMAGE_MEDIA_FIELDS.RECTANGLE];
+    }
+
+    get font () {
+        return this.fields[IMAGE_MEDIA_FIELDS.FONT];
+    }
+
+    get color () {
+        return this.fields[IMAGE_MEDIA_FIELDS.COLOR];
+    }
+
+    get lines () {
+        return this.fields[IMAGE_MEDIA_FIELDS.LINES];
+    }
+}
+
+const IMAGE_MEDIA_FIELDS = {
+    COSTUME_NAME: 0,
+    BITMAP: 1,
+    ROTATION_CENTER: 2,
+    TEXT_DETAILS: 3,
+    BASE_LAYER_DATA: 4,
+    OLD_COMPOSITE: 5
+};
+
+class ImageMediaData extends ExtendedData {
+    get costumeName () {
+        return this.string(IMAGE_MEDIA_FIELDS.COSTUME_NAME);
+    }
+
+    get bitmap () {
+        return this.fields[IMAGE_MEDIA_FIELDS.BITMAP];
+    }
+
+    get rotationCenter () {
+        return this.fields[IMAGE_MEDIA_FIELDS.ROTATION_CENTER];
+    }
+
+    get textDetails () {
+        return this.fields[IMAGE_MEDIA_FIELDS.TEXT_DETAILS];
+    }
+
+    get baseLayerData () {
+        return this.fields[IMAGE_MEDIA_FIELDS.BASE_LAYER_DATA];
+    }
+
+    get oldComposite () {
+        return this.fields[IMAGE_MEDIA_FIELDS.OLD_COMPOSITE];
+    }
+}
+
+const UNCOMPRESSED_FIELDS = {
+    DATA: 3,
+    RATE: 4,
+};
+
+class UncompressedData extends ExtendedData {
+    get data () {
+        return this.fields[UNCOMPRESSED_FIELDS.DATA];
+    }
+
+    get rate () {
+        return this.fields[UNCOMPRESSED_FIELDS.RATE];
+    }
+}
+
+const SOUND_MEDIA_FIELDS = {
+    NAME: 0,
+    UNCOMPRESSED: 1,
+    RATE: 4,
+    BITS_PER_SAMPLE: 5,
+    DATA: 6
+};
+
+class SoundMediaData extends ExtendedData {
+    get name () {
+        return this.fields[SOUND_MEDIA_FIELDS.NAME];
+    }
+
+    get uncompressed () {
+        return this.fields[SOUND_MEDIA_FIELDS.UNCOMPRESSED];
+    }
+
+    get rate () {
+        return this.fields[SOUND_MEDIA_FIELDS.RATE];
+    }
+
+    get bitsPerSample () {
+        return this.fields[SOUND_MEDIA_FIELDS.BITS_PER_SAMPLE];
+    }
+
+    get data () {
+        return this.fields[SOUND_MEDIA_FIELDS.DATA];
+    }
+}
+
+const EXTENDED_CONSTRUCTORS = {
+    [TYPES.POINT]: PointData,
+    [TYPES.RECTANGLE]: RectangleData,
+    [TYPES.FORM]: ImageData,
+    [TYPES.SQUEAK]: ImageData,
+    [TYPES.SAMPLED_SOUND]: UncompressedData,
+    [TYPES.SPRITE]: SpriteData,
+    [TYPES.STAGE]: StageData,
+    [TYPES.IMAGE_MEDIA]: ImageMediaData,
+    [TYPES.SOUND_MEDIA]: SoundMediaData
+};
+
 const objectExtended = function (objectIterator, header) {
     const fields = [];
 
@@ -428,12 +768,14 @@ const objectExtended = function (objectIterator, header) {
         fields.push(objectIterator._next().value);
     }
 
-    return {
+    const constructor = EXTENDED_CONSTRUCTORS[header.classId] || ExtendedData;
+
+    return new constructor({
         classId: header.classId,
         value: null,
         version: header.version,
         fields,
-    };
+    });
 };
 
 class SB1ObjectIterator {
@@ -463,16 +805,10 @@ class SB1ObjectIterator {
             break;
 
         case TYPES.POINT:
-            value = objectPoint(this, header);
-            break;
-
         case TYPES.RECTANGLE:
-            value = objectRectangle(this, header);
-            break;
-
         case TYPES.FORM:
         case TYPES.SQUEAK:
-            value = objectImage(this, header);
+            value = objectExtended(this, header);
             break;
 
         default:
@@ -516,6 +852,49 @@ class SB1ObjectIterator {
 
 window.SB1ObjectIterator = SB1ObjectIterator;
 
+class SB1ReferenceFixer {
+    constructor (table) {
+        this.table = Array.from(table);
+        this.fixed = this.fix(this.table);
+    }
+
+    fix () {
+        const fixed = [];
+
+        for (let i = 0; i < this.table.length; i++) {
+            this.fixItem(this.table[i]);
+        }
+
+        return this.table[0];
+    }
+
+    fixItem (item) {
+        if (typeof item.fields !== 'undefined') {
+            item.fields = item.fields.map(this.deref, this);
+        } else if (typeof item.bytes !== 'undefined') {
+            item.width = this.deref(item.width);
+            item.height = this.deref(item.height);
+            item.encoding = this.deref(item.encoding);
+            item.something = this.deref(item.something);
+            item.bytes = this.deref(item.bytes);
+            item.colormap = this.deref(item.colormap);
+        } else if (Array.isArray(item)) {
+            for (let i = 0; i < item.length; i++) {
+                item[i] = this.deref(item[i]);
+            }
+        }
+    }
+
+    deref (ref) {
+        if (ref instanceof Reference) {
+            return this.table[ref.index - 1];
+        }
+        return ref;
+    }
+}
+
+window.SB1ReferenceFixer = SB1ReferenceFixer;
+
 class SB1File {
     constructor (buffer) {
         this.buffer = buffer;
@@ -528,14 +907,145 @@ class SB1File {
     }
 
     info () {
-        return new SB1ObjectIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength);
+        return new SB1ReferenceFixer(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength)).fixed;
     }
 
     data () {
-        return new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength);
+        console.log(Array.from(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength)));
+        return new SB1ReferenceFixer(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength)).fixed;
     }
 }
 
 window.SB1File = SB1File;
+
+const _expanded = {};
+
+class SB1View {
+    constructor (data, prefix = '', path = prefix) {
+        this._elements = {};
+
+        this.element = document.createElement('div');
+        this.element.style.position = 'relative';
+        this.element.style.top = '0';
+        this.element.style.left = '0';
+        // this.element.style.overflow = 'hidden';
+
+        this.content = this.element;
+
+        this.data = data;
+        this.prefix = prefix;
+        this.path = path;
+        this.expanded = !!_expanded[this.path];
+
+        this.toggle = this.toggle.bind(this);
+
+        this.element.addEventListener('click', this.toggle);
+
+        this.render();
+    }
+
+    toggle (event) {
+        _expanded[this.path] = this.expanded = !this.expanded;
+        this.render();
+
+        event.preventDefault();
+        event.stopPropagation();
+        return false;
+    }
+
+    createElement (type, name) {
+        console.log('createElement', type, name, this._elements[name]);
+        if (!this._elements[name]) {
+            this._elements[name] = document.createElement(type);
+        }
+        this._elements[name].innerHTML = '';
+        return this._elements[name];
+    }
+
+    renderClear () {
+        while (this.element.children.length) {
+            this.element.removeChild(this.element.children[0]);
+        }
+        this.content = this.element;
+    }
+
+    renderArrow () {
+        const arrowDiv = this.createElement('div', 'arrow');
+        arrowDiv.innerHTML = '&#x25b6;';
+        arrowDiv.style.position = 'absolute';
+        arrowDiv.style.left = '0';
+        arrowDiv.style.width = '1em';
+        arrowDiv.style.transform = this.expanded ? 'rotateZ(90deg)' : '';
+        arrowDiv.style.transition = 'transform 3s';
+        this.element.appendChild(arrowDiv);
+
+        const contentDiv = this.createElement('div', 'arrowContent');
+        contentDiv.style.position = 'relative';
+        contentDiv.style.left = '1em';
+        contentDiv.style.right = '0';
+        this.element.appendChild(contentDiv);
+        this.content = contentDiv;
+    }
+
+    renderTitle (title) {
+        const titleDiv = this.createElement('div', 'title');
+        const fullTitle = (this.prefix ? `${this.prefix}: ` : '') + title;
+        console.log('renderTitle', title.length, fullTitle.indexOf('\n'), fullTitle.indexOf('\r'), fullTitle.indexOf('<br>'));
+        if (['\n', '\r', '<br>'].some(str => fullTitle.indexOf(str) !== -1)) {
+            this.renderArrow();
+            if (this.expanded) {
+                titleDiv.innerText = fullTitle;
+            } else {
+                titleDiv.innerText = fullTitle.substring(0, ['\n', '\r', '<br>'].reduce((value, str) => (fullTitle.indexOf(str) !== -1 ? Math.min(value, fullTitle.indexOf(str)) : value), Infinity)) + ' ...';
+            }
+        } else {
+            titleDiv.innerText = fullTitle;
+        }
+        this.content.appendChild(titleDiv);
+    }
+
+    renderExpand (fn) {
+        if (this.expanded) {
+            const div = this.createElement('div', 'expanded');
+            fn.call(this, div)
+            .forEach(view => this.content.appendChild(view.element));
+        }
+    }
+
+    render () {
+        this.renderClear();
+        if (this.data instanceof ExtendedData) {
+            this.renderArrow();
+            this.renderTitle(this.data.constructor.name);
+            this.renderExpand(() => {
+                return Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(this.data)))
+                .filter(([, desc]) => desc.get)
+                .map(([name]) => new SB1View(this.data[name], name, `${this.path}.${name}`));
+            });
+        } else if (this.data instanceof Value) {
+            if (this.data.value && this.data.value.buffer) {
+                this.renderTitle('Typed Array');
+            } else {
+                this.renderTitle('' + this.data);
+            }
+        } else if (Array.isArray(this.data)) {
+            if (this.data.length) this.renderArrow();
+            this.renderTitle(`Array (${this.data.length})`);
+            if (this.data.length) this.renderExpand(() => {
+                return this.data.map((field, index) => new SB1View(field, index + 1, `${this.path}[${index}]`));
+            });
+        } else if (['string', 'number', 'boolean'].includes(typeof this.data)) {
+            this.renderTitle('' + this.data);
+        } else {
+            this.renderTitle(`Unknown Structure(${this.data ? this.data.classId : ''})`);
+        }
+
+        // const clearDiv = this.createElement('div', 'clear');
+        // clearDiv.style.clear = 'both';
+        // this.content.appendChild(clearDiv);
+    }
+}
+
+window.SB1View = SB1View;
 
 module.exports = SB1Iterator;
