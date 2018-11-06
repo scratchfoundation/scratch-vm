@@ -1,8 +1,8 @@
 [main]
 host = https://www.transifex.com
 
-[experimental-scratch.pen]
-file_filter = translations/pen/<lang>.json
-source_file = translations/pen/en.json
+[scratch-editor.extensions]
+file_filter = translations/core/<lang>.json
+source_file = translations/core/en.json
 source_lang = en
 type = CHROME

@@ -12,6 +12,19 @@
             "!6Ahqg4f}Ljl}X5Hws?Z"
         ]
     },
+    "createComment": {
+        "workspaceId": "7Luws3lyb*Z98~Kk+IG|",
+        "group": ";OswyM#@%`%,xOrhOXC=",
+        "recordUndo": true,
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type=\"wedo_motorclockwise\" id=\"z!+#Nqr,_(V=xz0y7a@d\"><comment id=\"aCommentId\">Some comment text</comment><value name=\"DURATION\"><shadow type=\"math_number\" id=\"!6Ahqg4f}Ljl}X5Hws?Z\"><field name=\"NUM\">10</field></shadow></value></block>"
+        },
+        "ids": [
+            "z!+#Nqr,_(V=xz0y7a@d",
+            "!6Ahqg4f}Ljl}X5Hws?Z"
+        ]
+    },
     "createbranch": {
         "name": "block",
         "xml": {
@@ -70,6 +83,24 @@
         "name": "block",
         "xml": {
             "outerHTML": "<block type='operator_add' id='D;MqidqmaN}Dft)y#Bf`' x='80' y='98'><value name='NUM1'><shadow type='math_number' id='F[IFAdLbq8!q25+Nio@i'><field name='NUM'></field></shadow><block type='sensing_answer' id='D~ZQ|BYb1)xw4)8ziI%.'></block</value><value name='NUM2'><shadow type='math_number' id='|Sjv4!*X6;wj?QaCE{-9'><field name='NUM'></field></shadow></value></block>"
+        }
+    },
+    "createcommentUpdatePosition": {
+        "name": "comment",
+        "type": "comment_create",
+        "commentId": "a comment",
+        "xy": {"x": 10, "y": 20}
+    },
+    "mockVariableBlock": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='data_variable' id='a block' x='0' y='0'><field name='VARIABLE' id='mock var id' variabletype=''>a mock variable</field></block>"
+        }
+    },
+    "mockListBlock": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='data_listcontents' id='another block' x='0' y='0'><field name='LIST' id='mock list id' variabletype=''>a mock list</field></block>"
         }
     }
 }

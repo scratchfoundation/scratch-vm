@@ -476,11 +476,14 @@ const runBenchmark = function () {
 
     // Instantiate the renderer and connect it to the VM.
     const canvas = document.getElementById('scratch-stage');
-    const renderer = new window.RenderWebGL(canvas);
+    const renderer = new window.ScratchRender(canvas);
     Scratch.renderer = renderer;
     vm.attachRenderer(renderer);
     const audioEngine = new window.AudioEngine();
     vm.attachAudioEngine(audioEngine);
+    /* global ScratchSVGRenderer */
+    vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer());
+    vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter());
 
     // Feed mouse events as VM I/O events.
     document.addEventListener('mousemove', e => {

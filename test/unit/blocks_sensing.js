@@ -3,6 +3,7 @@ const Sensing = require('../../src/blocks/scratch3_sensing');
 const Runtime = require('../../src/engine/runtime');
 const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
+const BlockUtility = require('../../src/engine/block-utility');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -34,6 +35,90 @@ test('ask and answer with a hidden target', t => {
         t.strictEqual(s.getAnswer(), expectedAnswer);
         t.end();
     });
+});
+
+test('ask and stop all dismisses question', t => {
+    const rt = new Runtime();
+    const s = new Sensing(rt);
+    const util = {target: {visible: false}};
+
+    const expectedQuestion = 'a question';
+
+    let call = 0;
+
+    rt.addListener('QUESTION', question => {
+        if (call === 0) {
+            // (2) Assert the question was passed.
+            t.strictEqual(question, expectedQuestion);
+        } else if (call === 1) {
+            // (4) Assert the question was dismissed.
+            t.strictEqual(question, null);
+            t.end();
+        }
+        call += 1;
+    });
+
+    // (1) Emit the question.
+    s.askAndWait({QUESTION: expectedQuestion}, util);
+    // (3) Emit the stop all event.
+    rt.stopAll();
+});
+
+test('ask and stop other scripts dismisses if it is the last question', t => {
+    const rt = new Runtime();
+    const s = new Sensing(rt);
+    const util = {target: {visible: false, sprite: {}}, thread: {}};
+
+    const expectedQuestion = 'a question';
+
+    let call = 0;
+
+    rt.addListener('QUESTION', question => {
+        if (call === 0) {
+            // (2) Assert the question was passed.
+            t.strictEqual(question, expectedQuestion);
+        } else if (call === 1) {
+            // (4) Assert the question was dismissed.
+            t.strictEqual(question, null);
+            t.end();
+        }
+        call += 1;
+    });
+
+    // (1) Emit the questions.
+    s.askAndWait({QUESTION: expectedQuestion}, util);
+    // (3) Emit the stop for target event.
+    rt.stopForTarget(util.target, util.thread);
+});
+
+test('ask and stop other scripts asks next question', t => {
+    const rt = new Runtime();
+    const s = new Sensing(rt);
+    const util = {target: {visible: false, sprite: {}}, thread: {}};
+    const util2 = {target: {visible: false, sprite: {}}, thread: {}};
+
+    const expectedQuestion = 'a question';
+    const nextQuestion = 'a followup';
+
+    let call = 0;
+
+    rt.addListener('QUESTION', question => {
+        if (call === 0) {
+            // (2) Assert the question was passed.
+            t.strictEqual(question, expectedQuestion);
+        } else if (call === 1) {
+            // (4) Assert the next question was passed.
+            t.strictEqual(question, nextQuestion);
+            t.end();
+        }
+        call += 1;
+    });
+
+    // (1) Emit the questions.
+    s.askAndWait({QUESTION: expectedQuestion}, util);
+    s.askAndWait({QUESTION: nextQuestion}, util2);
+    // (3) Emit the stop for target event.
+    rt.stopForTarget(util.target, util.thread);
 });
 
 test('ask and answer with a visible target', t => {
@@ -81,5 +166,74 @@ test('set drag mode', t => {
     sensing.setDragMode({DRAG_MODE: 'draggable'}, {target: rt});
     t.strictEqual(rt.draggable, true);
 
+    t.end();
+});
+
+test('get loudness with caching', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // It should report -1 when audio engine is not available.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the audio engine with its getLoudness function, and set up different
+    // values to simulate it changing over time.
+    const firstLoudness = 1;
+    const secondLoudness = 2;
+    let simulatedLoudness = firstLoudness;
+    rt.audioEngine = {getLoudness: () => simulatedLoudness};
+
+    // It should report -1 when current step time is null.
+    t.strictEqual(sensing.getLoudness(), -1);
+
+    // Stub the current step time.
+    rt.currentStepTime = 1000 / 30;
+
+    // The first time it works, it should report the result from the stubbed audio engine.
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Update the simulated loudness to a new value.
+    simulatedLoudness = secondLoudness;
+
+    // Simulate time passing by advancing the timer forward a little bit.
+    // After less than a step, it should still report cached loudness.
+    let simulatedTime = Date.now() + (rt.currentStepTime / 2);
+    sensing._timer = {time: () => simulatedTime};
+    t.strictEqual(sensing.getLoudness(), firstLoudness);
+
+    // Simulate more than a step passing. It should now request the value
+    // from the audio engine again.
+    simulatedTime += rt.currentStepTime;
+    t.strictEqual(sensing.getLoudness(), secondLoudness);
+
+    t.end();
+});
+
+test('loud? boolean', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+
+    // The simplest way to test this is to actually override the getLoudness
+    // method, which isLoud uses.
+    let simulatedLoudness = 0;
+    sensing.getLoudness = () => simulatedLoudness;
+    t.false(sensing.isLoud());
+
+    // Check for GREATER than 10, not equal.
+    simulatedLoudness = 10;
+    t.false(sensing.isLoud());
+
+    simulatedLoudness = 11;
+    t.true(sensing.isLoud());
+
+    t.end();
+});
+
+test('username block', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+    const util = new BlockUtility(rt.sequencer);
+
+    t.equal(sensing.getUsername({}, util), '');
     t.end();
 });

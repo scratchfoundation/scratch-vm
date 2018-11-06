@@ -34,15 +34,30 @@ class Scratch3MotionBlocks {
             motion_sety: this.setY,
             motion_xposition: this.getX,
             motion_yposition: this.getY,
-            motion_direction: this.getDirection
+            motion_direction: this.getDirection,
+            // Legacy no-op blocks:
+            motion_scroll_right: () => {},
+            motion_scroll_up: () => {},
+            motion_align_scene: () => {},
+            motion_xscroll: () => {},
+            motion_yscroll: () => {}
         };
     }
 
     getMonitored () {
         return {
-            motion_xposition: {isSpriteSpecific: true},
-            motion_yposition: {isSpriteSpecific: true},
-            motion_direction: {isSpriteSpecific: true}
+            motion_xposition: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_xposition`
+            },
+            motion_yposition: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_yposition`
+            },
+            motion_direction: {
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_direction`
+            }
         };
     }
 

@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 
 const uri = path.resolve(__dirname, '../fixtures/procedure.sb2');
-const project = extract(uri);
+const project = readFileToBuffer(uri);
 
 test('procedure', t => {
     const vm = new VirtualMachine();

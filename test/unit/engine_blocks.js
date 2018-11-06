@@ -1,5 +1,8 @@
 const test = require('tap').test;
 const Blocks = require('../../src/engine/blocks');
+const Variable = require('../../src/engine/variable');
+const adapter = require('../../src/engine/adapter');
+const events = require('../fixtures/events.json');
 
 test('spec', t => {
     const b = new Blocks();
@@ -536,5 +539,272 @@ test('delete inputs', t => {
     t.equal(b._scripts.indexOf('foo'), -1);
     t.equal(Object.keys(b._blocks).length, 0);
     t.equal(b._scripts.length, 0);
+    t.end();
+});
+
+test('updateAssetName function updates name in sound field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            SOUND_MENU: {
+                name: 'SOUND_MENU',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.SOUND_MENU.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sound');
+    t.equals(b.getBlock('foo').fields.SOUND_MENU.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in costume field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.COSTUME.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'costume');
+    t.equals(b.getBlock('foo').fields.COSTUME.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in backdrop field', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'foo',
+        fields: {
+            BACKDROP: {
+                name: 'BACKDROP',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('foo').fields.BACKDROP.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'backdrop');
+    t.equals(b.getBlock('foo').fields.BACKDROP.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name in all sprite fields', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            TOWARDS: {
+                name: 'TOWARDS',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            TO: {
+                name: 'TO',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id3',
+        fields: {
+            OBJECT: {
+                name: 'OBJECT',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id4',
+        fields: {
+            VIDEOONMENU2: {
+                name: 'VIDEOONMENU2',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id5',
+        fields: {
+            DISTANCETOMENU: {
+                name: 'DISTANCETOMENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id6',
+        fields: {
+            TOUCHINGOBJECTMENU: {
+                name: 'TOUCHINGOBJECTMENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id7',
+        fields: {
+            CLONE_OPTION: {
+                name: 'CLONE_OPTION',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.TOWARDS.value, 'name1');
+    t.equals(b.getBlock('id2').fields.TO.value, 'name1');
+    t.equals(b.getBlock('id3').fields.OBJECT.value, 'name1');
+    t.equals(b.getBlock('id4').fields.VIDEOONMENU2.value, 'name1');
+    t.equals(b.getBlock('id5').fields.DISTANCETOMENU.value, 'name1');
+    t.equals(b.getBlock('id6').fields.TOUCHINGOBJECTMENU.value, 'name1');
+    t.equals(b.getBlock('id7').fields.CLONE_OPTION.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sprite');
+    t.equals(b.getBlock('id1').fields.TOWARDS.value, 'name2');
+    t.equals(b.getBlock('id2').fields.TO.value, 'name2');
+    t.equals(b.getBlock('id3').fields.OBJECT.value, 'name2');
+    t.equals(b.getBlock('id4').fields.VIDEOONMENU2.value, 'name2');
+    t.equals(b.getBlock('id5').fields.DISTANCETOMENU.value, 'name2');
+    t.equals(b.getBlock('id6').fields.TOUCHINGOBJECTMENU.value, 'name2');
+    t.equals(b.getBlock('id7').fields.CLONE_OPTION.value, 'name2');
+    t.end();
+});
+
+test('updateAssetName function updates name according to asset type', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            SOUND_MENU: {
+                name: 'SOUND_MENU',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.SOUND_MENU.value, 'name1');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'name1');
+    b.updateAssetName('name1', 'name2', 'sound');
+    // only sound should get renamed
+    t.equals(b.getBlock('id1').fields.SOUND_MENU.value, 'name2');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'name1');
+    t.end();
+});
+
+test('updateAssetName only updates given name', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'name1'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            COSTUME: {
+                name: 'COSTUME',
+                value: 'foo'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.COSTUME.value, 'name1');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'foo');
+    b.updateAssetName('name1', 'name2', 'costume');
+    t.equals(b.getBlock('id1').fields.COSTUME.value, 'name2');
+    t.equals(b.getBlock('id2').fields.COSTUME.value, 'foo');
+    t.end();
+});
+
+test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'id1',
+        fields: {
+            BACKDROP: {
+                name: 'BACKDROP',
+                value: 'foo'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    b.updateAssetName('name1', 'name2', 'backdrop');
+    t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    t.end();
+});
+
+test('updateTargetSpecificBlocks changes sprite clicked hat to stage clicked for stage', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'originallySpriteClicked',
+        opcode: 'event_whenthisspriteclicked'
+    });
+    b.createBlock({
+        id: 'originallyStageClicked',
+        opcode: 'event_whenstageclicked'
+    });
+
+    // originallySpriteClicked does not update when on a non-stage target
+    b.updateTargetSpecificBlocks(false /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenthisspriteclicked');
+
+    // originallySpriteClicked does update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does not update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does update when on a non-stage target
+    b.updateTargetSpecificBlocks(false/* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenthisspriteclicked');
+
+    t.end();
+});
+
+test('getAllVariableAndListReferences returns an empty map references when variable blocks do not exist', t => {
+    const b = new Blocks();
+    t.equal(Object.keys(b.getAllVariableAndListReferences()).length, 0);
+    t.end();
+});
+
+test('getAllVariableAndListReferences returns references when variable blocks exist', t => {
+    const b = new Blocks();
+
+    let varListRefs = b.getAllVariableAndListReferences();
+    t.equal(Object.keys(varListRefs).length, 0);
+
+    b.createBlock(adapter(events.mockVariableBlock)[0]);
+    b.createBlock(adapter(events.mockListBlock)[0]);
+
+    varListRefs = b.getAllVariableAndListReferences();
+    t.equal(Object.keys(varListRefs).length, 2);
+    t.equal(Array.isArray(varListRefs['mock var id']), true);
+    t.equal(varListRefs['mock var id'].length, 1);
+    t.equal(varListRefs['mock var id'][0].type, Variable.SCALAR_TYPE);
+    t.equal(varListRefs['mock var id'][0].referencingField.value, 'a mock variable');
+    t.equal(Array.isArray(varListRefs['mock list id']), true);
+    t.equal(varListRefs['mock list id'].length, 1);
+    t.equal(varListRefs['mock list id'][0].type, Variable.LIST_TYPE);
+    t.equal(varListRefs['mock list id'][0].referencingField.value, 'a mock list');
+
     t.end();
 });

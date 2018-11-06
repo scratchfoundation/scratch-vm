@@ -11,11 +11,37 @@ const Sprite = require('../sprites/sprite');
 const Color = require('../util/color');
 const log = require('../util/log');
 const uid = require('../util/uid');
+const StringUtil = require('../util/string-util');
 const specMap = require('./sb2_specmap');
+const Comment = require('../engine/comment');
 const Variable = require('../engine/variable');
+const MonitorRecord = require('../engine/monitor-record');
+const StageLayering = require('../engine/stage-layering');
 
-const {loadCostume, loadOldTextCostume} = require('../import/load-costume.js');
+const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
+const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
+
+// Constants used during deserialization of an SB2 file
+const CORE_EXTENSIONS = [
+    'argument',
+    'control',
+    'data',
+    'event',
+    'looks',
+    'math',
+    'motion',
+    'operator',
+    'procedures',
+    'sensing',
+    'sound'
+];
+
+// Adjust script coordinates to account for
+// larger block size in scratch-blocks.
+// @todo: Determine more precisely the right formulas here.
+const WORKSPACE_X_SCALE = 1.5;
+const WORKSPACE_Y_SCALE = 2.2;
 
 /**
  * Convert a Scratch 2.0 procedure string (e.g., "my_procedure %s %b %n")
@@ -44,6 +70,8 @@ const parseProcedureArgMap = function (procCode) {
                 arg.inputOp = 'math_number';
             } else if (argType === 's') {
                 arg.inputOp = 'text';
+            } else if (argType === 'b') {
+                arg.inputOp = 'boolean';
             }
             argMap.push(arg);
         }
@@ -91,16 +119,29 @@ const flatten = function (blocks) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
- * @return {Array.<object>} Scratch VM-format block list.
+ * @param {ParseState} parseState - info on the state of parsing beyond the current block.
+ * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
+ * They are indexed in this object by the sb2 flattened block list index indicating
+ * which block they should attach to.
+ * @param {int} commentIndex The current index of the top block in this list if it were in a flattened
+ * list of all blocks for the target
+ * @return {Array<Array.<object>|int>} Tuple where first item is the Scratch VM-format block list, and
+ * second item is the updated comment index
  */
-const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions) {
+const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, extensions, parseState, comments,
+    commentIndex) {
     const resultingList = [];
     let previousBlock = null; // For setting next.
     for (let i = 0; i < blockList.length; i++) {
         const block = blockList[i];
         // eslint-disable-next-line no-use-before-define
-        const parsedBlock = parseBlock(block, addBroadcastMsg, getVariableId, extensions);
-        if (typeof parsedBlock === 'undefined') continue;
+        const parsedBlockAndComments = parseBlock(block, addBroadcastMsg, getVariableId,
+            extensions, parseState, comments, commentIndex);
+        const parsedBlock = parsedBlockAndComments[0];
+        // Update commentIndex
+        commentIndex = parsedBlockAndComments[1];
+
+        if (!parsedBlock) continue;
         if (previousBlock) {
             parsedBlock.parent = previousBlock.id;
             previousBlock.next = parsedBlock.id;
@@ -108,7 +149,7 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
         previousBlock = parsedBlock;
         resultingList.push(parsedBlock);
     }
-    return resultingList;
+    return [resultingList, commentIndex];
 };
 
 /**
@@ -119,20 +160,25 @@ const parseBlockList = function (blockList, addBroadcastMsg, getVariableId, exte
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retreive a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {object} comments Comments that need to be attached to the blocks that need to be parsed
  */
-const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, extensions) {
+const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, extensions, comments) {
+    // Keep track of the index of the current script being
+    // parsed in order to attach block comments correctly
+    let scriptIndexForComment = 0;
+
     for (let i = 0; i < scripts.length; i++) {
         const script = scripts[i];
         const scriptX = script[0];
         const scriptY = script[1];
         const blockList = script[2];
-        const parsedBlockList = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions);
+        const parseState = {};
+        const [parsedBlockList, newCommentIndex] = parseBlockList(blockList, addBroadcastMsg, getVariableId, extensions,
+            parseState, comments, scriptIndexForComment);
+        scriptIndexForComment = newCommentIndex;
         if (parsedBlockList[0]) {
-            // Adjust script coordinates to account for
-            // larger block size in scratch-blocks.
-            // @todo: Determine more precisely the right formulas here.
-            parsedBlockList[0].x = scriptX * 1.5;
-            parsedBlockList[0].y = scriptY * 2.2;
+            parsedBlockList[0].x = scriptX * WORKSPACE_X_SCALE;
+            parsedBlockList[0].y = scriptY * WORKSPACE_Y_SCALE;
             parsedBlockList[0].topLevel = true;
             parsedBlockList[0].parent = null;
         }
@@ -152,18 +198,18 @@ const parseScripts = function (scripts, blocks, addBroadcastMsg, getVariableId, 
  */
 const generateVariableIdGetter = (function () {
     let globalVariableNameMap = {};
-    const namer = (targetId, name) => `${targetId}-${name}`;
+    const namer = (targetId, name, type) => `${targetId}-${name}-${type}`;
     return function (targetId, topLevel) {
         // Reset the global variable map if topLevel
         if (topLevel) globalVariableNameMap = {};
-        return function (name) {
+        return function (name, type) {
             if (topLevel) { // Store the name/id pair in the globalVariableNameMap
-                globalVariableNameMap[name] = namer(targetId, name);
-                return globalVariableNameMap[name];
+                globalVariableNameMap[`${name}-${type}`] = namer(targetId, name, type);
+                return globalVariableNameMap[`${name}-${type}`];
             }
             // Not top-level, so first check the global name map
-            if (globalVariableNameMap[name]) return globalVariableNameMap[name];
-            return namer(targetId, name);
+            if (globalVariableNameMap[`${name}-${type}`]) return globalVariableNameMap[`${name}-${type}`];
+            return namer(targetId, name, type);
         };
     };
 }());
@@ -192,26 +238,150 @@ const globalBroadcastMsgStateGenerator = (function () {
 }());
 
 /**
+ * Parse a single monitor object and create all its in-memory VM objects.
+ * @param {!object} object - From-JSON "Monitor object"
+ * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
+ * @param {!Array.<Target>} targets - Targets have already been parsed.
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ */
+const parseMonitorObject = (object, runtime, targets, extensions) => {
+    let target = null;
+    const opcode = specMap[object.cmd].opcode;
+    const extIndex = opcode.indexOf('_');
+    const extID = opcode.substring(0, extIndex);
+
+    // All non-core extensions should be added by blocks at this point
+    // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
+    if (CORE_EXTENSIONS.indexOf(extID) === -1) {
+        if (extID !== '') return;
+    }
+
+    // List blocks don't come in with their target name set.
+    // Find the target by searching for a target with matching variable name/type.
+    if (!object.hasOwnProperty('target')) {
+        for (let i = 0; i < targets.length; i++) {
+            const currTarget = targets[i];
+            const listVariables = Object.keys(currTarget.variables).filter(key => {
+                const variable = currTarget.variables[key];
+                return variable.type === Variable.LIST_TYPE && variable.name === object.listName;
+            });
+            if (listVariables.length > 0) {
+                target = currTarget; // Keep this target for later use
+                object.target = currTarget.getName(); // Set target name to normalize with other monitors
+            }
+        }
+    }
+
+    // Get the target for this monitor, if not gotten above.
+    target = target || targets.filter(t => t.getName() === object.target)[0];
+    if (!target) throw new Error('Cannot create monitor for target that cannot be found by name');
+
+    // Create var id getter to make block naming/parsing easier, variables already created.
+    const getVariableId = generateVariableIdGetter(target.id, false);
+    // eslint-disable-next-line no-use-before-define
+    const [block, _] = parseBlock(
+        [object.cmd, object.param], // Scratch 2 monitor blocks only have one param.
+        null, // `addBroadcastMsg`, not needed for monitor blocks.
+        getVariableId,
+        extensions,
+        {},
+        null, // `comments`, not needed for monitor blocks
+        null // `commentIndex`, not needed for monitor blocks
+    );
+
+    // Monitor blocks have special IDs to match the toolbox obtained from the getId
+    // function in the runtime.monitorBlocksInfo. Variable monitors, however,
+    // get their IDs from the variable id they reference.
+    if (object.cmd === 'getVar:') {
+        block.id = getVariableId(object.param, Variable.SCALAR_TYPE);
+    } else if (object.cmd === 'contentsOfList:') {
+        block.id = getVariableId(object.param, Variable.LIST_TYPE);
+    } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
+        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
+    }
+
+    // Block needs a targetId if it is targetting something other than the stage
+    block.targetId = target.isStage ? null : target.id;
+
+    // Property required for running monitored blocks.
+    block.isMonitored = object.visible;
+
+    // Blocks can be created with children, flatten and add to monitorBlocks.
+    const newBlocks = flatten([block]);
+    for (let i = 0; i < newBlocks.length; i++) {
+        runtime.monitorBlocks.createBlock(newBlocks[i]);
+    }
+
+    // Convert numbered mode into strings for better understandability.
+    switch (object.mode) {
+    case 1:
+        object.mode = 'default';
+        break;
+    case 2:
+        object.mode = 'large';
+        break;
+    case 3:
+        object.mode = 'slider';
+        break;
+    }
+
+    // Create a monitor record for the runtime's monitorState
+    runtime.requestAddMonitor(MonitorRecord({
+        id: block.id,
+        targetId: block.targetId,
+        spriteName: block.targetId ? object.target : null,
+        opcode: block.opcode,
+        params: runtime.monitorBlocks._getBlockParams(block),
+        value: '',
+        mode: object.mode,
+        sliderMin: object.sliderMin,
+        sliderMax: object.sliderMax,
+        x: object.x,
+        y: object.y,
+        width: object.width,
+        height: object.height,
+        visible: object.visible
+    }));
+};
+
+/**
  * Parse a single "Scratch object" and create all its in-memory VM objects.
  * TODO: parse the "info" section, especially "savedExtensions"
  * @param {!object} object - From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime - Runtime object to load all structures into.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @param {boolean} topLevel - Whether this is the top-level object (stage).
+ * @param {?object} zip - Optional zipped assets for local file import
  * @return {!Promise.<Array.<Target>>} Promise for the loaded targets when ready, or null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, extensions, topLevel) {
+const parseScratchObject = function (object, runtime, extensions, topLevel, zip) {
     if (!object.hasOwnProperty('objName')) {
-        // Watcher/monitor - skip this object until those are implemented in VM.
-        // @todo
-        return Promise.resolve(null);
+        if (object.hasOwnProperty('listName')) {
+            // Shim these objects so they can be processed as monitors
+            object.cmd = 'contentsOfList:';
+            object.param = object.listName;
+            object.mode = 'list';
+        }
+        // Defer parsing monitors until targets are all parsed
+        object.deferredMonitor = true;
+        return Promise.resolve(object);
     }
+
     // Blocks container for this object.
     const blocks = new Blocks();
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
     const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
     if (object.hasOwnProperty('objName')) {
+        if (topLevel && object.objName !== 'Stage') {
+            for (const child of object.children) {
+                if (!child.hasOwnProperty('objName') && child.target === object.objName) {
+                    child.target = 'Stage';
+                }
+            }
+            object.objName = 'Stage';
+        }
+
         sprite.name = object.objName;
     }
     // Costumes from JSON.
@@ -219,21 +389,35 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     if (object.hasOwnProperty('costumes')) {
         for (let i = 0; i < object.costumes.length; i++) {
             const costumeSource = object.costumes[i];
+            const bitmapResolution = costumeSource.bitmapResolution || 1;
             const costume = {
                 name: costumeSource.costumeName,
-                bitmapResolution: costumeSource.bitmapResolution || 1,
-                rotationCenterX: costumeSource.rotationCenterX,
-                rotationCenterY: costumeSource.rotationCenterY,
+                bitmapResolution: bitmapResolution,
+                rotationCenterX: topLevel ? 240 * bitmapResolution : costumeSource.rotationCenterX,
+                rotationCenterY: topLevel ? 180 * bitmapResolution : costumeSource.rotationCenterY,
+                // TODO we eventually want this next property to be called
+                // md5ext to reflect what it actually contains, however this
+                // will be a very extensive change across many repositories
+                // and should be done carefully and altogether
+                md5: costumeSource.baseLayerMD5,
                 skinId: null
             };
-
-            if ('textLayerMD5' in costumeSource) {
-                costumePromises.push(
-                    loadOldTextCostume(costumeSource.baseLayerMD5, costumeSource.textLayerMD5, costume, runtime)
-                );
-            } else {
-                costumePromises.push(loadCostume(costumeSource.baseLayerMD5, costume, runtime));
-            }
+            const md5ext = costumeSource.baseLayerMD5;
+            const idParts = StringUtil.splitFirst(md5ext, '.');
+            const md5 = idParts[0];
+            const ext = idParts[1].toLowerCase();
+            costume.dataFormat = ext;
+            costume.assetId = md5;
+            // If there is no internet connection, or if the asset is not in storage
+            // for some reason, and we are doing a local .sb2 import, (e.g. zip is provided)
+            // the file name of the costume should be the baseLayerID followed by the file ext
+            const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
+            costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
+                .then(asset => {
+                    costume.asset = asset;
+                    return loadCostume(costume.md5, costume, runtime, 2 /* optVersion */);
+                })
+            );
         }
     }
     // Sounds from JSON
@@ -246,16 +430,36 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 format: soundSource.format,
                 rate: soundSource.rate,
                 sampleCount: soundSource.sampleCount,
-                soundID: soundSource.soundID,
+                // TODO we eventually want this next property to be called
+                // md5ext to reflect what it actually contains, however this
+                // will be a very extensive change across many repositories
+                // and should be done carefully and altogether
+                // (for example, the audio engine currently relies on this
+                // property to be named 'md5')
                 md5: soundSource.md5,
                 data: null
             };
-            soundPromises.push(loadSound(sound, runtime));
+            const md5ext = soundSource.md5;
+            const idParts = StringUtil.splitFirst(md5ext, '.');
+            const md5 = idParts[0];
+            const ext = idParts[1].toLowerCase();
+            sound.dataFormat = ext;
+            sound.assetId = md5;
+            // If there is no internet connection, or if the asset is not in storage
+            // for some reason, and we are doing a local .sb2 import, (e.g. zip is provided)
+            // the file name of the sound should be the soundID (provided from the project.json)
+            // followed by the file ext
+            const assetFileName = `${soundSource.soundID}.${ext}`;
+            soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
+                .then(asset => {
+                    sound.asset = asset;
+                    return loadSound(sound, runtime, sprite);
+                }));
         }
     }
 
     // Create the first clone, and load its run-state from JSON.
-    const target = sprite.createClone();
+    const target = sprite.createClone(topLevel ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
 
     const getVariableId = generateVariableIdGetter(target.id, topLevel);
 
@@ -266,28 +470,106 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
             const variable = object.variables[j];
+            // A variable is a cloud variable if:
+            // - the project says it's a cloud variable, and
+            // - it's a stage variable, and
+            // - the runtime can support another cloud variable
+            const isCloud = variable.isPersistent && topLevel && runtime.canAddCloudVariable();
             const newVariable = new Variable(
-                getVariableId(variable.name),
+                getVariableId(variable.name, Variable.SCALAR_TYPE),
                 variable.name,
                 Variable.SCALAR_TYPE,
-                variable.isPersistent
+                isCloud
             );
+            if (isCloud) runtime.addCloudVariable();
             newVariable.value = variable.value;
             target.variables[newVariable.id] = newVariable;
         }
     }
 
+    // If included, parse any and all comments on the object (this includes top-level
+    // workspace comments as well as comments attached to specific blocks)
+    const blockComments = {};
+    if (object.hasOwnProperty('scriptComments')) {
+        const comments = object.scriptComments.map(commentDesc => {
+            const [
+                commentX,
+                commentY,
+                commentWidth,
+                commentHeight,
+                commentFullSize,
+                flattenedBlockIndex,
+                commentText
+            ] = commentDesc;
+            const isBlockComment = commentDesc[5] >= 0;
+            const newComment = new Comment(
+                null, // generate a new id for this comment
+                commentText, // text content of sb2 comment
+                // Only serialize x & y position of comment if it's a workspace comment
+                // If it's a block comment, we'll let scratch-blocks handle positioning
+                isBlockComment ? null : commentX * WORKSPACE_X_SCALE,
+                isBlockComment ? null : commentY * WORKSPACE_Y_SCALE,
+                commentWidth * WORKSPACE_X_SCALE,
+                commentHeight * WORKSPACE_Y_SCALE,
+                !commentFullSize
+            );
+            if (isBlockComment) {
+                // commentDesc[5] refers to the index of the block that this
+                // comment is attached to --  in a flattened version of the
+                // scripts array.
+                // If commentDesc[5] is -1, this is a workspace comment (we don't need to do anything
+                // extra at this point), otherwise temporarily save the flattened script array
+                // index as the blockId property of the new comment. We will
+                // change this to refer to the actual block id of the corresponding
+                // block when that block gets created
+                newComment.blockId = flattenedBlockIndex;
+                // Add this comment to the block comments object with its script index
+                // as the key
+                if (blockComments.hasOwnProperty(flattenedBlockIndex)) {
+                    blockComments[flattenedBlockIndex].push(newComment);
+                } else {
+                    blockComments[flattenedBlockIndex] = [newComment];
+                }
+            }
+            return newComment;
+        });
+
+        // Add all the comments that were just created to the target.comments,
+        // referenced by id
+        comments.forEach(comment => {
+            target.comments[comment.id] = comment;
+        });
+    }
+
     // If included, parse any and all scripts/blocks on the object.
     if (object.hasOwnProperty('scripts')) {
-        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions);
+        parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions, blockComments);
     }
+
+    // If there are any comments referring to a numerical block ID, make them
+    // workspace comments. These are comments that were originally created as
+    // block comments, detached from the block, and then had the associated
+    // block deleted.
+    // These comments should be imported as workspace comments
+    // by making their blockIDs (which currently refer to non-existing blocks)
+    // null (See #1452).
+    for (const commentIndex in blockComments) {
+        const currBlockComments = blockComments[commentIndex];
+        currBlockComments.forEach(c => {
+            if (typeof c.blockId === 'number') {
+                c.blockId = null;
+            }
+        });
+    }
+
+    // Update stage specific blocks (e.g. sprite clicked <=> stage clicked)
+    blocks.updateTargetSpecificBlocks(topLevel); // topLevel = isStage
 
     if (object.hasOwnProperty('lists')) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
-            // @todo: monitor properties.
             const newVariable = new Variable(
-                getVariableId(list.listName),
+                getVariableId(list.listName, Variable.LIST_TYPE),
                 list.listName,
                 Variable.LIST_TYPE,
                 false
@@ -327,6 +609,27 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
+    if (object.hasOwnProperty('tempoBPM')) {
+        target.tempo = object.tempoBPM;
+    }
+    if (object.hasOwnProperty('videoAlpha')) {
+        // SB2 stores alpha as opacity, where 1.0 is opaque.
+        // We convert to a percentage, and invert it so 100% is full transparency.
+        target.videoTransparency = 100 - (100 * object.videoAlpha);
+    }
+    if (object.hasOwnProperty('info')) {
+        if (object.info.hasOwnProperty('videoOn')) {
+            if (object.info.videoOn) {
+                target.videoState = RenderedTarget.VIDEO_STATE.ON;
+            }
+        }
+    }
+    if (object.hasOwnProperty('indexInLibrary')) {
+        // Temporarily store the 'indexInLibrary' property from the sb2 file
+        // so that we can correctly order sprites in the target pane.
+        // This will be deleted after we are done parsing and ordering the targets list.
+        target.targetPaneOrder = object.indexInLibrary;
+    }
 
     target.isStage = topLevel;
 
@@ -342,7 +645,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
     const childrenPromises = [];
     if (object.children) {
         for (let m = 0; m < object.children.length; m++) {
-            childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false));
+            childrenPromises.push(parseScratchObject(object.children[m], runtime, extensions, false, zip));
         }
     }
 
@@ -393,13 +696,38 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
                 }
             }
             let targets = [target];
+            const deferredMonitors = [];
             for (let n = 0; n < children.length; n++) {
-                targets = targets.concat(children[n]);
+                if (children[n]) {
+                    if (children[n].deferredMonitor) {
+                        deferredMonitors.push(children[n]);
+                    } else {
+                        targets = targets.concat(children[n]);
+                    }
+                }
+            }
+            for (let n = 0; n < deferredMonitors.length; n++) {
+                parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
             }
             return targets;
         })
     );
 };
+
+const reorderParsedTargets = function (targets) {
+    // Reorder parsed targets based on the temporary targetPaneOrder property
+    // and then delete it.
+
+    targets.sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
+
+    // Delete the temporary target pane ordering since we shouldn't need it anymore.
+    targets.forEach(t => {
+        delete t.targetPaneOrder;
+    });
+
+    return targets;
+};
+
 
 /**
  * Top-level handler. Parse provided JSON,
@@ -407,18 +735,38 @@ const parseScratchObject = function (object, runtime, extensions, topLevel) {
  * @param {!object} json SB2-format JSON to load.
  * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {boolean=} optForceSprite If set, treat as sprite (Sprite2).
+ * @param {?object} zip Optional zipped assets for local file import
  * @return {Promise.<ImportedProject>} Promise that resolves to the loaded targets when ready.
  */
-const sb2import = function (json, runtime, optForceSprite) {
+const sb2import = function (json, runtime, optForceSprite, zip) {
     const extensions = {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
-    return parseScratchObject(json, runtime, extensions, !optForceSprite)
+    return parseScratchObject(json, runtime, extensions, !optForceSprite, zip)
+        .then(reorderParsedTargets)
         .then(targets => ({
             targets,
             extensions
         }));
+};
+
+/**
+ * Given the sb2 block, inspect the specmap for a translation method or object.
+ * @param {!object} block a sb2 formatted block
+ * @return {object} specmap block to parse this opcode
+ */
+const specMapBlock = function (block) {
+    const opcode = block[0];
+    const mapped = opcode && specMap[opcode];
+    if (!mapped) {
+        log.warn(`Couldn't find SB2 block: ${opcode}`);
+        return null;
+    }
+    if (typeof mapped === 'function') {
+        return mapped(block);
+    }
+    return mapped;
 };
 
 /**
@@ -427,23 +775,40 @@ const sb2import = function (json, runtime, optForceSprite) {
  * @param {Function} addBroadcastMsg function to update broadcast message name map
  * @param {Function} getVariableId function to retrieve a variable's ID based on name
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
- * @return {object} Scratch VM format block, or null if unsupported object.
+ * @param {ParseState} parseState - info on the state of parsing beyond the current block.
+ * @param {object<int, Comment>} comments - Comments from sb2 project that need to be attached to blocks.
+ * They are indexed in this object by the sb2 flattened block list index indicating
+ * which block they should attach to.
+ * @param {int} commentIndex The comment index for the block to be parsed if it were in a flattened
+ * list of all blocks for the target
+ * @return {Array.<object|int>} Tuple where first item is the Scratch VM-format block (or null if unsupported object),
+ * and second item is the updated comment index (after this block and its children are parsed)
  */
-const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions) {
-    // First item in block object is the old opcode (e.g., 'forward:').
+const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extensions, parseState, comments, commentIndex) {
+    const commentsForParsedBlock = (comments && typeof commentIndex === 'number' && !isNaN(commentIndex)) ?
+        comments[commentIndex] : null;
+    const blockMetadata = specMapBlock(sb2block);
+    if (!blockMetadata) {
+        // No block opcode found, exclude this block, increment the commentIndex,
+        // make all block comments into workspace comments and send them to zero/zero
+        // to prevent serialization issues.
+        if (commentsForParsedBlock) {
+            commentsForParsedBlock.forEach(comment => {
+                comment.blockId = null;
+                comment.x = comment.y = 0;
+            });
+        }
+        return [null, commentIndex + 1];
+    }
     const oldOpcode = sb2block[0];
-    // Convert the block using the specMap. See sb2specmap.js.
-    if (!oldOpcode || !specMap[oldOpcode]) {
-        log.warn('Couldn\'t find SB2 block: ', oldOpcode);
-        return null;
-    }
-    const blockMetadata = specMap[oldOpcode];
+
     // If the block is from an extension, record it.
-    const dotIndex = blockMetadata.opcode.indexOf('.');
-    if (dotIndex >= 0) {
-        const extension = blockMetadata.opcode.substring(0, dotIndex);
-        extensions.extensionIDs.add(extension);
+    const index = blockMetadata.opcode.indexOf('_');
+    const prefix = blockMetadata.opcode.substring(0, index);
+    if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+        if (prefix !== '') extensions.extensionIDs.add(prefix);
     }
+
     // Block skeleton.
     const activeBlock = {
         id: uid(), // Generate a new block unique ID.
@@ -454,6 +819,26 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         shadow: false, // No shadow blocks in an SB2 by default.
         children: [] // Store any generated children, flattened in `flatten`.
     };
+
+    // Attach any comments to this block..
+    if (commentsForParsedBlock) {
+        // Attach only the last comment to the block, make all others workspace comments
+        activeBlock.comment = commentsForParsedBlock[commentsForParsedBlock.length - 1].id;
+        commentsForParsedBlock.forEach(comment => {
+            if (comment.id === activeBlock.comment) {
+                comment.blockId = activeBlock.id;
+            } else {
+                // All other comments don't get a block ID and are sent back to zero.
+                // This is important, because if they have `null` x/y, serialization breaks.
+                comment.blockId = null;
+                comment.x = comment.y = 0;
+            }
+        });
+    }
+    commentIndex++;
+
+    const parentExpectedArg = parseState.expectedArg;
+
     // For a procedure call, generate argument map from proc string.
     if (oldOpcode === 'call') {
         blockMetadata.argMap = parseProcedureArgMap(sb2block[1]);
@@ -478,13 +863,24 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             if (typeof providedArg === 'object' && providedArg) {
                 // Block or block list occupies the input.
                 let innerBlocks;
+                parseState.expectedArg = expectedArg;
                 if (typeof providedArg[0] === 'object' && providedArg[0]) {
                     // Block list occupies the input.
-                    innerBlocks = parseBlockList(providedArg, addBroadcastMsg, getVariableId, extensions);
+                    [innerBlocks, commentIndex] = parseBlockList(providedArg, addBroadcastMsg, getVariableId,
+                        extensions, parseState, comments, commentIndex);
                 } else {
                     // Single block occupies the input.
-                    innerBlocks = [parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions)];
+                    const parsedBlockDesc = parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions,
+                        parseState, comments, commentIndex);
+                    innerBlocks = [parsedBlockDesc[0]];
+                    // Update commentIndex
+                    commentIndex = parsedBlockDesc[1];
                 }
+                parseState.expectedArg = parentExpectedArg;
+                // Check if innerBlocks is an empty list.
+                // This indicates that all the inner blocks from the sb2 have
+                // unknown opcodes and have been skipped.
+                if (innerBlocks.length === 0) continue;
                 let previousBlock = null;
                 for (let j = 0; j < innerBlocks.length; j++) {
                     if (j === 0) {
@@ -505,6 +901,11 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             }
             // Generate a shadow block to occupy the input.
             if (!expectedArg.inputOp) {
+                // Undefined inputOp. inputOp should always be defined for inputs.
+                log.warn(`Unknown input operation for input ${expectedArg.inputName} of opcode ${activeBlock.opcode}.`);
+                continue;
+            }
+            if (expectedArg.inputOp === 'boolean' || expectedArg.inputOp === 'substack') {
                 // No editable shadow input; e.g., for a boolean.
                 continue;
             }
@@ -540,6 +941,26 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 if (shadowObscured) {
                     fieldValue = '';
                 }
+            } else if (expectedArg.inputOp === 'music.menu.DRUM') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                }
+            } else if (expectedArg.inputOp === 'music.menu.INSTRUMENT') {
+                if (shadowObscured) {
+                    fieldValue = 1;
+                }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.ATTRIBUTE') {
+                if (shadowObscured) {
+                    fieldValue = 'motion';
+                }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.SUBJECT') {
+                if (shadowObscured) {
+                    fieldValue = 'this sprite';
+                }
+            } else if (expectedArg.inputOp === 'videoSensing.menu.VIDEO_STATE') {
+                if (shadowObscured) {
+                    fieldValue = 'on';
+                }
             } else if (shadowObscured) {
                 // Filled drop-down menu.
                 fieldValue = '';
@@ -552,18 +973,16 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             // event_broadcast_menus have some extra properties to add to the
             // field and a different value than the rest
             if (expectedArg.inputOp === 'event_broadcast_menu') {
-                if (!shadowObscured) {
-                    // Need to update the broadcast message name map with
-                    // the value of this field.
-                    // Also need to provide the fields[fieldName] object,
-                    // so that we can later update its value property, e.g.
-                    // if sb2 message name is empty string, we will later
-                    // replace this field's value with messageN
-                    // once we can traverse through all the existing message names
-                    // and come up with a fresh messageN.
-                    const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
-                    fields[fieldName].id = broadcastId;
-                }
+                // Need to update the broadcast message name map with
+                // the value of this field.
+                // Also need to provide the fields[fieldName] object,
+                // so that we can later update its value property, e.g.
+                // if sb2 message name is empty string, we will later
+                // replace this field's value with messageN
+                // once we can traverse through all the existing message names
+                // and come up with a fresh messageN.
+                const broadcastId = addBroadcastMsg(fieldValue, fields[fieldName]);
+                fields[fieldName].id = broadcastId;
                 fields[fieldName].variableType = expectedArg.variableType;
             }
             activeBlock.children.push({
@@ -588,9 +1007,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 value: providedArg
             };
 
-            if (expectedArg.fieldName === 'VARIABLE' || expectedArg.fieldName === 'LIST') {
+            if (expectedArg.fieldName === 'VARIABLE') {
                 // Add `id` property to variable fields
-                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg);
+                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg, Variable.SCALAR_TYPE);
+            } else if (expectedArg.fieldName === 'LIST') {
+                // Add `id` property to variable fields
+                activeBlock.fields[expectedArg.fieldName].id = getVariableId(providedArg, Variable.LIST_TYPE);
             } else if (expectedArg.fieldName === 'BROADCAST_OPTION') {
                 // Add the name in this field to the broadcast msg name map.
                 // Also need to provide the fields[fieldName] object,
@@ -639,6 +1061,12 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
         activeBlock.fields.NUMBER_NAME = {
             name: 'NUMBER_NAME',
             value: 'number'
+        };
+        break;
+    case 'costumeName':
+        activeBlock.fields.NUMBER_NAME = {
+            name: 'NUMBER_NAME',
+            value: 'name'
         };
         break;
     }
@@ -695,8 +1123,15 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             argumentids: JSON.stringify(parseProcedureArgIds(sb2block[1]))
         };
     } else if (oldOpcode === 'getParam') {
+        let returnCode = sb2block[2];
+
+        // Ensure the returnCode is "b" if used in a boolean input.
+        if (parentExpectedArg && parentExpectedArg.inputOp === 'boolean' && returnCode !== 'b') {
+            returnCode = 'b';
+        }
+
         // Assign correct opcode based on the block shape.
-        switch (sb2block[2]) {
+        switch (returnCode) {
         case 'r':
             activeBlock.opcode = 'argument_reporter_string_number';
             break;
@@ -705,7 +1140,7 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
             break;
         }
     }
-    return activeBlock;
+    return [activeBlock, commentIndex];
 };
 
 module.exports = {

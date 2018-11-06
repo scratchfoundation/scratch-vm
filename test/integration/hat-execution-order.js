@@ -1,11 +1,11 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 
 const projectUri = path.resolve(__dirname, '../fixtures/hat-execution-order.sb2');
-const project = extract(projectUri);
+const project = readFileToBuffer(projectUri);
 
 test('complex', t => {
     const vm = new VirtualMachine();

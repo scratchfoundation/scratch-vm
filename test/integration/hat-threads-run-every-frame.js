@@ -1,13 +1,13 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extract = require('../fixtures/extract');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 const Thread = require('../../src/engine/thread');
 const Runtime = require('../../src/engine/runtime');
 
 const projectUri = path.resolve(__dirname, '../fixtures/loudness-hat-block.sb2');
-const project = extract(projectUri);
+const project = readFileToBuffer(projectUri);
 
 const checkIsHatThread = (t, vm, hatThread) => {
     t.equal(hatThread.stackClick, false);

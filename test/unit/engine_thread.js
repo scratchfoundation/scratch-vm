@@ -89,8 +89,8 @@ test('pushReportedValue', t => {
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
     th.pushReportedValue('value');
-    t.strictEquals(th.peekParentStackFrame().reported.null, 'value');
-    
+    t.strictEquals(th.justReported, 'value');
+
     t.end();
 });
 

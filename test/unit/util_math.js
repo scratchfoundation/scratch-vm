@@ -42,3 +42,9 @@ test('tan', t => {
     t.strictEqual(math.tan(33), 0.6494075932);
     t.end();
 });
+
+test('reducedSortOrdering', t => {
+    t.deepEqual(math.reducedSortOrdering([5, 18, 6, 3]), [1, 3, 2, 0]);
+    t.deepEqual(math.reducedSortOrdering([5, 1, 56, 19]), [1, 0, 3, 2]);
+    t.end();
+});

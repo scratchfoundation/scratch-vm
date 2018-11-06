@@ -1,5 +1,6 @@
 const mutationAdapter = require('./mutation-adapter');
 const html = require('htmlparser2');
+const uid = require('../util/uid');
 
 /**
  * Convert and an individual block DOM to the representation tree.
@@ -11,6 +12,10 @@ const html = require('htmlparser2');
  * @return {undefined}
  */
 const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
+    if (!blockDOM.attribs.id) {
+        blockDOM.attribs.id = uid();
+    }
+
     // Block skeleton.
     const block = {
         id: blockDOM.attribs.id, // Block ID
@@ -79,6 +84,11 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
             if (typeof fieldVarType === 'string') {
                 block.fields[fieldName].variableType = fieldVarType;
             }
+            break;
+        }
+        case 'comment':
+        {
+            block.comment = xmlChild.attribs.id;
             break;
         }
         case 'value':
@@ -152,7 +162,7 @@ const domToBlocks = function (blocksDOM) {
 /**
  * Adapter between block creation events and block representation which can be
  * used by the Scratch runtime.
- * @param {object} e `Blockly.events.create`
+ * @param {object} e `Blockly.events.create` or `Blockly.events.endDrag`
  * @return {Array.<object>} List of blocks from this CREATE event.
  */
 const adapter = function (e) {
