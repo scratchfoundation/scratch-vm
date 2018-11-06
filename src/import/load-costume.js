@@ -36,6 +36,7 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
  * If the costume has a text layer asset, which is a text part from Scratch 1.4, then this function
  * will merge the two image assets. See the issue LLK/scratch-vm#672 for more information.
  * @param {!object} costume - the Scratch costume object.
+ * @param {!Runtime} runtime - Scratch runtime, used to access the v2BitmapAdapter
  * @param {?object} rotationCenter - optionally passed in coordinates for the center of rotation for the image. If
  *     none is given, the rotation center of the costume will be set to the middle of the costume later on.
  * @property {number} costume.bitmapResolution - the resolution scale for a bitmap costume.
@@ -43,7 +44,7 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
  *     or reject on error.
  *     assetMatchesBase is true if the asset matches the base layer; false if it required adjustment
  */
-const fetchBitmapCanvas_ = function (costume, rotationCenter) {
+const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
     if (!costume || !costume.asset) {
         return Promise.reject('Costume load failed. Assets were missing.');
     }
@@ -89,16 +90,21 @@ const fetchBitmapCanvas_ = function (costume, rotationCenter) {
     }).then(imageElements => {
         const [baseImageElement, textImageElement] = imageElements;
 
-        const canvas = document.createElement('canvas');
-        canvas.getContext('2d').imageSmoothingEnabled = false;
+        let canvas = document.createElement('canvas');
         const scale = costume.bitmapResolution === 1 ? 2 : 1;
-        canvas.width = baseImageElement.width * scale;
-        canvas.height = baseImageElement.height * scale;
+        canvas.width = baseImageElement.width;
+        canvas.height = baseImageElement.height;
 
         const ctx = canvas.getContext('2d');
-        ctx.drawImage(baseImageElement, 0, 0, canvas.width, canvas.height);
+        ctx.drawImage(baseImageElement, 0, 0);
         if (textImageElement.src) {
-            ctx.drawImage(textImageElement, 0, 0, canvas.width, canvas.height);
+            ctx.drawImage(textImageElement, 0, 0);
+        }
+        if (scale !== 1) {
+            if (!runtime.v2BitmapAdapter) {
+                return Promise.reject('No V2 Bitmap adapter present.');
+            }
+            canvas = runtime.v2BitmapAdapter.resize(canvas, canvas.width * scale, canvas.height * scale);
         }
 
         // By scaling, we've converted it to bitmap resolution 2
@@ -114,7 +120,7 @@ const fetchBitmapCanvas_ = function (costume, rotationCenter) {
             canvas: canvas,
             rotationCenter: rotationCenter,
             // True if the asset matches the base layer; false if it required adjustment
-            assetMatchesBase: scale !== 1 || textImageElement.src
+            assetMatchesBase: scale === 1 && !textImageElement.src
         };
     })
         .catch(e => Promise.reject(e))
@@ -126,10 +132,14 @@ const fetchBitmapCanvas_ = function (costume, rotationCenter) {
 };
 
 const loadBitmap_ = function (costume, runtime, rotationCenter) {
-    return fetchBitmapCanvas_(costume, rotationCenter).then(fetched => new Promise(resolve => {
+    return fetchBitmapCanvas_(costume, runtime, rotationCenter).then(fetched => new Promise(resolve => {
         rotationCenter = fetched.rotationCenter;
 
         const saveAssetToStorage = function (dataURI) {
+            if (!runtime.v2BitmapAdapter) {
+                return Promise.reject('No V2 Bitmap adapter present.');
+            }
+
             const storage = runtime.storage;
             costume.asset = storage.createAsset(
                 storage.AssetType.ImageBitmap,
