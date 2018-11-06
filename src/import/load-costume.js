@@ -31,7 +31,7 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
 };
 
 /**
- * Fetch bitmap from storage and return a canvas.
+ * Return a promise to fetch a bitmap from storage and return it as a canvas
  * If the costume has bitmapResolution 1, it will be converted to bitmapResolution 2 here (the standard for Scratch 3)
  * If the costume has a text layer asset, which is a text part from Scratch 1.4, then this function
  * will merge the two image assets. See the issue LLK/scratch-vm#672 for more information.
