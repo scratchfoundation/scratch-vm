@@ -213,7 +213,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
 /**
  * Load a costume's asset into memory asynchronously.
  * Do not call this unless there is a renderer attached.
- * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
+ * @param {!string} md5ext - the MD5 and extension of the costume to be loaded.
  * @param {!object} costume - the Scratch costume object.
  * @property {int} skinId - the ID of the costume's render skin, once installed.
  * @property {number} rotationCenterX - the X component of the costume's origin.
@@ -225,38 +225,36 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostume = function (md5ext, costume, runtime, optVersion) {
-    let costumePromise;
-    let textLayerPromise;
+    const idParts = StringUtil.splitFirst(md5ext, '.');
+    const md5 = idParts[0];
+    const ext = idParts[1].toLowerCase();
+    costume.dataFormat = ext;
+
     if (costume.asset) {
         // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or file
-        costumePromise = Promise.resolve(costume.asset);
-        if (costume.textLayerPromise) {
-            textLayerPromise = Promise.resolve(costume.textLayerAsset);
-        }
+        return loadCostumeFromAsset(costume, runtime, optVersion);
+    }
+
+    // Need to load the costume from storage. The server should have a reference to this md5.
+    if (!runtime.storage) {
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
+        return Promise.resolve(costume);
+    }
+
+    const AssetType = runtime.storage.AssetType;
+    const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
+
+    const costumePromise = runtime.storage.load(assetType, md5, ext);
+    if (!costumePromise) {
+        log.error(`Couldn't fetch costume asset: ${md5ext}`);
+        return;
+    }
+
+    let textLayerPromise;
+    if (costume.textLayerMD5) {
+        textLayerPromise = runtime.storage.load(AssetType.ImageBitmap, costume.textLayerMD5, 'png');
     } else {
-        // Need to load the costume from storage. The server should have a reference to this md5.
-        if (!runtime.storage) {
-            log.error('No storage module present; cannot load costume asset: ', md5ext);
-            return Promise.resolve(costume);
-        }
-
-        const AssetType = runtime.storage.AssetType;
-        const idParts = StringUtil.splitFirst(md5ext, '.');
-        const md5 = idParts[0];
-        const ext = idParts[1].toLowerCase();
-        const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
-        costume.dataFormat = ext;
-        costumePromise = runtime.storage.load(assetType, md5, ext);
-        if (!costumePromise) {
-            log.error(`Couldn't fetch costume asset: ${md5ext}`);
-            return;
-        }
-
-        if (costume.textLayerMD5) {
-            textLayerPromise = runtime.storage.load(AssetType.ImageBitmap, costume.textLayerMD5, 'png');
-        } else {
-            textLayerPromise = Promise.resolve(null);
-        }
+        textLayerPromise = Promise.resolve(null);
     }
 
     return Promise.all([costumePromise, textLayerPromise]).then(assetArray => {
