@@ -1,8 +1,8 @@
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 
-const loadVector_ = function (costume, costumeAsset, runtime, rotationCenter, optVersion) {
-    let svgString = costumeAsset.decodeText();
+const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
+    let svgString = costume.asset.decodeText();
     // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
     if (optVersion && optVersion === 2 && !runtime.v2SvgAdapter) {
         log.error('No V2 SVG adapter present; SVGs may not render correctly.');
@@ -30,64 +30,128 @@ const loadVector_ = function (costume, costumeAsset, runtime, rotationCenter, op
     return Promise.resolve(costume);
 };
 
-const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
+/**
+ * Fetch bitmap from storage and return a canvas.
+ * If the costume has bitmapResolution 1, it will be converted to bitmapResolution 2 here (the standard for Scratch 3)
+ * If the costume has a text layer asset, which is a text part from Scratch 1.4, then this function
+ * will merge the two image assets. See the issue LLK/scratch-vm#672 for more information.
+ * @param {!object} costume - the Scratch costume object.
+ * @param {?object} rotationCenter - optionally passed in coordinates for the center of rotation for the image. If
+ *     none is given, the rotation center of the costume will be set to the middle of the costume later on.
+ * @property {number} costume.bitmapResolution - the resolution scale for a bitmap costume.
+ * @returns {?Promise} - a promise which will resolve to an object {canvas, rotationCenter, assetMatchesBase},
+ *     or reject on error.
+ *     assetMatchesBase is true if the asset matches the base layer; false if it required adjustment
+ */
+const fetchBitmapCanvas_ = function (costume, rotationCenter) {
+    if (!costume || !costume.asset) {
+        return Promise.reject('Costume load failed. Assets were missing.');
+    }
     return new Promise((resolve, reject) => {
-        const imageElement = new Image();
+        const baseImageElement = new Image();
+        const textImageElement = new Image();
+
+        let loadedOne = false;
+
         const onError = function () {
             // eslint-disable-next-line no-use-before-define
             removeEventListeners();
-            reject('Image load failed');
+            reject('Costume load failed. Asset could not be read.');
         };
         const onLoad = function () {
-            // eslint-disable-next-line no-use-before-define
-            removeEventListeners();
-            resolve(imageElement);
+            if (loadedOne) {
+                // eslint-disable-next-line no-use-before-define
+                removeEventListeners();
+                resolve([baseImageElement, textImageElement]);
+            } else {
+                loadedOne = true;
+            }
         };
+
         const removeEventListeners = function () {
-            imageElement.removeEventListener('error', onError);
-            imageElement.removeEventListener('load', onLoad);
+            baseImageElement.removeEventListener('error', onError);
+            textImageElement.removeEventListener('error', onError);
+            baseImageElement.removeEventListener('load', onLoad);
+            textImageElement.removeEventListener('load', onLoad);
         };
-        imageElement.addEventListener('error', onError);
-        imageElement.addEventListener('load', onLoad);
-        const src = costumeAsset.encodeDataURI();
-        if (costume.bitmapResolution === 1 && !runtime.v2BitmapAdapter) {
-            log.error('No V2 bitmap adapter present; bitmaps may not render correctly.');
-        } else if (costume.bitmapResolution === 1) {
-            runtime.v2BitmapAdapter.convertResolution1Bitmap(src, (error, dataURI) => {
-                if (error) {
-                    log.error(error);
-                } else if (dataURI) {
-                    // Put back into storage
-                    const storage = runtime.storage;
-                    costume.asset = storage.createAsset(
-                        storage.AssetType.ImageBitmap,
-                        storage.DataFormat.PNG,
-                        runtime.v2BitmapAdapter.convertDataURIToBinary(dataURI),
-                        null,
-                        true // generate md5
-                    );
-                    costume.assetId = costume.asset.assetId;
-                    costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-                }
-                // Regardless of if conversion succeeds, convert it to bitmap resolution 2,
-                // since all code from here on will assume that.
-                if (rotationCenter) {
-                    rotationCenter[0] = rotationCenter[0] * 2;
-                    rotationCenter[1] = rotationCenter[1] * 2;
-                    costume.rotationCenterX = rotationCenter[0];
-                    costume.rotationCenterY = rotationCenter[1];
-                }
-                costume.bitmapResolution = 2;
-                // Use original src if conversion fails.
-                // The image will appear half-sized.
-                imageElement.src = dataURI ? dataURI : src;
-            });
+
+        baseImageElement.addEventListener('error', onError);
+        textImageElement.addEventListener('error', onError);
+        baseImageElement.addEventListener('load', onLoad);
+        textImageElement.addEventListener('load', onLoad);
+
+        if (costume.textLayerAsset) {
+            textImageElement.src = costume.textLayerAsset.encodeDataURI();
         } else {
-            imageElement.src = src;
+            loadedOne = true;
         }
-    }).then(imageElement => {
+        baseImageElement.src = costume.asset.encodeDataURI();
+    })
+    .then(imageElements => {
+        const [baseImageElement, textImageElement] = imageElements;
+
+        const canvas = document.createElement('canvas');
+        canvas.getContext('2d').imageSmoothingEnabled = false;
+        const scale = costume.bitmapResolution === 1 ? 2 : 1;
+        canvas.width = baseImageElement.width * scale;
+        canvas.height = baseImageElement.height * scale;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(baseImageElement, 0, 0, canvas.width, canvas.height);
+        if (textImageElement.src) {
+            ctx.drawImage(textImageElement, 0, 0, canvas.width, canvas.height);
+        }
+
+        // By scaling, we've converted it to bitmap resolution 2
+        if (rotationCenter) {
+            rotationCenter[0] = rotationCenter[0] * scale;
+            rotationCenter[1] = rotationCenter[1] * scale;
+            costume.rotationCenterX = rotationCenter[0];
+            costume.rotationCenterY = rotationCenter[1];
+        }
+        costume.bitmapResolution = 2;
+
+        return {
+            canvas: canvas,
+            rotationCenter: rotationCenter,
+            // True if the asset matches the base layer; false if it required adjustment
+            assetMatchesBase: scale !== 1 || textImageElement.src
+        };
+    })
+    .catch(e => Promise.reject(e))
+    .finally(() => {
+        // Clean up the costume object
+        delete costume.textLayerMD5;
+        delete costume.textLayerAsset;
+    });
+};
+
+const loadBitmap_ = function (costume, runtime, rotationCenter) {
+    return fetchBitmapCanvas_(costume, rotationCenter).then(fetched => new Promise(resolve => {
+        rotationCenter = fetched.rotationCenter;
+
+        const saveAssetToStorage = function (dataURI) {
+            const storage = runtime.storage;
+            costume.asset = storage.createAsset(
+                storage.AssetType.ImageBitmap,
+                storage.DataFormat.PNG,
+                runtime.v2BitmapAdapter.convertDataURIToBinary(dataURI),
+                null,
+                true // generate md5
+            );
+            costume.assetId = costume.asset.assetId;
+            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        };
+
+        if (!fetched.assetMatchesBase) {
+            saveAssetToStorage(fetched.canvas.toDataURL());
+        }
+        resolve(fetched.canvas);
+    }))
+    .catch(e => Promise.reject(e))
+    .then(canvas => {
         // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
-        costume.skinId = runtime.renderer.createBitmapSkin(imageElement, costume.bitmapResolution, rotationCenter);
+        costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
         const renderSize = runtime.renderer.getSkinSize(costume.skinId);
         costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
 
@@ -110,14 +174,14 @@ const loadBitmap_ = function (costume, costumeAsset, runtime, rotationCenter) {
  * @property {number} rotationCenterX - the X component of the costume's origin.
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
- * @param {!Asset} costumeAsset - the asset of the costume loaded from storage.
+ * @param {!Asset} costume.asset - the asset of the costume loaded from storage.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
  * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
  *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersion) {
-    costume.assetId = costumeAsset.assetId;
+const loadCostumeFromAsset = function (costume, runtime, optVersion) {
+    costume.assetId = costume.asset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
         log.error('No rendering module present; cannot load costume: ', costume.name);
@@ -131,10 +195,10 @@ const loadCostumeFromAsset = function (costume, costumeAsset, runtime, optVersio
             typeof costume.rotationCenterY === 'number' && !isNaN(costume.rotationCenterY)) {
         rotationCenter = [costume.rotationCenterX, costume.rotationCenterY];
     }
-    if (costumeAsset.assetType === AssetType.ImageVector) {
-        return loadVector_(costume, costumeAsset, runtime, rotationCenter, optVersion);
+    if (costume.asset.assetType === AssetType.ImageVector) {
+        return loadVector_(costume, runtime, rotationCenter, optVersion);
     }
-    return loadBitmap_(costume, costumeAsset, runtime, rotationCenter, optVersion);
+    return loadBitmap_(costume, runtime, rotationCenter, optVersion);
 };
 
 /**
@@ -186,152 +250,19 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
         }
     }
 
-    return Promise.all(costumePromise, textLayerPromise).then(assetArray => {
+    return Promise.all([costumePromise, textLayerPromise]).then(assetArray => {
         costume.asset = assetArray[0];
         if (assetArray[1]) {
             costume.textLayerAsset = assetArray[1];
         }
-        return loadCostumeFromAsset(costume, costumeAsset, runtime, optVersion);
+        return loadCostumeFromAsset(costume, runtime, optVersion);
     })
         .catch(e => {
             log.error(e);
         });
 };
 
-/**
- * Load an "old text" costume's asset into memory asynchronously.
- * "Old text" costumes are ones who have a text part from Scratch 1.4.
- * See the issue LLK/scratch-vm#672 for more information.
- * Do not call this unless there is a renderer attached.
- * @param {string} baseMD5ext - the MD5 and extension of the base layer of the costume to be loaded.
- * @param {string} textMD5ext - the MD5 and extension of the text layer of the costume to be loaded.
- * @param {!object} costume - the Scratch costume object.
- * @property {int} skinId - the ID of the costume's render skin, once installed.
- * @property {number} rotationCenterX - the X component of the costume's origin.
- * @property {number} rotationCenterY - the Y component of the costume's origin.
- * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
- * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
- * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
- */
-const loadOldTextCostume = function (baseMD5ext, textMD5ext, costume, runtime) {
-    // @todo should [bitmapResolution] (in the documentation comment) not be optional? After all, the resulting image
-    // is always a bitmap.
-
-    if (!runtime.storage) {
-        log.error('No storage module present; cannot load costume asset: ', baseMD5ext, textMD5ext);
-        return Promise.resolve(costume);
-    }
-
-    const [baseMD5, baseExt] = StringUtil.splitFirst(baseMD5ext, '.');
-    const [textMD5, textExt] = StringUtil.splitFirst(textMD5ext, '.');
-
-    if (baseExt === 'svg' || textExt === 'svg') {
-        log.error('Old text costumes should never be SVGs');
-        return Promise.resolve(costume);
-    }
-
-    const assetType = runtime.storage.AssetType.ImageBitmap;
-
-    // @todo should this be in a separate function, which could also be used by loadCostume?
-    const rotationCenter = [
-        costume.rotationCenterX / costume.bitmapResolution,
-        costume.rotationCenterY / costume.bitmapResolution
-    ];
-
-    // @todo what should the assetId be? Probably unset, since we'll be doing image processing (which will produce
-    // a completely new image)?
-    // @todo what about the dataFormat? This depends on how the image processing is implemented.
-
-    return Promise.all([
-        runtime.storage.load(assetType, baseMD5, baseExt),
-        runtime.storage.load(assetType, textMD5, textExt)
-    ])
-        .then(costumeAssets => (
-            new Promise((resolve, reject) => {
-                const baseImageElement = new Image();
-                const textImageElement = new Image();
-
-                let loadedOne = false;
-
-                const onError = function () {
-                    // eslint-disable-next-line no-use-before-define
-                    removeEventListeners();
-                    reject();
-                };
-                const onLoad = function () {
-                    if (loadedOne) {
-                        // eslint-disable-next-line no-use-before-define
-                        removeEventListeners();
-                        resolve([baseImageElement, textImageElement]);
-                    } else {
-                        loadedOne = true;
-                    }
-                };
-
-                const removeEventListeners = function () {
-                    baseImageElement.removeEventListener('error', onError);
-                    textImageElement.removeEventListener('error', onError);
-                    baseImageElement.removeEventListener('load', onLoad);
-                    textImageElement.removeEventListener('load', onLoad);
-                };
-
-                baseImageElement.addEventListener('error', onError);
-                textImageElement.addEventListener('error', onError);
-                baseImageElement.addEventListener('load', onLoad);
-                textImageElement.addEventListener('load', onLoad);
-
-                const [baseAsset, textAsset] = costumeAssets;
-
-                baseImageElement.src = baseAsset.encodeDataURI();
-                textImageElement.src = textAsset.encodeDataURI();
-            })
-        ))
-        .then(imageElements => {
-            const [baseImageElement, textImageElement] = imageElements;
-
-            const canvas = document.createElement('canvas');
-            canvas.width = baseImageElement.width;
-            canvas.height = baseImageElement.height;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(baseImageElement, 0, 0);
-            ctx.drawImage(textImageElement, 0, 0);
-
-            return new Promise((resolve, reject) => {
-                canvas.toBlob(blob => {
-                    const reader = new FileReader();
-                    const onError = function () {
-                        // eslint-disable-next-line no-use-before-define
-                        removeEventListeners();
-                        reject();
-                    };
-                    const onLoad = function () {
-                        // eslint-disable-next-line no-use-before-define
-                        removeEventListeners();
-                        costume.assetId = runtime.storage.builtinHelper.cache(
-                            assetType,
-                            runtime.storage.DataFormat.PNG,
-                            new Buffer(reader.result)
-                        );
-                        costume.skinId = runtime.renderer.createBitmapSkin(
-                            canvas, costume.bitmapResolution, rotationCenter
-                        );
-                        resolve(costume);
-                    };
-                    const removeEventListeners = function () {
-                        reader.removeEventListener('error', onError);
-                        reader.removeEventListener('load', onLoad);
-                    };
-                    reader.addEventListener('error', onError);
-                    reader.addEventListener('load', onLoad);
-                    reader.readAsArrayBuffer(blob);
-                }, 'image/png');
-            });
-        });
-};
-
 module.exports = {
     loadCostume,
-    loadCostumeFromAsset,
-    loadOldTextCostume
+    loadCostumeFromAsset
 };
