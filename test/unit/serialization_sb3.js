@@ -230,5 +230,9 @@ test('getExtensionIdForOpcode', t => {
 
     // only considers things before the first underscore
     t.equal(sb3.getExtensionIdForOpcode('hello_there_loopy'), 'hello');
+
+    // does not return anything for opcodes with no extension
+    t.false(sb3.getExtensionIdForOpcode('hello'));
+
     t.end();
 });

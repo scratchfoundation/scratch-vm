@@ -274,7 +274,7 @@ const compressInputTree = function (block, blocks) {
 /**
  * Get non-core extension ID for a given sb3 opcode.
  * @param {!string} opcode The opcode to examine for extension.
- * @return {?string} The extension ID, if it exists/is not a core extension.
+ * @return {?string} The extension ID, if it exists and is not a core extension.
  */
 const getExtensionIdForOpcode = function (opcode) {
     const index = opcode.indexOf('_');
