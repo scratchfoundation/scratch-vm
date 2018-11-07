@@ -1048,4 +1048,431 @@ class SB1View {
 
 window.SB1View = SB1View;
 
+class StructMember {
+    constructor ({size, toBytes = new Uint8Array(1), read, write}) {
+        this.size = size;
+
+        this.toBytes = toBytes;
+        this.bytes = new Uint8Array(toBytes.buffer);
+
+        this.read = read;
+        this.write = write;
+    }
+
+    defineProperty (obj, key, position) {
+        const _this = this;
+
+        Object.defineProperty(obj, key, {
+            get () {
+                return _this.read(this.uint8, position + this.offset);
+            },
+
+            set (value) {
+                return _this.write(this.uint8, position + this.offset, value);
+            },
+
+            enumerable: true
+        });
+    }
+}
+
+const Uint8 = new StructMember({
+    size: 1,
+    read (uint8, position) {
+        return uint8[position];
+    },
+    write (uint8, position, value) {
+        uint8[position] = value;
+        return value;
+    }
+});
+
+const Uint16BE = new StructMember({
+    size: 4,
+    toBytes: new Uint16Array(1),
+    read (uint8, position) {
+        this.bytes[1] = uint8[position + 0];
+        this.bytes[0] = uint8[position + 1];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[1];
+        uint8[position + 1] = this.bytes[0];
+        return value;
+    }
+});
+
+const Int32BE = new StructMember({
+    size: 4,
+    toBytes: new Int32Array(1),
+    read (uint8, position) {
+        this.bytes[3] = uint8[position + 0];
+        this.bytes[2] = uint8[position + 1];
+        this.bytes[1] = uint8[position + 2];
+        this.bytes[0] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[3];
+        uint8[position + 1] = this.bytes[2];
+        uint8[position + 2] = this.bytes[1];
+        uint8[position + 3] = this.bytes[0];
+        return value;
+    }
+});
+
+const Uint32BE = new StructMember({
+    size: 4,
+    toBytes: new Uint32Array(1),
+    read (uint8, position) {
+        this.bytes[3] = uint8[position + 0];
+        this.bytes[2] = uint8[position + 1];
+        this.bytes[1] = uint8[position + 2];
+        this.bytes[0] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[3];
+        uint8[position + 1] = this.bytes[2];
+        uint8[position + 2] = this.bytes[1];
+        uint8[position + 3] = this.bytes[0];
+        return value;
+    }
+});
+
+class FixedAsciiString extends StructMember {
+    constructor (size) {
+        super({
+            size,
+            read (uint8, position) {
+                let str = '';
+                for (let i = 0; i < size; i++) {
+                    str += String.fromCharCode(uint8[position + i]);
+                }
+                return str;
+            },
+            write (uint8, position, value) {
+                for (let i = 0; i < size; i++) {
+                    uint8[position + i] = value.charCodeAt(i);
+                }
+                return value;
+            }
+        });
+    }
+}
+
+class Struct {
+    constructor (shape) {
+        let position = 0;
+        Object.keys(shape).forEach(key => {
+            shape[key].defineProperty(this, key, position);
+            position += prop.size;
+        });
+    }
+}
+
+const struct = shape => {
+    const Base = class {
+        constructor (uint8, offset = 0) {
+            this.uint8 = uint8;
+            this.offset = offset;
+        }
+    };
+
+    let position = 0;
+    Object.keys(shape).forEach(key => {
+        shape[key].defineProperty(Base.prototype, key, position);
+        position += prop.size;
+    });
+
+    Base.prototype.size = position;
+
+    return Base;
+};
+
+class PNGSignature extends struct({
+    support8Bit: Uint8,
+    png: new FixedAsciiString(3),
+    dosLineEnding: new FixedAsciiString(2),
+    dosEndOfFile: new FixedAsciiString(1),
+    unixLineEnding: new FixedAsciiString(1)
+}) {}
+
+class PNGChunkStart extends struct({
+    length: Uint32BE,
+    chunkType: new FixedAsciiString(4)
+}) {}
+
+class PNGChunkEnd extends struct({
+    checksum: Uint32BE
+}) {}
+
+class PNGIHDRChunkBody extends struct({
+    width: Uint32BE,
+    height: Uint32BE,
+    bitDepth: Uint8,
+    colorType: Uint8,
+    compressionMethod: Uint8,
+    filterMethod: Uint8,
+    interlaceMethod: Uint8,
+}) {}
+
+const DEFLATE_BLOCK_SIZE_MAX = 0xffff;
+
+class PNGFilterMethodByte extends struct({
+    method: Uint8
+}) {}
+
+class DeflateHeader extends struct({
+    cmf: Uint8,
+    flag: Uint8
+}) {}
+
+class DeflateChunkStart extends struct({
+    lastBlock: Uint8,
+    length: Uint16BE,
+    lengthCheck: Uint16BE
+}) {}
+
+class DeflateEnd extends struct({
+    checksum: Uint32BE
+}) {}
+
+class CRC32 {
+    constructor () {
+        this.bit = new Uint32Array(1);
+        this.crc = new Uint32Array(1);
+        this.c = 0;
+
+        this.table = [];
+        let c;
+        for (let i = 0; i < 256; i++) {
+            c = i;
+            for (let j = 0; j < 8; j++) {
+                c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+            }
+            this.table[i] = c >>> 0;
+        }
+    }
+
+    update (uint8, position, length) {
+        this.crc[0] = ~this.crc[0];
+        for (let i = 0; i < length; i++) {
+            this.crc[0] = (this.crc[0] >>> 8) ^ this.table[(this.crc[0] ^ uint8[position + i]) & 0xff];
+        }
+        this.crc[0] = ~this.crc[0];
+        return this;
+    }
+
+    get digest () {
+        return this.crc[0];
+    }
+}
+
+class Adler32 {
+    constructor () {
+        this.adler = 1;
+    }
+
+    update (uint8, position, length) {
+        let a = this.adler & 0xffff;
+        let b = this.adler >>> 16;
+        for (let i = 0; i < length; i++) {
+            a = (a + uint8[position + i]) % 65521;
+            b = (b + a) % 65521;
+        }
+        this.adler = (b << 16) | a;
+        return this;
+    }
+
+    get digest () {
+        return this.adler;
+    }
+}
+
+class PNGFile {
+    encode (width, height, pixels) {
+        const pixelsUint8 = new Uint8Array(pixels);
+
+        const rowSize = width * 4 + 1;
+        const bodySize = rowSize * height;
+        let bodyRemaining = bodySize;
+        const blocks = Math.ceil(bodySize / DEFLATE_BLOCK_SIZE_MAX);
+        const idatSize = (
+            DeflateHeader.prototype.prototype.size +
+            blocks * DeflateChunkStart.prototype.size +
+            DeflateEnd.prototype.size +
+            bodySize
+        );
+        const size = (
+            PNGSignature.prototype.size +
+            PNGChunkStart.prototype.size +
+            PNGIHDRChunkBody.prototype.size +
+            PNGChunkEnd.prototype.size +
+            PNGChunkStart.prototype.size +
+            idatSize +
+            PNGChunkEnd.prototype.size
+        );
+        const buffer = new ArrayBuffer(size);
+        const uint8 = new Uint8Array(buffer);
+
+        let position = 0;
+
+        Object.assign(new PNGSignature(uint8, position), {
+            support8Bit: 0x89,
+            png: 'PNG',
+            dosLineEnding: '\r\n',
+            dosEndOfFile: '\x1a',
+            unixLineEnding: '\n'
+        });
+        position += PNGSignature.prototype.size;
+
+        Object.assign(new PNGChunkStart(uint8, position), {
+            length: PNGIHDRChunkBody.prototype.size,
+            chunkType: 'IHDR'
+        });
+        position += PNGChunkStart.prototype.size;
+
+        Object.assign(new PNGIHDRChunkBody(uint8, position), {
+            width,
+            height,
+            bitDepth: 8,
+            colorType: 6,
+            compressionMethod: 0,
+            filterMethod: 0,
+            interlaceMethod: 0
+        });
+        position += PNGIHDRChunkBody.prototype.size;
+
+        Object.assign(new PNGChunkEnd(uint8, position), {
+            checksum: new CRC32()
+                .update(uint8, position, PNGIHDRChunkBody.prototype.size)
+                .digest
+        });
+        position += PNGChunkEnd.prototype.size;
+
+        Object.assign(new PNGChunkStart(uint8, position), {
+            length: idatSize,
+            chunkType: 'IDAT'
+        });
+        position += PNGChunkStart.prototype.size;
+
+        Object.assign(new DeflateHeader(uint8, position), {
+            cmf: 0b00001000,
+            flag: 0b00011101
+        });
+        position += DeflateHeader.prototype.size;
+
+        const deflateCrc = new CRC32();
+        const pngAdler = new Adler32();
+
+        let deflateIndex = 0;
+
+        let rowIndex = 0;
+        let y = 0;
+        let pixelsIndex = 0;
+        while (pixelsIndex < pixels.length) {
+            if (deflateIndex === 0) {
+                const deflateChunkSize = Math.min(bodyRemaining, DEFLATE_BLOCK_SIZE_MAX);
+                Object.assign(new DeflateChunkStart(uint8, position), {
+                    lastBlock: deflateChunkSize === bodyRemaining ? 1 : 0,
+                    length: deflateChunkSize,
+                    lengthCheck: deflateChunkSize ^ 0xffff
+                });
+
+                deflateCrc.update(uint8, position, DeflateChunkStart.prototype.size);
+                position += DeflateChunkStart.prototype.size;
+            }
+
+            if (rowIndex === 0) {
+                Object.assign(new PNGFilterMethodByte(uint8, position), {
+                    method: 0
+                });
+
+                deflateCrc.update(uint8, position, PNGFilterMethodByte.prototype.size);
+                pngAdler.update(uint8, position, PNGFilterMethodByte.prototype.size);
+
+                position += PNGFilterMethodByte.prototype.size;
+                rowIndex += PNGFilterMethodByte.prototype.size;
+                bodyRemaining -= PNGFilterMethodByte.prototype.size;
+                deflateIndex += PNGFilterMethodByte.prototype.size;
+            } else {
+                const rowPartialSize = Math.min(
+                    pixelsIndex,
+                    rowSize - rowIndex,
+                    DEFLATE_BLOCK_SIZE_MAX - deflateIndex
+                );
+
+                for (let i = 0; i < rowPartialSize; i++) {
+                    uint8[position + i] = pixelsUint8[pixelsIndex + i];
+                }
+
+                deflateCrc.update(uint8, position, rowPartialSize);
+                pngAdler.update(uint8, position, rowPartialSize);
+
+                position += rowPartialSize;
+                rowIndex += rowPartialSize;
+                bodyRemaining -= rowPartialSize;
+                deflateIndex += rowPartialSize;
+            }
+
+            if (deflateIndex >= DEFLATE_BLOCK_SIZE_MAX) {
+                deflateIndex = 0;
+            }
+
+            if (rowIndex === rowSize) {
+                rowIndex = 0;
+                y += 1;
+            }
+        }
+
+        Object.assign(new DeflateEnd(uint8, position), {
+            checksum: deflateCrc.digest
+        });
+        position += DeflateEnd.prototype.size;
+
+        Object.assign(new PNGChunkEnd(uint8, position), {
+            checksum: pngAdler.digest
+        });
+        position += PNGChunkEnd.prototype.size;
+
+        Object.assign(new PNGChunkStart(uint8, position), {
+            length: 0,
+            chunkType: 'IEND'
+        });
+        position += PNGChunkStart.prototype.size;
+
+        Object.assign(new PNGChunkEnd(uint8, position), {
+            checksum: 0xae426082
+        });
+
+        return buffer;
+    }
+
+    static encode (width, height, pixels) {
+        return new PNGFile().encode(width, height, pixels);
+    }
+}
+
+class SqueakImageDecoder {
+    decode (width, height, pixels, colormap) {
+
+    }
+
+    decodePixels (pixels, withAlpha) {
+
+    }
+
+    unpackPixels (pixels, width, height, depth, colormap) {
+
+    }
+
+    raster16To32 (pixels, width, height) {
+
+    }
+}
+
 module.exports = SB1Iterator;
