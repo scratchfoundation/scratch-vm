@@ -85,6 +85,9 @@ class Scratch3MusicBlocks {
 
         this._onTargetCreated = this._onTargetCreated.bind(this);
         this.runtime.on('targetWasCreated', this._onTargetCreated);
+
+        this._playNoteForPicker = this._playNoteForPicker.bind(this);
+        this.runtime.on('PLAY_NOTE', this._playNoteForPicker);
     }
 
     /**
@@ -747,7 +750,7 @@ class Scratch3MusicBlocks {
                     }),
                     arguments: {
                         NOTE: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.NOTE,
                             defaultValue: 60
                         },
                         BEATS: {
@@ -938,6 +941,15 @@ class Scratch3MusicBlocks {
         } else {
             this._checkStackTimer(util);
         }
+    }
+
+    _playNoteForPicker (noteNum, category) {
+        if (category !== this.getInfo().name) return;
+        const util = {
+            runtime: this.runtime,
+            target: this.runtime.getEditingTarget()
+        };
+        this._playNote(util, noteNum, 0.25);
     }
 
     /**
