@@ -60,7 +60,9 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.height, 202);
 
         // Backdrop name monitor is visible, not sprite specific
-        monitorRecord = vm.runtime._monitorState.get('backdropnumbername');
+        // should get imported with id that references the name parameter
+        // via '_name' at the end since the 3.0 block has a dropdown.
+        monitorRecord = vm.runtime._monitorState.get('backdropnumbername_name');
         t.equal(monitorRecord.opcode, 'looks_backdropnumbername');
         t.equal(monitorRecord.mode, 'default');
         t.equal(monitorRecord.visible, true);

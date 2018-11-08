@@ -90,7 +90,7 @@ class Scratch3SensingBlocks {
                 // This is different from the default toolbox xml id in order to support
                 // importing multiple monitors from the same opcode from sb2 files,
                 // something that is not currently supported in scratch 3.
-                getId: (_, params) => getMonitorIdForBlockWithArgs('current', params) // _${param}`
+                getId: (_, fields) => getMonitorIdForBlockWithArgs('current', fields) // _${param}`
             }
         };
     }

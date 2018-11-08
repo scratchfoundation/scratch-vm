@@ -579,9 +579,9 @@ class Blocks {
             if (block.fields && Object.keys(block.fields).length > 0 &&
                 block.opcode !== 'data_variable' && block.opcode !== 'data_listcontents') {
 
-                // This block has an argument which needs to get separated out into multiple monitor blocks
-                const params = Object.keys(block.fields).map(k => block.fields[k].value);
-                const newId = getMonitorIdForBlockWithArgs(block.id, params);
+                // This block has an argument which needs to get separated out into
+                // multiple monitor blocks with ids based on the selected argument
+                const newId = getMonitorIdForBlockWithArgs(block.id, block.fields);
                 // Note: we're not just constantly creating a longer and longer id everytime we check
                 // the checkbox because we're using the id of the block in the flyout as the base
 
