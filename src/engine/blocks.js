@@ -7,6 +7,7 @@ const {Map} = require('immutable');
 const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Variable = require('./variable');
+const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
 
 /**
  * @fileoverview
@@ -523,11 +524,20 @@ class Blocks {
     changeBlock (args, optRuntime) {
         // Validate
         if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) return;
-        const block = this._blocks[args.id];
+        let block = this._blocks[args.id];
         if (typeof block === 'undefined') return;
-        const wasMonitored = block.isMonitored;
         switch (args.element) {
         case 'field':
+            // TODO when the field of a monitored block changes,
+            // update the checkbox in the flyout based on whether
+            // a monitor for that current combination of selected parameters exists
+            // e.g.
+            // 1. check (current [v year])
+            // 2. switch dropdown in flyout block to (current [v minute])
+            // 3. the checkbox should become unchecked if we're not already
+            //    monitoring current minute
+
+
             // Update block value
             if (!block.fields[args.name]) return;
             if (args.name === 'VARIABLE' || args.name === 'LIST' ||
@@ -559,10 +569,35 @@ class Blocks {
             block.mutation = mutationAdapter(args.value);
             break;
         case 'checkbox': {
-            block.isMonitored = args.value;
             if (!optRuntime) {
                 break;
             }
+
+            // A checkbox usually has a one to one correspondence with the monitor
+            // block but in the case of monitored reporters that have arguments,
+            // map the old id to a new id, creating a new monitor block if necessary
+            if (block.fields && Object.keys(block.fields).length > 0 &&
+                block.opcode !== 'data_variable' && block.opcode !== 'data_listcontents') {
+
+                // This block has an argument which needs to get separated out into multiple monitor blocks
+                const params = Object.keys(block.fields).map(k => block.fields[k].value);
+                const newId = getMonitorIdForBlockWithArgs(block.id, params);
+                // Note: we're not just constantly creating a longer and longer id everytime we check
+                // the checkbox because we're using the id of the block in the flyout as the base
+
+                // check if a block withl the new id already exists, otherwise create
+                let newBlock = optRuntime.monitorBlocks.getBlock(newId);
+                if (!newBlock) {
+                    newBlock = JSON.parse(JSON.stringify(block));
+                    newBlock.id = newId;
+                    optRuntime.monitorBlocks.createBlock(newBlock);
+                }
+
+                block = newBlock; // Carry on through the rest of this code with newBlock
+            }
+
+            const wasMonitored = block.isMonitored;
+            block.isMonitored = args.value;
 
             // Variable blocks may be sprite specific depending on the owner of the variable
             let isSpriteLocalVariable = false;
