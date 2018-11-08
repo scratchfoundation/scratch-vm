@@ -297,6 +297,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     } else if (object.cmd === 'contentsOfList:') {
         block.id = getVariableId(object.param, Variable.LIST_TYPE);
     } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
+        if (object.param === 'day of week') object.param = 'DAYOFWEEK';
         block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, [object.param]);
     } else {
         // If the opcode can't be found in the runtime monitorBlockInfo,
@@ -1027,6 +1028,10 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 name: expectedArg.fieldName,
                 value: providedArg
             };
+
+            if (expectedArg.fieldName === 'CURRENTMENU' && providedArg === 'day of week') {
+                activeBlock.fields[expectedArg.fieldName].value = 'DAYOFWEEK';
+            }
 
             if (expectedArg.fieldName === 'VARIABLE') {
                 // Add `id` property to variable fields
