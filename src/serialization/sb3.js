@@ -272,6 +272,19 @@ const compressInputTree = function (block, blocks) {
 };
 
 /**
+ * Get non-core extension ID for a given sb3 opcode.
+ * @param {!string} opcode The opcode to examine for extension.
+ * @return {?string} The extension ID, if it exists and is not a core extension.
+ */
+const getExtensionIdForOpcode = function (opcode) {
+    const index = opcode.indexOf('_');
+    const prefix = opcode.substring(0, index);
+    if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
+        if (prefix !== '') return prefix;
+    }
+};
+
+/**
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
  * @param {object} blocks The blocks to be serialized
@@ -285,10 +298,9 @@ const serializeBlocks = function (blocks) {
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
         obj[blockID] = serializeBlock(blocks[blockID], blocks);
-        const index = blocks[blockID].opcode.indexOf('_');
-        const prefix = blocks[blockID].opcode.substring(0, index);
-        if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
-            if (prefix !== '') extensionIDs.add(prefix);
+        const extensionID = getExtensionIdForOpcode(blocks[blockID].opcode);
+        if (extensionID) {
+            extensionIDs.add(extensionID);
         }
     }
     // once we have completed a first pass, do a second pass on block inputs
@@ -812,10 +824,9 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
             blocks.createBlock(blockJSON);
 
             // If the block is from an extension, record it.
-            const index = blockJSON.opcode.indexOf('_');
-            const prefix = blockJSON.opcode.substring(0, index);
-            if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
-                if (prefix !== '') extensions.extensionIDs.add(prefix);
+            const extensionID = getExtensionIdForOpcode(blockJSON.opcode);
+            if (extensionID) {
+                extensions.extensionIDs.add(extensionID);
             }
         }
     }
@@ -1049,5 +1060,6 @@ module.exports = {
     serialize: serialize,
     deserialize: deserialize,
     deserializeBlocks: deserializeBlocks,
-    serializeBlocks: serializeBlocks
+    serializeBlocks: serializeBlocks,
+    getExtensionIdForOpcode: getExtensionIdForOpcode
 };
