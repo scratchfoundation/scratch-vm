@@ -1028,8 +1028,13 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 value: providedArg
             };
 
-            if (expectedArg.fieldName === 'CURRENTMENU' && providedArg === 'day of week') {
-                activeBlock.fields[expectedArg.fieldName].value = 'DAYOFWEEK';
+            if (expectedArg.fieldName === 'CURRENTMENU') {
+                // In 3.0, the field value of the `sensing_current` block
+                // is in all caps.
+                activeBlock.fields[expectedArg.fieldName].value = providedArg.toUpperCase();
+                if (providedArg === 'day of week') {
+                    activeBlock.fields[expectedArg.fieldName].value = 'DAYOFWEEK';
+                }
             }
 
             if (expectedArg.fieldName === 'VARIABLE') {
