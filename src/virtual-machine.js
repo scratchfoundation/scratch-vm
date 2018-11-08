@@ -1060,7 +1060,7 @@ class VirtualMachine extends EventEmitter {
         // Filter events by type, since monitor blocks only need to listen to these events.
         // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
         if (['create', 'change'].indexOf(e.type) !== -1) {
-            this.runtime.monitorBlocks.blocklyListen(e, this.runtime, true);
+            this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
         }
     }
 
