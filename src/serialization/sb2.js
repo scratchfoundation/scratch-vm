@@ -297,7 +297,13 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     } else if (object.cmd === 'contentsOfList:') {
         block.id = getVariableId(object.param, Variable.LIST_TYPE);
     } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
-        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, object.param);
+        block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, block.fields);
+    } else {
+        // If the opcode can't be found in the runtime monitorBlockInfo,
+        // then default to using the block opcode as the id instead.
+        // This is for extension monitors, and assumes that extension monitors
+        // cannot be sprite specific.
+        block.id = block.opcode;
     }
 
     // Block needs a targetId if it is targetting something other than the stage
@@ -306,10 +312,19 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     // Property required for running monitored blocks.
     block.isMonitored = object.visible;
 
-    // Blocks can be created with children, flatten and add to monitorBlocks.
-    const newBlocks = flatten([block]);
-    for (let i = 0; i < newBlocks.length; i++) {
-        runtime.monitorBlocks.createBlock(newBlocks[i]);
+    const existingMonitorBlock = runtime.monitorBlocks._blocks[block.id];
+    if (existingMonitorBlock) {
+        // A monitor block already exists if the toolbox has been loaded and
+        // the monitor block is not target specific (because the block gets recycled).
+        // Update the existing block with the relevant monitor information.
+        existingMonitorBlock.isMonitored = object.visible;
+        existingMonitorBlock.targetId = block.targetId;
+    } else {
+        // Blocks can be created with children, flatten and add to monitorBlocks.
+        const newBlocks = flatten([block]);
+        for (let i = 0; i < newBlocks.length; i++) {
+            runtime.monitorBlocks.createBlock(newBlocks[i]);
+        }
     }
 
     // Convert numbered mode into strings for better understandability.
@@ -1012,6 +1027,15 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 name: expectedArg.fieldName,
                 value: providedArg
             };
+
+            if (expectedArg.fieldName === 'CURRENTMENU') {
+                // In 3.0, the field value of the `sensing_current` block
+                // is in all caps.
+                activeBlock.fields[expectedArg.fieldName].value = providedArg.toUpperCase();
+                if (providedArg === 'day of week') {
+                    activeBlock.fields[expectedArg.fieldName].value = 'DAYOFWEEK';
+                }
+            }
 
             if (expectedArg.fieldName === 'VARIABLE') {
                 // Add `id` property to variable fields

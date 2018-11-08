@@ -3,6 +3,7 @@ const Clone = require('../util/clone');
 const RenderedTarget = require('../sprites/rendered-target');
 const uid = require('../util/uid');
 const StageLayering = require('../engine/stage-layering');
+const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -272,10 +273,10 @@ class Scratch3LooksBlocks {
             },
             looks_costumenumbername: {
                 isSpriteSpecific: true,
-                getId: targetId => `${targetId}_costumenumbername`
+                getId: (targetId, fields) => getMonitorIdForBlockWithArgs(`${targetId}_costumenumbername`, fields)
             },
             looks_backdropnumbername: {
-                getId: () => 'backdropnumbername'
+                getId: (_, fields) => getMonitorIdForBlockWithArgs('backdropnumbername', fields)
             }
         };
     }
