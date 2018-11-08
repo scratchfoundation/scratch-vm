@@ -13046,6 +13046,9 @@ var RenderWebGL = function (_EventEmitter) {
             var bounds = this.clientSpaceToScratchBounds(centerX, centerY, touchWidth, touchHeight);
             var worldPos = twgl.v3.create();
 
+            drawable.updateMatrix();
+            drawable.skin.updateSilhouette();
+
             for (worldPos[1] = bounds.bottom; worldPos[1] <= bounds.top; worldPos[1]++) {
                 for (worldPos[0] = bounds.left; worldPos[0] <= bounds.right; worldPos[0]++) {
                     if (drawable.isTouching(worldPos)) {
@@ -14908,8 +14911,8 @@ var Drawable = function () {
         value: function updateProperties(properties) {
             var dirty = false;
             if ('position' in properties && (this._position[0] !== properties.position[0] || this._position[1] !== properties.position[1])) {
-                this._position[0] = properties.position[0];
-                this._position[1] = properties.position[1];
+                this._position[0] = Math.round(properties.position[0]);
+                this._position[1] = Math.round(properties.position[1]);
                 dirty = true;
             }
             if ('direction' in properties && this._direction !== properties.direction) {
