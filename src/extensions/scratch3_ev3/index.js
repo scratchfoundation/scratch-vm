@@ -346,7 +346,7 @@ class EV3Motor {
      */
     coast () {
         if (this._power === 0) return;
-        
+
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
@@ -555,6 +555,9 @@ class EV3 {
      * Called by the runtime when user wants to scan for an EV3 peripheral.
      */
     scan () {
+        if (this._bt) {
+            this._bt.disconnect();
+        }
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
@@ -566,17 +569,22 @@ class EV3 {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        this._bt.connectPeripheral(id);
+        if (this._bt) {
+            this._bt.connectPeripheral(id);
+        }
     }
 
     /**
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
     disconnect () {
-        this._bt.disconnect();
         this._clearSensorsAndMotors();
         window.clearInterval(this._pollingIntervalID);
         this._pollingIntervalID = null;
+
+        if (this._bt) {
+            this._bt.disconnect();
+        }
     }
 
     /**

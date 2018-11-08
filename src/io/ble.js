@@ -42,7 +42,7 @@ class BLE extends JSONRPCWebSocket {
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(e => {
                     this._sendRequestError(e);
-                }); // never reached?
+                });
         }
         // TODO: else?
     }

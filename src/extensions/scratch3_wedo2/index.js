@@ -570,6 +570,9 @@ class WeDo2 {
      * Called by the runtime when user wants to scan for a WeDo 2.0 peripheral.
      */
     scan () {
+        if (this._ble) {
+            this._ble.disconnect();
+        }
         this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
                 services: [BLEService.DEVICE_SERVICE]
@@ -583,7 +586,9 @@ class WeDo2 {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        this._ble.connectPeripheral(id);
+        if (this._ble) {
+            this._ble.connectPeripheral(id);
+        }
     }
 
     /**
@@ -598,7 +603,9 @@ class WeDo2 {
             distance: 0
         };
 
-        this._ble.disconnect();
+        if (this._ble) {
+            this._ble.disconnect();
+        }
     }
 
     /**
