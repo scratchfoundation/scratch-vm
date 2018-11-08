@@ -40,6 +40,9 @@ class BT extends JSONRPCWebSocket {
     requestPeripheral () {
         if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
             this._availablePeripherals = {};
+            if (this._discoverTimeoutID) {
+                window.clearTimeout(this._discoverTimeoutID);
+            }
             this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(
@@ -71,6 +74,9 @@ class BT extends JSONRPCWebSocket {
      */
     disconnect () {
         this._ws.close();
+        if (this._discoverTimeoutID) {
+            window.clearTimeout(this._discoverTimeoutID);
+        }
     }
 
     /**
@@ -103,7 +109,6 @@ class BT extends JSONRPCWebSocket {
                 this._availablePeripherals
             );
             if (this._discoverTimeoutID) {
-                // TODO: window?
                 window.clearTimeout(this._discoverTimeoutID);
             }
             break;
@@ -138,6 +143,9 @@ class BT extends JSONRPCWebSocket {
     }
 
     _sendDiscoverTimeout () {
+        if (this._discoverTimeoutID) {
+            window.clearTimeout(this._discoverTimeoutID);
+        }
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
     }
 }
