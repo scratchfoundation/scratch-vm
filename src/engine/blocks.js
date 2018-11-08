@@ -585,7 +585,7 @@ class Blocks {
                 // Note: we're not just constantly creating a longer and longer id everytime we check
                 // the checkbox because we're using the id of the block in the flyout as the base
 
-                // check if a block withl the new id already exists, otherwise create
+                // check if a block with the new id already exists, otherwise create
                 let newBlock = optRuntime.monitorBlocks.getBlock(newId);
                 if (!newBlock) {
                     newBlock = JSON.parse(JSON.stringify(block));
