@@ -43,6 +43,14 @@ const TYPES = {
     LIST_WATCHER: 175,
 };
 
+const TYPE_NAMES = Object.entries(TYPES)
+.reduce((carry, [key, value]) => {
+    carry[value] = key;
+    return carry;
+}, {
+    105: 'STRING'
+});
+
 class Field {
     constructor (classId) {
         this.classId = classId;
@@ -490,6 +498,13 @@ class ExtendedData {
     boolean (field) {
         return !!this.fields[field];
     }
+
+    toString () {
+        if (this.constructor === ExtendedData) {
+            return `${this.constructor.name} ${this.classId} ${TYPE_NAMES[this.classId]}`;
+        }
+        return this.constructor.name;
+    }
 }
 
 const POINT_FIELDS = {
@@ -776,7 +791,16 @@ class ImageMediaData extends ExtendedData {
     }
 
     get preview () {
+        if (this.baseLayerData.value) {
+            const image = new Image();
+            image.src = URL.createObjectURL(new Blob([this.baseLayerData.value], {type: 'image/jpeg'}));
+            return image;
+        }
         return this.bitmap.preview;
+    }
+
+    toString () {
+        return `ImageMediaData "${this.costumeName}"`;
     }
 }
 
@@ -805,7 +829,7 @@ const SOUND_MEDIA_FIELDS = {
 
 class SoundMediaData extends ExtendedData {
     get name () {
-        return this.fields[SOUND_MEDIA_FIELDS.NAME];
+        return this.string(SOUND_MEDIA_FIELDS.NAME);
     }
 
     get uncompressed () {
@@ -822,6 +846,36 @@ class SoundMediaData extends ExtendedData {
 
     get data () {
         return this.fields[SOUND_MEDIA_FIELDS.DATA];
+    }
+
+    get preview () {
+        const audio = new Audio();
+        audio.controls = true;
+
+        let samples;
+        if (this.data.value) {
+            samples = new SqueakSoundDecoder(this.bitsPerSample.value).decode(
+                this.data.value
+            );
+        } else {
+            console.log(this.uncompressed.data.value.slice(), reverseBytes16(this.uncompressed.data.value.slice()));
+            samples = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
+        }
+        console.log(!!this.data.value, new Uint8Array(WAVFile.encode(samples, {sampleRate: this.rate.value || this.uncompressed.rate.value}).buffer));
+
+        audio.src = URL.createObjectURL(
+            new Blob(
+                [WAVFile.encode(samples, {
+                    sampleRate: this.rate.value || this.uncompressed.rate.value
+                })],
+                { type: 'audio/wav' }
+            )
+        );
+        return audio;
+    }
+
+    toString () {
+        return `SoundMediaData "${this.name}"`;
     }
 }
 
@@ -1057,11 +1111,41 @@ class SB1File {
     }
 
     images () {
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength), obj => obj instanceof ImageMediaData).fixed;
+        const unique = new Set();
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table.filter(obj => {
+            if (obj instanceof ImageMediaData) {
+                const array = obj.baseLayerData.value || obj.bitmap.bytes.value;
+                if (unique.has(array)) return false;
+                const crc = new CRC32()
+                .update(new Uint8Array(new Uint32Array([obj.bitmap.width]).buffer))
+                .update(new Uint8Array(new Uint32Array([obj.bitmap.height]).buffer))
+                .update(new Uint8Array(new Uint32Array([obj.bitmap.encoding]).buffer))
+                .update(array);
+                if (obj.bitmap.colormap) {
+                    crc.update(new Uint8Array(new Uint32Array(obj.bitmap.colormap).buffer));
+                }
+                if (unique.has(crc.digest)) return false;
+                unique.add(array);
+                unique.add(crc.digest);
+                return true;
+            }
+            return false;
+        });
     }
 
     sounds () {
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength), obj => obj instanceof SoundMediaData).fixed;
+        const unique = new Set();
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table.filter(obj => {
+            if (obj instanceof SoundMediaData) {
+                const array = obj.data.value || obj.uncompressed.data.value;
+                if (unique.has(array)) {
+                    return false;
+                }
+                unique.add(array);
+                return true;
+            }
+            return false;
+        });
     }
 }
 
@@ -1085,6 +1169,7 @@ class SB1View {
         this.prefix = prefix;
         this.path = path;
         this.expanded = !!_expanded[this.path];
+        this.canExpand = false;
 
         this.toggle = this.toggle.bind(this);
 
@@ -1094,6 +1179,10 @@ class SB1View {
     }
 
     toggle (event) {
+        if (!this.canExpand) return;
+
+        if (event.target !== this._elements.arrow && event.target !== this._elements.title) return;
+
         _expanded[this.path] = this.expanded = !this.expanded;
         this.render();
 
@@ -1111,6 +1200,7 @@ class SB1View {
     }
 
     renderClear () {
+        this.canExpand = false;
         while (this.element.children.length) {
             this.element.removeChild(this.element.children[0]);
         }
@@ -1118,6 +1208,7 @@ class SB1View {
     }
 
     renderArrow () {
+        this.canExpand = true;
         const arrowDiv = this.createElement('div', 'arrow');
         arrowDiv.innerHTML = '&#x25b6;';
         arrowDiv.style.position = 'absolute';
@@ -1164,21 +1255,28 @@ class SB1View {
         this.renderClear();
         if (this.data instanceof ExtendedData) {
             this.renderArrow();
-            this.renderTitle(this.data.constructor.name);
+            this.renderTitle(this.data);
             this.renderExpand(() => {
                 return Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(this.data)))
                 .filter(([, desc]) => desc.get)
-                .map(([name]) => new SB1View(this.data[name], name, `${this.path}.${name}`));
+                .map(([name]) => {
+                    try {
+                        return new SB1View(this.data[name], name, `${this.path}.${name}`);
+                    } catch (err) {
+                        console.error(err);
+                        return new SB1View('An error occured rendering this data.', name, `${this.path}.${name}`);
+                    }
+                });
             });
         } else if (this.data instanceof Reference) {
             this.renderTitle(`Reference { index: ${this.data.index} }`);
         } else if (this.data instanceof Header) {
-            this.renderTitle(`Header { classId: ${this.data.classId}, size: ${this.data.size} }`);
+            this.renderTitle(`Header { classId: ${this.data.classId} (${TYPE_NAMES[this.data.classId]}), size: ${this.data.size} }`);
         } else if ((this.data instanceof Value) && (this.data.classId === TYPES.COLOR || this.data.classId === TYPES.TRANSLUCENT_COLOR)) {
             this.renderTitle((+this.data).toString(16).padStart(8, '0')).style.fontFamily = 'monospace';
         } else if (this.data instanceof Value) {
             if (this.data.value && this.data.value.buffer) {
-                this.renderTitle(`Typed Array (${this.data.value.length})`);
+                this.renderTitle(`${this.data.value.constructor.name} (${this.data.value.length})`);
             } else {
                 this.renderTitle('' + this.data);
             }
@@ -1190,7 +1288,7 @@ class SB1View {
             });
         } else if (['string', 'number', 'boolean'].includes(typeof this.data)) {
             this.renderTitle('' + this.data);
-        } else if (this.data instanceof Image) {
+        } else if (this.data instanceof HTMLElement) {
             this.content.appendChild(this.data);
         } else if (['undefined', 'string', 'number', 'boolean'].includes(typeof this.data) || this.data === null) {
             this.renderTitle('' + this.data);
@@ -1281,6 +1379,22 @@ const Int32BE = new StructMember({
     }
 });
 
+const Uint16LE = new StructMember({
+    size: 2,
+    toBytes: new Uint16Array(1),
+    read (uint8, position) {
+        this.bytes[0] = uint8[position + 0];
+        this.bytes[1] = uint8[position + 1];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[0];
+        uint8[position + 1] = this.bytes[1];
+        return value;
+    }
+});
+
 const Uint32BE = new StructMember({
     size: 4,
     toBytes: new Uint32Array(1),
@@ -1297,6 +1411,26 @@ const Uint32BE = new StructMember({
         uint8[position + 1] = this.bytes[2];
         uint8[position + 2] = this.bytes[1];
         uint8[position + 3] = this.bytes[0];
+        return value;
+    }
+});
+
+const Uint32LE = new StructMember({
+    size: 4,
+    toBytes: new Uint32Array(1),
+    read (uint8, position) {
+        this.bytes[0] = uint8[position + 0];
+        this.bytes[1] = uint8[position + 1];
+        this.bytes[2] = uint8[position + 2];
+        this.bytes[3] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[0];
+        uint8[position + 1] = this.bytes[1];
+        uint8[position + 2] = this.bytes[2];
+        uint8[position + 3] = this.bytes[3];
         return value;
     }
 });
@@ -1395,12 +1529,12 @@ class DeflateHeader extends struct({
 
 class DeflateChunkStart extends struct({
     lastBlock: Uint8,
-    length: Uint16BE,
-    lengthCheck: Uint16BE
+    length: Uint16LE,
+    lengthCheck: Uint16LE
 }) {}
 
 class DeflateEnd extends struct({
-    checksum: Uint32BE
+    checksum: Uint32LE
 }) {}
 
 class CRC32 {
@@ -1420,7 +1554,7 @@ class CRC32 {
         }
     }
 
-    update (uint8, position, length) {
+    update (uint8, position = 0, length = uint8.length) {
         this.crc[0] = ~this.crc[0];
         for (let i = 0; i < length; i++) {
             this.crc[0] = (this.crc[0] >>> 8) ^ this.table[(this.crc[0] ^ uint8[position + i]) & 0xff];
@@ -1551,7 +1685,7 @@ class PNGFile {
         let rowIndex = 0;
         let y = 0;
         let pixelsIndex = 0;
-        while (pixelsIndex < pixels.length) {
+        while (pixelsIndex < pixelsUint8.length) {
             if (deflateIndex === 0) {
                 const deflateChunkSize = Math.min(bodyRemaining, DEFLATE_BLOCK_SIZE_MAX);
                 Object.assign(new DeflateChunkStart(uint8, position), {
@@ -1559,6 +1693,7 @@ class PNGFile {
                     length: deflateChunkSize,
                     lengthCheck: deflateChunkSize ^ 0xffff
                 });
+                console.log(deflateChunkSize);
 
                 pngCrc.update(uint8, position, DeflateChunkStart.prototype.size);
 
@@ -1579,7 +1714,7 @@ class PNGFile {
                 deflateIndex += PNGFilterMethodByte.prototype.size;
             } else {
                 const rowPartialSize = Math.min(
-                    pixels.length - pixelsIndex,
+                    pixelsUint8.length - pixelsIndex,
                     rowSize - rowIndex,
                     DEFLATE_BLOCK_SIZE_MAX - deflateIndex
                 );
@@ -1743,6 +1878,7 @@ class SqueakImageDecoder {
                 }
             }
         }
+        console.log(i, pixelsOut, position, bytes.length);
 
         return result;
     }
@@ -1754,8 +1890,8 @@ class SqueakImageDecoder {
         const pixelsPerWord = 32 / depth;
         let dst = 0;
 
+        let src = 0;
         for (let y = 0; y < height; y++) {
-            const src = y * span;
             let word;
             let shift = -1;
             for (let x = 0; x < width; x++) {
@@ -1804,6 +1940,195 @@ class SqueakImageDecoder {
             result[i] = table[colors[i].index - 1];
         }
         return result;
+    }
+}
+
+const SQUEAK_SOUND_STEP_SIZE_TABLE = [
+    7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
+    45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209,
+    230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876,
+    963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749,
+    3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630,
+    9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623,
+    27086, 29794, 32767
+];
+
+const SQUEAK_SOUND_INDEX_TABLES = {
+    2: [-1, 2, -1, 2],
+    3: [-1, -1, 2, 4, -1, -1, 2, 4],
+    4: [-1, -1, -1, -1, 2, 4, 6, 8, -1, -1, -1, -1, 2, 4, 6, 8],
+    5: [
+        -1, -1, -1, -1, -1, -1, -1, -1, 1, 2, 4, 6, 8, 10, 13, 16,
+        -1, -1, -1, -1, -1, -1, -1, -1, 1, 2, 4, 6, 8, 10, 13, 16
+    ]
+};
+
+class SqueakSoundDecoder {
+    constructor (bitsPerSample) {
+        this.bitsPerSample = bitsPerSample;
+
+        this.indexTable = SQUEAK_SOUND_INDEX_TABLES[bitsPerSample];
+
+        this.signMask = 1 << (bitsPerSample - 1);
+        this.valueMask = this.signMask - 1;
+        this.valueHighBit = this.signMask >> 1;
+
+        this.bitPosition = 0;
+        this.currentByte = 0;
+        this.position = 0;
+    }
+
+    decode (data) {
+        // Reset position information.
+        this.bitPosition = 0;
+        this.currentByte = 0;
+        this.position = 0;
+
+        const size = Math.floor(data.length * 8 / this.bitsPerSample);
+        const result = new Int16Array(size);
+
+        let sample = 0;
+        let index = 0;
+        let position = 0;
+
+        for (let i = 0; i < size; i++) {
+            const code = this.nextCode(data);
+
+            assert(code >= 0, 'Ran out of bits in Squeak Sound');
+
+            step = SQUEAK_SOUND_STEP_SIZE_TABLE[index];
+            let delta = 0;
+            for (let bit = this.valueHighBit; bit > 0; bit = bit >> 1) {
+                if ((code & bit) != 0) {
+                    delta += step;
+                }
+                step = step >> 1;
+            }
+            delta += step;
+
+            sample += ((code & this.signMask) !== 0) ? -delta : delta;
+
+            index += this.indexTable[code];
+            if (index < 0) index = 0;
+            if (index > 88) index = 88;
+
+            if (sample > 32767) sample = 32767;
+            if (sample < -32768) sample = -32768;
+
+            result[i] = sample;
+        }
+
+        return result;
+    }
+
+    nextCode (data) {
+        let result = 0;
+        let remaining = this.bitsPerSample;
+        while (true) {
+            let shift = remaining - this.bitPosition;
+            result += (shift < 0) ? (this.currentByte >> -shift) : (this.currentByte << shift);
+            if (shift > 0) {
+                remaining -= this.bitPosition;
+                if (data.length - this.position > 0) {
+                    this.currentByte = data[this.position++];
+                    this.bitPosition = 8;
+                } else {
+                    this.currentByte = 0;
+                    this.bitPosition = 0;
+                    return -1;
+                }
+            } else {
+                this.bitPosition -= remaining;
+                this.currentByte = this.currentByte & (0xff >> (8 - this.bitPosition));
+                break;
+            }
+        }
+        return result;
+    }
+}
+
+class WAVESignature extends struct({
+    riff: new FixedAsciiString(4),
+    length: Uint32LE,
+    wave: new FixedAsciiString(4)
+}) {}
+
+class WAVEChunkStart extends struct({
+    chunkType: new FixedAsciiString(4),
+    length: Uint32LE,
+}) {}
+
+class WAVEFMTChunkBody extends struct({
+    format: Uint16LE,
+    channels: Uint16LE,
+    sampleRate: Uint32LE,
+    bytesPerSec: Uint32LE,
+    blockAlignment: Uint16LE,
+    bitsPerSample: Uint16LE
+}) {}
+
+const reverseBytes16 = input => {
+    const uint8 = new Uint8Array(input);
+    for (let i = 0; i < uint8.length; i += 2) {
+        uint8[i] = input[i + 1];
+        uint8[i + 1] = input[i];
+    }
+    return uint8;
+};
+
+class WAVFile {
+    encode (intSamples, {channels = 1, sampleRate = 22050} = {}) {
+        const samplesUint8 = new Uint8Array(intSamples.buffer, intSamples.byteOffset, intSamples.byteLength);
+        const size = (
+            WAVESignature.prototype.size +
+            WAVEChunkStart.prototype.size +
+            WAVEFMTChunkBody.prototype.size +
+            WAVEFMTChunkBody.prototype.size +
+            samplesUint8.length
+        );
+
+        const uint8 = new Uint8Array(size);
+        let position = 0;
+
+        Object.assign(new WAVESignature(uint8, position), {
+            riff: 'RIFF',
+            length: size - 8,
+            wave: 'WAVE'
+        });
+        position += WAVESignature.prototype.size;
+
+        Object.assign(new WAVEChunkStart(uint8, position), {
+            chunkType: 'fmt ',
+            length: WAVEFMTChunkBody.prototype.size
+        });
+        position += WAVEChunkStart.prototype.size;
+
+        Object.assign(new WAVEFMTChunkBody(uint8, position), {
+            format: 1,
+            channels: channels,
+            sampleRate: sampleRate,
+            bytesPerSec: sampleRate * 2 * channels,
+            blockAlignment: channels * 2,
+            bitsPerSample: 16
+        });
+        position += WAVEFMTChunkBody.prototype.size;
+
+        Object.assign(new WAVEChunkStart(uint8, position), {
+            chunkType: 'data',
+            length: size - position - WAVEChunkStart.prototype.size
+        });
+        position += WAVEChunkStart.prototype.size;
+
+        let index = 0;
+        while (index < samplesUint8.length) {
+            uint8[position++] = samplesUint8[index++];
+        }
+
+        return uint8;
+    }
+
+    static encode (intSamples, options) {
+        return new WAVFile().encode(intSamples, options);
     }
 }
 

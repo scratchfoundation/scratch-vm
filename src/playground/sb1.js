@@ -16,6 +16,8 @@ Array.from(document.getElementsByClassName('file')).forEach(el => {
                 last = [
                     new SB1View(Array.from(new SB1File(event.target.result).infoRaw()), 'raw - info').element,
                     new SB1View(Array.from(new SB1File(event.target.result).dataRaw()), 'raw - data').element,
+                    new SB1View(Array.from(new SB1ObjectIterator(new SB1File(event.target.result).infoRaw())), 'table - info').element,
+                    new SB1View(Array.from(new SB1ObjectIterator(new SB1File(event.target.result).dataRaw())), 'table - data').element,
                     new SB1View(new SB1File(event.target.result).info(), 'info').element,
                     new SB1View(new SB1File(event.target.result).data(), 'data').element,
                     new SB1View(new SB1File(event.target.result).images(), 'images').element,
