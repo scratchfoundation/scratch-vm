@@ -100,6 +100,15 @@ const int32BE = function (uint8, position) {
     );
 };
 
+const uint32BE = function (uint8, position) {
+    return (
+        uint8[position + 0] << 24 |
+        uint8[position + 1] << 16 |
+        uint8[position + 2] << 8 |
+        uint8[position + 3]
+    ) >>> 0;
+};
+
 const int16BE = function (uint8, position) {
     return (
         uint8[position + 0] << 8 |
@@ -134,8 +143,13 @@ const doubleBE = function (uint8, position) {
     return fromDouble[0];
 };
 
+const assert = function (test, message) {
+    if (!test) throw new Error(message);
+};
+
 const asciiString = function (iter) {
-    const count = int32BE(iter.uint8, iter.position);
+    const count = uint32BE(iter.uint8, iter.position);
+    assert(count < 10 * 1024 * 1024, 'asciiString too big');
     iter.position += 4;
     let str = '';
     for (let i = 0; i < count; i++) {
@@ -146,28 +160,32 @@ const asciiString = function (iter) {
 
 const uint8 = function (iter, count) {
     const value = new Uint8Array(iter.buffer, iter.position, count);
+    assert(count < 10 * 1024 * 1024, 'uint8 array too big');
     iter.position += count;
     return value;
 };
 
 const bytes = function (iter) {
-    const count = int32BE(iter.uint8, iter.position);
+    const count = uint32BE(iter.uint8, iter.position);
+    assert(count < 10 * 1024 * 1024, 'bytes too big');
     iter.position += 4;
     return uint8(iter, count);
 };
 
 const sound = function (iter) {
-    const count = int32BE(iter.uint8, iter.position);
+    const count = uint32BE(iter.uint8, iter.position);
+    assert(count < 10 * 1024 * 1024, 'sound too big');
     iter.position += 4;
     return uint8(iter, count * 2);
 };
 
 const bitmap = function (iter) {
-    const count = int32BE(iter.uint8, iter.position);
+    const count = uint32BE(iter.uint8, iter.position);
+    assert(count < 10 * 1024 * 1024, 'bitmap too big');
     iter.position += 4;
-    const value = new Int32Array(count);
+    const value = new Uint32Array(count);
     for (let i = 0; i < count; i++) {
-        value[i] = int32BE(iter.uint8, iter.position);
+        value[i] = uint32BE(iter.uint8, iter.position);
         iter.position += 4;
     }
     return value;
@@ -176,7 +194,8 @@ const bitmap = function (iter) {
 const decoder = new TextDecoder();
 
 const utf8 = function (iter) {
-    const count = int32BE(iter.uint8, iter.position);
+    const count = uint32BE(iter.uint8, iter.position);
+    assert(count < 10 * 1024 * 1024, 'utf8 too big');
     iter.position += 4;
     return decoder.decode(uint8(iter, count));
 };
@@ -191,7 +210,7 @@ const utf8 = function (iter) {
 // };
 
 const color = function (iter, classId) {
-    const rgb = int32BE(iter.uint8, iter.position);
+    const rgb = uint32BE(iter.uint8, iter.position);
     iter.position += 4;
     let a = 0xff;
     if (classId === TYPES.TRANSLUCENT_COLOR) {
@@ -200,7 +219,7 @@ const color = function (iter, classId) {
     const r = (rgb >> 22) & 0xff;
     const g = (rgb >> 12) & 0xff;
     const b = (rgb >> 2) & 0xff;
-    return a << 24 | r << 16 | g << 8 | b;
+    return (a << 24 | r << 16 | g << 8 | b) >>> 0;
 };
 
 const objectRef = function (iter) {
@@ -231,6 +250,30 @@ const extended = function (iter, classId) {
         done: false
     };
 };
+
+class SB1TakeIterator {
+    constructor (iter, maxLength = Infinity) {
+        this.iter = iter;
+        this.maxLength = maxLength;
+        this.index = 0;
+    }
+
+    [Symbol.iterator] () {
+        return this;
+    }
+
+    next () {
+        if (this.index === this.maxLength) {
+            return {
+                value: null,
+                done: true
+            };
+        }
+
+        this.index += 1;
+        return this.iter.next();
+    }
+}
 
 class SB1Iterator {
     constructor (buffer, position) {
@@ -300,6 +343,10 @@ class SB1Iterator {
 
         case TYPES.SOUND:
             value = sound(this);
+            break;
+
+        case TYPES.BITMAP:
+            value = bitmap(this);
             break;
 
         case TYPES.UTF8:
@@ -518,6 +565,31 @@ class ImageData extends ExtendedData {
     get colormap () {
         return this.fields[IMAGE_FIELDS.COLORMAP];
     }
+
+    get preview () {
+        const image = new Image();
+        image.src = URL.createObjectURL(
+            new Blob(
+                [
+                    PNGFile.encode(
+                        this.width,
+                        this.height,
+                        new Uint8Array(
+                            new SqueakImageDecoder().decode(
+                                this.width.value,
+                                this.height.value,
+                                this.encoding.value,
+                                this.bytes.value,
+                                this.colormap
+                            ).buffer
+                        )
+                    )
+                ],
+                { type: 'image/png' }
+            )
+        );
+        return image;
+    }
 }
 
 const STAGE_FIELDS = {
@@ -702,6 +774,10 @@ class ImageMediaData extends ExtendedData {
     get oldComposite () {
         return this.fields[IMAGE_MEDIA_FIELDS.OLD_COMPOSITE];
     }
+
+    get preview () {
+        return this.bitmap.preview;
+    }
 }
 
 const UNCOMPRESSED_FIELDS = {
@@ -852,9 +928,65 @@ class SB1ObjectIterator {
 
 window.SB1ObjectIterator = SB1ObjectIterator;
 
+class SB1TokenObjectTakeIterator {
+    constructor (valueIterator, maxLength = Infinity) {
+        this.valueIterator = valueIterator;
+        this.maxLength = maxLength;
+
+        this.index = 0;
+        this.queue = [];
+    }
+
+    [Symbol.iterator] () {
+        return this;
+    }
+
+    _next () {
+        const next = this.valueIterator.next();
+        if (next.done) {
+            return;
+        }
+
+        const value = next.value;
+        this.queue.push(value);
+        if (value instanceof Header) {
+            for (let i = 0; i < value.size; i++) {
+                this._next();
+            }
+        }
+    }
+
+    next () {
+        if (this.index === this.maxLength && this.queue.length === 0) {
+            return {
+                value: null,
+                done: true
+            };
+        }
+
+        if (this.queue.length === 0) {
+            this.index += 1;
+            this._next();
+        }
+
+        if (this.queue.length) {
+            return {
+                value: this.queue.shift(),
+                done: false
+            };
+        } else {
+            return {
+                value: null,
+                done: true
+            };
+        }
+    }
+}
+
 class SB1ReferenceFixer {
-    constructor (table) {
+    constructor (table, filter) {
         this.table = Array.from(table);
+        this.filter = filter;
         this.fixed = this.fix(this.table);
     }
 
@@ -863,9 +995,12 @@ class SB1ReferenceFixer {
 
         for (let i = 0; i < this.table.length; i++) {
             this.fixItem(this.table[i]);
+            if (this.filter && this.filter(this.table[i]) || !this.filter) {
+                fixed.push(this.table[i]);
+            }
         }
 
-        return this.table[0];
+        return fixed;
     }
 
     fixItem (item) {
@@ -903,16 +1038,30 @@ class SB1File {
         this.infoLength = int32BE(this.uint8, this.infoPosition + 10);
         this.dataPosition = int32BE(this.uint8, 10) + 14;
         this.dataLength = int32BE(this.uint8, this.dataPosition + 10);
-        console.log(this.infoLength, this.dataLength);
+    }
+
+    infoRaw () {
+        return new SB1TokenObjectTakeIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength);
     }
 
     info () {
-        return new SB1ReferenceFixer(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength)).fixed;
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.infoRaw(), this.infoLength)).table[0];
+    }
+
+    dataRaw () {
+        return new SB1TokenObjectTakeIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength);
     }
 
     data () {
-        console.log(Array.from(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength)));
-        return new SB1ReferenceFixer(new SB1ObjectIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength)).fixed;
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table[0];
+    }
+
+    images () {
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength), obj => obj instanceof ImageMediaData).fixed;
+    }
+
+    sounds () {
+        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength), obj => obj instanceof SoundMediaData).fixed;
     }
 }
 
@@ -954,7 +1103,6 @@ class SB1View {
     }
 
     createElement (type, name) {
-        console.log('createElement', type, name, this._elements[name]);
         if (!this._elements[name]) {
             this._elements[name] = document.createElement(type);
         }
@@ -990,7 +1138,6 @@ class SB1View {
     renderTitle (title) {
         const titleDiv = this.createElement('div', 'title');
         const fullTitle = (this.prefix ? `${this.prefix}: ` : '') + title;
-        console.log('renderTitle', title.length, fullTitle.indexOf('\n'), fullTitle.indexOf('\r'), fullTitle.indexOf('<br>'));
         if (['\n', '\r', '<br>'].some(str => fullTitle.indexOf(str) !== -1)) {
             this.renderArrow();
             if (this.expanded) {
@@ -1002,6 +1149,7 @@ class SB1View {
             titleDiv.innerText = fullTitle;
         }
         this.content.appendChild(titleDiv);
+        return titleDiv;
     }
 
     renderExpand (fn) {
@@ -1022,9 +1170,15 @@ class SB1View {
                 .filter(([, desc]) => desc.get)
                 .map(([name]) => new SB1View(this.data[name], name, `${this.path}.${name}`));
             });
+        } else if (this.data instanceof Reference) {
+            this.renderTitle(`Reference { index: ${this.data.index} }`);
+        } else if (this.data instanceof Header) {
+            this.renderTitle(`Header { classId: ${this.data.classId}, size: ${this.data.size} }`);
+        } else if ((this.data instanceof Value) && (this.data.classId === TYPES.COLOR || this.data.classId === TYPES.TRANSLUCENT_COLOR)) {
+            this.renderTitle((+this.data).toString(16).padStart(8, '0')).style.fontFamily = 'monospace';
         } else if (this.data instanceof Value) {
             if (this.data.value && this.data.value.buffer) {
-                this.renderTitle('Typed Array');
+                this.renderTitle(`Typed Array (${this.data.value.length})`);
             } else {
                 this.renderTitle('' + this.data);
             }
@@ -1036,8 +1190,12 @@ class SB1View {
             });
         } else if (['string', 'number', 'boolean'].includes(typeof this.data)) {
             this.renderTitle('' + this.data);
+        } else if (this.data instanceof Image) {
+            this.content.appendChild(this.data);
+        } else if (['undefined', 'string', 'number', 'boolean'].includes(typeof this.data) || this.data === null) {
+            this.renderTitle('' + this.data);
         } else {
-            this.renderTitle(`Unknown Structure(${this.data ? this.data.classId : ''})`);
+            this.renderTitle(`Unknown Structure(${this.data ? this.data.classId || this.data.constructor.name : ''})`);
         }
 
         // const clearDiv = this.createElement('div', 'clear');
@@ -1088,7 +1246,7 @@ const Uint8 = new StructMember({
 });
 
 const Uint16BE = new StructMember({
-    size: 4,
+    size: 2,
     toBytes: new Uint16Array(1),
     read (uint8, position) {
         this.bytes[1] = uint8[position + 0];
@@ -1177,6 +1335,10 @@ class Struct {
 const struct = shape => {
     const Base = class {
         constructor (uint8, offset = 0) {
+            // Object.defineProperties(this, {
+            //     uint8: {enumerable: false},
+            //     offset: {enumerable: false}
+            // })
             this.uint8 = uint8;
             this.offset = offset;
         }
@@ -1185,7 +1347,7 @@ const struct = shape => {
     let position = 0;
     Object.keys(shape).forEach(key => {
         shape[key].defineProperty(Base.prototype, key, position);
-        position += prop.size;
+        position += shape[key].size;
     });
 
     Base.prototype.size = position;
@@ -1297,23 +1459,35 @@ class PNGFile {
     encode (width, height, pixels) {
         const pixelsUint8 = new Uint8Array(pixels);
 
-        const rowSize = width * 4 + 1;
+        for (let i = 0; i < pixelsUint8.length; i += 4) {
+            const r = pixelsUint8[i + 2];
+            const b = pixelsUint8[i + 0];
+            pixelsUint8[i + 2] = b;
+            pixelsUint8[i + 0] = r;
+        }
+
+        const rowSize = width * 4 + PNGFilterMethodByte.prototype.size;
         const bodySize = rowSize * height;
         let bodyRemaining = bodySize;
         const blocks = Math.ceil(bodySize / DEFLATE_BLOCK_SIZE_MAX);
         const idatSize = (
-            DeflateHeader.prototype.prototype.size +
+            DeflateHeader.prototype.size +
             blocks * DeflateChunkStart.prototype.size +
             DeflateEnd.prototype.size +
             bodySize
         );
         const size = (
             PNGSignature.prototype.size +
+            // IHDR
             PNGChunkStart.prototype.size +
             PNGIHDRChunkBody.prototype.size +
             PNGChunkEnd.prototype.size +
+            // IDAT
             PNGChunkStart.prototype.size +
             idatSize +
+            PNGChunkEnd.prototype.size +
+            // IEND
+            PNGChunkStart.prototype.size +
             PNGChunkEnd.prototype.size
         );
         const buffer = new ArrayBuffer(size);
@@ -1345,12 +1519,13 @@ class PNGFile {
             filterMethod: 0,
             interlaceMethod: 0
         });
+        const headerChecksum = new CRC32()
+            .update(uint8, position - 4, PNGIHDRChunkBody.prototype.size + 4)
+            .digest;
         position += PNGIHDRChunkBody.prototype.size;
 
         Object.assign(new PNGChunkEnd(uint8, position), {
-            checksum: new CRC32()
-                .update(uint8, position, PNGIHDRChunkBody.prototype.size)
-                .digest
+            checksum: headerChecksum
         });
         position += PNGChunkEnd.prototype.size;
 
@@ -1366,8 +1541,10 @@ class PNGFile {
         });
         position += DeflateHeader.prototype.size;
 
-        const deflateCrc = new CRC32();
-        const pngAdler = new Adler32();
+        const deflateAdler = new Adler32();
+        const pngCrc = new CRC32();
+
+        pngCrc.update(uint8, position - Uint32BE.size - DeflateHeader.prototype.size, Uint32BE.size + DeflateHeader.prototype.size);
 
         let deflateIndex = 0;
 
@@ -1383,7 +1560,8 @@ class PNGFile {
                     lengthCheck: deflateChunkSize ^ 0xffff
                 });
 
-                deflateCrc.update(uint8, position, DeflateChunkStart.prototype.size);
+                pngCrc.update(uint8, position, DeflateChunkStart.prototype.size);
+
                 position += DeflateChunkStart.prototype.size;
             }
 
@@ -1392,8 +1570,8 @@ class PNGFile {
                     method: 0
                 });
 
-                deflateCrc.update(uint8, position, PNGFilterMethodByte.prototype.size);
-                pngAdler.update(uint8, position, PNGFilterMethodByte.prototype.size);
+                deflateAdler.update(uint8, position, PNGFilterMethodByte.prototype.size);
+                pngCrc.update(uint8, position, PNGFilterMethodByte.prototype.size);
 
                 position += PNGFilterMethodByte.prototype.size;
                 rowIndex += PNGFilterMethodByte.prototype.size;
@@ -1401,7 +1579,7 @@ class PNGFile {
                 deflateIndex += PNGFilterMethodByte.prototype.size;
             } else {
                 const rowPartialSize = Math.min(
-                    pixelsIndex,
+                    pixels.length - pixelsIndex,
                     rowSize - rowIndex,
                     DEFLATE_BLOCK_SIZE_MAX - deflateIndex
                 );
@@ -1410,9 +1588,10 @@ class PNGFile {
                     uint8[position + i] = pixelsUint8[pixelsIndex + i];
                 }
 
-                deflateCrc.update(uint8, position, rowPartialSize);
-                pngAdler.update(uint8, position, rowPartialSize);
+                deflateAdler.update(uint8, position, rowPartialSize);
+                pngCrc.update(uint8, position, rowPartialSize);
 
+                pixelsIndex += rowPartialSize;
                 position += rowPartialSize;
                 rowIndex += rowPartialSize;
                 bodyRemaining -= rowPartialSize;
@@ -1430,12 +1609,12 @@ class PNGFile {
         }
 
         Object.assign(new DeflateEnd(uint8, position), {
-            checksum: deflateCrc.digest
+            checksum: deflateAdler.digest
         });
         position += DeflateEnd.prototype.size;
 
         Object.assign(new PNGChunkEnd(uint8, position), {
-            checksum: pngAdler.digest
+            checksum: pngCrc.digest
         });
         position += PNGChunkEnd.prototype.size;
 
@@ -1448,6 +1627,7 @@ class PNGFile {
         Object.assign(new PNGChunkEnd(uint8, position), {
             checksum: 0xae426082
         });
+        position += PNGChunkEnd.prototype.size;
 
         return buffer;
     }
@@ -1458,21 +1638,209 @@ class PNGFile {
 }
 
 class SqueakImageDecoder {
-    decode (width, height, pixels, colormap) {
-
+    decodeIntIncrement (bytes, position) {
+        const count = bytes[position];
+        if (count <= 223) {
+            return 1;
+        }
+        if (count <= 254) {
+            return 2;
+        }
+        return 5;
     }
 
-    decodePixels (pixels, withAlpha) {
-
+    decodeInt (bytes, position) {
+        const count = bytes[position];
+        if (count <= 223) {
+            return count;
+        }
+        if (count <= 254) {
+            return ((count - 224) * 256) + bytes[position + 1];
+        }
+        return uint32BE(bytes, position + 1);
     }
 
-    unpackPixels (pixels, width, height, depth, colormap) {
+    decode (width, height, depth, bytes, colormap, table) {
+        const pixels = this.decodePixels(bytes, depth === 32);
 
+        if (depth <= 8) {
+            if (!colormap) {
+                colormap = depth === 1 ? defaultOneBitColorMap : defaultColorMap;
+            }
+            return this.unpackPixels(pixels, width, height, depth, colormap);
+        } else if (depth === 16) {
+            return this.raster16To32(pixels, width, height);
+        } else if (depth === 32) {
+            return pixels;
+        }
+        throw new Error('Unhandled Squeak Image depth.');
     }
 
-    raster16To32 (pixels, width, height) {
+    decodePixels (bytes, withAlpha) {
+        let result;
 
+        // Already decompressed
+        if (Array.isArray(bytes) || bytes instanceof Uint32Array) {
+            result = new Uint32Array(bytes);
+            if (withAlpha) {
+                for (let i = 0; i < result.length; i++) {
+                    if (result[i] !== 0) {
+                        result[i] = 0xff000000 | result[i];
+                    }
+                }
+            }
+            return result;
+        }
+
+        const pixelsOut = this.decodeInt(bytes, 0);
+        let position = this.decodeIntIncrement(bytes, 0);
+        result = new Uint32Array(pixelsOut);
+
+        let i = 0;
+        while (i < pixelsOut) {
+            const runLengthAndCode = this.decodeInt(bytes, position);
+            position += this.decodeIntIncrement(bytes, position);
+            const runLength = runLengthAndCode >> 2;
+            const code = runLengthAndCode & 0b11;
+
+            let w;
+
+            switch (code) {
+            case 0:
+                i += runLength;
+                break;
+
+            case 1:
+                w = bytes[position++];
+                w = (w << 24) | (w << 16) | (w << 8) | w;
+                if (withAlpha && w != 0) {
+                    w |= 0xff000000;
+                }
+                for (let j = 0; j < runLength; j++) {
+                    result[i++] = w;
+                }
+                break;
+
+            case 2:
+                w = uint32BE(bytes, position);
+                position += 4;
+                if (withAlpha && w !== 0) {
+                    w |= 0xff000000;
+                }
+                for (let j = 0; j < runLength; j++) {
+                    result[i++] = w;
+                }
+                break;
+
+            case 3:
+                for (let j = 0; j < runLength; j++) {
+                    w = uint32BE(bytes, position);
+                    position += 4;
+                    if (withAlpha && w !== 0) {
+                        w |= 0xff000000;
+                    }
+                    result[i++] = w;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    unpackPixels (words, width, height, depth, colormap) {
+        const result = new Uint32Array(width * height);
+        const span = words.length / height;
+        const mask = (1 << depth) - 1;
+        const pixelsPerWord = 32 / depth;
+        let dst = 0;
+
+        for (let y = 0; y < height; y++) {
+            const src = y * span;
+            let word;
+            let shift = -1;
+            for (let x = 0; x < width; x++) {
+                if (shift < 0) {
+                    shift = depth * (pixelsPerWord - 1);
+                    word = words[src++];
+                }
+                result[dst++] = colormap[(word >> shift) & mask];
+                shift -= depth;
+            }
+        }
+        return result;
+    }
+
+    raster16To32 (words, width, height) {
+        const result = new Uint32Array(2 * words.length);
+        let shift;
+        let word;
+        let pix;
+        let src = 0;
+        let dst = 0;
+        for (let y = 0; y < height; y++) {
+            shift = -1;
+            for (let x = 0; x < width; x++) {
+                if (shift < 0) {
+                    shift = 16;
+                    word = words[src++];
+                }
+                pix = (word >> shift) & 0xffff;
+                if (pix !== 0) {
+                    const red = (pix >> 7) & 0b11111000;
+                    const green = (pix >> 2) & 0b11111000;
+                    const blue = (pix << 3) & 0b11111000;
+                    pix = 0xff000000 | (red << 16) | (green << 8) | blue;
+                }
+                result[dst++] = pix;
+                shift -= 16;
+            }
+        }
+        return result;
+    }
+
+    buildCustomColormap (depth, colors, table) {
+        const result = new Uint32Array(1 << depth);
+        for (let i = 0; i < colors.length; i++) {
+            result[i] = table[colors[i].index - 1];
+        }
+        return result;
     }
 }
+
+const defaultColorMap = [
+    0x00000000, 0xFF000000, 0xFFFFFFFF, 0xFF808080, 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFF00FFFF,
+    0xFFFFFF00, 0xFFFF00FF, 0xFF202020, 0xFF404040, 0xFF606060, 0xFF9F9F9F, 0xFFBFBFBF, 0xFFDFDFDF,
+    0xFF080808, 0xFF101010, 0xFF181818, 0xFF282828, 0xFF303030, 0xFF383838, 0xFF484848, 0xFF505050,
+    0xFF585858, 0xFF686868, 0xFF707070, 0xFF787878, 0xFF878787, 0xFF8F8F8F, 0xFF979797, 0xFFA7A7A7,
+    0xFFAFAFAF, 0xFFB7B7B7, 0xFFC7C7C7, 0xFFCFCFCF, 0xFFD7D7D7, 0xFFE7E7E7, 0xFFEFEFEF, 0xFFF7F7F7,
+    0xFF000000, 0xFF003300, 0xFF006600, 0xFF009900, 0xFF00CC00, 0xFF00FF00, 0xFF000033, 0xFF003333,
+    0xFF006633, 0xFF009933, 0xFF00CC33, 0xFF00FF33, 0xFF000066, 0xFF003366, 0xFF006666, 0xFF009966,
+    0xFF00CC66, 0xFF00FF66, 0xFF000099, 0xFF003399, 0xFF006699, 0xFF009999, 0xFF00CC99, 0xFF00FF99,
+    0xFF0000CC, 0xFF0033CC, 0xFF0066CC, 0xFF0099CC, 0xFF00CCCC, 0xFF00FFCC, 0xFF0000FF, 0xFF0033FF,
+    0xFF0066FF, 0xFF0099FF, 0xFF00CCFF, 0xFF00FFFF, 0xFF330000, 0xFF333300, 0xFF336600, 0xFF339900,
+    0xFF33CC00, 0xFF33FF00, 0xFF330033, 0xFF333333, 0xFF336633, 0xFF339933, 0xFF33CC33, 0xFF33FF33,
+    0xFF330066, 0xFF333366, 0xFF336666, 0xFF339966, 0xFF33CC66, 0xFF33FF66, 0xFF330099, 0xFF333399,
+    0xFF336699, 0xFF339999, 0xFF33CC99, 0xFF33FF99, 0xFF3300CC, 0xFF3333CC, 0xFF3366CC, 0xFF3399CC,
+    0xFF33CCCC, 0xFF33FFCC, 0xFF3300FF, 0xFF3333FF, 0xFF3366FF, 0xFF3399FF, 0xFF33CCFF, 0xFF33FFFF,
+    0xFF660000, 0xFF663300, 0xFF666600, 0xFF669900, 0xFF66CC00, 0xFF66FF00, 0xFF660033, 0xFF663333,
+    0xFF666633, 0xFF669933, 0xFF66CC33, 0xFF66FF33, 0xFF660066, 0xFF663366, 0xFF666666, 0xFF669966,
+    0xFF66CC66, 0xFF66FF66, 0xFF660099, 0xFF663399, 0xFF666699, 0xFF669999, 0xFF66CC99, 0xFF66FF99,
+    0xFF6600CC, 0xFF6633CC, 0xFF6666CC, 0xFF6699CC, 0xFF66CCCC, 0xFF66FFCC, 0xFF6600FF, 0xFF6633FF,
+    0xFF6666FF, 0xFF6699FF, 0xFF66CCFF, 0xFF66FFFF, 0xFF990000, 0xFF993300, 0xFF996600, 0xFF999900,
+    0xFF99CC00, 0xFF99FF00, 0xFF990033, 0xFF993333, 0xFF996633, 0xFF999933, 0xFF99CC33, 0xFF99FF33,
+    0xFF990066, 0xFF993366, 0xFF996666, 0xFF999966, 0xFF99CC66, 0xFF99FF66, 0xFF990099, 0xFF993399,
+    0xFF996699, 0xFF999999, 0xFF99CC99, 0xFF99FF99, 0xFF9900CC, 0xFF9933CC, 0xFF9966CC, 0xFF9999CC,
+    0xFF99CCCC, 0xFF99FFCC, 0xFF9900FF, 0xFF9933FF, 0xFF9966FF, 0xFF9999FF, 0xFF99CCFF, 0xFF99FFFF,
+    0xFFCC0000, 0xFFCC3300, 0xFFCC6600, 0xFFCC9900, 0xFFCCCC00, 0xFFCCFF00, 0xFFCC0033, 0xFFCC3333,
+    0xFFCC6633, 0xFFCC9933, 0xFFCCCC33, 0xFFCCFF33, 0xFFCC0066, 0xFFCC3366, 0xFFCC6666, 0xFFCC9966,
+    0xFFCCCC66, 0xFFCCFF66, 0xFFCC0099, 0xFFCC3399, 0xFFCC6699, 0xFFCC9999, 0xFFCCCC99, 0xFFCCFF99,
+    0xFFCC00CC, 0xFFCC33CC, 0xFFCC66CC, 0xFFCC99CC, 0xFFCCCCCC, 0xFFCCFFCC, 0xFFCC00FF, 0xFFCC33FF,
+    0xFFCC66FF, 0xFFCC99FF, 0xFFCCCCFF, 0xFFCCFFFF, 0xFFFF0000, 0xFFFF3300, 0xFFFF6600, 0xFFFF9900,
+    0xFFFFCC00, 0xFFFFFF00, 0xFFFF0033, 0xFFFF3333, 0xFFFF6633, 0xFFFF9933, 0xFFFFCC33, 0xFFFFFF33,
+    0xFFFF0066, 0xFFFF3366, 0xFFFF6666, 0xFFFF9966, 0xFFFFCC66, 0xFFFFFF66, 0xFFFF0099, 0xFFFF3399,
+    0xFFFF6699, 0xFFFF9999, 0xFFFFCC99, 0xFFFFFF99, 0xFFFF00CC, 0xFFFF33CC, 0xFFFF66CC, 0xFFFF99CC,
+    0xFFFFCCCC, 0xFFFFFFCC, 0xFFFF00FF, 0xFFFF33FF, 0xFFFF66FF, 0xFFFF99FF, 0xFFFFCCFF, 0xFFFFFFFF];
+
+const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
 module.exports = SB1Iterator;
