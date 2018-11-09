@@ -5,7 +5,6 @@ const extractProjectJson = require('../fixtures/readProjectFile').extractProject
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const Runtime = require('../../src/engine/runtime');
 const sb2 = require('../../src/serialization/sb2');
-const specMap = require('../../src/serialization/sb2_specmap.js');
 
 test('spec', t => {
     t.type(sb2, 'object');
@@ -100,29 +99,6 @@ test('Ordering', t => {
         t.equal(targets[1].sprite.name, 'First');
         t.equal(targets[2].sprite.name, 'Second');
         t.equal(targets[3].sprite.name, 'Third');
-        t.end();
-    });
-});
-
-test('Prevent monitors from adding non-core extensions', t => {
-    const rt = new Runtime();
-    // This test project's video motion reporter block was checked, saved, then unchecked and saved
-    const videoSensingMonitor = path.resolve(__dirname, '../fixtures/invisible-video-monitor.sb2');
-    const projectJSON = extractProjectJson(videoSensingMonitor);
-
-    sb2.deserialize(projectJSON, rt).then(project => {
-        for (const child of projectJSON.children) {
-            // Check that monitor's extension hasn't been added to the serialized project's extensions
-            if (child.cmd) {
-                const opcode = specMap[child.cmd].opcode;
-                const extIndex = opcode.indexOf('_');
-                const extID = opcode.substring(0, extIndex);
-                t.notOk(project.extensions.extensionIDs.has(extID));
-            }
-        }
-
-        // Non-core extension monitors haven't been added to the runtime
-        t.equal(rt._monitorState.size, 0);
         t.end();
     });
 });

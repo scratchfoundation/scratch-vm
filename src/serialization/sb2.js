@@ -245,17 +245,42 @@ const globalBroadcastMsgStateGenerator = (function () {
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
 const parseMonitorObject = (object, runtime, targets, extensions) => {
-    let target = null;
+    // In scratch 2.0, there are two monitors that now correspond to extension
+    // blocks (tempo and video motion/direction). In the case of the
+    // video motion/direction block, this reporter is not monitorable in Scratch 3.0.
+    // In the case of the tempo block, we should import it and load the music extension
+    // only when the monitor is actually visible.
+
     const opcode = specMap[object.cmd].opcode;
     const extIndex = opcode.indexOf('_');
     const extID = opcode.substring(0, extIndex);
 
-    // All non-core extensions should be added by blocks at this point
-    // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
-    if (CORE_EXTENSIONS.indexOf(extID) === -1) {
-        if (extID !== '') return;
+    if (extID === 'videoSensing') {
+        return;
+    } else if (CORE_EXTENSIONS.indexOf(extID) === -1 && extID !== '' &&
+        !extensions.extensionIDs.has(extID) && !object.visible) {
+        // Don't import this monitor if it refers to a non-core extension that
+        // doesn't exist anywhere else in the project and it isn't visible.
+        // This should only apply to the tempo block at this point since
+        // there are no other sb2 blocks that are now extension monitors.
+        return;
     }
 
+
+    // if (!object.visible) {
+    //     // If the monitor is invisible, check to see if it tries to load a new extension
+    //     // (e.g. one that hasn't already been loaded by an actual block in the project).
+    //     // If so, exit without importing the monitor.
+    //
+    //
+    //     // All non-core extensions should be added by blocks at this point
+    //     // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
+    //     if () {
+    //         if ( && !extensions.has(extID)) return;
+    //     }
+    // }
+
+    let target = null;
     // List blocks don't come in with their target name set.
     // Find the target by searching for a target with matching variable name/type.
     if (!object.hasOwnProperty('target')) {
