@@ -425,7 +425,7 @@ const objectArray = function (objectIterator, header) {
     const array = [];
 
     for (let i = 0; i < header.size; i++) {
-        array.push(objectIterator._next().value);
+        array.push(objectIterator.next().value);
     }
 
     return array;
@@ -435,8 +435,8 @@ const objectDictionary = function (objectIterator, header) {
     const dict = [];
 
     for (let i = 0; i < header.size; i += 2) {
-        dict.push(objectIterator._next().value);
-        dict.push(objectIterator._next().value);
+        dict.push(objectIterator.next().value);
+        dict.push(objectIterator.next().value);
     }
 
     return dict;
@@ -445,30 +445,30 @@ const objectDictionary = function (objectIterator, header) {
 const objectPoint = function (objectIterator, header) {
     return {
         classId: TYPES.POINT,
-        x: objectIterator._next().value,
-        y: objectIterator._next().value
+        x: objectIterator.next().value,
+        y: objectIterator.next().value
     };
 };
 
 const objectRectangle = function (objectIterator, header) {
     return {
         classId: TYPES.RECTANGLE,
-        x: objectIterator._next().value,
-        y: objectIterator._next().value,
-        width: objectIterator._next().value,
-        height: objectIterator._next().value
+        x: objectIterator.next().value,
+        y: objectIterator.next().value,
+        width: objectIterator.next().value,
+        height: objectIterator.next().value
     };
 };
 
 const objectImage = function (objectIterator, header) {
     return {
         classId: header.classId,
-        width: objectIterator._next().value,
-        height: objectIterator._next().value,
-        encoding: objectIterator._next().value,
-        something: objectIterator._next().value,
-        bytes: objectIterator._next().value,
-        colormap: header.classId === TYPES.SQUEAK ? objectIterator._next().value : null
+        width: objectIterator.next().value,
+        height: objectIterator.next().value,
+        encoding: objectIterator.next().value,
+        something: objectIterator.next().value,
+        bytes: objectIterator.next().value,
+        colormap: header.classId === TYPES.SQUEAK ? objectIterator.next().value : null
     };
 };
 
@@ -853,20 +853,18 @@ class SoundMediaData extends ExtendedData {
         audio.controls = true;
 
         let samples;
-        if (this.data.value) {
+        if (this.data && this.data.value) {
             samples = new SqueakSoundDecoder(this.bitsPerSample.value).decode(
                 this.data.value
             );
         } else {
-            console.log(this.uncompressed.data.value.slice(), reverseBytes16(this.uncompressed.data.value.slice()));
             samples = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
         }
-        console.log(!!this.data.value, new Uint8Array(WAVFile.encode(samples, {sampleRate: this.rate.value || this.uncompressed.rate.value}).buffer));
 
         audio.src = URL.createObjectURL(
             new Blob(
                 [WAVFile.encode(samples, {
-                    sampleRate: this.rate.value || this.uncompressed.rate.value
+                    sampleRate: this.rate && this.rate.value || this.uncompressed.rate.value
                 })],
                 { type: 'audio/wav' }
             )
@@ -895,7 +893,7 @@ const objectExtended = function (objectIterator, header) {
     const fields = [];
 
     for (let i = 0; i < header.size; i++) {
-        fields.push(objectIterator._next().value);
+        fields.push(objectIterator.next().value);
     }
 
     const constructor = EXTENDED_CONSTRUCTORS[header.classId] || ExtendedData;
@@ -953,7 +951,7 @@ class SB1ObjectIterator {
         };
     }
 
-    _next () {
+    next () {
         const nextHeader = this.valueIterator.next();
         if (nextHeader.done) {
             return {
@@ -965,18 +963,6 @@ class SB1ObjectIterator {
         const header = nextHeader.value;
 
         return this.read(header, header.classId);
-    }
-
-    next () {
-        if (this.length === 0) {
-            return {
-                value: null,
-                done: true
-            };
-        }
-        this.length--;
-
-        return this._next();
     }
 }
 
@@ -1137,7 +1123,7 @@ class SB1File {
         const unique = new Set();
         return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table.filter(obj => {
             if (obj instanceof SoundMediaData) {
-                const array = obj.data.value || obj.uncompressed.data.value;
+                const array = obj.data && obj.data.value || obj.uncompressed.data.value;
                 if (unique.has(array)) {
                     return false;
                 }
@@ -1229,12 +1215,13 @@ class SB1View {
     renderTitle (title) {
         const titleDiv = this.createElement('div', 'title');
         const fullTitle = (this.prefix ? `${this.prefix}: ` : '') + title;
-        if (['\n', '\r', '<br>'].some(str => fullTitle.indexOf(str) !== -1)) {
+        if (['\n', '\r', '<br>'].some(str => fullTitle.indexOf(str) !== -1) || fullTitle.length > 80) {
             this.renderArrow();
             if (this.expanded) {
                 titleDiv.innerText = fullTitle;
             } else {
-                titleDiv.innerText = fullTitle.substring(0, ['\n', '\r', '<br>'].reduce((value, str) => (fullTitle.indexOf(str) !== -1 ? Math.min(value, fullTitle.indexOf(str)) : value), Infinity)) + ' ...';
+                const maxLength = Math.min(fullTitle.lastIndexOf(' ', 80), ['\n', '\r', '<br>'].reduce((value, str) => (fullTitle.indexOf(str) !== -1 ? Math.min(value, fullTitle.indexOf(str)) : value), Infinity));
+                titleDiv.innerText = fullTitle.substring(0, maxLength) + ' ...';
             }
         } else {
             titleDiv.innerText = fullTitle;
