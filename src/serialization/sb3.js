@@ -1039,31 +1039,82 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
 };
 
 const deserializeMonitor = function (monitorData, runtime, targets) {
-    const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
+    // If the serialized monitor has spriteName defined, look up the sprite
+    // by name in the given list of targets and update the monitor's targetId
+    // to match the sprite's id.
     if (monitorData.spriteName) {
         const filteredTargets = targets.filter(t => t.sprite.name === monitorData.spriteName);
-        if (!filteredTargets || filteredTargets.length !== 1) {
-            log.error(`Could not deserialize monitor ${monitorData.opcode} for sprite ${
-                monitorData.spriteName} because no such sprite could be found.`);
+        if (filteredTargets && filteredTargets.length > 0) {
+            monitorData.targetId = filteredTargets[0].id;
+        } else {
+            log.warn(`Tried to deserialize sprite specific monitor ${
+                monitorData.opcode} but could not find sprite ${monitorData.spriteName}.`);
         }
-        monitorData.targetId = filteredTargets[0].id;
     }
 
-    if (monitorData.opcode !== 'data_variable' && monitorData.opcode !== 'data_listcontents') {
-        // Variables and lists already have their ID serialized in the monitorData,
-        // find the correct id for all other monitors. monitorBlockInfo.getId should
-        // ignore the given parameters if the monitor in question is not target specific.
+    // Get information about this monitor, if it exists, given the monitor's opcode.
+    // This will be undefined for extension blocks
+    const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
+
+    // Convert the serialized monitorData params into the block fields structure
+    const fields = {};
+    for (const paramKey in monitorData.params) {
+        const field = {
+            name: paramKey,
+            value: monitorData.params[paramKey]
+        };
+        fields[paramKey] = field;
+    }
+
+    // Variables, lists, and non-sprite-specific monitors, including any extension
+    // monitors should already have the correct monitor ID serialized in the monitorData,
+    // find the correct id for all other monitors.
+    if (monitorData.opcode !== 'data_variable' && monitorData.opcode !== 'data_listcontents' &&
+        monitorBlockInfo && monitorBlockInfo.isSpriteSpecific) {
         monitorData.id = monitorBlockInfo.getId(
-            monitorData.targetId, Object.values(monitorData.params)[0]);
+            monitorData.targetId, fields);
     }
 
+    // If the runtime already has a monitor block for this monitor's id,
+    // update the existing block with the relevant monitor information.
     const existingMonitorBlock = runtime.monitorBlocks._blocks[monitorData.id];
     if (existingMonitorBlock) {
         // A monitor block already exists if the toolbox has been loaded and
         // the monitor block is not target specific (because the block gets recycled).
-        // Update the existing block with the relevant monitor information.
         existingMonitorBlock.isMonitored = monitorData.visible;
         existingMonitorBlock.targetId = monitorData.targetId;
+    } else {
+        // If a monitor block doens't already exist for this monitor,
+        // construct a monitor block to add to the monitor blocks container
+        const monitorBlock = {
+            id: monitorData.id,
+            opcode: monitorData.opcode,
+            inputs: {}, // Assuming that monitor blocks don't have droppable fields
+            fields: fields,
+            topLevel: true,
+            next: null,
+            parent: null,
+            shadow: false,
+            x: 0,
+            y: 0,
+            isMonitored: monitorData.visible,
+            targetId: monitorData.targetId
+        };
+
+        // Variables and lists have additional properties
+        // stored in their fields, update this info in the
+        // monitor block fields
+        if (monitorData.opcode === 'data_variable') {
+            const field = monitorBlock.fields.VARIABLE;
+            field.id = monitorData.id;
+            field.variableType = Variable.SCALAR_TYPE;
+        } else if (monitorData.opcode === 'data_listcontents') {
+            const field = monitorBlock.fields.LIST;
+            field.id = monitorData.id;
+            field.variableType = Variable.LIST_TYPE;
+        }
+
+        runtime.monitorBlocks.createBlock(monitorBlock);
     }
     // Otherwise, the monitor block will get created when the toolbox updates
     // after the target has been installed.
