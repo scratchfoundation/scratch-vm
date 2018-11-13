@@ -1,4 +1,5 @@
 const Cast = require('../util/cast');
+const Timer = require('../util/timer');
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
@@ -38,6 +39,43 @@ class Scratch3ControlBlocks {
             control_clear_counter: this.clearCounter,
             control_all_at_once: this.allAtOnce
         };
+    }
+
+    /**
+     * Check the stack timer, and if its time is not up yet, yield the thread.
+     * @param {object} util - utility object provided by the runtime.
+     * @private
+     */
+    _checkStackTimer (util) {
+        const timeElapsed = util.stackFrame.timer.timeElapsed();
+        if (timeElapsed < util.stackFrame.duration) {
+            util.yield();
+        }
+    }
+
+    /**
+     * Check if the stack timer needs initialization.
+     * @param {object} util - utility object provided by the runtime.
+     * @return {boolean} - true if the stack timer needs to be initialized.
+     * @private
+     */
+    _stackTimerNeedsInit (util) {
+        return !util.stackFrame.timer;
+    }
+
+    /**
+     * Start the stack timer and the yield the thread if necessary.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {number} duration - a duration in seconds to set the timer for.
+     * @private
+     */
+    _startStackTimer (util, duration) {
+        duration = Math.max(0, 1000 * Cast.toNumber(duration));
+
+        util.stackFrame.timer = new Timer();
+        util.stackFrame.timer.start();
+        util.stackFrame.duration = duration;
+        util.yield();
     }
 
     getHats () {
@@ -107,13 +145,12 @@ class Scratch3ControlBlocks {
         util.startBranch(1, true);
     }
 
-    wait (args) {
-        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, duration);
-        });
+    wait (args, util) {
+        if (this._stackTimerNeedsInit(util)) {
+            this._startStackTimer(util, args.DURATION);
+        } else {
+            this._checkStackTimer(util);
+        }
     }
 
     if (args, util) {
