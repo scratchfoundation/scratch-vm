@@ -27,6 +27,13 @@ class Cloud {
      */
 
     /**
+     * Part of a cloud io data post indicating a cloud variable was successfully
+     * created.
+     * @typedef {object} VarCreateData
+     * @property {string} name The name of the variable to create
+     */
+
+    /**
      * A cloud io data post message.
      * @typedef {object} CloudIOData
      * @property {VarUpdateData} varUpdate A {@link VarUpdateData} message indicating
@@ -38,14 +45,21 @@ class Cloud {
      * Cloud IO Device responsible for sending and receiving messages from
      * cloud provider (mananging the cloud server connection) and interacting
      * with cloud variables in the current project.
+     * @param {Runtime} runtime The runtime context for this cloud io device.
      */
-    constructor () {
+    constructor (runtime) {
         /**
          * Reference to the cloud data provider, responsible for mananging
          * the web socket connection to the cloud data server.
          * @type {?CloudProvider}
          */
         this.provider = null;
+
+        /**
+         * Reference to the runtime that owns this cloud io device.
+         * @type {!Runtime}
+         */
+        this.runtime = runtime;
 
         /**
          * Reference to the stage target which owns the cloud variables
@@ -80,6 +94,21 @@ class Cloud {
         if (data.varUpdate) {
             this.updateCloudVariable(data.varUpdate);
         }
+
+        if (data.varCreate) {
+            this.createCloudVariable(data.varCreate);
+        }
+    }
+
+    requestCreateCloudVariable (variable) {
+        if (this.runtime.canAddCloudVariable()) {
+            if (this.provider) {
+                this.provider.createVariable(variable.name, variable.value);
+                // We'll set the cloud flag and update the
+                // cloud variable limit when we actually
+                // get a confirmation from the cloud data server
+            }
+        }
     }
 
     /**
@@ -95,9 +124,27 @@ class Cloud {
     }
 
     /**
+     * Create a cloud variable based on the message
+     * received from the cloud provider.
+     * @param {VarCreateData} varCreate A {@link VarCreateData} object received from the
+     * cloud data provider confirming the creation of a cloud variable,
+     * providing its name and value.
+     */
+    createCloudVariable (varCreate) {
+        const varName = varCreate.name;
+
+        const variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE);
+        if (!variable) {
+            log.error(`Could not find cloud variable with name: ${varName}`);
+        }
+        variable.isCloud = true;
+        this.runtime.addCloudVariable();
+    }
+
+    /**
      * Update a cloud variable in the runtime based on the message received
      * from the cloud provider.
-     * @param {VarUpdateData} varUpdate A {@link VarUpdateData} object describing
+     * @param {VarData} varUpdate A {@link VarData} object describing
      * a cloud variable update received from the cloud data provider.
      */
     updateCloudVariable (varUpdate) {

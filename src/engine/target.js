@@ -233,11 +233,16 @@ class Target extends EventEmitter {
      * @param {string} id Id of variable
      * @param {string} name Name of variable.
      * @param {string} type Type of variable, '', 'broadcast_msg', or 'list'
+     * @param {boolean} isCloud Whether the variable to create has the isCloud flag set.
+     * Additional checks are made that the variable can be created as a cloud variable.
      */
-    createVariable (id, name, type) {
+    createVariable (id, name, type, isCloud) {
         if (!this.variables.hasOwnProperty(id)) {
             const newVariable = new Variable(id, name, type, false);
             this.variables[id] = newVariable;
+            if (isCloud && this.isStage) {
+                this.runtime.ioDevices.cloud.requestCreateCloudVariable(newVariable);
+            }
         }
     }
 

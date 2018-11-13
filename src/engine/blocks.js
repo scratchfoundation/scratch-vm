@@ -366,7 +366,7 @@ class Blocks {
             // into a state where a local var was requested for the stage,
             // create a stage (global) var after checking for name conflicts
             // on all the sprites.
-            if (e.isLocal && editingTarget && !editingTarget.isStage) {
+            if (e.isLocal && editingTarget && !editingTarget.isStage && !e.isCloud) {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
                 }
@@ -378,7 +378,7 @@ class Blocks {
                         return;
                     }
                 }
-                stage.createVariable(e.varId, e.varName, e.varType);
+                stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
             }
             break;
         case 'var_rename':
