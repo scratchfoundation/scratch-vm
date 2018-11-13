@@ -1,3 +1,5 @@
+const TOO_BIG = 10 * 1024 * 1024;
+
 const TYPES = {
     NULL: 1,
     TRUE: 2,
@@ -51,15 +53,22 @@ const TYPE_NAMES = Object.entries(TYPES)
     105: 'STRING'
 });
 
+class Viewable {
+    toString () {
+        return this.constructor.name;
+    }
+}
+
 class Field {
-    constructor (classId) {
+    constructor (classId, position) {
         this.classId = classId;
+        this.position = position;
     }
 }
 
 class Value extends Field {
-    constructor (classId, value) {
-        super(classId);
+    constructor (classId, position, value) {
+        super(classId, position);
         this.value = value;
     }
 
@@ -69,15 +78,15 @@ class Value extends Field {
 }
 
 class Header extends Field {
-    constructor (classId, size) {
-        super(classId);
+    constructor (classId, position, size) {
+        super(classId, position);
         this.size = size;
     }
 }
 
 class Reference extends Field {
-    constructor (classId, index) {
-        super(classId);
+    constructor (classId, position, index) {
+        super(classId, position);
         this.index = index;
     }
 
@@ -87,150 +96,522 @@ class Reference extends Field {
 }
 
 class BuiltinObjectHeader extends Header {
-    constructor (classId) {
-        super(classId, 0);
+    constructor (classId, position) {
+        super(classId, position, 0);
     }
 }
 
 class ExtendedObjectHeader extends Header {
-    constructor (classId, version, size) {
-        super(classId, size);
+    constructor (classId, position, version, size) {
+        super(classId, position, size);
         this.version = version;
     }
 }
 
-const int32BE = function (uint8, position) {
-    return (
-        uint8[position + 0] << 24 |
-        uint8[position + 1] << 16 |
-        uint8[position + 2] << 8 |
-        uint8[position + 3]
-    );
-};
+class ByteStream {
+    constructor (buffer, position = 0) {
+        this.buffer = buffer;
+        this.position = position;
 
-const uint32BE = function (uint8, position) {
-    return (
-        uint8[position + 0] << 24 |
-        uint8[position + 1] << 16 |
-        uint8[position + 2] << 8 |
-        uint8[position + 3]
-    ) >>> 0;
-};
-
-const int16BE = function (uint8, position) {
-    return (
-        uint8[position + 0] << 8 |
-        uint8[position + 1]
-    );
-};
-
-const largeInt = function (iter) {
-    let num = 0;
-    let multiplier = 0;
-    const count = int16BE(iter.data, iter.position);
-    iter.position += 2;
-    for (let i = 0; i < count; i++) {
-        num = num + (multiplier * iter.data.getUint8(iter.position++));
-        multiplier *= 256;
+        this.uint8 = new Uint8Array(this.buffer);
     }
-    return num;
-};
 
-const fromDouble = new Float64Array(1);
-const toDouble = new Uint8Array(fromDouble.buffer);
+    read (member) {
+        const value = member.read(this.uint8, this.position);
+        if (member.size === 0) {
+            this.position += member.sizeOf(this.uint8, this.position);
+        } else {
+            this.position += member.size;
+        }
+        return value;
+    }
 
-const doubleBE = function (uint8, position) {
-    toDouble[0] = uint8[position + 0];
-    toDouble[1] = uint8[position + 1];
-    toDouble[2] = uint8[position + 2];
-    toDouble[3] = uint8[position + 3];
-    toDouble[4] = uint8[position + 4];
-    toDouble[5] = uint8[position + 5];
-    toDouble[6] = uint8[position + 6];
-    toDouble[7] = uint8[position + 7];
-    return fromDouble[0];
+    readStruct (StructType) {
+        const obj = new StructType(this.uint8, this.position);
+        this.position += StructType.prototype.size;
+        return obj;
+    }
+
+    resize (needed) {
+        if (this.buffer.byteLength < needed) {
+            const buffer = this.buffer;
+            const uint8 = this.uint8;
+            this.buffer = new ArrayBuffer(Math.pow(2, Math.ceil(Math.log(needed) / Math.log(2))));
+            this.uint8 = new Uint8Array(this.buffer);
+
+            for (let i = 0; i < uint8.length; i++) {
+                this.uint8[i] = uint8[i];
+            }
+        }
+    }
+
+    write (member, value) {
+        if (member.size === 0) {
+            this.resize(this.position + member.writeSizeOf(value));
+        } else {
+            this.resize(this.position + member.size);
+        }
+
+        member.write(this.uint8, this.position, value);
+        if (member.size === 0) {
+            this.position += member.writeSizeOf(this.uint8, this.position);
+        } else {
+            this.position += member.size;
+        }
+        return value;
+    }
+
+    writeStruct (StructType, data) {
+        this.resize(this.position + StructType.prototype.size);
+
+        Object.assign(new StructType(this.uint8, this.position), data);
+        this.position += StructType.prototype.size;
+        return data;
+    }
+
+    writeBytes (bytes, start = 0, end = bytes.length) {
+        assert(bytes instanceof Uint8Array, 'writeBytes must be passed an Uint8Array');
+
+        this.resize(this.position + (end - start));
+
+        for (let i = start; i < end; i++) {
+            this.uint8[this.position + i - start] = bytes[i];
+        }
+        this.position += end - start;
+        return bytes;
+    }
+}
+
+class StructMember {
+    constructor ({
+        size = 0,
+        sizeOf = () => size,
+        writeSizeOf = () => {throw new Error('Not implemented');},
+        toBytes = new Uint8Array(1),
+        read,
+        write}) {
+        this.size = size;
+        this.sizeOf = sizeOf;
+        this.writeSizeOf = writeSizeOf;
+
+        this.toBytes = toBytes;
+        this.bytes = new Uint8Array(toBytes.buffer);
+
+        this.read = read;
+        this.write = write;
+    }
+
+    defineProperty (obj, key, position) {
+        const _this = this;
+
+        Object.defineProperty(obj, key, {
+            get () {
+                return _this.read(this.uint8, position + this.offset);
+            },
+
+            set (value) {
+                return _this.write(this.uint8, position + this.offset, value);
+            },
+
+            enumerable: true
+        });
+    }
+}
+
+const Uint8 = new StructMember({
+    size: 1,
+    read (uint8, position) {
+        return uint8[position];
+    },
+    write (uint8, position, value) {
+        uint8[position] = value;
+        return value;
+    }
+});
+
+const Uint16BE = new StructMember({
+    size: 2,
+    toBytes: new Uint16Array(1),
+    read (uint8, position) {
+        this.bytes[1] = uint8[position + 0];
+        this.bytes[0] = uint8[position + 1];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[1];
+        uint8[position + 1] = this.bytes[0];
+        return value;
+    }
+});
+
+const Int16BE = new StructMember({
+    size: 2,
+    toBytes: new Int16Array(1),
+    read (uint8, position) {
+        this.bytes[1] = uint8[position + 0];
+        this.bytes[0] = uint8[position + 1];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[1];
+        uint8[position + 1] = this.bytes[0];
+        return value;
+    }
+});
+
+const Int32BE = new StructMember({
+    size: 4,
+    toBytes: new Int32Array(1),
+    read (uint8, position) {
+        this.bytes[3] = uint8[position + 0];
+        this.bytes[2] = uint8[position + 1];
+        this.bytes[1] = uint8[position + 2];
+        this.bytes[0] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[3];
+        uint8[position + 1] = this.bytes[2];
+        uint8[position + 2] = this.bytes[1];
+        uint8[position + 3] = this.bytes[0];
+        return value;
+    }
+});
+
+const Uint16LE = new StructMember({
+    size: 2,
+    toBytes: new Uint16Array(1),
+    read (uint8, position) {
+        this.bytes[0] = uint8[position + 0];
+        this.bytes[1] = uint8[position + 1];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[0];
+        uint8[position + 1] = this.bytes[1];
+        return value;
+    }
+});
+
+const Uint32BE = new StructMember({
+    size: 4,
+    toBytes: new Uint32Array(1),
+    read (uint8, position) {
+        this.bytes[3] = uint8[position + 0];
+        this.bytes[2] = uint8[position + 1];
+        this.bytes[1] = uint8[position + 2];
+        this.bytes[0] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[3];
+        uint8[position + 1] = this.bytes[2];
+        uint8[position + 2] = this.bytes[1];
+        uint8[position + 3] = this.bytes[0];
+        return value;
+    }
+});
+
+const Uint32LE = new StructMember({
+    size: 4,
+    toBytes: new Uint32Array(1),
+    read (uint8, position) {
+        this.bytes[0] = uint8[position + 0];
+        this.bytes[1] = uint8[position + 1];
+        this.bytes[2] = uint8[position + 2];
+        this.bytes[3] = uint8[position + 3];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        this.toBytes[0] = value;
+        uint8[position + 0] = this.bytes[0];
+        uint8[position + 1] = this.bytes[1];
+        uint8[position + 2] = this.bytes[2];
+        uint8[position + 3] = this.bytes[3];
+        return value;
+    }
+});
+
+const DoubleBE = new StructMember({
+    size: 8,
+    toBytes: new Float64Array(1),
+    read (uint8, position) {
+        this.bytes[7] = uint8[position + 0];
+        this.bytes[6] = uint8[position + 1];
+        this.bytes[5] = uint8[position + 2];
+        this.bytes[4] = uint8[position + 3];
+        this.bytes[3] = uint8[position + 4];
+        this.bytes[2] = uint8[position + 5];
+        this.bytes[1] = uint8[position + 6];
+        this.bytes[0] = uint8[position + 7];
+        return this.toBytes[0];
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
+
+class FixedAsciiString extends StructMember {
+    constructor (size) {
+        super({
+            size,
+            read (uint8, position) {
+                let str = '';
+                for (let i = 0; i < size; i++) {
+                    str += String.fromCharCode(uint8[position + i]);
+                }
+                return str;
+            },
+            write (uint8, position, value) {
+                for (let i = 0; i < size; i++) {
+                    uint8[position + i] = value.charCodeAt(i);
+                }
+                return value;
+            }
+        });
+    }
+}
+
+class Struct {
+    constructor (shape) {
+        let position = 0;
+        Object.keys(shape).forEach(key => {
+            shape[key].defineProperty(this, key, position);
+            position += prop.size;
+        });
+    }
+}
+
+const struct = shape => {
+    const Base = class {
+        constructor (uint8, offset = 0) {
+            this.uint8 = uint8;
+            this.offset = offset;
+        }
+
+        equals (other) {
+            for (const key in other) {
+                if (this[key] !== other[key]) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        view () {
+            const constructor = this.constructor;
+            const obj = {
+                toString() {
+                    return constructor.name;
+                }
+            };
+            for (const key in shape) {
+                obj[key] = this[key];
+            }
+            return obj;
+        }
+    };
+
+    let position = 0;
+    Object.keys(shape).forEach(key => {
+        shape[key].defineProperty(Base.prototype, key, position);
+        if (shape[key].size === 0) {
+            throw new Error('Struct cannot be defined with variable sized members.');
+        }
+        position += shape[key].size;
+    });
+
+    Base.prototype.size = position;
+
+    return Base;
 };
 
 const assert = function (test, message) {
     if (!test) throw new Error(message);
 };
 
-const asciiString = function (iter) {
-    const count = uint32BE(iter.uint8, iter.position);
-    assert(count < 10 * 1024 * 1024, 'asciiString too big');
-    iter.position += 4;
-    let str = '';
-    for (let i = 0; i < count; i++) {
-        str += String.fromCharCode(iter.uint8[iter.position++]);
+const int32BE = function (uint8, position) {
+    return Int32BE.read(uint8, position);
+};
+
+const uint32BE = function (uint8, position) {
+    return Uint32BE.read(uint8, position);
+};
+
+const int16BE = function (uint8, position) {
+    return Int16BE.read(uint8, position);
+};
+
+const LargeInt = new StructMember({
+    sizeOf (uint8, position) {
+        const count = Int16BE.read(uint8, position);
+        return Int16BE.size + count;
+    },
+    read (uint8, position) {
+        let num = 0;
+        let multiplier = 0;
+        const count = Int16BE.read(uint8, position);
+        for (let i = 0; i < count; i++) {
+            num = num + (multiplier * Uint8.read(uint8, position++));
+            multiplier *= 256;
+        }
+        return num;
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
     }
-    return str;
-};
+});
 
-const uint8 = function (iter, count) {
-    const value = new Uint8Array(iter.buffer, iter.position, count);
-    assert(count < 10 * 1024 * 1024, 'uint8 array too big');
-    iter.position += count;
-    return value;
-};
-
-const bytes = function (iter) {
-    const count = uint32BE(iter.uint8, iter.position);
-    assert(count < 10 * 1024 * 1024, 'bytes too big');
-    iter.position += 4;
-    return uint8(iter, count);
-};
-
-const sound = function (iter) {
-    const count = uint32BE(iter.uint8, iter.position);
-    assert(count < 10 * 1024 * 1024, 'sound too big');
-    iter.position += 4;
-    return uint8(iter, count * 2);
-};
-
-const bitmap = function (iter) {
-    const count = uint32BE(iter.uint8, iter.position);
-    assert(count < 10 * 1024 * 1024, 'bitmap too big');
-    iter.position += 4;
-    const value = new Uint32Array(count);
-    for (let i = 0; i < count; i++) {
-        value[i] = uint32BE(iter.uint8, iter.position);
-        iter.position += 4;
+const AsciiString = new StructMember({
+    sizeOf (uint8, position) {
+        const count = Uint32BE.read(uint8, position);
+        return Uint32BE.size + count;
+    },
+    read (uint8, position) {
+        const count = Uint32BE.read(uint8, position);
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'asciiString too big');
+        }
+        position += 4;
+        let str = '';
+        for (let i = 0; i < count; i++) {
+            str += String.fromCharCode(uint8[position++]);
+        }
+        return str;
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
     }
-    return value;
-};
+});
+
+const Bytes = new StructMember({
+    sizeOf (uint8, position) {
+        return Uint32BE.size + Uint32BE.read(uint8, position);
+    },
+    read (uint8, position) {
+        const count = Uint32BE.read(uint8, position);
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'bytes too big');
+        }
+        position += Uint32BE.size;
+
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'uint8 array too big');
+        }
+        return new Uint8Array(uint8.buffer, position, count);
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
+
+const SoundBytes = new StructMember({
+    sizeOf (uint8, position) {
+        return Uint32BE.size + Uint32BE.read(uint8, position) * 2;
+    },
+    read (uint8, position) {
+        const samples = Uint32BE.read(uint8, position);
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(samples < TOO_BIG, 'sound too big');
+        }
+        position += Uint32BE.size;
+
+        const count = samples * 2;
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'uint8 array too big');
+        }
+        return new Uint8Array(uint8.buffer, position, count);
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
+
+const Bitmap32BE = new StructMember({
+    sizeOf (uint8, position) {
+        return Uint32BE.size + Uint32BE.read(uint8, position) * Uint32BE.size;
+    },
+    read (uint8, position) {
+        const count = Uint32BE.read(uint8, position);
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'bitmap too big');
+        }
+        position += Uint32BE.size;
+
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'uint8 array too big');
+        }
+        const value = new Uint32Array(count);
+        for (let i = 0; i < count; i++) {
+            value[i] = Uint32BE.read(uint8, position);
+            position += Uint32BE.size;
+        }
+        return value;
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
 
 const decoder = new TextDecoder();
 
-const utf8 = function (iter) {
-    const count = uint32BE(iter.uint8, iter.position);
-    assert(count < 10 * 1024 * 1024, 'utf8 too big');
-    iter.position += 4;
-    return decoder.decode(uint8(iter, count));
-};
+const UTF8 = new StructMember({
+    sizeOf (uint8, position) {
+        return Uint32BE.size + Uint32BE.read(uint8, position);
+    },
+    read (uint8, position) {
+        const count = Uint32BE.read(uint8, position);
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'utf8 too big');
+        }
+        position += Uint32BE.size;
 
-// const arrayHeader = function (iter) {
-//     const count = int32BE(iter.uint8, iter.position);
-//     iter.position += 4;
-//     const value = new Array(count);
-//     for (let i = 0; i < count; i++) {
-//         value[i]
-//     }
-// };
-
-const color = function (iter, classId) {
-    const rgb = uint32BE(iter.uint8, iter.position);
-    iter.position += 4;
-    let a = 0xff;
-    if (classId === TYPES.TRANSLUCENT_COLOR) {
-        a = iter.uint8[iter.position++];
+        if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+            assert(count < TOO_BIG, 'uint8 array too big');
+        }
+        return decoder.decode(new Uint8Array(uint8.buffer, position, count));
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
     }
-    const r = (rgb >> 22) & 0xff;
-    const g = (rgb >> 12) & 0xff;
-    const b = (rgb >> 2) & 0xff;
-    return (a << 24 | r << 16 | g << 8 | b) >>> 0;
-};
+});
 
-const objectRef = function (iter) {
+const OpaqueColor = new StructMember({
+    size: 4,
+    read (uint8, position) {
+        const rgb = Uint32BE.read(uint8, position);
+        const a = 0xff;
+        const r = (rgb >> 22) & 0xff;
+        const g = (rgb >> 12) & 0xff;
+        const b = (rgb >> 2) & 0xff;
+        return (a << 24 | r << 16 | g << 8 | b) >>> 0;
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
+
+const TranslucentColor = new StructMember({
+    size: 5,
+    read (uint8, position) {
+        const rgb = Uint32BE.read(uint8, position);
+        const a = Uint8.read(uint8, position);
+        const r = (rgb >> 22) & 0xff;
+        const g = (rgb >> 12) & 0xff;
+        const b = (rgb >> 2) & 0xff;
+        return (a << 24 | r << 16 | g << 8 | b) >>> 0;
+    },
+    write (uint8, position, value) {
+        throw new Error('Not implemented.');
+    }
+});
+
+const objectRef = function (iter, position) {
     index = (
         iter.uint8[iter.position + 0] << 16 |
         iter.uint8[iter.position + 1] << 8 |
@@ -238,23 +619,23 @@ const objectRef = function (iter) {
     );
     iter.position += 3;
     return {
-        value: new Reference(TYPES.OBJECT_REF, index),
+        value: new Reference(TYPES.OBJECT_REF, position, index),
         done: false
     };
 };
 
-const builtin = function (iter, classId) {
+const builtin = function (iter, classId, position) {
     return {
-        value: new BuiltinObjectHeader(classId),
+        value: new BuiltinObjectHeader(classId, position),
         done: false
     };
 }
 
-const extended = function (iter, classId) {
+const extended = function (iter, classId, position) {
     const classVersion = iter.uint8[iter.position++];
     const size = iter.uint8[iter.position++];
     return {
-        value: new ExtendedObjectHeader(classId, classVersion, size),
+        value: new ExtendedObjectHeader(classId, position, classVersion, size),
         done: false
     };
 };
@@ -283,12 +664,21 @@ class SB1TakeIterator {
     }
 }
 
-class SB1Iterator {
+class SB1TokenIterator {
     constructor (buffer, position) {
         this.buffer = buffer;
-        this.uint8 = new Uint8Array(buffer);
+        this.stream = new ByteStream(buffer, position);
         this.view = new DataView(buffer);
-        this.position = position;
+        this.uint8 = new Uint8Array(buffer);
+        Object.defineProperty(this, 'position', {
+            get () {
+                return this.stream.position;
+            },
+            set (value) {
+                this.stream.position = value;
+                return value;
+            }
+        });
     }
 
     [Symbol.iterator] () {
@@ -303,7 +693,8 @@ class SB1Iterator {
             };
         }
 
-        const classId = this.uint8[this.position++];
+        const position = this.position;
+        const classId = this.stream.read(Uint8);
         let value;
         let headerSize;
 
@@ -321,63 +712,61 @@ class SB1Iterator {
             break;
 
         case TYPES.SMALL_INT:
-            value = int32BE(this.uint8, this.position);
-            this.position += 4;
+            value = this.stream.read(Int32BE);
             break;
 
         case TYPES.SMALL_INT_16:
-            value = int16BE(this.uint8, this.position);
-            this.position += 2;
+            value = this.stream.read(Int16BE);
             break;
 
         case TYPES.LARGE_INT_POSITIVE:
         case TYPES.LARGE_INT_NEGATIVE:
-            value = largeInt(this);
+            value = this.stream.read(LargeInt);
             break;
 
         case TYPES.FLOATING:
-            value = doubleBE(this.uint8, this.position);
-            this.position += 8;
+            value = this.stream.read(DoubleBE);
             break;
 
         case TYPES.STRING:
         case TYPES.SYMBOL:
-            value = asciiString(this);
+            value = this.stream.read(AsciiString);
             break;
 
         case TYPES.BYTES:
-            value = bytes(this);
+            value = this.stream.read(Bytes);
             break;
 
         case TYPES.SOUND:
-            value = sound(this);
+            value = this.stream.read(SoundBytes);
             break;
 
         case TYPES.BITMAP:
-            value = bitmap(this);
+            value = this.stream.read(Bitmap32BE);
             break;
 
         case TYPES.UTF8:
-            value = utf8(this);
+            value = this.stream.read(UTF8);
             break;
 
         case TYPES.ARRAY:
         case TYPES.ORDERED_COLLECTION:
         case TYPES.SET:
         case TYPES.IDENTITY_SET:
-            headerSize = int32BE(this.uint8, this.position);
-            this.position += 4;
+            headerSize = this.stream.read(Int32BE);
             break;
 
         case TYPES.DICTIONARY:
         case TYPES.IDENTITY_DICTIONARY:
-            headerSize = int32BE(this.uint8, this.position) * 2;
-            this.position += 4;
+            headerSize = this.stream.read(Int32BE) * 2;
             break;
 
         case TYPES.COLOR:
+            value = this.stream.read(OpaqueColor);
+            break;
+
         case TYPES.TRANSLUCENT_COLOR:
-            value = color(this, classId);
+            value = this.stream.read(TranslucentColor);
             break;
 
         case TYPES.POINT:
@@ -394,32 +783,32 @@ class SB1Iterator {
             break;
 
         case TYPES.OBJECT_REF:
-            return objectRef(this);
+            return objectRef(this, position);
             break;
 
         default:
             if (classId < TYPES.OBJECT_REF) {
-                return builtin(this, classId);
+                return builtin(this, classId, position);
             } else {
-                return extended(this, classId);
+                return extended(this, classId, position);
             }
         }
 
         if (typeof value !== 'undefined') {
             return {
-                value: new Value(classId, value),
+                value: new Value(classId, position, value),
                 done: false
             };
         } else {
             return {
-                value: new Header(classId, headerSize),
+                value: new Header(classId, position, headerSize),
                 done: false
             };
         }
     }
 }
 
-window.SB1Iterator = SB1Iterator;
+window.SB1TokenIterator = SB1TokenIterator;
 
 const objectArray = function (objectIterator, header) {
     const array = [];
@@ -429,54 +818,6 @@ const objectArray = function (objectIterator, header) {
     }
 
     return array;
-};
-
-const objectDictionary = function (objectIterator, header) {
-    const dict = [];
-
-    for (let i = 0; i < header.size; i += 2) {
-        dict.push(objectIterator.next().value);
-        dict.push(objectIterator.next().value);
-    }
-
-    return dict;
-};
-
-const objectPoint = function (objectIterator, header) {
-    return {
-        classId: TYPES.POINT,
-        x: objectIterator.next().value,
-        y: objectIterator.next().value
-    };
-};
-
-const objectRectangle = function (objectIterator, header) {
-    return {
-        classId: TYPES.RECTANGLE,
-        x: objectIterator.next().value,
-        y: objectIterator.next().value,
-        width: objectIterator.next().value,
-        height: objectIterator.next().value
-    };
-};
-
-const objectImage = function (objectIterator, header) {
-    return {
-        classId: header.classId,
-        width: objectIterator.next().value,
-        height: objectIterator.next().value,
-        encoding: objectIterator.next().value,
-        something: objectIterator.next().value,
-        bytes: objectIterator.next().value,
-        colormap: header.classId === TYPES.SQUEAK ? objectIterator.next().value : null
-    };
-};
-
-const objectBuiltin = function (objectIterator, header) {
-    return {
-        classId: header.classId,
-        value: objectIterator.read(header, header.classId).value
-    };
 };
 
 class ExtendedData {
@@ -550,7 +891,7 @@ class RectangleData extends ExtendedData {
 const IMAGE_FIELDS = {
     WIDTH: 0,
     HEIGHT: 1,
-    ENCODING: 2,
+    DEPTH: 2,
     SOMETHING: 3,
     BYTES: 4,
     COLORMAP: 5
@@ -565,8 +906,8 @@ class ImageData extends ExtendedData {
         return this.fields[IMAGE_FIELDS.HEIGHT];
     }
 
-    get encoding () {
-        return this.fields[IMAGE_FIELDS.ENCODING];
+    get depth () {
+        return this.fields[IMAGE_FIELDS.DEPTH];
     }
 
     get something () {
@@ -589,15 +930,15 @@ class ImageData extends ExtendedData {
                     PNGFile.encode(
                         this.width,
                         this.height,
-                        new Uint8Array(
+                        _bgra2rgbaInPlace(new Uint8Array(
                             new SqueakImageDecoder().decode(
                                 this.width.value,
                                 this.height.value,
-                                this.encoding.value,
+                                this.depth.value,
                                 this.bytes.value,
                                 this.colormap
                             ).buffer
-                        )
+                        ))
                     )
                 ],
                 { type: 'image/png' }
@@ -929,7 +1270,7 @@ class SB1ObjectIterator {
 
         case TYPES.DICTIONARY:
         case TYPES.IDENTITY_DICTIONARY:
-            value = objectDictionary(this, header);
+            value = objectArray(this, header);
             break;
 
         case TYPES.POINT:
@@ -1049,7 +1390,7 @@ class SB1ReferenceFixer {
         } else if (typeof item.bytes !== 'undefined') {
             item.width = this.deref(item.width);
             item.height = this.deref(item.height);
-            item.encoding = this.deref(item.encoding);
+            item.depth = this.deref(item.depth);
             item.something = this.deref(item.something);
             item.bytes = this.deref(item.bytes);
             item.colormap = this.deref(item.colormap);
@@ -1070,30 +1411,89 @@ class SB1ReferenceFixer {
 
 window.SB1ReferenceFixer = SB1ReferenceFixer;
 
+class SB1Signature extends struct({
+    version: new FixedAsciiString(10),
+    infoByteLength: Uint32BE
+}) {
+    validate () {
+        assert(
+            this.equals({version: 'ScratchV01'}) ||
+            this.equals({version: 'ScratchV02'}),
+            'Invalid Scratch file signature.'
+        );
+    }
+}
+
+class SB1BlockHeader extends struct({
+    ObjS: new FixedAsciiString(4),
+    ObjSValue: Uint8,
+    Stch: new FixedAsciiString(4),
+    StchValue: Uint8,
+    numObjects: Uint32BE
+}) {
+    validate () {
+        assert(
+            this.equals({
+                ObjS: 'ObjS', ObjSValue: 1,
+                Stch: 'Stch', StchValue: 1
+            }),
+            'Invalid Scratch file info block header.'
+        );
+    }
+}
+
 class SB1File {
     constructor (buffer) {
         this.buffer = buffer;
         this.uint8 = new Uint8Array(buffer);
-        this.infoPosition = 14;
-        this.infoLength = int32BE(this.uint8, this.infoPosition + 10);
-        this.dataPosition = int32BE(this.uint8, 10) + 14;
-        this.dataLength = int32BE(this.uint8, this.dataPosition + 10);
+
+        this.signature = new SB1Signature(this.uint8, 0);
+        this.signature.validate();
+
+        this.infoBlockHeader = new SB1BlockHeader(this.uint8, SB1Signature.prototype.size);
+        this.infoBlockHeader.validate();
+        this.infoPosition = this.infoBlockHeader.offset;
+        this.infoLength = this.infoBlockHeader.numObjects;
+
+        this.dataBlockHeader = new SB1BlockHeader(this.uint8, this.signature.infoByteLength + SB1Signature.prototype.size);
+        this.dataBlockHeader.validate();
+        this.dataPosition = this.dataBlockHeader.offset;
+        this.dataLength = this.dataBlockHeader.numObjects;
+    }
+
+    view () {
+        return {
+            signature: this.signature,
+            infoBlockHeader: this.infoBlockHeader,
+            dataBlockHeader: this.dataBlockHeader,
+            toString() {
+                return 'SB1File';
+            }
+        };
     }
 
     infoRaw () {
-        return new SB1TokenObjectTakeIterator(new SB1Iterator(this.buffer, this.infoPosition + 14), this.infoLength);
+        return new SB1TokenObjectTakeIterator(new SB1TokenIterator(this.buffer, this.infoPosition + SB1BlockHeader.prototype.size), this.infoLength);
+    }
+
+    infoTable () {
+        return new SB1ObjectIterator(this.infoRaw(), this.infoLength);
     }
 
     info () {
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.infoRaw(), this.infoLength)).table[0];
+        return new SB1ReferenceFixer(this.infoTable()).table[0];
     }
 
     dataRaw () {
-        return new SB1TokenObjectTakeIterator(new SB1Iterator(this.buffer, this.dataPosition + 14), this.dataLength);
+        return new SB1TokenObjectTakeIterator(new SB1TokenIterator(this.buffer, this.dataPosition + SB1BlockHeader.prototype.size), this.dataLength);
+    }
+
+    dataTable () {
+        return new SB1ObjectIterator(this.dataRaw(), this.dataLength);
     }
 
     data () {
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table[0];
+        return new SB1ReferenceFixer(this.dataTable()).table[0];
     }
 
     images () {
@@ -1105,7 +1505,7 @@ class SB1File {
                 const crc = new CRC32()
                 .update(new Uint8Array(new Uint32Array([obj.bitmap.width]).buffer))
                 .update(new Uint8Array(new Uint32Array([obj.bitmap.height]).buffer))
-                .update(new Uint8Array(new Uint32Array([obj.bitmap.encoding]).buffer))
+                .update(new Uint8Array(new Uint32Array([obj.bitmap.depth]).buffer))
                 .update(array);
                 if (obj.bitmap.colormap) {
                     crc.update(new Uint8Array(new Uint32Array(obj.bitmap.colormap).buffer));
@@ -1136,6 +1536,42 @@ class SB1File {
 }
 
 window.SB1File = SB1File;
+
+class SB1ArraySubView {
+    constructor (array, start, end) {
+        this.array = array instanceof SB1ArraySubView ? array.array: array;
+        this.start = start;
+        this.end = end;
+    }
+
+    get length () {
+        return this.end - this.start;
+    }
+
+    map (fn) {
+        const out = [];
+        for (let i = this.start; i < this.end; i++) {
+            out.push(fn(this.array[i], i, this));
+        }
+        return out;
+    }
+
+    static views (array) {
+        if (array.length > 100) {
+            const scale = Math.pow(10, Math.ceil(Math.log(array.length) / Math.log(10)));
+            const increment = scale / 10;
+
+            const views = [];
+            for (let i = (array.start || 0); i < (array.end || array.length); i += increment) {
+                views.push(new SB1ArraySubView(array, i, Math.min(i + increment, array.end || array.length)));
+                assert(views.length <= 10, 'Too many subviews');
+            }
+            return views;
+        } else {
+            return array;
+        }
+    }
+}
 
 const _expanded = {};
 
@@ -1255,6 +1691,22 @@ class SB1View {
                     }
                 });
             });
+        } else if (this.data && typeof this.data.view === 'function') {
+            const view = this.data.view();
+            this.renderArrow();
+            this.renderTitle(view);
+            this.renderExpand(() => {
+                return Object.entries(view)
+                .filter(([, value]) => typeof value !== 'function')
+                .map(([name]) => {
+                    try {
+                        return new SB1View(view[name], name, `${this.path}.${name}`);
+                    } catch (err) {
+                        console.error(err);
+                        return new SB1View('An error occured rendering this data.', name, `${this.path}.${name}`);
+                    }
+                });
+            });
         } else if (this.data instanceof Reference) {
             this.renderTitle(`Reference { index: ${this.data.index} }`);
         } else if (this.data instanceof Header) {
@@ -1267,11 +1719,11 @@ class SB1View {
             } else {
                 this.renderTitle('' + this.data);
             }
-        } else if (Array.isArray(this.data)) {
+        } else if (Array.isArray(this.data) || this.data instanceof SB1ArraySubView) {
             if (this.data.length) this.renderArrow();
             this.renderTitle(`Array (${this.data.length})`);
             if (this.data.length) this.renderExpand(() => {
-                return this.data.map((field, index) => new SB1View(field, index + 1, `${this.path}[${index}]`));
+                return SB1ArraySubView.views(this.data).map((field, index) => new SB1View(field, field instanceof SB1ArraySubView ? `${field.start + 1} - ${field.end}` : index + 1, `${this.path}[${index}]`));
             });
         } else if (['string', 'number', 'boolean'].includes(typeof this.data)) {
             this.renderTitle('' + this.data);
@@ -1290,191 +1742,6 @@ class SB1View {
 }
 
 window.SB1View = SB1View;
-
-class StructMember {
-    constructor ({size, toBytes = new Uint8Array(1), read, write}) {
-        this.size = size;
-
-        this.toBytes = toBytes;
-        this.bytes = new Uint8Array(toBytes.buffer);
-
-        this.read = read;
-        this.write = write;
-    }
-
-    defineProperty (obj, key, position) {
-        const _this = this;
-
-        Object.defineProperty(obj, key, {
-            get () {
-                return _this.read(this.uint8, position + this.offset);
-            },
-
-            set (value) {
-                return _this.write(this.uint8, position + this.offset, value);
-            },
-
-            enumerable: true
-        });
-    }
-}
-
-const Uint8 = new StructMember({
-    size: 1,
-    read (uint8, position) {
-        return uint8[position];
-    },
-    write (uint8, position, value) {
-        uint8[position] = value;
-        return value;
-    }
-});
-
-const Uint16BE = new StructMember({
-    size: 2,
-    toBytes: new Uint16Array(1),
-    read (uint8, position) {
-        this.bytes[1] = uint8[position + 0];
-        this.bytes[0] = uint8[position + 1];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[1];
-        uint8[position + 1] = this.bytes[0];
-        return value;
-    }
-});
-
-const Int32BE = new StructMember({
-    size: 4,
-    toBytes: new Int32Array(1),
-    read (uint8, position) {
-        this.bytes[3] = uint8[position + 0];
-        this.bytes[2] = uint8[position + 1];
-        this.bytes[1] = uint8[position + 2];
-        this.bytes[0] = uint8[position + 3];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[3];
-        uint8[position + 1] = this.bytes[2];
-        uint8[position + 2] = this.bytes[1];
-        uint8[position + 3] = this.bytes[0];
-        return value;
-    }
-});
-
-const Uint16LE = new StructMember({
-    size: 2,
-    toBytes: new Uint16Array(1),
-    read (uint8, position) {
-        this.bytes[0] = uint8[position + 0];
-        this.bytes[1] = uint8[position + 1];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[0];
-        uint8[position + 1] = this.bytes[1];
-        return value;
-    }
-});
-
-const Uint32BE = new StructMember({
-    size: 4,
-    toBytes: new Uint32Array(1),
-    read (uint8, position) {
-        this.bytes[3] = uint8[position + 0];
-        this.bytes[2] = uint8[position + 1];
-        this.bytes[1] = uint8[position + 2];
-        this.bytes[0] = uint8[position + 3];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[3];
-        uint8[position + 1] = this.bytes[2];
-        uint8[position + 2] = this.bytes[1];
-        uint8[position + 3] = this.bytes[0];
-        return value;
-    }
-});
-
-const Uint32LE = new StructMember({
-    size: 4,
-    toBytes: new Uint32Array(1),
-    read (uint8, position) {
-        this.bytes[0] = uint8[position + 0];
-        this.bytes[1] = uint8[position + 1];
-        this.bytes[2] = uint8[position + 2];
-        this.bytes[3] = uint8[position + 3];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[0];
-        uint8[position + 1] = this.bytes[1];
-        uint8[position + 2] = this.bytes[2];
-        uint8[position + 3] = this.bytes[3];
-        return value;
-    }
-});
-
-class FixedAsciiString extends StructMember {
-    constructor (size) {
-        super({
-            size,
-            read (uint8, position) {
-                let str = '';
-                for (let i = 0; i < size; i++) {
-                    str += String.fromCharCode(uint8[position + i]);
-                }
-                return str;
-            },
-            write (uint8, position, value) {
-                for (let i = 0; i < size; i++) {
-                    uint8[position + i] = value.charCodeAt(i);
-                }
-                return value;
-            }
-        });
-    }
-}
-
-class Struct {
-    constructor (shape) {
-        let position = 0;
-        Object.keys(shape).forEach(key => {
-            shape[key].defineProperty(this, key, position);
-            position += prop.size;
-        });
-    }
-}
-
-const struct = shape => {
-    const Base = class {
-        constructor (uint8, offset = 0) {
-            // Object.defineProperties(this, {
-            //     uint8: {enumerable: false},
-            //     offset: {enumerable: false}
-            // })
-            this.uint8 = uint8;
-            this.offset = offset;
-        }
-    };
-
-    let position = 0;
-    Object.keys(shape).forEach(key => {
-        shape[key].defineProperty(Base.prototype, key, position);
-        position += shape[key].size;
-    });
-
-    Base.prototype.size = position;
-
-    return Base;
-};
 
 class PNGSignature extends struct({
     support8Bit: Uint8,
@@ -1576,17 +1843,18 @@ class Adler32 {
     }
 }
 
+const _bgra2rgbaInPlace = uint8 => {
+    for (let i = 0; i < uint8.length; i += 4) {
+        const r = uint8[i + 2];
+        const b = uint8[i + 0];
+        uint8[i + 2] = b;
+        uint8[i + 0] = r;
+    }
+    return uint8;
+};
+
 class PNGFile {
-    encode (width, height, pixels) {
-        const pixelsUint8 = new Uint8Array(pixels);
-
-        for (let i = 0; i < pixelsUint8.length; i += 4) {
-            const r = pixelsUint8[i + 2];
-            const b = pixelsUint8[i + 0];
-            pixelsUint8[i + 2] = b;
-            pixelsUint8[i + 0] = r;
-        }
-
+    encode (width, height, pixelsUint8) {
         const rowSize = width * 4 + PNGFilterMethodByte.prototype.size;
         const bodySize = rowSize * height;
         let bodyRemaining = bodySize;
@@ -1614,24 +1882,25 @@ class PNGFile {
         const buffer = new ArrayBuffer(size);
         const uint8 = new Uint8Array(buffer);
 
+        const stream = new ByteStream(new ArrayBuffer(size));
+
         let position = 0;
 
-        Object.assign(new PNGSignature(uint8, position), {
+        stream.writeStruct(PNGSignature, {
             support8Bit: 0x89,
             png: 'PNG',
             dosLineEnding: '\r\n',
             dosEndOfFile: '\x1a',
             unixLineEnding: '\n'
         });
-        position += PNGSignature.prototype.size;
 
-        Object.assign(new PNGChunkStart(uint8, position), {
+        stream.writeStruct(PNGChunkStart, {
             length: PNGIHDRChunkBody.prototype.size,
             chunkType: 'IHDR'
         });
-        position += PNGChunkStart.prototype.size;
 
-        Object.assign(new PNGIHDRChunkBody(uint8, position), {
+        const ihdrBlockPosition = stream.position;
+        stream.writeStruct(PNGIHDRChunkBody, {
             width,
             height,
             bitDepth: 8,
@@ -1640,32 +1909,27 @@ class PNGFile {
             filterMethod: 0,
             interlaceMethod: 0
         });
-        const headerChecksum = new CRC32()
-            .update(uint8, position - 4, PNGIHDRChunkBody.prototype.size + 4)
-            .digest;
-        position += PNGIHDRChunkBody.prototype.size;
 
-        Object.assign(new PNGChunkEnd(uint8, position), {
-            checksum: headerChecksum
+        stream.writeStruct(PNGChunkEnd, {
+            checksum: new CRC32()
+            .update(stream.uint8, ihdrBlockPosition - 4, PNGIHDRChunkBody.prototype.size + 4)
+            .digest
         });
-        position += PNGChunkEnd.prototype.size;
 
-        Object.assign(new PNGChunkStart(uint8, position), {
+        stream.writeStruct(PNGChunkStart, {
             length: idatSize,
             chunkType: 'IDAT'
         });
-        position += PNGChunkStart.prototype.size;
 
-        Object.assign(new DeflateHeader(uint8, position), {
+        stream.writeStruct(DeflateHeader, {
             cmf: 0b00001000,
             flag: 0b00011101
         });
-        position += DeflateHeader.prototype.size;
 
         const deflateAdler = new Adler32();
         const pngCrc = new CRC32();
 
-        pngCrc.update(uint8, position - Uint32BE.size - DeflateHeader.prototype.size, Uint32BE.size + DeflateHeader.prototype.size);
+        pngCrc.update(stream.uint8, stream.position - Uint32BE.size - DeflateHeader.prototype.size, Uint32BE.size + DeflateHeader.prototype.size);
 
         let deflateIndex = 0;
 
@@ -1675,27 +1939,25 @@ class PNGFile {
         while (pixelsIndex < pixelsUint8.length) {
             if (deflateIndex === 0) {
                 const deflateChunkSize = Math.min(bodyRemaining, DEFLATE_BLOCK_SIZE_MAX);
-                Object.assign(new DeflateChunkStart(uint8, position), {
+                const deflateChunkPosition = stream.position;
+                stream.writeStruct(DeflateChunkStart, {
                     lastBlock: deflateChunkSize === bodyRemaining ? 1 : 0,
                     length: deflateChunkSize,
                     lengthCheck: deflateChunkSize ^ 0xffff
                 });
-                console.log(deflateChunkSize);
 
-                pngCrc.update(uint8, position, DeflateChunkStart.prototype.size);
-
-                position += DeflateChunkStart.prototype.size;
+                pngCrc.update(stream.uint8, deflateChunkPosition, DeflateChunkStart.prototype.size);
             }
 
             if (rowIndex === 0) {
-                Object.assign(new PNGFilterMethodByte(uint8, position), {
+                const filterBytePosition = stream.position;
+                stream.writeStruct(PNGFilterMethodByte, {
                     method: 0
                 });
 
-                deflateAdler.update(uint8, position, PNGFilterMethodByte.prototype.size);
-                pngCrc.update(uint8, position, PNGFilterMethodByte.prototype.size);
+                deflateAdler.update(stream.uint8, filterBytePosition, PNGFilterMethodByte.prototype.size);
+                pngCrc.update(stream.uint8, filterBytePosition, PNGFilterMethodByte.prototype.size);
 
-                position += PNGFilterMethodByte.prototype.size;
                 rowIndex += PNGFilterMethodByte.prototype.size;
                 bodyRemaining -= PNGFilterMethodByte.prototype.size;
                 deflateIndex += PNGFilterMethodByte.prototype.size;
@@ -1706,15 +1968,13 @@ class PNGFile {
                     DEFLATE_BLOCK_SIZE_MAX - deflateIndex
                 );
 
-                for (let i = 0; i < rowPartialSize; i++) {
-                    uint8[position + i] = pixelsUint8[pixelsIndex + i];
-                }
+                const bytesPosition = stream.position;
+                stream.writeBytes(pixelsUint8, pixelsIndex, pixelsIndex + rowPartialSize);
 
-                deflateAdler.update(uint8, position, rowPartialSize);
-                pngCrc.update(uint8, position, rowPartialSize);
+                deflateAdler.update(stream.uint8, bytesPosition, rowPartialSize);
+                pngCrc.update(stream.uint8, bytesPosition, rowPartialSize);
 
                 pixelsIndex += rowPartialSize;
-                position += rowPartialSize;
                 rowIndex += rowPartialSize;
                 bodyRemaining -= rowPartialSize;
                 deflateIndex += rowPartialSize;
@@ -1730,28 +1990,24 @@ class PNGFile {
             }
         }
 
-        Object.assign(new DeflateEnd(uint8, position), {
+        stream.writeStruct(DeflateEnd, {
             checksum: deflateAdler.digest
         });
-        position += DeflateEnd.prototype.size;
 
-        Object.assign(new PNGChunkEnd(uint8, position), {
+        stream.writeStruct(PNGChunkEnd, {
             checksum: pngCrc.digest
         });
-        position += PNGChunkEnd.prototype.size;
 
-        Object.assign(new PNGChunkStart(uint8, position), {
+        stream.writeStruct(PNGChunkStart, {
             length: 0,
             chunkType: 'IEND'
         });
-        position += PNGChunkStart.prototype.size;
 
-        Object.assign(new PNGChunkEnd(uint8, position), {
+        stream.writeStruct(PNGChunkEnd, {
             checksum: 0xae426082
         });
-        position += PNGChunkEnd.prototype.size;
 
-        return buffer;
+        return stream.buffer;
     }
 
     static encode (width, height, pixels) {
@@ -1865,7 +2121,6 @@ class SqueakImageDecoder {
                 }
             }
         }
-        console.log(i, pixelsOut, position, bytes.length);
 
         return result;
     }
@@ -1981,7 +2236,9 @@ class SqueakSoundDecoder {
         for (let i = 0; i < size; i++) {
             const code = this.nextCode(data);
 
-            assert(code >= 0, 'Ran out of bits in Squeak Sound');
+            if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
+                assert(code >= 0, 'Ran out of bits in Squeak Sound');
+            }
 
             step = SQUEAK_SOUND_STEP_SIZE_TABLE[index];
             let delta = 0;
@@ -2155,4 +2412,4 @@ const defaultColorMap = [
 
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
-module.exports = SB1Iterator;
+module.exports = SB1TokenIterator;
