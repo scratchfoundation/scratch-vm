@@ -50,7 +50,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
     }
     return new Promise((resolve, reject) => {
         const baseImageElement = new Image();
-        const textImageElement = new Image();
+        let textImageElement;
 
         let loadedOne = false;
 
@@ -71,17 +71,19 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
 
         const removeEventListeners = function () {
             baseImageElement.removeEventListener('error', onError);
-            textImageElement.removeEventListener('error', onError);
             baseImageElement.removeEventListener('load', onLoad);
-            textImageElement.removeEventListener('load', onLoad);
+            if (textImageElement) {
+                textImageElement.removeEventListener('error', onError);
+                textImageElement.removeEventListener('load', onLoad);
+            }
         };
 
-        baseImageElement.addEventListener('error', onError);
-        textImageElement.addEventListener('error', onError);
         baseImageElement.addEventListener('load', onLoad);
-        textImageElement.addEventListener('load', onLoad);
-
+        baseImageElement.addEventListener('error', onError);
         if (costume.textLayerAsset) {
+            textImageElement = new Image();
+            textImageElement.addEventListener('load', onLoad);
+            textImageElement.addEventListener('error', onError);
             textImageElement.src = costume.textLayerAsset.encodeDataURI();
         } else {
             loadedOne = true;
@@ -97,7 +99,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
 
         const ctx = canvas.getContext('2d');
         ctx.drawImage(baseImageElement, 0, 0);
-        if (textImageElement.src) {
+        if (textImageElement) {
             ctx.drawImage(textImageElement, 0, 0);
         }
         if (scale !== 1) {
@@ -120,7 +122,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             canvas: canvas,
             rotationCenter: rotationCenter,
             // True if the asset matches the base layer; false if it required adjustment
-            assetMatchesBase: scale === 1 && !textImageElement.src
+            assetMatchesBase: scale === 1 && !textImageElement
         };
     })
         .catch(e => Promise.reject(e))
@@ -135,7 +137,7 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
     return fetchBitmapCanvas_(costume, runtime, rotationCenter).then(fetched => new Promise(resolve => {
         rotationCenter = fetched.rotationCenter;
 
-        const saveAssetToStorage = function (dataURI) {
+        const updateCostumeAsset = function (dataURI) {
             if (!runtime.v2BitmapAdapter) {
                 return Promise.reject('No V2 Bitmap adapter present.');
             }
@@ -153,7 +155,7 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
         };
 
         if (!fetched.assetMatchesBase) {
-            saveAssetToStorage(fetched.canvas.toDataURL());
+            updateCostumeAsset(fetched.canvas.toDataURL());
         }
         resolve(fetched.canvas);
     }))
@@ -183,7 +185,7 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
  * @property {number} rotationCenterX - the X component of the costume's origin.
  * @property {number} rotationCenterY - the Y component of the costume's origin.
  * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
- * @param {!Asset} costume.asset - the asset of the costume loaded from storage.
+ * @property {!Asset} costume.asset - the asset of the costume loaded from storage.
  * @param {!Runtime} runtime - Scratch runtime, used to access the storage module.
  * @param {?int} optVersion - Version of Scratch that the costume comes from. If this is set
  *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
