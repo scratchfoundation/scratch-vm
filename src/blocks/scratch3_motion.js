@@ -123,6 +123,9 @@ class Scratch3MotionBlocks {
         if (args.TOWARDS === '_mouse_') {
             targetX = util.ioQuery('mouse', 'getScratchX');
             targetY = util.ioQuery('mouse', 'getScratchY');
+        } else if (args.TOWARDS === '_random_') {
+            util.target.setDirection(Math.round(Math.random() * 360) - 180);
+            return;
         } else {
             const pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
             if (!pointTarget) return;
