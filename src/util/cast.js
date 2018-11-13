@@ -30,7 +30,6 @@ class Cast {
     static toNumber (value) {
         // If value is already a number we don't need to coerce it with
         // Number().
-
         if (typeof value === 'number') {
             // Scratch treats NaN as 0, when needed as a number.
             // E.g., 0 + NaN -> 0.
@@ -136,7 +135,7 @@ class Cast {
     /**
      * Determine if a Scratch argument is negative infinity.
      * @param {*} val value to check.
-     * @return {boolean} True if the argument is a '-' folled by any capitalization of infinity.
+     * @return {boolean} True if the argument is a '-' followed by any capitalization of infinity.
      */
     static isNegativeInfinity (val) {
         return val === -Infinity || (typeof val === 'string' && val.toLowerCase() === '-infinity');
