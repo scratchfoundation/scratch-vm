@@ -1,6 +1,5 @@
 const test = require('tap').test;
 const Operators = require('../../src/blocks/scratch3_operators');
-const Data = require('../../src/blocks/scratch3_data');
 
 const blocks = new Operators(null);
 
