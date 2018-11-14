@@ -42,7 +42,7 @@ class Scratch3ControlBlocks {
     }
 
     /**
-     * Check the stack timer, and if its time is not up yet, yield the thread.
+     * Check the stack timer and return a boolean based on whether it has finished or not.
      * @param {object} stackFrame - part of the utility object provided by the runtime.
      * @return {boolean} - true if the stack timer has finished.
      * @private
@@ -66,9 +66,9 @@ class Scratch3ControlBlocks {
     }
 
     /**
-     * Start the stack timer and the yield the thread if necessary.
+     * Start the stack timer
      * @param {object} stackFrame - part of the utility object provided by the runtime.
-     * @param {number} duration - a duration in seconds to set the timer for.
+     * @param {number} duration - a duration in milliseconds to set the timer for.
      * @private
      */
     _startStackTimer (stackFrame, duration) {
@@ -151,8 +151,7 @@ class Scratch3ControlBlocks {
         if (this._stackTimerNeedsInit(stackFrame)) {
             this._startStackTimer(stackFrame, duration);
             util.yield();
-        }
-        if (!this._stackTimerFinished(stackFrame)) {
+        } else if (!this._stackTimerFinished(stackFrame)) {
             util.yield();
         }
     }
