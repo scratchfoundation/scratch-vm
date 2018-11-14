@@ -1038,6 +1038,14 @@ class SpriteData extends ExtendedData {
         return this.fields[SPRITE_FIELDS.BOX];
     }
 
+    get scratchX () {
+        return this.box.x + this.currentCostume.rotationCenter.x - 240;
+    }
+
+    get scratchY () {
+        return 180 - (this.box.y + this.currentCostume.rotationCenter.y);
+    }
+
     get visible () {
         return (this.fields[SPRITE_FIELDS.VISIBLE] & 1) === 0;
     }
@@ -1151,6 +1159,9 @@ class ImageMediaData extends ExtendedData {
     }
 
     get bytes () {
+        if (this.oldComposite instanceof ImageData) {
+            return this.oldComposite.png;
+        }
         if (this.baseLayerData.value) {
             return this.baseLayerData.value;
         }
@@ -1170,11 +1181,15 @@ class ImageMediaData extends ExtendedData {
     }
 
     get extension () {
+        if (this.oldComposite instanceof ImageData) return 'png';
         if (this.baseLayerData.value) return 'jpg';
         return 'png';
     }
 
     get preview () {
+        if (this.oldComposite instanceof ImageData) {
+            return this.oldComposite.preview;
+        }
         if (this.baseLayerData.value) {
             const image = new Image();
             image.src = URL.createObjectURL(new Blob([this.baseLayerData.value], {type: 'image/jpeg'}));
@@ -2533,10 +2548,10 @@ const toSb2Json = root => {
             .map(toSb2JsonCostume),
             currentCostumeIndex: rawCostumes.findIndex(image => image.crc === spriteData.currentCostume.crc),
             sounds: [],
-            scratchX: spriteData.box.x,
-            scratchY: spriteData.box.y,
+            scratchX: spriteData.scratchX,
+            scratchY: spriteData.scratchY,
             scale: spriteData.scalePoint.x,
-            direction: spriteData.rotationDegrees,
+            direction: Math.round(spriteData.rotationDegrees * 1e6) / 1e6 - 270,
             rotationStyle: spriteData.rotationStyle,
             isDraggable: spriteData.draggable,
             indexInLibrary: stageData.spriteOrderInLibrary.indexOf(spriteData),
@@ -2573,7 +2588,12 @@ const toSb2Json = root => {
     };
 
     const toSb2JsonInfo = info => {
-        return {};
+        const obj = {};
+        for (let i = 0; i < info.length; i += 2) {
+            if ('' + info[i] === 'thumbnail') continue;
+            obj['' + info[i]] = '' + info[i + 1];
+        }
+        return obj;
     };
 
     return Object.assign(toSb2JsonStage(stageData), {
