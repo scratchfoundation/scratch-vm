@@ -843,7 +843,6 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     for (let i = 0; i < blockMetadata.argMap.length; i++) {
         const expectedArg = blockMetadata.argMap[i];
         const providedArg = sb2block[i + 1]; // (i = 0 is opcode)
-
         // Whether the input is obscuring a shadow.
         let shadowObscured = false;
         // Positional argument is an input.
@@ -873,9 +872,6 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 }
                 parseState.expectedArg = parentExpectedArg;
 
-                // Obscures any shadow.
-                shadowObscured = true;
-
                 // Check if innerBlocks is not an empty list.
                 // An empty list indicates that all the inner blocks from the sb2 have
                 // unknown opcodes and have been skipped.
@@ -896,6 +892,9 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                         activeBlock.children.concat(innerBlocks)
                     );
                 }
+
+                // Obscures any shadow.
+                shadowObscured = true;
             }
             // Generate a shadow block to occupy the input.
             if (!expectedArg.inputOp) {
