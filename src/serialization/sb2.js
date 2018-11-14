@@ -990,6 +990,10 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                 } else if (fieldValue === 'Stage') {
                     fieldValue = '_stage_';
                 }
+            } else if (expectedArg.inputOp === 'note') {
+                if (shadowObscured) {
+                    fieldValue = 60;
+                }
             } else if (expectedArg.inputOp === 'music.menu.DRUM') {
                 if (shadowObscured) {
                     fieldValue = 1;
