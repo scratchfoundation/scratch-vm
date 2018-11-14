@@ -1,5 +1,6 @@
 const path = require('path');
-const test = require('tap').test;
+const tap = require('tap');
+const test = tap.test;
 const makeTestStorage = require('../fixtures/make-test-storage');
 const {readFileToBuffer, extractProjectJson} = require('../fixtures/readProjectFile');
 const VirtualMachine = require('../../src/index');
@@ -23,6 +24,8 @@ const invisibleTempoMonitorProject = readFileToBuffer(invisibleTempoMonitorProje
 const visibleTempoMonitorProjectUri = path.resolve(
     __dirname, '../fixtures/visible-tempo-monitor-no-other-music-blocks.sb2');
 const visibleTempoMonitorProject = readFileToBuffer(visibleTempoMonitorProjectUri);
+
+tap.tearDown(() => process.nextTick(process.exit));
 
 test('loading sb2 project with invisible video monitor should not load monitor or extension', t => {
     const vm = new VirtualMachine();
@@ -102,6 +105,5 @@ test('sb2 project with visible music monitor should load monitor and extension',
         t.equal(vm.runtime._monitorState.has('music_getTempo'), true);
         t.equal(vm.runtime._monitorState.get('music_getTempo').visible, true);
         t.end();
-        process.nextTick(process.exit); // This is needed because this is the end of the last test in this file!!
     });
 });

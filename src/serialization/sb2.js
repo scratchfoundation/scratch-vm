@@ -239,11 +239,22 @@ const globalBroadcastMsgStateGenerator = (function () {
 
 /**
  * Parse a single monitor object and create all its in-memory VM objects.
+ *
+ * It is important that monitors are parsed last,
+ * - after all sprite targets have finished parsing, and
+ * - after the rest of the stage has finished parsing.
+ *
+ * It is specifically important that all the scripts in the project
+ * have been parsed and all the relevant targets exist, have uids,
+ * and have their variables initialized.
+ * Calling this function before these things are true, will result in
+ * undefined behavior.
  * @param {!object} object - From-JSON "Monitor object"
  * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
  * @param {!Array.<Target>} targets - Targets have already been parsed.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
+
 const parseMonitorObject = (object, runtime, targets, extensions) => {
     // In scratch 2.0, there are two monitors that now correspond to extension
     // blocks (tempo and video motion/direction). In the case of the
@@ -265,20 +276,6 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         // there are no other sb2 blocks that are now extension monitors.
         return;
     }
-
-
-    // if (!object.visible) {
-    //     // If the monitor is invisible, check to see if it tries to load a new extension
-    //     // (e.g. one that hasn't already been loaded by an actual block in the project).
-    //     // If so, exit without importing the monitor.
-    //
-    //
-    //     // All non-core extensions should be added by blocks at this point
-    //     // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
-    //     if () {
-    //         if ( && !extensions.has(extID)) return;
-    //     }
-    // }
 
     let target = null;
     // List blocks don't come in with their target name set.
@@ -746,6 +743,12 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                     }
                 }
             }
+            // It is important that monitors are parsed last
+            // - after all sprite targets have finished parsing
+            // - and this is the last thing that happens in the stage parsing
+            // It is specifically important that all the scripts in the project
+            // have been parsed and all the relevant targets exist, have uids,
+            // and have their variables initialized.
             for (let n = 0; n < deferredMonitors.length; n++) {
                 parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
             }
