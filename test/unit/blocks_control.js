@@ -259,22 +259,29 @@ test('wait', t => {
     const c = new Control(rt);
     const args = {DURATION: .01};
     const waitTime = args.DURATION * 1000;
+    const startTest = Date.now();
     const threshold = 1000 / 60; // 60 hz
+    let yields = 0
     const util = {
         stackFrame: {},
-        yield: () => true
+        yield: () => yields++,
     };
 
     c.wait(args, util);
-    let timeElapsed = 0;
+    t.equal(yields, 1, 'First wait block yielded');
 
+    // spin the cpu until enough time passes
+    let timeElapsed = 0;
     while (timeElapsed < waitTime) {
-        timeElapsed = util.stackFrame.timer.timeElapsed() 
+        timeElapsed = util.stackFrame.timer.timeElapsed();
+        // in case util.timer is broken - have our own "exit"
+        if (Date.now() - startTest > timeElapsed + threshold) {
+            break;
+        }
     }
 
-    console.log('timeElapsed', timeElapsed);
-    console.log('waitTime', waitTime);
-    console.log('threshold', threshold);
+    c.wait(args, util);
+    t.equal(yields, 1, 'Second call after timeElapsed does not yield');
     t.equal(waitTime, util.stackFrame.duration);
     t.ok(timeElapsed >= (waitTime - threshold) &&
          timeElapsed <= (waitTime + threshold));
