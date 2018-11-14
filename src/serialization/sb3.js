@@ -1084,7 +1084,7 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
         existingMonitorBlock.isMonitored = monitorData.visible;
         existingMonitorBlock.targetId = monitorData.targetId;
     } else {
-        // If a monitor block doens't already exist for this monitor,
+        // If a monitor block doesn't already exist for this monitor,
         // construct a monitor block to add to the monitor blocks container
         const monitorBlock = {
             id: monitorData.id,
@@ -1122,8 +1122,6 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
             extensions.extensionIDs.add(extensionID);
         }
     }
-    // Otherwise, the monitor block will get created when the toolbox updates
-    // after the target has been installed.
 
     runtime.requestAddMonitor(MonitorRecord(monitorData));
 };
