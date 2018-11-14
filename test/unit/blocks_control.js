@@ -266,16 +266,17 @@ test('wait', t => {
     };
 
     c.wait(args, util);
+    let timeElapsed = 0;
 
-    // Delay tests until after Wait block should have finished
-    setTimeout(() => {
-        const timeElapsed = util.stackFrame.timer.timeElapsed();
-        console.log('timeElapsed', timeElapsed);
-        console.log('waitTime', waitTime);
-        console.log('threshold', threshold);
-        t.equal(waitTime, util.stackFrame.duration);
-        t.ok(timeElapsed >= (waitTime - threshold) &&
-             timeElapsed <= (waitTime + threshold));
-        t.end();
-    }, waitTime);
+    while (timeElapsed < waitTime) {
+        timeElapsed = util.stackFrame.timer.timeElapsed() 
+    }
+
+    console.log('timeElapsed', timeElapsed);
+    console.log('waitTime', waitTime);
+    console.log('threshold', threshold);
+    t.equal(waitTime, util.stackFrame.duration);
+    t.ok(timeElapsed >= (waitTime - threshold) &&
+         timeElapsed <= (waitTime + threshold));
+    t.end();
 });
