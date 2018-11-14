@@ -558,7 +558,7 @@ class EV3 {
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1,
-            ouiPrefix: "00-16-53" // The LEGO Group OUI Prefix
+            ouiPrefix: '00-16-53' // The LEGO Group OUI Prefix
         }, this._onConnect, this._onMessage);
     }
 
