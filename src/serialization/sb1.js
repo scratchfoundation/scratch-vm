@@ -2495,11 +2495,19 @@ const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 const toSb2Json = root => {
     const {info, stageData, images, sounds} = root;
 
-    // const toSb2JsonVariable = variable => {
-    //     name:
-    //     value:
-    //     isPersistent:
-    // };
+    const pairs = array => {
+        const pairs = [];
+        for (let i = 0; i < array.length; i += 2) {
+            pairs.push([array[i], array[i + 1]]);
+        }
+        return pairs;
+    };
+
+    const toSb2JsonVariable = ([name, value]) => ({
+        name: name.valueOf(),
+        value: value.valueOf(),
+        isPersistent: false
+    });
 
     // const toSb2JsonList = list => {
     //
@@ -2541,7 +2549,7 @@ const toSb2Json = root => {
         .filter(data => data instanceof ImageMediaData);
         return {
             objName: spriteData.objName,
-            variables: [],
+            variables: pairs(spriteData.vars).map(toSb2JsonVariable),
             lists: [],
             scripts: [],
             costumes: rawCostumes
@@ -2572,7 +2580,7 @@ const toSb2Json = root => {
         .filter(data => data instanceof ImageMediaData);
         return {
             objName: stageData.objName,
-            variables: [],
+            variables: pairs(stageData.vars).map(toSb2JsonVariable),
             lists: [],
             scripts: [],
             costumes: rawCostumes
