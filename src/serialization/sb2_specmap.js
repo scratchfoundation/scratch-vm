@@ -518,7 +518,7 @@ const specMap = {
         argMap: [
             {
                 type: 'input',
-                inputOp: 'math_number',
+                inputOp: 'note',
                 inputName: 'NOTE'
             },
             {
