@@ -261,10 +261,10 @@ test('wait', t => {
     const waitTime = args.DURATION * 1000;
     const startTest = Date.now();
     const threshold = 1000 / 60; // 60 hz
-    let yields = 0
+    let yields = 0;
     const util = {
         stackFrame: {},
-        yield: () => yields++,
+        yield: () => yields++
     };
 
     c.wait(args, util);
