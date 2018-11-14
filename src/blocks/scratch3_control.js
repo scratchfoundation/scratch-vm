@@ -43,38 +43,38 @@ class Scratch3ControlBlocks {
 
     /**
      * Check the stack timer, and if its time is not up yet, yield the thread.
-     * @param {object} util - utility object provided by the runtime.
+     * @param {object} stackFrame - part of the utility object provided by the runtime.
+     * @return {boolean} - true if the stack timer has finished.
      * @private
      */
-    _checkStackTimer (util) {
-        const timeElapsed = util.stackFrame.timer.timeElapsed();
-        if (timeElapsed < util.stackFrame.duration) {
-            util.yield();
+    _stackTimerFinished (stackFrame) {
+        const timeElapsed = stackFrame.timer.timeElapsed();
+        if (timeElapsed < stackFrame.duration) {
+            return false;
         }
+        return true;
     }
 
     /**
      * Check if the stack timer needs initialization.
-     * @param {object} util - utility object provided by the runtime.
+     * @param {object} stackFrame - part of the utility object provided by the runtime.
      * @return {boolean} - true if the stack timer needs to be initialized.
      * @private
      */
-    _stackTimerNeedsInit (util) {
-        return !util.stackFrame.timer;
+    _stackTimerNeedsInit (stackFrame) {
+        return !stackFrame.timer;
     }
 
     /**
      * Start the stack timer and the yield the thread if necessary.
-     * @param {object} util - utility object provided by the runtime.
+     * @param {object} stackFrame - part of the utility object provided by the runtime.
      * @param {number} duration - a duration in seconds to set the timer for.
      * @private
      */
-    _startStackTimer (util, duration) {
-        duration = Math.max(0, 1000 * Cast.toNumber(duration));
-        util.stackFrame.timer = new Timer();
-        util.stackFrame.timer.start();
-        util.stackFrame.duration = duration;
-        util.yield();
+    _startStackTimer (stackFrame, duration) {
+        stackFrame.timer = new Timer();
+        stackFrame.timer.start();
+        stackFrame.duration = duration;
     }
 
     getHats () {
@@ -145,10 +145,15 @@ class Scratch3ControlBlocks {
     }
 
     wait (args, util) {
-        if (this._stackTimerNeedsInit(util)) {
-            this._startStackTimer(util, args.DURATION);
-        } else {
-            this._checkStackTimer(util);
+        const stackFrame = util.stackFrame;
+        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+
+        if (this._stackTimerNeedsInit(stackFrame)) {
+            this._startStackTimer(stackFrame, duration);
+            util.yield();
+        }
+        if (!this._stackTimerFinished(stackFrame)) {
+            util.yield();
         }
     }
 
