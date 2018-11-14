@@ -4,6 +4,7 @@ const Variable = require('../../src/engine/variable');
 const adapter = require('../../src/engine/adapter');
 const Runtime = require('../../src/engine/runtime');
 const events = require('../fixtures/events.json');
+const Cloud = require('../../src/io/cloud');
 
 test('spec', t => {
     const target = new Target();
@@ -67,6 +68,58 @@ test('createListVariable creates a list', t => {
     t.assert(variable.value instanceof Array, true);
     t.equal(variable.value.length, 0);
     t.equal(variable.isCloud, false);
+
+    t.end();
+});
+
+test('createVariable calls cloud io device\'s requestCreateCloudVariable', t => {
+    const runtime = new Runtime();
+    // Mock the requestCreateCloudVariable function
+    let requestCreateCloudWasCalled = false;
+    runtime.ioDevices.cloud.requestCreateCloudVariable = () => {
+        requestCreateCloudWasCalled = true;
+    };
+
+    const target = new Target(runtime);
+    target.isStage = true;
+    target.createVariable('foo', 'bar', Variable.SCALAR_TYPE, true /* isCloud */);
+
+    const variables = target.variables;
+    t.equal(Object.keys(variables).length, 1);
+    const variable = variables[Object.keys(variables)[0]];
+    t.equal(variable.id, 'foo');
+    t.equal(variable.name, 'bar');
+    t.equal(variable.type, Variable.SCALAR_TYPE);
+    t.equal(variable.value, 0);
+    // isCloud flag doesn't get set by the target createVariable function
+    t.equal(variable.isCloud, false);
+    t.equal(requestCreateCloudWasCalled, true);
+
+    t.end();
+});
+
+test('createVariable does not call cloud io device\'s requestCreateCloudVariable if target is not stage', t => {
+    const runtime = new Runtime();
+    // Mock the requestCreateCloudVariable function
+    let requestCreateCloudWasCalled = false;
+    runtime.ioDevices.cloud.requestCreateCloudVariable = () => {
+        requestCreateCloudWasCalled = true;
+    };
+
+    const target = new Target(runtime);
+    target.isStage = false;
+    target.createVariable('foo', 'bar', Variable.SCALAR_TYPE, true /* isCloud */);
+
+    const variables = target.variables;
+    t.equal(Object.keys(variables).length, 1);
+    const variable = variables[Object.keys(variables)[0]];
+    t.equal(variable.id, 'foo');
+    t.equal(variable.name, 'bar');
+    t.equal(variable.type, Variable.SCALAR_TYPE);
+    t.equal(variable.value, 0);
+    // isCloud flag doesn't get set by the target createVariable function
+    t.equal(variable.isCloud, false);
+    t.equal(requestCreateCloudWasCalled, false);
 
     t.end();
 });
