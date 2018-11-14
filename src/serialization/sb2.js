@@ -239,23 +239,45 @@ const globalBroadcastMsgStateGenerator = (function () {
 
 /**
  * Parse a single monitor object and create all its in-memory VM objects.
+ *
+ * It is important that monitors are parsed last,
+ * - after all sprite targets have finished parsing, and
+ * - after the rest of the stage has finished parsing.
+ *
+ * It is specifically important that all the scripts in the project
+ * have been parsed and all the relevant targets exist, have uids,
+ * and have their variables initialized.
+ * Calling this function before these things are true, will result in
+ * undefined behavior.
  * @param {!object} object - From-JSON "Monitor object"
  * @param {!Runtime} runtime - (in/out) Runtime object to load monitor info into.
  * @param {!Array.<Target>} targets - Targets have already been parsed.
  * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  */
+
 const parseMonitorObject = (object, runtime, targets, extensions) => {
-    let target = null;
+    // In scratch 2.0, there are two monitors that now correspond to extension
+    // blocks (tempo and video motion/direction). In the case of the
+    // video motion/direction block, this reporter is not monitorable in Scratch 3.0.
+    // In the case of the tempo block, we should import it and load the music extension
+    // only when the monitor is actually visible.
+
     const opcode = specMap[object.cmd].opcode;
     const extIndex = opcode.indexOf('_');
     const extID = opcode.substring(0, extIndex);
 
-    // All non-core extensions should be added by blocks at this point
-    // We can assume this is an unintended monitor and skip parsing if it belongs to a non-core extension
-    if (CORE_EXTENSIONS.indexOf(extID) === -1) {
-        if (extID !== '') return;
+    if (extID === 'videoSensing') {
+        return;
+    } else if (CORE_EXTENSIONS.indexOf(extID) === -1 && extID !== '' &&
+        !extensions.extensionIDs.has(extID) && !object.visible) {
+        // Don't import this monitor if it refers to a non-core extension that
+        // doesn't exist anywhere else in the project and it isn't visible.
+        // This should only apply to the tempo block at this point since
+        // there are no other sb2 blocks that are now extension monitors.
+        return;
     }
 
+    let target = null;
     // List blocks don't come in with their target name set.
     // Find the target by searching for a target with matching variable name/type.
     if (!object.hasOwnProperty('target')) {
@@ -721,6 +743,12 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
                     }
                 }
             }
+            // It is important that monitors are parsed last
+            // - after all sprite targets have finished parsing
+            // - and this is the last thing that happens in the stage parsing
+            // It is specifically important that all the scripts in the project
+            // have been parsed and all the relevant targets exist, have uids,
+            // and have their variables initialized.
             for (let n = 0; n < deferredMonitors.length; n++) {
                 parseMonitorObject(deferredMonitors[n], runtime, targets, extensions);
             }
