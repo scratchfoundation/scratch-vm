@@ -8,7 +8,7 @@ const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
-const sb1 = require('./serialization/sb1');
+const SB1File = require('./serialization/sb1');
 const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
@@ -406,7 +406,14 @@ class VirtualMachine extends EventEmitter {
 
         const runtime = this.runtime;
         const deserializePromise = function () {
-            const projectVersion = projectJSON.projectVersion;
+            let projectVersion = projectJSON.projectVersion;
+            console.log(projectVersion);
+            if (projectVersion === 1) {
+                const sb1File = new SB1File(projectJSON.buffer);
+                projectJSON = sb1File.json;
+                zip = sb1File.zip;
+                projectVersion = 2;
+            }
             if (projectVersion === 2) {
                 return sb2.deserialize(projectJSON, runtime, false, zip);
             }

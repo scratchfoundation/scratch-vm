@@ -612,7 +612,7 @@ const TranslucentColor = new StructMember({
 });
 
 const objectRef = function (iter, position) {
-    index = (
+    const index = (
         iter.uint8[iter.position + 0] << 16 |
         iter.uint8[iter.position + 1] << 8 |
         iter.uint8[iter.position + 2]
@@ -922,33 +922,36 @@ class ImageData extends ExtendedData {
         return this.fields[IMAGE_FIELDS.COLORMAP];
     }
 
+    get png () {
+        if (!this._png) {
+            this._png = new Uint8Array(PNGFile.encode(
+                this.width,
+                this.height,
+                _bgra2rgbaInPlace(new Uint8Array(
+                    new SqueakImageDecoder().decode(
+                        this.width.value,
+                        this.height.value,
+                        this.depth.value,
+                        this.bytes.value,
+                        this.colormap
+                    ).buffer
+                ))
+            ));
+        }
+        return this._png;
+    }
+
     get preview () {
         const image = new Image();
         image.src = URL.createObjectURL(
-            new Blob(
-                [
-                    PNGFile.encode(
-                        this.width,
-                        this.height,
-                        _bgra2rgbaInPlace(new Uint8Array(
-                            new SqueakImageDecoder().decode(
-                                this.width.value,
-                                this.height.value,
-                                this.depth.value,
-                                this.bytes.value,
-                                this.colormap
-                            ).buffer
-                        ))
-                    )
-                ],
-                { type: 'image/png' }
-            )
+            new Blob([this.png.buffer], { type: 'image/png' })
         );
         return image;
     }
 }
 
 const STAGE_FIELDS = {
+    STAGE_CONTENTS: 2,
     OBJ_NAME: 6,
     VARS: 7,
     BLOCKS_BIN: 8,
@@ -969,6 +972,10 @@ const STAGE_FIELDS = {
 class StageData extends ExtendedData {
     get objName () {
         return '' + this.fields[STAGE_FIELDS.OBJ_NAME];
+    }
+
+    get stageContents () {
+        return this.fields[STAGE_FIELDS.STAGE_CONTENTS];
     }
 
     get vars () {
@@ -1001,6 +1008,10 @@ class StageData extends ExtendedData {
 }
 
 const SPRITE_FIELDS = {
+    BOX: 0,
+    PARENT: 1,
+    COLOR: 3,
+    VISIBLE: 4,
     OBJ_NAME: 6,
     VARS: 7,
     BLOCKS_BIN: 8,
@@ -1021,6 +1032,14 @@ const SPRITE_FIELDS = {
 class SpriteData extends ExtendedData {
     get objName () {
         return '' + this.fields[SPRITE_FIELDS.OBJ_NAME];
+    }
+
+    get box () {
+        return this.fields[SPRITE_FIELDS.BOX];
+    }
+
+    get visible () {
+        return (this.fields[SPRITE_FIELDS.VISIBLE] & 1) === 0;
     }
 
     get vars () {
@@ -1131,6 +1150,30 @@ class ImageMediaData extends ExtendedData {
         return this.fields[IMAGE_MEDIA_FIELDS.OLD_COMPOSITE];
     }
 
+    get bytes () {
+        if (this.baseLayerData.value) {
+            return this.baseLayerData.value;
+        }
+        return this.bitmap.png;
+    }
+
+    get crc () {
+        if (!this._crc) {
+            const crc = new CRC32()
+            .update(new Uint8Array(new Uint32Array([this.bitmap.width]).buffer))
+            .update(new Uint8Array(new Uint32Array([this.bitmap.height]).buffer))
+            .update(new Uint8Array(new Uint32Array([this.bitmap.depth]).buffer))
+            .update(this.bytes);
+            this._crc = crc.digest;
+        }
+        return this._crc;
+    }
+
+    get extension () {
+        if (this.baseLayerData.value) return 'jpg';
+        return 'png';
+    }
+
     get preview () {
         if (this.baseLayerData.value) {
             const image = new Image();
@@ -1189,26 +1232,31 @@ class SoundMediaData extends ExtendedData {
         return this.fields[SOUND_MEDIA_FIELDS.DATA];
     }
 
+    get bytes () {
+        if (!this._wav) {
+            let samples;
+            if (this.data && this.data.value) {
+                samples = new SqueakSoundDecoder(this.bitsPerSample.value).decode(
+                    this.data.value
+                );
+            } else {
+                samples = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
+            }
+
+            this._wav = new Uint8Array(WAVFile.encode(samples, {
+                sampleRate: this.rate && this.rate.value || this.uncompressed.rate.value
+            }));
+        }
+
+        return this._wav;
+    }
+
     get preview () {
         const audio = new Audio();
         audio.controls = true;
 
-        let samples;
-        if (this.data && this.data.value) {
-            samples = new SqueakSoundDecoder(this.bitsPerSample.value).decode(
-                this.data.value
-            );
-        } else {
-            samples = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
-        }
-
         audio.src = URL.createObjectURL(
-            new Blob(
-                [WAVFile.encode(samples, {
-                    sampleRate: this.rate && this.rate.value || this.uncompressed.rate.value
-                })],
-                { type: 'audio/wav' }
-            )
+            new Blob([this.bytes.buffer],{ type: 'audio/wav' })
         );
         return audio;
     }
@@ -1461,7 +1509,24 @@ class SB1File {
         this.dataLength = this.dataBlockHeader.numObjects;
     }
 
+    get json () {
+        return toSb2Json({
+            info: this.info(),
+            stageData: this.data(),
+            images: this.images(),
+            sounds: this.sounds()
+        });
+    }
+
+    get zip () {
+        return toSb2FakeZipApi({
+            images: this.images(),
+            sounds: this.sounds()
+        });
+    }
+
     view () {
+        // console.log(this.json);
         return {
             signature: this.signature,
             infoBlockHeader: this.infoBlockHeader,
@@ -2240,7 +2305,7 @@ class SqueakSoundDecoder {
                 assert(code >= 0, 'Ran out of bits in Squeak Sound');
             }
 
-            step = SQUEAK_SOUND_STEP_SIZE_TABLE[index];
+            let step = SQUEAK_SOUND_STEP_SIZE_TABLE[index];
             let delta = 0;
             for (let bit = this.valueHighBit; bit > 0; bit = bit >> 1) {
                 if ((code & bit) != 0) {
@@ -2412,4 +2477,152 @@ const defaultColorMap = [
 
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
-module.exports = SB1TokenIterator;
+const toSb2Json = root => {
+    const {info, stageData, images, sounds} = root;
+
+    // const toSb2JsonVariable = variable => {
+    //     name:
+    //     value:
+    //     isPersistent:
+    // };
+
+    // const toSb2JsonList = list => {
+    //
+    // };
+
+    // const toSb2JsonWatcher = watcher => {
+    //
+    // };
+    //
+    // const toSb2JsonListWatcher = listWatcher => {
+    //
+    // };
+
+    // const toSb2JsonSound = soundMediaData => {
+    //     return {
+    //         soundName:
+    //         soundID:
+    //         md5:
+    //         sampleCount:
+    //         rate:
+    //         format:
+    //     };
+    // };
+
+    const toSb2JsonCostume = imageMediaData => {
+        const baseLayerID = images.findIndex(image => image.crc === imageMediaData.crc);
+        return {
+            costumeName: imageMediaData.costumeName,
+            baseLayerID,
+            baseLayerMD5: `${baseLayerID}.${imageMediaData.extension}`,
+            bitmapResolution: 1,
+            rotationCenterX: imageMediaData.rotationCenter.x,
+            rotationCenterY: imageMediaData.rotationCenter.y
+        };
+    };
+
+    const toSb2JsonSprite = spriteData => {
+        const rawCostumes = spriteData.media
+        .filter(data => data instanceof ImageMediaData);
+        return {
+            objName: spriteData.objName,
+            variables: [],
+            lists: [],
+            scripts: [],
+            costumes: rawCostumes
+            .map(toSb2JsonCostume),
+            currentCostumeIndex: rawCostumes.findIndex(image => image.crc === spriteData.currentCostume.crc),
+            sounds: [],
+            scratchX: spriteData.box.x,
+            scratchY: spriteData.box.y,
+            scale: spriteData.scalePoint.x,
+            direction: spriteData.rotationDegrees,
+            rotationStyle: spriteData.rotationStyle,
+            isDraggable: spriteData.draggable,
+            indexInLibrary: stageData.spriteOrderInLibrary.indexOf(spriteData),
+            visible: spriteData.visible,
+            spriteInfo: {}
+        };
+    };
+
+    const toSb2JsonChild = child => {
+        if (child instanceof SpriteData) {
+            return toSb2JsonSprite(child);
+        }
+        return null;
+    }
+
+    const toSb2JsonStage = stageData => {
+        const rawCostumes = stageData.media
+        .filter(data => data instanceof ImageMediaData);
+        return {
+            objName: stageData.objName,
+            variables: [],
+            lists: [],
+            scripts: [],
+            costumes: rawCostumes
+            .map(toSb2JsonCostume),
+            currentCostumeIndex: rawCostumes.findIndex(image => image.crc === stageData.currentCostume.crc),
+            sounds: [],
+            penLayerMD5: '5c81a336fab8be57adc039a8a2b33ca9.png',
+            penLayerID: 0,
+            tempoBPM: 60,
+            videoAlpha: 0.5,
+            children: stageData.stageContents.map(toSb2JsonChild).filter(Boolean)
+        };
+    };
+
+    const toSb2JsonInfo = info => {
+        return {};
+    };
+
+    return Object.assign(toSb2JsonStage(stageData), {
+        info: toSb2JsonInfo(info)
+    });
+};
+
+class FakeZipFile {
+    constructor (file) {
+        this.file = file;
+    }
+
+    async (outputType) {
+        assert(outputType === 'uint8array', 'SB1FakeZipFile only supports uint8array');
+
+        return Promise.resolve(this.file.bytes);
+    }
+}
+
+class FakeZip {
+    constructor (files) {
+        this.files = files;
+    }
+
+    file (file) {
+        if (file in this.files) {
+            return new FakeZipFile(this.files[file]);
+        }
+    }
+}
+
+const toSb2FakeZipApi = ({images, sounds}) => {
+    const files = {};
+
+    let index = 0;
+    for (const image of images) {
+        files[`${index++}.${image.extension}`] = {
+            bytes: image.bytes
+        };
+    }
+
+    index = 0;
+    for (const sound of sounds) {
+        files[`${index++}.${sound.extension}`] = {
+            bytes: sound.bytes
+        };
+    }
+
+    return new FakeZip(files);
+};
+
+module.exports = SB1File;
