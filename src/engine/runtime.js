@@ -659,6 +659,10 @@ class Runtime extends EventEmitter {
         }
     }
 
+    getMonitorState () {
+        return this._monitorState;
+    }
+
     /**
      * Generate an extension-specific menu ID.
      * @param {string} menuName - the name of the menu.
@@ -2098,9 +2102,9 @@ class Runtime extends EventEmitter {
         const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
         if (!block) return;
 
-        // TODO: should this use some other category? Also, we may want to format the label in a locale-specific way.
+        // TODO: we may want to format the label in a locale-specific way.
         return {
-            category: 'data',
+            category: 'extension', // This assumes that all extensions have the same monitor color.
             label: `${categoryInfo.name}: ${block.info.text}`
         };
     }
