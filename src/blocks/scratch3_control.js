@@ -71,7 +71,6 @@ class Scratch3ControlBlocks {
      */
     _startStackTimer (util, duration) {
         duration = Math.max(0, 1000 * Cast.toNumber(duration));
-
         util.stackFrame.timer = new Timer();
         util.stackFrame.timer.start();
         util.stackFrame.duration = duration;

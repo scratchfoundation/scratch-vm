@@ -1,7 +1,6 @@
 const test = require('tap').test;
 const Control = require('../../src/blocks/scratch3_control');
 const Runtime = require('../../src/engine/runtime');
-const BlockUtility = require('../../src/engine/block-utility');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -258,13 +257,13 @@ test('allAtOnce', t => {
 test('wait', t => {
     const rt = new Runtime();
     const c = new Control(rt);
-    const args = { DURATION: .01 };
+    const args = {DURATION: .01};
     const waitTime = args.DURATION * 1000;
     const threshold = 1000 / 60; // 60 hz
     const util = {
         stackFrame: {},
-        yield: () => true,
-    }
+        yield: () => true
+    };
 
     c.wait(args, util);
 
