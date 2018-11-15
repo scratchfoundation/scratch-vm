@@ -933,7 +933,7 @@ class ImageData extends ExtendedData {
                         this.height.value,
                         this.depth.value,
                         this.bytes.value,
-                        this.colormap
+                        this.colormap && this.colormap.map(color => color.valueOf())
                     ).buffer
                 ))
             ));
@@ -1561,7 +1561,10 @@ class SB1File {
     }
 
     info () {
-        return new SB1ReferenceFixer(this.infoTable()).table[0];
+        if (!this._info) {
+            this._info = new SB1ReferenceFixer(this.infoTable()).table[0];
+        }
+        return this._info;
     }
 
     dataRaw () {
@@ -1572,27 +1575,26 @@ class SB1File {
         return new SB1ObjectIterator(this.dataRaw(), this.dataLength);
     }
 
+    dataFixed () {
+        if (!this._data) {
+            this._data = new SB1ReferenceFixer(this.dataTable()).table;
+        }
+        return this._data;
+    }
+
     data () {
-        return new SB1ReferenceFixer(this.dataTable()).table[0];
+        return this.dataFixed()[0];
     }
 
     images () {
         const unique = new Set();
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table.filter(obj => {
+        return this.dataFixed().filter(obj => {
             if (obj instanceof ImageMediaData) {
                 const array = obj.baseLayerData.value || obj.bitmap.bytes.value;
                 if (unique.has(array)) return false;
-                const crc = new CRC32()
-                .update(new Uint8Array(new Uint32Array([obj.bitmap.width]).buffer))
-                .update(new Uint8Array(new Uint32Array([obj.bitmap.height]).buffer))
-                .update(new Uint8Array(new Uint32Array([obj.bitmap.depth]).buffer))
-                .update(array);
-                if (obj.bitmap.colormap) {
-                    crc.update(new Uint8Array(new Uint32Array(obj.bitmap.colormap).buffer));
-                }
-                if (unique.has(crc.digest)) return false;
+                if (unique.has(obj.crc)) return false;
                 unique.add(array);
-                unique.add(crc.digest);
+                unique.add(obj.crc);
                 return true;
             }
             return false;
@@ -1601,7 +1603,7 @@ class SB1File {
 
     sounds () {
         const unique = new Set();
-        return new SB1ReferenceFixer(new SB1ObjectIterator(this.dataRaw(), this.dataLength)).table.filter(obj => {
+        return this.dataFixed().filter(obj => {
             if (obj instanceof SoundMediaData) {
                 const array = obj.data && obj.data.value || obj.uncompressed.data.value;
                 if (unique.has(array)) {
@@ -1874,7 +1876,8 @@ class DeflateEnd extends struct({
 class CRC32 {
     constructor () {
         this.bit = new Uint32Array(1);
-        this.crc = new Uint32Array(1);
+        // this.crc = new Uint32Array(1);
+        this.crc = 0;
         this.c = 0;
 
         this.table = [];
@@ -1889,6 +1892,12 @@ class CRC32 {
     }
 
     update (uint8, position = 0, length = uint8.length) {
+        let crc = (~this.crc) >>> 0;
+        for (let i = 0; i < length; i++) {
+            crc = (crc >>> 8) ^ this.table[(crc ^ uint8[position + i]) & 0xff];
+        }
+        this.crc = (~crc) >>> 0;
+        return this;
         this.crc[0] = ~this.crc[0];
         for (let i = 0; i < length; i++) {
             this.crc[0] = (this.crc[0] >>> 8) ^ this.table[(this.crc[0] ^ uint8[position + i]) & 0xff];
@@ -1898,7 +1907,7 @@ class CRC32 {
     }
 
     get digest () {
-        return this.crc[0];
+        return this.crc;
     }
 }
 
