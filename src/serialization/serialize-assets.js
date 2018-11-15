@@ -50,21 +50,7 @@ const serializeCostumes = function (runtime, optTargetId) {
     return serializeAssets(runtime, 'costumes', optTargetId);
 };
 
-/*
- * Return all costumes and sounds in the provided runtime
- * @param {Runtime} runtime
- * @returns {Array<object>} An array of costumes and sounds
- */
-const collectAssets = function (runtime) {
-    return runtime.targets.reduce((acc, target) => (
-        acc
-            .concat(target.sprite.sounds.map(sound => sound.asset))
-            .concat(target.sprite.costumes.map(costume => costume.asset))
-    ), []);
-};
-
 module.exports = {
-    collectAssets,
     serializeSounds,
     serializeCostumes
 };
