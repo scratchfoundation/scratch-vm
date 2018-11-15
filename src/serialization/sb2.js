@@ -915,32 +915,35 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
                     // Single block occupies the input.
                     const parsedBlockDesc = parseBlock(providedArg, addBroadcastMsg, getVariableId, extensions,
                         parseState, comments, commentIndex);
-                    innerBlocks = [parsedBlockDesc[0]];
+                    innerBlocks = parsedBlockDesc[0] ? [parsedBlockDesc[0]] : [];
                     // Update commentIndex
                     commentIndex = parsedBlockDesc[1];
                 }
                 parseState.expectedArg = parentExpectedArg;
-                // Check if innerBlocks is an empty list.
-                // This indicates that all the inner blocks from the sb2 have
+
+                // Check if innerBlocks is not an empty list.
+                // An empty list indicates that all the inner blocks from the sb2 have
                 // unknown opcodes and have been skipped.
-                if (innerBlocks.length === 0) continue;
-                let previousBlock = null;
-                for (let j = 0; j < innerBlocks.length; j++) {
-                    if (j === 0) {
-                        innerBlocks[j].parent = activeBlock.id;
-                    } else {
-                        innerBlocks[j].parent = previousBlock;
+                if (innerBlocks.length > 0) {
+                    let previousBlock = null;
+                    for (let j = 0; j < innerBlocks.length; j++) {
+                        if (j === 0) {
+                            innerBlocks[j].parent = activeBlock.id;
+                        } else {
+                            innerBlocks[j].parent = previousBlock;
+                        }
+                        previousBlock = innerBlocks[j].id;
                     }
-                    previousBlock = innerBlocks[j].id;
+                    activeBlock.inputs[expectedArg.inputName].block = (
+                        innerBlocks[0].id
+                    );
+                    activeBlock.children = (
+                        activeBlock.children.concat(innerBlocks)
+                    );
                 }
+
                 // Obscures any shadow.
                 shadowObscured = true;
-                activeBlock.inputs[expectedArg.inputName].block = (
-                    innerBlocks[0].id
-                );
-                activeBlock.children = (
-                    activeBlock.children.concat(innerBlocks)
-                );
             }
             // Generate a shadow block to occupy the input.
             if (!expectedArg.inputOp) {
