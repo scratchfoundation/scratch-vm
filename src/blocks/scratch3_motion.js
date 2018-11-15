@@ -262,15 +262,24 @@ class Scratch3MotionBlocks {
     }
 
     getX (args, util) {
-        return util.target.x;
+        return this.limitPrecision(util.target.x);
     }
 
     getY (args, util) {
-        return util.target.y;
+        return this.limitPrecision(util.target.y);
     }
 
     getDirection (args, util) {
         return util.target.direction;
+    }
+
+    // This corresponds to snapToInteger in Scratch 2
+    limitPrecision (coordinate) {
+        const rounded = Math.round(coordinate);
+        const delta = coordinate - rounded;
+        const limitedCoord = (Math.abs(delta) < 1e-9) ? rounded : coordinate;
+
+        return limitedCoord;
     }
 }
 

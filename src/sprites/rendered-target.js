@@ -257,17 +257,6 @@ class RenderedTarget extends Target {
     }
 
     /**
-     * Round a number to n digits
-     * @param {number} value The number to be rounded
-     * @param {number} places The number of decimal places to round to
-     * @return {number} The rounded number
-     */
-    _roundCoord (value, places) {
-        const power = Math.pow(10, places);
-        return Math.round(value * power) / power;
-    }
-
-    /**
      * Set the X and Y coordinates.
      * @param {!number} x New X coordinate, in Scratch coordinates.
      * @param {!number} y New Y coordinate, in Scratch coordinates.
@@ -280,8 +269,6 @@ class RenderedTarget extends Target {
         const oldY = this.y;
         if (this.renderer) {
             const position = this.renderer.getFencedPositionOfDrawable(this.drawableID, [x, y]);
-            position[0] = this._roundCoord(position[0], 8);
-            position[1] = this._roundCoord(position[1], 8);
             this.x = position[0];
             this.y = position[1];
 
@@ -293,8 +280,8 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         } else {
-            this.x = this._roundCoord(x, 8);
-            this.y = this._roundCoord(y, 8);
+            this.x = x;
+            this.y = y;
         }
         this.emit(RenderedTarget.EVENT_TARGET_MOVED, this, oldX, oldY, force);
         this.runtime.requestTargetsUpdate(this);
