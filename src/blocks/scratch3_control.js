@@ -150,6 +150,7 @@ class Scratch3ControlBlocks {
 
         if (this._stackTimerNeedsInit(stackFrame)) {
             this._startStackTimer(stackFrame, duration);
+            this.runtime.requestRedraw();
             util.yield();
         } else if (!this._stackTimerFinished(stackFrame)) {
             util.yield();
