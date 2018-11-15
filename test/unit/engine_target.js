@@ -4,7 +4,6 @@ const Variable = require('../../src/engine/variable');
 const adapter = require('../../src/engine/adapter');
 const Runtime = require('../../src/engine/runtime');
 const events = require('../fixtures/events.json');
-const Cloud = require('../../src/io/cloud');
 
 test('spec', t => {
     const target = new Target();
