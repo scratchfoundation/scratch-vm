@@ -4,7 +4,6 @@
  */
 
 const uid = require('../util/uid');
-const Cast = require('../util/cast');
 const xmlEscape = require('../util/xml-escape');
 
 class Comment {
