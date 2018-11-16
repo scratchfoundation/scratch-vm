@@ -1236,6 +1236,9 @@ class SoundMediaData extends ExtendedData {
     }
 
     get rate () {
+        if (this.uncompressed.data.value.length !== 0) {
+            return this.uncompressed.rate;
+        }
         return this.fields[SOUND_MEDIA_FIELDS.RATE];
     }
 
@@ -1264,6 +1267,17 @@ class SoundMediaData extends ExtendedData {
         }
 
         return this._wav;
+    }
+
+    get crc () {
+        if (!this._crc) {
+            this._crc = new CRC32().update(this.bytes).digest;
+        }
+        return this._crc;
+    }
+
+    get sampleCount () {
+        return WAVFile.samples(this.bytes);
     }
 
     get preview () {
@@ -2416,7 +2430,7 @@ class WAVFile {
             WAVESignature.prototype.size +
             WAVEChunkStart.prototype.size +
             WAVEFMTChunkBody.prototype.size +
-            WAVEFMTChunkBody.prototype.size +
+            WAVEChunkStart.prototype.size +
             samplesUint8.length
         );
 
@@ -2463,6 +2477,12 @@ class WAVFile {
     static encode (intSamples, options) {
         return new WAVFile().encode(intSamples, options);
     }
+
+    static samples (bytes) {
+        const headerLength = new WAVEChunkStart(bytes, WAVESignature.prototype.size).length;
+        const bodyLength = new WAVEChunkStart(bytes, WAVESignature.prototype.size + WAVEChunkStart.prototype.size + headerLength).length;
+        return bodyLength / 2;
+    }
 }
 
 const defaultColorMap = [
@@ -2501,6 +2521,31 @@ const defaultColorMap = [
 
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
+const sb1SpecMap = {
+    'changeVariable': block => [block[2], block[1], block[3]],
+    'EventHatMorph': block => {
+        if (block[1] === 'Scratch-StartClicked') {
+            return ['whenGreenFlag'];
+        }
+        return ['whenIReceive', block[1]];
+    },
+    'MouseClickEventHatMorph': () => ['whenClicked'],
+    'KeyEventHatMorph': block => ['whenKeyPressed', block[1]],
+    'stopScripts': block => {
+        if (block[1] === 'other scripts') {
+            return [block[0], 'other scripts in sprite'];
+        }
+        return block;
+    },
+    'abs': block => ['computeFunction:of:', 'abs', block[1]],
+    'sqrt': block => ['computeFunction:of:', 'sqrt', block[1]],
+    'doReturn': () => ['stopScripts', 'this script'],
+    'stopAll': () => ['stopScripts', 'all'],
+    'showBackground:': block => ['startScene', block[1]],
+    'nextBackground': () => ['nextScene'],
+    'doForeverIf': block => ['doForever', [['doIf', block[1], block[2]]]]
+};
+
 const toSb2Json = root => {
     const {info, stageData, images, sounds} = root;
 
@@ -2530,16 +2575,17 @@ const toSb2Json = root => {
     //
     // };
 
-    // const toSb2JsonSound = soundMediaData => {
-    //     return {
-    //         soundName:
-    //         soundID:
-    //         md5:
-    //         sampleCount:
-    //         rate:
-    //         format:
-    //     };
-    // };
+    const toSb2JsonSound = soundMediaData => {
+        const soundID = sounds.findIndex(sound => sound.crc === soundMediaData.crc);
+        return {
+            soundName: soundMediaData.name,
+            soundID,
+            md5: `${soundID}.wav`,
+            sampleCount: soundMediaData.sampleCount,
+            rate: soundMediaData.rate.value,
+            format: ''
+        };
+    };
 
     const toSb2JsonCostume = imageMediaData => {
         const baseLayerID = images.findIndex(image => image.crc === imageMediaData.crc);
@@ -2548,29 +2594,65 @@ const toSb2Json = root => {
             baseLayerID,
             baseLayerMD5: `${baseLayerID}.${imageMediaData.extension}`,
             bitmapResolution: 1,
-            rotationCenterX: imageMediaData.rotationCenter.x,
-            rotationCenterY: imageMediaData.rotationCenter.y
+            rotationCenterX: imageMediaData.rotationCenter.x.value,
+            rotationCenterY: imageMediaData.rotationCenter.y.value
         };
+    };
+
+    const toSb2JsonBlock = blockData => {
+        let output = blockData.map(toSb2JsonBlockArg);
+        const spec = sb1SpecMap[output[0]];
+        if (spec) {
+            output = spec(output);
+        }
+        return output;
+    };
+
+    const toSb2JsonStack = stackData => {
+        return stackData.map(toSb2JsonBlock);
+    };
+
+    const toSb2JsonBlockArg = argData => {
+        if (argData instanceof SpriteData) {
+            return argData.objName;
+        }
+        else if (Array.isArray(argData)) {
+            if (argData.length === 0 || Array.isArray(argData[0])) {
+                return toSb2JsonStack(argData);
+            }
+            return toSb2JsonBlock(argData);
+        }
+        return (argData && typeof argData === 'object') ? argData.value : argData;
+    };
+
+    const toSb2JsonScript = scriptData => {
+        return [
+            scriptData[0].x.valueOf(),
+            scriptData[0].y.valueOf(),
+            toSb2JsonStack(scriptData[1])
+        ];
     };
 
     const toSb2JsonSprite = spriteData => {
         const rawCostumes = spriteData.media
         .filter(data => data instanceof ImageMediaData);
+        const rawSounds = spriteData.media
+        .filter(data => data instanceof SoundMediaData);
         return {
             objName: spriteData.objName,
             variables: pairs(spriteData.vars).map(toSb2JsonVariable),
             lists: [],
-            scripts: [],
+            scripts: spriteData.blocksBin.map(toSb2JsonScript),
             costumes: rawCostumes
             .map(toSb2JsonCostume),
             currentCostumeIndex: rawCostumes.findIndex(image => image.crc === spriteData.currentCostume.crc),
-            sounds: [],
+            sounds: rawSounds.map(toSb2JsonSound),
             scratchX: spriteData.scratchX,
             scratchY: spriteData.scratchY,
-            scale: spriteData.scalePoint.x,
+            scale: spriteData.scalePoint.x.valueOf(),
             direction: Math.round(spriteData.rotationDegrees * 1e6) / 1e6 - 270,
-            rotationStyle: spriteData.rotationStyle,
-            isDraggable: spriteData.draggable,
+            rotationStyle: spriteData.rotationStyle.valueOf(),
+            isDraggable: spriteData.draggable.valueOf(),
             indexInLibrary: stageData.spriteOrderInLibrary.indexOf(spriteData),
             visible: spriteData.visible,
             spriteInfo: {}
@@ -2591,7 +2673,7 @@ const toSb2Json = root => {
             objName: stageData.objName,
             variables: pairs(stageData.vars).map(toSb2JsonVariable),
             lists: [],
-            scripts: [],
+            scripts: stageData.blocksBin.map(toSb2JsonScript),
             costumes: rawCostumes
             .map(toSb2JsonCostume),
             currentCostumeIndex: rawCostumes.findIndex(image => image.crc === stageData.currentCostume.crc),
@@ -2654,7 +2736,7 @@ const toSb2FakeZipApi = ({images, sounds}) => {
 
     index = 0;
     for (const sound of sounds) {
-        files[`${index++}.${sound.extension}`] = {
+        files[`${index++}.wav`] = {
             bytes: sound.bytes
         };
     }
