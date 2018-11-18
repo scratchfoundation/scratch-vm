@@ -579,7 +579,6 @@ class EV3 {
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
     disconnect () {
-        console.log('EV3 DISCONNECT');
         this._clearSensorsAndMotors();
         window.clearInterval(this._pollingIntervalID);
         this._pollingIntervalID = null;

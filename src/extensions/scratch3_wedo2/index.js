@@ -611,7 +611,6 @@ class WeDo2 {
      * Disconnects from the current BLE socket.
      */
     disconnect () {
-        console.log('WEDO2 DISCONNECT');
         this._ports = ['none', 'none'];
         this._motors = [null, null];
         this._sensors = {

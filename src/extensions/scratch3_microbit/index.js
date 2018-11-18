@@ -229,7 +229,6 @@ class MicroBit {
      * Disconnect from the micro:bit.
      */
     disconnect () {
-        console.log('MICROBIT DISCONNECT');
         window.clearInterval(this._timeoutID);
         if (this._ble) {
             this._ble.disconnect();
