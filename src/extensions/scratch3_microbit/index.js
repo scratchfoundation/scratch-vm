@@ -212,7 +212,7 @@ class MicroBit {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        }, this._onConnect);
+        }, this._onConnect, null);
     }
 
     /**

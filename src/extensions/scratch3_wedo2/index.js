@@ -435,6 +435,7 @@ class WeDo2 {
          */
         this._batteryLevelIntervalId = null;
 
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._checkBatteryLevel = this._checkBatteryLevel.bind(this);
@@ -593,7 +594,7 @@ class WeDo2 {
                 services: [BLEService.DEVICE_SERVICE]
             }],
             optionalServices: [BLEService.IO_SERVICE]
-        }, this._onConnect);
+        }, this._onConnect, this.disconnect);
     }
 
     /**
@@ -623,7 +624,6 @@ class WeDo2 {
         }
 
         if (this._batteryLevelIntervalId) {
-            console.log('clearing batterylevelintervalid');
             window.clearInterval(this._batteryLevelIntervalId);
             this._batteryLevelIntervalId = null;
         }

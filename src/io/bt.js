@@ -11,9 +11,10 @@ class BT extends JSONRPCWebSocket {
      * @param {string} extensionId - the id of the extension using this socket.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
+     * @param {object} disconnectCallback - a callback for disconnection.
      * @param {object} messageCallback - a callback for message sending.
      */
-    constructor (runtime, extensionId, peripheralOptions, connectCallback, messageCallback) {
+    constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null, messageCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
@@ -26,9 +27,10 @@ class BT extends JSONRPCWebSocket {
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
+        this._disconnectCallback = disconnectCallback;
+        this._discoverTimeoutID = null;
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
-        this._discoverTimeoutID = null;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
     }
@@ -135,6 +137,9 @@ class BT extends JSONRPCWebSocket {
         if (!this._connected) return;
 
         this._connected = false;
+        if (this._disconnectCallback) {
+            this._disconnectCallback();
+        }
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
