@@ -73,7 +73,10 @@ class BLE extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
+        if (!this._connected) return;
+
         this._ws.close();
+        this._connected = false;
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
@@ -191,9 +194,10 @@ class BLE extends JSONRPCWebSocket {
 
         if (!this._connected) return;
 
-        this._connected = false;
         if (this._disconnectCallback) {
-            this._disconnectCallback();
+            this._disconnectCallback(); // will trigger a disconnect()
+        } else {
+            this.disconnect();
         }
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {

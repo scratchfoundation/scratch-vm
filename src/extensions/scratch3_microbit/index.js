@@ -212,7 +212,7 @@ class MicroBit {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        }, this._onConnect, null);
+        }, this._onConnect, this.disconnect);
     }
 
     /**
@@ -229,6 +229,7 @@ class MicroBit {
      * Disconnect from the micro:bit.
      */
     disconnect () {
+        console.log('MICROBIT DISCONNECT');
         window.clearInterval(this._timeoutID);
         if (this._ble) {
             this._ble.disconnect();
@@ -317,7 +318,11 @@ class MicroBit {
 
         // cancel disconnect timeout and start a new one
         window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(this.disconnect, BLETimeout);
+        this._timeoutID = window.setInterval(
+            // send an error to the BLE socket
+            this._ble._sendDisconnectError.bind(this._ble, 'micro:bit stopped receiving data'),
+            BLETimeout
+        );
     }
 
     /**
