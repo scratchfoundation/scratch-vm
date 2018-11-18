@@ -319,7 +319,7 @@ class MicroBit {
         window.clearInterval(this._timeoutID);
         this._timeoutID = window.setInterval(
             // send an error to the BLE socket
-            this._ble._sendDisconnectError.bind(this._ble, 'micro:bit stopped receiving data'),
+            this._ble._sendDisconnectError.bind(this._ble, 'micro:bit extension stopped receiving data'),
             BLETimeout
         );
     }
