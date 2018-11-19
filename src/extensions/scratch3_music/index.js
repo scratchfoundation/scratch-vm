@@ -612,6 +612,62 @@ class Scratch3MusicBlocks {
     }
 
     /**
+     * An array that is a mapping from MIDI drum numbers in range (35..81) to Scratch drum numbers.
+     * @type {Array[]} an array of information about the drums, in the format [drumNum, pitch, decay].
+     */
+    get MIDI_DRUMS () {
+        return [
+            [1, -4], // "BassDrum" in 2.0, "Bass Drum" in 3.0 (which was "Tom" in 2.0)
+            [1, 0], // Same as just above
+            [2, 0],
+            [0, 0],
+            [7, 0],
+            [0, 2],
+            [1, -6, 4],
+            [5, 0],
+            [1, -3, 3.2],
+            [5, 0], // "HiHatPedal" in 2.0, "Closed Hi-Hat" in 3.0
+            [1, 0, 3],
+            [4, -8],
+            [1, 4, 3],
+            [1, 7, 2.7],
+            [3, -8],
+            [1, 10, 2.7],
+            [4, -2],
+            [3, -11],
+            [4, 2],
+            [6, 0],
+            [3, 0, 3.5],
+            [10, 0],
+            [3, -8, 3.5],
+            [16, -6],
+            [4, 2],
+            [12, 2],
+            [12, 0],
+            [13, 0, 0.2],
+            [13, 0, 2],
+            [13, -5, 2],
+            [12, 12],
+            [12, 5],
+            [10, 19],
+            [10, 12],
+            [14, 0],
+            [14, 0], // "Maracas" in 2.0, "Cabasa" in 3.0 (TODO: pitch up?)
+            [17, 12],
+            [17, 5],
+            [15, 0], // "GuiroShort" in 2.0, "Guiro" in 3.0 (which was "GuiroLong" in 2.0) (TODO: decay?)
+            [15, 0],
+            [8, 0],
+            [9, 0],
+            [9, -4],
+            [17, -5],
+            [17, 0],
+            [11, -6, 1],
+            [11, -6, 3]
+        ];
+    }
+
+    /**
      * The key to load & store a target's music-related state.
      * @type {string}
      */
@@ -712,6 +768,26 @@ class Scratch3MusicBlocks {
                         id: 'music.playDrumForBeats',
                         default: 'play drum [DRUM] for [BEATS] beats',
                         description: 'play drum sample for a number of beats'
+                    }),
+                    arguments: {
+                        DRUM: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'DRUM',
+                            defaultValue: 1
+                        },
+                        BEATS: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.25
+                        }
+                    }
+                },
+                {
+                    opcode: 'midiPlayDrumForBeats',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'music.midiPlayDrumForBeats',
+                        default: 'play drum [DRUM] for [BEATS] beats',
+                        description: 'play drum sample for a number of beats according to a mapping of MIDI codes'
                     }),
                     arguments: {
                         DRUM: {
@@ -846,14 +922,48 @@ class Scratch3MusicBlocks {
      * @property {number} BEATS - the duration in beats of the drum sound.
      */
     playDrumForBeats (args, util) {
+        this._playDrumForBeats(args.DRUM, args.BEATS, util, false);
+    }
+
+    /**
+     * Play a drum sound for some number of beats according to the range of "MIDI" drum codes supported.
+     * This block is implemented for compatibility with old Scratch projects that use the
+     * 'drum:duration:elapsed:from:' block.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     */
+    midiPlayDrumForBeats (args, util) {
+        this._playDrumForBeats(args.DRUM, args.BEATS, util, true);
+    }
+
+    /**
+     * Internal code to play a drum sound for some number of beats. If mapMidi is true, choose the sound according to
+     * the MIDI to Scratch drum mapping.
+     * @param {number} drumNum - the drum number.
+     * @param {beats} beats - the duration in beats to pause after playing the sound.
+     * @param {object} util - utility object provided by the runtime.
+     * @param {boolean} mapMidi - whether or not drumNum is a MIDI drum number.
+     */
+    _playDrumForBeats (drumNum, beats, util, mapMidi) {
         if (this._stackTimerNeedsInit(util)) {
-            let drum = Cast.toNumber(args.DRUM);
-            drum = Math.round(drum);
-            drum -= 1; // drums are one-indexed
-            drum = MathUtil.wrapClamp(drum, 0, this.DRUM_INFO.length - 1);
-            let beats = Cast.toNumber(args.BEATS);
+            drumNum = Cast.toNumber(drumNum);
+            drumNum = Math.round(drumNum);
+            let pitchShift = 0;
+            if (mapMidi) {
+                const midiDescription = this.MIDI_DRUMS[drumNum - 35];
+                if (midiDescription) {
+                    drumNum = midiDescription[0];
+                    pitchShift = midiDescription[1] * 10; // 10 = one semitone
+                } else {
+                    drumNum = 2;
+                }
+            } else {
+                drumNum -= 1; // drums are one-indexed
+            }
+            drumNum = MathUtil.wrapClamp(drumNum, 0, this.DRUM_INFO.length - 1);
+            beats = Cast.toNumber(beats);
             beats = this._clampBeats(beats);
-            this._playDrumNum(util, drum);
+            this._playDrumNum(util, drumNum, pitchShift);
             this._startStackTimer(util, this._beatsToSec(beats));
         } else {
             this._checkStackTimer(util);
@@ -863,10 +973,11 @@ class Scratch3MusicBlocks {
     /**
      * Play a drum sound using its 0-indexed number.
      * @param {object} util - utility object provided by the runtime.
-     * @param  {number} drumNum - the number of the drum to play.
+     * @param {number} drumNum - the number of the drum to play.
+     * @param {number} pitchShift - pitch shift to be applied (in addition to sprite's "pitch" audio effect).
      * @private
      */
-    _playDrumNum (util, drumNum) {
+    _playDrumNum (util, drumNum, pitchShift) {
         if (util.runtime.audioEngine === null) return;
         if (util.target.sprite.soundBank === null) return;
         // If we're playing too many sounds, do not play the drum sound.
@@ -887,8 +998,19 @@ class Scratch3MusicBlocks {
 
         const engine = util.runtime.audioEngine;
         const chain = engine.createEffectChain();
-        chain.setEffectsFromTarget(util.target);
+        const soundEffects = Object.assign({}, util.target.soundEffects);
+        if (pitchShift) {
+            soundEffects.pitch = (soundEffects.pitch || 0) + pitchShift;
+        }
+        chain.setEffectsFromTarget(soundEffects);
         player.connect(chain);
+
+        // Dirty hack to make the pitch effect work - otherwise the effect isn't applied, for some reason.
+        // (Other audio effects work fine without this, though.)
+        const pitchEffect = chain._effects.find(effect => effect.name === 'pitch');
+        if (pitchEffect) {
+            pitchEffect.updatePlayer(player);
+        }
 
         this._concurrencyCounter++;
         player.once('stop', () => {
