@@ -1,3 +1,4 @@
+const formatMessage = require('format-message');
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
@@ -27,26 +28,123 @@ const SEQUENCE_HAT_TIMEOUT = 100;
  */
 class Scratch3MakeyMakeyBlocks {
     constructor (runtime) {
+        /**
+         * The runtime instantiating this block package.
+         * @type {Runtime}
+         */
         this.runtime = runtime;
-        this.frameCounter = 0;
-        setInterval(() => this.frameCounter++, this.runtime.currentStepTime);
+
+        /**
+         * A toggle that alternates true and false each frame, so that an
+         * edge-triggered hat can trigger on every other frame.
+         * @type {boolean}
+         */
+        this.frameToggle = false;
+
+        // Set an interval that toggles the frameToggle every frame.
+        setInterval(() => {
+            this.frameToggle = !this.frameToggle;
+        }, this.runtime.currentStepTime);
 
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
 
-        this.sequenceMenu = [
-            {text: 'left up right', value: 'left up right'},
-            {text: 'right up left', value: 'right up left'},
-            {text: 'left right', value: 'left right'},
-            {text: 'right left', value: 'right left'},
-            {text: 'up down', value: 'up down'},
-            {text: 'down up', value: 'down up'},
-            {text: 'up right down left', value: 'up right down left'},
-            {text: 'space space space', value: 'space space space'},
-            {text: 'up up down down left right left right', value: 'up up down down left right left right'}
-        ];
         this.sequences = {};
+
         this.keyPressBuffer = [];
+    }
+
+    get KEY_NAME () {
+        return {
+            SPACE: 'space',
+            LEFT: 'left arrow',
+            UP: 'up arrow',
+            RIGHT: 'right arrow',
+            DOWN: 'down arrow'
+        };
+    }
+
+    get KEY_TEXT () {
+        return {
+            [this.KEY_NAME.SPACE]: formatMessage({
+                id: 'makeymakey.spaceKey',
+                default: 'space',
+                description: 'The space key on a computer keyboard.'
+            }),
+            [this.KEY_NAME.LEFT]: formatMessage({
+                id: 'makeymakey.leftArrow',
+                default: 'left arrow',
+                description: 'The left arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME.UP]: formatMessage({
+                id: 'makeymakey.upArrow',
+                default: 'up arrow',
+                description: 'The up arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME.RIGHT]: formatMessage({
+                id: 'makeymakey.rightArrow',
+                default: 'right arrow',
+                description: 'The right arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME.DOWN]: formatMessage({
+                id: 'makeymakey.downArrow',
+                default: 'down arrow',
+                description: 'The down arrow key on a computer keyboard.'
+            })
+        };
+    }
+
+    get KEY_NAME_SHORT () {
+        return {
+            SPACE: 'space',
+            LEFT: 'left',
+            UP: 'up',
+            RIGHT: 'right',
+            DOWN: 'down'
+        };
+    }
+
+    get KEY_TEXT_SHORT () {
+        return {
+            [this.KEY_NAME_SHORT.SPACE]: formatMessage({
+                id: 'makeymakey.spaceKeyShort',
+                default: 'space',
+                description: 'Short name for the space key on a computer keyboard.'
+            }),
+            [this.KEY_NAME_SHORT.LEFT]: formatMessage({
+                id: 'makeymakey.leftArrowShort',
+                default: 'left',
+                description: 'Short name for the left arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME_SHORT.UP]: formatMessage({
+                id: 'makeymakey.upArrowShort',
+                default: 'up',
+                description: 'Short name for the up arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME_SHORT.RIGHT]: formatMessage({
+                id: 'makeymakey.rightArrowShort',
+                default: 'right',
+                description: 'Short name for the right arrow key on a computer keyboard.'
+            }),
+            [this.KEY_NAME_SHORT.DOWN]: formatMessage({
+                id: 'makeymakey.downArrowShort',
+                default: 'down',
+                description: 'Short name for the down arrow key on a computer keyboard.'
+            })
+        };
+    }
+    get DEFAULT_SEQUENCES () {
+        return [
+            'left up right',
+            'right up left',
+            'left right',
+            'right left',
+            'up down',
+            'down up',
+            'up right down left',
+            'space space space',
+            'up up down down left right left right'
+        ];
     }
 
     /**
@@ -78,7 +176,7 @@ class Scratch3MakeyMakeyBlocks {
                         SEQUENCE: {
                             type: ArgumentType.STRING,
                             menu: 'SEQUENCE',
-                            defaultValue: this.sequenceMenu[0].value
+                            defaultValue: this.DEFAULT_SEQUENCES[0]
                         }
                     }
                 }
@@ -97,21 +195,39 @@ class Scratch3MakeyMakeyBlocks {
                     {text: 'f', value: 'f'},
                     {text: 'g', value: 'g'}
                 ],
-                SEQUENCE: this.sequenceMenu
+                SEQUENCE: this.buildSequenceMenu(this.DEFAULT_SEQUENCES)
             }
         };
     }
 
+    buildSequenceMenu (sequencesArray) {
+        return sequencesArray.map(
+            str => this.getMenuItemForSequenceString(str)
+        );
+    }
+
+    getMenuItemForSequenceString (sequenceString) {
+        const menuItem = {
+            text: '',
+            value: sequenceString
+        };
+        const sequenceArray = sequenceString.split(' ');
+        sequenceArray.forEach(str => {
+            const text = this.KEY_TEXT_SHORT[str];
+            menuItem.text += ` ${text}`;
+        });
+        return menuItem;
+    }
+
     whenMakeyKeyPressed (args, util) {
         const isDown = this.isKeyDown(args.KEY, util);
-        return isDown && (this.frameCounter % 2 === 0);
+        return (isDown && this.frameToggle);
     }
 
     whenMakeyKeyReleased (args, util) {
         return !this.isKeyDown(args.KEY, util);
     }
 
-    // todo: clear the buffer after sequence complete?
     keyPressed (key) {
         this.keyPressBuffer.push(key);
         // Keep the buffer under the length limit
@@ -142,8 +258,6 @@ class Scratch3MakeyMakeyBlocks {
                 // time to all trigger before resetting the flag.
                 setTimeout(() => {
                     this.sequences[str].completed = false;
-                    // Clear the buffer
-                    this.keyPressBuffer = [];
                 }, SEQUENCE_HAT_TIMEOUT);
             }
         }
