@@ -799,7 +799,8 @@ class Scratch3MusicBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0.25
                         }
-                    }
+                    },
+                    hideFromPalette: true
                 },
                 {
                     opcode: 'restForBeats',
