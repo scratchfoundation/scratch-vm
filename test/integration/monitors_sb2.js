@@ -17,7 +17,12 @@ test('importing sb2 project with monitors', t => {
         // All monitors should create threads that finish during the step and
         // are revoved from runtime.threads.
         t.equal(threads.length, 0);
-        t.equal(vm.runtime._lastStepDoneThreads.length, 8);
+
+        // we care that the last step updated the right number of monitors
+        // we don't care whether the last step ran other threads or not
+        const lastStepUpdatedMonitorThreads = vm.runtime._lastStepDoneThreads.filter(thread => thread.updateMonitor);
+        t.equal(lastStepUpdatedMonitorThreads.length, 8);
+
         // There should be one additional hidden monitor that is in the monitorState but
         // does not start a thread.
         t.equal(vm.runtime._monitorState.size, 9);
