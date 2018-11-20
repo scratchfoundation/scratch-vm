@@ -48,10 +48,16 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
     if (!costume || !costume.asset) {
         return Promise.reject('Costume load failed. Assets were missing.');
     }
+    if (!runtime.v2BitmapAdapter) {
+        return Promise.reject('No V2 Bitmap adapter present.');
+    }
+
     return new Promise((resolve, reject) => {
         const baseImageElement = new Image();
         let textImageElement;
 
+        // We need to wait for 2 images total to load. loadedOne will be true when one
+        // is done, and we are just waiting for one more.
         let loadedOne = false;
 
         const onError = function () {
@@ -103,9 +109,6 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             ctx.drawImage(textImageElement, 0, 0);
         }
         if (scale !== 1) {
-            if (!runtime.v2BitmapAdapter) {
-                return Promise.reject('No V2 Bitmap adapter present.');
-            }
             canvas = runtime.v2BitmapAdapter.resize(canvas, canvas.width * scale, canvas.height * scale);
         }
 
