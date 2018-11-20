@@ -229,6 +229,33 @@ test('loud? boolean', t => {
     t.end();
 });
 
+test('get attribute of sprite variable', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+    const s = new Sprite();
+    const target = new RenderedTarget(s, rt);
+    const thing = {
+        name: 'cars',
+        value: 'trucks'
+    };
+    rt.getSpriteTargetByName = () => target;
+    target.lookupVariableByNameAndType = () => thing;
+    t.equal(sensing.getAttributeOf({PROPERTY: 'cars'}), 'trucks');
+
+    t.end();
+});
+test('get attribute of variable that does not exist', t => {
+    const rt = new Runtime();
+    const sensing = new Sensing(rt);
+    const s = new Sprite();
+    const stage = new RenderedTarget(s, rt);
+    rt.getTargetForStage = () => stage;
+    stage.lookupVariableByNameAndType = () => null;
+    t.equal(sensing.getAttributeOf({PROPERTY: 'stage'}), 0);
+
+    t.end();
+});
+
 test('username block', t => {
     const rt = new Runtime();
     const sensing = new Sensing(rt);

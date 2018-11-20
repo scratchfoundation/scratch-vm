@@ -598,6 +598,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that block was updated and needs.
+     * @const {string}
+     */
+    static get BLOCKS_NEED_UPDATE () {
+        return 'BLOCKS_NEED_UPDATE';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -2144,6 +2152,13 @@ class Runtime extends EventEmitter {
     requestTargetsUpdate (target) {
         if (!target.isOriginal) return;
         this._refreshTargets = true;
+    }
+
+    /**
+     * Emit an event that indicate that the blocks on the workspace need updating.
+     */
+    requestBlocksUpdate () {
+        this.emit(Runtime.BLOCK_NEED_UPDATE);
     }
 
     /**
