@@ -8,7 +8,7 @@ const Variable = require('../../src/engine/variable');
 const projectUri = path.resolve(__dirname, '../fixtures/monitors.sb3');
 const project = readFileToBuffer(projectUri);
 
-test('importing sb2 project with monitors', t => {
+test('importing sb3 project with monitors', t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());
 
@@ -18,7 +18,12 @@ test('importing sb2 project with monitors', t => {
         // All monitors should create threads that finish during the step and
         // are revoved from runtime.threads.
         t.equal(threads.length, 0);
-        t.equal(vm.runtime._lastStepDoneThreads.length, 17);
+
+        // we care that the last step updated the right number of monitors
+        // we don't care whether the last step ran other threads or not
+        const lastStepUpdatedMonitorThreads = vm.runtime._lastStepDoneThreads.filter(thread => thread.updateMonitor);
+        t.equal(lastStepUpdatedMonitorThreads.length, 17);
+
         // There should be one additional hidden monitor that is in the monitorState but
         // does not start a thread.
         t.equal(vm.runtime._monitorState.size, 18);
