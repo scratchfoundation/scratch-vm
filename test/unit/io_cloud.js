@@ -12,7 +12,7 @@ test('spec', t => {
     t.type(cloud.postData, 'function');
     t.type(cloud.requestUpdateVariable, 'function');
     t.type(cloud.updateCloudVariable, 'function');
-    t.type(cloud.requestCreateCloudVariable, 'function');
+    t.type(cloud.requestCreateVariable, 'function');
     t.type(cloud.createCloudVariable, 'function');
     t.type(cloud.setProvider, 'function');
     t.type(cloud.setStage, 'function');
@@ -115,7 +115,7 @@ test('requestUpdateVariable calls provider\'s updateVariable function', t => {
     t.end();
 });
 
-test('requestCreateCloudVariable calls provider\'s createVariable function', t => {
+test('requestCreateVariable calls provider\'s createVariable function', t => {
     let createVariableCalled = false;
     const mockVariable = new Variable('a var id', 'my var', Variable.SCALAR_TYPE, false);
     let mockVarName;
@@ -134,11 +134,11 @@ test('requestCreateCloudVariable calls provider\'s createVariable function', t =
     const runtime = new Runtime();
     const cloud = new Cloud(runtime);
     cloud.setProvider(provider);
-    cloud.requestCreateCloudVariable(mockVariable);
+    cloud.requestCreateVariable(mockVariable);
     t.equals(createVariableCalled, true);
     t.strictEquals(mockVarName, 'my var');
     t.strictEquals(mockVarValue, 0);
-    // Calling requestCreateCloudVariable does not set isCloud flag on variable
+    // Calling requestCreateVariable does not set isCloud flag on variable
     t.strictEquals(mockVariable.isCloud, false);
     t.end();
 });

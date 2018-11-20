@@ -71,11 +71,11 @@ test('createListVariable creates a list', t => {
     t.end();
 });
 
-test('createVariable calls cloud io device\'s requestCreateCloudVariable', t => {
+test('createVariable calls cloud io device\'s requestCreateVariable', t => {
     const runtime = new Runtime();
-    // Mock the requestCreateCloudVariable function
+    // Mock the requestCreateVariable function
     let requestCreateCloudWasCalled = false;
-    runtime.ioDevices.cloud.requestCreateCloudVariable = () => {
+    runtime.ioDevices.cloud.requestCreateVariable = () => {
         requestCreateCloudWasCalled = true;
     };
 
@@ -97,11 +97,11 @@ test('createVariable calls cloud io device\'s requestCreateCloudVariable', t => 
     t.end();
 });
 
-test('createVariable does not call cloud io device\'s requestCreateCloudVariable if target is not stage', t => {
+test('createVariable does not call cloud io device\'s requestCreateVariable if target is not stage', t => {
     const runtime = new Runtime();
-    // Mock the requestCreateCloudVariable function
+    // Mock the requestCreateVariable function
     let requestCreateCloudWasCalled = false;
-    runtime.ioDevices.cloud.requestCreateCloudVariable = () => {
+    runtime.ioDevices.cloud.requestCreateVariable = () => {
         requestCreateCloudWasCalled = true;
     };
 
