@@ -567,6 +567,16 @@ class Blocks {
                 if (!optRuntime){
                     break;
                 }
+                // The selected item in the sensing of block menu needs to change based on the
+                // selected target.  Set it to the first item in the menu list.
+                if (block.opcode === 'sensing_of_object_menu') {
+                    if (block.fields.OBJECT.value === '_stage_') {
+                        this._blocks[block.parent].fields.PROPERTY.value = 'backdrop #';
+                    } else {
+                        this._blocks[block.parent].fields.PROPERTY.value = 'x position';
+                    }
+                    optRuntime.requestBlocksUpdate();
+                }
 
                 const flyoutBlock = block.shadow && block.parent ? this._blocks[block.parent] : block;
                 if (flyoutBlock.isMonitored) {

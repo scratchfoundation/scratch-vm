@@ -108,6 +108,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.BLOCKSINFO_UPDATE, blocksInfo => {
             this.emit(Runtime.BLOCKSINFO_UPDATE, blocksInfo);
         });
+        this.runtime.on(Runtime.BLOCKS_NEED_UPDATE, () => {
+            this.emitWorkspaceUpdate();
+        });
         this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
             this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
         });
