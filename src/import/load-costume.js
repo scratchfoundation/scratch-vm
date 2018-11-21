@@ -128,7 +128,6 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             assetMatchesBase: scale === 1 && !textImageElement
         };
     })
-        .catch(e => Promise.reject(e))
         .finally(() => {
             // Clean up the costume object
             delete costume.textLayerMD5;
@@ -162,7 +161,6 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
         }
         resolve(fetched.canvas);
     }))
-        .catch(e => Promise.reject(e))
         .then(canvas => {
             // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
             costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
