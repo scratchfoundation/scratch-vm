@@ -234,12 +234,12 @@ test('get attribute of sprite variable', t => {
     const sensing = new Sensing(rt);
     const s = new Sprite();
     const target = new RenderedTarget(s, rt);
-    const thing = {
+    const variable = {
         name: 'cars',
         value: 'trucks'
     };
     rt.getSpriteTargetByName = () => target;
-    target.lookupVariableByNameAndType = () => thing;
+    target.lookupVariableByNameAndType = () => variable;
     t.equal(sensing.getAttributeOf({PROPERTY: 'cars'}), 'trucks');
 
     t.end();
@@ -248,10 +248,10 @@ test('get attribute of variable that does not exist', t => {
     const rt = new Runtime();
     const sensing = new Sensing(rt);
     const s = new Sprite();
-    const stage = new RenderedTarget(s, rt);
-    rt.getTargetForStage = () => stage;
-    stage.lookupVariableByNameAndType = () => null;
-    t.equal(sensing.getAttributeOf({PROPERTY: 'stage'}), 0);
+    const target = new RenderedTarget(s, rt);
+    rt.getTargetForStage = () => target;
+    target.lookupVariableByNameAndType = () => null;
+    t.equal(sensing.getAttributeOf({PROPERTY: 'variableThatDoesNotExist'}), 0);
 
     t.end();
 });

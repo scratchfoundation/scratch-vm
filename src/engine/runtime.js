@@ -2181,7 +2181,7 @@ class Runtime extends EventEmitter {
      * Emit an event that indicate that the blocks on the workspace need updating.
      */
     requestBlocksUpdate () {
-        this.emit(Runtime.BLOCK_NEED_UPDATE);
+        this.emit(Runtime.BLOCKS_NEED_UPDATE);
     }
 
     /**
