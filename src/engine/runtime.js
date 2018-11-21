@@ -598,7 +598,7 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for reporting that block was updated and needs.
+     * Event name for reporting that a block was updated and needs to be rerendered.
      * @const {string}
      */
     static get BLOCKS_NEED_UPDATE () {
@@ -2158,7 +2158,7 @@ class Runtime extends EventEmitter {
      * Emit an event that indicate that the blocks on the workspace need updating.
      */
     requestBlocksUpdate () {
-        this.emit(Runtime.BLOCK_NEED_UPDATE);
+        this.emit(Runtime.BLOCKS_NEED_UPDATE);
     }
 
     /**

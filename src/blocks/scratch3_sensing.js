@@ -313,7 +313,7 @@ class Scratch3SensingBlocks {
             }
         }
 
-        // Local variables (not lists).
+        // Target variables.
         const varName = args.PROPERTY;
         const variable = attrTarget.lookupVariableByNameAndType(varName, '', true);
         if (variable) {
