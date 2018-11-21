@@ -100,7 +100,7 @@ class Cloud {
         }
     }
 
-    requestCreateCloudVariable (variable) {
+    requestCreateVariable (variable) {
         if (this.runtime.canAddCloudVariable()) {
             if (this.provider) {
                 this.provider.createVariable(variable.name, variable.value);
@@ -120,6 +120,29 @@ class Cloud {
     requestUpdateVariable (name, value) {
         if (this.provider) {
             this.provider.updateVariable(name, value);
+        }
+    }
+
+    /**
+     * Request the cloud data provider to rename the variable with the given name
+     * to the given new name. Does nothing if this io device does not have a provider set.
+     * @param {string} oldName The name of the variable to rename
+     * @param {string | number} newName The new name for the variable
+     */
+    requestRenameVariable (oldName, newName) {
+        if (this.provider) {
+            this.provider.renameVariable(oldName, newName);
+        }
+    }
+
+    /**
+     * Request the cloud data provider to delete the variable with the given name
+     * Does nothing if this io device does not have a provider set.
+     * @param {string} name The name of the variable to delete
+     */
+    requestDeleteVariable (name) {
+        if (this.provider) {
+            this.provider.deleteVariable(name);
         }
     }
 

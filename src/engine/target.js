@@ -241,7 +241,7 @@ class Target extends EventEmitter {
             const newVariable = new Variable(id, name, type, false);
             this.variables[id] = newVariable;
             if (isCloud && this.isStage) {
-                this.runtime.ioDevices.cloud.requestCreateCloudVariable(newVariable);
+                this.runtime.ioDevices.cloud.requestCreateVariable(newVariable);
             }
         }
     }
@@ -285,9 +285,14 @@ class Target extends EventEmitter {
         if (this.variables.hasOwnProperty(id)) {
             const variable = this.variables[id];
             if (variable.id === id) {
+                const oldName = variable.name;
                 variable.name = newName;
 
                 if (this.runtime) {
+                    if (variable.isCloud && this.isStage) {
+                        this.runtime.ioDevices.cloud.requestRenameVariable(oldName, newName);
+                    }
+
                     const blocks = this.runtime.monitorBlocks;
                     blocks.changeBlock({
                         id: id,
@@ -314,8 +319,14 @@ class Target extends EventEmitter {
      */
     deleteVariable (id) {
         if (this.variables.hasOwnProperty(id)) {
+            // Get info about the variable before deleting it
+            const deletedVariableName = this.variables[id].name;
+            const deletedVariableWasCloud = this.variables[id].isCloud;
             delete this.variables[id];
             if (this.runtime) {
+                if (deletedVariableWasCloud && this.isStage) {
+                    this.runtime.ioDevices.cloud.requestDeleteVariable(deletedVariableName);
+                }
                 this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
             }
