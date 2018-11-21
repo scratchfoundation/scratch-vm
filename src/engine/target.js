@@ -319,11 +319,13 @@ class Target extends EventEmitter {
      */
     deleteVariable (id) {
         if (this.variables.hasOwnProperty(id)) {
-            const variable = this.variables[id];
+            // Get info about the variable before deleting it
+            const deletedVariableName = this.variables[id].name;
+            const deletedVariableWasCloud = this.variables[id].isCloud;
             delete this.variables[id];
             if (this.runtime) {
-                if (variable.isCloud && this.isStage) {
-                    this.runtime.ioDevices.cloud.requestDeleteVariable(variable.name);
+                if (deletedVariableWasCloud && this.isStage) {
+                    this.runtime.ioDevices.cloud.requestDeleteVariable(deletedVariableName);
                 }
                 this.runtime.monitorBlocks.deleteBlock(id);
                 this.runtime.requestRemoveMonitor(id);
