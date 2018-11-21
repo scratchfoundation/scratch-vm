@@ -114,8 +114,6 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
     // that was opened in Scratch 2.0. In this case, set costume.textLayerAsset.
     let textLayerFilePromise;
     if (costume.textLayerMD5) {
-        textLayerFileName = textLayerFileName ? textLayerFileName :
-            `${costume.textLayerMD5}.png`;
         const textLayerFile = zip.file(textLayerFileName);
         if (!textLayerFile) {
             log.error(`Could not find text layer file associated with the ${costume.name} costume.`);
