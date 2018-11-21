@@ -445,15 +445,16 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             const ext = idParts[1].toLowerCase();
             costume.dataFormat = ext;
             costume.assetId = md5;
+            if (costumeSource.textLayerMD5) {
+                costume.textLayerMD5 = StringUtil.splitFirst(costumeSource.textLayerMD5, '.')[0];
+            }
             // If there is no internet connection, or if the asset is not in storage
             // for some reason, and we are doing a local .sb2 import, (e.g. zip is provided)
             // the file name of the costume should be the baseLayerID followed by the file ext
             const assetFileName = `${costumeSource.baseLayerID}.${ext}`;
-            costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName)
-                .then(asset => {
-                    costume.asset = asset;
-                    return loadCostume(costume.md5, costume, runtime, 2 /* optVersion */);
-                })
+            const textLayerFileName = costumeSource.textLayerID ? `${costumeSource.textLayerID}.png` : null;
+            costumePromises.push(deserializeCostume(costume, runtime, zip, assetFileName, textLayerFileName)
+                .then(() => loadCostume(costume.md5, costume, runtime, 2 /* optVersion */))
             );
         }
     }

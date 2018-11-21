@@ -881,10 +881,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeCostume(costume, runtime, zip)
-            .then(asset => {
-                costume.asset = asset;
-                return loadCostume(costumeMd5Ext, costume, runtime);
-            });
+            .then(() => loadCostume(costumeMd5Ext, costume, runtime));
         // Only attempt to load the costume after the deserialization
         // process has been completed
     });
