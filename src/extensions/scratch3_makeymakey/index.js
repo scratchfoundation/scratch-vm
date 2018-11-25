@@ -49,11 +49,29 @@ class Scratch3MakeyMakeyBlocks {
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
 
+        /*
+         * An object containing a set of sequence objects.
+         * These are the key sequences currently being detected by the "when
+         * keys pressed in order" hat block. Each sequence is keyed by its
+         * string representation (the sequence's value in the menu, which is a
+         * string of KEY_ID_SHORTs separated by spaces). Each sequence object
+         * has an array property (an array of KEY_ID_SHORTs) and a boolean
+         * completed property that is true when the sequence has just been
+         * pressed.
+         * @type {object}
+         */
         this.sequences = {};
 
+        /*
+         * An array of the key codes of recently pressed keys.
+         * @type {array}
+         */
         this.keyPressBuffer = [];
     }
 
+    /*
+     * IDs for the space bar and arrow keys.
+     */
     get KEY_ID () {
         return {
             SPACE: 'space',
@@ -64,6 +82,9 @@ class Scratch3MakeyMakeyBlocks {
         };
     }
 
+    /*
+     * Localized names of the space bar and arrow keys.
+     */
     get KEY_TEXT () {
         return {
             [this.KEY_ID.SPACE]: formatMessage({
@@ -94,6 +115,9 @@ class Scratch3MakeyMakeyBlocks {
         };
     }
 
+    /*
+     * Short form IDs for the space bar and arrow keys.
+     */
     get KEY_ID_SHORT () {
         return {
             SPACE: 'space',
@@ -104,6 +128,9 @@ class Scratch3MakeyMakeyBlocks {
         };
     }
 
+    /*
+    * Localized short-form names of the space bar and arrow keys.
+    */
     get KEY_TEXT_SHORT () {
         return {
             [this.KEY_ID_SHORT.SPACE]: formatMessage({
@@ -133,6 +160,12 @@ class Scratch3MakeyMakeyBlocks {
             })
         };
     }
+
+    /*
+     * An array of strings of KEY_IDs representing the default set of
+     * key sequences for use by the "when keys pressed in order" block.
+     * @type {array}
+     */
     get DEFAULT_SEQUENCES () {
         return [
             `${this.KEY_ID_SHORT.LEFT} ${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.RIGHT}`,
@@ -219,12 +252,22 @@ class Scratch3MakeyMakeyBlocks {
         };
     }
 
+    /*
+     * Build the menu of key sequences.
+     * @param {array} sequencesArray an array of strings of KEY_IDs.
+     * @returns {array} an array of objects with text and value properties.
+     */
     buildSequenceMenu (sequencesArray) {
         return sequencesArray.map(
             str => this.getMenuItemForSequenceString(str)
         );
     }
 
+    /*
+     * Create a menu item for a sequence string.
+     * @param {string} sequenceString a string of KEY_IDs.
+     * @return {object} an object with text and value properties.
+     */
     getMenuItemForSequenceString (sequenceString) {
         let sequenceArray = sequenceString.split(' ');
         sequenceArray = sequenceArray.map(str => this.KEY_TEXT_SHORT[str]);
@@ -234,15 +277,24 @@ class Scratch3MakeyMakeyBlocks {
         };
     }
 
+    /*
+     * Check whether a keyboard key is currently pressed.
+     * Also, toggle the results of the test on alternate frames, so that the
+     * hat block fires repeatedly.
+     * @param {object} args - the block arguments.
+     * @property {number} KEY - a key code.
+     * @param {object} util - utility object provided by the runtime.
+     */
     whenMakeyKeyPressed (args, util) {
-        const isDown = this.isKeyDown(args.KEY, util);
+        const isDown = util.ioQuery('keyboard', 'getKeyIsDown', [args.KEY]);
         return (isDown && this.frameToggle);
     }
 
-    whenMakeyKeyReleased (args, util) {
-        return !this.isKeyDown(args.KEY, util);
-    }
-
+    /*
+     * A function called on the KEY_PRESSED event, to update the key press
+     * buffer and check if any of the key sequences have been completed.
+     * @param {string} key A key code.
+     */
     keyPressed (key) {
         this.keyPressBuffer.push(key);
         // Keep the buffer under the length limit
@@ -278,6 +330,11 @@ class Scratch3MakeyMakeyBlocks {
         }
     }
 
+    /*
+     * Add a key sequence to the set currently being checked on each key press.
+     * @param {string} sequenceString a string of space-separated KEY_IDs.
+     * @param {array} sequenceArray an array of KEY_IDs.
+     */
     addSequence (sequenceString, sequenceArray) {
         // If we already have this sequence string, return.
         if (this.sequences.hasOwnProperty(sequenceString)) {
@@ -298,6 +355,11 @@ class Scratch3MakeyMakeyBlocks {
         this.sequences[sequenceString] = newSeq;
     }
 
+    /*
+     * Check whether a key sequence was recently completed.
+     * @param {object} args The block arguments.
+     * @property {number} SEQUENCE A string of KEY_IDs.
+     */
     whenCodePressed (args) {
         const sequenceString = Cast.toString(args.SEQUENCE);
         const sequenceArray = sequenceString.split(' ');
@@ -307,10 +369,6 @@ class Scratch3MakeyMakeyBlocks {
         this.addSequence(sequenceString, sequenceArray);
 
         return this.sequences[sequenceString].completed;
-    }
-
-    isKeyDown (keyArg, util) {
-        return util.ioQuery('keyboard', 'getKeyIsDown', [keyArg]);
     }
 }
 module.exports = Scratch3MakeyMakeyBlocks;
