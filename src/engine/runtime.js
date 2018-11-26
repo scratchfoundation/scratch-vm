@@ -502,6 +502,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for report that a change was made that can be saved
+     * @const {string}
+     */
+    static get PROJECT_CHANGED () {
+        return 'PROJECT_CHANGED';
+    }
+
+    /**
      * Event name for targets update report.
      * @const {string}
      */
@@ -1737,7 +1745,6 @@ class Runtime extends EventEmitter {
         // Script glows must be cleared.
         this._scriptGlowsPreviousFrame = [];
         this._updateGlows();
-        this.requestTargetsUpdate(editingTarget);
     }
 
     /**
@@ -2033,6 +2040,13 @@ class Runtime extends EventEmitter {
      */
     emitProjectLoaded () {
         this.emit(Runtime.PROJECT_LOADED);
+    }
+
+    /**
+     * Report that the project has changed in a way that would affect serialization
+     */
+    emitProjectChanged () {
+        this.emit(Runtime.PROJECT_CHANGED);
     }
 
     /**

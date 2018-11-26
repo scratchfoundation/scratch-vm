@@ -84,6 +84,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PROJECT_RUN_STOP, () => {
             this.emit(Runtime.PROJECT_RUN_STOP);
         });
+        this.runtime.on(Runtime.PROJECT_CHANGED, () => {
+            this.emit(Runtime.PROJECT_CHANGED);
+        });
         this.runtime.on(Runtime.VISUAL_REPORT, visualReport => {
             this.emit(Runtime.VISUAL_REPORT, visualReport);
         });
@@ -476,7 +479,7 @@ class VirtualMachine extends EventEmitter {
             }
 
             // Update the VM user's knowledge of targets and blocks on the workspace.
-            this.emitTargetsUpdate();
+            this.emitTargetsUpdate(false /* Don't emit project change */);
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(this.editingTarget);
             this.runtime.ioDevices.cloud.setStage(this.runtime.getTargetForStage());
@@ -1105,7 +1108,7 @@ class VirtualMachine extends EventEmitter {
         if (target) {
             this.editingTarget = target;
             // Emit appropriate UI updates.
-            this.emitTargetsUpdate();
+            this.emitTargetsUpdate(false /* Don't emit project change */);
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
         }
@@ -1199,6 +1202,7 @@ class VirtualMachine extends EventEmitter {
         if (this.editingTarget) {
             this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(this.editingTarget);
+            this.emitTargetsUpdate(false /* Don't emit project change */);
         }
     }
 
@@ -1206,8 +1210,12 @@ class VirtualMachine extends EventEmitter {
      * Emit metadata about available targets.
      * An editor UI could use this to display a list of targets and show
      * the currently editing one.
+     * @param {bool} triggerProjectChange If true, also emit a project changed event.
+     * Disabled selectively by updates that don't affect project serialization.
+     * Defaults to true.
      */
-    emitTargetsUpdate () {
+    emitTargetsUpdate (triggerProjectChange) {
+        if (typeof triggerProjectChange === 'undefined') triggerProjectChange = true;
         this.emit('targetsUpdate', {
             // [[target id, human readable target name], ...].
             targetList: this.runtime.targets
@@ -1220,6 +1228,7 @@ class VirtualMachine extends EventEmitter {
             // Currently editing target id.
             editingTarget: this.editingTarget ? this.editingTarget.id : null
         });
+        if (triggerProjectChange) this.runtime.emitProjectChanged();
     }
 
     /**
