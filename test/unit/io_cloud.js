@@ -10,10 +10,11 @@ test('spec', t => {
 
     t.type(cloud, 'object');
     t.type(cloud.postData, 'function');
-    t.type(cloud.requestUpdateVariable, 'function');
-    t.type(cloud.updateCloudVariable, 'function');
     t.type(cloud.requestCreateVariable, 'function');
-    t.type(cloud.createCloudVariable, 'function');
+    t.type(cloud.requestUpdateVariable, 'function');
+    t.type(cloud.requestRenameVariable, 'function');
+    t.type(cloud.requestDeleteVariable, 'function');
+    t.type(cloud.updateCloudVariable, 'function');
     t.type(cloud.setProvider, 'function');
     t.type(cloud.setStage, 'function');
     t.type(cloud.clear, 'function');
@@ -63,30 +64,6 @@ test('postData update message updates the variable', t => {
         value: 3
     }});
     t.strictEquals(fooVar.value, 3);
-    t.end();
-});
-
-test('postData create message sets isCloud flag on the variable and updates runtime cloud limit', t => {
-    const stage = new Target();
-    const fooVar = new Variable(
-        'a fake var id',
-        'foo',
-        Variable.SCALAR_TYPE,
-        false /* isCloud */
-    );
-    stage.variables[fooVar.id] = fooVar;
-
-    t.strictEquals(fooVar.value, 0);
-    t.strictEquals(fooVar.isCloud, false);
-
-    const runtime = new Runtime();
-    const cloud = new Cloud(runtime);
-    cloud.setStage(stage);
-    cloud.postData({varCreate: {
-        name: 'foo'
-    }});
-    t.strictEquals(fooVar.isCloud, true);
-    t.strictEquals(runtime.hasCloudData(), true);
     t.end();
 });
 
