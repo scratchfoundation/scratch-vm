@@ -364,13 +364,17 @@ class Runtime extends EventEmitter {
 
         /**
          * A function that tracks a new cloud variable in the runtime,
-         * updating the cloud variable limit.
+         * updating the cloud variable limit. Calling this function will
+         * emit a cloud data update event if this is the first cloud variable
+         * being added.
+         * @type {function}
          */
         this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
 
         /**
          * A function which updates the runtime's cloud variable limit
-         * when removing a cloud variable.
+         * when removing a cloud variable and emits a cloud update event
+         * if the last of the cloud variables is being removed.
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
@@ -647,6 +651,7 @@ class Runtime extends EventEmitter {
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
 
+    // Helper function for initializing the addCloudVariable function
     _initializeAddCloudVariable (newCloudDataManager) {
         // The addCloudVariable function
         return (() => {
@@ -658,6 +663,7 @@ class Runtime extends EventEmitter {
         });
     }
 
+    // Helper function for initializing the removeCloudVariable function
     _initializeRemoveCloudVariable (newCloudDataManager) {
         return (() => {
             const hadCloudVarsBefore = this.hasCloudData();
