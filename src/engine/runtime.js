@@ -366,14 +366,14 @@ class Runtime extends EventEmitter {
          * A function that tracks a new cloud variable in the runtime,
          * updating the cloud variable limit.
          */
-        this.addCloudVariable = newCloudDataManager.addCloudVariable;
+        this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
 
         /**
          * A function which updates the runtime's cloud variable limit
          * when removing a cloud variable.
          * @type {function}
          */
-        this.removeCloudVariable = newCloudDataManager.removeCloudVariable;
+        this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
     }
 
     /**
@@ -422,6 +422,15 @@ class Runtime extends EventEmitter {
      */
     static get BLOCK_GLOW_OFF () {
         return 'BLOCK_GLOW_OFF';
+    }
+
+    /**
+     * Event name for a cloud data update
+     * to this project.
+     * @const {string}
+     */
+    static get HAS_CLOUD_DATA_UPDATE () {
+        return 'HAS_CLOUD_DATA_UPDATE';
     }
 
     /**
@@ -637,6 +646,27 @@ class Runtime extends EventEmitter {
 
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
+
+    _initializeAddCloudVariable (newCloudDataManager) {
+        // The addCloudVariable function
+        return (() => {
+            const hadCloudVarsBefore = this.hasCloudData();
+            newCloudDataManager.addCloudVariable();
+            if (!hadCloudVarsBefore && this.hasCloudData()) {
+                this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, true);
+            }
+        });
+    }
+
+    _initializeRemoveCloudVariable (newCloudDataManager) {
+        return (() => {
+            const hadCloudVarsBefore = this.hasCloudData();
+            newCloudDataManager.removeCloudVariable();
+            if (hadCloudVarsBefore && !this.hasCloudData()) {
+                this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, false);
+            }
+        });
+    }
 
     /**
      * Register default block packages with this runtime.
@@ -1510,8 +1540,8 @@ class Runtime extends EventEmitter {
         const newCloudDataManager = cloudDataManager();
         this.hasCloudData = newCloudDataManager.hasCloudVariables;
         this.canAddCloudVariable = newCloudDataManager.canAddCloudVariable;
-        this.addCloudVariable = newCloudDataManager.addCloudVariable;
-        this.removeCloudVariable = newCloudDataManager.removeCloudVariable;
+        this.addCloudVariable = this._initializeAddCloudVariable(newCloudDataManager);
+        this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
 
     }
 
