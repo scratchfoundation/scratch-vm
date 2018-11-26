@@ -30,7 +30,7 @@ const TYPES = {
     OBJECT_REF: 99,
     MORPH: 100,
     ALIGNMENT: 104,
-    // STRING: 105,
+    STATIC_STRING: 105,
     UPDATING_STRING: 106,
     SAMPLED_SOUND: 109,
     IMAGE_MORPH: 110,
@@ -50,7 +50,7 @@ const TYPE_NAMES = Object.entries(TYPES)
     carry[value] = key;
     return carry;
 }, {
-    105: 'STRING'
+    105: 'STATIC_STRING'
 });
 
 class Viewable {
@@ -841,7 +841,7 @@ class ExtendedData {
     }
 
     toString () {
-        if (this.constructor === ExtendedData) {
+        if (this.constructor === ExtendedData || this.constructor === UnknownData) {
             return `${this.constructor.name} ${this.classId} ${TYPE_NAMES[this.classId]}`;
         }
         return this.constructor.name;
@@ -866,8 +866,8 @@ class PointData extends ExtendedData {
 const RECTANGLE_FIELDS = {
     X: 0,
     Y: 1,
-    WIDTH: 2,
-    HEIGHT: 3
+    X2: 2,
+    Y2: 3
 };
 
 class RectangleData extends ExtendedData {
@@ -879,12 +879,20 @@ class RectangleData extends ExtendedData {
         return this.fields[RECTANGLE_FIELDS.Y];
     }
 
+    get x2 () {
+        return this.fields[RECTANGLE_FIELDS.X2];
+    }
+
+    get y2 () {
+        return this.fields[RECTANGLE_FIELDS.Y2];
+    }
+
     get width () {
-        return this.fields[RECTANGLE_FIELDS.WIDTH];
+        return this.x2 - this.x;
     }
 
     get height () {
-        return this.fields[RECTANGLE_FIELDS.HEIGHT];
+        return this.y2 - this.y;
     }
 }
 
@@ -1295,6 +1303,157 @@ class SoundMediaData extends ExtendedData {
     }
 }
 
+const toTitleCase = str => str.replace(/_?\w/g, letter => {
+    if (letter.startsWith('_')) return letter[1];
+    return letter.toLowerCase();
+})
+
+const fieldData = (FIELDS, Super = ExtendedData) => {
+    class Base extends Super {}
+
+    Object.keys(FIELDS).forEach(key => {
+        const index = FIELDS[key];
+        Object.defineProperty(Base.prototype, toTitleCase(key), {
+            get () {
+                return this.fields[index];
+            }
+        });
+    });
+
+    return Base;
+};
+
+const LIST_WATCHER_FIELDS = {
+    BOX: 0,
+    HIDDEN_WHEN_NULL: 1,
+    LIST_NAME: 8,
+    CONTENTS: 9,
+    TARGET: 10
+};
+
+class ListWatcherData extends fieldData(LIST_WATCHER_FIELDS) {
+    get x () {
+        if (this.hiddenWhenNull === null) return 5;
+        return this.box.x + 1;
+    }
+
+    get y () {
+        if (this.hiddenWhenNull === null) return 5;
+        return this.box.y + 1;
+    }
+
+    get width () {
+        return this.box.width - 2;
+    }
+
+    get height () {
+        return this.box.height - 2;
+    }
+}
+
+class UnknownData extends fieldData({
+    A: 0,
+    B: 1,
+    C: 2,
+    D: 3,
+    E: 4,
+    F: 5,
+    G: 6,
+    H: 7,
+    I: 8,
+    J: 9,
+    K: 10,
+    L: 11,
+    M: 12,
+    N: 13,
+    O: 15,
+    P: 16,
+    Q: 17,
+    R: 18,
+    S: 19
+}) {}
+
+class AlignmentData extends fieldData({
+    BOX: 0,
+    PARENT: 1,
+    FRAMES: 2,
+    COLOR: 3,
+    DIRECTION: 8,
+    ALIGNMENT: 9
+}) {}
+
+class MorphData extends fieldData({
+    BOX: 0,
+    PARENT: 1,
+    COLOR: 3
+}) {}
+
+class StaticStringData extends fieldData({
+    BOX: 0,
+    COLOR: 3,
+    VALUE: 8,
+}) {}
+
+class UpdatingStringData extends fieldData({
+    BOX: 0,
+    READOUT_FRAME: 1,
+    COLOR: 3,
+    FONT: 6,
+    VALUE: 8,
+    TARGET: 10,
+    CMD: 11,
+    PARAM: 13
+}) {}
+
+class WatcherReadoutFrameData extends fieldData({
+    BOX: 0,
+}) {}
+
+const WATCHER_MODES = {
+    NORMAL: 1,
+    LARGE: 2,
+    SLIDER: 3,
+    TEXT: 4
+};
+
+class WatcherData extends fieldData({
+    BOX: 0,
+    TARGET: 1,
+    SHAPE: 2,
+    READOUT: 14,
+    READOUT_FRAME: 15,
+    SLIDER: 16,
+    ALIGNMENT: 17,
+    SLIDER_MIN: 20,
+    SLIDER_MAX: 21
+}) {
+    get x () {
+        return this.box.x;
+    }
+
+    get y () {
+        return this.box.y;
+    }
+
+    get mode () {
+        if (this.slider === null) {
+            if (this.readoutFrame.box.height <= 14) {
+                return WATCHER_MODES.NORMAL;
+            }
+            return WATCHER_MODES.LARGE;
+        }
+        return WATCHER_MODES.SLIDER;
+    }
+
+    get isDiscrete () {
+        return (
+            Math.floor(this.sliderMin) === this.sliderMin &&
+            Math.floor(this.sliderMax) === this.sliderMax &&
+            Math.floor(this.readout.value) === this.readout.value
+        );
+    }
+}
+
 const EXTENDED_CONSTRUCTORS = {
     [TYPES.POINT]: PointData,
     [TYPES.RECTANGLE]: RectangleData,
@@ -1304,7 +1463,14 @@ const EXTENDED_CONSTRUCTORS = {
     [TYPES.SPRITE]: SpriteData,
     [TYPES.STAGE]: StageData,
     [TYPES.IMAGE_MEDIA]: ImageMediaData,
-    [TYPES.SOUND_MEDIA]: SoundMediaData
+    [TYPES.SOUND_MEDIA]: SoundMediaData,
+    [TYPES.ALIGNMENT]: AlignmentData,
+    [TYPES.MORPH]: MorphData,
+    [TYPES.WATCHER_READOUT_FRAME]: WatcherReadoutFrameData,
+    [TYPES.STATIC_STRING]: StaticStringData,
+    [TYPES.UPDATING_STRING]: UpdatingStringData,
+    [TYPES.WATCHER]: WatcherData,
+    [TYPES.LIST_WATCHER]: ListWatcherData
 };
 
 const objectExtended = function (objectIterator, header) {
@@ -1314,7 +1480,7 @@ const objectExtended = function (objectIterator, header) {
         fields.push(objectIterator.next().value);
     }
 
-    const constructor = EXTENDED_CONSTRUCTORS[header.classId] || ExtendedData;
+    const constructor = EXTENDED_CONSTRUCTORS[header.classId] || UnknownData;
 
     return new constructor({
         classId: header.classId,
@@ -1644,6 +1810,10 @@ class SB1ArraySubView {
         return this.end - this.start;
     }
 
+    get name () {
+        return `${this.start + 1} - ${this.end}`;
+    }
+
     map (fn) {
         const out = [];
         for (let i = this.start; i < this.end; i++) {
@@ -1653,6 +1823,9 @@ class SB1ArraySubView {
     }
 
     static views (array) {
+        if (array instanceof SB1ArrayFullView) {
+            return array;
+        }
         if (array.length > 100) {
             const scale = Math.pow(10, Math.ceil(Math.log(array.length) / Math.log(10)));
             const increment = scale / 10;
@@ -1662,12 +1835,36 @@ class SB1ArraySubView {
                 views.push(new SB1ArraySubView(array, i, Math.min(i + increment, array.end || array.length)));
                 assert(views.length <= 10, 'Too many subviews');
             }
+            views.push(new SB1ArrayFullView(array));
             return views;
         } else {
             return array;
         }
     }
 }
+
+class SB1ArrayFullView extends SB1ArraySubView {
+    constructor (array) {
+        super(array, array.start || 0, array.end || array.length);
+    }
+
+    get name () {
+        return 'all';
+    }
+}
+
+const allPropertyDescriptors = prototype => (
+    prototype === null ?
+        {} :
+        Object.entries(Object.getOwnPropertyDescriptors(prototype))
+            .reduce(
+                (carry, [key, value]) => {
+                    carry[key] = value;
+                    return carry;
+                },
+                allPropertyDescriptors(Object.getPrototypeOf(prototype))
+            )
+);
 
 const _expanded = {};
 
@@ -1776,7 +1973,7 @@ class SB1View {
             this.renderArrow();
             this.renderTitle(this.data);
             this.renderExpand(() => {
-                return Object.entries(Object.getOwnPropertyDescriptors(Object.getPrototypeOf(this.data)))
+                return Object.entries(allPropertyDescriptors(Object.getPrototypeOf(this.data)))
                 .filter(([, desc]) => desc.get)
                 .map(([name]) => {
                     try {
@@ -1819,7 +2016,7 @@ class SB1View {
             if (this.data.length) this.renderArrow();
             this.renderTitle(`Array (${this.data.length})`);
             if (this.data.length) this.renderExpand(() => {
-                return SB1ArraySubView.views(this.data).map((field, index) => new SB1View(field, field instanceof SB1ArraySubView ? `${field.start + 1} - ${field.end}` : index + 1, `${this.path}[${index}]`));
+                return SB1ArraySubView.views(this.data).map((field, index) => new SB1View(field, field instanceof SB1ArraySubView ? field.name : index + 1, `${this.path}[${index}]`));
             });
         } else if (['string', 'number', 'boolean'].includes(typeof this.data)) {
             this.renderTitle('' + this.data);
@@ -2669,6 +2866,8 @@ const toSb2Json = root => {
     const toSb2JsonStage = stageData => {
         const rawCostumes = stageData.media
         .filter(data => data instanceof ImageMediaData);
+        const rawSounds = stageData.media
+        .filter(data => data instanceof SoundMediaData);
         return {
             objName: stageData.objName,
             variables: pairs(stageData.vars).map(toSb2JsonVariable),
@@ -2677,10 +2876,10 @@ const toSb2Json = root => {
             costumes: rawCostumes
             .map(toSb2JsonCostume),
             currentCostumeIndex: rawCostumes.findIndex(image => image.crc === stageData.currentCostume.crc),
-            sounds: [],
+            sounds: rawSounds.map(toSb2JsonSound),
             penLayerMD5: '5c81a336fab8be57adc039a8a2b33ca9.png',
             penLayerID: 0,
-            tempoBPM: 60,
+            tempoBPM: stageData.tempoBPM,
             videoAlpha: 0.5,
             children: stageData.stageContents.map(toSb2JsonChild).filter(Boolean)
         };
