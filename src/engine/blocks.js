@@ -487,6 +487,10 @@ class Blocks {
             }
             break;
         }
+
+        // forceNoGlow is set to true on containers that don't affect the project serialization,
+        // e.g., the toolbox or monitor containers.
+        if (optRuntime && !this.forceNoGlow) optRuntime.emitProjectChanged();
     }
 
     // ---------------------------------------------------------------------
