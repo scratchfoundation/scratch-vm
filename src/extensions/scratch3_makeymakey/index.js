@@ -48,6 +48,18 @@ const KEY_ID_UP = 'UP';
 const KEY_ID_DOWN = 'DOWN';
 
 /**
+ * Names used by keyboard io for keys used in scratch.
+ * @enum {string}
+ */
+const SCRATCH_KEY_NAME = {
+    [KEY_ID_SPACE]: 'space',
+    [KEY_ID_LEFT]: 'left arrow',
+    [KEY_ID_UP]: 'up arrow',
+    [KEY_ID_RIGHT]: 'right arrow',
+    [KEY_ID_DOWN]: 'down arrow'
+};
+
+/**
  * Class for the makey makey blocks in Scratch 3.0
  * @constructor
  */
@@ -271,7 +283,13 @@ class Scratch3MakeyMakeyBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     whenMakeyKeyPressed (args, util) {
-        const isDown = util.ioQuery('keyboard', 'getKeyIsDown', [args.KEY]);
+        let key = args.KEY;
+        // Convert the key arg, if it is a KEY_ID, to the key name used by
+        // the Keyboard io module.
+        if (SCRATCH_KEY_NAME[args.KEY]) {
+            key = SCRATCH_KEY_NAME[args.KEY];
+        }
+        const isDown = util.ioQuery('keyboard', 'getKeyIsDown', [key]);
         return (isDown && this.frameToggle);
     }
 
