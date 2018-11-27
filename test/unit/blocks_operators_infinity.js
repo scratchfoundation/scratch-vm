@@ -16,7 +16,7 @@ test('divide: division with Infinity', t => {
         blocks.divide({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" / 111 = Infinity'
     );
     t.strictEqual(
-        blocks.divide({NUM1: 'INFINITY', NUM2: 222}), Infinity, '"INFINITY" / 222 = Infinity'
+        blocks.divide({NUM1: 'INFINITY', NUM2: 222}), 0, '"INFINITY" / 222 = 0'
     );
     t.strictEqual(
         blocks.divide({NUM1: Infinity, NUM2: 333}), Infinity, 'Infinity / 333 = Infinity'
@@ -26,7 +26,7 @@ test('divide: division with Infinity', t => {
         blocks.divide({NUM1: 111, NUM2: 'Infinity'}), 0, '111 / "Infinity" = 0'
     );
     t.strictEqual(
-        blocks.divide({NUM1: 222, NUM2: 'INFINITY'}), 0, '222 / "INFINITY" = 0'
+        blocks.divide({NUM1: 222, NUM2: 'INFINITY'}), Infinity, '222 / "INFINITY" = Infinity'
     );
     t.strictEqual(
         blocks.divide({NUM1: 333, NUM2: Infinity}), 0, '333 / Infinity = 0'
@@ -36,7 +36,7 @@ test('divide: division with Infinity', t => {
         blocks.divide({NUM1: '-Infinity', NUM2: 111}), -Infinity, '"-Infinity" / 111 = -Infinity'
     );
     t.strictEqual(
-        blocks.divide({NUM1: '-INFINITY', NUM2: 222}), -Infinity, '"-INFINITY" / 222 = -Infinity'
+        blocks.divide({NUM1: '-INFINITY', NUM2: 222}), 0, '"-INFINITY" / 222 = 0'
     );
     t.strictEqual(
         blocks.divide({NUM1: -Infinity, NUM2: 333}), -Infinity, '-Infinity / 333 = -Infinity'
@@ -46,7 +46,7 @@ test('divide: division with Infinity', t => {
         blocks.divide({NUM1: 111, NUM2: '-Infinity'}), 0, '111 / "-Infinity" = 0'
     );
     t.strictEqual(
-        blocks.divide({NUM1: 222, NUM2: '-INFINITY'}), 0, '222 / "-INFINITY" = 0'
+        blocks.divide({NUM1: 222, NUM2: '-INFINITY'}), Infinity, '222 / "-INFINITY" = Infinity'
     );
     t.strictEqual(
         blocks.divide({NUM1: 333, NUM2: -Infinity}), 0, '333 / -Infinity = 0'
@@ -60,7 +60,7 @@ test('multiply: multiply Infinity with numbers', t => {
         blocks.multiply({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" * 111 = Infinity'
     );
     t.strictEqual(
-        blocks.multiply({NUM1: 'INFINITY', NUM2: 222}), Infinity, '"INFINITY" * 222 = Infinity'
+        blocks.multiply({NUM1: 'INFINITY', NUM2: 222}), 0, '"INFINITY" * 222 = 0'
     );
     t.strictEqual(
         blocks.multiply({NUM1: Infinity, NUM2: 333}), Infinity, 'Infinity * 333 = Infinity'
@@ -69,7 +69,7 @@ test('multiply: multiply Infinity with numbers', t => {
         blocks.multiply({NUM1: '-Infinity', NUM2: 111}), -Infinity, '"-Infinity" * 111 = -Infinity'
     );
     t.strictEqual(
-        blocks.multiply({NUM1: '-INFINITY', NUM2: 222}), -Infinity, '"-INFINITY" * 222 = -Infinity'
+        blocks.multiply({NUM1: '-INFINITY', NUM2: 222}), 0, '"-INFINITY" * 222 = 0'
     );
     t.strictEqual(
         blocks.multiply({NUM1: -Infinity, NUM2: 333}), -Infinity, '-Infinity * 333 = -Infinity'
@@ -90,7 +90,7 @@ test('add: add Infinity to a number', t => {
         blocks.add({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" + 111 = Infinity'
     );
     t.strictEqual(
-        blocks.add({NUM1: 'INFINITY', NUM2: 222}), Infinity, '"INFINITY" + 222 = Infinity'
+        blocks.add({NUM1: 'INFINITY', NUM2: 222}), 222, '"INFINITY" + 222 = 222'
     );
     t.strictEqual(
         blocks.add({NUM1: Infinity, NUM2: 333}), Infinity, 'Infinity + 333 = Infinity'
@@ -99,7 +99,7 @@ test('add: add Infinity to a number', t => {
         blocks.add({NUM1: '-Infinity', NUM2: 111}), -Infinity, '"-Infinity" + 111 = -Infinity'
     );
     t.strictEqual(
-        blocks.add({NUM1: '-INFINITY', NUM2: 222}), -Infinity, '"-INFINITY" + 222 = -Infinity'
+        blocks.add({NUM1: '-INFINITY', NUM2: 222}), 222, '"-INFINITY" + 222 = 222'
     );
     t.strictEqual(
         blocks.add({NUM1: -Infinity, NUM2: 333}), -Infinity, '-Infinity + 333 = -Infinity'
@@ -117,7 +117,7 @@ test('subtract: subtract Infinity with a number', t => {
         blocks.subtract({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" - 111 = Infinity'
     );
     t.strictEqual(
-        blocks.subtract({NUM1: 'INFINITY', NUM2: 222}), Infinity, '"INFINITY" - 222 = Infinity'
+        blocks.subtract({NUM1: 'INFINITY', NUM2: 222}), -222, '"INFINITY" - 222 = -222'
     );
     t.strictEqual(
         blocks.subtract({NUM1: Infinity, NUM2: 333}), Infinity, 'Infinity - 333 = Infinity'
@@ -126,7 +126,7 @@ test('subtract: subtract Infinity with a number', t => {
         blocks.subtract({NUM1: 111, NUM2: 'Infinity'}), -Infinity, '111 - "Infinity" = -Infinity'
     );
     t.strictEqual(
-        blocks.subtract({NUM1: 222, NUM2: 'INFINITY'}), -Infinity, '222 - "INFINITY" = -Infinity'
+        blocks.subtract({NUM1: 222, NUM2: 'INFINITY'}), 222, '222 - "INFINITY" = 222'
     );
     t.strictEqual(
         blocks.subtract({NUM1: 333, NUM2: Infinity}), -Infinity, '333 - Infinity = -Infinity'

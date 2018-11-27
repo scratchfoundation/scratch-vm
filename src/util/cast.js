@@ -38,14 +38,7 @@ class Cast {
             }
             return value;
         }
-        let n;
-        if (Cast.isInfinity(value)) {
-            n = Infinity;
-        } else if (Cast.isNegativeInfinity(value)) {
-            n = -Infinity;
-        } else {
-            n = Number(value);
-        }
+        const n = Number(value);
         if (_NumberIsNaN(n)) {
             // Scratch treats NaN as 0, when needed as a number.
             // E.g., 0 + NaN -> 0.
@@ -124,24 +117,6 @@ class Cast {
     }
 
     /**
-     * Determine if a Scratch argument is infinity.
-     * @param {*} val value to check.
-     * @return {boolean} True if the argument is any capitalization of infinity.
-     */
-    static isInfinity (val) {
-        return val === Infinity || (typeof val === 'string' && val.toLowerCase() === 'infinity');
-    }
-
-    /**
-     * Determine if a Scratch argument is negative infinity.
-     * @param {*} val value to check.
-     * @return {boolean} True if the argument is a '-' followed by any capitalization of infinity.
-     */
-    static isNegativeInfinity (val) {
-        return val === -Infinity || (typeof val === 'string' && val.toLowerCase() === '-infinity');
-    }
-
-    /**
      * Compare two values, using Scratch cast, case-insensitive string compare, etc.
      * In Scratch 2.0, this is captured by `interp.compare.`
      * @param {*} v1 First value to compare.
@@ -149,10 +124,8 @@ class Cast {
      * @returns {number} Negative number if v1 < v2; 0 if equal; positive otherwise.
      */
     static compare (v1, v2) {
-        // If Cast.toNumber returns '0', then the value might be NaN. If the value is NaN,
-        // this comparison algorithm needs to know.
-        let n1 = Cast.toNumber(v1) || Number(v1);
-        let n2 = Cast.toNumber(v2) || Number(v2);
+        let n1 = Number(v1);
+        let n2 = Number(v2);
         if (n1 === 0 && Cast.isWhiteSpace(v1)) {
             n1 = NaN;
         } else if (n2 === 0 && Cast.isWhiteSpace(v2)) {
@@ -170,17 +143,15 @@ class Cast {
             }
             return 0;
         }
-        // Compare as numbers.
-        const r = n1 - n2;
-        if (isNaN(r)) {
-            if (n1 === Infinity && n2 === Infinity) {
-                return 0;
-            }
-            if (n1 === -Infinity && n2 === -Infinity) {
-                return 0;
-            }
+        // Handle the special case of Infinity
+        if (
+            (n1 === Infinity && n2 === Infinity)
+            || (n1 === -Infinity && n2 === -Infinity)
+        ) {
+            return 0;
         }
-        return r;
+        // Compare as numbers.
+        return n1 - n2;
     }
 
     /**
