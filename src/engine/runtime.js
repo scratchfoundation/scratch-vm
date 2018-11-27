@@ -598,6 +598,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name when the runtime tick loop has been started.
+     * @const {string}
+     */
+    static get RUNTIME_STARTED () {
+        return 'RUNTIME_STARTED';
+    }
+
+    /**
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
@@ -2158,6 +2166,7 @@ class Runtime extends EventEmitter {
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
+        this.emit(Runtime.RUNTIME_STARTED);
     }
 
     /**

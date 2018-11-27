@@ -967,3 +967,14 @@ test('Getting the renderer returns the renderer', t => {
     t.equal(vm.renderer, renderer);
     t.end();
 });
+
+test('Starting the VM emits an event', t => {
+    let started = false;
+    const vm = new VirtualMachine();
+    vm.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    vm.start();
+    t.equal(started, true);
+    t.end();
+});

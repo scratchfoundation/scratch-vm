@@ -180,3 +180,14 @@ test('Cloud variable limit allows only 8 cloud variables', t => {
     t.end();
 
 });
+
+test('Starting the runtime emits an event', t => {
+    let started = false;
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    rt.start();
+    t.equal(started, true);
+    t.end();
+});
