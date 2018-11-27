@@ -86,10 +86,12 @@ class JSONRPC {
         const {result, error, id} = json;
         const openRequest = this._openRequests[id];
         delete this._openRequests[id];
-        if (error) {
-            openRequest.reject(error);
-        } else {
-            openRequest.resolve(result);
+        if (openRequest) {
+            if (error) {
+                openRequest.reject(error);
+            } else {
+                openRequest.resolve(result);
+            }
         }
     }
 
