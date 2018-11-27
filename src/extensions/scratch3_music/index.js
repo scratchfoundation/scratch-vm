@@ -949,12 +949,10 @@ class Scratch3MusicBlocks {
         if (this._stackTimerNeedsInit(util)) {
             drumNum = Cast.toNumber(drumNum);
             drumNum = Math.round(drumNum);
-            let pitchShift = 0;
             if (mapMidi) {
                 const midiDescription = this.MIDI_DRUMS[drumNum - 35];
                 if (midiDescription) {
                     drumNum = midiDescription[0];
-                    pitchShift = midiDescription[1] * 10; // 10 = one semitone
                 } else {
                     drumNum = 2;
                 }
@@ -964,7 +962,7 @@ class Scratch3MusicBlocks {
             drumNum = MathUtil.wrapClamp(drumNum, 0, this.DRUM_INFO.length - 1);
             beats = Cast.toNumber(beats);
             beats = this._clampBeats(beats);
-            this._playDrumNum(util, drumNum, pitchShift);
+            this._playDrumNum(util, drumNum);
             this._startStackTimer(util, this._beatsToSec(beats));
         } else {
             this._checkStackTimer(util);
@@ -975,10 +973,9 @@ class Scratch3MusicBlocks {
      * Play a drum sound using its 0-indexed number.
      * @param {object} util - utility object provided by the runtime.
      * @param {number} drumNum - the number of the drum to play.
-     * @param {number} pitchShift - pitch shift to be applied (in addition to sprite's "pitch" audio effect).
      * @private
      */
-    _playDrumNum (util, drumNum, pitchShift) {
+    _playDrumNum (util, drumNum) {
         if (util.runtime.audioEngine === null) return;
         if (util.target.sprite.soundBank === null) return;
         // If we're playing too many sounds, do not play the drum sound.
@@ -998,20 +995,10 @@ class Scratch3MusicBlocks {
         }
 
         const engine = util.runtime.audioEngine;
-        const chain = engine.createEffectChain();
-        const soundEffects = Object.assign({}, util.target.soundEffects);
-        if (pitchShift) {
-            soundEffects.pitch = (soundEffects.pitch || 0) + pitchShift;
-        }
-        chain.setEffectsFromTarget(soundEffects);
-        player.connect(chain);
-
-        // Dirty hack to make the pitch effect work - otherwise the effect isn't applied, for some reason.
-        // (Other audio effects work fine without this, though.)
-        const pitchEffect = chain._effects.find(effect => effect.name === 'pitch');
-        if (pitchEffect) {
-            pitchEffect.updatePlayer(player);
-        }
+        const context = engine.audioContext;
+        const volumeGain = context.createGain();
+        volumeGain.gain.setValueAtTime(util.target.volume / 100, engine.currentTime);
+        volumeGain.connect(engine.getInputNode());
 
         this._concurrencyCounter++;
         player.once('stop', () => {
