@@ -23,6 +23,31 @@ const KEY_BUFFER_LENGTH = 100;
 const SEQUENCE_HAT_TIMEOUT = 100;
 
 /**
+ * An id for the space key on a keyboard.
+ */
+const KEY_ID_SPACE = 'SPACE';
+
+/**
+ * An id for the left arrow key on a keyboard.
+ */
+const KEY_ID_LEFT = 'LEFT';
+
+/**
+ * An id for the right arrow key on a keyboard.
+ */
+const KEY_ID_RIGHT = 'RIGHT';
+
+/**
+ * An id for the up arrow key on a keyboard.
+ */
+const KEY_ID_UP = 'UP';
+
+/**
+ * An id for the down arrow key on a keyboard.
+ */
+const KEY_ID_DOWN = 'DOWN';
+
+/**
  * Class for the makey makey blocks in Scratch 3.0
  * @constructor
  */
@@ -54,8 +79,8 @@ class Scratch3MakeyMakeyBlocks {
          * These are the key sequences currently being detected by the "when
          * keys pressed in order" hat block. Each sequence is keyed by its
          * string representation (the sequence's value in the menu, which is a
-         * string of KEY_ID_SHORTs separated by spaces). Each sequence object
-         * has an array property (an array of KEY_ID_SHORTs) and a boolean
+         * string of KEY_IDs separated by spaces). Each sequence object
+         * has an array property (an array of KEY_IDs) and a boolean
          * completed property that is true when the sequence has just been
          * pressed.
          * @type {object}
@@ -70,90 +95,33 @@ class Scratch3MakeyMakeyBlocks {
     }
 
     /*
-     * IDs for the space bar and arrow keys.
-     */
-    get KEY_ID () {
+    * Localized short-form names of the space bar and arrow keys, for use in the
+    * displayed menu items of the "when keys pressed in order" block.
+    * @type {object}
+    */
+    get KEY_TEXT_SHORT () {
         return {
-            SPACE: 'space',
-            LEFT: 'left arrow',
-            UP: 'up arrow',
-            RIGHT: 'right arrow',
-            DOWN: 'down arrow'
-        };
-    }
-
-    /*
-     * Localized names of the space bar and arrow keys.
-     */
-    get KEY_TEXT () {
-        return {
-            [this.KEY_ID.SPACE]: formatMessage({
+            [KEY_ID_SPACE]: formatMessage({
                 id: 'makeymakey.spaceKey',
                 default: 'space',
                 description: 'The space key on a computer keyboard.'
             }),
-            [this.KEY_ID.LEFT]: formatMessage({
-                id: 'makeymakey.leftArrow',
-                default: 'left arrow',
-                description: 'The left arrow key on a computer keyboard.'
-            }),
-            [this.KEY_ID.UP]: formatMessage({
-                id: 'makeymakey.upArrow',
-                default: 'up arrow',
-                description: 'The up arrow key on a computer keyboard.'
-            }),
-            [this.KEY_ID.RIGHT]: formatMessage({
-                id: 'makeymakey.rightArrow',
-                default: 'right arrow',
-                description: 'The right arrow key on a computer keyboard.'
-            }),
-            [this.KEY_ID.DOWN]: formatMessage({
-                id: 'makeymakey.downArrow',
-                default: 'down arrow',
-                description: 'The down arrow key on a computer keyboard.'
-            })
-        };
-    }
-
-    /*
-     * Short form IDs for the space bar and arrow keys.
-     */
-    get KEY_ID_SHORT () {
-        return {
-            SPACE: 'space',
-            LEFT: 'left',
-            UP: 'up',
-            RIGHT: 'right',
-            DOWN: 'down'
-        };
-    }
-
-    /*
-    * Localized short-form names of the space bar and arrow keys.
-    */
-    get KEY_TEXT_SHORT () {
-        return {
-            [this.KEY_ID_SHORT.SPACE]: formatMessage({
-                id: 'makeymakey.spaceKeyShort',
-                default: 'space',
-                description: 'Short name for the space key on a computer keyboard.'
-            }),
-            [this.KEY_ID_SHORT.LEFT]: formatMessage({
+            [KEY_ID_LEFT]: formatMessage({
                 id: 'makeymakey.leftArrowShort',
                 default: 'left',
                 description: 'Short name for the left arrow key on a computer keyboard.'
             }),
-            [this.KEY_ID_SHORT.UP]: formatMessage({
+            [KEY_ID_UP]: formatMessage({
                 id: 'makeymakey.upArrowShort',
                 default: 'up',
                 description: 'Short name for the up arrow key on a computer keyboard.'
             }),
-            [this.KEY_ID_SHORT.RIGHT]: formatMessage({
+            [KEY_ID_RIGHT]: formatMessage({
                 id: 'makeymakey.rightArrowShort',
                 default: 'right',
                 description: 'Short name for the right arrow key on a computer keyboard.'
             }),
-            [this.KEY_ID_SHORT.DOWN]: formatMessage({
+            [KEY_ID_DOWN]: formatMessage({
                 id: 'makeymakey.downArrowShort',
                 default: 'down',
                 description: 'Short name for the down arrow key on a computer keyboard.'
@@ -168,19 +136,16 @@ class Scratch3MakeyMakeyBlocks {
      */
     get DEFAULT_SEQUENCES () {
         return [
-            `${this.KEY_ID_SHORT.LEFT} ${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.RIGHT}`,
-            `${this.KEY_ID_SHORT.RIGHT} ${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.LEFT}`,
-            `${this.KEY_ID_SHORT.LEFT} ${this.KEY_ID_SHORT.RIGHT}`,
-            `${this.KEY_ID_SHORT.RIGHT} ${this.KEY_ID_SHORT.LEFT}`,
-            `${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.DOWN}`,
-            `${this.KEY_ID_SHORT.DOWN} ${this.KEY_ID_SHORT.UP}`,
-            `${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.RIGHT} ` +
-                `${this.KEY_ID_SHORT.DOWN} ${this.KEY_ID_SHORT.LEFT}`,
-            `${this.KEY_ID_SHORT.SPACE} ${this.KEY_ID_SHORT.SPACE} ${this.KEY_ID_SHORT.SPACE}`,
-            `${this.KEY_ID_SHORT.UP} ${this.KEY_ID_SHORT.UP} ` +
-                `${this.KEY_ID_SHORT.DOWN} ${this.KEY_ID_SHORT.DOWN} ` +
-                `${this.KEY_ID_SHORT.LEFT} ${this.KEY_ID_SHORT.RIGHT} ` +
-                `${this.KEY_ID_SHORT.LEFT} ${this.KEY_ID_SHORT.RIGHT}`
+            `${KEY_ID_LEFT} ${KEY_ID_UP} ${KEY_ID_RIGHT}`,
+            `${KEY_ID_RIGHT} ${KEY_ID_UP} ${KEY_ID_LEFT}`,
+            `${KEY_ID_LEFT} ${KEY_ID_RIGHT}`,
+            `${KEY_ID_RIGHT} ${KEY_ID_LEFT}`,
+            `${KEY_ID_UP} ${KEY_ID_DOWN}`,
+            `${KEY_ID_DOWN} ${KEY_ID_UP}`,
+            `${KEY_ID_UP} ${KEY_ID_RIGHT} ${KEY_ID_DOWN} ${KEY_ID_LEFT}`,
+            `${KEY_ID_SPACE} ${KEY_ID_SPACE} ${KEY_ID_SPACE}`,
+            `${KEY_ID_UP} ${KEY_ID_UP} ${KEY_ID_DOWN} ${KEY_ID_DOWN} ` +
+                `${KEY_ID_LEFT} ${KEY_ID_RIGHT} ${KEY_ID_LEFT} ${KEY_ID_RIGHT}`
         ];
     }
 
@@ -201,7 +166,7 @@ class Scratch3MakeyMakeyBlocks {
                         KEY: {
                             type: ArgumentType.STRING,
                             menu: 'KEY',
-                            defaultValue: this.KEY_ID.SPACE
+                            defaultValue: KEY_ID_SPACE
                         }
                     }
                 },
@@ -221,24 +186,44 @@ class Scratch3MakeyMakeyBlocks {
             menus: {
                 KEY: [
                     {
-                        text: this.KEY_TEXT[this.KEY_ID.SPACE],
-                        value: this.KEY_ID.SPACE
+                        text: formatMessage({
+                            id: 'makeymakey.spaceKey',
+                            default: 'space',
+                            description: 'The space key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_SPACE
                     },
                     {
-                        text: this.KEY_TEXT[this.KEY_ID.LEFT],
-                        value: this.KEY_ID.LEFT
+                        text: formatMessage({
+                            id: 'makeymakey.leftArrow',
+                            default: 'left arrow',
+                            description: 'The left arrow key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_LEFT
                     },
                     {
-                        text: this.KEY_TEXT[this.KEY_ID.RIGHT],
-                        value: this.KEY_ID.RIGHT
+                        text: formatMessage({
+                            id: 'makeymakey.rightArrow',
+                            default: 'right arrow',
+                            description: 'The right arrow key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_RIGHT
                     },
                     {
-                        text: this.KEY_TEXT[this.KEY_ID.DOWN],
-                        value: this.KEY_ID.DOWN
+                        text: formatMessage({
+                            id: 'makeymakey.downArrow',
+                            default: 'down arrow',
+                            description: 'The down arrow key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_DOWN
                     },
                     {
-                        text: this.KEY_TEXT[this.KEY_ID.UP],
-                        value: this.KEY_ID.UP
+                        text: formatMessage({
+                            id: 'makeymakey.upArrow',
+                            default: 'up arrow',
+                            description: 'The up arrow key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_UP
                     },
                     {text: 'w', value: 'w'},
                     {text: 'a', value: 'a'},
@@ -293,9 +278,13 @@ class Scratch3MakeyMakeyBlocks {
     /*
      * A function called on the KEY_PRESSED event, to update the key press
      * buffer and check if any of the key sequences have been completed.
-     * @param {string} key A key code.
+     * @param {string} key A scratch key name.
      */
     keyPressed (key) {
+        // Store only the first word of the Scratch key name, so that e.g. when
+        // "left arrow" is pressed, we store "LEFT", which matches KEY_ID_LEFT
+        key = key.split(' ')[0];
+        key = key.toUpperCase();
         this.keyPressBuffer.push(key);
         // Keep the buffer under the length limit
         if (this.keyPressBuffer.length > KEY_BUFFER_LENGTH) {
@@ -340,19 +329,10 @@ class Scratch3MakeyMakeyBlocks {
         if (this.sequences.hasOwnProperty(sequenceString)) {
             return;
         }
-        // Convert shorthand versions of arrow key IDs.
-        const newArray = sequenceArray.map(entry => {
-            entry = entry.toUpperCase();
-            if (this.KEY_ID_SHORT[entry]) {
-                return this.KEY_ID[entry];
-            }
-            return entry;
-        });
-        const newSeq = {
-            array: newArray,
+        this.sequences[sequenceString] = {
+            array: sequenceArray,
             completed: false
         };
-        this.sequences[sequenceString] = newSeq;
     }
 
     /*
@@ -361,7 +341,7 @@ class Scratch3MakeyMakeyBlocks {
      * @property {number} SEQUENCE A string of KEY_IDs.
      */
     whenCodePressed (args) {
-        const sequenceString = Cast.toString(args.SEQUENCE);
+        const sequenceString = Cast.toString(args.SEQUENCE).toUpperCase();
         const sequenceArray = sequenceString.split(' ');
         if (sequenceArray.length < 2) {
             return;
