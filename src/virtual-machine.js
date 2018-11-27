@@ -126,6 +126,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.MIC_LISTENING, listening => {
             this.emit(Runtime.MIC_LISTENING, listening);
         });
+        this.runtime.on(Runtime.RUNTIME_STARTED, () => {
+            this.emit(Runtime.RUNTIME_STARTED);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
