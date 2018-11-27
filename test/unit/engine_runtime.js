@@ -1,10 +1,14 @@
-const test = require('tap').test;
+const tap = require('tap');
 const path = require('path');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/virtual-machine');
 const Runtime = require('../../src/engine/runtime');
 const MonitorRecord = require('../../src/engine/monitor-record');
 const {Map} = require('immutable');
+
+tap.tearDown(() => process.nextTick(process.exit));
+
+const test = tap.test;
 
 test('spec', t => {
     const r = new Runtime();

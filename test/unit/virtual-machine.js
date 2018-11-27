@@ -1,4 +1,4 @@
-const test = require('tap').test;
+const tap = require('tap');
 const VirtualMachine = require('../../src/virtual-machine');
 const Sprite = require('../../src/sprites/sprite');
 const Variable = require('../../src/engine/variable');
@@ -7,6 +7,10 @@ const events = require('../fixtures/events.json');
 const Renderer = require('../fixtures/fake-renderer');
 const Runtime = require('../../src/engine/runtime');
 const RenderedTarget = require('../../src/sprites/rendered-target');
+
+tap.tearDown(() => process.nextTick(process.exit));
+
+const test = tap.test;
 
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
