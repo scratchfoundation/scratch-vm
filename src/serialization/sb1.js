@@ -49,9 +49,7 @@ const TYPE_NAMES = Object.entries(TYPES)
 .reduce((carry, [key, value]) => {
     carry[value] = key;
     return carry;
-}, {
-    105: 'STATIC_STRING'
-});
+}, {});
 
 class Viewable {
     toString () {
@@ -73,6 +71,14 @@ class Value extends Field {
     }
 
     valueOf () {
+        return this.value;
+    }
+
+    toJSON () {
+        return this.value;
+    }
+
+    toString () {
         return this.value;
     }
 }
@@ -1705,12 +1711,12 @@ class SB1File {
     }
 
     get json () {
-        return toSb2Json({
+        return JSON.parse(JSON.stringify(toSb2Json({
             info: this.info(),
             stageData: this.data(),
             images: this.images(),
             sounds: this.sounds()
-        });
+        })));
     }
 
     get zip () {
@@ -2024,6 +2030,14 @@ class SB1View {
             this.content.appendChild(this.data);
         } else if (['undefined', 'string', 'number', 'boolean'].includes(typeof this.data) || this.data === null) {
             this.renderTitle('' + this.data);
+        } else if (this.data && this.data.constructor === Object) {
+            this.renderArrow();
+            this.renderTitle('Object');
+            this.renderExpand(() => {
+                return Object.entries(this.data).map(([key, value]) => (
+                    new SB1View(value, key, `${this.path}.${key}`)
+                ));
+            });
         } else {
             this.renderTitle(`Unknown Structure(${this.data ? this.data.classId || this.data.constructor.name : ''})`);
         }
@@ -2755,14 +2769,23 @@ const toSb2Json = root => {
     };
 
     const toSb2JsonVariable = ([name, value]) => ({
-        name: name.valueOf(),
-        value: value.valueOf(),
+        name,
+        value,
         isPersistent: false
     });
 
-    // const toSb2JsonList = list => {
-    //
-    // };
+    const toSb2JsonList = ([name, {
+        listName, contents, x, y, width, height, hiddenWhenNull
+    }]) => ({
+        listName: listName,
+        contents: contents,
+        isPersistent: false,
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        visible: hiddenWhenNull !== null
+    });
 
     // const toSb2JsonWatcher = watcher => {
     //
@@ -2779,7 +2802,7 @@ const toSb2Json = root => {
             soundID,
             md5: `${soundID}.wav`,
             sampleCount: soundMediaData.sampleCount,
-            rate: soundMediaData.rate.value,
+            rate: soundMediaData.rate,
             format: ''
         };
     };
@@ -2791,8 +2814,8 @@ const toSb2Json = root => {
             baseLayerID,
             baseLayerMD5: `${baseLayerID}.${imageMediaData.extension}`,
             bitmapResolution: 1,
-            rotationCenterX: imageMediaData.rotationCenter.x.value,
-            rotationCenterY: imageMediaData.rotationCenter.y.value
+            rotationCenterX: imageMediaData.rotationCenter.x,
+            rotationCenterY: imageMediaData.rotationCenter.y
         };
     };
 
@@ -2819,13 +2842,13 @@ const toSb2Json = root => {
             }
             return toSb2JsonBlock(argData);
         }
-        return (argData && typeof argData === 'object') ? argData.value : argData;
+        return argData;
     };
 
     const toSb2JsonScript = scriptData => {
         return [
-            scriptData[0].x.valueOf(),
-            scriptData[0].y.valueOf(),
+            scriptData[0].x,
+            scriptData[0].y,
             toSb2JsonStack(scriptData[1])
         ];
     };
@@ -2838,7 +2861,7 @@ const toSb2Json = root => {
         return {
             objName: spriteData.objName,
             variables: pairs(spriteData.vars).map(toSb2JsonVariable),
-            lists: [],
+            lists: pairs(spriteData.lists).map(toSb2JsonList),
             scripts: spriteData.blocksBin.map(toSb2JsonScript),
             costumes: rawCostumes
             .map(toSb2JsonCostume),
@@ -2846,10 +2869,10 @@ const toSb2Json = root => {
             sounds: rawSounds.map(toSb2JsonSound),
             scratchX: spriteData.scratchX,
             scratchY: spriteData.scratchY,
-            scale: spriteData.scalePoint.x.valueOf(),
+            scale: spriteData.scalePoint.x,
             direction: Math.round(spriteData.rotationDegrees * 1e6) / 1e6 - 270,
-            rotationStyle: spriteData.rotationStyle.valueOf(),
-            isDraggable: spriteData.draggable.valueOf(),
+            rotationStyle: spriteData.rotationStyle,
+            isDraggable: spriteData.draggable,
             indexInLibrary: stageData.spriteOrderInLibrary.indexOf(spriteData),
             visible: spriteData.visible,
             spriteInfo: {}
@@ -2871,7 +2894,7 @@ const toSb2Json = root => {
         return {
             objName: stageData.objName,
             variables: pairs(stageData.vars).map(toSb2JsonVariable),
-            lists: [],
+            lists: pairs(stageData.lists).map(toSb2JsonList),
             scripts: stageData.blocksBin.map(toSb2JsonScript),
             costumes: rawCostumes
             .map(toSb2JsonCostume),

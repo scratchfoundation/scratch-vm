@@ -15,7 +15,8 @@ const readFile = f => {
             new SB1View(sb1.info(), 'info').element,
             new SB1View(sb1.data(), 'data').element,
             new SB1View(sb1.images(), 'images').element,
-            new SB1View(sb1.sounds(), 'sounds').element
+            new SB1View(sb1.sounds(), 'sounds').element,
+            new SB1View(sb1.json, 'json').element
         ];
         last.forEach(document.body.appendChild, document.body);
     };
