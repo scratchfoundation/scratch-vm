@@ -1763,6 +1763,7 @@ class Runtime extends EventEmitter {
         this.compatibilityMode = compatibilityModeOn;
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
+            this._steppingInterval = null;
             this.start();
         }
     }
