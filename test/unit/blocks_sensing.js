@@ -4,6 +4,8 @@ const Runtime = require('../../src/engine/runtime');
 const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const BlockUtility = require('../../src/engine/block-utility');
+const Variable = require('../../src/engine/variable');
+
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -236,10 +238,12 @@ test('get attribute of sprite variable', t => {
     const target = new RenderedTarget(s, rt);
     const variable = {
         name: 'cars',
-        value: 'trucks'
+        value: 'trucks',
+        type: ''
     };
+    // Add variable to set the map (it should be empty before this).
+    target.variables.anId = variable;
     rt.getSpriteTargetByName = () => target;
-    target.lookupVariableByNameAndType = () => variable;
     t.equal(sensing.getAttributeOf({PROPERTY: 'cars'}), 'trucks');
 
     t.end();
@@ -250,7 +254,6 @@ test('get attribute of variable that does not exist', t => {
     const s = new Sprite();
     const target = new RenderedTarget(s, rt);
     rt.getTargetForStage = () => target;
-    target.lookupVariableByNameAndType = () => null;
     t.equal(sensing.getAttributeOf({PROPERTY: 'variableThatDoesNotExist'}), 0);
 
     t.end();
