@@ -613,6 +613,7 @@ class Scratch3MusicBlocks {
 
     /**
      * An array that is a mapping from MIDI drum numbers in range (35..81) to Scratch drum numbers.
+     * The pitch and decay properties are not currently being used.
      * @type {Array[]} an array of information about the drums, in the format [drumNum, pitch, decay].
      */
     get MIDI_DRUMS () {
@@ -940,7 +941,7 @@ class Scratch3MusicBlocks {
         if (midiDescription) {
             drumNum = midiDescription[0];
         } else {
-            drumNum = 2;
+            drumNum = 2; // Default instrument used in Scratch 2.0
         }
         drumNum += 1; // drumNum input to _playDrumForBeats is one-indexed
         this._playDrumForBeats(drumNum, args.BEATS, util);
