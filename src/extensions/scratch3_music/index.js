@@ -613,8 +613,9 @@ class Scratch3MusicBlocks {
 
     /**
      * An array that is a mapping from MIDI drum numbers in range (35..81) to Scratch drum numbers.
+     * It's in the format [drumNum, pitch, decay].
      * The pitch and decay properties are not currently being used.
-     * @type {Array[]} an array of information about the drums, in the format [drumNum, pitch, decay].
+     * @type {Array[]}
      */
     get MIDI_DRUMS () {
         return [
