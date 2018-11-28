@@ -5,7 +5,6 @@ const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const BlockUtility = require('../../src/engine/block-utility');
 
-
 test('getPrimitives', t => {
     const rt = new Runtime();
     const s = new Sensing(rt);
