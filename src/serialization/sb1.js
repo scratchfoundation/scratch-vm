@@ -854,45 +854,41 @@ class ExtendedData {
     }
 }
 
-const POINT_FIELDS = {
-    X: 0,
-    Y: 1
+
+const toTitleCase = str => str.replace(/_?\w/g, letter => {
+    if (letter.startsWith('_')) return letter[1];
+    return letter.toLowerCase();
+})
+
+const fieldData = (FIELDS, Super = ExtendedData) => {
+    class Base extends Super {}
+
+    Object.keys(FIELDS).forEach(key => {
+        const index = FIELDS[key];
+        Object.defineProperty(Base.prototype, toTitleCase(key), {
+            get () {
+                return this.fields[index];
+            }
+        });
+    });
+
+    Base.prototype.FIELDS = FIELDS;
+    Base.FIELDS = FIELDS;
+
+    return Base;
 };
 
-class PointData extends ExtendedData {
-    get x () {
-        return this.fields[POINT_FIELDS.X];
-    }
+class PointData extends fieldData({
+    X: 0,
+    Y: 1
+}) {}
 
-    get y () {
-        return this.fields[POINT_FIELDS.Y];
-    }
-}
-
-const RECTANGLE_FIELDS = {
+class RectangleData extends fieldData({
     X: 0,
     Y: 1,
     X2: 2,
     Y2: 3
-};
-
-class RectangleData extends ExtendedData {
-    get x () {
-        return this.fields[RECTANGLE_FIELDS.X];
-    }
-
-    get y () {
-        return this.fields[RECTANGLE_FIELDS.Y];
-    }
-
-    get x2 () {
-        return this.fields[RECTANGLE_FIELDS.X2];
-    }
-
-    get y2 () {
-        return this.fields[RECTANGLE_FIELDS.Y2];
-    }
-
+}) {
     get width () {
         return this.x2 - this.x;
     }
@@ -902,40 +898,14 @@ class RectangleData extends ExtendedData {
     }
 }
 
-const IMAGE_FIELDS = {
+class ImageData extends fieldData({
     WIDTH: 0,
     HEIGHT: 1,
     DEPTH: 2,
     SOMETHING: 3,
     BYTES: 4,
     COLORMAP: 5
-};
-
-class ImageData extends ExtendedData {
-    get width () {
-        return this.fields[IMAGE_FIELDS.WIDTH];
-    }
-
-    get height () {
-        return this.fields[IMAGE_FIELDS.HEIGHT];
-    }
-
-    get depth () {
-        return this.fields[IMAGE_FIELDS.DEPTH];
-    }
-
-    get something () {
-        return this.fields[IMAGE_FIELDS.SOMETHING];
-    }
-
-    get bytes () {
-        return this.fields[IMAGE_FIELDS.BYTES];
-    }
-
-    get colormap () {
-        return this.fields[IMAGE_FIELDS.COLORMAP];
-    }
-
+}) {
     get png () {
         if (!this._png) {
             this._png = new Uint8Array(PNGFile.encode(
@@ -964,7 +934,7 @@ class ImageData extends ExtendedData {
     }
 }
 
-const STAGE_FIELDS = {
+class StageData extends fieldData({
     STAGE_CONTENTS: 2,
     OBJ_NAME: 6,
     VARS: 7,
@@ -981,47 +951,21 @@ const STAGE_FIELDS = {
     TEMPO_BPM: 18,
     SCENE_STATES: 19,
     LISTS: 20
-};
-
-class StageData extends ExtendedData {
-    get objName () {
-        return '' + this.fields[STAGE_FIELDS.OBJ_NAME];
-    }
-
-    get stageContents () {
-        return this.fields[STAGE_FIELDS.STAGE_CONTENTS];
-    }
-
-    get vars () {
-        return this.fields[STAGE_FIELDS.VARS];
-    }
-
-    get blocksBin () {
-        return this.fields[STAGE_FIELDS.BLOCKS_BIN];
-    }
-
-    get media () {
-        return this.fields[STAGE_FIELDS.MEDIA];
-    }
-
-    get currentCostume () {
-        return this.fields[STAGE_FIELDS.CURRENT_COSTUME];
-    }
-
+}) {
     get spriteOrderInLibrary () {
-        return this.fields[STAGE_FIELDS.SPRITE_ORDER_IN_LIBRARY] || null;
+        return this.fields[this.FIELDS.SPRITE_ORDER_IN_LIBRARY] || null;
     }
 
     get tempoBPM () {
-        return this.fields[STAGE_FIELDS.TEMPO_BPM] || 0;
+        return this.fields[this.FIELDS.TEMPO_BPM] || 0;
     }
 
     get lists () {
-        return this.fields[STAGE_FIELDS.LISTS] || [];
+        return this.fields[this.FIELDS.LISTS] || [];
     }
 }
 
-const SPRITE_FIELDS = {
+class SpriteData extends fieldData({
     BOX: 0,
     PARENT: 1,
     COLOR: 3,
@@ -1041,17 +985,7 @@ const SPRITE_FIELDS = {
     DRAGGABLE: 18,
     SCENE_STATES: 19,
     LISTS: 20
-};
-
-class SpriteData extends ExtendedData {
-    get objName () {
-        return '' + this.fields[SPRITE_FIELDS.OBJ_NAME];
-    }
-
-    get box () {
-        return this.fields[SPRITE_FIELDS.BOX];
-    }
-
+}) {
     get scratchX () {
         return this.box.x + this.currentCostume.rotationCenter.x - 240;
     }
@@ -1061,117 +995,33 @@ class SpriteData extends ExtendedData {
     }
 
     get visible () {
-        return (this.fields[SPRITE_FIELDS.VISIBLE] & 1) === 0;
-    }
-
-    get vars () {
-        return this.fields[SPRITE_FIELDS.VARS];
-    }
-
-    get blocksBin () {
-        return this.fields[SPRITE_FIELDS.BLOCKS_BIN];
-    }
-
-    get media () {
-        return this.fields[SPRITE_FIELDS.MEDIA];
-    }
-
-    get currentCostume () {
-        return this.fields[SPRITE_FIELDS.CURRENT_COSTUME];
-    }
-
-    get visibility () {
-        return +this.fields[SPRITE_FIELDS.VISIBILITY];
-    }
-
-    get scalePoint () {
-        return this.fields[SPRITE_FIELDS.SCALE_POINT];
-    }
-
-    get rotationDegrees () {
-        return this.fields[SPRITE_FIELDS.ROTATION_DEGREES];
-    }
-
-    get rotationStyle () {
-        return this.fields[SPRITE_FIELDS.ROTATION_STYLE];
-    }
-
-    get volume () {
-        return this.fields[SPRITE_FIELDS.VOLUME];
+        return (this.fields[this.FIELDS.VISIBLE] & 1) === 0;
     }
 
     get tempoBPM () {
-        return this.fields[SPRITE_FIELDS.TEMPO_BPM] || 0;
-    }
-
-    get draggable () {
-        return this.fields[SPRITE_FIELDS.DRAGGABLE];
+        return this.fields[this.FIELDS.TEMPO_BPM] || 0;
     }
 
     get lists () {
-        return this.fields[SPRITE_FIELDS.LISTS] || [];
+        return this.fields[this.FIELDS.LISTS] || [];
     }
 }
 
-const TEXT_DETAILS_FIELDS = {
+class TextDetailsData extends fieldData({
     RECTANGLE: 0,
     FONT: 8,
     COLOR: 9,
     LINES: 11
-};
+}) {}
 
-class TextDetailsData extends ExtendedData {
-    get rectangle () {
-        return this.fields[IMAGE_MEDIA_FIELDS.RECTANGLE];
-    }
-
-    get font () {
-        return this.fields[IMAGE_MEDIA_FIELDS.FONT];
-    }
-
-    get color () {
-        return this.fields[IMAGE_MEDIA_FIELDS.COLOR];
-    }
-
-    get lines () {
-        return this.fields[IMAGE_MEDIA_FIELDS.LINES];
-    }
-}
-
-const IMAGE_MEDIA_FIELDS = {
+class ImageMediaData extends fieldData({
     COSTUME_NAME: 0,
     BITMAP: 1,
     ROTATION_CENTER: 2,
     TEXT_DETAILS: 3,
     BASE_LAYER_DATA: 4,
     OLD_COMPOSITE: 5
-};
-
-class ImageMediaData extends ExtendedData {
-    get costumeName () {
-        return this.string(IMAGE_MEDIA_FIELDS.COSTUME_NAME);
-    }
-
-    get bitmap () {
-        return this.fields[IMAGE_MEDIA_FIELDS.BITMAP];
-    }
-
-    get rotationCenter () {
-        return this.fields[IMAGE_MEDIA_FIELDS.ROTATION_CENTER];
-    }
-
-    get textDetails () {
-        return this.fields[IMAGE_MEDIA_FIELDS.TEXT_DETAILS];
-    }
-
-    get baseLayerData () {
-        return this.fields[IMAGE_MEDIA_FIELDS.BASE_LAYER_DATA];
-    }
-
-    get oldComposite () {
-        return this.fields[IMAGE_MEDIA_FIELDS.OLD_COMPOSITE];
-    }
-
+}) {
     get bytes () {
         if (this.oldComposite instanceof ImageData) {
             return this.oldComposite.png;
@@ -1217,51 +1067,23 @@ class ImageMediaData extends ExtendedData {
     }
 }
 
-const UNCOMPRESSED_FIELDS = {
+class UncompressedData extends fieldData({
     DATA: 3,
     RATE: 4,
-};
+}) {}
 
-class UncompressedData extends ExtendedData {
-    get data () {
-        return this.fields[UNCOMPRESSED_FIELDS.DATA];
-    }
-
-    get rate () {
-        return this.fields[UNCOMPRESSED_FIELDS.RATE];
-    }
-}
-
-const SOUND_MEDIA_FIELDS = {
+class SoundMediaData extends fieldData({
     NAME: 0,
     UNCOMPRESSED: 1,
     RATE: 4,
     BITS_PER_SAMPLE: 5,
     DATA: 6
-};
-
-class SoundMediaData extends ExtendedData {
-    get name () {
-        return this.string(SOUND_MEDIA_FIELDS.NAME);
-    }
-
-    get uncompressed () {
-        return this.fields[SOUND_MEDIA_FIELDS.UNCOMPRESSED];
-    }
-
+}) {
     get rate () {
         if (this.uncompressed.data.value.length !== 0) {
             return this.uncompressed.rate;
         }
-        return this.fields[SOUND_MEDIA_FIELDS.RATE];
-    }
-
-    get bitsPerSample () {
-        return this.fields[SOUND_MEDIA_FIELDS.BITS_PER_SAMPLE];
-    }
-
-    get data () {
-        return this.fields[SOUND_MEDIA_FIELDS.DATA];
+        return this.fields[this.FIELDS.RATE];
     }
 
     get bytes () {
@@ -1309,35 +1131,13 @@ class SoundMediaData extends ExtendedData {
     }
 }
 
-const toTitleCase = str => str.replace(/_?\w/g, letter => {
-    if (letter.startsWith('_')) return letter[1];
-    return letter.toLowerCase();
-})
-
-const fieldData = (FIELDS, Super = ExtendedData) => {
-    class Base extends Super {}
-
-    Object.keys(FIELDS).forEach(key => {
-        const index = FIELDS[key];
-        Object.defineProperty(Base.prototype, toTitleCase(key), {
-            get () {
-                return this.fields[index];
-            }
-        });
-    });
-
-    return Base;
-};
-
-const LIST_WATCHER_FIELDS = {
+class ListWatcherData extends fieldData({
     BOX: 0,
     HIDDEN_WHEN_NULL: 1,
     LIST_NAME: 8,
     CONTENTS: 9,
     TARGET: 10
-};
-
-class ListWatcherData extends fieldData(LIST_WATCHER_FIELDS) {
+}) {
     get x () {
         if (this.hiddenWhenNull === null) return 5;
         return this.box.x + 1;
