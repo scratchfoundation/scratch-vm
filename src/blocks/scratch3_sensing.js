@@ -313,12 +313,11 @@ class Scratch3SensingBlocks {
             }
         }
 
-        // Variables
+        // Target variables.
         const varName = args.PROPERTY;
-        for (const id in attrTarget.variables) {
-            if (attrTarget.variables[id].name === varName) {
-                return attrTarget.variables[id].value;
-            }
+        const variable = attrTarget.lookupVariableByNameAndType(varName, '', true);
+        if (variable) {
+            return variable.value;
         }
 
         // Otherwise, 0
