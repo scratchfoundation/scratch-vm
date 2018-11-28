@@ -90,8 +90,7 @@ test('createVariable calls cloud io device\'s requestCreateVariable', t => {
     t.equal(variable.name, 'bar');
     t.equal(variable.type, Variable.SCALAR_TYPE);
     t.equal(variable.value, 0);
-    // isCloud flag doesn't get set by the target createVariable function
-    t.equal(variable.isCloud, false);
+    t.equal(variable.isCloud, true);
     t.equal(requestCreateCloudWasCalled, true);
 
     t.end();
@@ -116,7 +115,7 @@ test('createVariable does not call cloud io device\'s requestCreateVariable if t
     t.equal(variable.name, 'bar');
     t.equal(variable.type, Variable.SCALAR_TYPE);
     t.equal(variable.value, 0);
-    // isCloud flag doesn't get set by the target createVariable function
+    // isCloud flag doesn't get set if the target is not the stage
     t.equal(variable.isCloud, false);
     t.equal(requestCreateCloudWasCalled, false);
 

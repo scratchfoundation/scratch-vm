@@ -27,19 +27,11 @@ class Cloud {
      */
 
     /**
-     * Part of a cloud io data post indicating a cloud variable was successfully
-     * created.
-     * @typedef {object} VarCreateData
-     * @property {string} name The name of the variable to create
-     */
-
-    /**
      * A cloud io data post message.
      * @typedef {object} CloudIOData
      * @property {VarUpdateData} varUpdate A {@link VarUpdateData} message indicating
      * a cloud variable update
      */
-
 
     /**
      * Cloud IO Device responsible for sending and receiving messages from
@@ -94,10 +86,6 @@ class Cloud {
         if (data.varUpdate) {
             this.updateCloudVariable(data.varUpdate);
         }
-
-        if (data.varCreate) {
-            this.createCloudVariable(data.varCreate);
-        }
     }
 
     requestCreateVariable (variable) {
@@ -108,7 +96,7 @@ class Cloud {
                 // cloud variable limit when we actually
                 // get a confirmation from the cloud data server
             }
-        }
+        } // TODO else track creation for later
     }
 
     /**
@@ -144,24 +132,6 @@ class Cloud {
         if (this.provider) {
             this.provider.deleteVariable(name);
         }
-    }
-
-    /**
-     * Create a cloud variable based on the message
-     * received from the cloud provider.
-     * @param {VarCreateData} varCreate A {@link VarCreateData} object received from the
-     * cloud data provider confirming the creation of a cloud variable,
-     * providing its name and value.
-     */
-    createCloudVariable (varCreate) {
-        const varName = varCreate.name;
-
-        const variable = this.stage.lookupVariableByNameAndType(varName, Variable.SCALAR_TYPE);
-        if (!variable) {
-            log.error(`Could not find cloud variable with name: ${varName}`);
-        }
-        variable.isCloud = true;
-        this.runtime.addCloudVariable();
     }
 
     /**
