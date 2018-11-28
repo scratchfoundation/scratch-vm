@@ -195,3 +195,19 @@ test('Starting the runtime emits an event', t => {
     t.equal(started, true);
     t.end();
 });
+
+test('Runtime cannot be started while already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it can be started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    // Starting again should not emit another event
+    rt.start();
+    t.equal(started, false);
+    t.end();
+});
