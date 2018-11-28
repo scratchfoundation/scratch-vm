@@ -4,7 +4,6 @@ const Runtime = require('../../src/engine/runtime');
 const Sprite = require('../../src/sprites/sprite');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const BlockUtility = require('../../src/engine/block-utility');
-const Variable = require('../../src/engine/variable');
 
 
 test('getPrimitives', t => {
