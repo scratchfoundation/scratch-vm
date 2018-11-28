@@ -1763,6 +1763,7 @@ class Runtime extends EventEmitter {
         this.compatibilityMode = compatibilityModeOn;
         if (this._steppingInterval) {
             clearInterval(this._steppingInterval);
+            this._steppingInterval = null;
             this.start();
         }
     }
@@ -2172,6 +2173,9 @@ class Runtime extends EventEmitter {
      * Set up timers to repeatedly step in a browser.
      */
     start () {
+        // Do not start if we are already running
+        if (this._steppingInterval) return;
+
         let interval = Runtime.THREAD_STEP_INTERVAL;
         if (this.compatibilityMode) {
             interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;

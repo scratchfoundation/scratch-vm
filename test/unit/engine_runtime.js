@@ -195,3 +195,47 @@ test('Starting the runtime emits an event', t => {
     t.equal(started, true);
     t.end();
 });
+
+test('Runtime cannot be started while already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it can be started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    // Starting again should not emit another event
+    rt.start();
+    t.equal(started, false);
+    t.end();
+});
+
+test('setCompatibilityMode restarts if it was already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it gets started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    rt.setCompatibilityMode(true);
+    t.equal(started, true);
+    t.end();
+});
+
+test('setCompatibilityMode does not restart if it was not running', t => {
+    const rt = new Runtime();
+
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    rt.setCompatibilityMode(true);
+    t.equal(started, false);
+    t.end();
+});
