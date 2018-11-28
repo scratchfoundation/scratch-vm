@@ -1036,10 +1036,9 @@ class VirtualMachine extends EventEmitter {
      *     updated for a new locale (or empty if locale hasn't changed.)
      */
     setLocale (locale, messages) {
-        if (locale === formatMessage.setup().locale) {
-            return Promise.resolve();
+        if (locale !== formatMessage.setup().locale) {
+            formatMessage.setup({locale: locale, translations: {[locale]: messages}});
         }
-        formatMessage.setup({locale: locale, translations: {[locale]: messages}});
         return this.extensionManager.refreshBlocks();
     }
 
