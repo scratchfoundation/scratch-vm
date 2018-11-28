@@ -923,7 +923,7 @@ class Scratch3MusicBlocks {
      * @property {number} BEATS - the duration in beats of the drum sound.
      */
     playDrumForBeats (args, util) {
-        this._playDrumForBeats(args.DRUM, args.BEATS, util, false);
+        this._playDrumForBeats(args.DRUM, args.BEATS, util);
     }
 
     /**
@@ -934,31 +934,29 @@ class Scratch3MusicBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     midiPlayDrumForBeats (args, util) {
-        this._playDrumForBeats(args.DRUM, args.BEATS, util, true);
+        let drumNum = Cast.toNumber(args.DRUM);
+        drumNum = Math.round(drumNum);
+        const midiDescription = this.MIDI_DRUMS[drumNum - 35];
+        if (midiDescription) {
+            drumNum = midiDescription[0];
+        } else {
+            drumNum = 2;
+        }
+        drumNum += 1; // drumNum input to _playDrumForBeats is one-indexed
+        this._playDrumForBeats(drumNum, args.BEATS, util);
     }
 
     /**
-     * Internal code to play a drum sound for some number of beats. If mapMidi is true, choose the sound according to
-     * the MIDI to Scratch drum mapping.
+     * Internal code to play a drum sound for some number of beats.
      * @param {number} drumNum - the drum number.
      * @param {beats} beats - the duration in beats to pause after playing the sound.
      * @param {object} util - utility object provided by the runtime.
-     * @param {boolean} mapMidi - whether or not drumNum is a MIDI drum number.
      */
-    _playDrumForBeats (drumNum, beats, util, mapMidi) {
+    _playDrumForBeats (drumNum, beats, util) {
         if (this._stackTimerNeedsInit(util)) {
             drumNum = Cast.toNumber(drumNum);
             drumNum = Math.round(drumNum);
-            if (mapMidi) {
-                const midiDescription = this.MIDI_DRUMS[drumNum - 35];
-                if (midiDescription) {
-                    drumNum = midiDescription[0];
-                } else {
-                    drumNum = 2;
-                }
-            } else {
-                drumNum -= 1; // drums are one-indexed
-            }
+            drumNum -= 1; // drums are one-indexed
             drumNum = MathUtil.wrapClamp(drumNum, 0, this.DRUM_INFO.length - 1);
             beats = Cast.toNumber(beats);
             beats = this._clampBeats(beats);
