@@ -1006,6 +1006,10 @@ class Scratch3MusicBlocks {
         });
 
         player.play();
+        // Connect the player to the gain node.
+        player.connect({getInputNode () {
+            return volumeGain;
+        }});
     }
 
     /**
