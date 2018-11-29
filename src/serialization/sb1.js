@@ -51,18 +51,14 @@ const TYPE_NAMES = Object.entries(TYPES)
     return carry;
 }, {});
 
-class Viewable {
-    toString () {
-        return this.constructor.name;
-    }
-}
-
 class Field {
     constructor (classId, position) {
         this.classId = classId;
         this.position = position;
     }
 }
+
+const value = obj => (typeof obj === 'object' && obj) ? obj.valueOf() : obj;
 
 class Value extends Field {
     constructor (classId, position, value) {
@@ -75,6 +71,13 @@ class Value extends Field {
     }
 
     toJSON () {
+        if (
+            this.classId === TYPES.TRANSLUCENT_COLOR ||
+            this.classId === TYPES.COLOR
+        ) {
+            // TODO: Can colors be 32 bit in scratch-blocks?
+            return this.value & 0xffffff;
+        }
         return this.value;
     }
 
@@ -402,7 +405,7 @@ const struct = shape => {
 
         equals (other) {
             for (const key in other) {
-                if (this[key] !== other[key]) {
+                if (value(this[key]) !== other[key]) {
                     return false;
                 }
             }
@@ -439,18 +442,6 @@ const struct = shape => {
 
 const assert = function (test, message) {
     if (!test) throw new Error(message);
-};
-
-const int32BE = function (uint8, position) {
-    return Int32BE.read(uint8, position);
-};
-
-const uint32BE = function (uint8, position) {
-    return Uint32BE.read(uint8, position);
-};
-
-const int16BE = function (uint8, position) {
-    return Int16BE.read(uint8, position);
 };
 
 const LargeInt = new StructMember({
@@ -1139,12 +1130,12 @@ class ListWatcherData extends fieldData({
     TARGET: 10
 }) {
     get x () {
-        if (this.hiddenWhenNull === null) return 5;
+        if (value(this.hiddenWhenNull) === null) return 5;
         return this.box.x + 1;
     }
 
     get y () {
-        if (this.hiddenWhenNull === null) return 5;
+        if (value(this.hiddenWhenNull) === null) return 5;
         return this.box.y + 1;
     }
 
@@ -1242,7 +1233,7 @@ class WatcherData extends fieldData({
     }
 
     get mode () {
-        if (this.slider === null) {
+        if (value(this.slider) === null) {
             if (this.readoutFrame.box.height <= 14) {
                 return WATCHER_MODES.NORMAL;
             }
@@ -2149,7 +2140,7 @@ class SqueakImageDecoder {
         if (count <= 254) {
             return ((count - 224) * 256) + bytes[position + 1];
         }
-        return uint32BE(bytes, position + 1);
+        return Uint32BE.read(bytes, position + 1);
     }
 
     decode (width, height, depth, bytes, colormap, table) {
@@ -2214,7 +2205,7 @@ class SqueakImageDecoder {
                 break;
 
             case 2:
-                w = uint32BE(bytes, position);
+                w = Uint32BE.read(bytes, position);
                 position += 4;
                 if (withAlpha && w !== 0) {
                     w |= 0xff000000;
@@ -2226,7 +2217,7 @@ class SqueakImageDecoder {
 
             case 3:
                 for (let j = 0; j < runLength; j++) {
-                    w = uint32BE(bytes, position);
+                    w = Uint32BE.read(bytes, position);
                     position += 4;
                     if (withAlpha && w !== 0) {
                         w |= 0xff000000;
@@ -2445,23 +2436,20 @@ class WAVFile {
             samplesUint8.length
         );
 
-        const uint8 = new Uint8Array(size);
-        let position = 0;
+        const stream = new ByteStream(new ArrayBuffer(size));
 
-        Object.assign(new WAVESignature(uint8, position), {
+        stream.writeStruct(WAVESignature, {
             riff: 'RIFF',
             length: size - 8,
             wave: 'WAVE'
         });
-        position += WAVESignature.prototype.size;
 
-        Object.assign(new WAVEChunkStart(uint8, position), {
+        stream.writeStruct(WAVEChunkStart, {
             chunkType: 'fmt ',
             length: WAVEFMTChunkBody.prototype.size
         });
-        position += WAVEChunkStart.prototype.size;
 
-        Object.assign(new WAVEFMTChunkBody(uint8, position), {
+        stream.writeStruct(WAVEFMTChunkBody, {
             format: 1,
             channels: channels,
             sampleRate: sampleRate,
@@ -2469,20 +2457,15 @@ class WAVFile {
             blockAlignment: channels * 2,
             bitsPerSample: 16
         });
-        position += WAVEFMTChunkBody.prototype.size;
 
-        Object.assign(new WAVEChunkStart(uint8, position), {
+        stream.writeStruct(WAVEChunkStart, {
             chunkType: 'data',
-            length: size - position - WAVEChunkStart.prototype.size
+            length: size - stream.position - WAVEChunkStart.prototype.size
         });
-        position += WAVEChunkStart.prototype.size;
 
-        let index = 0;
-        while (index < samplesUint8.length) {
-            uint8[position++] = samplesUint8[index++];
-        }
+        stream.writeBytes(samplesUint8);
 
-        return uint8;
+        return stream.uint8;
     }
 
     static encode (intSamples, options) {
@@ -2535,7 +2518,7 @@ const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 const sb1SpecMap = {
     'changeVariable': block => [block[2], block[1], block[3]],
     'EventHatMorph': block => {
-        if (block[1] === 'Scratch-StartClicked') {
+        if (String(block[1]) === 'Scratch-StartClicked') {
             return ['whenGreenFlag'];
         }
         return ['whenIReceive', block[1]];
@@ -2543,7 +2526,7 @@ const sb1SpecMap = {
     'MouseClickEventHatMorph': () => ['whenClicked'],
     'KeyEventHatMorph': block => ['whenKeyPressed', block[1]],
     'stopScripts': block => {
-        if (block[1] === 'other scripts') {
+        if (String(block[1]) === 'other scripts') {
             return [block[0], 'other scripts in sprite'];
         }
         return block;
@@ -2584,7 +2567,7 @@ const toSb2Json = root => {
         y: y,
         width: width,
         height: height,
-        visible: hiddenWhenNull !== null
+        visible: value(hiddenWhenNull) !== null
     });
 
     // const toSb2JsonWatcher = watcher => {
