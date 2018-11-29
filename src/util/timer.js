@@ -18,8 +18,12 @@ class Timer {
          * Used to store the start time of a timer action.
          * Updated when calling `timer.start`.
          */
-         console.log('nowObj', nowObj);
         this.startTime = 0;
+
+        /**
+         * Used to pass custom logic for determining the value for "now"
+         * which is sometimes useful for compatibility with Scratch 2
+         */
         this.nowObj = nowObj;
     }
 

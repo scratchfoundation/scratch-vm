@@ -21,8 +21,6 @@ class BlockUtility {
          * @type {?Thread}
          */
         this.thread = thread;
-
-        this.timer = null;
     }
 
     /**
@@ -41,14 +39,18 @@ class BlockUtility {
         return this.sequencer.runtime;
     }
 
-    get nowObject () {
+    /**
+     * Use the runtime's currentMSecs value as a timestamp value for now
+     * This is useful in some cases where we need compatability with Scratch 2
+     * @type {function}
+     */
+    get nowObj () {
         if (this.runtime) {
-           return {
-                now: () => {
-                    return this.runtime.currentMSecs;
-                }
+            return {
+                now: () => this.runtime.currentMSecs
             };
         }
+        return null;
     }
 
     /**
@@ -66,7 +68,6 @@ class BlockUtility {
     /**
      * Check the stack timer and return a boolean based on whether it has finished or not.
      * @return {boolean} - true if the stack timer has finished.
-     * @private
      */
     stackTimerFinished () {
         const timeElapsed = this.stackFrame.timer.timeElapsed();
@@ -79,20 +80,22 @@ class BlockUtility {
     /**
      * Check if the stack timer needs initialization.
      * @return {boolean} - true if the stack timer needs to be initialized.
-     * @private
      */
     stackTimerNeedsInit () {
         return !this.stackFrame.timer;
     }
 
     /**
-     * Start the stack timer
-     * @param {object} stackFrame - part of the utility object provided by the runtime.
+     * Create and start a stack timer
      * @param {number} duration - a duration in milliseconds to set the timer for.
-     * @private
      */
     startStackTimer (duration) {
-        this.stackFrame.timer = new Timer(this.nowObject);
+        if (this.nowObj) {
+            this.stackFrame.timer = new Timer(this.nowObj);
+        } else {
+            this.stackFrame.timer = new Timer();
+        }
+        
         this.stackFrame.timer.start();
         this.stackFrame.duration = duration;
     }

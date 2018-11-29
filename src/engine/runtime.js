@@ -305,6 +305,7 @@ class Runtime extends EventEmitter {
          */
         this.currentStepTime = null;
 
+        // Set an intial value for this.currentMSecs
         this.updateCurrentMSecs();
 
         /**
@@ -2176,6 +2177,12 @@ class Runtime extends EventEmitter {
         this.profiler = null;
     }
 
+    /**
+     * Update the timestamp value in milliseconds that is saved on the Runtime.
+     * This value is helpful in certain instances for compatability with Scratch 2,
+     * which uses the same `currentMSecs` timestamp value for certain operations
+     * in Interpreter.as, such as a millisecond clock for steps
+     */
     updateCurrentMSecs () {
         this.currentMSecs = Date.now();
     }
