@@ -38,7 +38,6 @@ class Cast {
             }
             return value;
         }
-
         const n = Number(value);
         if (_NumberIsNaN(n)) {
             // Scratch treats NaN as 0, when needed as a number.
@@ -144,9 +143,15 @@ class Cast {
             }
             return 0;
         }
+        // Handle the special case of Infinity
+        if (
+            (n1 === Infinity && n2 === Infinity) ||
+            (n1 === -Infinity && n2 === -Infinity)
+        ) {
+            return 0;
+        }
         // Compare as numbers.
         return n1 - n2;
-
     }
 
     /**
