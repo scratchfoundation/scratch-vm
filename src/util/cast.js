@@ -145,8 +145,8 @@ class Cast {
         }
         // Handle the special case of Infinity
         if (
-            (n1 === Infinity && n2 === Infinity)
-            || (n1 === -Infinity && n2 === -Infinity)
+            (n1 === Infinity && n2 === Infinity) ||
+            (n1 === -Infinity && n2 === -Infinity)
         ) {
             return 0;
         }
