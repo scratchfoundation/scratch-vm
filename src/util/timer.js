@@ -18,6 +18,7 @@ class Timer {
          * Used to store the start time of a timer action.
          * Updated when calling `timer.start`.
          */
+         console.log('nowObj', nowObj);
         this.startTime = 0;
         this.nowObj = nowObj;
     }

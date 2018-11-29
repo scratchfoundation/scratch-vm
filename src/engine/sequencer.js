@@ -50,17 +50,7 @@ class Sequencer {
          * A utility timer for timing thread sequencing.
          * @type {!Timer}
          */
-        this.timer = new Timer(this.nowObject);
-    }
-
-    get nowObject () {
-        if (this.runtime) {
-           return {
-                now: () => {
-                    return this.runtime.currentMSecs;
-                }
-            };
-        }
+        this.timer = new Timer();
     }
 
     /**
