@@ -41,16 +41,27 @@ let executeProfilerId = -1;
 class Sequencer {
     constructor (runtime) {
         /**
-         * A utility timer for timing thread sequencing.
-         * @type {!Timer}
-         */
-        this.timer = new Timer();
-
-        /**
          * Reference to the runtime owning this sequencer.
          * @type {!Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * A utility timer for timing thread sequencing.
+         * @type {!Timer}
+         */
+        this.timer = new Timer(this.nowObject);
+    }
+
+    get nowObject () {
+        if (this.runtime) {
+           return {
+                now: () => {
+                    return this.runtime.currentMSecs;
+                }
+            };
+        }
+        return null;
     }
 
     /**
@@ -68,6 +79,7 @@ class Sequencer {
     stepThreads () {
         // Work time is 75% of the thread stepping interval.
         const WORK_TIME = 0.75 * this.runtime.currentStepTime;
+        this.runtime.updateCurrentMSecs();
         // Start counting toward WORK_TIME.
         this.timer.start();
         // Count of active threads.
@@ -134,6 +146,7 @@ class Sequencer {
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
                     stoppedThread = true;
+                    this.runtime.updateCurrentMSecs();
                 }
             }
             // We successfully ticked once. Prevents running STATUS_YIELD_TICK

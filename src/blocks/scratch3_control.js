@@ -1,5 +1,4 @@
 const Cast = require('../util/cast');
-const Timer = require('../util/timer');
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
@@ -39,42 +38,6 @@ class Scratch3ControlBlocks {
             control_clear_counter: this.clearCounter,
             control_all_at_once: this.allAtOnce
         };
-    }
-
-    /**
-     * Check the stack timer and return a boolean based on whether it has finished or not.
-     * @param {object} stackFrame - part of the utility object provided by the runtime.
-     * @return {boolean} - true if the stack timer has finished.
-     * @private
-     */
-    _stackTimerFinished (stackFrame) {
-        const timeElapsed = stackFrame.timer.timeElapsed();
-        if (timeElapsed < stackFrame.duration) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Check if the stack timer needs initialization.
-     * @param {object} stackFrame - part of the utility object provided by the runtime.
-     * @return {boolean} - true if the stack timer needs to be initialized.
-     * @private
-     */
-    _stackTimerNeedsInit (stackFrame) {
-        return !stackFrame.timer;
-    }
-
-    /**
-     * Start the stack timer
-     * @param {object} stackFrame - part of the utility object provided by the runtime.
-     * @param {number} duration - a duration in milliseconds to set the timer for.
-     * @private
-     */
-    _startStackTimer (stackFrame, duration) {
-        stackFrame.timer = new Timer();
-        stackFrame.timer.start();
-        stackFrame.duration = duration;
     }
 
     getHats () {
@@ -145,14 +108,13 @@ class Scratch3ControlBlocks {
     }
 
     wait (args, util) {
-        const stackFrame = util.stackFrame;
         const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
 
-        if (this._stackTimerNeedsInit(stackFrame)) {
-            this._startStackTimer(stackFrame, duration);
+        if (util.stackTimerNeedsInit()) {
+            util.startStackTimer(duration);
             this.runtime.requestRedraw();
             util.yield();
-        } else if (!this._stackTimerFinished(stackFrame)) {
+        } else if (!util.stackTimerFinished()) {
             util.yield();
         }
     }

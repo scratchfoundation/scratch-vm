@@ -305,6 +305,8 @@ class Runtime extends EventEmitter {
          */
         this.currentStepTime = null;
 
+        this.updateCurrentMSecs();
+
         /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
@@ -2172,6 +2174,10 @@ class Runtime extends EventEmitter {
      */
     disableProfiling () {
         this.profiler = null;
+    }
+
+    updateCurrentMSecs () {
+        this.currentMSecs = Date.now();
     }
 }
 

@@ -1,4 +1,5 @@
 const Thread = require('./thread');
+const Timer = require('../util/timer');
 
 /**
  * @fileoverview
@@ -20,6 +21,8 @@ class BlockUtility {
          * @type {?Thread}
          */
         this.thread = thread;
+
+        this.timer = null;
     }
 
     /**
@@ -38,6 +41,17 @@ class BlockUtility {
         return this.sequencer.runtime;
     }
 
+    get nowObject () {
+        if (this.runtime) {
+           return {
+                now: () => {
+                    return this.runtime.currentMSecs;
+                }
+            };
+        }
+        return null;
+    }
+
     /**
      * The stack frame used by loop and other blocks to track internal state.
      * @type {object}
@@ -48,6 +62,40 @@ class BlockUtility {
             frame.executionContext = {};
         }
         return frame.executionContext;
+    }
+
+    /**
+     * Check the stack timer and return a boolean based on whether it has finished or not.
+     * @return {boolean} - true if the stack timer has finished.
+     * @private
+     */
+    stackTimerFinished () {
+        const timeElapsed = this.stackFrame.timer.timeElapsed();
+        if (timeElapsed < this.stackFrame.duration) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if the stack timer needs initialization.
+     * @return {boolean} - true if the stack timer needs to be initialized.
+     * @private
+     */
+    stackTimerNeedsInit () {
+        return !this.stackFrame.timer;
+    }
+
+    /**
+     * Start the stack timer
+     * @param {object} stackFrame - part of the utility object provided by the runtime.
+     * @param {number} duration - a duration in milliseconds to set the timer for.
+     * @private
+     */
+    startStackTimer (duration) {
+        this.stackFrame.timer = new Timer(this.nowObject);
+        this.stackFrame.timer.start();
+        this.stackFrame.duration = duration;
     }
 
     /**
