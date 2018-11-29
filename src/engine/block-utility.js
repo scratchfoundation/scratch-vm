@@ -49,7 +49,6 @@ class BlockUtility {
                 }
             };
         }
-        return null;
     }
 
     /**

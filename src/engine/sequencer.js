@@ -61,7 +61,6 @@ class Sequencer {
                 }
             };
         }
-        return null;
     }
 
     /**
