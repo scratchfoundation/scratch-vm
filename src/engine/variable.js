@@ -35,7 +35,8 @@ class Variable {
 
     toXML (isLocal) {
         isLocal = (isLocal === true);
-        return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal}">${this.name}</variable>`;
+        return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal
+        }" iscloud="${this.isCloud}">${this.name}</variable>`;
     }
 
     /**
