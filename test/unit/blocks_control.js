@@ -1,6 +1,7 @@
 const test = require('tap').test;
 const Control = require('../../src/blocks/scratch3_control');
 const Runtime = require('../../src/engine/runtime');
+const BlockUtility = require('../../src/engine/block-utility');
 
 test('getPrimitives', t => {
     const rt = new Runtime();
@@ -262,27 +263,31 @@ test('wait', t => {
     const startTest = Date.now();
     const threshold = 1000 / 60; // 60 hz
     let yields = 0;
-    const util = {
+    const util = new BlockUtility();
+    const mockUtil = {
         stackFrame: {},
-        yield: () => yields++
+        yield: () => yields++,
+        stackTimerNeedsInit: util.stackTimerNeedsInit,
+        startStackTimer: util.startStackTimer,
+        stackTimerFinished: util.stackTimerFinished
     };
 
-    c.wait(args, util);
+    c.wait(args, mockUtil);
     t.equal(yields, 1, 'First wait block yielded');
 
-    // spin the cpu until enough time passes
+    // Spin the cpu until enough time passes
     let timeElapsed = 0;
     while (timeElapsed < waitTime) {
-        timeElapsed = util.stackFrame.timer.timeElapsed();
-        // in case util.timer is broken - have our own "exit"
+        timeElapsed = mockUtil.stackFrame.timer.timeElapsed();
+        // In case util.timer is broken - have our own "exit"
         if (Date.now() - startTest > timeElapsed + threshold) {
             break;
         }
     }
 
-    c.wait(args, util);
+    c.wait(args, mockUtil);
     t.equal(yields, 1, 'Second call after timeElapsed does not yield');
-    t.equal(waitTime, util.stackFrame.duration);
+    t.equal(waitTime, mockUtil.stackFrame.duration);
     t.ok(timeElapsed >= (waitTime - threshold) &&
          timeElapsed <= (waitTime + threshold));
     t.end();

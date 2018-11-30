@@ -95,7 +95,6 @@ class BlockUtility {
         } else {
             this.stackFrame.timer = new Timer();
         }
-        
         this.stackFrame.timer.start();
         this.stackFrame.duration = duration;
     }
