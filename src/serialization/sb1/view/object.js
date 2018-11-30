@@ -3,20 +3,22 @@ class ObjectRenderer {
         return data && data.constructor === Object;
     }
 
-    render (data, view) {
+    render (dataOrFn, view) {
         view.renderArrow();
-        view.renderTitle(String(data) === '[object Object]' ? 'Object' : String(data));
+        view.renderTitle(String(dataOrFn) === '[object Object]' ? 'Object' : String(dataOrFn));
         view.renderExpand(() => {
-            return Object.entries(data)
-            .filter(([, value]) => typeof value !== 'function')
-            .map(([key, value]) => {
+            const data = typeof dataOrFn === 'function' ? dataOrFn() : dataOrFn;
+            return Object.keys(data)
+            .map(key => {
                 try {
-                    return view.child(value, key, `.${key}`);
+                    if (typeof data[key] === 'function') return;
+                    return view.child(data[key], key, `.${key}`);
                 } catch (err) {
                     console.error(err);
                     return view.child('An error occured rendering view data.', key, `.${key}`);
                 }
-            });
+            })
+            .filter(Boolean);
         });
     }
 }

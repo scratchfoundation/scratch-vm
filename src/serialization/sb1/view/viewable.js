@@ -6,10 +6,9 @@ class ViewableRenderer {
     }
 
     render (data, view) {
-        const obj = data.view();
-        obj.toString = () => data.constructor.name;
-        console.log(obj);
-        new ObjectRenderer(obj).render(obj, view);
+        new ObjectRenderer().render(Object.assign(() => data.view(), {
+            toString () { return data.constructor.name; }
+        }), view);
     }
 }
 

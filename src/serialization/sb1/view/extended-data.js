@@ -21,14 +21,17 @@ class ExtendedDataRenderer {
     }
 
     render (data, view) {
-        const obj = Object.entries(allPropertyDescriptors(Object.getPrototypeOf(data)))
+        new ObjectRenderer().render(Object.assign(() => (
+            Object.entries(allPropertyDescriptors(Object.getPrototypeOf(data)))
             .filter(([, desc]) => desc.get)
             .reduce((carry, [key]) => {
-                carry[key] = data[key];
+                Object.defineProperty(carry, key, {
+                    enumerable: true,
+                    get () { return data[key]; }
+                });
                 return carry;
-            }, {});
-        obj.toString = () => data.toString();
-        new ObjectRenderer(obj, view).render(obj, view);
+            }, {})
+        ), { toString () { return data.toString(); } }), view);
     }
 }
 

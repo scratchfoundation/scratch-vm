@@ -115,11 +115,25 @@ class SB1View {
         return titleDiv;
     }
 
+    expand (fn, elsefn) {
+        if (this.expanded) {
+            elsefn();
+        } else {
+            fn();
+        }
+    }
+
     renderExpand (fn) {
         if (this.expanded) {
-            const div = this.createElement('div', 'expanded');
-            fn.call(this, div)
-            .forEach(view => this.content.appendChild(view.element));
+            try {
+                const div = this.createElement('div', 'expanded');
+                fn.call(this, div)
+                .forEach(view => this.content.appendChild(view.element));
+            } catch (error) {
+                const divError = this.createElement('div', 'expanded-error');
+                divError.innerText = 'Error rendering expanded area ...';
+                this.content.appendChild(divError);
+            }
         }
     }
 
