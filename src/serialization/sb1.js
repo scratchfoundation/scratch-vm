@@ -2516,27 +2516,43 @@ const defaultColorMap = [
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
 const sb1SpecMap = {
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L197-L199
+    'getParam': ([a, b, c, d]) => [a, b, c, d || 'r'],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L200-L212
     'changeVariable': block => [block[2], block[1], block[3]],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L213-L219
     'EventHatMorph': block => {
         if (String(block[1]) === 'Scratch-StartClicked') {
             return ['whenGreenFlag'];
         }
         return ['whenIReceive', block[1]];
     },
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L220-L222
     'MouseClickEventHatMorph': () => ['whenClicked'],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L223-L226
     'KeyEventHatMorph': block => ['whenKeyPressed', block[1]],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L227-L235
     'stopScripts': block => {
         if (String(block[1]) === 'other scripts') {
             return [block[0], 'other scripts in sprite'];
         }
         return block;
     },
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L249-L253
     'abs': block => ['computeFunction:of:', 'abs', block[1]],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L254-L258
     'sqrt': block => ['computeFunction:of:', 'sqrt', block[1]],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L137
+    '\\\\': block => ['%', ...block.slice(1)],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L259-L262
     'doReturn': () => ['stopScripts', 'this script'],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L263-L266
     'stopAll': () => ['stopScripts', 'all'],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L267-L270
     'showBackground:': block => ['startScene', block[1]],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L271-L273
     'nextBackground': () => ['nextScene'],
+    // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L274-L282
     'doForeverIf': block => ['doForever', [['doIf', block[1], block[2]]]]
 };
 
