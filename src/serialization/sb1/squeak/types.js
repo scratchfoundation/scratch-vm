@@ -174,6 +174,16 @@ class ImageMediaData extends FieldObject.define({
     BASE_LAYER_DATA: 4,
     OLD_COMPOSITE: 5
 }) {
+    get rawBytes () {
+        if (this.oldComposite instanceof ImageData) {
+            return this.oldComposite.bytes.value;
+        }
+        if (this.baseLayerData.value) {
+            return this.baseLayerData.value;
+        }
+        return this.bitmap.bytes.value;
+    }
+
     get bytes () {
         if (this.oldComposite instanceof ImageData) {
             return this.oldComposite.png;
@@ -190,7 +200,7 @@ class ImageMediaData extends FieldObject.define({
             .update(new Uint8Array(new Uint32Array([this.bitmap.width]).buffer))
             .update(new Uint8Array(new Uint32Array([this.bitmap.height]).buffer))
             .update(new Uint8Array(new Uint32Array([this.bitmap.depth]).buffer))
-            .update(this.bytes);
+            .update(this.rawBytes);
             this._crc = crc.digest;
         }
         return this._crc;
@@ -251,6 +261,14 @@ class SoundMediaData extends FieldObject.define({
         return this.fields[this.FIELDS.RATE];
     }
 
+    get rawBytes () {
+        if (this.data && this.data.value) {
+            return this.data.value;
+        } else {
+            return this.uncompressed.data.value;
+        }
+    }
+
     get bytes () {
         if (!this._wav) {
             let samples;
@@ -272,7 +290,10 @@ class SoundMediaData extends FieldObject.define({
 
     get crc () {
         if (!this._crc) {
-            this._crc = new CRC32().update(this.bytes).digest;
+            this._crc = new CRC32()
+            .update(new Uint32Array([this.rate]))
+            .update(this.rawBytes)
+            .digest;
         }
         return this._crc;
     }

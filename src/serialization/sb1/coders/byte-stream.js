@@ -56,9 +56,9 @@ class ByteStream {
     writeStruct (StructType, data) {
         this.resize(this.position + StructType.prototype.size);
 
-        Object.assign(new StructType(this.uint8, this.position), data);
+        const st = Object.assign(new StructType(this.uint8, this.position), data);
         this.position += StructType.prototype.size;
-        return data;
+        return st;
     }
 
     writeBytes (bytes, start = 0, end = bytes.length) {

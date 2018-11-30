@@ -4,6 +4,8 @@ const {ByteStream} = require('./byte-stream');
 const {CRC32} = require('./crc32');
 const {DEFLATE_BLOCK_SIZE_MAX, DeflateHeader, DeflateChunkStart, DeflateEnd} = require('./deflate-blocks');
 const {PNGSignature, PNGChunkStart, PNGChunkEnd, PNGIHDRChunkBody, PNGFilterMethodByte} = require('./png-blocks');
+const {DeflateStream} = require('./deflate-stream');
+const {PNGChunkStream} = require('./png-chunk-stream');
 
 class PNGFile {
     encode (width, height, pixelsUint8) {
@@ -31,12 +33,8 @@ class PNGFile {
             PNGChunkStart.prototype.size +
             PNGChunkEnd.prototype.size
         );
-        const buffer = new ArrayBuffer(size);
-        const uint8 = new Uint8Array(buffer);
 
         const stream = new ByteStream(new ArrayBuffer(size));
-
-        let position = 0;
 
         stream.writeStruct(PNGSignature, {
             support8Bit: 0x89,
@@ -46,13 +44,9 @@ class PNGFile {
             unixLineEnding: '\n'
         });
 
-        stream.writeStruct(PNGChunkStart, {
-            length: PNGIHDRChunkBody.prototype.size,
-            chunkType: 'IHDR'
-        });
+        const pngIhdr = new PNGChunkStream(stream, 'IHDR');
 
-        const ihdrBlockPosition = stream.position;
-        stream.writeStruct(PNGIHDRChunkBody, {
+        pngIhdr.writeStruct(PNGIHDRChunkBody, {
             width,
             height,
             bitDepth: 8,
@@ -62,104 +56,36 @@ class PNGFile {
             interlaceMethod: 0
         });
 
-        stream.writeStruct(PNGChunkEnd, {
-            checksum: new CRC32()
-            .update(stream.uint8, ihdrBlockPosition - 4, PNGIHDRChunkBody.prototype.size + 4)
-            .digest
-        });
+        pngIhdr.finish();
 
-        stream.writeStruct(PNGChunkStart, {
-            length: idatSize,
-            chunkType: 'IDAT'
-        });
+        const pngIdat = new PNGChunkStream(stream, 'IDAT');
 
-        stream.writeStruct(DeflateHeader, {
-            cmf: 0b00001000,
-            flag: 0b00011101
-        });
+        const deflate = new DeflateStream(pngIdat);
 
-        const deflateAdler = new Adler32();
-        const pngCrc = new CRC32();
-
-        pngCrc.update(stream.uint8, stream.position - Uint32BE.size - DeflateHeader.prototype.size, Uint32BE.size + DeflateHeader.prototype.size);
-
-        let deflateIndex = 0;
-
-        let rowIndex = 0;
-        let y = 0;
         let pixelsIndex = 0;
         while (pixelsIndex < pixelsUint8.length) {
-            if (deflateIndex === 0) {
-                const deflateChunkSize = Math.min(bodyRemaining, DEFLATE_BLOCK_SIZE_MAX);
-                const deflateChunkPosition = stream.position;
-                stream.writeStruct(DeflateChunkStart, {
-                    lastBlock: deflateChunkSize === bodyRemaining ? 1 : 0,
-                    length: deflateChunkSize,
-                    lengthCheck: deflateChunkSize ^ 0xffff
-                });
+            deflate.writeStruct(PNGFilterMethodByte, {
+                method: 0
+            });
 
-                pngCrc.update(stream.uint8, deflateChunkPosition, DeflateChunkStart.prototype.size);
-            }
+            const partialLength = Math.min(
+                pixelsUint8.length - pixelsIndex,
+                rowSize - PNGFilterMethodByte.prototype.size
+            );
+            deflate.writeBytes(
+                pixelsUint8, pixelsIndex, pixelsIndex + partialLength
+            );
 
-            if (rowIndex === 0) {
-                const filterBytePosition = stream.position;
-                stream.writeStruct(PNGFilterMethodByte, {
-                    method: 0
-                });
-
-                deflateAdler.update(stream.uint8, filterBytePosition, PNGFilterMethodByte.prototype.size);
-                pngCrc.update(stream.uint8, filterBytePosition, PNGFilterMethodByte.prototype.size);
-
-                rowIndex += PNGFilterMethodByte.prototype.size;
-                bodyRemaining -= PNGFilterMethodByte.prototype.size;
-                deflateIndex += PNGFilterMethodByte.prototype.size;
-            } else {
-                const rowPartialSize = Math.min(
-                    pixelsUint8.length - pixelsIndex,
-                    rowSize - rowIndex,
-                    DEFLATE_BLOCK_SIZE_MAX - deflateIndex
-                );
-
-                const bytesPosition = stream.position;
-                stream.writeBytes(pixelsUint8, pixelsIndex, pixelsIndex + rowPartialSize);
-
-                deflateAdler.update(stream.uint8, bytesPosition, rowPartialSize);
-                pngCrc.update(stream.uint8, bytesPosition, rowPartialSize);
-
-                pixelsIndex += rowPartialSize;
-                rowIndex += rowPartialSize;
-                bodyRemaining -= rowPartialSize;
-                deflateIndex += rowPartialSize;
-            }
-
-            if (deflateIndex >= DEFLATE_BLOCK_SIZE_MAX) {
-                deflateIndex = 0;
-            }
-
-            if (rowIndex === rowSize) {
-                rowIndex = 0;
-                y += 1;
-            }
+            pixelsIndex += partialLength
         }
 
-        stream.writeStruct(DeflateEnd, {
-            checksum: deflateAdler.digest
-        });
+        deflate.finish();
 
-        pngCrc.update(stream.uint8, stream.position - DeflateEnd.prototype.size, DeflateEnd.prototype.size);
+        pngIdat.finish();
 
-        stream.writeStruct(PNGChunkEnd, {
-            checksum: pngCrc.digest
-        });
+        const pngIend = new PNGChunkStream(stream, 'IEND');
 
-        stream.writeStruct(PNGChunkStart, {
-            length: 0,
-            chunkType: 'IEND'
-        });
-
-        stream.writeStruct(PNGChunkEnd, {
-            checksum: 0xae426082
-        });
+        pngIend.finish();
 
         return stream.buffer;
     }

@@ -1,7 +1,7 @@
 const valueOf = obj => (typeof obj === 'object' && obj) ? obj.valueOf() : obj;
 
 class Struct {
-    constructor (uint8, offset = 0) {
+    constructor (uint8 = new Uint8Array(this.size), offset = 0) {
         this.uint8 = uint8;
         this.offset = offset;
     }
