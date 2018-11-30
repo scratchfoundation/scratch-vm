@@ -27,7 +27,7 @@ const VirtualMachine = require('../../src/index');
  * been reached.
  */
 
-const whenThreadsComplete = (t, vm, timeLimit = 2500) => (
+const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
     // When the number of threads reaches 0 the test is expected to be complete.
     new Promise((resolve, reject) => {
         const intervalId = setInterval(() => {

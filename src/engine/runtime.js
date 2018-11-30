@@ -2178,10 +2178,9 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Update the timestamp value in milliseconds that is saved on the Runtime.
-     * This value is helpful in certain instances for compatability with Scratch 2,
-     * which uses the same `currentMSecs` timestamp value for certain operations
-     * in Interpreter.as, such as a millisecond clock for steps
+     * Update a millisecond timestamp value that is saved on the Runtime.
+     * This value is helpful in certain instances for compatibility with Scratch 2,
+     * which sometimes uses a `currentMSecs` timestamp value in Interpreter.as
      */
     updateCurrentMSecs () {
         this.currentMSecs = Date.now();

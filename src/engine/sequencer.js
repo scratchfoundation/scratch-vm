@@ -41,16 +41,16 @@ let executeProfilerId = -1;
 class Sequencer {
     constructor (runtime) {
         /**
-         * Reference to the runtime owning this sequencer.
-         * @type {!Runtime}
-         */
-        this.runtime = runtime;
-
-        /**
          * A utility timer for timing thread sequencing.
          * @type {!Timer}
          */
         this.timer = new Timer();
+
+        /**
+         * Reference to the runtime owning this sequencer.
+         * @type {!Runtime}
+         */
+        this.runtime = runtime;
     }
 
     /**

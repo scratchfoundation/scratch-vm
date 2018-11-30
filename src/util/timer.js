@@ -21,7 +21,7 @@ class Timer {
         this.startTime = 0;
 
         /**
-         * Used to pass custom logic for determining the value for "now"
+         * Used to pass custom logic for determining the value for "now",
          * which is sometimes useful for compatibility with Scratch 2
          */
         this.nowObj = nowObj;
@@ -47,7 +47,6 @@ class Timer {
             }
         };
     }
-
 
     /**
      * Use this object to route all time functions through single access points.
