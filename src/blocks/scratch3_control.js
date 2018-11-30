@@ -108,9 +108,9 @@ class Scratch3ControlBlocks {
     }
 
     wait (args, util) {
-        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-
         if (util.stackTimerNeedsInit()) {
+            const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+
             util.startStackTimer(duration);
             this.runtime.requestRedraw();
             util.yield();
