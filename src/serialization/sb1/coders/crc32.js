@@ -35,3 +35,5 @@ class CRC32 {
         return this.crc;
     }
 }
+
+exports.CRC32 = CRC32;

@@ -1,8 +1,9 @@
 const {assert} = require('./assert');
 
-const {FixedAsciiString, Uint32BE, struct, Uint8} = require('./binary');
+const {Block} = require('./coders/byte-blocks');
+const {FixedAsciiString, Uint8, Uint32BE} = require('./coders/byte-primitives');
 
-class SB1Signature extends struct({
+class SB1Signature extends Block.extend({
     version: new FixedAsciiString(10),
     infoByteLength: Uint32BE
 }) {
@@ -17,7 +18,7 @@ class SB1Signature extends struct({
 
 exports.SB1Signature = SB1Signature;
 
-class SB1BlockHeader extends struct({
+class SB1BlockHeader extends Block.extend({
     ObjS: new FixedAsciiString(4),
     ObjSValue: Uint8,
     Stch: new FixedAsciiString(4),

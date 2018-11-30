@@ -1,3 +1,6 @@
+const {ByteStream} = require('./byte-stream');
+const {WAVESignature, WAVEChunkStart, WAVEFMTChunkBody} = require('./wav-blocks');
+
 class WAVFile {
     encode (intSamples, {channels = 1, sampleRate = 22050} = {}) {
         const samplesUint8 = new Uint8Array(intSamples.buffer, intSamples.byteOffset, intSamples.byteLength);
@@ -52,3 +55,4 @@ class WAVFile {
     }
 }
 
+exports.WAVFile = WAVFile;

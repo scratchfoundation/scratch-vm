@@ -22,4 +22,4 @@ class SB1TakeIterator {
     }
 }
 
-exports.SB1TakeIterator = SB1TakeIterator;
+exports.TakeIterator = SB1TakeIterator;

@@ -1,3 +1,10 @@
+const {Adler32} = require('./adler32');
+const {Uint32BE} = require('./byte-primitives');
+const {ByteStream} = require('./byte-stream');
+const {CRC32} = require('./crc32');
+const {DEFLATE_BLOCK_SIZE_MAX, DeflateHeader, DeflateChunkStart, DeflateEnd} = require('./deflate-blocks');
+const {PNGSignature, PNGChunkStart, PNGChunkEnd, PNGIHDRChunkBody, PNGFilterMethodByte} = require('./png-blocks');
+
 class PNGFile {
     encode (width, height, pixelsUint8) {
         const rowSize = width * 4 + PNGFilterMethodByte.prototype.size;
@@ -161,3 +168,5 @@ class PNGFile {
         return new PNGFile().encode(width, height, pixels);
     }
 }
+
+exports.PNGFile = PNGFile;

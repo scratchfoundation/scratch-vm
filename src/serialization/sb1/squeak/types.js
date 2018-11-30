@@ -1,9 +1,21 @@
-class PointData extends fieldData({
+const {CRC32} = require('../coders/crc32');
+const {PNGFile} = require('../coders/png-file');
+const {SqueakImage} = require('../coders/squeak-image');
+const {SqueakSound} = require('../coders/squeak-sound');
+const {WAVFile} = require('../coders/wav-file');
+
+const {FieldObject} = require('./field-object');
+const {value} = require('./fields');
+const {TYPES} = require('./ids');
+
+class PointData extends FieldObject.define({
     X: 0,
     Y: 1
 }) {}
 
-class RectangleData extends fieldData({
+exports.PointData = PointData;
+
+class RectangleData extends FieldObject.define({
     X: 0,
     Y: 1,
     X2: 2,
@@ -18,6 +30,8 @@ class RectangleData extends fieldData({
     }
 }
 
+exports.RectangleData = RectangleData;
+
 const _bgra2rgbaInPlace = uint8 => {
     for (let i = 0; i < uint8.length; i += 4) {
         const r = uint8[i + 2];
@@ -28,7 +42,7 @@ const _bgra2rgbaInPlace = uint8 => {
     return uint8;
 };
 
-class ImageData extends fieldData({
+class ImageData extends FieldObject.define({
     WIDTH: 0,
     HEIGHT: 1,
     DEPTH: 2,
@@ -42,7 +56,7 @@ class ImageData extends fieldData({
                 this.width,
                 this.height,
                 _bgra2rgbaInPlace(new Uint8Array(
-                    new SqueakImageDecoder().decode(
+                    new SqueakImage().decode(
                         this.width.value,
                         this.height.value,
                         this.depth.value,
@@ -64,7 +78,9 @@ class ImageData extends fieldData({
     }
 }
 
-class StageData extends fieldData({
+exports.ImageData = ImageData;
+
+class StageData extends FieldObject.define({
     STAGE_CONTENTS: 2,
     OBJ_NAME: 6,
     VARS: 7,
@@ -95,7 +111,9 @@ class StageData extends fieldData({
     }
 }
 
-class SpriteData extends fieldData({
+exports.StageData = StageData;
+
+class SpriteData extends FieldObject.define({
     BOX: 0,
     PARENT: 1,
     COLOR: 3,
@@ -137,14 +155,18 @@ class SpriteData extends fieldData({
     }
 }
 
-class TextDetailsData extends fieldData({
+exports.SpriteData = SpriteData;
+
+class TextDetailsData extends FieldObject.define({
     RECTANGLE: 0,
     FONT: 8,
     COLOR: 9,
     LINES: 11
 }) {}
 
-class ImageMediaData extends fieldData({
+exports.TextDetailsData = TextDetailsData;
+
+class ImageMediaData extends FieldObject.define({
     COSTUME_NAME: 0,
     BITMAP: 1,
     ROTATION_CENTER: 2,
@@ -197,10 +219,14 @@ class ImageMediaData extends fieldData({
     }
 }
 
-class UncompressedData extends fieldData({
+exports.ImageMediaData = ImageMediaData;
+
+class UncompressedData extends FieldObject.define({
     DATA: 3,
     RATE: 4,
 }) {}
+
+exports.UncompressedData = UncompressedData;
 
 const reverseBytes16 = input => {
     const uint8 = new Uint8Array(input);
@@ -211,7 +237,7 @@ const reverseBytes16 = input => {
     return uint8;
 };
 
-class SoundMediaData extends fieldData({
+class SoundMediaData extends FieldObject.define({
     NAME: 0,
     UNCOMPRESSED: 1,
     RATE: 4,
@@ -229,7 +255,7 @@ class SoundMediaData extends fieldData({
         if (!this._wav) {
             let samples;
             if (this.data && this.data.value) {
-                samples = new SqueakSoundDecoder(this.bitsPerSample.value).decode(
+                samples = new SqueakSound(this.bitsPerSample.value).decode(
                     this.data.value
                 );
             } else {
@@ -270,7 +296,9 @@ class SoundMediaData extends fieldData({
     }
 }
 
-class ListWatcherData extends fieldData({
+exports.SoundMediaData = SoundMediaData;
+
+class ListWatcherData extends FieldObject.define({
     BOX: 0,
     HIDDEN_WHEN_NULL: 1,
     LIST_NAME: 8,
@@ -296,7 +324,9 @@ class ListWatcherData extends fieldData({
     }
 }
 
-class AlignmentData extends fieldData({
+exports.ListWatcherData = ListWatcherData;
+
+class AlignmentData extends FieldObject.define({
     BOX: 0,
     PARENT: 1,
     FRAMES: 2,
@@ -305,19 +335,25 @@ class AlignmentData extends fieldData({
     ALIGNMENT: 9
 }) {}
 
-class MorphData extends fieldData({
+exports.AlignmentData = AlignmentData;
+
+class MorphData extends FieldObject.define({
     BOX: 0,
     PARENT: 1,
     COLOR: 3
 }) {}
 
-class StaticStringData extends fieldData({
+exports.MorphData = MorphData;
+
+class StaticStringData extends FieldObject.define({
     BOX: 0,
     COLOR: 3,
     VALUE: 8,
 }) {}
 
-class UpdatingStringData extends fieldData({
+exports.StaticStringData = StaticStringData;
+
+class UpdatingStringData extends FieldObject.define({
     BOX: 0,
     READOUT_FRAME: 1,
     COLOR: 3,
@@ -328,9 +364,13 @@ class UpdatingStringData extends fieldData({
     PARAM: 13
 }) {}
 
-class WatcherReadoutFrameData extends fieldData({
+exports.UpdatingStringData = UpdatingStringData;
+
+class WatcherReadoutFrameData extends FieldObject.define({
     BOX: 0,
 }) {}
+
+exports.WatcherReadoutFrameData = WatcherReadoutFrameData;
 
 const WATCHER_MODES = {
     NORMAL: 1,
@@ -339,7 +379,9 @@ const WATCHER_MODES = {
     TEXT: 4
 };
 
-class WatcherData extends fieldData({
+exports.WATCHER_MODES = WATCHER_MODES;
+
+class WatcherData extends FieldObject.define({
     BOX: 0,
     TARGET: 1,
     SHAPE: 2,
@@ -377,6 +419,8 @@ class WatcherData extends fieldData({
     }
 }
 
+exports.WatcherData = WatcherData;
+
 const EXTENDED_CONSTRUCTORS = {
     [TYPES.POINT]: PointData,
     [TYPES.RECTANGLE]: RectangleData,
@@ -395,3 +439,5 @@ const EXTENDED_CONSTRUCTORS = {
     [TYPES.WATCHER]: WatcherData,
     [TYPES.LIST_WATCHER]: ListWatcherData
 };
+
+exports.EXTENDED_CONSTRUCTORS = EXTENDED_CONSTRUCTORS;

@@ -1,3 +1,5 @@
+const {Reference} = require('./fields');
+
 class SB1ReferenceFixer {
     constructor (table, filter) {
         this.table = Array.from(table);
@@ -43,4 +45,4 @@ class SB1ReferenceFixer {
     }
 }
 
-window.SB1ReferenceFixer = SB1ReferenceFixer;
+exports.ReferenceFixer = SB1ReferenceFixer;

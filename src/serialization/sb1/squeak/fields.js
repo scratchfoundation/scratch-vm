@@ -1,3 +1,5 @@
+const {TYPES} = require('./ids');
+
 class Field {
     constructor (classId, position) {
         this.classId = classId;
@@ -5,7 +7,11 @@ class Field {
     }
 }
 
+exports.Field = Field;
+
 const value = obj => (typeof obj === 'object' && obj) ? obj.valueOf() : obj;
+
+exports.value = value;
 
 class Value extends Field {
     constructor (classId, position, value) {
@@ -33,12 +39,16 @@ class Value extends Field {
     }
 }
 
+exports.Value = Value;
+
 class Header extends Field {
     constructor (classId, position, size) {
         super(classId, position);
         this.size = size;
     }
 }
+
+exports.Header = Header;
 
 class Reference extends Field {
     constructor (classId, position, index) {
@@ -51,11 +61,15 @@ class Reference extends Field {
     }
 }
 
+exports.Reference = Reference;
+
 class BuiltinObjectHeader extends Header {
     constructor (classId, position) {
         super(classId, position, 0);
     }
 }
+
+exports.BuiltinObjectHeader = BuiltinObjectHeader;
 
 class ExtendedObjectHeader extends Header {
     constructor (classId, position, version, size) {
@@ -63,3 +77,5 @@ class ExtendedObjectHeader extends Header {
         this.version = version;
     }
 }
+
+exports.ExtendedObjectHeader = ExtendedObjectHeader;

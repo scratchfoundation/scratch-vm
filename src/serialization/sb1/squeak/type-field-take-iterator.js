@@ -1,4 +1,4 @@
-const {Header} = require('../binary-tokens');
+const {Header} = require('./fields');
 
 class SB1TokenObjectTakeIterator {
     constructor (valueIterator, maxLength = Infinity) {
@@ -55,4 +55,4 @@ class SB1TokenObjectTakeIterator {
     }
 }
 
-exports.SB1TokenObjectTakeIterator = SB1TokenObjectTakeIterator;
+exports.TypeFieldTakeIterator = SB1TokenObjectTakeIterator;

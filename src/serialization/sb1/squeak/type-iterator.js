@@ -1,6 +1,6 @@
-const {ExtendedObjectHeader} = require('../binary-token');
-const {UnknownData, EXTENDED_CONSTRUCTORS} = require('../types');
-const {TYPES} = require('../type-ids');
+const {ExtendedObjectHeader} = require('./fields');
+const {TYPES} = require('./ids');
+const {UnknownData, EXTENDED_CONSTRUCTORS} = require('./types');
 
 const objectArray = function (objectIterator, header) {
     const array = [];
@@ -89,4 +89,4 @@ class SB1ObjectIterator {
     }
 }
 
-window.SB1ObjectIterator = SB1ObjectIterator;
+exports.TypeIterator = SB1ObjectIterator;

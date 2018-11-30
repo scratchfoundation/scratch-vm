@@ -212,4 +212,3 @@ class FixedAsciiString extends StructMember {
 }
 
 exports.FixedAsciiString = FixedAsciiString;
-

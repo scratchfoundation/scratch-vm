@@ -54,7 +54,11 @@ class ExtendedData {
     }
 }
 
+exports.FieldObject = ExtendedData;
+
 const fieldData = (FIELDS, Super) => ExtendedData.define(FIELDS, Super);
+
+exports.fieldData = fieldData;
 
 class UnknownData extends fieldData({
     A: 0,
@@ -77,3 +81,5 @@ class UnknownData extends fieldData({
     R: 18,
     S: 19
 }) {}
+
+exports.UnknownData = UnknownData;

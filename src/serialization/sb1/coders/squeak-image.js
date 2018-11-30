@@ -1,3 +1,5 @@
+const {Uint32BE} = require('./byte-primitives');
+
 const defaultColorMap = [
     0x00000000, 0xFF000000, 0xFFFFFFFF, 0xFF808080, 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFF00FFFF,
     0xFFFFFF00, 0xFFFF00FF, 0xFF202020, 0xFF404040, 0xFF606060, 0xFF9F9F9F, 0xFFBFBFBF, 0xFFDFDFDF,
@@ -34,7 +36,7 @@ const defaultColorMap = [
 
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
-class SqueakImageDecoder {
+class SqueakImage {
     decodeIntIncrement (bytes, position) {
         const count = bytes[position];
         if (count <= 223) {
@@ -203,3 +205,5 @@ class SqueakImageDecoder {
         return result;
     }
 }
+
+exports.SqueakImage = SqueakImage;

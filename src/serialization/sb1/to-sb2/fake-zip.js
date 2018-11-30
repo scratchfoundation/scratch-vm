@@ -10,6 +10,8 @@ class FakeZipFile {
     }
 }
 
+exports.FakeZipFile = FakeZipFile;
+
 class FakeZip {
     constructor (files) {
         this.files = files;
@@ -21,6 +23,8 @@ class FakeZip {
         }
     }
 }
+
+exports.FakeZip = FakeZip;
 
 const toSb2FakeZipApi = ({images, sounds}) => {
     const files = {};
@@ -41,3 +45,5 @@ const toSb2FakeZipApi = ({images, sounds}) => {
 
     return new FakeZip(files);
 };
+
+exports.toSb2FakeZipApi = toSb2FakeZipApi;

@@ -1,21 +1,9 @@
-Reference
-BuiltinObjectHeader
-ExtendedObjectHeader
-ByteStream
-Uint8
-TYPES
-Int32BE
-Int16BE
-LargeInt
-DoubleBE
-AsciiString
-Bytes
-SoundBytes
-Bitmap32BE
-UTF8
-Int32BE
-OpaqueColor
-TranslucentColor
+const {Uint8, Int16BE, Int32BE, DoubleBE} = require('../coders/byte-primitives');
+const {ByteStream} = require('../coders/byte-stream');
+
+const {LargeInt, AsciiString, UTF8, Bytes, SoundBytes, Bitmap32BE, OpaqueColor, TranslucentColor} = require('./byte-primitives');
+const {BuiltinObjectHeader, ExtendedObjectHeader, Header, Reference, Value} = require('./fields');
+const {TYPES} = require('./ids');
 
 const objectRef = function (iter, position) {
     const index = (
@@ -190,4 +178,4 @@ class SB1TokenIterator {
     }
 }
 
-window.SB1TokenIterator = SB1TokenIterator;
+exports.FieldIterator = SB1TokenIterator;

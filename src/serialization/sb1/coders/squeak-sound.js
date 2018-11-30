@@ -1,3 +1,5 @@
+const {assert} = require('../assert');
+
 const SQUEAK_SOUND_STEP_SIZE_TABLE = [
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
     45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209,
@@ -18,7 +20,7 @@ const SQUEAK_SOUND_INDEX_TABLES = {
     ]
 };
 
-class SqueakSoundDecoder {
+class SqueakSound {
     constructor (bitsPerSample) {
         this.bitsPerSample = bitsPerSample;
 
@@ -103,3 +105,5 @@ class SqueakSoundDecoder {
         return result;
     }
 }
+
+exports.SqueakSound = SqueakSound;

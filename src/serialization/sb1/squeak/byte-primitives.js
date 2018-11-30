@@ -1,3 +1,11 @@
+const {assert} = require('../assert');
+
+const {Int16BE, StructMember, Uint8, Uint32BE} = require('../coders/byte-primitives');
+
+const TOO_BIG = 10 * 1024 * 1024;
+
+exports.TOO_BIG = TOO_BIG;
+
 const LargeInt = new StructMember({
     sizeOf (uint8, position) {
         const count = Int16BE.read(uint8, position);
@@ -17,6 +25,8 @@ const LargeInt = new StructMember({
         throw new Error('Not implemented.');
     }
 });
+
+exports.LargeInt = LargeInt;
 
 const AsciiString = new StructMember({
     sizeOf (uint8, position) {
@@ -40,6 +50,8 @@ const AsciiString = new StructMember({
     }
 });
 
+exports.AsciiString = AsciiString;
+
 const Bytes = new StructMember({
     sizeOf (uint8, position) {
         return Uint32BE.size + Uint32BE.read(uint8, position);
@@ -60,6 +72,8 @@ const Bytes = new StructMember({
         throw new Error('Not implemented.');
     }
 });
+
+exports.Bytes = Bytes;
 
 const SoundBytes = new StructMember({
     sizeOf (uint8, position) {
@@ -82,6 +96,8 @@ const SoundBytes = new StructMember({
         throw new Error('Not implemented.');
     }
 });
+
+exports.SoundBytes = SoundBytes;
 
 const Bitmap32BE = new StructMember({
     sizeOf (uint8, position) {
@@ -109,6 +125,8 @@ const Bitmap32BE = new StructMember({
     }
 });
 
+exports.Bitmap32BE = Bitmap32BE;
+
 const decoder = new TextDecoder();
 
 const UTF8 = new StructMember({
@@ -132,6 +150,8 @@ const UTF8 = new StructMember({
     }
 });
 
+exports.UTF8 = UTF8;
+
 const OpaqueColor = new StructMember({
     size: 4,
     read (uint8, position) {
@@ -147,6 +167,8 @@ const OpaqueColor = new StructMember({
     }
 });
 
+exports.OpaqueColor = OpaqueColor;
+
 const TranslucentColor = new StructMember({
     size: 5,
     read (uint8, position) {
@@ -161,3 +183,5 @@ const TranslucentColor = new StructMember({
         throw new Error('Not implemented.');
     }
 });
+
+exports.TranslucentColor = TranslucentColor;

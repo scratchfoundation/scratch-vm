@@ -1,3 +1,6 @@
+const {value} = require('../squeak/fields');
+const {ImageMediaData, SoundMediaData, SpriteData} = require('../squeak/types');
+
 const sb1SpecMap = {
     // https://github.com/LLK/scratch-flash/blob/cb5f42f039ef633710faf9c63b69e8368b280372/src/blocks/BlockIO.as#L197-L199
     'getParam': ([a, b, c, d]) => [a, b, c, d || 'r'],
@@ -203,3 +206,5 @@ const toSb2Json = root => {
         info: toSb2JsonInfo(info)
     })));
 };
+
+exports.toSb2Json = toSb2Json;

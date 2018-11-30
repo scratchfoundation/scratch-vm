@@ -1,3 +1,5 @@
+const valueOf = obj => (typeof obj === 'object' && obj) ? obj.valueOf() : obj;
+
 class Struct {
     constructor (uint8, offset = 0) {
         this.uint8 = uint8;
@@ -6,7 +8,7 @@ class Struct {
 
     equals (other) {
         for (const key in other) {
-            if (value(this[key]) !== other[key]) {
+            if (valueOf(this[key]) !== other[key]) {
                 return false;
             }
         }
@@ -20,7 +22,7 @@ class Struct {
                 return constructor.name;
             }
         };
-        for (const key in shape) {
+        for (const key in this.shape) {
             obj[key] = this[key];
         }
         return obj;
@@ -50,6 +52,8 @@ class Struct {
 }
 
 exports.Struct = Struct;
+
+exports.Block = Struct;
 
 const struct = shape => Struct.extend(shape);
 

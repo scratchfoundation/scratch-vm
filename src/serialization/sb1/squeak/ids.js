@@ -45,8 +45,12 @@ const TYPES = {
     LIST_WATCHER: 175,
 };
 
+exports.TYPES = TYPES;
+
 const TYPE_NAMES = Object.entries(TYPES)
 .reduce((carry, [key, value]) => {
     carry[value] = key;
     return carry;
 }, {});
+
+exports.TYPE_NAMES = TYPE_NAMES;

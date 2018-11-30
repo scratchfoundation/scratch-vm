@@ -1,3 +1,5 @@
+const {assert} = require('../assert');
+
 class ByteStream {
     constructor (buffer, position = 0) {
         this.buffer = buffer;

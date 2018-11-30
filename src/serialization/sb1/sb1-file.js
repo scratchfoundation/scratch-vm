@@ -1,11 +1,13 @@
-const {SB1TokenObjectTakeIterator, SB1TokenIterator, SB1ObjectIterator} = require('./deserialize/iterators');
-const {SB1ReferenceFixer} = require('./deserialize/reference-fixer');
-const {ImageMediaData, SoundMediaData} = require('./deserialize/types');
+const {FieldIterator} = require('./squeak/field-iterator');
+const {TypeFieldTakeIterator} = require('./squeak/type-field-take-iterator');
+const {TypeIterator} = require('./squeak/type-iterator');
+const {ReferenceFixer} = require('./squeak/reference-fixer');
+const {ImageMediaData, SoundMediaData} = require('./squeak/types');
 
-const {toSb2Json} = require('./convert-sb2/json-generator');
-const {toSb2FakeZipApi} = require('./convert-sb2/fake-zip');
+const {toSb2FakeZipApi} = require('./to-sb2/fake-zip');
+const {toSb2Json} = require('./to-sb2/json-generator');
 
-const {SB1Signature, SB1BlockHeader} = require('./sb1-file-structs');
+const {SB1BlockHeader, SB1Signature} = require('./sb1-file-blocks');
 
 class SB1File {
     constructor (buffer) {
@@ -55,31 +57,31 @@ class SB1File {
     }
 
     infoRaw () {
-        return new SB1TokenObjectTakeIterator(new SB1TokenIterator(this.buffer, this.infoPosition + SB1BlockHeader.prototype.size), this.infoLength);
+        return new TypeFieldTakeIterator(new FieldIterator(this.buffer, this.infoPosition + SB1BlockHeader.prototype.size), this.infoLength);
     }
 
     infoTable () {
-        return new SB1ObjectIterator(this.infoRaw(), this.infoLength);
+        return new TypeIterator(this.infoRaw(), this.infoLength);
     }
 
     info () {
         if (!this._info) {
-            this._info = new SB1ReferenceFixer(this.infoTable()).table[0];
+            this._info = new ReferenceFixer(this.infoTable()).table[0];
         }
         return this._info;
     }
 
     dataRaw () {
-        return new SB1TokenObjectTakeIterator(new SB1TokenIterator(this.buffer, this.dataPosition + SB1BlockHeader.prototype.size), this.dataLength);
+        return new TypeFieldTakeIterator(new FieldIterator(this.buffer, this.dataPosition + SB1BlockHeader.prototype.size), this.dataLength);
     }
 
     dataTable () {
-        return new SB1ObjectIterator(this.dataRaw(), this.dataLength);
+        return new TypeIterator(this.dataRaw(), this.dataLength);
     }
 
     dataFixed () {
         if (!this._data) {
-            this._data = new SB1ReferenceFixer(this.dataTable()).table;
+            this._data = new ReferenceFixer(this.dataTable()).table;
         }
         return this._data;
     }

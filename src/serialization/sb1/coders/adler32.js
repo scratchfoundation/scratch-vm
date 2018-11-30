@@ -18,3 +18,5 @@ class Adler32 {
         return this.adler;
     }
 }
+
+exports.Adler32 = Adler32;
