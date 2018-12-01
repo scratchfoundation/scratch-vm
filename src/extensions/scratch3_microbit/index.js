@@ -25,14 +25,24 @@ const BLECommand = {
     CMD_DISPLAY_LED: 0x82
 };
 
-// TODO: Needs comment
-const BLETimeout = 4500; // TODO: might need tweaking based on how long the peripheral takes to start sending data
+
+/**
+ * A time interval to wait (in milliseconds) before reporting to the BLE socket
+ * that data has stopped coming from the peripheral.
+ */
+const BLETimeout = 4500;
 
 /**
  * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
  * @type {number}
  */
 const BLESendInterval = 100;
+
+/**
+ * A string to report to the BLE socket when the micro:bit has stopped receiving data.
+ * @type {string}
+ */
+const BLEDataStoppedError = 'micro:bit extension stopped receiving data';
 
 /**
  * Enum for micro:bit protocol.
@@ -319,7 +329,7 @@ class MicroBit {
         window.clearInterval(this._timeoutID);
         this._timeoutID = window.setInterval(
             // send an error to the BLE socket
-            this._ble._sendDisconnectError.bind(this._ble, 'micro:bit extension stopped receiving data'),
+            this._ble._sendDisconnectError.bind(this._ble, BLEDataStoppedError),
             BLETimeout
         );
     }
