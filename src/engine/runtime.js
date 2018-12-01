@@ -581,6 +581,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that a peripheral has been intentionally disconnected.
+     * @const {string}
+     */
+    static get PERIPHERAL_DISCONNECT () {
+        return 'PERIPHERAL_DISCONNECT';
+    }
+
+    /**
      * Event name for reporting that a peripheral has encountered a disconnect error.
      * @const {string}
      */
