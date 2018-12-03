@@ -64,6 +64,16 @@ class DeflateStream extends ProxyStream {
             checksum: this.adler.digest
         });
     }
+
+    static estimateSize (bodySize) {
+        const blocks = Math.ceil(bodySize / DEFLATE_BLOCK_SIZE_MAX);
+        return (
+            DeflateHeader.size +
+            blocks * DeflateChunkStart.size +
+            DeflateEnd.size +
+            bodySize
+        );
+    }
 }
 
 exports.DeflateStream = DeflateStream;

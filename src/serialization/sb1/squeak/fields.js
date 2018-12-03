@@ -71,11 +71,11 @@ class BuiltinObjectHeader extends Header {
 
 exports.BuiltinObjectHeader = BuiltinObjectHeader;
 
-class ExtendedObjectHeader extends Header {
+class FieldObjectHeader extends Header {
     constructor (classId, position, version, size) {
         super(classId, position, size);
         this.version = version;
     }
 }
 
-exports.ExtendedObjectHeader = ExtendedObjectHeader;
+exports.FieldObjectHeader = FieldObjectHeader;

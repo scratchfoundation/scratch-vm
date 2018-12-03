@@ -1,8 +1,8 @@
-const {Uint8, Int16BE, Int32BE, DoubleBE, StructMember} = require('../coders/byte-primitives');
+const {Uint8, Int16BE, Int32BE, DoubleBE, BytePrimitive} = require('../coders/byte-primitives');
 const {ByteStream} = require('../coders/byte-stream');
 
 const {ReferenceBE, LargeInt, AsciiString, UTF8, Bytes, SoundBytes, Bitmap32BE, OpaqueColor, TranslucentColor} = require('./byte-primitives');
-const {BuiltinObjectHeader, ExtendedObjectHeader, Header, Reference, Value} = require('./fields');
+const {BuiltinObjectHeader, FieldObjectHeader, Header, Reference, Value} = require('./fields');
 const {TYPES} = require('./ids');
 
 class Consumer {
@@ -103,7 +103,7 @@ class FieldIterator {
             const classVersion = this.stream.read(Uint8);
             const size = this.stream.read(Uint8);
             return {
-                value: new ExtendedObjectHeader(classId, position, classVersion, size),
+                value: new FieldObjectHeader(classId, position, classVersion, size),
                 done: false
             };
         }

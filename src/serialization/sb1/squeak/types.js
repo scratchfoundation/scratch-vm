@@ -299,7 +299,10 @@ class SoundMediaData extends FieldObject.define({
     }
 
     get sampleCount () {
-        return WAVFile.samples(this.bytes);
+        if (this.data && this.data.value) {
+            return SqueakSound.samples(this.bitsPerSample.value, this.data.value);
+        }
+        return this.uncompressed.data.value.length / 2;
     }
 
     get preview () {
@@ -307,7 +310,7 @@ class SoundMediaData extends FieldObject.define({
         audio.controls = true;
 
         audio.src = URL.createObjectURL(
-            new Blob([this.bytes.buffer],{ type: 'audio/wav' })
+            new Blob([this.bytes.buffer], { type: 'audio/wav' })
         );
         return audio;
     }
@@ -442,7 +445,7 @@ class WatcherData extends FieldObject.define({
 
 exports.WatcherData = WatcherData;
 
-const EXTENDED_CONSTRUCTOR_PROTOS = {
+const FIELD_OBJECT_CONTRUCTOR_PROTOS = {
     [TYPES.POINT]: PointData,
     [TYPES.RECTANGLE]: RectangleData,
     [TYPES.FORM]: ImageData,
@@ -461,11 +464,11 @@ const EXTENDED_CONSTRUCTOR_PROTOS = {
     [TYPES.LIST_WATCHER]: ListWatcherData
 };
 
-const EXTENDED_CONSTRUCTORS = new Array(256).fill(null);
+const FIELD_OBJECT_CONTRUCTORS = new Array(256).fill(null);
 for (const index of Object.values(TYPES)) {
-    if (EXTENDED_CONSTRUCTOR_PROTOS[index]) {
-        EXTENDED_CONSTRUCTORS[index] = EXTENDED_CONSTRUCTOR_PROTOS[index];
+    if (FIELD_OBJECT_CONTRUCTOR_PROTOS[index]) {
+        FIELD_OBJECT_CONTRUCTORS[index] = FIELD_OBJECT_CONTRUCTOR_PROTOS[index];
     }
 }
 
-exports.EXTENDED_CONSTRUCTORS = EXTENDED_CONSTRUCTORS;
+exports.FIELD_OBJECT_CONTRUCTORS = FIELD_OBJECT_CONTRUCTORS;

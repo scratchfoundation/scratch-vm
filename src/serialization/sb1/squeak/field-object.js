@@ -1,9 +1,11 @@
+const {TYPE_NAMES} = require('./ids');
+
 const toTitleCase = str => str.replace(/_?\w/g, letter => {
     if (letter.startsWith('_')) return letter[1];
     return letter.toLowerCase();
 });
 
-class ExtendedData {
+class FieldObject {
     constructor ({classId, version, fields}) {
         this.classId = classId;
         this.version = version;
@@ -23,16 +25,20 @@ class ExtendedData {
     }
 
     toString () {
-        if (this.constructor === ExtendedData || this.constructor === UnknownData) {
+        if (this.constructor === FieldObject) {
             return `${this.constructor.name} ${this.classId} ${TYPE_NAMES[this.classId]}`;
         }
         return this.constructor.name;
     }
 
-    static define (FIELDS, Super = ExtendedData) {
+    static define (FIELDS, Super = FieldObject) {
         class Base extends Super {
             get FIELDS () {
                 return FIELDS;
+            }
+
+            get RAW_FIELDS () {
+                return this.fields;
             }
 
             static get FIELDS () {
@@ -53,28 +59,4 @@ class ExtendedData {
     }
 }
 
-exports.FieldObject = ExtendedData;
-
-class UnknownData extends ExtendedData.define({
-    A: 0,
-    B: 1,
-    C: 2,
-    D: 3,
-    E: 4,
-    F: 5,
-    G: 6,
-    H: 7,
-    I: 8,
-    J: 9,
-    K: 10,
-    L: 11,
-    M: 12,
-    N: 13,
-    O: 15,
-    P: 16,
-    Q: 17,
-    R: 18,
-    S: 19
-}) {}
-
-exports.UnknownData = UnknownData;
+exports.FieldObject = FieldObject;

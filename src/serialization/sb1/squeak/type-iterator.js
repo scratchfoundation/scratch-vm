@@ -1,6 +1,7 @@
-const {ExtendedObjectHeader, Header} = require('./fields');
+const {FieldObjectHeader, Header} = require('./fields');
+const {FieldObject} = require('./field-object');
 const {TYPES} = require('./ids');
-const {UnknownData, EXTENDED_CONSTRUCTORS} = require('./types');
+const {FIELD_OBJECT_CONTRUCTORS} = require('./types');
 
 class TypeIterator {
     constructor (valueIterator) {
@@ -31,10 +32,10 @@ class TypeIterator {
         }
 
         if (
-            EXTENDED_CONSTRUCTORS[classId] !== null ||
-            header instanceof ExtendedObjectHeader
+            FIELD_OBJECT_CONTRUCTORS[classId] !== null ||
+            header instanceof FieldObjectHeader
         ) {
-            const constructor = EXTENDED_CONSTRUCTORS[header.classId] || UnknownData;
+            const constructor = FIELD_OBJECT_CONTRUCTORS[header.classId] || FieldObject;
 
             value = new constructor({
                 classId: header.classId,

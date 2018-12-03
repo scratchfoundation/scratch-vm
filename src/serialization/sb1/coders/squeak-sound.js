@@ -1,5 +1,8 @@
 const {assert} = require('../assert');
 
+const {Uint8} = require('./byte-primitives');
+const {ByteStream} = require('./byte-stream');
+
 const SQUEAK_SOUND_STEP_SIZE_TABLE = [
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41,
     45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209,
@@ -32,14 +35,18 @@ class SqueakSound {
 
         this.bitPosition = 0;
         this.currentByte = 0;
-        this.position = 0;
+
+        this.stream = null;
+        this.end = 0;
     }
 
     decode (data) {
         // Reset position information.
         this.bitPosition = 0;
         this.currentByte = 0;
-        this.position = 0;
+
+        this.stream = new ByteStream(data.buffer, data.byteOffset);
+        this.end = data.byteOffset + data.length;
 
         const size = Math.floor(data.length * 8 / this.bitsPerSample);
         const result = new Int16Array(size);
@@ -49,7 +56,7 @@ class SqueakSound {
         let position = 0;
 
         for (let i = 0; i < size; i++) {
-            const code = this.nextCode(data);
+            const code = this.nextCode();
 
             if (typeof process !== 'undefined' && process.env.NODE_ENV !== 'production') {
                 assert(code >= 0, 'Ran out of bits in Squeak Sound');
@@ -80,7 +87,7 @@ class SqueakSound {
         return result;
     }
 
-    nextCode (data) {
+    nextCode () {
         let result = 0;
         let remaining = this.bitsPerSample;
         while (true) {
@@ -88,8 +95,8 @@ class SqueakSound {
             result += (shift < 0) ? (this.currentByte >> -shift) : (this.currentByte << shift);
             if (shift > 0) {
                 remaining -= this.bitPosition;
-                if (data.length - this.position > 0) {
-                    this.currentByte = data[this.position++];
+                if (this.end - this.stream.position > 0) {
+                    this.currentByte = this.stream.read(Uint8);
                     this.bitPosition = 8;
                 } else {
                     this.currentByte = 0;
@@ -103,6 +110,10 @@ class SqueakSound {
             }
         }
         return result;
+    }
+
+    static samples (bitsPerSample, data) {
+        return data.length * 8 / bitsPerSample;
     }
 }
 

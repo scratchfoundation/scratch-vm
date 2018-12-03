@@ -1,4 +1,4 @@
-const {FieldObject} = require('../squeak/field-object');
+const {FieldObject, UnknownData} = require('../squeak/field-object');
 
 const {ObjectRenderer} = require('./object');
 
@@ -15,7 +15,7 @@ const allPropertyDescriptors = prototype => (
             )
 );
 
-class ExtendedDataRenderer {
+class FieldObjectRenderer {
     static check (data, view) {
         return data instanceof FieldObject;
     }
@@ -35,4 +35,4 @@ class ExtendedDataRenderer {
     }
 }
 
-exports.ExtendedDataRenderer = ExtendedDataRenderer;
+exports.FieldObjectRenderer = FieldObjectRenderer;

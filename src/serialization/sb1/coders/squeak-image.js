@@ -1,4 +1,5 @@
-const {Uint32BE} = require('./byte-primitives');
+const {BytePrimitive, Uint8, Uint32BE} = require('./byte-primitives');
+const {ByteStream} = require('./byte-stream');
 
 const defaultColorMap = [
     0x00000000, 0xFF000000, 0xFFFFFFFF, 0xFF808080, 0xFFFF0000, 0xFF00FF00, 0xFF0000FF, 0xFF00FFFF,
@@ -36,29 +37,22 @@ const defaultColorMap = [
 
 const defaultOneBitColorMap = [0xFFFFFFFF, 0xFF000000];
 
-class SqueakImage {
-    decodeIntIncrement (bytes, position) {
-        const count = bytes[position];
-        if (count <= 223) {
-            return 1;
-        }
-        if (count <= 254) {
-            return 2;
-        }
+const VariableIntBE = new BytePrimitive({
+    sizeOf (uint8, position) {
+        const count = uint8[position];
+        if (count <= 223) return 1;
+        if (count <= 254) return 2;
         return 5;
+    },
+    read (uint8, position) {
+        const count = uint8[position];
+        if (count <= 223) return count;
+        if (count <= 254) return ((count - 224) * 256) + uint8[position + 1];
+        return Uint32BE.read(uint8, position + 1);
     }
+})
 
-    decodeInt (bytes, position) {
-        const count = bytes[position];
-        if (count <= 223) {
-            return count;
-        }
-        if (count <= 254) {
-            return ((count - 224) * 256) + bytes[position + 1];
-        }
-        return Uint32BE.read(bytes, position + 1);
-    }
-
+class SqueakImage {
     decode (width, height, depth, bytes, colormap, table) {
         const pixels = this.decodePixels(bytes, depth === 32);
 
@@ -91,14 +85,14 @@ class SqueakImage {
             return result;
         }
 
-        const pixelsOut = this.decodeInt(bytes, 0);
-        let position = this.decodeIntIncrement(bytes, 0);
+        const stream = new ByteStream(bytes.buffer, bytes.byteOffset);
+
+        const pixelsOut = stream.read(VariableIntBE);
         result = new Uint32Array(pixelsOut);
 
         let i = 0;
         while (i < pixelsOut) {
-            const runLengthAndCode = this.decodeInt(bytes, position);
-            position += this.decodeIntIncrement(bytes, position);
+            const runLengthAndCode = stream.read(VariableIntBE);
             const runLength = runLengthAndCode >> 2;
             const code = runLengthAndCode & 0b11;
 
@@ -110,7 +104,7 @@ class SqueakImage {
                 break;
 
             case 1:
-                w = bytes[position++];
+                w = stream.read(Uint8);
                 w = (w << 24) | (w << 16) | (w << 8) | w;
                 if (withAlpha && w != 0) {
                     w |= 0xff000000;
@@ -121,8 +115,7 @@ class SqueakImage {
                 break;
 
             case 2:
-                w = Uint32BE.read(bytes, position);
-                position += 4;
+                w = stream.read(Uint32BE);
                 if (withAlpha && w !== 0) {
                     w |= 0xff000000;
                 }
@@ -133,8 +126,7 @@ class SqueakImage {
 
             case 3:
                 for (let j = 0; j < runLength; j++) {
-                    w = Uint32BE.read(bytes, position);
-                    position += 4;
+                    w = stream.read(Uint32BE);
                     if (withAlpha && w !== 0) {
                         w |= 0xff000000;
                     }

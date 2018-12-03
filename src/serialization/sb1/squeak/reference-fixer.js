@@ -1,9 +1,8 @@
 const {Reference} = require('./fields');
 
-class SB1ReferenceFixer {
-    constructor (table, filter) {
+class ReferenceFixer {
+    constructor (table) {
         this.table = Array.from(table);
-        this.filter = filter;
         this.fixed = this.fix(this.table);
     }
 
@@ -12,9 +11,7 @@ class SB1ReferenceFixer {
 
         for (let i = 0; i < this.table.length; i++) {
             this.fixItem(this.table[i]);
-            if (this.filter && this.filter(this.table[i]) || !this.filter) {
-                fixed.push(this.table[i]);
-            }
+            fixed.push(this.table[i]);
         }
 
         return fixed;
@@ -22,8 +19,9 @@ class SB1ReferenceFixer {
 
     fixItem (item) {
         if (typeof item.fields !== 'undefined') {
-            item.fields = item.fields.map(this.deref, this);
-        } else if (Array.isArray(item)) {
+            item = item.fields;
+        }
+        if (Array.isArray(item)) {
             for (let i = 0; i < item.length; i++) {
                 item[i] = this.deref(item[i]);
             }
@@ -38,4 +36,4 @@ class SB1ReferenceFixer {
     }
 }
 
-exports.ReferenceFixer = SB1ReferenceFixer;
+exports.ReferenceFixer = ReferenceFixer;

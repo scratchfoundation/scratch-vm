@@ -1,7 +1,6 @@
 class CRC32 {
     constructor () {
         this.bit = new Uint32Array(1);
-        // this.crc = new Uint32Array(1);
         this.crc = 0;
         this.c = 0;
 
@@ -22,12 +21,6 @@ class CRC32 {
             crc = (crc >>> 8) ^ this.table[(crc ^ uint8[position + i]) & 0xff];
         }
         this.crc = (~crc) >>> 0;
-        return this;
-        this.crc[0] = ~this.crc[0];
-        for (let i = 0; i < length; i++) {
-            this.crc[0] = (this.crc[0] >>> 8) ^ this.table[(this.crc[0] ^ uint8[position + i]) & 0xff];
-        }
-        this.crc[0] = ~this.crc[0];
         return this;
     }
 

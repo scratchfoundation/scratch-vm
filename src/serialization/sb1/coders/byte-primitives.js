@@ -1,4 +1,4 @@
-class StructMember {
+class BytePrimitive {
     constructor ({
         size = 0,
         sizeOf = () => size,
@@ -35,9 +35,9 @@ class StructMember {
     }
 }
 
-exports.StructMember = StructMember;
+exports.BytePrimitive = BytePrimitive;
 
-const Uint8 = new StructMember({
+const Uint8 = new BytePrimitive({
     size: 1,
     read (uint8, position) {
         return uint8[position];
@@ -66,13 +66,13 @@ const BE16 = {
     }
 };
 
-const Uint16BE = new StructMember(Object.assign({}, BE16, {
+const Uint16BE = new BytePrimitive(Object.assign({}, BE16, {
     toBytes: new Uint16Array(1),
 }));
 
 exports.Uint16BE = Uint16BE;
 
-const Int16BE = new StructMember(Object.assign({}, BE16, {
+const Int16BE = new BytePrimitive(Object.assign({}, BE16, {
     toBytes: new Int16Array(1),
 }));
 
@@ -98,19 +98,19 @@ const BE32 = {
     }
 };
 
-const Int32BE = new StructMember(Object.assign({}, BE32, {
+const Int32BE = new BytePrimitive(Object.assign({}, BE32, {
     toBytes: new Int32Array(1),
 }));
 
 exports.Int32BE = Int32BE;
 
-const Uint32BE = new StructMember(Object.assign({}, BE32, {
+const Uint32BE = new BytePrimitive(Object.assign({}, BE32, {
     toBytes: new Uint32Array(1),
 }));
 
 exports.Uint32BE = Uint32BE;
 
-const Uint16LE = new StructMember({
+const Uint16LE = new BytePrimitive({
     size: 2,
     toBytes: new Uint16Array(1),
     read (uint8, position) {
@@ -128,7 +128,7 @@ const Uint16LE = new StructMember({
 
 exports.Uint16LE = Uint16LE;
 
-const Uint32LE = new StructMember({
+const Uint32LE = new BytePrimitive({
     size: 4,
     toBytes: new Uint32Array(1),
     read (uint8, position) {
@@ -150,7 +150,7 @@ const Uint32LE = new StructMember({
 
 exports.Uint32LE = Uint32LE;
 
-const DoubleBE = new StructMember({
+const DoubleBE = new BytePrimitive({
     size: 8,
     toBytes: new Float64Array(1),
     read (uint8, position) {
@@ -168,7 +168,7 @@ const DoubleBE = new StructMember({
 
 exports.DoubleBE = DoubleBE;
 
-class FixedAsciiString extends StructMember {
+class FixedAsciiString extends BytePrimitive {
     constructor (size) {
         super({
             size,

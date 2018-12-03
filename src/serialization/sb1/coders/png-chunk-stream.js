@@ -25,6 +25,10 @@ class PNGChunkStream extends ProxyStream {
             checksum: this.crc.digest
         });
     }
+
+    static size (bodySize) {
+        return PNGChunkStart.size + bodySize + PNGChunkEnd.size;
+    }
 }
 
 exports.PNGChunkStream = PNGChunkStream;

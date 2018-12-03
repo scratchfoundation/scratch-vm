@@ -1,4 +1,4 @@
-class SB1ByteTakeIterator {
+class ByteTakeIterator {
     constructor (iter, maxPosition = Infinity) {
         this.iter = iter;
         this.maxPosition = maxPosition;
@@ -20,4 +20,4 @@ class SB1ByteTakeIterator {
     }
 }
 
-exports.ByteTakeIterator = SB1ByteTakeIterator;
+exports.ByteTakeIterator = ByteTakeIterator;

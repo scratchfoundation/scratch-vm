@@ -1,7 +1,7 @@
 const {SB1View} = require('./view');
 
 SB1View.register(require('./array').ArrayRenderer);
-SB1View.register(require('./extended-data').ExtendedDataRenderer);
+SB1View.register(require('./field-object').FieldObjectRenderer);
 SB1View.register(require('./field').FieldRenderer);
 SB1View.register(require('./js-primitive').JSPrimitiveRenderer);
 SB1View.register(require('./object').ObjectRenderer);
