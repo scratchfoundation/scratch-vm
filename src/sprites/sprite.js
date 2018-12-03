@@ -146,8 +146,7 @@ class Sprite {
 
         newSprite.costumes = this.costumes_.map(costume => {
             const newCostume = Object.assign({}, costume);
-            const costumeAsset = costume.asset;
-            assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));
+            assetPromises.push(loadCostumeFromAsset(newCostume, this.runtime));
             return newCostume;
         });
 
