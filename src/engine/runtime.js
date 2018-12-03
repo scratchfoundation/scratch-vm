@@ -18,7 +18,6 @@ const Variable = require('./variable');
 // Virtual I/O devices.
 const Clock = require('../io/clock');
 const Cloud = require('../io/cloud');
-const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
 const MouseWheel = require('../io/mouseWheel');
@@ -323,7 +322,6 @@ class Runtime extends EventEmitter {
         this.ioDevices = {
             clock: new Clock(),
             cloud: new Cloud(this),
-            deviceManager: new DeviceManager(),
             keyboard: new Keyboard(this),
             mouse: new Mouse(this),
             mouseWheel: new MouseWheel(this),
