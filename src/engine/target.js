@@ -702,12 +702,11 @@ class Target extends EventEmitter {
         }
         // Rename any local variables that were missed above because they aren't
         // referenced by any blocks
-        for (const id in unreferencedLocalVarIds) {
-            const varId = unreferencedLocalVarIds[id];
+        unreferencedLocalVarIds.forEach(varId => {
             const name = this.variables[varId].name;
             const type = this.variables[varId].type;
             renameConflictingLocalVar(varId, name, type);
-        }
+        });
         // Handle global var conflicts with existing global vars (e.g. a sprite is uploaded, and has
         // blocks referencing some variable that the sprite does not own, and this
         // variable conflicts with a global var)
