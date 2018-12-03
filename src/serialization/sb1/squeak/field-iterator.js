@@ -1,54 +1,80 @@
-const {Uint8, Int16BE, Int32BE, DoubleBE} = require('../coders/byte-primitives');
+const {Uint8, Int16BE, Int32BE, DoubleBE, StructMember} = require('../coders/byte-primitives');
 const {ByteStream} = require('../coders/byte-stream');
 
-const {LargeInt, AsciiString, UTF8, Bytes, SoundBytes, Bitmap32BE, OpaqueColor, TranslucentColor} = require('./byte-primitives');
+const {ReferenceBE, LargeInt, AsciiString, UTF8, Bytes, SoundBytes, Bitmap32BE, OpaqueColor, TranslucentColor} = require('./byte-primitives');
 const {BuiltinObjectHeader, ExtendedObjectHeader, Header, Reference, Value} = require('./fields');
 const {TYPES} = require('./ids');
 
-const objectRef = function (iter, position) {
-    const index = (
-        iter.uint8[iter.position + 0] << 16 |
-        iter.uint8[iter.position + 1] << 8 |
-        iter.uint8[iter.position + 2]
-    );
-    iter.position += 3;
-    return {
-        value: new Reference(TYPES.OBJECT_REF, position, index),
-        done: false
-    };
-};
+class Consumer {
+    constructor({
+        type = Value,
+        read,
+        value = read ? (stream => stream.read(read)) : null
+    }) {
+        this.type = type;
+        this.value = value;
+    }
 
-const builtin = function (iter, classId, position) {
-    return {
-        value: new BuiltinObjectHeader(classId, position),
-        done: false
-    };
+    next (stream, classId, position) {
+        return {
+            value: new this.type(classId, position, this.value(stream)),
+            done: false
+        };
+    }
 }
 
-const extended = function (iter, classId, position) {
-    const classVersion = iter.uint8[iter.position++];
-    const size = iter.uint8[iter.position++];
-    return {
-        value: new ExtendedObjectHeader(classId, position, classVersion, size),
-        done: false
-    };
+const CONSUMER_PROTOS = {
+    [TYPES.NULL]: {value: () => null},
+    [TYPES.TRUE]: {value: () => true},
+    [TYPES.FALSE]: {value: () => false},
+    [TYPES.SMALL_INT]: {read: Int32BE},
+    [TYPES.SMALL_INT_16]: {read: Int16BE},
+    [TYPES.LARGE_INT_POSITIVE]: {read: LargeInt},
+    [TYPES.LARGE_INT_NEGATIVE]: {read: LargeInt},
+    [TYPES.FLOATING]: {read: DoubleBE},
+    [TYPES.STRING]: {read: AsciiString},
+    [TYPES.SYMBOL]: {read: AsciiString},
+    [TYPES.BYTES]: {read: Bytes},
+    [TYPES.SOUND]: {read: SoundBytes},
+    [TYPES.BITMAP]: {read: Bitmap32BE},
+    [TYPES.UTF8]: {read: UTF8},
+    [TYPES.ARRAY]: {type: Header, read: Int32BE},
+    [TYPES.ORDERED_COLLECTION]: {type: Header, read: Int32BE},
+    [TYPES.SET]: {type: Header, read: Int32BE},
+    [TYPES.IDENTITY_SET]: {type: Header, read: Int32BE},
+    [TYPES.DICTIONARY]: {
+        type: Header,
+        value: stream => stream.read(Int32BE) * 2
+    },
+    [TYPES.IDENTITY_DICTIONARY]: {
+        type: Header,
+        value: stream => stream.read(Int32BE) * 2
+    },
+    [TYPES.COLOR]: {read: OpaqueColor},
+    [TYPES.TRANSLUCENT_COLOR]: {read: TranslucentColor},
+    [TYPES.POINT]: {type: Header, value: () => 2},
+    [TYPES.RECTANGLE]: {type: Header, value: () => 4},
+    [TYPES.FORM]: {type: Header, value: () => 5},
+    [TYPES.SQUEAK]: {type: Header, value: () => 6},
+    [TYPES.OBJECT_REF]: {type: Reference, read: ReferenceBE},
 };
 
-class SB1TokenIterator {
+const CONSUMERS = new Array(256).fill(null);
+for (const index of Object.values(TYPES)) {
+    if (CONSUMER_PROTOS[index]) {
+        CONSUMERS[index] = new Consumer(CONSUMER_PROTOS[index]);
+    }
+}
+
+const builtinConsumer = new Consumer({
+    type: BuiltinObjectHeader,
+    value: () => null
+});
+
+class FieldIterator {
     constructor (buffer, position) {
         this.buffer = buffer;
         this.stream = new ByteStream(buffer, position);
-        this.view = new DataView(buffer);
-        this.uint8 = new Uint8Array(buffer);
-        Object.defineProperty(this, 'position', {
-            get () {
-                return this.stream.position;
-            },
-            set (value) {
-                this.stream.position = value;
-                return value;
-            }
-        });
     }
 
     [Symbol.iterator] () {
@@ -56,126 +82,32 @@ class SB1TokenIterator {
     }
 
     next () {
-        if (this.position >= this.uint8.length) {
+        if (this.stream.position >= this.stream.uint8.length) {
             return {
                 value: null,
                 done: true
             };
         }
 
-        const position = this.position;
+        const position = this.stream.position;
         const classId = this.stream.read(Uint8);
-        let value;
-        let headerSize;
 
-        switch (classId) {
-        case TYPES.NULL:
-            value = null;
-            break;
+        const consumer = CONSUMERS[classId];
 
-        case TYPES.TRUE:
-            value = true;
-            break;
-
-        case TYPES.FALSE:
-            value = false;
-            break;
-
-        case TYPES.SMALL_INT:
-            value = this.stream.read(Int32BE);
-            break;
-
-        case TYPES.SMALL_INT_16:
-            value = this.stream.read(Int16BE);
-            break;
-
-        case TYPES.LARGE_INT_POSITIVE:
-        case TYPES.LARGE_INT_NEGATIVE:
-            value = this.stream.read(LargeInt);
-            break;
-
-        case TYPES.FLOATING:
-            value = this.stream.read(DoubleBE);
-            break;
-
-        case TYPES.STRING:
-        case TYPES.SYMBOL:
-            value = this.stream.read(AsciiString);
-            break;
-
-        case TYPES.BYTES:
-            value = this.stream.read(Bytes);
-            break;
-
-        case TYPES.SOUND:
-            value = this.stream.read(SoundBytes);
-            break;
-
-        case TYPES.BITMAP:
-            value = this.stream.read(Bitmap32BE);
-            break;
-
-        case TYPES.UTF8:
-            value = this.stream.read(UTF8);
-            break;
-
-        case TYPES.ARRAY:
-        case TYPES.ORDERED_COLLECTION:
-        case TYPES.SET:
-        case TYPES.IDENTITY_SET:
-            headerSize = this.stream.read(Int32BE);
-            break;
-
-        case TYPES.DICTIONARY:
-        case TYPES.IDENTITY_DICTIONARY:
-            headerSize = this.stream.read(Int32BE) * 2;
-            break;
-
-        case TYPES.COLOR:
-            value = this.stream.read(OpaqueColor);
-            break;
-
-        case TYPES.TRANSLUCENT_COLOR:
-            value = this.stream.read(TranslucentColor);
-            break;
-
-        case TYPES.POINT:
-            headerSize = 2;
-            break;
-
-        case TYPES.RECTANGLE:
-            headerSize = 4;
-            break;
-
-        case TYPES.FORM:
-        case TYPES.SQUEAK:
-            headerSize = classId === TYPES.SQUEAK ? 6 : 5;
-            break;
-
-        case TYPES.OBJECT_REF:
-            return objectRef(this, position);
-            break;
-
-        default:
-            if (classId < TYPES.OBJECT_REF) {
-                return builtin(this, classId, position);
-            } else {
-                return extended(this, classId, position);
-            }
-        }
-
-        if (typeof value !== 'undefined') {
-            return {
-                value: new Value(classId, position, value),
-                done: false
-            };
+        if (consumer !== null) {
+            return consumer.next(this.stream, classId, position);
+        } else if (classId < TYPES.OBJECT_REF) {
+            // TODO: Does this ever happen?
+            return builtinConsumer.next(this.stream, classId, position);
         } else {
+            const classVersion = this.stream.read(Uint8);
+            const size = this.stream.read(Uint8);
             return {
-                value: new Header(classId, position, headerSize),
+                value: new ExtendedObjectHeader(classId, position, classVersion, size),
                 done: false
             };
         }
     }
 }
 
-exports.FieldIterator = SB1TokenIterator;
+exports.FieldIterator = FieldIterator;

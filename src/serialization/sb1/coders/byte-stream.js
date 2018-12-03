@@ -20,7 +20,7 @@ class ByteStream {
 
     readStruct (StructType) {
         const obj = new StructType(this.uint8, this.position);
-        this.position += StructType.prototype.size;
+        this.position += StructType.size;
         return obj;
     }
 
@@ -54,10 +54,10 @@ class ByteStream {
     }
 
     writeStruct (StructType, data) {
-        this.resize(this.position + StructType.prototype.size);
+        this.resize(this.position + StructType.size);
 
         const st = Object.assign(new StructType(this.uint8, this.position), data);
-        this.position += StructType.prototype.size;
+        this.position += StructType.size;
         return st;
     }
 

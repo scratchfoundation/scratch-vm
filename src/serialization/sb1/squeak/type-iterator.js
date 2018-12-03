@@ -1,71 +1,46 @@
-const {ExtendedObjectHeader} = require('./fields');
+const {ExtendedObjectHeader, Header} = require('./fields');
 const {TYPES} = require('./ids');
 const {UnknownData, EXTENDED_CONSTRUCTORS} = require('./types');
 
-const objectArray = function (objectIterator, header) {
-    const array = [];
-
-    for (let i = 0; i < header.size; i++) {
-        array.push(objectIterator.next().value);
-    }
-
-    return array;
-};
-
-const objectExtended = function (objectIterator, header) {
-    const fields = [];
-
-    for (let i = 0; i < header.size; i++) {
-        fields.push(objectIterator.next().value);
-    }
-
-    const constructor = EXTENDED_CONSTRUCTORS[header.classId] || UnknownData;
-
-    return new constructor({
-        classId: header.classId,
-        value: null,
-        version: header.version,
-        fields,
-    });
-};
-
-class SB1ObjectIterator {
-    constructor (valueIterator, length) {
+class TypeIterator {
+    constructor (valueIterator) {
         this.valueIterator = valueIterator;
-        this.length = length;
     }
 
     [Symbol.iterator] () {
         return this;
     }
 
-    read (header, classId) {
+    next () {
+        const nextHeader = this.valueIterator.next();
+        if (nextHeader.done) {
+            return nextHeader;
+        }
+
+        const header = nextHeader.value;
+        const {classId} = header;
+
         let value = header;
 
-        switch (classId) {
-        case TYPES.ARRAY:
-        case TYPES.ORDERED_COLLECTION:
-        case TYPES.SET:
-        case TYPES.IDENTITY_SET:
-            value = objectArray(this, header);
-            break;
+        if (header instanceof Header) {
+            value = [];
 
-        case TYPES.DICTIONARY:
-        case TYPES.IDENTITY_DICTIONARY:
-            value = objectArray(this, header);
-            break;
-
-        case TYPES.POINT:
-        case TYPES.RECTANGLE:
-        case TYPES.FORM:
-        case TYPES.SQUEAK:
-            value = objectExtended(this, header);
-            break;
-
-        default:
-            if (header instanceof ExtendedObjectHeader) {
-                value = objectExtended(this, header);
+            for (let i = 0; i < header.size; i++) {
+                value.push(this.next().value);
             }
+        }
+
+        if (
+            EXTENDED_CONSTRUCTORS[classId] !== null ||
+            header instanceof ExtendedObjectHeader
+        ) {
+            const constructor = EXTENDED_CONSTRUCTORS[header.classId] || UnknownData;
+
+            value = new constructor({
+                classId: header.classId,
+                version: header.version,
+                fields: value,
+            });
         }
 
         return {
@@ -73,20 +48,6 @@ class SB1ObjectIterator {
             done: false
         };
     }
-
-    next () {
-        const nextHeader = this.valueIterator.next();
-        if (nextHeader.done) {
-            return {
-                value: null,
-                done: true
-            };
-        }
-
-        const header = nextHeader.value;
-
-        return this.read(header, header.classId);
-    }
 }
 
-exports.TypeIterator = SB1ObjectIterator;
+exports.TypeIterator = TypeIterator;

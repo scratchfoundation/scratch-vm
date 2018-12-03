@@ -5,7 +5,8 @@ class StructMember {
         writeSizeOf = () => {throw new Error('Not implemented');},
         toBytes = new Uint8Array(1),
         read,
-        write}) {
+        write = () => {throw new Error('Not implemented.');}
+    }) {
         this.size = size;
         this.sizeOf = sizeOf;
         this.writeSizeOf = writeSizeOf;
@@ -49,9 +50,9 @@ const Uint8 = new StructMember({
 
 exports.Uint8 = Uint8;
 
-const Uint16BE = new StructMember({
+const BE16 = {
     size: 2,
-    toBytes: new Uint16Array(1),
+    // toBytes: Defined by instance.
     read (uint8, position) {
         this.bytes[1] = uint8[position + 0];
         this.bytes[0] = uint8[position + 1];
@@ -63,31 +64,23 @@ const Uint16BE = new StructMember({
         uint8[position + 1] = this.bytes[0];
         return value;
     }
-});
+};
+
+const Uint16BE = new StructMember(Object.assign({}, BE16, {
+    toBytes: new Uint16Array(1),
+}));
 
 exports.Uint16BE = Uint16BE;
 
-const Int16BE = new StructMember({
-    size: 2,
+const Int16BE = new StructMember(Object.assign({}, BE16, {
     toBytes: new Int16Array(1),
-    read (uint8, position) {
-        this.bytes[1] = uint8[position + 0];
-        this.bytes[0] = uint8[position + 1];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[1];
-        uint8[position + 1] = this.bytes[0];
-        return value;
-    }
-});
+}));
 
 exports.Int16BE = Int16BE;
 
-const Int32BE = new StructMember({
+const BE32 = {
     size: 4,
-    toBytes: new Int32Array(1),
+    // toBytes: Defined by instance.
     read (uint8, position) {
         this.bytes[3] = uint8[position + 0];
         this.bytes[2] = uint8[position + 1];
@@ -103,9 +96,19 @@ const Int32BE = new StructMember({
         uint8[position + 3] = this.bytes[0];
         return value;
     }
-});
+};
+
+const Int32BE = new StructMember(Object.assign({}, BE32, {
+    toBytes: new Int32Array(1),
+}));
 
 exports.Int32BE = Int32BE;
+
+const Uint32BE = new StructMember(Object.assign({}, BE32, {
+    toBytes: new Uint32Array(1),
+}));
+
+exports.Uint32BE = Uint32BE;
 
 const Uint16LE = new StructMember({
     size: 2,
@@ -124,28 +127,6 @@ const Uint16LE = new StructMember({
 });
 
 exports.Uint16LE = Uint16LE;
-
-const Uint32BE = new StructMember({
-    size: 4,
-    toBytes: new Uint32Array(1),
-    read (uint8, position) {
-        this.bytes[3] = uint8[position + 0];
-        this.bytes[2] = uint8[position + 1];
-        this.bytes[1] = uint8[position + 2];
-        this.bytes[0] = uint8[position + 3];
-        return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        this.toBytes[0] = value;
-        uint8[position + 0] = this.bytes[3];
-        uint8[position + 1] = this.bytes[2];
-        uint8[position + 2] = this.bytes[1];
-        uint8[position + 3] = this.bytes[0];
-        return value;
-    }
-});
-
-exports.Uint32BE = Uint32BE;
 
 const Uint32LE = new StructMember({
     size: 4,
@@ -182,9 +163,6 @@ const DoubleBE = new StructMember({
         this.bytes[1] = uint8[position + 6];
         this.bytes[0] = uint8[position + 7];
         return this.toBytes[0];
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 

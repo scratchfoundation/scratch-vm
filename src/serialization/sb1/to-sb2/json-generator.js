@@ -85,6 +85,7 @@ const toSb2Json = root => {
         return {
             soundName: soundMediaData.name,
             soundID,
+            // TODO: Produce a proper MD5.
             md5: `${soundID}.wav`,
             sampleCount: soundMediaData.sampleCount,
             rate: soundMediaData.rate,
@@ -97,6 +98,7 @@ const toSb2Json = root => {
         return {
             costumeName: imageMediaData.costumeName,
             baseLayerID,
+            // TODO: Produce a proper MD5.
             baseLayerMD5: `${baseLayerID}.${imageMediaData.extension}`,
             bitmapResolution: 1,
             rotationCenterX: imageMediaData.rotationCenter.x,
@@ -185,6 +187,7 @@ const toSb2Json = root => {
             .map(toSb2JsonCostume),
             currentCostumeIndex: rawCostumes.findIndex(image => image.crc === stageData.currentCostume.crc),
             sounds: rawSounds.map(toSb2JsonSound),
+            // TODO: Where does this come from? Is it always the same for SB1?
             penLayerMD5: '5c81a336fab8be57adc039a8a2b33ca9.png',
             penLayerID: 0,
             tempoBPM: stageData.tempoBPM,

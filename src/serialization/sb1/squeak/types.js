@@ -442,7 +442,7 @@ class WatcherData extends FieldObject.define({
 
 exports.WatcherData = WatcherData;
 
-const EXTENDED_CONSTRUCTORS = {
+const EXTENDED_CONSTRUCTOR_PROTOS = {
     [TYPES.POINT]: PointData,
     [TYPES.RECTANGLE]: RectangleData,
     [TYPES.FORM]: ImageData,
@@ -460,5 +460,12 @@ const EXTENDED_CONSTRUCTORS = {
     [TYPES.WATCHER]: WatcherData,
     [TYPES.LIST_WATCHER]: ListWatcherData
 };
+
+const EXTENDED_CONSTRUCTORS = new Array(256).fill(null);
+for (const index of Object.values(TYPES)) {
+    if (EXTENDED_CONSTRUCTOR_PROTOS[index]) {
+        EXTENDED_CONSTRUCTORS[index] = EXTENDED_CONSTRUCTOR_PROTOS[index];
+    }
+}
 
 exports.EXTENDED_CONSTRUCTORS = EXTENDED_CONSTRUCTORS;

@@ -1,6 +1,4 @@
-const valueOf = obj => (typeof obj === 'object' && obj) ? obj.valueOf() : obj;
-
-class Struct {
+class Block {
     constructor (uint8 = new Uint8Array(this.size), offset = 0) {
         this.uint8 = uint8;
         this.offset = offset;
@@ -8,7 +6,7 @@ class Struct {
 
     equals (other) {
         for (const key in other) {
-            if (valueOf(this[key]) !== other[key]) {
+            if (this[key] !== other[key]) {
                 return false;
             }
         }
@@ -28,8 +26,13 @@ class Struct {
         return obj;
     }
 
+    static initConstructor (BlockConstructor) {
+        BlockConstructor.size = BlockConstructor.prototype.size;
+        return BlockConstructor;
+    }
+
     static extend (shape) {
-        const Base = class extends Struct {
+        const Base = class extends Block {
             get shape () {
                 return shape;
             }
@@ -39,7 +42,7 @@ class Struct {
         Object.keys(shape).forEach(key => {
             shape[key].defineProperty(Base.prototype, key, position);
             if (shape[key].size === 0) {
-                throw new Error('Struct cannot be defined with variable sized members.');
+                throw new Error('Block cannot be defined with variable sized members.');
             }
             position += shape[key].size;
         });
@@ -51,10 +54,4 @@ class Struct {
     }
 }
 
-exports.Struct = Struct;
-
-exports.Block = Struct;
-
-const struct = shape => Struct.extend(shape);
-
-exports.struct = struct;
+exports.Block = Block;

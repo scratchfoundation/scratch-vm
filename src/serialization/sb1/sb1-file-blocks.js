@@ -16,6 +16,8 @@ class SB1Signature extends Block.extend({
     }
 }
 
+Block.initConstructor(SB1Signature);
+
 exports.SB1Signature = SB1Signature;
 
 class SB1BlockHeader extends Block.extend({
@@ -35,5 +37,7 @@ class SB1BlockHeader extends Block.extend({
         );
     }
 }
+
+Block.initConstructor(SB1BlockHeader);
 
 exports.SB1BlockHeader = SB1BlockHeader;

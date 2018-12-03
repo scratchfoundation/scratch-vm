@@ -1,9 +1,10 @@
 const {Adler32} = require('./adler32');
 const {DEFLATE_BLOCK_SIZE_MAX, DeflateHeader, DeflateChunkStart, DeflateEnd} = require('./deflate-blocks');
+const {ProxyStream} = require('./proxy-stream');
 
-class DeflateStream {
+class DeflateStream extends ProxyStream {
     constructor (stream) {
-        this.stream = stream;
+        super(stream);
 
         this.stream.writeStruct(DeflateHeader, {
             cmf: 0b00001000,
@@ -17,24 +18,6 @@ class DeflateStream {
             length: 0,
             lengthCheck: 0 ^ 0xffff
         });
-    }
-
-    get uint8 () {
-        return this.stream.uint8;
-    }
-
-    set uint8 (value) {
-        this.stream.uint8 = value;
-        return this.stream.uint8;
-    }
-
-    get position () {
-        return this.stream.position;
-    }
-
-    set position (value) {
-        this.stream.position = value;
-        return this.stream.position;
     }
 
     get _deflateIndex () {

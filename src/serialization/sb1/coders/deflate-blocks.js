@@ -10,6 +10,8 @@ class DeflateHeader extends Block.extend({
     flag: Uint8
 }) {}
 
+Block.initConstructor(DeflateHeader);
+
 exports.DeflateHeader = DeflateHeader;
 
 class DeflateChunkStart extends Block.extend({
@@ -18,10 +20,14 @@ class DeflateChunkStart extends Block.extend({
     lengthCheck: Uint16LE
 }) {}
 
+Block.initConstructor(DeflateChunkStart);
+
 exports.DeflateChunkStart = DeflateChunkStart;
 
 class DeflateEnd extends Block.extend({
     checksum: Uint32LE
 }) {}
+
+Block.initConstructor(DeflateEnd);
 
 exports.DeflateEnd = DeflateEnd;

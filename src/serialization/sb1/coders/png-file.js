@@ -9,29 +9,29 @@ const {PNGChunkStream} = require('./png-chunk-stream');
 
 class PNGFile {
     encode (width, height, pixelsUint8) {
-        const rowSize = width * 4 + PNGFilterMethodByte.prototype.size;
+        const rowSize = width * 4 + PNGFilterMethodByte.size;
         const bodySize = rowSize * height;
         let bodyRemaining = bodySize;
         const blocks = Math.ceil(bodySize / DEFLATE_BLOCK_SIZE_MAX);
         const idatSize = (
-            DeflateHeader.prototype.size +
-            blocks * DeflateChunkStart.prototype.size +
-            DeflateEnd.prototype.size +
+            DeflateHeader.size +
+            blocks * DeflateChunkStart.size +
+            DeflateEnd.size +
             bodySize
         );
         const size = (
-            PNGSignature.prototype.size +
+            PNGSignature.size +
             // IHDR
-            PNGChunkStart.prototype.size +
-            PNGIHDRChunkBody.prototype.size +
-            PNGChunkEnd.prototype.size +
+            PNGChunkStart.size +
+            PNGIHDRChunkBody.size +
+            PNGChunkEnd.size +
             // IDAT
-            PNGChunkStart.prototype.size +
+            PNGChunkStart.size +
             idatSize +
-            PNGChunkEnd.prototype.size +
+            PNGChunkEnd.size +
             // IEND
-            PNGChunkStart.prototype.size +
-            PNGChunkEnd.prototype.size
+            PNGChunkStart.size +
+            PNGChunkEnd.size
         );
 
         const stream = new ByteStream(new ArrayBuffer(size));
@@ -70,7 +70,7 @@ class PNGFile {
 
             const partialLength = Math.min(
                 pixelsUint8.length - pixelsIndex,
-                rowSize - PNGFilterMethodByte.prototype.size
+                rowSize - PNGFilterMethodByte.size
             );
             deflate.writeBytes(
                 pixelsUint8, pixelsIndex, pixelsIndex + partialLength

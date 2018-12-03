@@ -1,5 +1,7 @@
+const {ByteStream} = require('./coders/byte-stream');
+
+const {ByteTakeIterator} = require('./squeak/byte-take-iterator');
 const {FieldIterator} = require('./squeak/field-iterator');
-const {TypeFieldTakeIterator} = require('./squeak/type-field-take-iterator');
 const {TypeIterator} = require('./squeak/type-iterator');
 const {ReferenceFixer} = require('./squeak/reference-fixer');
 const {ImageMediaData, SoundMediaData} = require('./squeak/types');
@@ -12,20 +14,18 @@ const {SB1BlockHeader, SB1Signature} = require('./sb1-file-blocks');
 class SB1File {
     constructor (buffer) {
         this.buffer = buffer;
-        this.uint8 = new Uint8Array(buffer);
+        this.stream = new ByteStream(buffer);
 
-        this.signature = new SB1Signature(this.uint8, 0);
+        this.signature = this.stream.readStruct(SB1Signature);
         this.signature.validate();
 
-        this.infoBlockHeader = new SB1BlockHeader(this.uint8, SB1Signature.prototype.size);
+        this.infoBlockHeader = this.stream.readStruct(SB1BlockHeader);
         this.infoBlockHeader.validate();
-        this.infoPosition = this.infoBlockHeader.offset;
-        this.infoLength = this.infoBlockHeader.numObjects;
 
-        this.dataBlockHeader = new SB1BlockHeader(this.uint8, this.signature.infoByteLength + SB1Signature.prototype.size);
+        this.stream.position += this.signature.infoByteLength - SB1BlockHeader.size;
+
+        this.dataBlockHeader = this.stream.readStruct(SB1BlockHeader);
         this.dataBlockHeader.validate();
-        this.dataPosition = this.dataBlockHeader.offset;
-        this.dataLength = this.dataBlockHeader.numObjects;
     }
 
     get json () {
@@ -45,7 +45,6 @@ class SB1File {
     }
 
     view () {
-        // console.log(this.json);
         return {
             signature: this.signature,
             infoBlockHeader: this.infoBlockHeader,
@@ -57,11 +56,11 @@ class SB1File {
     }
 
     infoRaw () {
-        return new TypeFieldTakeIterator(new FieldIterator(this.buffer, this.infoPosition + SB1BlockHeader.prototype.size), this.infoLength);
+        return new ByteTakeIterator(new FieldIterator(this.buffer, this.infoBlockHeader.offset + SB1BlockHeader.size), this.signature.infoByteLength + SB1Signature.size);
     }
 
     infoTable () {
-        return new TypeIterator(this.infoRaw(), this.infoLength);
+        return new TypeIterator(this.infoRaw());
     }
 
     info () {
@@ -72,11 +71,11 @@ class SB1File {
     }
 
     dataRaw () {
-        return new TypeFieldTakeIterator(new FieldIterator(this.buffer, this.dataPosition + SB1BlockHeader.prototype.size), this.dataLength);
+        return new ByteTakeIterator(new FieldIterator(this.buffer, this.dataBlockHeader.offset + SB1BlockHeader.size), this.stream.uint8.length);
     }
 
     dataTable () {
-        return new TypeIterator(this.dataRaw(), this.dataLength);
+        return new TypeIterator(this.dataRaw());
     }
 
     dataFixed () {

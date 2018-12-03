@@ -1,8 +1,7 @@
-class SB1TakeIterator {
-    constructor (iter, maxLength = Infinity) {
+class SB1ByteTakeIterator {
+    constructor (iter, maxPosition = Infinity) {
         this.iter = iter;
-        this.maxLength = maxLength;
-        this.index = 0;
+        this.maxPosition = maxPosition;
     }
 
     [Symbol.iterator] () {
@@ -10,16 +9,15 @@ class SB1TakeIterator {
     }
 
     next () {
-        if (this.index === this.maxLength) {
+        if (this.iter.stream.position >= this.maxPosition) {
             return {
                 value: null,
                 done: true
             };
         }
 
-        this.index += 1;
         return this.iter.next();
     }
 }
 
-exports.TakeIterator = SB1TakeIterator;
+exports.ByteTakeIterator = SB1ByteTakeIterator;

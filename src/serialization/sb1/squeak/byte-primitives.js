@@ -6,6 +6,19 @@ const TOO_BIG = 10 * 1024 * 1024;
 
 exports.TOO_BIG = TOO_BIG;
 
+const ReferenceBE = new StructMember({
+    size: 3,
+    read (uint8, position) {
+        return (
+            uint8[position + 0] << 16 |
+            uint8[position + 1] << 8 |
+            uint8[position + 2]
+        );
+    }
+});
+
+exports.ReferenceBE = ReferenceBE;
+
 const LargeInt = new StructMember({
     sizeOf (uint8, position) {
         const count = Int16BE.read(uint8, position);
@@ -20,9 +33,6 @@ const LargeInt = new StructMember({
             multiplier *= 256;
         }
         return num;
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -44,9 +54,6 @@ const AsciiString = new StructMember({
             str += String.fromCharCode(uint8[position++]);
         }
         return str;
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -67,9 +74,6 @@ const Bytes = new StructMember({
             assert(count < TOO_BIG, 'uint8 array too big');
         }
         return new Uint8Array(uint8.buffer, position, count);
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -91,9 +95,6 @@ const SoundBytes = new StructMember({
             assert(count < TOO_BIG, 'uint8 array too big');
         }
         return new Uint8Array(uint8.buffer, position, count);
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -119,9 +120,6 @@ const Bitmap32BE = new StructMember({
             position += Uint32BE.size;
         }
         return value;
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -144,9 +142,6 @@ const UTF8 = new StructMember({
             assert(count < TOO_BIG, 'uint8 array too big');
         }
         return decoder.decode(new Uint8Array(uint8.buffer, position, count));
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -161,9 +156,6 @@ const OpaqueColor = new StructMember({
         const g = (rgb >> 12) & 0xff;
         const b = (rgb >> 2) & 0xff;
         return (a << 24 | r << 16 | g << 8 | b) >>> 0;
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 
@@ -178,9 +170,6 @@ const TranslucentColor = new StructMember({
         const g = (rgb >> 12) & 0xff;
         const b = (rgb >> 2) & 0xff;
         return (a << 24 | r << 16 | g << 8 | b) >>> 0;
-    },
-    write (uint8, position, value) {
-        throw new Error('Not implemented.');
     }
 });
 

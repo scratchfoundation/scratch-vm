@@ -5,10 +5,10 @@ class WAVFile {
     encode (intSamples, {channels = 1, sampleRate = 22050} = {}) {
         const samplesUint8 = new Uint8Array(intSamples.buffer, intSamples.byteOffset, intSamples.byteLength);
         const size = (
-            WAVESignature.prototype.size +
-            WAVEChunkStart.prototype.size +
-            WAVEFMTChunkBody.prototype.size +
-            WAVEChunkStart.prototype.size +
+            WAVESignature.size +
+            WAVEChunkStart.size +
+            WAVEFMTChunkBody.size +
+            WAVEChunkStart.size +
             samplesUint8.length
         );
 
@@ -22,7 +22,7 @@ class WAVFile {
 
         stream.writeStruct(WAVEChunkStart, {
             chunkType: 'fmt ',
-            length: WAVEFMTChunkBody.prototype.size
+            length: WAVEFMTChunkBody.size
         });
 
         stream.writeStruct(WAVEFMTChunkBody, {
@@ -36,7 +36,7 @@ class WAVFile {
 
         stream.writeStruct(WAVEChunkStart, {
             chunkType: 'data',
-            length: size - stream.position - WAVEChunkStart.prototype.size
+            length: size - stream.position - WAVEChunkStart.size
         });
 
         stream.writeBytes(samplesUint8);
@@ -49,8 +49,8 @@ class WAVFile {
     }
 
     static samples (bytes) {
-        const headerLength = new WAVEChunkStart(bytes, WAVESignature.prototype.size).length;
-        const bodyLength = new WAVEChunkStart(bytes, WAVESignature.prototype.size + WAVEChunkStart.prototype.size + headerLength).length;
+        const headerLength = new WAVEChunkStart(bytes, WAVESignature.size).length;
+        const bodyLength = new WAVEChunkStart(bytes, WAVESignature.size + WAVEChunkStart.size + headerLength).length;
         return bodyLength / 2;
     }
 }

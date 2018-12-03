@@ -21,6 +21,8 @@ class PNGSignature extends Block.extend({
     }
 }
 
+Block.initConstructor(PNGSignature);
+
 exports.PNGSignature = PNGSignature;
 
 class PNGChunkStart extends Block.extend({
@@ -28,11 +30,15 @@ class PNGChunkStart extends Block.extend({
     chunkType: new FixedAsciiString(4)
 }) {}
 
+Block.initConstructor(PNGChunkStart);
+
 exports.PNGChunkStart = PNGChunkStart;
 
 class PNGChunkEnd extends Block.extend({
     checksum: Uint32BE
 }) {}
+
+Block.initConstructor(PNGChunkEnd);
 
 exports.PNGChunkEnd = PNGChunkEnd;
 
@@ -46,10 +52,14 @@ class PNGIHDRChunkBody extends Block.extend({
     interlaceMethod: Uint8,
 }) {}
 
+Block.initConstructor(PNGIHDRChunkBody);
+
 exports.PNGIHDRChunkBody = PNGIHDRChunkBody;
 
 class PNGFilterMethodByte extends Block.extend({
     method: Uint8
 }) {}
+
+Block.initConstructor(PNGFilterMethodByte);
 
 exports.PNGFilterMethodByte = PNGFilterMethodByte;

@@ -7,12 +7,16 @@ class WAVESignature extends Block.extend({
     wave: new FixedAsciiString(4)
 }) {}
 
+Block.initConstructor(WAVESignature);
+
 exports.WAVESignature = WAVESignature;
 
 class WAVEChunkStart extends Block.extend({
     chunkType: new FixedAsciiString(4),
     length: Uint32LE,
 }) {}
+
+Block.initConstructor(WAVEChunkStart);
 
 exports.WAVEChunkStart = WAVEChunkStart;
 
@@ -24,5 +28,7 @@ class WAVEFMTChunkBody extends Block.extend({
     blockAlignment: Uint16LE,
     bitsPerSample: Uint16LE
 }) {}
+
+Block.initConstructor(WAVEFMTChunkBody);
 
 exports.WAVEFMTChunkBody = WAVEFMTChunkBody;

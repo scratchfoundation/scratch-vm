@@ -4,9 +4,8 @@ const toTitleCase = str => str.replace(/_?\w/g, letter => {
 });
 
 class ExtendedData {
-    constructor ({classId, value, version, fields}) {
+    constructor ({classId, version, fields}) {
         this.classId = classId;
-        this.value = value;
         this.version = version;
         this.fields = fields;
     }
@@ -56,11 +55,7 @@ class ExtendedData {
 
 exports.FieldObject = ExtendedData;
 
-const fieldData = (FIELDS, Super) => ExtendedData.define(FIELDS, Super);
-
-exports.fieldData = fieldData;
-
-class UnknownData extends fieldData({
+class UnknownData extends ExtendedData.define({
     A: 0,
     B: 1,
     C: 2,
