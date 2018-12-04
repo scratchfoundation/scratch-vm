@@ -130,6 +130,7 @@ class SB1View {
                 fn.call(this, div)
                 .forEach(view => this.content.appendChild(view.element));
             } catch (error) {
+                console.error(error);
                 const divError = this.createElement('div', 'expanded-error');
                 divError.innerText = 'Error rendering expanded area ...';
                 this.content.appendChild(divError);

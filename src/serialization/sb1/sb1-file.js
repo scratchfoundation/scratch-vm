@@ -93,10 +93,7 @@ class SB1File {
         const unique = new Set();
         return this.dataFixed().filter(obj => {
             if (obj instanceof ImageMediaData) {
-                const array = obj.baseLayerData.value || obj.bitmap.bytes.value;
-                if (unique.has(array)) return false;
                 if (unique.has(obj.crc)) return false;
-                unique.add(array);
                 unique.add(obj.crc);
                 return true;
             }

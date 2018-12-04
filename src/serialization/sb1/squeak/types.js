@@ -1,8 +1,6 @@
 const {CRC32} = require('../coders/crc32');
-const {PNGFile} = require('../coders/png-file');
 const {SqueakImage} = require('../coders/squeak-image');
 const {SqueakSound} = require('../coders/squeak-sound');
-const {WAVFile} = require('../coders/wav-file');
 
 const {FieldObject} = require('./field-object');
 const {value} = require('./fields');
@@ -50,31 +48,23 @@ class ImageData extends FieldObject.define({
     BYTES: 4,
     COLORMAP: 5
 }) {
-    get png () {
-        if (!this._png) {
-            this._png = new Uint8Array(PNGFile.encode(
-                this.width,
-                this.height,
-                _bgra2rgbaInPlace(new Uint8Array(
-                    new SqueakImage().decode(
-                        this.width.value,
-                        this.height.value,
-                        this.depth.value,
-                        this.bytes.value,
-                        this.colormap && this.colormap.map(color => color.valueOf())
-                    ).buffer
-                ))
+    get decoded () {
+        if (!this._decoded) {
+            this._decoded = _bgra2rgbaInPlace(new Uint8Array(
+                new SqueakImage().decode(
+                    this.width.value,
+                    this.height.value,
+                    this.depth.value,
+                    this.bytes.value,
+                    this.colormap && this.colormap.map(color => color.valueOf())
+                ).buffer
             ));
         }
-        return this._png;
+        return this._decoded;
     }
 
-    get preview () {
-        const image = new Image();
-        image.src = URL.createObjectURL(
-            new Blob([this.png.buffer], { type: 'image/png' })
-        );
-        return image;
+    get extension () {
+        return 'uncompressed';
     }
 }
 
@@ -174,24 +164,42 @@ class ImageMediaData extends FieldObject.define({
     BASE_LAYER_DATA: 4,
     OLD_COMPOSITE: 5
 }) {
-    get rawBytes () {
+    get image () {
         if (this.oldComposite instanceof ImageData) {
-            return this.oldComposite.bytes.value;
+            return this.oldComposite;
         }
         if (this.baseLayerData.value) {
-            return this.baseLayerData.value;
+            return null;
         }
-        return this.bitmap.bytes.value;
+        return this.bitmap;
     }
 
-    get bytes () {
-        if (this.oldComposite instanceof ImageData) {
-            return this.oldComposite.png;
+    get width () {
+        if (this.image === null) {
+            return -1;
         }
-        if (this.baseLayerData.value) {
-            return this.baseLayerData.value;
+        return this.image.width;
+    }
+
+    get height () {
+        if (this.image === null) {
+            return -1;
         }
-        return this.bitmap.png;
+        return this.image.height;
+    }
+
+    get rawBytes () {
+        if (this.image === null) {
+            return this.baseLayerData.value.slice();
+        }
+        return this.image.bytes.value;
+    }
+
+    get decoded () {
+        if (this.image === null) {
+            return this.baseLayerData.value.slice();
+        }
+        return this.image.decoded;
     }
 
     get crc () {
@@ -207,21 +215,9 @@ class ImageMediaData extends FieldObject.define({
     }
 
     get extension () {
-        if (this.oldComposite instanceof ImageData) return 'png';
+        if (this.oldComposite instanceof ImageData) return 'uncompressed';
         if (this.baseLayerData.value) return 'jpg';
-        return 'png';
-    }
-
-    get preview () {
-        if (this.oldComposite instanceof ImageData) {
-            return this.oldComposite.preview;
-        }
-        if (this.baseLayerData.value) {
-            const image = new Image();
-            image.src = URL.createObjectURL(new Blob([this.baseLayerData.value], {type: 'image/jpeg'}));
-            return image;
-        }
-        return this.bitmap.preview;
+        return 'uncompressed';
     }
 
     toString () {
@@ -269,23 +265,17 @@ class SoundMediaData extends FieldObject.define({
         }
     }
 
-    get bytes () {
-        if (!this._wav) {
-            let samples;
+    get decoded () {
+        if (!this._decoded) {
             if (this.data && this.data.value) {
-                samples = new SqueakSound(this.bitsPerSample.value).decode(
+                this._decoded = new SqueakSound(this.bitsPerSample.value).decode(
                     this.data.value
                 );
             } else {
-                samples = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
+                this._decoded = new Int16Array(reverseBytes16(this.uncompressed.data.value.slice()).buffer);
             }
-
-            this._wav = new Uint8Array(WAVFile.encode(samples, {
-                sampleRate: this.rate && this.rate.value || this.uncompressed.rate.value
-            }));
         }
-
-        return this._wav;
+        return this._decoded;
     }
 
     get crc () {
@@ -305,14 +295,8 @@ class SoundMediaData extends FieldObject.define({
         return this.uncompressed.data.value.length / 2;
     }
 
-    get preview () {
-        const audio = new Audio();
-        audio.controls = true;
-
-        audio.src = URL.createObjectURL(
-            new Blob([this.bytes.buffer], { type: 'audio/wav' })
-        );
-        return audio;
+    get extension () {
+        return 'pcm';
     }
 
     toString () {
