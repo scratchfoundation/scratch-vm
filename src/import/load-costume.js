@@ -121,6 +121,10 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
         }
         costume.bitmapResolution = 2;
 
+        // Clean up the costume object
+        delete costume.textLayerMD5;
+        delete costume.textLayerAsset;
+
         return {
             canvas: canvas,
             rotationCenter: rotationCenter,
@@ -128,8 +132,8 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             assetMatchesBase: scale === 1 && !textImageElement
         };
     })
-        .finally(() => {
-            // Clean up the costume object
+        .catch(() => {
+            // Clean up the text layer properties if it fails to load
             delete costume.textLayerMD5;
             delete costume.textLayerAsset;
         });
