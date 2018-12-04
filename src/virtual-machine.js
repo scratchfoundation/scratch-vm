@@ -381,7 +381,7 @@ class VirtualMachine extends EventEmitter {
     exportSprite (targetId, optZipType) {
         const soundDescs = serializeSounds(this.runtime, targetId);
         const costumeDescs = serializeCostumes(this.runtime, targetId);
-        const spriteJson = JSON.stringify(sb3.serialize(this.runtime, targetId));
+        const spriteJson = StringUtil.stringify(sb3.serialize(this.runtime, targetId));
 
         const zip = new JSZip();
         zip.file('sprite.json', spriteJson);
@@ -401,7 +401,7 @@ class VirtualMachine extends EventEmitter {
      * @return {string} Serialized state of the runtime.
      */
     toJSON () {
-        return JSON.stringify(sb3.serialize(this.runtime));
+        return StringUtil.stringify(sb3.serialize(this.runtime));
     }
 
     // TODO do we still need this function? Keeping it here so as not to introduce
