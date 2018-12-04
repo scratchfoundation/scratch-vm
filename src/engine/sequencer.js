@@ -68,6 +68,10 @@ class Sequencer {
     stepThreads () {
         // Work time is 75% of the thread stepping interval.
         const WORK_TIME = 0.75 * this.runtime.currentStepTime;
+        // For compatibility with Scatch 2, update the millisecond clock
+        // on the Runtime once per step (see Interpreter.as in Scratch 2
+        // for original use of `currentMSecs`)
+        this.runtime.updateCurrentMSecs();
         // Start counting toward WORK_TIME.
         this.timer.start();
         // Count of active threads.
@@ -134,6 +138,7 @@ class Sequencer {
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
                     stoppedThread = true;
+                    this.runtime.updateCurrentMSecs();
                 }
             }
             // We successfully ticked once. Prevents running STATUS_YIELD_TICK

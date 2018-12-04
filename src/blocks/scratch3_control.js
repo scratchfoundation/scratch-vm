@@ -107,13 +107,16 @@ class Scratch3ControlBlocks {
         util.startBranch(1, true);
     }
 
-    wait (args) {
-        const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, duration);
-        });
+    wait (args, util) {
+        if (util.stackTimerNeedsInit()) {
+            const duration = Math.max(0, 1000 * Cast.toNumber(args.DURATION));
+
+            util.startStackTimer(duration);
+            this.runtime.requestRedraw();
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
+        }
     }
 
     if (args, util) {

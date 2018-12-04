@@ -1,4 +1,5 @@
 const Thread = require('./thread');
+const Timer = require('../util/timer');
 
 /**
  * @fileoverview
@@ -39,6 +40,20 @@ class BlockUtility {
     }
 
     /**
+     * Use the runtime's currentMSecs value as a timestamp value for now
+     * This is useful in some cases where we need compatibility with Scratch 2
+     * @type {function}
+     */
+    get nowObj () {
+        if (this.runtime) {
+            return {
+                now: () => this.runtime.currentMSecs
+            };
+        }
+        return null;
+    }
+
+    /**
      * The stack frame used by loop and other blocks to track internal state.
      * @type {object}
      */
@@ -48,6 +63,40 @@ class BlockUtility {
             frame.executionContext = {};
         }
         return frame.executionContext;
+    }
+
+    /**
+     * Check the stack timer and return a boolean based on whether it has finished or not.
+     * @return {boolean} - true if the stack timer has finished.
+     */
+    stackTimerFinished () {
+        const timeElapsed = this.stackFrame.timer.timeElapsed();
+        if (timeElapsed < this.stackFrame.duration) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Check if the stack timer needs initialization.
+     * @return {boolean} - true if the stack timer needs to be initialized.
+     */
+    stackTimerNeedsInit () {
+        return !this.stackFrame.timer;
+    }
+
+    /**
+     * Create and start a stack timer
+     * @param {number} duration - a duration in milliseconds to set the timer for.
+     */
+    startStackTimer (duration) {
+        if (this.nowObj) {
+            this.stackFrame.timer = new Timer(this.nowObj);
+        } else {
+            this.stackFrame.timer = new Timer();
+        }
+        this.stackFrame.timer.start();
+        this.stackFrame.duration = duration;
     }
 
     /**

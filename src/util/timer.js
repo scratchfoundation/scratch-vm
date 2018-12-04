@@ -13,12 +13,18 @@
  */
 
 class Timer {
-    constructor () {
+    constructor (nowObj = Timer.nowObj) {
         /**
          * Used to store the start time of a timer action.
          * Updated when calling `timer.start`.
          */
         this.startTime = 0;
+
+        /**
+         * Used to pass custom logic for determining the value for "now",
+         * which is sometimes useful for compatibility with Scratch 2
+         */
+        this.nowObj = nowObj;
     }
 
     /**
@@ -59,7 +65,7 @@ class Timer {
      * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
      */
     time () {
-        return Timer.nowObj.now();
+        return this.nowObj.now();
     }
 
     /**
@@ -70,7 +76,7 @@ class Timer {
      * @returns {number} ms-scale accurate time relative to other relative times.
      */
     relativeTime () {
-        return Timer.nowObj.now();
+        return this.nowObj.now();
     }
 
     /**
@@ -78,11 +84,11 @@ class Timer {
      * at the most accurate precision possible.
      */
     start () {
-        this.startTime = Timer.nowObj.now();
+        this.startTime = this.nowObj.now();
     }
 
     timeElapsed () {
-        return Timer.nowObj.now() - this.startTime;
+        return this.nowObj.now() - this.startTime;
     }
 }
 
