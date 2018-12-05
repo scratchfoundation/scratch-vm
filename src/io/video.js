@@ -132,7 +132,8 @@ class Video {
      */
     setPreviewGhost (ghost) {
         this._ghost = ghost;
-        if (this._drawable) {
+        // Confirm that the default value has been changed to a valid id for the drawable
+        if (this._drawable !== -1) {
             this.runtime.renderer.updateDrawableProperties(this._drawable, {
                 ghost: this._forceTransparentPreview ? 100 : ghost
             });

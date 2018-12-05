@@ -659,6 +659,8 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         if (object.info.hasOwnProperty('videoOn')) {
             if (object.info.videoOn) {
                 target.videoState = RenderedTarget.VIDEO_STATE.ON;
+            } else {
+                target.videoState = RenderedTarget.VIDEO_STATE.OFF;
             }
         }
     }
