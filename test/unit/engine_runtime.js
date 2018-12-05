@@ -246,7 +246,7 @@ test('Disposing the runtime emits an event', t => {
     rt.addListener('RUNTIME_DISPOSED', () => {
         disposed = true;
     });
-    rt.start();
+    rt.dispose();
     t.equal(disposed, true);
     t.end();
 });
