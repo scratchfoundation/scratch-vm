@@ -325,7 +325,7 @@ const serializeBlocks = function (blocks) {
         // a shadow block, and there are no blocks that reference it, otherwise
         // they would have been compressed in the last pass)
         if (Array.isArray(serializedBlock) &&
-            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock) < 0) {
+            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock[0]) < 0) {
             log.warn(`Found an unexpected top level primitive with block ID: ${
                 blockID}; deleting it from serialized blocks.`);
             delete obj[blockID];

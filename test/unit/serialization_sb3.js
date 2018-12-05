@@ -7,6 +7,7 @@ const exampleProjectPath = path.resolve(__dirname, '../fixtures/clone-cleanup.sb
 const commentsSB2ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb2');
 const commentsSB3ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb3');
 const commentsSB3NoDupeIds = path.resolve(__dirname, '../fixtures/comments_no_duplicate_id_serialization.sb3');
+const variableReporterSB2ProjectPath = path.resolve(__dirname, '../fixtures/top-level-variable-reporter.sb2');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
 test('serialize', t => {
@@ -235,4 +236,17 @@ test('getExtensionIdForOpcode', t => {
     t.false(sb3.getExtensionIdForOpcode('hello'));
 
     t.end();
+});
+
+test('(#1608) serializeBlocks maintains top level variable reporters', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(variableReporterSB2ProjectPath))
+        .then(() => {
+            const blocks = vm.runtime.targets[0].blocks._blocks;
+            const result = sb3.serialize(vm.runtime).targets[0].blocks;
+            // Project should have 1 block, a top-level variable reporter
+            t.equal(Object.keys(blocks).length, 1);
+            t.equal(Object.keys(result).length, 1);
+            t.end();
+        });
 });
