@@ -354,7 +354,11 @@ class Target extends EventEmitter {
                 originalVariable.type,
                 originalVariable.isCloud
             );
-            newVariable.value = originalVariable.value;
+            if (newVariable.type === Variable.LIST_TYPE) {
+                newVariable.value = originalVariable.value.slice(0);
+            } else {
+                newVariable.value = originalVariable.value;
+            }
             return newVariable;
         }
         return null;
