@@ -20,7 +20,6 @@ test('importing one project after the other resets monitored variables', t => {
     vm.setCompatibilityMode(false);
     vm.setTurboMode(false);
     vm.loadProject(project).then(() => {
-
         const refSprite = vm.runtime.targets[1];
         const refVarId = Object.keys(refSprite.variables)[0];
         const refBlock = vm.runtime.monitorBlocks.getBlock(refVarId);
