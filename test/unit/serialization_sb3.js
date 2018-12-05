@@ -243,10 +243,15 @@ test('(#1608) serializeBlocks maintains top level variable reporters', t => {
     vm.loadProject(readFileToBuffer(variableReporterSB2ProjectPath))
         .then(() => {
             const blocks = vm.runtime.targets[0].blocks._blocks;
-            const result = sb3.serialize(vm.runtime).targets[0].blocks;
+            const result = sb3.serialize(vm.runtime);
             // Project should have 1 block, a top-level variable reporter
             t.equal(Object.keys(blocks).length, 1);
-            t.equal(Object.keys(result).length, 1);
+            t.equal(Object.keys(result.targets[0].blocks).length, 1);
+
+            // Make sure deserializing these blocks works
+            t.doesNotThrow(() => {
+                sb3.deserialize(JSON.parse(JSON.stringify(result)), vm.runtime);
+            });
             t.end();
         });
 });

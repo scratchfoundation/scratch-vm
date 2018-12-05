@@ -802,7 +802,7 @@ const deserializeBlocks = function (blocks) {
             // this is one of the primitives
             // delete the old entry in object.blocks and replace it w/the
             // deserialized object
-            delete block[blockId];
+            delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
             continue;
         }
