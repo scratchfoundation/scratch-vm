@@ -34,7 +34,28 @@ class StringUtil {
             return [text.substring(0, index), text.substring(index + 1)];
         }
         return [text, null];
-        
+
+    }
+
+    /**
+     * A customized version of JSON.stringify that sets Infinity/NaN to 0,
+     * instead of the default (null).
+     * Needed because null is not of type number, but Infinity/NaN are, which
+     * can lead to serialization producing JSON that isn't valid based on the parser schema.
+     * It is also consistent with the behavior of saving 2.0 projects.
+     * This is only needed when stringifying an object for saving.
+     *
+     * @param {!object} obj - The object to serialize
+     * @return {!string} The JSON.stringified string with Infinity/NaN replaced with 0
+     */
+    static stringify (obj) {
+        return JSON.stringify(obj, (_key, value) => {
+            if (typeof value === 'number' &&
+               (value === Infinity || value === -Infinity || isNaN(value))){
+                return 0;
+            }
+            return value;
+        });
     }
 }
 

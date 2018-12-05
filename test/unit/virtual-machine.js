@@ -982,3 +982,30 @@ test('Starting the VM emits an event', t => {
     t.equal(started, true);
     t.end();
 });
+
+test('toJSON encodes Infinity/NaN as 0, not null', t => {
+    const vm = new VirtualMachine();
+    const runtime = vm.runtime;
+    const spr1 = new Sprite(null, runtime);
+    const stage = spr1.createClone();
+    stage.isStage = true;
+    stage.volume = Infinity;
+    stage.tempo = NaN;
+    stage.createVariable('id1', 'name1', '');
+    stage.variables.id1.value = Infinity;
+    stage.createVariable('id2', 'name2', '');
+    stage.variables.id1.value = -Infinity;
+    stage.createVariable('id3', 'name3', '');
+    stage.variables.id1.value = NaN;
+
+    runtime.targets = [stage];
+
+    const json = JSON.parse(vm.toJSON());
+    t.equal(json.targets[0].volume, 0);
+    t.equal(json.targets[0].tempo, 0);
+    t.equal(json.targets[0].variables.id1[1], 0);
+    t.equal(json.targets[0].variables.id2[1], 0);
+    t.equal(json.targets[0].variables.id3[1], 0);
+
+    t.end();
+});
