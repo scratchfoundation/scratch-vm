@@ -628,6 +628,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name when the runtime dispose has been called.
+     * @const {string}
+     */
+    static get RUNTIME_DISPOSED () {
+        return 'RUNTIME_DISPOSED';
+    }
+
+    /**
      * Event name for reporting that a block was updated and needs to be rerendered.
      * @const {string}
      */
@@ -1548,6 +1556,7 @@ class Runtime extends EventEmitter {
         this.stopAll();
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
+        this.emit(Runtime.RUNTIME_DISPOSED);
         // @todo clear out extensions? turboMode? etc.
 
         // *********** Cloud *******************

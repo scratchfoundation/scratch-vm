@@ -239,3 +239,14 @@ test('setCompatibilityMode does not restart if it was not running', t => {
     t.equal(started, false);
     t.end();
 });
+
+test('Disposing the runtime emits an event', t => {
+    let disposed = false;
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_DISPOSED', () => {
+        disposed = true;
+    });
+    rt.dispose();
+    t.equal(disposed, true);
+    t.end();
+});
