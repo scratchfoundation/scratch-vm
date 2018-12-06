@@ -625,18 +625,22 @@ class Blocks {
             // Variable blocks may be sprite specific depending on the owner of the variable
             let isSpriteLocalVariable = false;
             if (block.opcode === 'data_variable') {
-                isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage &&
-                    optRuntime.getEditingTarget().variables[block.fields.VARIABLE.id];
+                isSpriteLocalVariable = !(optRuntime.getTargetForStage().variables[block.fields.VARIABLE.id]);
             } else if (block.opcode === 'data_listcontents') {
-                isSpriteLocalVariable = !optRuntime.getEditingTarget().isStage &&
-                    optRuntime.getEditingTarget().variables[block.fields.LIST.id];
+                isSpriteLocalVariable = !(optRuntime.getTargetForStage().variables[block.fields.LIST.id]);
             }
-
 
             const isSpriteSpecific = isSpriteLocalVariable ||
                 (optRuntime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
                 optRuntime.monitorBlockInfo[block.opcode].isSpriteSpecific);
-            block.targetId = isSpriteSpecific ? optRuntime.getEditingTarget().id : null;
+            if (isSpriteSpecific) {
+                // If creating a new sprite specific monitor, the only possible target is
+                // the current editing one b/c you cannot dynamically create monitors.
+                // Also, do not change the targetId if it has already been assigned
+                block.targetId = block.targetId || optRuntime.getEditingTarget().id;
+            } else {
+                block.targetId = null;
+            }
 
             if (wasMonitored && !block.isMonitored) {
                 optRuntime.requestHideMonitor(block.id);
