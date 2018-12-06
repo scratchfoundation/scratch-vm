@@ -326,7 +326,7 @@ test('duplicateVariable creates a new variable with a new ID by default', t => {
 test('duplicateVariable creates new array reference for list variable.value', t => {
     const target = new Target();
     const arr = [1, 2, 3];
-    target.createVariable('a var ID', arr, Variable.LIST_TYPE);
+    target.createVariable('a var ID', 'arr', Variable.LIST_TYPE);
     const originalVariable = target.variables['a var ID'];
     const newVariable = target.duplicateVariable('a var ID');
     // Values are deeply equal but not the same object
