@@ -328,6 +328,7 @@ test('duplicateVariable creates new array reference for list variable.value', t 
     const arr = [1, 2, 3];
     target.createVariable('a var ID', 'arr', Variable.LIST_TYPE);
     const originalVariable = target.variables['a var ID'];
+    originalVariable.value = arr;
     const newVariable = target.duplicateVariable('a var ID');
     // Values are deeply equal but not the same object
     t.deepEqual(originalVariable.value, newVariable.value);
