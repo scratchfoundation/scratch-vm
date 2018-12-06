@@ -1,10 +1,10 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
-const log = require('../../util/log');
-const cast = require('../../util/cast');
+// const log = require('../../util/log');
+// const cast = require('../../util/cast');
 const formatMessage = require('format-message');
-const BLE = require('../../io/ble');
-const Base64Util = require('../../util/base64-util');
+// const BLE = require('../../io/ble');
+// const Base64Util = require('../../util/base64-util');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -27,7 +27,7 @@ class Scratch3GoForceBlocks {
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'Go!Force';
+        return 'Go! Force';
     }
 
     /**
@@ -62,7 +62,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'whenAccelerationCompare',
                     text: formatMessage({
-                        id: 'ev3.whenAccelerationCompare',
+                        id: 'goforce.whenAccelerationCompare',
                         default: 'when acceleration [DIRECTION] [COMPARE] [VALUE] m/s\u{00B2}',
                         description: 'when the value measured by the acceleration sensor is compared to some value'
                     }),
@@ -87,7 +87,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'whenTiltCompare',
                     text: formatMessage({
-                        id: 'ev3.whenTitleCompare',
+                        id: 'goforce.whenTitleCompare',
                         default: 'when tilt [DIRECTION] [COMPARE] [VALUE] rad/s',
                         description: 'when the value measured by the acceleration sensor is compared to some value'
                     }),
@@ -112,7 +112,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'whenForceCompare',
                     text: formatMessage({
-                        id: 'ev3.whenForceCompare',
+                        id: 'goforce.whenForceCompare',
                         default: 'when force [COMPARE] [VALUE] N',
                         description: 'when the value measured by the force sensor is compared to some value'
                     }),
@@ -132,7 +132,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getAcceleration',
                     text: formatMessage({
-                        id: 'ev3.getAcceleration',
+                        id: 'goforce.getAcceleration',
                         default: 'acceleration [DIRECTION]',
                         description: 'gets acceleration'
                     }),
@@ -148,7 +148,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getTilt',
                     text: formatMessage({
-                        id: 'ev3.getTitle',
+                        id: 'goforce.getTitle',
                         default: 'tilt [DIRECTION]',
                         description: 'gets tilt'
                     }),
@@ -164,7 +164,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getForce',
                     text: formatMessage({
-                        id: 'ev3.getForce',
+                        id: 'goforce.getForce',
                         default: 'force',
                         description: 'gets force'
                     }),
@@ -173,29 +173,27 @@ class Scratch3GoForceBlocks {
             ],
             menus: {
                 directionOptions: this._formatMenu(DirectionOptionsMenu),
-                compareOptions: this._formatMenu(CompareOptionsMenu),
-                motorPorts: this._formatMenu(Ev3MotorMenu),
-                sensorPorts: this._formatMenu(Ev3SensorMenu)
+                compareOptions: this._formatMenu(CompareOptionsMenu)
             }
         };
     }
 
-    whenAccelerationCompare (args) {
+    whenAccelerationCompare () {
         return Promise.resolve();
     }
-    whenTiltCompare (args) {
+    whenTiltCompare () {
         return Promise.resolve();
     }
-    whenForceCompare (args) {
+    whenForceCompare () {
         return Promise.resolve();
     }
-    getAcceleration (args) {
+    getAcceleration () {
         return Promise.resolve();
     }
-    getTilt (args) {
+    getTilt () {
         return Promise.resolve();
     }
-    getForce (args) {
+    getForce () {
         return Promise.resolve();
     }
 
