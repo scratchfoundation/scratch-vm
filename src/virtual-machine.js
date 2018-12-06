@@ -78,6 +78,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.BLOCK_GLOW_OFF, glowData => {
             this.emit(Runtime.BLOCK_GLOW_OFF, glowData);
         });
+        this.runtime.on(Runtime.PROJECT_START, () => {
+            this.emit(Runtime.PROJECT_START);
+        });
         this.runtime.on(Runtime.PROJECT_RUN_START, () => {
             this.emit(Runtime.PROJECT_RUN_START);
         });
