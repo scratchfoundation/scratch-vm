@@ -983,6 +983,17 @@ test('Starting the VM emits an event', t => {
     t.end();
 });
 
+test('vm.greenFlag() emits a PROJECT_START event', t => {
+    let greenFlagged = false;
+    const vm = new VirtualMachine();
+    vm.addListener('PROJECT_START', () => {
+        greenFlagged = true;
+    });
+    vm.greenFlag();
+    t.equal(greenFlagged, true);
+    t.end();
+});
+
 test('toJSON encodes Infinity/NaN as 0, not null', t => {
     const vm = new VirtualMachine();
     const runtime = vm.runtime;
