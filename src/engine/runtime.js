@@ -1541,13 +1541,18 @@ class Runtime extends EventEmitter {
         return newThreads;
     }
 
+
     /**
      * Dispose all targets. Return to clean state.
      */
     dispose () {
         this.stopAll();
+        // Deleting each target's variable's monitors.
+        this.targets.forEach(target => {
+            if (target.isOriginal) target.deleteMonitors();
+        });
+
         this.targets.map(this.disposeTarget, this);
-        this.monitorBlocks = new Blocks(true);
         this._monitorState = OrderedMap({});
         // @todo clear out extensions? turboMode? etc.
 

@@ -337,6 +337,26 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Remove this target's monitors from the runtime state and remove the
+     * target-specific monitored blocks (e.g. local variables, global variables for the stage, x-position).
+     * NOTE: This does not delete any of the stage monitors like backdrop name.
+     */
+    deleteMonitors () {
+        this.runtime.requestRemoveMonitorByTargetId(this.id);
+        let targetSpecificMonitorBlockIds;
+        if (this.isStage) {
+            // This only deletes global variables and not other stage monitors like backdrop number.
+            targetSpecificMonitorBlockIds = Object.keys(this.variables);
+        } else {
+            targetSpecificMonitorBlockIds = Object.keys(this.runtime.monitorBlocks._blocks)
+                .filter(key => this.runtime.monitorBlocks._blocks[key].targetId === this.id);
+        }
+        for (const blockId of targetSpecificMonitorBlockIds) {
+            this.runtime.monitorBlocks.deleteBlock(blockId);
+        }
+    }
+
+    /**
      * Create a clone of the variable with the given id from the dictionary of
      * this target's variables.
      * @param {string} id Id of variable to duplicate.
