@@ -24,6 +24,20 @@ const DirectionOptionsMenu = ['x', 'y', 'z'];
 class Scratch3GoForceBlocks {
 
     /**
+     * @return {string} - the name of this extension.
+     */
+    static get EXTENSION_NAME () {
+        return 'Go!Force';
+    }
+
+    /**
+     * @return {string} - the ID of this extension.
+     */
+    static get EXTENSION_ID () {
+        return 'goforce';
+    }
+
+    /**
      * Construct a set of GoForce blocks.
      * @param {Runtime} runtime - the Scratch 3.0 runtime.
      */
