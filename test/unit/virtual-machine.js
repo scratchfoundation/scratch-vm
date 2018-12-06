@@ -667,6 +667,36 @@ test('setVariableValue', t => {
     t.end();
 });
 
+test('setVariableValue requests update for cloud variable', t => {
+    const vm = new VirtualMachine();
+    const spr = new Sprite(null, vm.runtime);
+    const target = spr.createClone();
+    target.isStage = true;
+    target.createVariable('a-variable', 'a-name', Variable.SCALAR_TYPE, true /* isCloud */);
+
+    vm.runtime.targets = [target];
+
+    // Mock cloud io device requestUpdateVariable function
+    let requestUpdateVarWasCalled = false;
+    let varName;
+    let varValue;
+    vm.runtime.ioDevices.cloud.requestUpdateVariable = (name, value) => {
+        requestUpdateVarWasCalled = true;
+        varName = name;
+        varValue = value;
+    };
+
+    vm.setVariableValue(target.id, 'not-a-variable', 100);
+    t.equal(requestUpdateVarWasCalled, false);
+
+    vm.setVariableValue(target.id, 'a-variable', 100);
+    t.equal(requestUpdateVarWasCalled, true);
+    t.equal(varName, 'a-name');
+    t.equal(varValue, 100);
+
+    t.end();
+});
+
 test('getVariableValue', t => {
     const vm = new VirtualMachine();
     const spr = new Sprite(null, vm.runtime);
