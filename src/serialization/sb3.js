@@ -326,7 +326,7 @@ const serializeBlocks = function (blocks) {
         // a shadow block, and there are no blocks that reference it, otherwise
         // they would have been compressed in the last pass)
         if (Array.isArray(serializedBlock) &&
-            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock) < 0) {
+            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock[0]) < 0) {
             log.warn(`Found an unexpected top level primitive with block ID: ${
                 blockID}; deleting it from serialized blocks.`);
             delete obj[blockID];
@@ -803,7 +803,7 @@ const deserializeBlocks = function (blocks) {
             // this is one of the primitives
             // delete the old entry in object.blocks and replace it w/the
             // deserialized object
-            delete block[blockId];
+            delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
             continue;
         }
