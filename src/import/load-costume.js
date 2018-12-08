@@ -211,7 +211,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
             typeof costume.rotationCenterY === 'number' && !isNaN(costume.rotationCenterY)) {
         rotationCenter = [costume.rotationCenterX, costume.rotationCenterY];
     }
-    if (costume.asset.assetType === AssetType.ImageVector) {
+    if (costume.asset.assetType.runtimeFormat === AssetType.ImageVector.runtimeFormat) {
         return loadVector_(costume, runtime, rotationCenter, optVersion);
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion);
