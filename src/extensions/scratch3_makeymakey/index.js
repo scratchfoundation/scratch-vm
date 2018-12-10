@@ -86,6 +86,9 @@ class Scratch3MakeyMakeyBlocks {
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
 
+        this._clearkeyPressBuffer = this._clearkeyPressBuffer.bind(this);
+        this.runtime.on('PROJECT_STOP_ALL', this._clearkeyPressBuffer);
+
         /*
          * An object containing a set of sequence objects.
          * These are the key sequences currently being detected by the "when
@@ -335,6 +338,13 @@ class Scratch3MakeyMakeyBlocks {
                 }, SEQUENCE_HAT_TIMEOUT);
             }
         }
+    }
+
+    /**
+     * Clear the key press buffer.
+     */
+    _clearkeyPressBuffer () {
+        this.keyPressBuffer = [];
     }
 
     /*
