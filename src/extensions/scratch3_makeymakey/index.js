@@ -158,7 +158,7 @@ class Scratch3MakeyMakeyBlocks {
             `${KEY_ID_UP} ${KEY_ID_DOWN}`,
             `${KEY_ID_DOWN} ${KEY_ID_UP}`,
             `${KEY_ID_UP} ${KEY_ID_RIGHT} ${KEY_ID_DOWN} ${KEY_ID_LEFT}`,
-            `${KEY_ID_SPACE} ${KEY_ID_SPACE} ${KEY_ID_SPACE}`,
+            `${KEY_ID_UP} ${KEY_ID_LEFT} ${KEY_ID_DOWN} ${KEY_ID_RIGHT}`,
             `${KEY_ID_UP} ${KEY_ID_UP} ${KEY_ID_DOWN} ${KEY_ID_DOWN} ` +
                 `${KEY_ID_LEFT} ${KEY_ID_RIGHT} ${KEY_ID_LEFT} ${KEY_ID_RIGHT}`
         ];
