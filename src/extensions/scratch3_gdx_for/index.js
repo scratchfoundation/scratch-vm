@@ -19,26 +19,26 @@ const DirectionOptionsMenu = ['x', 'y', 'z'];
 
 
 /**
- * Scratch 3.0 blocks to interact with a GoForce peripheral.
+ * Scratch 3.0 blocks to interact with a GDX-FOR peripheral.
  */
-class Scratch3GoForceBlocks {
+class Scratch3GdxForBlocks {
 
     /**
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'Go! Force';
+        return 'GDX-FOR';
     }
 
     /**
      * @return {string} - the ID of this extension.
      */
     static get EXTENSION_ID () {
-        return 'goforce';
+        return 'gdxfor';
     }
 
     /**
-     * Construct a set of GoForce blocks.
+     * Construct a set of GDX-FOR blocks.
      * @param {Runtime} runtime - the Scratch 3.0 runtime.
      */
     constructor (runtime) {
@@ -54,15 +54,15 @@ class Scratch3GoForceBlocks {
      */
     getInfo () {
         return {
-            id: Scratch3GoForceBlocks.EXTENSION_ID,
-            name: Scratch3GoForceBlocks.EXTENSION_NAME,
+            id: Scratch3GdxForBlocks.EXTENSION_ID,
+            name: Scratch3GdxForBlocks.EXTENSION_NAME,
             blockIconURI: blockIconURI,
             showStatusButton: true,
             blocks: [
                 {
                     opcode: 'whenAccelerationCompare',
                     text: formatMessage({
-                        id: 'goforce.whenAccelerationCompare',
+                        id: 'gdxfor.whenAccelerationCompare',
                         default: 'when acceleration [DIRECTION] [COMPARE] [VALUE] m/s\u{00B2}',
                         description: 'when the value measured by the acceleration sensor is compared to some value'
                     }),
@@ -87,7 +87,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'whenAngularSpeedCompare',
                     text: formatMessage({
-                        id: 'goforce.whenAngularSpeedCompare',
+                        id: 'gdxfor.whenAngularSpeedCompare',
                         default: 'when angular speed [DIRECTION] [COMPARE] [VALUE] rad/s',
                         description: 'when the value measured by the gyroscope sensor is compared to some value'
                     }),
@@ -112,7 +112,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'whenForceCompare',
                     text: formatMessage({
-                        id: 'goforce.whenForceCompare',
+                        id: 'gdxfor.whenForceCompare',
                         default: 'when force [COMPARE] [VALUE] N',
                         description: 'when the value measured by the force sensor is compared to some value'
                     }),
@@ -132,7 +132,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getAcceleration',
                     text: formatMessage({
-                        id: 'goforce.getAcceleration',
+                        id: 'gdxfor.getAcceleration',
                         default: 'acceleration [DIRECTION]',
                         description: 'gets acceleration'
                     }),
@@ -148,7 +148,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getAngularSpeed',
                     text: formatMessage({
-                        id: 'goforce.getAngularSpeed',
+                        id: 'gdxfor.getAngularSpeed',
                         default: 'angular speed [DIRECTION]',
                         description: 'gets tilt'
                     }),
@@ -164,7 +164,7 @@ class Scratch3GoForceBlocks {
                 {
                     opcode: 'getForce',
                     text: formatMessage({
-                        id: 'goforce.getForce',
+                        id: 'gdxfor.getForce',
                         default: 'force',
                         description: 'gets force'
                     }),
@@ -228,4 +228,4 @@ class Scratch3GoForceBlocks {
     }
 }
 
-module.exports = Scratch3GoForceBlocks;
+module.exports = Scratch3GdxForBlocks;
