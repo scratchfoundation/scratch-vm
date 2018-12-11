@@ -143,8 +143,12 @@ class Scratch3SensingBlocks {
         ));
 
         if (currentlyAsking) {
-            this.runtime.emit('SAY', stopTarget, null, '');
-            this.runtime.emit('QUESTION', null);
+            this.runtime.emit('SAY', stopTarget, 'say', null);
+            if (this._questionList.length > 0) {
+                this._askNextQuestion();
+            } else {
+                this.runtime.emit('QUESTION', null);
+            }
         }
     }
 
