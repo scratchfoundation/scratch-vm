@@ -197,6 +197,35 @@ class Scratch3GoForceBlocks {
         return Promise.resolve();
     }
 
+    /**
+     * Formats menus into a format suitable for block menus, and loading previously
+     * saved projects:
+     * [
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   {
+     *    text: label,
+     *    value: index
+     *   },
+     *   etc...
+     * ]
+     *
+     * @param {array} menu - a menu to format.
+     * @return {object} - a formatted menu as an object.
+     * @private
+     */
+    _formatMenu (menu) {
+        const m = [];
+        for (let i = 0; i < menu.length; i++) {
+            const obj = {};
+            obj.text = menu[i];
+            obj.value = i.toString();
+            m.push(obj);
+        }
+        return m;
+    }
 }
 
 module.exports = Scratch3GoForceBlocks;
