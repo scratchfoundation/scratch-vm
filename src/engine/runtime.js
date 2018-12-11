@@ -1233,12 +1233,14 @@ class Runtime extends EventEmitter {
     /**
      * Update an edge-activated hat block value.
      * @param {!string} blockId ID of hat to store value for.
+     * @param {!string} threadTargetId Target ID for the thread that the block belongs to
      * @param {*} newValue Value to store for edge-activated hat.
      * @return {*} The old value for the edge-activated hat.
      */
-    updateEdgeActivatedValue (blockId, newValue) {
-        const oldValue = this._edgeActivatedHatValues[blockId];
-        this._edgeActivatedHatValues[blockId] = newValue;
+    updateEdgeActivatedValue (blockId, threadTargetId, newValue) {
+        const blockAndTargetId = `${blockId}_${threadTargetId}`;
+        const oldValue = this._edgeActivatedHatValues[blockAndTargetId];
+        this._edgeActivatedHatValues[blockAndTargetId] = newValue;
         return oldValue;
     }
 

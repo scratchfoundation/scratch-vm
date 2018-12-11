@@ -65,6 +65,7 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
             if (!thread.stackClick) {
                 const oldEdgeValue = sequencer.runtime.updateEdgeActivatedValue(
                     currentBlockId,
+                    thread.target.id,
                     resolvedValue
                 );
                 const edgeWasActivated = !oldEdgeValue && resolvedValue;
