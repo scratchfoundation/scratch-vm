@@ -85,11 +85,11 @@ class Scratch3GoForceBlocks {
                     }
                 },
                 {
-                    opcode: 'whenTiltCompare',
+                    opcode: 'whenAngularSpeedCompare',
                     text: formatMessage({
-                        id: 'goforce.whenTitleCompare',
-                        default: 'when tilt [DIRECTION] [COMPARE] [VALUE] rad/s',
-                        description: 'when the value measured by the acceleration sensor is compared to some value'
+                        id: 'goforce.whenAngularSpeedCompare',
+                        default: 'when angular speed [DIRECTION] [COMPARE] [VALUE] rad/s',
+                        description: 'when the value measured by the gyroscope sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -146,10 +146,10 @@ class Scratch3GoForceBlocks {
                     }
                 },
                 {
-                    opcode: 'getTilt',
+                    opcode: 'getAngularSpeed',
                     text: formatMessage({
-                        id: 'goforce.getTitle',
-                        default: 'tilt [DIRECTION]',
+                        id: 'goforce.getAngularSpeed',
+                        default: 'angular speed [DIRECTION]',
                         description: 'gets tilt'
                     }),
                     blockType: BlockType.REPORTER,
@@ -181,7 +181,7 @@ class Scratch3GoForceBlocks {
     whenAccelerationCompare () {
         return Promise.resolve();
     }
-    whenTiltCompare () {
+    whenAngularSpeedCompare () {
         return Promise.resolve();
     }
     whenForceCompare () {
@@ -190,7 +190,7 @@ class Scratch3GoForceBlocks {
     getAcceleration () {
         return Promise.resolve();
     }
-    getTilt () {
+    getAngularSpeed () {
         return Promise.resolve();
     }
     getForce () {
