@@ -5,7 +5,7 @@ const Sprite = require('../../src/sprites/sprite');
 
 test('spec', t => {
     t.type(Thread, 'function');
-    
+
     const th = new Thread('arbitraryString');
     t.type(th, 'object');
     t.ok(th instanceof Thread);
@@ -17,20 +17,21 @@ test('spec', t => {
     t.type(th.peekStackFrame, 'function');
     t.type(th.peekParentStackFrame, 'function');
     t.type(th.pushReportedValue, 'function');
+    t.type(th.initParams, 'function');
     t.type(th.pushParam, 'function');
     t.type(th.peekStack, 'function');
     t.type(th.getParam, 'function');
     t.type(th.atStackTop, 'function');
     t.type(th.goToNextBlock, 'function');
     t.type(th.isRecursiveCall, 'function');
-    
+
     t.end();
 });
 
 test('pushStack', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
-    
+
     t.end();
 });
 
@@ -39,7 +40,7 @@ test('popStack', t => {
     th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
     t.strictEquals(th.popStack(), undefined);
-    
+
     t.end();
 });
 
@@ -50,7 +51,7 @@ test('atStackTop', t => {
     t.strictEquals(th.atStackTop(), false);
     th.popStack();
     t.strictEquals(th.atStackTop(), true);
-    
+
     t.end();
 });
 
@@ -59,7 +60,7 @@ test('reuseStackForNextBlock', t => {
     th.pushStack('arbitraryString');
     th.reuseStackForNextBlock('secondString');
     t.strictEquals(th.popStack(), 'secondString');
-    
+
     t.end();
 });
 
@@ -69,7 +70,7 @@ test('peekStackFrame', t => {
     t.strictEquals(th.peekStackFrame().warpMode, false);
     th.popStack();
     t.strictEquals(th.peekStackFrame(), null);
-    
+
     t.end();
 });
 
@@ -80,7 +81,7 @@ test('peekParentStackFrame', t => {
     t.strictEquals(th.peekParentStackFrame(), null);
     th.pushStack('secondString');
     t.strictEquals(th.peekParentStackFrame().warpMode, true);
-    
+
     t.end();
 });
 
@@ -100,13 +101,14 @@ test('peekStack', t => {
     t.strictEquals(th.peekStack(), 'arbitraryString');
     th.popStack();
     t.strictEquals(th.peekStack(), null);
-    
+
     t.end();
 });
 
 test('PushGetParam', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
+    th.initParams();
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
     t.strictEquals(th.getParam('testParam'), 'testValue');
@@ -149,12 +151,12 @@ test('goToNextBlock', t => {
         x: 0,
         y: 0
     };
-    
+
     rt.blocks.createBlock(block1);
     rt.blocks.createBlock(block2);
     rt.blocks.createBlock(block2);
     th.target = rt;
-    
+
     t.strictEquals(th.peekStack(), null);
     th.pushStack('secondString');
     t.strictEquals(th.peekStack(), 'secondString');
@@ -167,7 +169,7 @@ test('goToNextBlock', t => {
     t.strictEquals(th.peekStack(), 'secondString');
     th.goToNextBlock();
     t.strictEquals(th.peekStack(), null);
-    
+
     t.end();
 });
 
@@ -204,11 +206,11 @@ test('stopThisScript', t => {
         x: 0,
         y: 0
     };
-    
+
     rt.blocks.createBlock(block1);
     rt.blocks.createBlock(block2);
     th.target = rt;
-    
+
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
     th.pushStack('arbitraryString');
@@ -219,7 +221,7 @@ test('stopThisScript', t => {
     th.pushStack('secondString');
     th.stopThisScript();
     t.strictEquals(th.peekStack(), 'secondString');
-    
+
     t.end();
 });
 
@@ -256,11 +258,11 @@ test('isRecursiveCall', t => {
         x: 0,
         y: 0
     };
-    
+
     rt.blocks.createBlock(block1);
     rt.blocks.createBlock(block2);
     th.target = rt;
-    
+
     t.strictEquals(th.isRecursiveCall('fakeCode'), false);
     th.pushStack('secondString');
     t.strictEquals(th.isRecursiveCall('fakeCode'), false);
@@ -274,6 +276,6 @@ test('isRecursiveCall', t => {
     t.strictEquals(th.isRecursiveCall('fakeCode'), false);
     th.popStack();
     t.strictEquals(th.isRecursiveCall('fakeCode'), false);
-    
+
     t.end();
 });

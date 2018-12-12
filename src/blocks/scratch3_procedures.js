@@ -38,6 +38,7 @@ class Scratch3ProcedureBlocks {
 
             const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
+            util.initParams();
             for (let i = 0; i < paramIds.length; i++) {
                 if (args.hasOwnProperty(paramIds[i])) {
                     util.pushParam(paramNames[i], args[paramIds[i]]);
