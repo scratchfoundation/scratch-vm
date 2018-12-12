@@ -137,14 +137,18 @@ test('edge activated hat should trigger for both sprites when sprite is duplicat
             // Run execute on the thread to populate the runtime's
             // _edgeActivatedHatValues object
             execute(vm.runtime.sequencer, vm.runtime.threads[0]);
-            t.equal(Object.keys(vm.runtime._edgeActivatedHatValues).length, 1);
+            let numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 1);
 
             vm.duplicateSprite(vm.runtime.targets[1].id).then(() => {
                 vm.runtime._step();
                 // Check that the runtime's _edgeActivatedHatValues object has two separate keys
                 // after execute is run on each thread
                 vm.runtime.threads.forEach(thread => execute(vm.runtime.sequencer, thread));
-                t.equal(Object.keys(vm.runtime._edgeActivatedHatValues).length, 2);
+                numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                    val + Object.keys(target._edgeActivatedHatValues).length, 0);
+                t.equal(numTargetEdgeHats, 2);
                 t.end();
             });
 
@@ -184,7 +188,9 @@ test('edge activated hat should trigger for both sprites when sprite is cloned',
             // Run execute on the thread to populate the runtime's
             // _edgeActivatedHatValues object
             execute(vm.runtime.sequencer, vm.runtime.threads[0]);
-            t.equal(Object.keys(vm.runtime._edgeActivatedHatValues).length, 1);
+            let numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 1);
 
             vm.runtime.targets.push(vm.runtime.targets[1].makeClone());
 
@@ -192,7 +198,9 @@ test('edge activated hat should trigger for both sprites when sprite is cloned',
             // Check that the runtime's _edgeActivatedHatValues object has two separate keys
             // after execute is run on each thread
             vm.runtime.threads.forEach(thread => execute(vm.runtime.sequencer, thread));
-            t.equal(Object.keys(vm.runtime._edgeActivatedHatValues).length, 2);
+            numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 2);
             t.end();
         });
     });
