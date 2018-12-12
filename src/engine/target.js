@@ -103,6 +103,10 @@ class Target extends EventEmitter {
         return oldValue;
     }
 
+    hasEdgeActivatedValue (blockId) {
+        return this._edgeActivatedHatValues.hasOwnProperty(blockId);
+    }
+
     /**
      * Clear all edge-activaed hat values.
      */

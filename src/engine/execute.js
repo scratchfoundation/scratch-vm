@@ -63,11 +63,13 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
             // true and used to be false, or the stack was activated explicitly
             // via stack click
             if (!thread.stackClick) {
+                const hasOldEdgeValue = thread.target.hasEdgeActivatedValue(currentBlockId);
                 const oldEdgeValue = thread.target.updateEdgeActivatedValue(
                     currentBlockId,
                     resolvedValue
                 );
-                const edgeWasActivated = !oldEdgeValue && resolvedValue;
+
+                const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && resolvedValue) : resolvedValue;
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
