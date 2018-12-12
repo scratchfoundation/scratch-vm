@@ -327,6 +327,15 @@ class Scratch3PenBlocks {
                     })
                 },
                 {
+                    opcode: "isDown",
+                    blockType: BlockType.BOOLEAN,
+                    text: formatMessage({
+                        id: 'pen.isDown',
+                        default: 'is the pen down?',
+                        description: 'says if the pen is down'
+                    })
+                },
+                {
                     opcode: 'setPenColorToColor',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -541,6 +550,13 @@ class Scratch3PenBlocks {
             penState.penDown = false;
             target.removeListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
         }
+    }
+    
+    isDown (args, util) {
+        const target = util.target;
+        const penState = this._getPenState(target);
+        
+        return penState.penDown;
     }
 
     /**
