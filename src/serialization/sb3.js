@@ -200,15 +200,13 @@ const serializeBlock = function (block) {
     obj.parent = block.parent;
     obj.inputs = serializeInputs(block.inputs);
     obj.fields = serializeFields(block.fields);
-    obj.topLevel = block.topLevel ? block.topLevel : false;
     obj.shadow = block.shadow;
     if (block.topLevel) {
-        if (block.x) {
-            obj.x = Math.round(block.x);
-        }
-        if (block.y) {
-            obj.y = Math.round(block.y);
-        }
+        obj.topLevel = true;
+        obj.x = block.x ? Math.round(block.x) : 0;
+        obj.y = block.y ? Math.round(block.y) : 0;
+    } else {
+        obj.topLevel = false;
     }
     if (block.mutation) {
         obj.mutation = block.mutation;
