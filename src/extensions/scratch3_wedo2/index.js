@@ -787,7 +787,9 @@ class WeDo2 {
     _checkBatteryLevel () {
         this._ble.read(
             BLEService.DEVICE_SERVICE,
-            BLECharacteristic.LOW_VOLTAGE_ALERT
+            BLECharacteristic.LOW_VOLTAGE_ALERT,
+            false,
+            this._onMessage
         );
     }
 

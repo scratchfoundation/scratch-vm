@@ -80,7 +80,7 @@ class BLE extends JSONRPCWebSocket {
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
-        
+
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT);
     }
 
