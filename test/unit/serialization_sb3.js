@@ -8,6 +8,7 @@ const commentsSB2ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb2
 const commentsSB3ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb3');
 const commentsSB3NoDupeIds = path.resolve(__dirname, '../fixtures/comments_no_duplicate_id_serialization.sb3');
 const variableReporterSB2ProjectPath = path.resolve(__dirname, '../fixtures/top-level-variable-reporter.sb2');
+const topLevelReportersProjectPath = path.resolve(__dirname, '../fixtures/top-level-reporters.sb3');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
 test('serialize', t => {
@@ -194,6 +195,38 @@ test('serializeBlocks', t => {
             t.type(result[0], 'object');
             t.ok(Object.keys(result[0]).length < Object.keys(blocks).length, 'less blocks in serialized format');
             t.ok(Array.isArray(result[1]));
+            t.end();
+        });
+});
+
+test('serializeBlocks serializes x and y for topLevel blocks with x,y of 0,0', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(topLevelReportersProjectPath))
+        .then(() => {
+            // Verify that there are 2 blocks and they are both top level
+            const blocks = vm.runtime.targets[1].blocks._blocks;
+            const blockIds = Object.keys(blocks);
+            t.equal(blockIds.length, 2);
+            const blocksArray = blockIds.map(key => blocks[key]);
+            t.equal(blocksArray.every(b => b.topLevel), true);
+            // Simulate cleaning up the blocks by resetting x and y positions to 0
+            blockIds.forEach(blockId => {
+                blocks[blockId].x = 0;
+                blocks[blockId].y = 0;
+            });
+            const result = sb3.serializeBlocks(blocks);
+            const serializedBlocks = result[0];
+
+            t.type(serializedBlocks, 'object');
+            const serializedBlockIds = Object.keys(serializedBlocks);
+            t.equal(serializedBlockIds.length, 2);
+            const firstBlock = serializedBlocks[serializedBlockIds[0]];
+            const secondBlock = serializedBlocks[serializedBlockIds[1]];
+            t.equal(firstBlock.x, 0);
+            t.equal(firstBlock.y, 0);
+            t.equal(secondBlock.x, 0);
+            t.equal(secondBlock.y, 0);
+
             t.end();
         });
 });
