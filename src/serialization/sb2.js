@@ -442,7 +442,15 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             const md5ext = costumeSource.baseLayerMD5;
             const idParts = StringUtil.splitFirst(md5ext, '.');
             const md5 = idParts[0];
-            const ext = idParts[1].toLowerCase();
+            let ext;
+            if (idParts.length === 2 && idParts[1]) {
+                ext = idParts[1];
+            } else {
+                // Default to 'png' if baseLayerMD5 is not formatted correctly
+                ext = 'png';
+                // Fix costume md5 for later
+                costume.md5 = `${costume.md5}.${ext}`;
+            }
             costume.dataFormat = ext;
             costume.assetId = md5;
             if (costumeSource.textLayerMD5) {
