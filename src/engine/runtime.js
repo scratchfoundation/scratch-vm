@@ -222,13 +222,6 @@ class Runtime extends EventEmitter {
         this._hats = {};
 
         /**
-         * Currently known values for edge-activated hats.
-         * Keys are block ID for the hat; values are the currently known values.
-         * @type {Object.<string, *>}
-         */
-        this._edgeActivatedHatValues = {};
-
-        /**
          * A list of script block IDs that were glowing during the previous frame.
          * @type {!Array.<!string>}
          */
@@ -1230,24 +1223,6 @@ class Runtime extends EventEmitter {
             this._hats[opcode].edgeActivated;
     }
 
-    /**
-     * Update an edge-activated hat block value.
-     * @param {!string} blockId ID of hat to store value for.
-     * @param {*} newValue Value to store for edge-activated hat.
-     * @return {*} The old value for the edge-activated hat.
-     */
-    updateEdgeActivatedValue (blockId, newValue) {
-        const oldValue = this._edgeActivatedHatValues[blockId];
-        this._edgeActivatedHatValues[blockId] = newValue;
-        return oldValue;
-    }
-
-    /**
-     * Clear all edge-activaed hat values.
-     */
-    clearEdgeActivatedValues () {
-        this._edgeActivatedHatValues = {};
-    }
 
     /**
      * Attach the audio engine
@@ -1687,7 +1662,7 @@ class Runtime extends EventEmitter {
         this.stopAll();
         this.emit(Runtime.PROJECT_START);
         this.ioDevices.clock.resetProjectTimer();
-        this.clearEdgeActivatedValues();
+        this.targets.forEach(target => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onGreenFlag();
