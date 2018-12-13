@@ -789,7 +789,7 @@ class WeDo2 {
             BLEService.DEVICE_SERVICE,
             BLECharacteristic.LOW_VOLTAGE_ALERT,
             false,
-            this._onMessage
+            this._onMessage // TODO: make optional
         );
     }
 
