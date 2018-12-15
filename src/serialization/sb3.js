@@ -1025,6 +1025,9 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // This will be deleted after we are done parsing and ordering the targets list.
         target.targetPaneOrder = object.targetPaneOrder;
     }
+    if (object.hasOwnProperty('draggable')) {
+        target.draggable = object.draggable;
+    }
     Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
     });
