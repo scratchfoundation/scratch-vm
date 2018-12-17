@@ -465,7 +465,7 @@ class Scratch3Text2SpeechBlocks {
 
         // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
-            words = words.replace(/\w+/g, 'meow');
+            words = words.replace(/\S+/g, 'meow');
         }
 
         // Build up URL
