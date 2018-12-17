@@ -9,6 +9,7 @@ const commentsSB3ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb3
 const commentsSB3NoDupeIds = path.resolve(__dirname, '../fixtures/comments_no_duplicate_id_serialization.sb3');
 const variableReporterSB2ProjectPath = path.resolve(__dirname, '../fixtures/top-level-variable-reporter.sb2');
 const topLevelReportersProjectPath = path.resolve(__dirname, '../fixtures/top-level-reporters.sb3');
+const draggableSB3ProjectPath = path.resolve(__dirname, '../fixtures/draggable.sb3');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
 test('serialize', t => {
@@ -285,6 +286,17 @@ test('(#1608) serializeBlocks maintains top level variable reporters', t => {
             t.doesNotThrow(() => {
                 sb3.deserialize(JSON.parse(JSON.stringify(result)), vm.runtime);
             });
+            t.end();
+        });
+});
+
+test('(#1850) sprite draggability state read when loading SB3 file', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(draggableSB3ProjectPath))
+        .then(() => {
+            const sprite1Obj = vm.runtime.targets.find(target => target.sprite.name === 'Sprite1')
+            // Sprite1 in project should have draggable set to true
+            t.equal(sprite1Obj.draggable, true);
             t.end();
         });
 });
