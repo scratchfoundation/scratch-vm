@@ -294,7 +294,7 @@ test('(#1850) sprite draggability state read when loading SB3 file', t => {
     const vm = new VirtualMachine();
     vm.loadProject(readFileToBuffer(draggableSB3ProjectPath))
         .then(() => {
-            const sprite1Obj = vm.runtime.targets.find(target => target.sprite.name === 'Sprite1')
+            const sprite1Obj = vm.runtime.targets.find(target => target.sprite.name === 'Sprite1');
             // Sprite1 in project should have draggable set to true
             t.equal(sprite1Obj.draggable, true);
             t.end();
