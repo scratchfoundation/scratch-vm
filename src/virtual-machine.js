@@ -584,13 +584,14 @@ class VirtualMachine extends EventEmitter {
      * @property {number} rotationCenterY - the Y component of the costume's origin.
      * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
      * @param {string} optTargetId - the id of the target to add to, if not the editing target.
+     * @param {string} optVersion - if this is 2, load costume as sb2, otherwise load costume as sb3.
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
-    addCostume (md5ext, costumeObject, optTargetId) {
+    addCostume (md5ext, costumeObject, optTargetId, optVersion) {
         const target = optTargetId ? this.runtime.getTargetById(optTargetId) :
             this.editingTarget;
         if (target) {
-            return loadCostume(md5ext, costumeObject, this.runtime).then(() => {
+            return loadCostume(md5ext, costumeObject, this.runtime, optVersion).then(() => {
                 target.addCostume(costumeObject);
                 target.setCostume(
                     target.getCostumes().length - 1
@@ -598,7 +599,22 @@ class VirtualMachine extends EventEmitter {
             });
         }
         // If the target cannot be found by id, return a rejected promise
-        return new Promise.reject();
+        return Promise.reject();
+    }
+
+    /**
+     * Add a costume loaded from the library to the current editing target.
+     * @param {string} md5ext - the MD5 and extension of the costume to be loaded.
+     * @param {!object} costumeObject Object representing the costume.
+     * @property {int} skinId - the ID of the costume's render skin, once installed.
+     * @property {number} rotationCenterX - the X component of the costume's origin.
+     * @property {number} rotationCenterY - the Y component of the costume's origin.
+     * @property {number} [bitmapResolution] - the resolution scale for a bitmap costume.
+     * @returns {?Promise} - a promise that resolves when the costume has been added
+     */
+    addCostumeFromLibrary (md5ext, costumeObject) {
+        if (!this.editingTarget) return Promise.reject();
+        return this.addCostume(md5ext, costumeObject, this.editingTarget.id, 2 /* optVersion */);
     }
 
     /**
