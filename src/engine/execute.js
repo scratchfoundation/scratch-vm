@@ -112,7 +112,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
     // Promise handlers
     primitiveReportedValue.then(resolvedValue => {
         handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
-        // If its a command block or a top level reporter in a stackClick.
+        // If it's a command block or a top level reporter in a stackClick.
         if (lastOperation) {
             let stackFrame;
             let nextBlockId;
