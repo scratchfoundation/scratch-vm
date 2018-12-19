@@ -6,7 +6,7 @@ const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
 //const ScratchLinkProxy = require('./scratch-link-proxy');
-const createDevice = require('@vernier/godirect/src/godirect').default.createDevice;
+const createDevice = require('@vernier/godirect').default.createDevice;
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
