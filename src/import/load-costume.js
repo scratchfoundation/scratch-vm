@@ -2,32 +2,34 @@ const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
-    let svgString = costume.asset.decodeText();
-    // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
-    if (optVersion && optVersion === 2 && !runtime.v2SvgAdapter) {
-        log.error('No V2 SVG adapter present; SVGs may not render correctly.');
-    } else if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
-        runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
-        svgString = runtime.v2SvgAdapter.toString();
-        // Put back into storage
-        const storage = runtime.storage;
-        costume.asset.encodeTextData(svgString, storage.DataFormat.SVG, true);
-        costume.assetId = costume.asset.assetId;
-        costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-    }
-    // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
-    // undefined here
-    costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
-    costume.size = runtime.renderer.getSkinSize(costume.skinId);
-    // Now we should have a rotationCenter even if we didn't before
-    if (!rotationCenter) {
-        rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
-        costume.rotationCenterX = rotationCenter[0];
-        costume.rotationCenterY = rotationCenter[1];
-        costume.bitmapResolution = 1;
-    }
+    return new Promise(resolve => {
+        let svgString = costume.asset.decodeText();
+        // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+        if (optVersion && optVersion === 2 && !runtime.v2SvgAdapter) {
+            log.error('No V2 SVG adapter present; SVGs may not render correctly.');
+        } else if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
+            runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
+            svgString = runtime.v2SvgAdapter.toString();
+            // Put back into storage
+            const storage = runtime.storage;
+            costume.asset.encodeTextData(svgString, storage.DataFormat.SVG, true);
+            costume.assetId = costume.asset.assetId;
+            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        }
+        // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
+        // undefined here
+        costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
+        costume.size = runtime.renderer.getSkinSize(costume.skinId);
+        // Now we should have a rotationCenter even if we didn't before
+        if (!rotationCenter) {
+            rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
+            costume.rotationCenterX = rotationCenter[0];
+            costume.rotationCenterY = rotationCenter[1];
+            costume.bitmapResolution = 1;
+        }
 
-    return Promise.resolve(costume);
+        resolve(costume);
+    });
 };
 
 /**
@@ -212,7 +214,13 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
         rotationCenter = [costume.rotationCenterX, costume.rotationCenterY];
     }
     if (costume.asset.assetType.runtimeFormat === AssetType.ImageVector.runtimeFormat) {
-        return loadVector_(costume, runtime, rotationCenter, optVersion);
+        return loadVector_(costume, runtime, rotationCenter, optVersion)
+            .catch(() => {
+                // Use default asset if original fails to load
+                costume.assetId = runtime.storage.defaultAssetId.ImageVector;
+                costume.asset = runtime.storage.get(costume.assetId);
+                return loadVector_(costume, runtime);
+            });
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion);
 };
@@ -245,6 +253,11 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     // Need to load the costume from storage. The server should have a reference to this md5.
     if (!runtime.storage) {
         log.error('No storage module present; cannot load costume asset: ', md5ext);
+        return Promise.resolve(costume);
+    }
+
+    if (!runtime.storage.defaultAssetId) {
+        log.error(`No default assets found`);
         return Promise.resolve(costume);
     }
 
