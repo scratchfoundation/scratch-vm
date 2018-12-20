@@ -290,26 +290,33 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
-            try {
-                const sb1 = new SB1File(input);
-                const json = sb1.json;
-                json.projectVersion = 2;
-                return resolve([json, sb1.zip]);
-            } catch (e) {
-                if (e instanceof ValidationError) {
-                    // The input does not validate as a Scratch 1 file.
-                } else {
-                    throw e;
-                }
-            }
-
             // The second argument of false below indicates to the validator that the
             // input should be parsed/validated as an entire project (and not a single sprite)
             validate(input, false, (error, res) => {
                 if (error) return reject(error);
                 resolve(res);
             });
-        });
+        })
+            .catch(error => {
+                try {
+                    const sb1 = new SB1File(input);
+                    const json = sb1.json;
+                    json.projectVersion = 2;
+                    return [json, sb1.zip];
+                } catch (sb1Error) {
+                    if (sb1Error instanceof ValidationError) {
+                        // The input does not validate as a Scratch 1 file.
+                    } else {
+                        // The project appears to be a Scratch 1 file but it
+                        // could not be successfully translated into a Scratch 2
+                        // project.
+                        throw sb1Error;
+                    }
+                }
+                // Through original error since the input does not appear to be
+                // an SB1File.
+                throw error;
+            });
 
         return validationPromise
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
