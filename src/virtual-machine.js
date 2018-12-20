@@ -8,7 +8,7 @@ const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
-const {SB1File} = require('scratch-sb1-converter');
+const {SB1File, ValidationError} = require('scratch-sb1-converter');
 const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
@@ -294,10 +294,13 @@ class VirtualMachine extends EventEmitter {
                 const sb1 = new SB1File(input);
                 const json = sb1.json;
                 json.projectVersion = 2;
-                console.log(json);
                 return resolve([json, sb1.zip]);
             } catch (e) {
-                console.error(e);
+                if (e instanceof ValidationError) {
+                    // The input does not validate as a Scratch 1 file.
+                } else {
+                    throw e;
+                }
             }
 
             // The second argument of false below indicates to the validator that the
@@ -442,7 +445,7 @@ class VirtualMachine extends EventEmitter {
 
         const runtime = this.runtime;
         const deserializePromise = function () {
-            let projectVersion = projectJSON.projectVersion;
+            const projectVersion = projectJSON.projectVersion;
             if (projectVersion === 2) {
                 return sb2.deserialize(projectJSON, runtime, false, zip);
             }
