@@ -302,7 +302,7 @@ class VirtualMachine extends EventEmitter {
                     const sb1 = new SB1File(input);
                     const json = sb1.json;
                     json.projectVersion = 2;
-                    return [json, sb1.zip];
+                    return Promise.resolve([json, sb1.zip]);
                 } catch (sb1Error) {
                     if (sb1Error instanceof ValidationError) {
                         // The input does not validate as a Scratch 1 file.
