@@ -310,12 +310,12 @@ class VirtualMachine extends EventEmitter {
                         // The project appears to be a Scratch 1 file but it
                         // could not be successfully translated into a Scratch 2
                         // project.
-                        throw sb1Error;
+                        return Promise.reject(sb1Error);
                     }
                 }
-                // Through original error since the input does not appear to be
+                // Throw original error since the input does not appear to be
                 // an SB1File.
-                throw error;
+                return Promise.reject(error);
             });
 
         return validationPromise
