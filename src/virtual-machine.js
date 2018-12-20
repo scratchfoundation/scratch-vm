@@ -8,6 +8,7 @@ const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
+const {SB1File, ValidationError} = require('scratch-sb1-converter');
 const sb2 = require('./serialization/sb2');
 const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
@@ -295,7 +296,27 @@ class VirtualMachine extends EventEmitter {
                 if (error) return reject(error);
                 resolve(res);
             });
-        });
+        })
+            .catch(error => {
+                try {
+                    const sb1 = new SB1File(input);
+                    const json = sb1.json;
+                    json.projectVersion = 2;
+                    return Promise.resolve([json, sb1.zip]);
+                } catch (sb1Error) {
+                    if (sb1Error instanceof ValidationError) {
+                        // The input does not validate as a Scratch 1 file.
+                    } else {
+                        // The project appears to be a Scratch 1 file but it
+                        // could not be successfully translated into a Scratch 2
+                        // project.
+                        return Promise.reject(sb1Error);
+                    }
+                }
+                // Throw original error since the input does not appear to be
+                // an SB1File.
+                return Promise.reject(error);
+            });
 
         return validationPromise
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
