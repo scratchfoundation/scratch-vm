@@ -3,9 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 // const cast = require('../../util/cast');
 const formatMessage = require('format-message');
-const BLE = require('../../io/ble');
-const Base64Util = require('../../util/base64-util');
-//const ScratchLinkProxy = require('./scratch-link-proxy');
+// const ScratchLinkProxy = require('./scratch-link-proxy');
 const createDevice = require('@vernier/godirect').default.createDevice;
 
 /**
@@ -53,13 +51,13 @@ class GdxFor {
          * @private
          */
         this._sensors = {
-			force: 0,
-			accelerationX: 0,
-			accelerationY: 0,
-			accelerationX: 0,
-			angularVelocityX: 0,
-			angularVelocityY: 0,
-			angularVelocityX: 0,
+            force: 0,
+            accelerationX: 0,
+            accelerationY: 0,
+            accelerationZ: 0,
+            angularVelocityX: 0,
+            angularVelocityY: 0,
+            angularVelocityZ: 0
         };
 
         this.disconnect = this.disconnect.bind(this);
@@ -78,16 +76,15 @@ class GdxFor {
         }
 
         navigator.bluetooth.requestDevice({
-            filters: [{ namePrefix: 'GDX' }],
+            filters: [{namePrefix: 'GDX'}],
             optionalServices: ['d91714ef-28b9-4f91-ba16-f0d9a604f112']
-        }).then((bleWbtDevice) => {
-            return createDevice(bleWbtDevice, {open: false});
-        }).then((device) => {
-            this._ble = device;
-            this._ble.open(false); // false prevents starting of measurements
-            this._ble.on('device-opened', this._onConnect);
-            this._ble.on('device-closed', this._onClose);
-        });
+        }).then(bleWbtDevice => createDevice(bleWbtDevice, {open: false}))
+            .then(device => {
+                this._ble = device;
+                this._ble.open(false); // false prevents starting of measurements
+                this._ble.on('device-opened', this._onConnect);
+                this._ble.on('device-closed', this._onClose);
+            });
     }
 
     /**
@@ -133,16 +130,16 @@ class GdxFor {
             sensor.setEnabled(true);
 
             // do some calculations here?
-            sensor.on('value-changed', (sensor) => {
+            sensor.on('value-changed', changedSensor => {
 
                 // We don't need this list, essentially.
-                if (sensor.values.length > 1000) {
-                    sensor.clear();
+                if (changedSensor.values.length > 1000) {
+                    changedSensor.clear();
                 }
             });
 
         });
-        this._ble.start();  // Can set period here if needed.
+        this._ble.start(); // Can set period here if needed.
     }
 
     getForce () {
@@ -251,7 +248,7 @@ class Scratch3GdxForBlocks {
          */
         this.runtime = runtime;
 
-		// Create a new GdxFor peripheral instance
+        // Create a new GdxFor peripheral instance
         this._peripheral = new GdxFor(this.runtime, Scratch3GdxForBlocks.EXTENSION_ID);
     }
 
@@ -379,7 +376,7 @@ class Scratch3GdxForBlocks {
             ],
             menus: {
                 directionOptions: this.DIRECTIONS_MENU,
-                compareOptions: this.COMPARE_MENU,
+                compareOptions: this.COMPARE_MENU
             }
         };
     }
@@ -394,7 +391,6 @@ class Scratch3GdxForBlocks {
         return Promise.resolve();
     }
     getAcceleration (args) {
-        console.log(args);
         switch (args.DIRECTION) {
         case 'x':
             return this._peripheral.getAccelerationX();
