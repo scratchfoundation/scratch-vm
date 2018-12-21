@@ -16580,6 +16580,7 @@ class SvgRenderer {
             // Set text-before-edge alignment:
             // Scratch renders all text like this.
             textElement.setAttribute('alignment-baseline', 'text-before-edge');
+            textElement.setAttribute('xml:space', 'preserve');
             // If there's no font size provided, provide one.
             if (!textElement.getAttribute('font-size')) {
                 textElement.setAttribute('font-size', '18');
@@ -16637,8 +16638,9 @@ class SvgRenderer {
                 for (const line of lines) {
                     const tspanNode = SvgElement.create('tspan');
                     tspanNode.setAttribute('x', '0');
+                    tspanNode.setAttribute('style', 'white-space: pre');
                     tspanNode.setAttribute('dy', `${spacing}em`);
-                    tspanNode.textContent = line;
+                    tspanNode.textContent = line ? line : ' ';
                     textElement.appendChild(tspanNode);
                 }
             }
