@@ -158,6 +158,7 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
                 null,
                 true // generate md5
             );
+            costume.dataFormat = storage.DataFormat.PNG;
             costume.assetId = costume.asset.assetId;
             costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         };
