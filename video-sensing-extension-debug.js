@@ -222,7 +222,7 @@ module.exports = {
  * @file debug.js
  */
 
-const VideoMotion = __webpack_require__(86);
+const VideoMotion = __webpack_require__(87);
 const VideoMotionView = __webpack_require__(481);
 
 module.exports = {
@@ -815,7 +815,7 @@ module.exports = VideoMotionView;
 
 /***/ }),
 
-/***/ 86:
+/***/ 87:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
