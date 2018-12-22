@@ -464,7 +464,6 @@ class Scratch3Text2SpeechBlocks {
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
             locale = 'en-US';
