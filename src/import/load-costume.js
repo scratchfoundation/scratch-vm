@@ -285,10 +285,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
             costume.textLayerAsset = assetArray[1];
         }
         return loadCostumeFromAsset(costume, runtime, optVersion);
-    })
-        .catch(e => {
-            log.error(e);
-        });
+    });
 };
 
 module.exports = {
