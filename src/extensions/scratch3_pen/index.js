@@ -671,11 +671,12 @@ class Scratch3PenBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     setPenHueToNumber (args, util) {
-        const penState = this._getPenState(util.target);
+        let penState = this._getPenState(util.target);
         const hueValue = Cast.toNumber(args.HUE);
         const colorValue = hueValue / 2;
         this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
-
+        penState = this._getPenState(util.target);
+        this._setOrChangeColorParam(ColorParam.TRANSPARENCY, 0, penState, false);
         this._legacyUpdatePenColor(penState);
     }
 
