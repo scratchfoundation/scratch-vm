@@ -7,3 +7,10 @@ test('escape', t => {
     t.strictEqual(xml(input), output);
     t.end();
 });
+
+test('remove unicode backspace', t => {
+    const input = '\u0008';
+    const output = '';
+    t.strictEqual(xml(input), output);
+    t.end();
+});

@@ -7,13 +7,15 @@
  * @return {string} XML-escaped string, for use within an XML tag.
  */
 const xmlEscape = function (unsafe) {
-    return unsafe.replace(/[<>&'"]/g, c => {
+    // eslint-disable-next-line no-control-regex
+    return unsafe.replace(/[<>&'"\u0008]/g, c => {
         switch (c) {
         case '<': return '&lt;';
         case '>': return '&gt;';
         case '&': return '&amp;';
         case '\'': return '&apos;';
         case '"': return '&quot;';
+        case '\u0008': return '';
         }
     });
 };
