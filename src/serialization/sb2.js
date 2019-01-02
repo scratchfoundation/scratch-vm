@@ -497,10 +497,8 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // followed by the file ext
             const assetFileName = `${soundSource.soundID}.${ext}`;
             soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
-                .then(asset => {
-                    sound.asset = asset;
-                    return loadSound(sound, runtime, sprite);
-                }));
+                .then(() => loadSound(sound, runtime, sprite))
+            );
         }
     }
 
