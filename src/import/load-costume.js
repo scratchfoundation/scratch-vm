@@ -267,6 +267,10 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
     const costumePromise = runtime.storage.load(assetType, md5, ext);
+    if (!costumePromise) {
+        log.error(`Couldn't fetch costume asset: ${md5ext}`);
+        return;
+    }
 
     let textLayerPromise;
     if (costume.textLayerMD5) {
@@ -276,9 +280,6 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     }
 
     return Promise.all([costumePromise, textLayerPromise]).then(assetArray => {
-        if (!assetArray[0]) {
-            throw new Error(`Couldn't fetch costume asset: ${md5ext}`);
-        }
         costume.asset = assetArray[0];
         if (assetArray[1]) {
             costume.textLayerAsset = assetArray[1];
