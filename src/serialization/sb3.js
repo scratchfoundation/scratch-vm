@@ -14,7 +14,6 @@ const StageLayering = require('../engine/stage-layering');
 const log = require('../util/log');
 const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
-const StringUtil = require('../util/string-util');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -521,7 +520,7 @@ const serialize = function (runtime, targetId) {
 
     const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
 
-    const flattenedOriginalTargets = JSON.parse(StringUtil.stringify(originalTargetsToSerialize));
+    const flattenedOriginalTargets = originalTargetsToSerialize.map(t => t.toJSON());
 
     // If the renderer is attached, and we're serializing a whole project (not a sprite)
     // add a temporary layerOrder property to each target.
