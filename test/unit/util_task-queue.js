@@ -1,4 +1,4 @@
-const test = require('tap').skip;
+const test = require('tap').test;
 
 const TaskQueue = require('../../src/util/task-queue');
 
