@@ -15,8 +15,8 @@ const BLEUUID = {
  * Adapter class
  */
 class ScratchLinkDeviceAdapter {
-    constructor (scratchLinkNativeDevice) {
-        this.scratchLinkNativeDevice = scratchLinkNativeDevice;
+    constructor (scratchLinkSocket) {
+        this.scratchLinkSocket = scratchLinkSocket;
 
         this._onResponse = this._onResponse.bind(this);
         this._deviceOnResponse = null;
@@ -29,13 +29,13 @@ class ScratchLinkDeviceAdapter {
     writeCommand (commandBuffer) {
         const data = Base64Util.uint8ArrayToBase64(commandBuffer);
 
-        return this.scratchLinkNativeDevice
+        return this.scratchLinkSocket
             .write(BLEUUID.service, BLEUUID.commandChar, data, 'base64', true);
     }
 
     setup ({onResponse}) {
         this._deviceOnResponse = onResponse;
-        return this.scratchLinkNativeDevice
+        return this.scratchLinkSocket
             .startNotifications(BLEUUID.service, BLEUUID.responseChar, this._onResponse);
 
         // TODO:
@@ -49,7 +49,7 @@ class ScratchLinkDeviceAdapter {
     }
 
     close () {
-        return this.scratchLinkNativeDevice.disconnect();
+        return this.scratchLinkSocket.disconnect();
     }
 }
 
