@@ -125,7 +125,7 @@ class GdxFor {
     }
 
     /**
-     * Return true if connected to the goforce devie.
+     * Return true if connected to the goforce device.
      * @return {boolean} - whether the goforce is connected.
      */
     isConnected () {
