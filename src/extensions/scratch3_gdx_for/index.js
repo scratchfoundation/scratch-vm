@@ -144,7 +144,6 @@ class GdxFor {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket);
         createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
-            this._device.on('device-closed', this._onClose);
             this._startMeasurements();
         });
     }
@@ -213,11 +212,6 @@ class GdxFor {
             return this._device.getSensor(7).value;
         }
         return 0;
-    }
-
-
-    _onClose () {
-        this._scratchLinkSocket.disconnect();
     }
 }
 

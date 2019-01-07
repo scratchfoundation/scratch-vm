@@ -33,7 +33,7 @@ class ScratchLinkDeviceAdapter {
             .write(BLEUUID.service, BLEUUID.commandChar, data, 'base64', true);
     }
 
-    setup ({onClosed, onResponse}) {
+    setup ({onResponse}) {
         this._deviceOnResponse = onResponse;
         return this.scratchLinkNativeDevice
             .startNotifications(BLEUUID.service, BLEUUID.responseChar, this._onResponse);
