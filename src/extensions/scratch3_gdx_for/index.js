@@ -83,8 +83,6 @@ class GdxFor {
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
-
-        this._connected = false;
     }
 
 
@@ -117,38 +115,6 @@ class GdxFor {
     }
 
     /**
-     * Called by the runtime when a user exits the connection popup.
-     * Disconnect from the Gdx Force.
-     */
-    disconnect () {
-        if (this._device) {
-            this._device.close();
-        }
-    }
-
-    /**
-     * Return true if connected to the goforce devie.
-     * @return {boolean} - whether the goforce is connected.
-     */
-    isConnected () {
-        let connected = false;
-        if (this._device) {
-            connected = this._connected;
-        }
-        return connected;
-    }
-
-    /**
-     * Called by the runtime when user wants to connect to a certain peripheral.
-     * @param {number} id - the id of the peripheral to connect to.
-     */
-    connect (id) {
-        if (this._scratchLinkSocket) {
-            this._scratchLinkSocket.connectPeripheral(id);
-        }
-    }
-
-    /**
      * Called by the runtime when a use exits the connection popup.
      * Disconnect from the GDX FOR.
      */
@@ -164,8 +130,8 @@ class GdxFor {
      */
     isConnected () {
         let connected = false;
-        if (this._device) {
-            connected = this._connected;
+        if (this._scratchLinkSocket) {
+            connected = this._scratchLinkSocket.isConnected();
         }
         return connected;
     }
@@ -175,7 +141,6 @@ class GdxFor {
      * @private
      */
     _onConnect () {
-        this._connected = true;
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket);
         createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
@@ -202,49 +167,49 @@ class GdxFor {
 
 
     getForce () {
-        if (this._device) {
+        if (this.isConnected()) {
             return this._device.getSensor(1).value;
         }
         return 0;
     }
 
     getAccelerationX () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(2).value;
         }
         return 0;
     }
 
     getAccelerationY () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(3).value;
         }
         return 0;
     }
 
     getAccelerationZ () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(4).value;
         }
         return 0;
     }
 
     getAngularSpeedX () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(5).value;
         }
         return 0;
     }
 
     getAngularSpeedY () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(6).value;
         }
         return 0;
     }
 
     getAngularSpeedZ () {
-        if (this._device && this._connected) {
+        if (this.isConnected()) {
             return this._device.getSensor(7).value;
         }
         return 0;
@@ -252,7 +217,7 @@ class GdxFor {
 
 
     _onClose () {
-        this._connected = false;
+        this._scratchLinkSocket.disconnect();
     }
 }
 
