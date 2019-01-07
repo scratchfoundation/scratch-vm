@@ -5,6 +5,7 @@ const cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
+const TaskQueue = require('../../util/task-queue');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -130,6 +131,8 @@ class MicroBit {
          * @private
          */
         this._timeoutID = null;
+
+        this._queue = new TaskQueue(1000, 1000);
 
         /**
          * A flag that is true while we are busy sending data to the BLE socket.
@@ -264,19 +267,19 @@ class MicroBit {
      */
     send (command, message) {
         if (!this.isConnected()) return;
-        if (this._busy) return;
+        // if (this._busy) return;
 
         // Set a busy flag so that while we are sending a message and waiting for
         // the response, additional messages are ignored.
-        this._busy = true;
+        // this._busy = true;
 
         // Set a timeout after which to reset the busy flag. This is used in case
         // a BLE message was sent for which we never received a response, because
         // e.g. the peripheral was turned off after the message was sent. We reset
         // the busy flag after a while so that it is possible to try again later.
-        this._busyTimeoutID = window.setTimeout(() => {
+        /* this._busyTimeoutID = window.setTimeout(() => {
             this._busy = false;
-        }, 5000);
+        }, 5000); */
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -285,12 +288,14 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
+        /* this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
             () => {
                 this._busy = false;
                 window.clearTimeout(this._busyTimeoutID);
             }
-        );
+        );*/
+
+        this._queue.do(this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true));
     }
 
     /**

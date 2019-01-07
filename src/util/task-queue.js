@@ -43,6 +43,7 @@ class TaskQueue {
                     // Remove this task from the queue and run it
                     this._pendingTaskRecords.shift();
                     try {
+                        console.log(task);
                         resolve(task());
                     } catch (e) {
                         reject(e);
