@@ -99,7 +99,7 @@ const ArgumentTypeMap = (() => {
  * cloud variable.
  */
 const cloudDataManager = () => {
-    const limit = 8;
+    const limit = 10;
     let count = 0;
 
     const canAddCloudVariable = () => count < limit;
