@@ -1,4 +1,4 @@
-const test = require('tap').skip;
+const test = require('tap').test;
 
 const Blocks = require('../../src/engine/blocks');
 const Clone = require('../../src/util/clone');

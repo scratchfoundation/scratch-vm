@@ -1,5 +1,5 @@
 const path = require('path');
-const test = require('tap').skip;
+const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
 const extractProjectJson = require('../fixtures/readProjectFile').extractProjectJson;
 
