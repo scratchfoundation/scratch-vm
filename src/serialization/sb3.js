@@ -447,6 +447,13 @@ const serializeTarget = function (target, extensions) {
     obj.broadcasts = vars.broadcasts;
     [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
     obj.comments = serializeComments(target.comments);
+
+    // TODO remove this check/patch when (#1901) is fixed
+    if (target.currentCostume < 0 || target.currentCostume >= target.costumes.length) {
+        log.warn(`currentCostume property for target ${target.name} is out of range`);
+        target.currentCostume = MathUtil.clamp(target.currentCostume, 0, target.costumes.length - 1);
+    }
+
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
@@ -1007,7 +1014,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostume')) {
-        target.currentCostume = object.currentCostume;
+        target.currentCostume = MathUtil.clamp(object.currentCostume, 0, object.costumes.length - 1);
     }
     if (object.hasOwnProperty('rotationStyle')) {
         target.rotationStyle = object.rotationStyle;
