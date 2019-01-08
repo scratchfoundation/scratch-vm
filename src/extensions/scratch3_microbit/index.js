@@ -295,7 +295,7 @@ class MicroBit {
             }
         );*/
 
-        this._queue.do(this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true));
+        this._queue.do(() => this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true));
     }
 
     /**
@@ -816,6 +816,7 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
+        // TODO: put entire block function in the new task queue task
         const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
         const reducer = (accumulator, c, index) => {
             const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
@@ -831,6 +832,7 @@ class Scratch3MicroBitBlocks {
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
         }
 
+        // TODO: use promise from TaskQueue instead?
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve();

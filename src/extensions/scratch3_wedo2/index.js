@@ -1282,6 +1282,7 @@ class Scratch3WeDo2Blocks {
         // TODO: cast args.MOTOR_ID?
         let durationMS = Cast.toNumber(args.DURATION) * 1000;
         durationMS = MathUtil.clamp(durationMS, 0, 15000);
+        // TODO: return queue.do(() => new Promise)....
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
