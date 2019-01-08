@@ -1,7 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
-// const cast = require('../../util/cast');
+const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const createDevice = require('@vernier/godirect').default.createDevice;
@@ -193,21 +193,21 @@ class GdxFor {
         return 0;
     }
 
-    getAngularSpeedX () {
+    getSpinSpeedX () {
         if (this.isConnected()) {
             return this._device.getSensor(5).value;
         }
         return 0;
     }
 
-    getAngularSpeedY () {
+    getSpinSpeedY () {
         if (this.isConnected()) {
             return this._device.getSensor(6).value;
         }
         return 0;
     }
 
-    getAngularSpeedZ () {
+    getSpinSpeedZ () {
         if (this.isConnected()) {
             return this._device.getSensor(7).value;
         }
@@ -327,10 +327,10 @@ class Scratch3GdxForBlocks {
                     }
                 },
                 {
-                    opcode: 'whenAngularSpeedCompare',
+                    opcode: 'whenSpinSpeedCompare',
                     text: formatMessage({
-                        id: 'gdxfor.whenAngularSpeedCompare',
-                        default: 'when angular speed [DIRECTION] [COMPARE] [VALUE]',
+                        id: 'gdxfor.whenSpinSpeedCompare',
+                        default: 'when spin speed [DIRECTION] [COMPARE] [VALUE]',
                         description: 'when the degrees/second value measured by the gyroscope sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
@@ -363,7 +363,7 @@ class Scratch3GdxForBlocks {
                         COMPARE: {
                             type: ArgumentType.STRING,
                             menu: 'compareOptions',
-                            defaultValue: 'x'
+                            defaultValue: ComparisonOptions.GREATER_THAN
                         },
                         VALUE: {
                             type: ArgumentType.NUMBER,
@@ -388,11 +388,11 @@ class Scratch3GdxForBlocks {
                     }
                 },
                 {
-                    opcode: 'getAngularSpeed',
+                    opcode: 'getSpinSpeed',
                     text: formatMessage({
-                        id: 'gdxfor.getAngularSpeed',
-                        default: 'angular speed [DIRECTION]',
-                        description: 'gets angular speed'
+                        id: 'gdxfor.getSpinSpeed',
+                        default: 'spin speed [DIRECTION]',
+                        description: 'gets spin speed'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
@@ -420,14 +420,72 @@ class Scratch3GdxForBlocks {
         };
     }
 
-    whenAccelerationCompare () {
-        return Promise.resolve();
+    whenAccelerationCompare (args) {
+        let currentVal = 0;
+
+        switch (args.DIRECTION) {
+        case 'x':
+            currentVal = this._peripheral.getAccelerationX();
+            break;
+        case 'y':
+            currentVal = this._peripheral.getAccelerationY();
+            break;
+        case 'z':
+            currentVal = this._peripheral.getAccelerationZ();
+            break;
+        default:
+            log.warn(`Unknown direction in whenAccelerationCompare: ${args.DIRECTION}`);
+            return false;
+        }
+
+        switch (args.COMPARE) {
+        case ComparisonOptions.LESS_THAN:
+            return currentVal < Cast.toNumber(args.VALUE);
+        case ComparisonOptions.GREATER_THAN:
+            return currentVal > Cast.toNumber(args.VALUE);
+        default:
+            log.warn(`Unknown comparison operator in whenAccelerationCompare: ${args.COMPARE}`);
+            return false;
+        }
     }
-    whenAngularSpeedCompare () {
-        return Promise.resolve();
+    whenSpinSpeedCompare (args) {
+        let currentVal = 0;
+
+        switch (args.DIRECTION) {
+        case 'x':
+            currentVal = this._peripheral.getSpinSpeedX();
+            break;
+        case 'y':
+            currentVal = this._peripheral.getSpinSpeedY();
+            break;
+        case 'z':
+            currentVal = this._peripheral.getSpinSpeedZ();
+            break;
+        default:
+            log.warn(`Unknown direction in whenSpinSpeedCompare: ${args.DIRECTION}`);
+            return false;
+        }
+
+        switch (args.COMPARE) {
+        case ComparisonOptions.LESS_THAN:
+            return currentVal < Cast.toNumber(args.VALUE);
+        case ComparisonOptions.GREATER_THAN:
+            return currentVal > Cast.toNumber(args.VALUE);
+        default:
+            log.warn(`Unknown comparison operator in whenSpinSpeedCompare: ${args.COMPARE}`);
+            return false;
+        }
     }
-    whenForceCompare () {
-        return Promise.resolve();
+    whenForceCompare (args) {
+        switch (args.COMPARE) {
+        case ComparisonOptions.LESS_THAN:
+            return this._peripheral.getForce() < Cast.toNumber(args.VALUE);
+        case ComparisonOptions.GREATER_THAN:
+            return this._peripheral.getForce() > Cast.toNumber(args.VALUE);
+        default:
+            log.warn(`Unknown comparison operator in whenForceCompare: ${args.COMPARE}`);
+            return false;
+        }
     }
     getAcceleration (args) {
         switch (args.DIRECTION) {
@@ -441,16 +499,16 @@ class Scratch3GdxForBlocks {
             log.warn(`Unknown direction in getAcceleration: ${args.DIRECTION}`);
         }
     }
-    getAngularSpeed (args) {
+    getSpinSpeed (args) {
         switch (args.DIRECTION) {
         case 'x':
-            return this._peripheral.getAngularSpeedX();
+            return this._peripheral.getSpinSpeedX();
         case 'y':
-            return this._peripheral.getAngularSpeedY();
+            return this._peripheral.getSpinSpeedY();
         case 'z':
-            return this._peripheral.getAngularSpeedZ();
+            return this._peripheral.getSpinSpeedZ();
         default:
-            log.warn(`Unknown direction in getAngularSpeed: ${args.DIRECTION}`);
+            log.warn(`Unknown direction in getSpinSpeed: ${args.DIRECTION}`);
         }
     }
     getForce () {
