@@ -270,7 +270,7 @@ class MicroBit {
         const data = Base64Util.uint8ArrayToBase64(output);
 
         // TODO: move this up to the block op instead
-        this._queue.do(() => this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true));
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true);
     }
 
     /**
@@ -806,9 +806,9 @@ class Scratch3MicroBitBlocks {
                 this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
                 this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
             }
-        }).catch(e => {
+        }); /*.catch(e => {
             console.log(e);
-        });
+        });*/
     }
 
     /**
@@ -843,9 +843,9 @@ class Scratch3MicroBitBlocks {
                 this._peripheral.ledMatrixState[i] = 0;
             }
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }).catch(e => {
+        }); /*.catch(e => {
             console.log(e);
-        });
+        });*/
     }
 
     /**

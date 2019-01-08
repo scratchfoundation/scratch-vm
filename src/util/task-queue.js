@@ -81,6 +81,7 @@ class TaskQueue {
             this._timeout = null;
         }
         console.log(this._pendingTaskRecords);
+        // this._pendingTaskRecords.forEach(r => r.reject());
         this._pendingTaskRecords.forEach(r => {
             if (r.reject) {
                 r.reject();
