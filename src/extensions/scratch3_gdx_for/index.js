@@ -305,8 +305,8 @@ class Scratch3GdxForBlocks {
                     opcode: 'whenAccelerationCompare',
                     text: formatMessage({
                         id: 'gdxfor.whenAccelerationCompare',
-                        default: 'when acceleration [DIRECTION] [COMPARE] [VALUE] m/s\u{00B2}',
-                        description: 'when the value measured by the acceleration sensor is compared to some value'
+                        default: 'when acceleration [DIRECTION] [COMPARE] [VALUE]',
+                        description: 'when the meters/second^2 value measured by the acceleration sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -330,8 +330,8 @@ class Scratch3GdxForBlocks {
                     opcode: 'whenAngularSpeedCompare',
                     text: formatMessage({
                         id: 'gdxfor.whenAngularSpeedCompare',
-                        default: 'when angular speed [DIRECTION] [COMPARE] [VALUE] rad/s',
-                        description: 'when the value measured by the gyroscope sensor is compared to some value'
+                        default: 'when angular speed [DIRECTION] [COMPARE] [VALUE]',
+                        description: 'when the degrees/second value measured by the gyroscope sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -355,7 +355,7 @@ class Scratch3GdxForBlocks {
                     opcode: 'whenForceCompare',
                     text: formatMessage({
                         id: 'gdxfor.whenForceCompare',
-                        default: 'when force [COMPARE] [VALUE] N',
+                        default: 'when force [COMPARE] [VALUE]',
                         description: 'when the value measured by the force sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
