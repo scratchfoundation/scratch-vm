@@ -269,7 +269,6 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        // TODO: move this up to the block op instead
         this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true);
     }
 
