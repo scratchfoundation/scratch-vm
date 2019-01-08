@@ -134,7 +134,7 @@ class MicroBit {
          * @type {TaskQueue}
          * @private
          */
-        this._queue = new TaskQueue(1, 30);
+        this._queue = new TaskQueue(60, 30);
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -806,6 +806,8 @@ class Scratch3MicroBitBlocks {
                 this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
                 this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
             }
+        }).catch(e => {
+            console.log(e);
         });
     }
 
@@ -841,6 +843,8 @@ class Scratch3MicroBitBlocks {
                 this._peripheral.ledMatrixState[i] = 0;
             }
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
+        }).catch(e => {
+            console.log(e);
         });
     }
 

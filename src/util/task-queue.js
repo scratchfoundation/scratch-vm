@@ -59,6 +59,7 @@ class TaskQueue {
                     this._waitUntilAffordable(cost).then(() => newRecord.wrappedTask());
                 }
             };
+            // newRecord.reject = reject;
         });
         this._pendingTaskRecords.push(newRecord);
 
@@ -79,7 +80,12 @@ class TaskQueue {
             clearTimeout(this._timeout);
             this._timeout = null;
         }
-        this._pendingTaskRecords.forEach(r => r.reject());
+        console.log(this._pendingTaskRecords);
+        this._pendingTaskRecords.forEach(r => {
+            if (r.reject) {
+                r.reject();
+            }
+        });
         this._pendingTaskRecords = [];
     }
 
