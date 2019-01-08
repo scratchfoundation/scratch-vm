@@ -34,12 +34,6 @@ const BLECommand = {
 const BLETimeout = 4500;
 
 /**
- * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
- * @type {number}
- */
-const BLESendInterval = 100;
-
-/**
  * A string to report to the BLE socket when the micro:bit has stopped receiving data.
  * @type {string}
  */
@@ -75,6 +69,7 @@ class MicroBit {
          * @private
          */
         this._runtime = runtime;
+        this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
          * The BluetoothLowEnergy connection socket for reading/writing peripheral data.
@@ -132,20 +127,14 @@ class MicroBit {
          */
         this._timeoutID = null;
 
-        this._queue = new TaskQueue(1000, 1000);
-
         /**
-         * A flag that is true while we are busy sending data to the BLE socket.
-         * @type {boolean}
+         * A task queue to track timed tasks over the socket.
+         * TODO: what to set maxTokens?
+         * TODO: what to set refillRate?
+         * @type {TaskQueue}
          * @private
          */
-        this._busy = false;
-
-        /**
-         * ID for a timeout which is used to clear the busy flag if it has been
-         * true for a long time.
-         */
-        this._busyTimeoutID = null;
+        this._queue = new TaskQueue(1, 30);
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -170,6 +159,11 @@ class MicroBit {
      */
     displayMatrix (matrix) {
         return this.send(BLECommand.CMD_DISPLAY_LED, matrix);
+    }
+
+    stopAll () {
+        console.log('stopall microbit');
+        this._queue.cancelAll();
     }
 
     /**
@@ -267,19 +261,6 @@ class MicroBit {
      */
     send (command, message) {
         if (!this.isConnected()) return;
-        // if (this._busy) return;
-
-        // Set a busy flag so that while we are sending a message and waiting for
-        // the response, additional messages are ignored.
-        // this._busy = true;
-
-        // Set a timeout after which to reset the busy flag. This is used in case
-        // a BLE message was sent for which we never received a response, because
-        // e.g. the peripheral was turned off after the message was sent. We reset
-        // the busy flag after a while so that it is possible to try again later.
-        /* this._busyTimeoutID = window.setTimeout(() => {
-            this._busy = false;
-        }, 5000); */
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -288,13 +269,7 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        /* this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
-            () => {
-                this._busy = false;
-                window.clearTimeout(this._busyTimeoutID);
-            }
-        );*/
-
+        // TODO: move this up to the block op instead
         this._queue.do(() => this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true));
     }
 
@@ -816,27 +791,21 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
-        // TODO: put entire block function in the new task queue task
-        const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
-        const reducer = (accumulator, c, index) => {
-            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
-            return value;
-        };
-        const hex = symbol.split('').reduce(reducer, 0);
-        if (hex !== null) {
-            this._peripheral.ledMatrixState[0] = hex & 0x1F;
-            this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
-            this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
-            this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
-            this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
-            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }
-
-        // TODO: use promise from TaskQueue instead?
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        return this._peripheral._queue.do(() => {
+            const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
+            const reducer = (accumulator, c, index) => {
+                const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
+                return value;
+            };
+            const hex = symbol.split('').reduce(reducer, 0);
+            if (hex !== null) {
+                this._peripheral.ledMatrixState[0] = hex & 0x1F;
+                this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
+                this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
+                this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
+                this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
+                this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
+            }
         });
     }
 
@@ -867,15 +836,11 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displayClear () {
-        for (let i = 0; i < 5; i++) {
-            this._peripheral.ledMatrixState[i] = 0;
-        }
-        this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        return this._peripheral._queue.do(() => {
+            for (let i = 0; i < 5; i++) {
+                this._peripheral.ledMatrixState[i] = 0;
+            }
+            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
         });
     }
 
