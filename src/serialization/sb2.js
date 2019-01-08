@@ -12,6 +12,7 @@ const Color = require('../util/color');
 const log = require('../util/log');
 const uid = require('../util/uid');
 const StringUtil = require('../util/string-util');
+const MathUtil = require('../util/math-util');
 const specMap = require('./sb2_specmap');
 const Comment = require('../engine/comment');
 const Variable = require('../engine/variable');
@@ -642,7 +643,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostumeIndex')) {
-        target.currentCostume = Math.round(object.currentCostumeIndex);
+        // Current costume index can sometimes be a floating
+        // point number, use Math.floor to come up with an appropriate index
+        // and clamp it to the actual number of costumes the object has for good measure.
+        target.currentCostume = MathUtil.clamp(Math.floor(object.currentCostumeIndex), 0, object.costumes.length - 1);
     }
     if (object.hasOwnProperty('rotationStyle')) {
         if (object.rotationStyle === 'none') {
