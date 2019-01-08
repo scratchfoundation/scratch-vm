@@ -25,7 +25,6 @@ const BLEUUID = {
     responseChar: 'b41e6675-a329-40e0-aa01-44d2f444babe'
 };
 
-
 /**
  * Manage communication with a GDX-FOR peripheral over a Scratch Link client socket.
  */
@@ -167,7 +166,17 @@ class GdxFor {
 
     getForce () {
         if (this.isConnected()) {
-            return this._device.getSensor(1).value;
+            let force = this._device.getSensor(1).value;
+            // Normalize the force, which can be measured between -50 and 50 N,
+            // to be a value between -100 and 100.
+            force = force * 2;
+            if (force > 100) {
+                return 100;
+            }
+            if (force < -100) {
+                return -100;
+            }
+            return force;
         }
         return 0;
     }
@@ -195,21 +204,21 @@ class GdxFor {
 
     getSpinSpeedX () {
         if (this.isConnected()) {
-            return this._device.getSensor(5).value;
+            return this._device.getSensor(5).value * (180 / Math.PI);
         }
         return 0;
     }
 
     getSpinSpeedY () {
         if (this.isConnected()) {
-            return this._device.getSensor(6).value;
+            return this._device.getSensor(6).value * (180 / Math.PI);
         }
         return 0;
     }
 
     getSpinSpeedZ () {
         if (this.isConnected()) {
-            return this._device.getSensor(7).value;
+            return this._device.getSensor(7).value * (180 / Math.PI);
         }
         return 0;
     }
