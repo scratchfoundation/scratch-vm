@@ -134,7 +134,7 @@ class MicroBit {
          * @type {TaskQueue}
          * @private
          */
-        this._queue = new TaskQueue(1, 20);
+        this._queue = new TaskQueue(1, 60);
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -825,11 +825,11 @@ class Scratch3MicroBitBlocks {
         if (text.length > 0) this._peripheral.displayText(text);
         const yieldDelay = 120 * ((6 * text.length) + 6);
 
-        return new Promise(resolve => {
+        return this._peripheral._queue.do(() => new Promise(resolve => {
             setTimeout(() => {
                 resolve();
             }, yieldDelay);
-        });
+        }));
     }
 
     /**
