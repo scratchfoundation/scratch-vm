@@ -43,6 +43,7 @@ class TaskQueue {
                     // Remove this task from the queue and run it
                     this._pendingTaskRecords.shift();
                     try {
+                        console.log('resolve task');
                         resolve(task());
                     } catch (e) {
                         reject(e);
@@ -59,7 +60,7 @@ class TaskQueue {
                     this._waitUntilAffordable(cost).then(() => newRecord.wrappedTask());
                 }
             };
-            // newRecord.reject = reject;
+            newRecord.reject = reject;
         });
         this._pendingTaskRecords.push(newRecord);
 

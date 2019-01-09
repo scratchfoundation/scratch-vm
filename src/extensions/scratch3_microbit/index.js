@@ -134,7 +134,7 @@ class MicroBit {
          * @type {TaskQueue}
          * @private
          */
-        this._queue = new TaskQueue(60, 30);
+        this._queue = new TaskQueue(1, 20);
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
