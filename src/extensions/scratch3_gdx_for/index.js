@@ -191,13 +191,19 @@ class GdxFor {
 	        let y_sign = 1;
 	        let z_sign = 1;
 
-	        if (x < 0.0) { x *= -1.0; x_sign = -1; }
-	        if (y < 0.0) { y *= -1.0; y_sign = -1; }
-	        if (z < 0.0) { z *= -1.0; z_sign = -1; }
+	        if (x < 0.0) {
+                x *= -1.0; x_sign = -1;
+            }
+	        if (y < 0.0) {
+                y *= -1.0; y_sign = -1;
+            }
+	        if (z < 0.0) {
+                z *= -1.0; z_sign = -1;
+            }
 
 	        // Compute the yz unit vector
-	        let z2 = z * z;
-	        let y2 = y * y;
+	        const z2 = z * z;
+	        const y2 = y * y;
 	        let value = z2 + y2;
 	        value = Math.sqrt(value);
 
@@ -205,12 +211,9 @@ class GdxFor {
 	        // The following snaps to 90 and avoids divide-by-zero errors.
 	        // The snap factor was derived through observation -- just enough to
 	        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-	        if (value < 0.35)
-	        {
+	        if (value < 0.35) {
 		        value = 90;
-	        }
-	        else
-	        {
+	        } else {
 		        // Compute the x-axis angle
 		        value = x / value;
 		        value = Math.atan(value);
@@ -238,13 +241,19 @@ class GdxFor {
 	        let y_sign = 1;
 	        let z_sign = 1;
 
-	        if (x < 0.0) { x *= -1.0; x_sign = -1; }
-	        if (y < 0.0) { y *= -1.0; y_sign = -1; }
-	        if (z < 0.0) { z *= -1.0; z_sign = -1; }
+	        if (x < 0.0) {
+                x *= -1.0; x_sign = -1;
+            }
+	        if (y < 0.0) {
+                y *= -1.0; y_sign = -1;
+            }
+	        if (z < 0.0) {
+                z *= -1.0; z_sign = -1;
+            }
 
 	        // Compute the yz unit vector
-	        let z2 = z * z;
-	        let x2 = x * x;
+	        const z2 = z * z;
+	        const x2 = x * x;
 	        let value = z2 + x2;
 	        value = Math.sqrt(value);
 
@@ -252,12 +261,9 @@ class GdxFor {
 	        // The following snaps to 90 and avoids divide-by-zero errors.
 	        // The snap factor was derived through observation -- just enough to
 	        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-	        if (value < 0.35)
-	        {
+	        if (value < 0.35) {
 		        value = 90;
-	        }
-	        else
-	        {
+	        } else {
 		        // Compute the x-axis angle
 		        value = y / value;
 		        value = Math.atan(value);
@@ -547,12 +553,12 @@ class Scratch3GdxForBlocks {
      * @return {number} - the magnitude of a three dimension vector.
      */
     magnitude (x, y, z) {
-        return Math.sqrt(x*x + y*y + z*z);
+        return Math.sqrt(x * x + y * y + z * z);
     }
 
 
     whenAccelerationCompare (args) {
-        let currentVal = this.magnitude(
+        const currentVal = this.magnitude(
             this._peripheral.getAccelerationX(),
             this._peripheral.getAccelerationY(),
             this._peripheral.getAccelerationZ()
@@ -569,7 +575,7 @@ class Scratch3GdxForBlocks {
         }
     }
     whenSpinSpeedCompare (args) {
-        let currentVal = this.magnitude(
+        const currentVal = this.magnitude(
             this._peripheral.getSpinSpeedX(),
             this._peripheral.getSpinSpeedY(),
             this._peripheral.getSpinSpeedZ()
