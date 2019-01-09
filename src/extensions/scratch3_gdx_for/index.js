@@ -4,7 +4,7 @@ const log = require('../../util/log');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
-const createDevice = require('@vernier/godirect').default.createDevice;
+const godirect = require('@vernier/godirect/dist/godirect.min.umd.js');
 const ScratchLinkDeviceAdapter = require('./scratch-link-device-adapter');
 
 /**
@@ -141,7 +141,7 @@ class GdxFor {
      */
     _onConnect () {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket);
-        createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
+        godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
             this._startMeasurements();
         });
@@ -314,16 +314,11 @@ class Scratch3GdxForBlocks {
                     opcode: 'whenAccelerationCompare',
                     text: formatMessage({
                         id: 'gdxfor.whenAccelerationCompare',
-                        default: 'when acceleration [DIRECTION] [COMPARE] [VALUE]',
+                        default: 'when acceleration [COMPARE] [VALUE]',
                         description: 'when the meters/second^2 value measured by the acceleration sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'directionOptions',
-                            defaultValue: 'x'
-                        },
                         COMPARE: {
                             type: ArgumentType.STRING,
                             menu: 'compareOptions',
@@ -339,16 +334,11 @@ class Scratch3GdxForBlocks {
                     opcode: 'whenSpinSpeedCompare',
                     text: formatMessage({
                         id: 'gdxfor.whenSpinSpeedCompare',
-                        default: 'when spin speed [DIRECTION] [COMPARE] [VALUE]',
+                        default: 'when spin speed [COMPARE] [VALUE]',
                         description: 'when the degrees/second value measured by the gyroscope sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'directionOptions',
-                            defaultValue: 'x'
-                        },
                         COMPARE: {
                             type: ArgumentType.STRING,
                             menu: 'compareOptions',
@@ -429,23 +419,20 @@ class Scratch3GdxForBlocks {
         };
     }
 
-    whenAccelerationCompare (args) {
-        let currentVal = 0;
+    /**
+     * @return {number} - the magnitude of a three dimension vector.
+     */
+    magnitude (x, y, z) {
+        return Math.sqrt(x*x + y*y + z*z);
+    }
 
-        switch (args.DIRECTION) {
-        case 'x':
-            currentVal = this._peripheral.getAccelerationX();
-            break;
-        case 'y':
-            currentVal = this._peripheral.getAccelerationY();
-            break;
-        case 'z':
-            currentVal = this._peripheral.getAccelerationZ();
-            break;
-        default:
-            log.warn(`Unknown direction in whenAccelerationCompare: ${args.DIRECTION}`);
-            return false;
-        }
+
+    whenAccelerationCompare (args) {
+        let currentVal = this.magnitude(
+            this._peripheral.getAccelerationX(),
+            this._peripheral.getAccelerationY(),
+            this._peripheral.getAccelerationZ()
+        );
 
         switch (args.COMPARE) {
         case ComparisonOptions.LESS_THAN:
@@ -458,22 +445,11 @@ class Scratch3GdxForBlocks {
         }
     }
     whenSpinSpeedCompare (args) {
-        let currentVal = 0;
-
-        switch (args.DIRECTION) {
-        case 'x':
-            currentVal = this._peripheral.getSpinSpeedX();
-            break;
-        case 'y':
-            currentVal = this._peripheral.getSpinSpeedY();
-            break;
-        case 'z':
-            currentVal = this._peripheral.getSpinSpeedZ();
-            break;
-        default:
-            log.warn(`Unknown direction in whenSpinSpeedCompare: ${args.DIRECTION}`);
-            return false;
-        }
+        let currentVal = this.magnitude(
+            this._peripheral.getSpinSpeedX(),
+            this._peripheral.getSpinSpeedY(),
+            this._peripheral.getSpinSpeedZ()
+        );
 
         switch (args.COMPARE) {
         case ComparisonOptions.LESS_THAN:
