@@ -187,45 +187,45 @@ class GdxFor {
             let y = this.getAccelerationY();
             let z = this.getAccelerationZ();
 
-	        let x_sign = 1;
-	        let y_sign = 1;
-	        let z_sign = 1;
+            let xSign = 1;
+            let ySign = 1;
+            let zSign = 1;
 
-	        if (x < 0.0) {
-                x *= -1.0; x_sign = -1;
+            if (x < 0.0) {
+                x *= -1.0; xSign = -1;
             }
-	        if (y < 0.0) {
-                y *= -1.0; y_sign = -1;
+            if (y < 0.0) {
+                y *= -1.0; ySign = -1;
             }
-	        if (z < 0.0) {
-                z *= -1.0; z_sign = -1;
+            if (z < 0.0) {
+                z *= -1.0; zSign = -1;
             }
 
-	        // Compute the yz unit vector
-	        const z2 = z * z;
-	        const y2 = y * y;
-	        let value = z2 + y2;
-	        value = Math.sqrt(value);
+            // Compute the yz unit vector
+            const z2 = z * z;
+            const y2 = y * y;
+            let value = z2 + y2;
+            value = Math.sqrt(value);
 
-	        // For sufficiently small zy vector values we are essentially at 90 degrees.
-	        // The following snaps to 90 and avoids divide-by-zero errors.
-	        // The snap factor was derived through observation -- just enough to
-	        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-	        if (value < 0.35) {
-		        value = 90;
-	        } else {
-		        // Compute the x-axis angle
-		        value = x / value;
-		        value = Math.atan(value);
-		        value *= 57.2957795; // convert from rad to deg
-	        }
-	        // Manage the sign of the result
-	        let yz_sign = y_sign;
-	        if (z > y) yz_sign = z_sign;
-	        if (yz_sign == -1) value = 180.0 - value;
-	        value *= x_sign;
-	        // Round the result to the nearest degree
-	        value += 0.5;
+            // For sufficiently small zy vector values we are essentially at 90 degrees.
+            // The following snaps to 90 and avoids divide-by-zero errors.
+            // The snap factor was derived through observation -- just enough to
+            // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
+            if (value < 0.35) {
+                value = 90;
+            } else {
+                // Compute the x-axis angle
+                value = x / value;
+                value = Math.atan(value);
+                value *= 57.2957795; // convert from rad to deg
+            }
+            // Manage the sign of the result
+            let yzSign = ySign;
+            if (z > y) yzSign = zSign;
+            if (yzSign === -1) value = 180.0 - value;
+            value *= xSign;
+            // Round the result to the nearest degree
+            value += 0.5;
             return value;
         }
         return 0;
@@ -237,45 +237,45 @@ class GdxFor {
             let y = this.getAccelerationY();
             let z = this.getAccelerationZ();
 
-	        let x_sign = 1;
-	        let y_sign = 1;
-	        let z_sign = 1;
+            let xSign = 1;
+            let ySign = 1;
+            let zSign = 1;
 
-	        if (x < 0.0) {
-                x *= -1.0; x_sign = -1;
+            if (x < 0.0) {
+                x *= -1.0; xSign = -1;
             }
-	        if (y < 0.0) {
-                y *= -1.0; y_sign = -1;
+            if (y < 0.0) {
+                y *= -1.0; ySign = -1;
             }
-	        if (z < 0.0) {
-                z *= -1.0; z_sign = -1;
+            if (z < 0.0) {
+                z *= -1.0; zSign = -1;
             }
 
-	        // Compute the yz unit vector
-	        const z2 = z * z;
-	        const x2 = x * x;
-	        let value = z2 + x2;
-	        value = Math.sqrt(value);
+            // Compute the yz unit vector
+            const z2 = z * z;
+            const x2 = x * x;
+            let value = z2 + x2;
+            value = Math.sqrt(value);
 
-	        // For sufficiently small zy vector values we are essentially at 90 degrees.
-	        // The following snaps to 90 and avoids divide-by-zero errors.
-	        // The snap factor was derived through observation -- just enough to
-	        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-	        if (value < 0.35) {
-		        value = 90;
-	        } else {
-		        // Compute the x-axis angle
-		        value = y / value;
-		        value = Math.atan(value);
-		        value *= 57.2957795; // convert from rad to deg
-	        }
-	        // Manage the sign of the result
-	        let xz_sign = x_sign;
-	        if (z > x) xz_sign = z_sign;
-	        if (xz_sign == -1) value = 180.0 - value;
-	        value *= y_sign;
-	        // Round the result to the nearest degree
-	        value += 0.5;
+            // For sufficiently small zy vector values we are essentially at 90 degrees.
+            // The following snaps to 90 and avoids divide-by-zero errors.
+            // The snap factor was derived through observation -- just enough to
+            // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
+            if (value < 0.35) {
+                value = 90;
+            } else {
+                // Compute the x-axis angle
+                value = y / value;
+                value = Math.atan(value);
+                value *= 57.2957795; // convert from rad to deg
+            }
+            // Manage the sign of the result
+            let xzSign = xSign;
+            if (z > x) xzSign = zSign;
+            if (xzSign === -1) value = 180.0 - value;
+            value *= ySign;
+            // Round the result to the nearest degree
+            value += 0.5;
             return value;
         }
         return 0;
@@ -428,7 +428,8 @@ class Scratch3GdxForBlocks {
                     text: formatMessage({
                         id: 'gdxfor.whenAccelerationCompare',
                         default: 'when acceleration [COMPARE] [VALUE]',
-                        description: 'when the meters/second^2 value measured by the acceleration sensor is compared to some value'
+                        description: 'when the meters/second^2 value measured by the ' +
+                            'acceleration sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -448,7 +449,8 @@ class Scratch3GdxForBlocks {
                     text: formatMessage({
                         id: 'gdxfor.whenSpinSpeedCompare',
                         default: 'when spin speed [COMPARE] [VALUE]',
-                        description: 'when the degrees/second value measured by the gyroscope sensor is compared to some value'
+                        description: 'when the degrees/second value measured by the ' +
+                            'gyroscope sensor is compared to some value'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
@@ -550,10 +552,13 @@ class Scratch3GdxForBlocks {
     }
 
     /**
+     * @param {number} x - x axis vector
+     * @param {number} y - y axis vector
+     * @param {number} z - z axis vector
      * @return {number} - the magnitude of a three dimension vector.
      */
     magnitude (x, y, z) {
-        return Math.sqrt(x * x + y * y + z * z);
+        return Math.sqrt((x * x) + (y * y) + (z * z));
     }
 
 
@@ -627,8 +632,6 @@ class Scratch3GdxForBlocks {
         }
     }
     getTilt (args) {
-        console.log(args);
-
         switch (args.TILT) {
         case 'x':
             return this._peripheral.getTiltX();
