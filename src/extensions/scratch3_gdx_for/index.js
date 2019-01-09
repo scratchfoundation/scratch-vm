@@ -160,7 +160,7 @@ class GdxFor {
                 }
             });
         });
-        this._device.start(5); // Can set period here if needed.
+        this._device.start(10); // Set the period to 10 milliseconds
     }
 
 
