@@ -257,6 +257,13 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 
 const parseMonitorObject = (object, runtime, targets, extensions) => {
+    // If we can't find the block in the spec map, ignore it.
+    // This happens for things like Lego Wedo 1.0 monitors.
+    const mapped = specMap[object.cmd];
+    if (!mapped) {
+        log.warn(`Could not find monitor block with opcode: ${object.cmd}`);
+        return;
+    }
     // In scratch 2.0, there are two monitors that now correspond to extension
     // blocks (tempo and video motion/direction). In the case of the
     // video motion/direction block, this reporter is not monitorable in Scratch 3.0.
