@@ -491,7 +491,7 @@ class Scratch3GdxForBlocks {
                         default: 'when jumped',
                         description: 'when the device has jumped'
                     }),
-                    blockType: BlockType.HAT,
+                    blockType: BlockType.HAT
                 },
                 {
                     opcode: 'getAcceleration',
@@ -573,7 +573,8 @@ class Scratch3GdxForBlocks {
                         default: 'free falling?',
                         description: 'is the device in freefall?'
                     }),
-                    blockType: BlockType.BOOLEAN,
+                    blockType: BlockType.BOOLEAN
+
                 }
             ],
             menus: {
