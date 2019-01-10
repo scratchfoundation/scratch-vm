@@ -596,11 +596,14 @@ class Scratch3GdxForBlocks {
     }
 
     whenAccelerationCompare (args) {
-        const currentVal = this.magnitude(
+        let currentVal = this.magnitude(
             this._peripheral.getAccelerationX(),
             this._peripheral.getAccelerationY(),
             this._peripheral.getAccelerationZ()
         );
+
+        // Remove acceleration due to gravity
+        currentVal = currentVal - 9.8;
 
         switch (args.COMPARE) {
         case ComparisonOptions.LESS_THAN:
