@@ -4,7 +4,7 @@ const Base64Util = require('../../util/base64-util');
  * Adapter class
  */
 class ScratchLinkDeviceAdapter {
-    constructor (scratchLinkSocket, { service, commandChar, responseChar }) {
+    constructor (scratchLinkSocket, {service, commandChar, responseChar}) {
         this.scratchLinkSocket = scratchLinkSocket;
 
         this._service = service;

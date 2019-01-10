@@ -3,6 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
+const MathUtil = require('../../util/math-util');
 const BLE = require('../../io/ble');
 const godirect = require('@vernier/godirect/dist/godirect.min.umd.js');
 const ScratchLinkDeviceAdapter = require('./scratch-link-device-adapter');
@@ -52,8 +53,8 @@ class GdxFor {
         this._scratchLinkSocket = null;
 
         /**
-         * A godirect device
-         * @type {@vernier/goDirect device}
+         * An @vernier/godirect Device
+         * @type {Device}
          * @private
          */
         this._device = null;
@@ -64,21 +65,6 @@ class GdxFor {
          * The id of the extension this peripheral belongs to.
          */
         this._extensionId = extensionId;
-
-        /**
-         * The most recently received value for each sensor.
-         * @type {Object.<string, number>}
-         * @private
-         */
-        this._sensors = {
-            force: 0,
-            accelerationX: 0,
-            accelerationY: 0,
-            accelerationZ: 0,
-            angularVelocityX: 0,
-            angularVelocityY: 0,
-            angularVelocityZ: 0
-        };
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -154,6 +140,9 @@ class GdxFor {
     _startMeasurements () {
         this._device.sensors.forEach(sensor => {
             sensor.setEnabled(true);
+
+            // For now, clear the save sensor values. The unlimited saving
+            // will be fixed in a future @vernier/godirect release.
             sensor.on('value-changed', changedSensor => {
                 if (changedSensor.values.length > 1000) {
                     changedSensor.clear();
@@ -169,13 +158,7 @@ class GdxFor {
             let force = this._device.getSensor(1).value;
             // Normalize the force, which can be measured between -50 and 50 N,
             // to be a value between -100 and 100.
-            force = force * 2;
-            if (force > 100) {
-                return 100;
-            }
-            if (force < -100) {
-                return -100;
-            }
+            force = MathUtil.clamp(force * 2, -100, 100);
             return force;
         }
         return 0;
