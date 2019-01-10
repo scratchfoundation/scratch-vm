@@ -617,12 +617,7 @@ class Scratch3GdxForBlocks {
         }
     }
     whenJumped () {
-        const currentVal = this.magnitude(
-            this._peripheral.getAccelerationX(),
-            this._peripheral.getAccelerationY(),
-            this._peripheral.getAccelerationZ()
-        );
-        return currentVal < .5;
+        return this.isFreeFalling;
     }
     whenSpinSpeedCompare (args) {
         const currentVal = this.magnitude(
