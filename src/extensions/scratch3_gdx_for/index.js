@@ -367,6 +367,20 @@ class Scratch3GdxForBlocks {
         ];
     }
 
+    get FACE_MENU () {
+        return [
+            {
+                text: 'up',
+                value: 'up'
+            },
+            {
+                text: 'down',
+                value: 'down'
+            }
+        ];
+    }
+
+
     get COMPARE_MENU () {
         return [
             {
@@ -524,12 +538,29 @@ class Scratch3GdxForBlocks {
                         description: 'gets force'
                     }),
                     blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'isFacing',
+                    text: formatMessage({
+                        id: 'gdxfor.isFacing',
+                        default: 'facing [FACING]?',
+                        description: 'is the device facing up or down?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        FACING: {
+                            type: ArgumentType.STRING,
+                            menu: 'faceOptions',
+                            defaultValue: 'up'
+                        }
+                    }
                 }
             ],
             menus: {
                 directionOptions: this.DIRECTIONS_MENU,
                 compareOptions: this.COMPARE_MENU,
-                tiltOptions: this.TILT_MENU
+                tiltOptions: this.TILT_MENU,
+                faceOptions: this.FACE_MENU
             }
         };
     }
@@ -622,6 +653,16 @@ class Scratch3GdxForBlocks {
             return this._peripheral.getTiltY();
         default:
             log.warn(`Unknown direction in getTilt: ${args.TILT}`);
+        }
+    }
+    isFacing (args) {
+        switch (args.FACING) {
+        case 'up':
+            return this._peripheral.getAccelerationZ() > 9;
+        case 'down':
+            return this._peripheral.getAccelerationZ() < -9;
+        default:
+            log.warn(`Unknown direction in isFacing: ${args.FACING}`);
         }
     }
     getForce () {
