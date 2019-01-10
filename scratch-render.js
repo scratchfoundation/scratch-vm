@@ -10906,83 +10906,6 @@ module.exports = ShaderManager;
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports) {
-
-/* Adapted from
- * Paper.js - The Swiss Army Knife of Vector Graphics Scripting.
- * http://paperjs.org/
- *
- * Copyright (c) 2011 - 2016, Juerg Lehni & Jonathan Puckey
- * http://scratchdisk.com/ & http://jonathanpuckey.com/
- *
- * Distributed under the MIT license. See LICENSE file for details.
- *
- * All rights reserved.
- */
-
-/**
- * @name SvgElement
- * @namespace
- * @private
- */
-class SvgElement {
-    // SVG related namespaces
-    static get svg () {
-        return 'http://www.w3.org/2000/svg';
-    }
-    static get xmlns () {
-        return 'http://www.w3.org/2000/xmlns';
-    }
-    static get xlink () {
-        return 'http://www.w3.org/1999/xlink';
-    }
-
-    // Mapping of attribute names to required namespaces:
-    static attributeNamespace () {
-        return {
-            'href': SvgElement.xlink,
-            'xlink': SvgElement.xmlns,
-            // Only the xmlns attribute needs the trailing slash. See #984
-            'xmlns': `${SvgElement.xmlns}/`,
-            // IE needs the xmlns namespace when setting 'xmlns:xlink'. See #984
-            'xmlns:xlink': `${SvgElement.xmlns}/`
-        };
-    }
-
-    static create (tag, attributes, formatter) {
-        return SvgElement.set(document.createElementNS(SvgElement.svg, tag), attributes, formatter);
-    }
-
-    static get (node, name) {
-        const namespace = SvgElement.attributeNamespace[name];
-        const value = namespace ?
-            node.getAttributeNS(namespace, name) :
-            node.getAttribute(name);
-        return value === 'null' ? null : value;
-    }
-
-    static set (node, attributes, formatter) {
-        for (const name in attributes) {
-            let value = attributes[name];
-            const namespace = SvgElement.attributeNamespace[name];
-            if (typeof value === 'number' && formatter) {
-                value = formatter.number(value);
-            }
-            if (namespace) {
-                node.setAttributeNS(namespace, name, value);
-            } else {
-                node.setAttribute(name, value);
-            }
-        }
-        return node;
-    }
-}
-
-module.exports = SvgElement;
-
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11192,6 +11115,83 @@ var Rectangle = function () {
 }();
 
 module.exports = Rectangle;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports) {
+
+/* Adapted from
+ * Paper.js - The Swiss Army Knife of Vector Graphics Scripting.
+ * http://paperjs.org/
+ *
+ * Copyright (c) 2011 - 2016, Juerg Lehni & Jonathan Puckey
+ * http://scratchdisk.com/ & http://jonathanpuckey.com/
+ *
+ * Distributed under the MIT license. See LICENSE file for details.
+ *
+ * All rights reserved.
+ */
+
+/**
+ * @name SvgElement
+ * @namespace
+ * @private
+ */
+class SvgElement {
+    // SVG related namespaces
+    static get svg () {
+        return 'http://www.w3.org/2000/svg';
+    }
+    static get xmlns () {
+        return 'http://www.w3.org/2000/xmlns';
+    }
+    static get xlink () {
+        return 'http://www.w3.org/1999/xlink';
+    }
+
+    // Mapping of attribute names to required namespaces:
+    static attributeNamespace () {
+        return {
+            'href': SvgElement.xlink,
+            'xlink': SvgElement.xmlns,
+            // Only the xmlns attribute needs the trailing slash. See #984
+            'xmlns': `${SvgElement.xmlns}/`,
+            // IE needs the xmlns namespace when setting 'xmlns:xlink'. See #984
+            'xmlns:xlink': `${SvgElement.xmlns}/`
+        };
+    }
+
+    static create (tag, attributes, formatter) {
+        return SvgElement.set(document.createElementNS(SvgElement.svg, tag), attributes, formatter);
+    }
+
+    static get (node, name) {
+        const namespace = SvgElement.attributeNamespace[name];
+        const value = namespace ?
+            node.getAttributeNS(namespace, name) :
+            node.getAttribute(name);
+        return value === 'null' ? null : value;
+    }
+
+    static set (node, attributes, formatter) {
+        for (const name in attributes) {
+            let value = attributes[name];
+            const namespace = SvgElement.attributeNamespace[name];
+            if (typeof value === 'number' && formatter) {
+                value = formatter.number(value);
+            }
+            if (namespace) {
+                node.setAttributeNS(namespace, name, value);
+            } else {
+                node.setAttribute(name, value);
+            }
+        }
+        return node;
+    }
+}
+
+module.exports = SvgElement;
+
 
 /***/ }),
 /* 7 */
@@ -11808,7 +11808,7 @@ module.exports = EffectTransform;
 const SVGRenderer = __webpack_require__(29);
 const BitmapAdapter = __webpack_require__(51);
 const inlineSvgFonts = __webpack_require__(10);
-const SvgElement = __webpack_require__(5);
+const SvgElement = __webpack_require__(6);
 const convertFonts = __webpack_require__(11);
 // /**
 //  * Export for NPM & Node.js
@@ -11827,7 +11827,6 @@ module.exports = {
 /* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const SvgElement = __webpack_require__(5);
 /**
  * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
  */
@@ -11844,30 +11843,30 @@ const {FONTS} = __webpack_require__(30);
  *   // External stylesheet linked to by SVG: no effect.
  *   // Using a <link> or <style>@import</style> to link to font-family
  *   // injected into the document: no effect.
- * @param {SVGElement} svgTag The SVG dom object
- * @return {void}
+ * @param {string} svgString The string representation of the svg to modify
+ * @return {string} The svg with any needed fonts inlined
  */
-const inlineSvgFonts = function (svgTag) {
+const inlineSvgFonts = function (svgString) {
     // Collect fonts that need injection.
     const fontsNeeded = new Set();
-    const collectFonts = function collectFonts (domElement) {
-        if (domElement.getAttribute && domElement.getAttribute('font-family')) {
-            fontsNeeded.add(domElement.getAttribute('font-family'));
-        }
-        for (let i = 0; i < domElement.childNodes.length; i++) {
-            collectFonts(domElement.childNodes[i]);
-        }
-    };
-    collectFonts(svgTag);
-    const newDefs = SvgElement.create('defs');
-    const newStyle = SvgElement.create('style');
-    for (const font of fontsNeeded) {
-        if (FONTS.hasOwnProperty(font)) {
-            newStyle.textContent += FONTS[font];
-        }
+    const fontRegex = /font-family="([^"]*)"/g;
+    let matches = fontRegex.exec(svgString);
+    while (matches) {
+        fontsNeeded.add(matches[1]);
+        matches = fontRegex.exec(svgString);
     }
-    newDefs.appendChild(newStyle);
-    svgTag.insertBefore(newDefs, svgTag.childNodes[0]);
+    if (fontsNeeded.size > 0) {
+        let str = '<defs><style>';
+        for (const font of fontsNeeded) {
+            if (FONTS.hasOwnProperty(font)) {
+                str += `${FONTS[font]}`;
+            }
+        }
+        str += '</style></defs>';
+        svgString = svgString.replace(/<svg[^>]*>/, `$&${str}`);
+        return svgString;
+    }
+    return svgString;
 };
 
 module.exports = inlineSvgFonts;
@@ -12127,7 +12126,7 @@ var twgl = __webpack_require__(0);
 
 var BitmapSkin = __webpack_require__(22);
 var Drawable = __webpack_require__(24);
-var Rectangle = __webpack_require__(6);
+var Rectangle = __webpack_require__(5);
 var PenSkin = __webpack_require__(27);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
@@ -13161,7 +13160,11 @@ var RenderWebGL = function (_EventEmitter) {
             var worldPos = twgl.v3.create();
 
             drawable.updateMatrix();
-            drawable.skin.updateSilhouette();
+            if (drawable.skin) {
+                drawable.skin.updateSilhouette();
+            } else {
+                log.warn('Could not find skin for drawable with id: ' + drawableID);
+            }
 
             for (worldPos[1] = bounds.bottom; worldPos[1] <= bounds.top; worldPos[1]++) {
                 for (worldPos[0] = bounds.left; worldPos[0] <= bounds.right; worldPos[0]++) {
@@ -13198,7 +13201,11 @@ var RenderWebGL = function (_EventEmitter) {
                 // default pick list ignores visible and ghosted sprites.
                 if (drawable.getVisible() && drawable.getUniforms().u_ghost !== 0) {
                     drawable.updateMatrix();
-                    drawable.skin.updateSilhouette();
+                    if (drawable.skin) {
+                        drawable.skin.updateSilhouette();
+                    } else {
+                        log.warn('Could not find skin for drawable with id: ' + id);
+                    }
                     return true;
                 }
                 return false;
@@ -14848,7 +14855,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var twgl = __webpack_require__(0);
 
-var Rectangle = __webpack_require__(6);
+var Rectangle = __webpack_require__(5);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
 var Skin = __webpack_require__(2);
@@ -15381,11 +15388,13 @@ var Drawable = function () {
         value: function _getTransformedHullPoints() {
             var projection = twgl.m4.ortho(-1, 1, -1, 1, -1, 1);
             var skinSize = this.skin.size;
+            var halfXPixel = 1 / skinSize[0] / 2;
+            var halfYPixel = 1 / skinSize[1] / 2;
             var tm = twgl.m4.multiply(this._uniforms.u_modelMatrix, projection);
             var transformedHullPoints = [];
             for (var i = 0; i < this._convexHullPoints.length; i++) {
                 var point = this._convexHullPoints[i];
-                var glPoint = twgl.v3.create(0.5 + -point[0] / skinSize[0], point[1] / skinSize[1] - 0.5, 0);
+                var glPoint = twgl.v3.create(0.5 + -point[0] / skinSize[0] - halfXPixel, point[1] / skinSize[1] - 0.5 + halfYPixel, 0);
                 twgl.m4.transformPoint(tm, glPoint, glPoint);
                 transformedHullPoints.push(glPoint);
             }
@@ -15482,14 +15491,14 @@ var Drawable = function () {
     }, {
         key: 'useNearest',
         get: function get() {
-            // We can't use nearest neighbor unless we are a multiple of 90 rotation
-            if (this._direction % 90 !== 0) {
-                return false;
-            }
-
             // Raster skins (bitmaps) should always prefer nearest neighbor
             if (this.skin.isRaster) {
                 return true;
+            }
+
+            // We can't use nearest neighbor unless we are a multiple of 90 rotation
+            if (this._direction % 90 !== 0) {
+                return false;
             }
 
             // If the scale of the skin is very close to 100 (0.99999 variance is okay I guess)
@@ -15594,7 +15603,7 @@ var twgl = __webpack_require__(0);
 var RenderConstants = __webpack_require__(3);
 var Skin = __webpack_require__(2);
 
-var Rectangle = __webpack_require__(6);
+var Rectangle = __webpack_require__(5);
 var ShaderManager = __webpack_require__(4);
 
 /**
@@ -16397,7 +16406,6 @@ var SVGSkin = function (_Skin) {
                 if (_this3._texture) {
                     gl.bindTexture(gl.TEXTURE_2D, _this3._texture);
                     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, _this3._svgRenderer.canvas);
-                    _this3._silhouette.update(_this3._svgRenderer.canvas);
                 } else {
                     // TODO: mipmaps?
                     var textureOptions = {
@@ -16407,8 +16415,8 @@ var SVGSkin = function (_Skin) {
                     };
 
                     _this3._texture = twgl.createTexture(gl, textureOptions);
-                    _this3._silhouette.update(_this3._svgRenderer.canvas);
                 }
+                _this3._silhouetteDirty = true;
 
                 var maxDimension = Math.max(_this3._svgRenderer.canvas.width, _this3._svgRenderer.canvas.height);
                 var testScale = 2;
@@ -16420,6 +16428,14 @@ var SVGSkin = function (_Skin) {
                 _this3.setRotationCenter.apply(_this3, rotationCenter);
                 _this3.emit(Skin.Events.WasAltered);
             });
+        }
+    }, {
+        key: 'updateSilhouette',
+        value: function updateSilhouette() {
+            if (this._silhouetteDirty) {
+                this._silhouette.update(this._svgRenderer.canvas);
+                this._silhouetteDirty = false;
+            }
         }
     }, {
         key: 'size',
@@ -16438,7 +16454,7 @@ module.exports = SVGSkin;
 /***/ (function(module, exports, __webpack_require__) {
 
 const inlineSvgFonts = __webpack_require__(10);
-const SvgElement = __webpack_require__(5);
+const SvgElement = __webpack_require__(6);
 const convertFonts = __webpack_require__(11);
 const fixupSvgString = __webpack_require__(38);
 const transformStrokeWidths = __webpack_require__(39);
@@ -16766,13 +16782,11 @@ class SvgRenderer {
      * @returns {string} String representing current SVG data.
      */
     toString (shouldInjectFonts) {
-        let svgDom = this._svgDom;
-        if (shouldInjectFonts) {
-            svgDom = this._svgDom.cloneNode(true /* deep */);
-            inlineSvgFonts(svgDom.documentElement);
-        }
         const serializer = new XMLSerializer();
-        const string = serializer.serializeToString(svgDom);
+        let string = serializer.serializeToString(this._svgDom);
+        if (shouldInjectFonts) {
+            string = inlineSvgFonts(string);
+        }
         return string;
     }
 
@@ -16962,7 +16976,7 @@ module.exports = function (svgString) {
 /***/ (function(module, exports, __webpack_require__) {
 
 const Matrix = __webpack_require__(40);
-const SvgElement = __webpack_require__(5);
+const SvgElement = __webpack_require__(6);
 const log = __webpack_require__(41);
 
 /**

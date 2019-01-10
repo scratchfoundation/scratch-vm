@@ -82,7 +82,7 @@ var VirtualMachine =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 479);
+/******/ 	return __webpack_require__(__webpack_require__.s = 482);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -114,7 +114,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 46:
+/***/ 47:
 /***/ (function(module, exports) {
 
 /**
@@ -205,15 +205,15 @@ module.exports = {
 
 /***/ }),
 
-/***/ 479:
+/***/ 482:
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(480);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(483);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(4)))
 
 /***/ }),
 
-/***/ 480:
+/***/ 483:
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -223,7 +223,7 @@ module.exports = {
  */
 
 const VideoMotion = __webpack_require__(87);
-const VideoMotionView = __webpack_require__(481);
+const VideoMotionView = __webpack_require__(484);
 
 module.exports = {
     VideoMotion,
@@ -233,7 +233,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 481:
+/***/ 484:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -242,7 +242,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(46),
+var _require = __webpack_require__(47),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -832,7 +832,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * Video motion sensing primitives.
  */
-var _require = __webpack_require__(46),
+var _require = __webpack_require__(47),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 /**
