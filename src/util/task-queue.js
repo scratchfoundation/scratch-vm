@@ -43,7 +43,7 @@ class TaskQueue {
                     // Remove this task from the queue and run it
                     this._pendingTaskRecords.shift();
                     try {
-                        console.log('resolve task');
+                        // console.log('resolve task');
                         resolve(task());
                     } catch (e) {
                         reject(e);
@@ -81,13 +81,13 @@ class TaskQueue {
             clearTimeout(this._timeout);
             this._timeout = null;
         }
-        console.log(this._pendingTaskRecords);
-        // this._pendingTaskRecords.forEach(r => r.reject());
-        this._pendingTaskRecords.forEach(r => {
+        // console.log(this._pendingTaskRecords);
+        this._pendingTaskRecords.forEach(r => r.reject());
+        /* this._pendingTaskRecords.forEach(r => {
             if (r.reject) {
                 r.reject();
             }
-        });
+        }); */
         this._pendingTaskRecords = [];
     }
 
