@@ -140,7 +140,7 @@ class GdxFor {
      * @private
      */
     _onConnect () {
-        const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket);
+        const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
             this._startMeasurements();
