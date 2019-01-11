@@ -895,8 +895,8 @@ class Scratch3MicroBitBlocks {
     _isTilted (direction) {
         switch (direction) {
         case MicroBitTiltDirection.ANY:
-            return (Math.abs(this._peripheral.tiltX / 10) >= Scratch3MicroBitBlocks.TILT_THRESHOLD) ||
-                (Math.abs(this._peripheral.tiltY / 10) >= Scratch3MicroBitBlocks.TILT_THRESHOLD);
+            return (Math.abs(this._peripheral.tiltX) >= Scratch3MicroBitBlocks.TILT_THRESHOLD) ||
+                (Math.abs(this._peripheral.tiltY) >= Scratch3MicroBitBlocks.TILT_THRESHOLD);
         default:
             return this._getTiltAngle(direction) >= Scratch3MicroBitBlocks.TILT_THRESHOLD;
         }
@@ -911,13 +911,13 @@ class Scratch3MicroBitBlocks {
     _getTiltAngle (direction) {
         switch (direction) {
         case MicroBitTiltDirection.FRONT:
-            return Math.round(this._peripheral.tiltY / -10);
+            return this._peripheral.tiltY * -1;
         case MicroBitTiltDirection.BACK:
-            return Math.round(this._peripheral.tiltY / 10);
+            return this._peripheral.tiltY;
         case MicroBitTiltDirection.LEFT:
-            return Math.round(this._peripheral.tiltX / -10);
+            return this._peripheral.tiltX * -1;
         case MicroBitTiltDirection.RIGHT:
-            return Math.round(this._peripheral.tiltX / 10);
+            return this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
