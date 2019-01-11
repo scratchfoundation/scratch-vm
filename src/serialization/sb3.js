@@ -1157,12 +1157,18 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
             parseScratchObject(target, runtime, extensions, zip))
     )
         .then(targets => targets // Re-sort targets back into original sprite-pane ordering
+            .map((t, i) => {
+                // Add layer order property to deserialized targets.
+                // This property is used to initialize executable targets in
+                // the correct order and is deleted in VM's installTargets function
+                t.layerOrder = i;
+                return t;
+            })
             .sort((a, b) => a.targetPaneOrder - b.targetPaneOrder)
             .map(t => {
                 // Delete the temporary properties used for
                 // sprite pane ordering and stage layer ordering
                 delete t.targetPaneOrder;
-                delete t.layerOrder;
                 return t;
             }))
         .then(targets => {

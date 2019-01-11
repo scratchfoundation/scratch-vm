@@ -166,6 +166,10 @@ class Scratch3ControlBlocks {
         const newClone = cloneTarget.makeClone();
         if (newClone) {
             this.runtime.targets.push(newClone);
+            this.runtime.addExecutable(newClone);
+
+            // Place behind the original target.
+            newClone.goBehindOther(cloneTarget);
         }
     }
 
