@@ -156,13 +156,13 @@ class GdxFor {
         });
         this._device.on('measurements-started', () => {
             this._sensorsEnabled = true;
-        })
+        });
         this._device.start(10); // Set the period to 10 milliseconds
     }
 
     /**
      * Device is connected and measurements enabled
-     * @private
+     * @return {boolean} - whether the goforce is connected and measurements started.
      */
     _canReadSensors () {
         return this.isConnected() && this._sensorsEnabled;
