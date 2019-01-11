@@ -617,7 +617,7 @@ class Scratch3GdxForBlocks {
         }
     }
     whenJumped () {
-        return this.isFreeFalling;
+        return this.isFreeFalling();
     }
     whenSpinSpeedCompare (args) {
         const currentVal = this.magnitude(
