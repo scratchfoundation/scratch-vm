@@ -107,6 +107,7 @@ class GdxFor {
     disconnect () {
         if (this._device) {
             this._device.close();
+            this._device = null;
             this._sensorsEnabled = false;
         }
     }
