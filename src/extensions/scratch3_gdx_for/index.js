@@ -145,7 +145,9 @@ class GdxFor {
             // will be fixed in a future @vernier/godirect release.
             sensor.on('value-changed', changedSensor => {
                 if (changedSensor.values.length > 1000) {
+                    const val = changedSensor.value;
                     changedSensor.clear();
+                    changedSensor.setValue(val);
                 }
             });
         });
@@ -367,6 +369,20 @@ class Scratch3GdxForBlocks {
         ];
     }
 
+    get FACE_MENU () {
+        return [
+            {
+                text: 'up',
+                value: 'up'
+            },
+            {
+                text: 'down',
+                value: 'down'
+            }
+        ];
+    }
+
+
     get COMPARE_MENU () {
         return [
             {
@@ -469,6 +485,15 @@ class Scratch3GdxForBlocks {
                     }
                 },
                 {
+                    opcode: 'whenJumped',
+                    text: formatMessage({
+                        id: 'gdxfor.whenJumped',
+                        default: 'when jumped',
+                        description: 'when the device has jumped'
+                    }),
+                    blockType: BlockType.HAT
+                },
+                {
                     opcode: 'getAcceleration',
                     text: formatMessage({
                         id: 'gdxfor.getAcceleration',
@@ -524,12 +549,39 @@ class Scratch3GdxForBlocks {
                         description: 'gets force'
                     }),
                     blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'isFacing',
+                    text: formatMessage({
+                        id: 'gdxfor.isFacing',
+                        default: 'facing [FACING]?',
+                        description: 'is the device facing up or down?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        FACING: {
+                            type: ArgumentType.STRING,
+                            menu: 'faceOptions',
+                            defaultValue: 'up'
+                        }
+                    }
+                },
+                {
+                    opcode: 'isFreeFalling',
+                    text: formatMessage({
+                        id: 'gdxfor.isFreeFalling',
+                        default: 'free falling?',
+                        description: 'is the device in freefall?'
+                    }),
+                    blockType: BlockType.BOOLEAN
+
                 }
             ],
             menus: {
                 directionOptions: this.DIRECTIONS_MENU,
                 compareOptions: this.COMPARE_MENU,
-                tiltOptions: this.TILT_MENU
+                tiltOptions: this.TILT_MENU,
+                faceOptions: this.FACE_MENU
             }
         };
     }
@@ -544,13 +596,15 @@ class Scratch3GdxForBlocks {
         return Math.sqrt((x * x) + (y * y) + (z * z));
     }
 
-
     whenAccelerationCompare (args) {
-        const currentVal = this.magnitude(
+        let currentVal = this.magnitude(
             this._peripheral.getAccelerationX(),
             this._peripheral.getAccelerationY(),
             this._peripheral.getAccelerationZ()
         );
+
+        // Remove acceleration due to gravity
+        currentVal = currentVal - 9.8;
 
         switch (args.COMPARE) {
         case ComparisonOptions.LESS_THAN:
@@ -561,6 +615,9 @@ class Scratch3GdxForBlocks {
             log.warn(`Unknown comparison operator in whenAccelerationCompare: ${args.COMPARE}`);
             return false;
         }
+    }
+    whenJumped () {
+        return this.isFreeFalling();
     }
     whenSpinSpeedCompare (args) {
         const currentVal = this.magnitude(
@@ -626,6 +683,25 @@ class Scratch3GdxForBlocks {
     }
     getForce () {
         return this._peripheral.getForce();
+    }
+    isFacing (args) {
+        switch (args.FACING) {
+        case 'up':
+            return this._peripheral.getAccelerationZ() > 9;
+        case 'down':
+            return this._peripheral.getAccelerationZ() < -9;
+        default:
+            log.warn(`Unknown direction in isFacing: ${args.FACING}`);
+        }
+    }
+    isFreeFalling () {
+        const currentVal = this.magnitude(
+            this._peripheral.getAccelerationX(),
+            this._peripheral.getAccelerationY(),
+            this._peripheral.getAccelerationZ()
+        );
+
+        return currentVal < .5;
     }
 }
 
