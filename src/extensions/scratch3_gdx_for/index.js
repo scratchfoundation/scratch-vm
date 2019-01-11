@@ -68,6 +68,7 @@ class GdxFor {
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
+        this._sensorsEnabled = null;
     }
 
 
@@ -100,12 +101,13 @@ class GdxFor {
     }
 
     /**
-     * Called by the runtime when a use exits the connection popup.
+     * Called by the runtime when a user exits the connection popup.
      * Disconnect from the GDX FOR.
      */
     disconnect () {
         if (this._device) {
             this._device.close();
+            this._sensorsEnabled = false;
         }
     }
 
@@ -151,12 +153,22 @@ class GdxFor {
                 }
             });
         });
+        this._device.on('measurements-started', () => {
+            this._sensorsEnabled = true;
+        })
         this._device.start(10); // Set the period to 10 milliseconds
     }
 
+    /**
+     * Device is connected and measurements enabled
+     * @private
+     */
+    _canReadSensors () {
+        return this.isConnected() && this._sensorsEnabled;
+    }
 
     getForce () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             let force = this._device.getSensor(1).value;
             // Normalize the force, which can be measured between -50 and 50 N,
             // to be a value between -100 and 100.
@@ -167,7 +179,7 @@ class GdxFor {
     }
 
     getTiltX () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             let x = this.getAccelerationX();
             let y = this.getAccelerationY();
             let z = this.getAccelerationZ();
@@ -217,7 +229,7 @@ class GdxFor {
     }
 
     getTiltY () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             let x = this.getAccelerationX();
             let y = this.getAccelerationY();
             let z = this.getAccelerationZ();
@@ -268,42 +280,42 @@ class GdxFor {
 
 
     getAccelerationX () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(2).value;
         }
         return 0;
     }
 
     getAccelerationY () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(3).value;
         }
         return 0;
     }
 
     getAccelerationZ () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(4).value;
         }
         return 0;
     }
 
     getSpinSpeedX () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(5).value * (180 / Math.PI);
         }
         return 0;
     }
 
     getSpinSpeedY () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(6).value * (180 / Math.PI);
         }
         return 0;
     }
 
     getSpinSpeedZ () {
-        if (this.isConnected()) {
+        if (this._canReadSensors()) {
             return this._device.getSensor(7).value * (180 / Math.PI);
         }
         return 0;
