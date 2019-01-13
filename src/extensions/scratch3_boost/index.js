@@ -337,6 +337,7 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             0x51,
+            0x00,
             [this._power * this._direction] // power in range 0-100
         );
 
@@ -368,6 +369,7 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostCommand.MOTOR_POWER,
+            0x00,
             [127] // 127 = break
         );
 
@@ -387,6 +389,7 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostCommand.MOTOR_POWER,
+            0x00,
             [0] // 0 = stop
         );
 
@@ -451,14 +454,14 @@ class Boost {
         this._extensionId = extensionId;
 
         /**
-         * A list of the ids of the motors or sensors in ports A, B, C or D.
+         * A list of the ids of the physical or virtual sensors.
          * @type {string[]}
          * @private
          */
         this._ports = [];
 
         /**
-         * The motors which this Boost could possibly have.
+         * A list of motors registered by the Boost hardware.
          * @type {BoostMotor[]}
          * @private
          */
@@ -562,7 +565,8 @@ class Boost {
         const cmd = this.generateOutputCommand(
             50,
             0x51,
-            [0x51,0x01].concat(rgb)
+            BoostMode.LED,
+            rgb
         );
 
         return this.send(BLECharacteristic, cmd);
@@ -592,6 +596,7 @@ class Boost {
         const cmd = this.generateOutputCommand(
             BoostConnectID.LED,
             0x32,
+            BoostMode.LED,
             [0, 0, 0]
         );
 
@@ -694,23 +699,21 @@ class Boost {
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (connectID, subCommandID = 0x51, values = null) {
+    generateOutputCommand (connectID, subCommandID = 0x51, mode=0x00, values = null) {
         let command = [0x00, BoostCommand.OUTPUT];
         if (values) {
             command = command.concat(
                 connectID
             ).concat(
-                0x00 // Execute immediately
+                0x00 //  Execute immediately
             );
 
             if(subCommandID) {
                 command = command.concat(subCommandID);
             }
-            command = command.concat(0x00)
+            command = command.concat(mode)
             
-            command = command/*.concat(
-                values.length
-            )*/.concat(
+            command = command.concat(
                 values
             );
         }
@@ -774,8 +777,6 @@ class Boost {
      */
     _onMessage (base64) {
         const data = Base64Util.base64ToUint8Array(base64);
-        //console.log(data)
-        // log.info(data);
 
         /**
          * First three bytes are the common header:
@@ -797,9 +798,7 @@ class Boost {
                 switch (data[4]) {
                     case BoostIOEvent.ATTACHED:
                     //case BoostIOEvent.ATTACHED_VIRTUAL:
-                        //console.log("New sensor or motor registered!")
                         this._registerSensorOrMotor(data[3], data[5])
-                        //console.log(data[3] + "," + data[5])
                         break;
                     case BoostIOEvent.DETACHED:
                         this._clearPort(data[3]);
@@ -811,37 +810,23 @@ class Boost {
             case BoostMessageTypes.PORT_VALUE:
                 var type = this._ports[data[3]];
                 var valueFormat = data.length
-                switch(valueFormat) {
-                    // TODO: we can't know whether a 2- or 4-byte value is multiple values or a uint16/32-value respectively. We need to utilize the value format information provided in https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#value-format
-                    case 5:
-                        var value = data[4];
-                        break;
-                    case 6:
-                        var value = [data[4], data[5]];
-                        break;
-                    case 8:
-                        //console.log(Uint32Array(data.slice(4,8)))
-                        //console.log(buf2hex(data))
-                        var dv = new DataView(data.slice(4,8))
-                        console.log(dv.getInt32);
-                        //var value = new Uint32Array(data.slice(4,8))[0]
-                        break;
-                    default:
-                        // Do nothing
-                }
+                // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
                 switch(type) {
                     case BoostDevice.TILT:
-                        this._sensors.tiltX = value[0]
-                        this._sensors.tiltY = value[1]
+                        this._sensors.tiltX = data[4]
+                        this._sensors.tiltY = data[5]
                         break;
                     case BoostDevice.COLOR:
-                        this._sensors.color = value;
+                        this._sensors.color = data[4];
                         break;
                     case BoostDevice.MOTOREXT:
-                        // ToDo: Handle external motor sensor
-                        break;
                     case BoostDevice.MOTORINT:
-                        //console.log(data[3] + "," + valueFormat + ": " + value)
+                        // Taken from EV3 extension tacho motor calculation
+                        let value = data[4] + (data[5] * 256) + (data[6] * 256 * 256) + (data[7] * 256 * 256 * 256);
+                        if (value > 0x7fffffff) {
+                            value = value - 0x100000000;
+                        }
+                        //console.log(value);
                         this._motors[data[3]]._position = value
                         break;
                     case BoostDevice.CURRENT:
@@ -852,12 +837,12 @@ class Boost {
                         console.log("Unknown sensor value! Type: " + type)
                 }
                 break;
+            case BoostMessageTypes.PORT_INPUT_FORMAT:
             case BoostMessageTypes.ERROR:
-                console.log("Error in BLE message! Errorneous command: " + data[3])
+                console.log(buf2hex(data))
                 break;
             default:
-                //console.log("No case found for message:")
-                //console.log(data)                
+                console.log(buf2hex(data))                
         }
     }
 
@@ -1660,14 +1645,15 @@ class Scratch3BoostBlocks {
      */
     getMotorPosition (args) {
         switch(args.MOTOR_ID) {
+            // TODO: Handle negative rotation.
             case BoostMotorLabel.A:
-                return this._peripheral._motors[BoostPort.A].position
+                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.A].position, 0, 360);
             case BoostMotorLabel.B:
-                return this._peripheral._motors[BoostPort.B].position
+                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.B].position, 0, 360);
             case BoostMotorLabel.C:
-                return this._peripheral._motors[BoostPort.C].position
+                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.C].position, 0, 360);
             case BoostMotorLabel.D:
-                return this._peripheral._motors[BoostPort.D].position
+                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.D].position, 0, 360);
             default:
                 log.warn("Asked for a motor position that doesnt exist!")
                 return false;
