@@ -495,11 +495,18 @@ class VirtualMachine extends EventEmitter {
 
         return Promise.all(extensionPromises).then(() => {
             targets.forEach(target => {
-                this.runtime.targets.push(target);
+                this.runtime.addTarget(target);
                 (/** @type RenderedTarget */ target).updateAllDrawableProperties();
                 // Ensure unique sprite name
                 if (target.isSprite()) this.renameSprite(target.id, target.getName());
             });
+            // Sort the executable targets by layerOrder.
+            // Remove layerOrder property after use.
+            this.runtime.executableTargets.sort((a, b) => a.layerOrder - b.layerOrder);
+            targets.forEach(target => {
+                delete target.layerOrder;
+            });
+
             // Select the first target for editing, e.g., the first sprite.
             if (wholeProject && (targets.length > 1)) {
                 this.editingTarget = targets[1];
@@ -1016,7 +1023,8 @@ class VirtualMachine extends EventEmitter {
             throw new Error('No sprite associated with this target.');
         }
         return target.duplicate().then(newTarget => {
-            this.runtime.targets.push(newTarget);
+            this.runtime.addTarget(newTarget);
+            newTarget.goBehindOther(target);
             this.setEditingTarget(newTarget.id);
         });
     }

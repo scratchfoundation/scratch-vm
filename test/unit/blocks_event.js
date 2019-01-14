@@ -54,7 +54,8 @@ test('#760 - broadcastAndWait', t => {
     const tgt = new Target(rt, b);
     tgt.isStage = true;
     tgt.createVariable('testBroadcastID', 'message', Variable.BROADCAST_MESSAGE_TYPE);
-    rt.targets.push(tgt);
+
+    rt.addTarget(tgt);
 
     let th = rt._pushThread('broadcastAndWaitBlock', t);
     const util = new BlockUtility();

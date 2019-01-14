@@ -188,7 +188,7 @@ test('renameVariable calls cloud io device\'s requestRenameVariable function', t
     target.isStage = true;
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.renameVariable('foo', 'bar2');
 
@@ -215,7 +215,7 @@ test('renameVariable does not call cloud io device\'s requestRenameVariable func
     const target = new Target(runtime);
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.renameVariable('foo', 'bar2');
 
@@ -266,7 +266,7 @@ test('deleteVariable calls cloud io device\'s requestRenameVariable function', t
     target.isStage = true;
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.deleteVariable('foo');
 
@@ -288,7 +288,7 @@ test('deleteVariable calls cloud io device\'s requestRenameVariable function', t
     const target = new Target(runtime);
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.deleteVariable('foo');
 

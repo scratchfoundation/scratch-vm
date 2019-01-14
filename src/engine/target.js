@@ -69,10 +69,6 @@ class Target extends EventEmitter {
          * @type {Object.<string, *>}
          */
         this._edgeActivatedHatValues = {};
-
-        if (this.runtime) {
-            this.runtime.addExecutable(this);
-        }
     }
 
     /**

@@ -1560,11 +1560,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Add a target to the execution order.
-     * @param {Target} executableTarget target to add
+     * Add a target to the runtime. This tracks the sprite pane
+     * ordering of the target. The target still needs to be put
+     * into the correct execution order after calling this function.
+     * @param {Target} target target to add
      */
-    addExecutable (executableTarget) {
-        this.executableTargets.push(executableTarget);
+    addTarget (target) {
+        this.targets.push(target);
+        this.executableTargets.push(target);
     }
 
     /**
