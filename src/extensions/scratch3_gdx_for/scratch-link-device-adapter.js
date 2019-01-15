@@ -22,7 +22,7 @@ class ScratchLinkDeviceAdapter {
         const data = Base64Util.uint8ArrayToBase64(commandBuffer);
 
         return this.scratchLinkSocket
-            .write(this._service, this._commandChar, data, 'base64', true);
+            .write(this._service, this._commandChar, data, 'base64');
     }
 
     setup ({onResponse}) {
