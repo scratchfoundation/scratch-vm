@@ -39,10 +39,6 @@ class ScratchLinkDeviceAdapter {
         const response = new DataView(array.buffer);
         return this._deviceOnResponse(response);
     }
-
-    close () {
-        return this.scratchLinkSocket.disconnect();
-    }
 }
 
 module.exports = ScratchLinkDeviceAdapter;
