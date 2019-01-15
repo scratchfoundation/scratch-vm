@@ -129,7 +129,7 @@ class GdxFor {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
-            this._device.keepValues = false;
+            this._device.keepValues = false; // todo: possibly remove after updating Vernier godirect module
             this._startMeasurements();
         });
     }
