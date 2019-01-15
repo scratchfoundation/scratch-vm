@@ -80,6 +80,7 @@ const Ev3Device = {
     30: 'ultrasonic',
     32: 'gyro',
     16: 'touch',
+    6: 'temperature',
     8: 'mediumMotor',
     7: 'largeMotor',
     126: 'none',
@@ -97,6 +98,7 @@ const Ev3Mode = {
     touch: 0, // touch
     color: 1, // ambient
     ultrasonic: 1, // inch
+    temperature: 1, // fahrenheit
     none: 0
 };
 
@@ -108,7 +110,8 @@ const Ev3Mode = {
 const Ev3Label = { // TODO: rename?
     touch: 'button',
     color: 'brightness',
-    ultrasonic: 'distance'
+    ultrasonic: 'distance',
+    temperature: 'temperature'
 };
 
 /**
@@ -437,6 +440,7 @@ class EV3 {
         this._sensors = {
             distance: 0,
             brightness: 0,
+            temperature: 0,
             buttons: [0, 0, 0, 0]
         };
 
@@ -491,6 +495,13 @@ class EV3 {
 
     get brightness () {
         return this._sensors.brightness;
+    }
+
+    get temperature () {
+        let value = this._sensors.temperature;
+        value = Math.round(100 * value) / 100;
+
+        return value;
     }
 
     /**
@@ -871,6 +882,7 @@ class EV3 {
         this._sensors = {
             distance: 0,
             brightness: 0,
+            temperature: 0,
             buttons: [0, 0, 0, 0]
         };
         this._motors = [null, null, null, null];
@@ -1091,6 +1103,15 @@ class Scratch3Ev3Blocks {
                     blockType: BlockType.REPORTER
                 },
                 {
+                    opcode: 'getTemperature',
+                    text: formatMessage({
+                        id: 'ev3.getTemperature',
+                        default: 'temperature',
+                        description: 'gets measured temperature'
+                    }),
+                    blockType: BlockType.REPORTER
+                },
+                {
                     opcode: 'beep',
                     text: formatMessage({
                         id: 'ev3.beepNote',
@@ -1221,6 +1242,10 @@ class Scratch3Ev3Blocks {
 
     getBrightness () {
         return this._peripheral.brightness;
+    }
+
+    getTemperature () {
+        return this._peripheral.temperature;
     }
 
     _playNoteForPicker (note, category) {
