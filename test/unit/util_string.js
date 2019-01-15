@@ -63,3 +63,24 @@ test('unusedName', t => {
     );
     t.end();
 });
+
+test('stringify', t => {
+    const obj = {
+        a: Infinity,
+        b: NaN,
+        c: -Infinity,
+        d: 23,
+        e: 'str',
+        f: {
+            nested: Infinity
+        }
+    };
+    const parsed = JSON.parse(StringUtil.stringify(obj));
+    t.equal(parsed.a, 0);
+    t.equal(parsed.b, 0);
+    t.equal(parsed.c, 0);
+    t.equal(parsed.d, 23);
+    t.equal(parsed.e, 'str');
+    t.equal(parsed.f.nested, 0);
+    t.end();
+});

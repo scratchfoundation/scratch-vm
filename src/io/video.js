@@ -39,6 +39,12 @@ class Video {
          * @type {number}
          */
         this._ghost = 0;
+
+        /**
+         * Store a flag that allows the preview to be forced transparent.
+         * @type {number}
+         */
+        this._forceTransparentPreview = false;
     }
 
     static get FORMAT_IMAGE_DATA () {
@@ -126,8 +132,11 @@ class Video {
      */
     setPreviewGhost (ghost) {
         this._ghost = ghost;
-        if (this._drawable) {
-            this.runtime.renderer.updateDrawableProperties(this._drawable, {ghost});
+        // Confirm that the default value has been changed to a valid id for the drawable
+        if (this._drawable !== -1) {
+            this.runtime.renderer.updateDrawableProperties(this._drawable, {
+                ghost: this._forceTransparentPreview ? 100 : ghost
+            });
         }
     }
 
@@ -155,7 +164,7 @@ class Video {
         // if we haven't already created and started a preview frame render loop, do so
         if (!this._renderPreviewFrame) {
             renderer.updateDrawableProperties(this._drawable, {
-                ghost: this._ghost,
+                ghost: this._forceTransparentPreview ? 100 : this._ghost,
                 visible: true
             });
 
@@ -187,6 +196,21 @@ class Video {
     get videoReady () {
         if (this.provider) return this.provider.videoReady;
         return false;
+    }
+
+    /**
+     * Method implemented by all IO devices to allow external changes.
+     * The only change available externally is hiding the preview, used e.g. to
+     * prevent drawing the preview into project thumbnails.
+     * @param {object} - data passed to this IO device.
+     * @property {boolean} forceTransparentPreview - whether the preview should be forced transparent.
+     */
+    postData ({forceTransparentPreview}) {
+        this._forceTransparentPreview = forceTransparentPreview;
+        // Setting the ghost to the current value will pick up the forceTransparentPreview
+        // flag and override the current ghost. The complexity is to prevent blocks
+        // from overriding forceTransparentPreview
+        this.setPreviewGhost(this._ghost);
     }
 }
 

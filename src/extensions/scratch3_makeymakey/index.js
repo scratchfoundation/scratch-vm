@@ -86,6 +86,9 @@ class Scratch3MakeyMakeyBlocks {
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
 
+        this._clearkeyPressBuffer = this._clearkeyPressBuffer.bind(this);
+        this.runtime.on('PROJECT_STOP_ALL', this._clearkeyPressBuffer);
+
         /*
          * An object containing a set of sequence objects.
          * These are the key sequences currently being detected by the "when
@@ -155,7 +158,7 @@ class Scratch3MakeyMakeyBlocks {
             `${KEY_ID_UP} ${KEY_ID_DOWN}`,
             `${KEY_ID_DOWN} ${KEY_ID_UP}`,
             `${KEY_ID_UP} ${KEY_ID_RIGHT} ${KEY_ID_DOWN} ${KEY_ID_LEFT}`,
-            `${KEY_ID_SPACE} ${KEY_ID_SPACE} ${KEY_ID_SPACE}`,
+            `${KEY_ID_UP} ${KEY_ID_LEFT} ${KEY_ID_DOWN} ${KEY_ID_RIGHT}`,
             `${KEY_ID_UP} ${KEY_ID_UP} ${KEY_ID_DOWN} ${KEY_ID_DOWN} ` +
                 `${KEY_ID_LEFT} ${KEY_ID_RIGHT} ${KEY_ID_LEFT} ${KEY_ID_RIGHT}`
         ];
@@ -207,19 +210,11 @@ class Scratch3MakeyMakeyBlocks {
                     },
                     {
                         text: formatMessage({
-                            id: 'makeymakey.leftArrow',
-                            default: 'left arrow',
-                            description: 'The left arrow key on a computer keyboard.'
+                            id: 'makeymakey.upArrow',
+                            default: 'up arrow',
+                            description: 'The up arrow key on a computer keyboard.'
                         }),
-                        value: KEY_ID_LEFT
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'makeymakey.rightArrow',
-                            default: 'right arrow',
-                            description: 'The right arrow key on a computer keyboard.'
-                        }),
-                        value: KEY_ID_RIGHT
+                        value: KEY_ID_UP
                     },
                     {
                         text: formatMessage({
@@ -231,11 +226,19 @@ class Scratch3MakeyMakeyBlocks {
                     },
                     {
                         text: formatMessage({
-                            id: 'makeymakey.upArrow',
-                            default: 'up arrow',
-                            description: 'The up arrow key on a computer keyboard.'
+                            id: 'makeymakey.rightArrow',
+                            default: 'right arrow',
+                            description: 'The right arrow key on a computer keyboard.'
                         }),
-                        value: KEY_ID_UP
+                        value: KEY_ID_RIGHT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'makeymakey.leftArrow',
+                            default: 'left arrow',
+                            description: 'The left arrow key on a computer keyboard.'
+                        }),
+                        value: KEY_ID_LEFT
                     },
                     {text: 'w', value: 'w'},
                     {text: 'a', value: 'a'},
@@ -335,6 +338,13 @@ class Scratch3MakeyMakeyBlocks {
                 }, SEQUENCE_HAT_TIMEOUT);
             }
         }
+    }
+
+    /**
+     * Clear the key press buffer.
+     */
+    _clearkeyPressBuffer () {
+        this.keyPressBuffer = [];
     }
 
     /*

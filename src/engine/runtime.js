@@ -99,7 +99,7 @@ const ArgumentTypeMap = (() => {
  * cloud variable.
  */
 const cloudDataManager = () => {
-    const limit = 8;
+    const limit = 10;
     let count = 0;
 
     const canAddCloudVariable = () => count < limit;
@@ -220,13 +220,6 @@ class Runtime extends EventEmitter {
          * @type {Object.<string, Object>}
          */
         this._hats = {};
-
-        /**
-         * Currently known values for edge-activated hats.
-         * Keys are block ID for the hat; values are the currently known values.
-         * @type {Object.<string, *>}
-         */
-        this._edgeActivatedHatValues = {};
 
         /**
          * A list of script block IDs that were glowing during the previous frame.
@@ -625,6 +618,14 @@ class Runtime extends EventEmitter {
      */
     static get RUNTIME_STARTED () {
         return 'RUNTIME_STARTED';
+    }
+
+    /**
+     * Event name when the runtime dispose has been called.
+     * @const {string}
+     */
+    static get RUNTIME_DISPOSED () {
+        return 'RUNTIME_DISPOSED';
     }
 
     /**
@@ -1222,24 +1223,6 @@ class Runtime extends EventEmitter {
             this._hats[opcode].edgeActivated;
     }
 
-    /**
-     * Update an edge-activated hat block value.
-     * @param {!string} blockId ID of hat to store value for.
-     * @param {*} newValue Value to store for edge-activated hat.
-     * @return {*} The old value for the edge-activated hat.
-     */
-    updateEdgeActivatedValue (blockId, newValue) {
-        const oldValue = this._edgeActivatedHatValues[blockId];
-        this._edgeActivatedHatValues[blockId] = newValue;
-        return oldValue;
-    }
-
-    /**
-     * Clear all edge-activaed hat values.
-     */
-    clearEdgeActivatedValues () {
-        this._edgeActivatedHatValues = {};
-    }
 
     /**
      * Attach the audio engine
@@ -1541,13 +1524,20 @@ class Runtime extends EventEmitter {
         return newThreads;
     }
 
+
     /**
      * Dispose all targets. Return to clean state.
      */
     dispose () {
         this.stopAll();
+        // Deleting each target's variable's monitors.
+        this.targets.forEach(target => {
+            if (target.isOriginal) target.deleteMonitors();
+        });
+
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
+        this.emit(Runtime.RUNTIME_DISPOSED);
         // @todo clear out extensions? turboMode? etc.
 
         // *********** Cloud *******************
@@ -1570,11 +1560,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Add a target to the execution order.
-     * @param {Target} executableTarget target to add
+     * Add a target to the runtime. This tracks the sprite pane
+     * ordering of the target. The target still needs to be put
+     * into the correct execution order after calling this function.
+     * @param {Target} target target to add
      */
-    addExecutable (executableTarget) {
-        this.executableTargets.push(executableTarget);
+    addTarget (target) {
+        this.targets.push(target);
+        this.executableTargets.push(target);
     }
 
     /**
@@ -1672,7 +1665,7 @@ class Runtime extends EventEmitter {
         this.stopAll();
         this.emit(Runtime.PROJECT_START);
         this.ioDevices.clock.resetProjectTimer();
-        this.clearEdgeActivatedValues();
+        this.targets.forEach(target => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onGreenFlag();

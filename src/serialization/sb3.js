@@ -199,15 +199,13 @@ const serializeBlock = function (block) {
     obj.parent = block.parent;
     obj.inputs = serializeInputs(block.inputs);
     obj.fields = serializeFields(block.fields);
-    obj.topLevel = block.topLevel ? block.topLevel : false;
     obj.shadow = block.shadow;
     if (block.topLevel) {
-        if (block.x) {
-            obj.x = Math.round(block.x);
-        }
-        if (block.y) {
-            obj.y = Math.round(block.y);
-        }
+        obj.topLevel = true;
+        obj.x = block.x ? Math.round(block.x) : 0;
+        obj.y = block.y ? Math.round(block.y) : 0;
+    } else {
+        obj.topLevel = false;
     }
     if (block.mutation) {
         obj.mutation = block.mutation;
@@ -325,7 +323,7 @@ const serializeBlocks = function (blocks) {
         // a shadow block, and there are no blocks that reference it, otherwise
         // they would have been compressed in the last pass)
         if (Array.isArray(serializedBlock) &&
-            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock) < 0) {
+            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock[0]) < 0) {
             log.warn(`Found an unexpected top level primitive with block ID: ${
                 blockID}; deleting it from serialized blocks.`);
             delete obj[blockID];
@@ -449,6 +447,13 @@ const serializeTarget = function (target, extensions) {
     obj.broadcasts = vars.broadcasts;
     [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
     obj.comments = serializeComments(target.comments);
+
+    // TODO remove this check/patch when (#1901) is fixed
+    if (target.currentCostume < 0 || target.currentCostume >= target.costumes.length) {
+        log.warn(`currentCostume property for target ${target.name} is out of range`);
+        target.currentCostume = MathUtil.clamp(target.currentCostume, 0, target.costumes.length - 1);
+    }
+
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
@@ -522,7 +527,7 @@ const serialize = function (runtime, targetId) {
 
     const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
 
-    const flattenedOriginalTargets = JSON.parse(JSON.stringify(originalTargetsToSerialize));
+    const flattenedOriginalTargets = originalTargetsToSerialize.map(t => t.toJSON());
 
     // If the renderer is attached, and we're serializing a whole project (not a sprite)
     // add a temporary layerOrder property to each target.
@@ -802,7 +807,7 @@ const deserializeBlocks = function (blocks) {
             // this is one of the primitives
             // delete the old entry in object.blocks and replace it w/the
             // deserialized object
-            delete block[blockId];
+            delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
             continue;
         }
@@ -906,10 +911,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeSound(sound, runtime, zip)
-            .then(asset => {
-                sound.asset = asset;
-                return loadSound(sound, runtime, sprite);
-            });
+            .then(() => loadSound(sound, runtime, sprite));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });
@@ -1012,7 +1014,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostume')) {
-        target.currentCostume = object.currentCostume;
+        target.currentCostume = MathUtil.clamp(object.currentCostume, 0, object.costumes.length - 1);
     }
     if (object.hasOwnProperty('rotationStyle')) {
         target.rotationStyle = object.rotationStyle;
@@ -1025,6 +1027,9 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // so that we can correctly order sprites in the target pane.
         // This will be deleted after we are done parsing and ordering the targets list.
         target.targetPaneOrder = object.targetPaneOrder;
+    }
+    if (object.hasOwnProperty('draggable')) {
+        target.draggable = object.draggable;
     }
     Promise.all(costumePromises).then(costumes => {
         sprite.costumes = costumes;
@@ -1152,12 +1157,18 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
             parseScratchObject(target, runtime, extensions, zip))
     )
         .then(targets => targets // Re-sort targets back into original sprite-pane ordering
+            .map((t, i) => {
+                // Add layer order property to deserialized targets.
+                // This property is used to initialize executable targets in
+                // the correct order and is deleted in VM's installTargets function
+                t.layerOrder = i;
+                return t;
+            })
             .sort((a, b) => a.targetPaneOrder - b.targetPaneOrder)
             .map(t => {
                 // Delete the temporary properties used for
                 // sprite pane ordering and stage layer ordering
                 delete t.targetPaneOrder;
-                delete t.layerOrder;
                 return t;
             }))
         .then(targets => {

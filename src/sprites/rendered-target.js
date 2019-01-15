@@ -1,6 +1,7 @@
 const log = require('../util/log');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
+const Clone = require('../util/clone');
 const Target = require('../engine/target');
 const StageLayering = require('../engine/stage-layering');
 
@@ -1015,12 +1016,11 @@ class RenderedTarget extends Target {
         newClone.size = this.size;
         newClone.currentCostume = this.currentCostume;
         newClone.rotationStyle = this.rotationStyle;
-        newClone.effects = JSON.parse(JSON.stringify(this.effects));
+        newClone.effects = Clone.simple(this.effects);
         newClone.variables = this.duplicateVariables();
+        newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
-        // Place behind the current target.
-        newClone.goBehindOther(this);
         return newClone;
     }
 
@@ -1044,7 +1044,6 @@ class RenderedTarget extends Target {
             newTarget.effects = JSON.parse(JSON.stringify(this.effects));
             newTarget.variables = this.duplicateVariables(newTarget.blocks);
             newTarget.updateAllDrawableProperties();
-            newTarget.goBehindOther(this);
             return newTarget;
         });
     }

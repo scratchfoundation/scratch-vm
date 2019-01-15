@@ -188,7 +188,7 @@ test('renameVariable calls cloud io device\'s requestRenameVariable function', t
     target.isStage = true;
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.renameVariable('foo', 'bar2');
 
@@ -215,7 +215,7 @@ test('renameVariable does not call cloud io device\'s requestRenameVariable func
     const target = new Target(runtime);
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.renameVariable('foo', 'bar2');
 
@@ -266,7 +266,7 @@ test('deleteVariable calls cloud io device\'s requestRenameVariable function', t
     target.isStage = true;
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.deleteVariable('foo');
 
@@ -288,7 +288,7 @@ test('deleteVariable calls cloud io device\'s requestRenameVariable function', t
     const target = new Target(runtime);
     const mockCloudVar = new Variable('foo', 'bar', Variable.SCALAR_TYPE, true);
     target.variables[mockCloudVar.id] = mockCloudVar;
-    runtime.targets.push(target);
+    runtime.addTarget(target);
 
     target.deleteVariable('foo');
 
@@ -320,6 +320,19 @@ test('duplicateVariable creates a new variable with a new ID by default', t => {
     t.notEqual(newVariable.value, originalVariable.value);
     t.equal(originalVariable.value, 10);
 
+    t.end();
+});
+
+test('duplicateVariable creates new array reference for list variable.value', t => {
+    const target = new Target();
+    const arr = [1, 2, 3];
+    target.createVariable('a var ID', 'arr', Variable.LIST_TYPE);
+    const originalVariable = target.variables['a var ID'];
+    originalVariable.value = arr;
+    const newVariable = target.duplicateVariable('a var ID');
+    // Values are deeply equal but not the same object
+    t.deepEqual(originalVariable.value, newVariable.value);
+    t.notEqual(originalVariable.value, newVariable.value);
     t.end();
 });
 

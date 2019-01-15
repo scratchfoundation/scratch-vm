@@ -92,21 +92,22 @@ class Scratch3VideoSensingBlocks {
          */
         this._lastUpdate = null;
 
+        /**
+         * A flag to determine if this extension has been installed in a project.
+         * It is set to false the first time getInfo is run.
+         * @type {boolean}
+         */
+        this.firstInstall = true;
+
         if (this.runtime.ioDevices) {
+            // Configure the video device with values from globally stored locations.
+            this.runtime.on(Runtime.PROJECT_LOADED, this.updateVideoDisplay.bind(this));
+
             // Clear target motion state values when the project starts.
             this.runtime.on(Runtime.PROJECT_RUN_START, this.reset.bind(this));
 
             // Kick off looping the analysis logic.
             this._loop();
-
-            // Configure the video device with values from a globally stored
-            // location.
-            this.setVideoTransparency({
-                TRANSPARENCY: this.globalVideoTransparency
-            });
-            this.videoToggle({
-                VIDEO_STATE: this.globalVideoState
-            });
         }
     }
 
@@ -179,7 +180,10 @@ class Scratch3VideoSensingBlocks {
         if (stage) {
             return stage.videoState;
         }
-        return VideoState.ON;
+        // Though the default value for the stage is normally 'on', we need to default
+        // to 'off' here to prevent the video device from briefly activating
+        // while waiting for stage targets to be installed that say it should be off
+        return VideoState.OFF;
     }
 
     set globalVideoState (state) {
@@ -188,6 +192,19 @@ class Scratch3VideoSensingBlocks {
             stage.videoState = state;
         }
         return state;
+    }
+
+    /**
+     * Get the latest values for video transparency and state,
+     * and set the video device to use them.
+     */
+    updateVideoDisplay () {
+        this.setVideoTransparency({
+            TRANSPARENCY: this.globalVideoTransparency
+        });
+        this.videoToggle({
+            VIDEO_STATE: this.globalVideoState
+        });
     }
 
     /**
@@ -380,8 +397,16 @@ class Scratch3VideoSensingBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
-        // Enable the video layer
-        this.runtime.ioDevices.video.enableVideo();
+        // Set the video display properties to defaults the first time
+        // getInfo is run. This turns on the video device when it is
+        // first added to a project, and is overwritten by a PROJECT_LOADED
+        // event listener that later calls updateVideoDisplay
+        if (this.firstInstall) {
+            this.globalVideoState = VideoState.ON;
+            this.globalVideoTransparency = 50;
+            this.updateVideoDisplay();
+            this.firstInstall = false;
+        }
 
         // Return extension definition
         return {

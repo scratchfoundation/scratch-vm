@@ -43,8 +43,14 @@ const deserializeSound = function (sound, runtime, zip, assetFileName) {
         storage.AssetType.Sound,
         dataFormat,
         data,
-        sound.assetId
-    ));
+        null,
+        true
+    ))
+        .then(asset => {
+            sound.asset = asset;
+            sound.assetId = asset.assetId;
+            sound.md5 = `${asset.assetId}.${asset.dataFormat}`;
+        });
 };
 
 /**
@@ -80,9 +86,12 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
             costume.asset.assetType,
             costume.asset.dataFormat,
             new Uint8Array(Object.keys(costume.asset.data).map(key => costume.asset.data[key])),
-            costume.asset.assetId
+            null,
+            true
         )).then(asset => {
             costume.asset = asset;
+            costume.assetId = asset.assetId;
+            costume.md5 = `${asset.assetId}.${asset.dataFormat}`;
         });
     }
 
@@ -140,10 +149,13 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
                 // TODO eventually we want to map non-png's to their actual file types?
                 costumeFormat,
                 data,
-                assetId
+                null,
+                true
             ))
             .then(asset => {
                 costume.asset = asset;
+                costume.assetId = asset.assetId;
+                costume.md5 = `${asset.assetId}.${asset.dataFormat}`;
             })
     ]);
 };

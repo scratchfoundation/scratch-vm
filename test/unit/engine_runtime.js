@@ -139,7 +139,7 @@ test('Project loaded emits runtime event', t => {
     });
 });
 
-test('Cloud variable limit allows only 8 cloud variables', t => {
+test('Cloud variable limit allows only 10 cloud variables', t => {
     // This is a test of just the cloud variable limit mechanism
     // The functions being tested below need to be used when
     // creating and deleting cloud variables in the runtime.
@@ -148,7 +148,7 @@ test('Cloud variable limit allows only 8 cloud variables', t => {
 
     t.equal(rt.hasCloudData(), false);
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
         t.equal(rt.canAddCloudVariable(), true);
         rt.addCloudVariable();
         // Adding a cloud variable should change the
@@ -172,7 +172,7 @@ test('Cloud variable limit allows only 8 cloud variables', t => {
     rt.dispose();
     t.equal(rt.hasCloudData(), false);
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 10; i++) {
         t.equal(rt.canAddCloudVariable(), true);
         rt.addCloudVariable();
         t.equal(rt.hasCloudData(), true);
@@ -237,5 +237,16 @@ test('setCompatibilityMode does not restart if it was not running', t => {
 
     rt.setCompatibilityMode(true);
     t.equal(started, false);
+    t.end();
+});
+
+test('Disposing the runtime emits an event', t => {
+    let disposed = false;
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_DISPOSED', () => {
+        disposed = true;
+    });
+    rt.dispose();
+    t.equal(disposed, true);
     t.end();
 });

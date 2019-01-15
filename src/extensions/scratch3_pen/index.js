@@ -67,6 +67,7 @@ class Scratch3PenBlocks {
         this._onTargetMoved = this._onTargetMoved.bind(this);
 
         runtime.on('targetWasCreated', this._onTargetCreated);
+        runtime.on('RUNTIME_DISPOSED', this.clear.bind(this));
     }
 
     /**

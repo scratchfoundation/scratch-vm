@@ -5,6 +5,7 @@ const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer
 const VirtualMachine = require('../../src/index');
 const Thread = require('../../src/engine/thread');
 const Runtime = require('../../src/engine/runtime');
+const execute = require('../../src/engine/execute.js');
 
 const projectUri = path.resolve(__dirname, '../fixtures/loudness-hat-block.sb2');
 const project = readFileToBuffer(projectUri);
@@ -98,6 +99,109 @@ test('edge activated hat thread not added twice', t => {
             t.equal(doneThreads.length, 0);
             checkIsHatThread(t, vm, vm.runtime.threads[0]);
             t.assert(vm.runtime.threads[0] === prevThread);
+            t.end();
+        });
+    });
+});
+
+
+/**
+ * Duplicating a sprite should also track duplicated edge activated hat in
+ * runtime's _edgeActivatedHatValues map.
+ */
+test('edge activated hat should trigger for both sprites when sprite is duplicated', t => {
+
+    // Project that is similar to loudness-hat-block.sb2, but has code on the sprite so that
+    // the sprite can be duplicated
+    const projectWithSpriteUri = path.resolve(__dirname, '../fixtures/edge-triggered-hat.sb3');
+    const projectWithSprite = readFileToBuffer(projectWithSpriteUri);
+
+    const vm = new VirtualMachine();
+    vm.attachStorage(makeTestStorage());
+
+    // Start VM, load project, and run
+    t.doesNotThrow(() => {
+        // Note: don't run vm.start(), we handle calling _step() manually in this test
+        vm.runtime.currentStepTime = 0;
+        vm.clear();
+        vm.setCompatibilityMode(false);
+        vm.setTurboMode(false);
+
+        vm.loadProject(projectWithSprite).then(() => {
+            t.equal(vm.runtime.threads.length, 0);
+
+            vm.runtime._step();
+            t.equal(vm.runtime.threads.length, 1);
+            checkIsHatThread(t, vm, vm.runtime.threads[0]);
+            t.assert(vm.runtime.threads[0].status === Thread.STATUS_RUNNING);
+            // Run execute on the thread to populate the runtime's
+            // _edgeActivatedHatValues object
+            execute(vm.runtime.sequencer, vm.runtime.threads[0]);
+            let numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 1);
+
+            vm.duplicateSprite(vm.runtime.targets[1].id).then(() => {
+                vm.runtime._step();
+                // Check that the runtime's _edgeActivatedHatValues object has two separate keys
+                // after execute is run on each thread
+                vm.runtime.threads.forEach(thread => execute(vm.runtime.sequencer, thread));
+                numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                    val + Object.keys(target._edgeActivatedHatValues).length, 0);
+                t.equal(numTargetEdgeHats, 2);
+                t.end();
+            });
+
+        });
+    });
+});
+
+/**
+ * Cloning a sprite should also track cloned edge activated hat separately
+ * runtime's _edgeActivatedHatValues map.
+ */
+test('edge activated hat should trigger for both sprites when sprite is cloned', t => {
+
+    // Project that is similar to loudness-hat-block.sb2, but has code on the sprite so that
+    // the sprite can be duplicated
+    const projectWithSpriteUri = path.resolve(__dirname, '../fixtures/edge-triggered-hat.sb3');
+    const projectWithSprite = readFileToBuffer(projectWithSpriteUri);
+
+    const vm = new VirtualMachine();
+    vm.attachStorage(makeTestStorage());
+
+    // Start VM, load project, and run
+    t.doesNotThrow(() => {
+        // Note: don't run vm.start(), we handle calling _step() manually in this test
+        vm.runtime.currentStepTime = 0;
+        vm.clear();
+        vm.setCompatibilityMode(false);
+        vm.setTurboMode(false);
+
+        vm.loadProject(projectWithSprite).then(() => {
+            t.equal(vm.runtime.threads.length, 0);
+
+            vm.runtime._step();
+            t.equal(vm.runtime.threads.length, 1);
+            checkIsHatThread(t, vm, vm.runtime.threads[0]);
+            t.assert(vm.runtime.threads[0].status === Thread.STATUS_RUNNING);
+            // Run execute on the thread to populate the runtime's
+            // _edgeActivatedHatValues object
+            execute(vm.runtime.sequencer, vm.runtime.threads[0]);
+            let numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 1);
+
+            const cloneTarget = vm.runtime.targets[1].makeClone();
+            vm.runtime.addTarget(cloneTarget);
+
+            vm.runtime._step();
+            // Check that the runtime's _edgeActivatedHatValues object has two separate keys
+            // after execute is run on each thread
+            vm.runtime.threads.forEach(thread => execute(vm.runtime.sequencer, thread));
+            numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
+                val + Object.keys(target._edgeActivatedHatValues).length, 0);
+            t.equal(numTargetEdgeHats, 2);
             t.end();
         });
     });

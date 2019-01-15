@@ -40,14 +40,14 @@ test('mouseDown', t => {
     const m = new Mouse(rt);
 
     m.postData({
-        x: 10,
-        y: 400,
+        x: 9.9,
+        y: 400.1,
         isDown: true,
         canvasWidth: 480,
         canvasHeight: 360
     });
-    t.strictEquals(m.getClientX(), 10);
-    t.strictEquals(m.getClientY(), 400);
+    t.strictEquals(m.getClientX(), 9.9);
+    t.strictEquals(m.getClientY(), 400.1);
     t.strictEquals(m.getScratchX(), -230);
     t.strictEquals(m.getScratchY(), -180);
     t.strictEquals(m.getIsDown(), true);

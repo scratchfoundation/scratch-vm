@@ -63,11 +63,13 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
             // true and used to be false, or the stack was activated explicitly
             // via stack click
             if (!thread.stackClick) {
-                const oldEdgeValue = sequencer.runtime.updateEdgeActivatedValue(
+                const hasOldEdgeValue = thread.target.hasEdgeActivatedValue(currentBlockId);
+                const oldEdgeValue = thread.target.updateEdgeActivatedValue(
                     currentBlockId,
                     resolvedValue
                 );
-                const edgeWasActivated = !oldEdgeValue && resolvedValue;
+
+                const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && resolvedValue) : resolvedValue;
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
@@ -110,8 +112,8 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
     // Promise handlers
     primitiveReportedValue.then(resolvedValue => {
         handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
-        // If its a command block.
-        if (lastOperation && typeof resolvedValue === 'undefined') {
+        // If it's a command block or a top level reporter in a stackClick.
+        if (lastOperation) {
             let stackFrame;
             let nextBlockId;
             do {

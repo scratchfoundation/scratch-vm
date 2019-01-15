@@ -63,9 +63,12 @@ class Target extends EventEmitter {
          */
         this._customState = {};
 
-        if (this.runtime) {
-            this.runtime.addExecutable(this);
-        }
+        /**
+         * Currently known values for edge-activated hats.
+         * Keys are block ID for the hat; values are the currently known values.
+         * @type {Object.<string, *>}
+         */
+        this._edgeActivatedHatValues = {};
     }
 
     /**
@@ -82,6 +85,29 @@ class Target extends EventEmitter {
      */
     getName () {
         return this.id;
+    }
+
+    /**
+     * Update an edge-activated hat block value.
+     * @param {!string} blockId ID of hat to store value for.
+     * @param {*} newValue Value to store for edge-activated hat.
+     * @return {*} The old value for the edge-activated hat.
+     */
+    updateEdgeActivatedValue (blockId, newValue) {
+        const oldValue = this._edgeActivatedHatValues[blockId];
+        this._edgeActivatedHatValues[blockId] = newValue;
+        return oldValue;
+    }
+
+    hasEdgeActivatedValue (blockId) {
+        return this._edgeActivatedHatValues.hasOwnProperty(blockId);
+    }
+
+    /**
+     * Clear all edge-activaed hat values.
+     */
+    clearEdgeActivatedValues () {
+        this._edgeActivatedHatValues = {};
     }
 
     /**
@@ -337,6 +363,26 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Remove this target's monitors from the runtime state and remove the
+     * target-specific monitored blocks (e.g. local variables, global variables for the stage, x-position).
+     * NOTE: This does not delete any of the stage monitors like backdrop name.
+     */
+    deleteMonitors () {
+        this.runtime.requestRemoveMonitorByTargetId(this.id);
+        let targetSpecificMonitorBlockIds;
+        if (this.isStage) {
+            // This only deletes global variables and not other stage monitors like backdrop number.
+            targetSpecificMonitorBlockIds = Object.keys(this.variables);
+        } else {
+            targetSpecificMonitorBlockIds = Object.keys(this.runtime.monitorBlocks._blocks)
+                .filter(key => this.runtime.monitorBlocks._blocks[key].targetId === this.id);
+        }
+        for (const blockId of targetSpecificMonitorBlockIds) {
+            this.runtime.monitorBlocks.deleteBlock(blockId);
+        }
+    }
+
+    /**
      * Create a clone of the variable with the given id from the dictionary of
      * this target's variables.
      * @param {string} id Id of variable to duplicate.
@@ -354,7 +400,11 @@ class Target extends EventEmitter {
                 originalVariable.type,
                 originalVariable.isCloud
             );
-            newVariable.value = originalVariable.value;
+            if (newVariable.type === Variable.LIST_TYPE) {
+                newVariable.value = originalVariable.value.slice(0);
+            } else {
+                newVariable.value = originalVariable.value;
+            }
             return newVariable;
         }
         return null;

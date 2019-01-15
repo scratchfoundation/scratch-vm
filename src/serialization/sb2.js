@@ -12,6 +12,7 @@ const Color = require('../util/color');
 const log = require('../util/log');
 const uid = require('../util/uid');
 const StringUtil = require('../util/string-util');
+const MathUtil = require('../util/math-util');
 const specMap = require('./sb2_specmap');
 const Comment = require('../engine/comment');
 const Variable = require('../engine/variable');
@@ -256,6 +257,13 @@ const globalBroadcastMsgStateGenerator = (function () {
  */
 
 const parseMonitorObject = (object, runtime, targets, extensions) => {
+    // If we can't find the block in the spec map, ignore it.
+    // This happens for things like Lego Wedo 1.0 monitors.
+    const mapped = specMap[object.cmd];
+    if (!mapped) {
+        log.warn(`Could not find monitor block with opcode: ${object.cmd}`);
+        return;
+    }
     // In scratch 2.0, there are two monitors that now correspond to extension
     // blocks (tempo and video motion/direction). In the case of the
     // video motion/direction block, this reporter is not monitorable in Scratch 3.0.
@@ -442,7 +450,15 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             const md5ext = costumeSource.baseLayerMD5;
             const idParts = StringUtil.splitFirst(md5ext, '.');
             const md5 = idParts[0];
-            const ext = idParts[1].toLowerCase();
+            let ext;
+            if (idParts.length === 2 && idParts[1]) {
+                ext = idParts[1];
+            } else {
+                // Default to 'png' if baseLayerMD5 is not formatted correctly
+                ext = 'png';
+                // Fix costume md5 for later
+                costume.md5 = `${costume.md5}.${ext}`;
+            }
             costume.dataFormat = ext;
             costume.assetId = md5;
             if (costumeSource.textLayerMD5) {
@@ -489,10 +505,8 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
             // followed by the file ext
             const assetFileName = `${soundSource.soundID}.${ext}`;
             soundPromises.push(deserializeSound(sound, runtime, zip, assetFileName)
-                .then(asset => {
-                    sound.asset = asset;
-                    return loadSound(sound, runtime, sprite);
-                }));
+                .then(() => loadSound(sound, runtime, sprite))
+            );
         }
     }
 
@@ -636,7 +650,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         target.visible = object.visible;
     }
     if (object.hasOwnProperty('currentCostumeIndex')) {
-        target.currentCostume = Math.round(object.currentCostumeIndex);
+        // Current costume index can sometimes be a floating
+        // point number, use Math.floor to come up with an appropriate index
+        // and clamp it to the actual number of costumes the object has for good measure.
+        target.currentCostume = MathUtil.clamp(Math.floor(object.currentCostumeIndex), 0, object.costumes.length - 1);
     }
     if (object.hasOwnProperty('rotationStyle')) {
         if (object.rotationStyle === 'none') {
@@ -659,6 +676,8 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip)
         if (object.info.hasOwnProperty('videoOn')) {
             if (object.info.videoOn) {
                 target.videoState = RenderedTarget.VIDEO_STATE.ON;
+            } else {
+                target.videoState = RenderedTarget.VIDEO_STATE.OFF;
             }
         }
     }
@@ -762,14 +781,17 @@ const reorderParsedTargets = function (targets) {
     // Reorder parsed targets based on the temporary targetPaneOrder property
     // and then delete it.
 
-    targets.sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
+    const reordered = targets.map((t, index) => {
+        t.layerOrder = index;
+        return t;
+    }).sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
 
     // Delete the temporary target pane ordering since we shouldn't need it anymore.
-    targets.forEach(t => {
+    reordered.forEach(t => {
         delete t.targetPaneOrder;
     });
 
-    return targets;
+    return reordered;
 };
 
 
