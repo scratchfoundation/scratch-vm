@@ -75,8 +75,8 @@ class GdxFor {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        if (this._device) {
-            this._device.close();
+        if (this._scratchLinkSocket) {
+            this._scratchLinkSocket.disconnect();
         }
 
         this._scratchLinkSocket = new BLE(this._runtime, this._extensionId, {
@@ -104,8 +104,8 @@ class GdxFor {
      * Disconnect from the GDX FOR.
      */
     disconnect () {
-        if (this._device) {
-            this._device.close();
+        if (this._scratchLinkSocket) {
+            this._scratchLinkSocket.disconnect();
         }
     }
 
