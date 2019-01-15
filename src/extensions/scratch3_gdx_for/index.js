@@ -129,6 +129,7 @@ class GdxFor {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             this._device = device;
+            this._device.keepValues = false; // todo: possibly remove after updating Vernier godirect module
             this._startMeasurements();
         });
     }
@@ -140,16 +141,6 @@ class GdxFor {
     _startMeasurements () {
         this._device.sensors.forEach(sensor => {
             sensor.setEnabled(true);
-
-            // For now, clear the save sensor values. The unlimited saving
-            // will be fixed in a future @vernier/godirect release.
-            sensor.on('value-changed', changedSensor => {
-                if (changedSensor.values.length > 1000) {
-                    const val = changedSensor.value;
-                    changedSensor.clear();
-                    changedSensor.setValue(val);
-                }
-            });
         });
         this._device.start(10); // Set the period to 10 milliseconds
     }
