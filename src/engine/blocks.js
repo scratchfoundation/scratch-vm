@@ -990,6 +990,10 @@ class Blocks {
      */
     blockToXML (blockId, comments) {
         const block = this._blocks[blockId];
+        // block should exist, but currently some blocks' next property point
+        // to a blockId for non-existent blocks. Until we track down that behavior,
+        // this early exit allows the project to load.
+        if (!block) return;
         // Encode properties of this block.
         const tagName = (block.shadow) ? 'shadow' : 'block';
         let xmlString =
