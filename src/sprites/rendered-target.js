@@ -1021,8 +1021,6 @@ class RenderedTarget extends Target {
         newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
-        // Place behind the current target.
-        newClone.goBehindOther(this);
         return newClone;
     }
 
@@ -1046,7 +1044,6 @@ class RenderedTarget extends Target {
             newTarget.effects = JSON.parse(JSON.stringify(this.effects));
             newTarget.variables = this.duplicateVariables(newTarget.blocks);
             newTarget.updateAllDrawableProperties();
-            newTarget.goBehindOther(this);
             return newTarget;
         });
     }

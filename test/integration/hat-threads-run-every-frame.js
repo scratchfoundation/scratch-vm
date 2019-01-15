@@ -192,7 +192,8 @@ test('edge activated hat should trigger for both sprites when sprite is cloned',
                 val + Object.keys(target._edgeActivatedHatValues).length, 0);
             t.equal(numTargetEdgeHats, 1);
 
-            vm.runtime.targets.push(vm.runtime.targets[1].makeClone());
+            const cloneTarget = vm.runtime.targets[1].makeClone();
+            vm.runtime.addTarget(cloneTarget);
 
             vm.runtime._step();
             // Check that the runtime's _edgeActivatedHatValues object has two separate keys

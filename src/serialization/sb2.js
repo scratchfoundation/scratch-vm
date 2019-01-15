@@ -781,14 +781,17 @@ const reorderParsedTargets = function (targets) {
     // Reorder parsed targets based on the temporary targetPaneOrder property
     // and then delete it.
 
-    targets.sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
+    const reordered = targets.map((t, index) => {
+        t.layerOrder = index;
+        return t;
+    }).sort((a, b) => a.targetPaneOrder - b.targetPaneOrder);
 
     // Delete the temporary target pane ordering since we shouldn't need it anymore.
-    targets.forEach(t => {
+    reordered.forEach(t => {
         delete t.targetPaneOrder;
     });
 
-    return targets;
+    return reordered;
 };
 
 
