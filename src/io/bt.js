@@ -143,10 +143,10 @@ class BT extends JSONRPCWebSocket {
 
         if (!this._connected) return;
 
-        this.disconnect();
-
         if (this._disconnectCallback) {
-            this._disconnectCallback();
+            this._disconnectCallback(); // must call disconnect()
+        } else {
+            this.disconnect();
         }
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
