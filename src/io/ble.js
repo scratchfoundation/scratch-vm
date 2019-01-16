@@ -187,7 +187,7 @@ class BLE extends JSONRPCWebSocket {
     /**
      * Handle an error resulting from losing connection to a peripheral.
      *
-     * This could be due to a variety of cases:
+     * This could be due to:
      * - battery depletion
      * - going out of bluetooth range
      * - being powered down
