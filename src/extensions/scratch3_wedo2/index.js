@@ -788,8 +788,7 @@ class WeDo2 {
         this._ble.read(
             BLEService.DEVICE_SERVICE,
             BLECharacteristic.LOW_VOLTAGE_ALERT,
-            false,
-            this._onMessage // TODO: make optional
+            false
         );
     }
 
