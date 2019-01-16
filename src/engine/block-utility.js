@@ -171,6 +171,13 @@ class BlockUtility {
     }
 
     /**
+     * Initialize procedure parameters in the thread before pushing parameters.
+     */
+    initParams () {
+        this.thread.initParams();
+    }
+
+    /**
      * Store a procedure parameter value by its name.
      * @param {string} paramName The procedure's parameter name.
      * @param {*} paramValue The procedure's parameter value.
