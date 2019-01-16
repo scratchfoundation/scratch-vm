@@ -21,6 +21,10 @@ class BlockUtility {
          * @type {?Thread}
          */
         this.thread = thread;
+
+        this._nowObj = {
+            now: () => this.runtime.currentMSecs
+        };
     }
 
     /**
@@ -46,9 +50,7 @@ class BlockUtility {
      */
     get nowObj () {
         if (this.runtime) {
-            return {
-                now: () => this.runtime.currentMSecs
-            };
+            return this._nowObj;
         }
         return null;
     }
