@@ -14,7 +14,7 @@ npm install scratch-vm
 ```
 To set up a development environment to edit scratch-vm yourself:
 ```bash
-git clone https://github.com/LLK/scratch-vm.git
+git clone https://github.com/edbotdev/scratch-vm.git
 cd scratch-vm
 npm install
 ```
