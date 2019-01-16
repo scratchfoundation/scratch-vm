@@ -135,19 +135,19 @@ class BT extends JSONRPCWebSocket {
      * - going out of bluetooth range
      * - being powered down
      *
-     * If the extension using this BLE socket has a disconnect callback, call it,
-     * and also disconnect the socket. Finally, emit an error to the runtime.
+     * Disconnect the socket, and if the extension using this socket has a
+     * disconnect callback, call it. Finally, emit an error to the runtime.
      */
     handleDisconnectError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
 
         if (!this._connected) return;
 
+        this.disconnect();
+
         if (this._disconnectCallback) {
             this._disconnectCallback();
         }
-
-        this.disconnect();
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
             message: `Scratch lost connection to`,
