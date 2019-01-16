@@ -143,6 +143,7 @@ class BT extends JSONRPCWebSocket {
 
         if (!this._connected) return;
 
+        // TODO: Fix branching by splitting up cleanup/disconnect in extension
         if (this._disconnectCallback) {
             this._disconnectCallback(); // must call disconnect()
         } else {
