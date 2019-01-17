@@ -21,7 +21,7 @@ class BT extends JSONRPCWebSocket {
         this._ws = ws;
         this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
         this._ws.onerror = this._handleRequestError.bind(this, 'ws onerror');
-        this._ws.onclose = this._handleDisconnectError.bind(this, 'ws onclose');
+        this._ws.onclose = this.handleDisconnectError.bind(this, 'ws onclose');
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
