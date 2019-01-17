@@ -126,7 +126,9 @@ class BLE extends JSONRPCWebSocket {
         if (optStartNotifications) {
             params.startNotifications = true;
         }
-        this._characteristicDidChangeCallback = onCharacteristicChanged;
+        if (onCharacteristicChanged) {
+            this._characteristicDidChangeCallback = onCharacteristicChanged;
+        }
         return this.sendRemoteRequest('read', params)
             .catch(e => {
                 this.handleDisconnectError(e);
