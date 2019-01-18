@@ -4,6 +4,7 @@ const escapeHtml = require('escape-html');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
+const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
@@ -1426,6 +1427,20 @@ class Runtime extends EventEmitter {
         }
     }
 
+    allScriptsByOpcodeDo (opcode, f, optTarget) {
+        let targets = this.executableTargets;
+        if (optTarget) {
+            targets = [optTarget];
+        }
+        for (let t = targets.length - 1; t >= 0; t--) {
+            const target = targets[t];
+            const scripts = BlocksRuntimeCache.getScripts(target.blocks, opcode);
+            for (let j = 0; j < scripts.length; j++) {
+                f(scripts[j], target);
+            }
+        }
+    }
+
     /**
      * Start all relevant hats.
      * @param {!string} requestedHatOpcode Opcode of hats to start.
@@ -1448,42 +1463,21 @@ class Runtime extends EventEmitter {
         }
 
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-        this.allScriptsDo((topBlockId, target) => {
-            const blocks = target.blocks;
-            const block = blocks.getBlock(topBlockId);
-            const potentialHatOpcode = block.opcode;
-            if (potentialHatOpcode !== requestedHatOpcode) {
-                // Not the right hat.
-                return;
-            }
+        this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
+            const {
+                blockId: topBlockId,
+                fieldsOfInputs: hatFields
+            } = script;
 
             // Match any requested fields.
             // For example: ensures that broadcasts match.
             // This needs to happen before the block is evaluated
             // (i.e., before the predicate can be run) because "broadcast and wait"
             // needs to have a precise collection of started threads.
-            let hatFields = blocks.getFields(block);
-
-            // If no fields are present, check inputs (horizontal blocks)
-            if (Object.keys(hatFields).length === 0) {
-                hatFields = {}; // don't overwrite the block's actual fields list
-                const hatInputs = blocks.getInputs(block);
-                for (const input in hatInputs) {
-                    if (!hatInputs.hasOwnProperty(input)) continue;
-                    const id = hatInputs[input].block;
-                    const inpBlock = blocks.getBlock(id);
-                    const fields = blocks.getFields(inpBlock);
-                    Object.assign(hatFields, fields);
-                }
-            }
-
-            if (optMatchFields) {
-                for (const matchField in optMatchFields) {
-                    if (hatFields[matchField].value.toUpperCase() !==
-                        optMatchFields[matchField]) {
-                        // Field mismatch.
-                        return;
-                    }
+            for (const matchField in optMatchFields) {
+                if (hatFields[matchField].value !== optMatchFields[matchField]) {
+                    // Field mismatch.
+                    return;
                 }
             }
 
@@ -1492,29 +1486,31 @@ class Runtime extends EventEmitter {
             if (hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
-                for (let i = 0; i < instance.threads.length; i++) {
-                    if (instance.threads[i].topBlock === topBlockId &&
-                        !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
-                        instance.threads[i].target === target) {
-                        newThreads.push(instance._restartThread(instance.threads[i]));
+                for (let i = 0; i < this.threads.length; i++) {
+                    if (this.threads[i].target === target &&
+                        this.threads[i].topBlock === topBlockId &&
+                        // stack click threads and hat threads can coexist
+                        !this.threads[i].stackClick) {
+                        newThreads.push(this._restartThread(this.threads[i]));
                         return;
                     }
                 }
             } else {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
-                for (let j = 0; j < instance.threads.length; j++) {
-                    if (instance.threads[j].topBlock === topBlockId &&
-                        instance.threads[j].target === target &&
-                        !instance.threads[j].stackClick && // stack click threads and hat threads can coexist
-                        instance.threads[j].status !== Thread.STATUS_DONE) {
+                for (let j = 0; j < this.threads.length; j++) {
+                    if (this.threads[j].target === target &&
+                        this.threads[j].topBlock === topBlockId &&
+                        // stack click threads and hat threads can coexist
+                        !this.threads[j].stackClick &&
+                        this.threads[j].status !== Thread.STATUS_DONE) {
                         // Some thread is already running.
                         return;
                     }
                 }
             }
             // Start the thread with this top block.
-            newThreads.push(instance._pushThread(topBlockId, target));
+            newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
         return newThreads;
     }
