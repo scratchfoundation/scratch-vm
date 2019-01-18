@@ -558,6 +558,8 @@ class Runtime extends EventEmitter {
 
     /**
      * Event name for updating the available set of peripheral devices.
+     * This causes the peripheral connection modal to update a list of
+     * available peripherals.
      * @const {string}
      */
     static get PERIPHERAL_LIST_UPDATE () {
@@ -566,6 +568,7 @@ class Runtime extends EventEmitter {
 
     /**
      * Event name for reporting that a peripheral has connected.
+     * This causes the status button in the blocks menu to indicate 'connected'.
      * @const {string}
      */
     static get PERIPHERAL_CONNECTED () {
@@ -573,7 +576,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that a peripheral has been intentionally disconnected.
+     * This causes the status button in the blocks menu to indicate 'disconnected'.
+     * @const {string}
+     */
+    static get PERIPHERAL_DISCONNECTED () {
+        return 'PERIPHERAL_DISCONNECTED';
+    }
+
+    /**
      * Event name for reporting that a peripheral has encountered a request error.
+     * This causes the peripheral connection modal to switch to an error state.
      * @const {string}
      */
     static get PERIPHERAL_REQUEST_ERROR () {
@@ -581,15 +594,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for reporting that a peripheral has encountered a disconnect error.
+     * Event name for reporting that a peripheral connection has been lost.
+     * This causes a 'peripheral connection lost' error alert to display.
      * @const {string}
      */
-    static get PERIPHERAL_DISCONNECT_ERROR () {
-        return 'PERIPHERAL_DISCONNECT_ERROR';
+    static get PERIPHERAL_CONNECTION_LOST_ERROR () {
+        return 'PERIPHERAL_CONNECTION_LOST_ERROR';
     }
 
     /**
      * Event name for reporting that a peripheral has not been discovered.
+     * This causes the peripheral connection modal to show a timeout state.
      * @const {string}
      */
     static get PERIPHERAL_SCAN_TIMEOUT () {
