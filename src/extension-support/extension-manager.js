@@ -7,6 +7,8 @@ const BlockType = require('./block-type');
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
+const Scratch3EdbotBlocks = require('../extensions/scratch3_edbot');
+const Scratch3DreamBlocks = require('../extensions/scratch3_dream');
 const Scratch3PenBlocks = require('../extensions/scratch3_pen');
 const Scratch3WeDo2Blocks = require('../extensions/scratch3_wedo2');
 const Scratch3MusicBlocks = require('../extensions/scratch3_music');
@@ -18,9 +20,10 @@ const Scratch3Speech2TextBlocks = require('../extensions/scratch3_speech2text');
 const Scratch3Ev3Blocks = require('../extensions/scratch3_ev3');
 const Scratch3MakeyMakeyBlocks = require('../extensions/scratch3_makeymakey');
 const Scratch3GdxForBlocks = require('../extensions/scratch3_gdx_for');
-const Scratch3EdbotBlocks = require('../extensions/scratch3_edbot');
 
 const builtinExtensions = {
+	edbot: Scratch3EdbotBlocks,
+	dream: Scratch3DreamBlocks,
     pen: Scratch3PenBlocks,
     wedo2: Scratch3WeDo2Blocks,
     music: Scratch3MusicBlocks,
@@ -31,8 +34,7 @@ const builtinExtensions = {
     speech2text: Scratch3Speech2TextBlocks,
     ev3: Scratch3Ev3Blocks,
     makeymakey: Scratch3MakeyMakeyBlocks,
-    gdxfor: Scratch3GdxForBlocks,
-	edbot: Scratch3EdbotBlocks
+    gdxfor: Scratch3GdxForBlocks
 };
 
 /**
@@ -135,9 +137,20 @@ class ExtensionManager {
 
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
-            return this._registerInternalExtension(extensionInstance).then(serviceName => {
-                this._loadedExtensions.set(extensionURL, serviceName);
-            });
+			if(extensionInstance.init) {
+				var instance = this;
+				return extensionInstance.init().then(
+					function() {
+						return instance._registerInternalExtension(extensionInstance).then(serviceName => {
+							instance._loadedExtensions.set(extensionURL, serviceName);
+						})
+					}
+				);
+			} else {
+				return this._registerInternalExtension(extensionInstance).then(serviceName => {
+					this._loadedExtensions.set(extensionURL, serviceName);
+				});
+			}
         }
 
         return new Promise((resolve, reject) => {
