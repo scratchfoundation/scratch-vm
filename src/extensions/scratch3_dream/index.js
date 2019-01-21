@@ -36,7 +36,21 @@ class Scratch3DreamBlocks {
 		}).connect().then(function(client) {
 			ec = client;
 			rn = ec.getRobotNames("dream");
+			if(rn.length < 1) {
+				if(!confirm("No Edbot Dreams found on the network. Continue with Demo blocks?")) {
+					return Promise.reject();
+				}
+				rn = ["Demo"];
+			}
 			return Promise.resolve();
+		})
+		.catch(err => {
+			alert(
+				"Could not find an Edbot server on the network." +
+				"\n\n" +
+				"Please run the Edbot Software, version 5 or above."
+			);
+			return Promise.reject();
 		});
 	}
 
