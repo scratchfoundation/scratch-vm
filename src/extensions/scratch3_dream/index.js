@@ -37,20 +37,18 @@ class Scratch3DreamBlocks {
 			ec = client;
 			rn = ec.getRobotNames("dream");
 			if(rn.length < 1) {
-				if(!confirm("No Edbot Dreams found on the network. Continue with Demo blocks?")) {
+				if(!confirm("No Edbot Dreams found on the network.\nContinue in Demo mode?")) {
 					return Promise.reject();
 				}
-				rn = ["Demo"];
+				rn = [ "Demo" ];
 			}
 			return Promise.resolve();
 		})
 		.catch(err => {
-			alert(
-				"Could not find an Edbot server on the network." +
-				"\n\n" +
-				"Please run the Edbot Software, version 5 or above."
-			);
-			return Promise.reject();
+			if(!confirm("Could not find an Edbot server on the network.\nContinue in Demo mode?")) {
+				return Promise.reject();
+			}
+			rn = [ "Demo" ];
 		});
 	}
 
@@ -364,26 +362,29 @@ class Scratch3DreamBlocks {
 
 	setMotor(args) {
 		const { NAME, PORT, SPEED, DIRECTION } = args;
-		ec.setServoCombined(NAME, PORT + "/0/" + (SPEED * DIRECTION) + "/0")
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoCombined(NAME, PORT + "/0/" + (SPEED * DIRECTION) + "/0")
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoTorque(args) {
 		const { NAME, PORT, TOGGLE } = args;
-		ec.setServoTorque(NAME, PORT + "/" + TOGGLE)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoTorque(NAME, PORT + "/" + TOGGLE)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoPosition(args) {
 		const { NAME, PORT, POSITION, SPEED } = args;
-		ec.setServoCombined(NAME, PORT + "/1/" + SPEED + "/" + POSITION)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoCombined(NAME, PORT + "/1/" + SPEED + "/" + POSITION)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setMotors(args) {
@@ -400,18 +401,20 @@ class Scratch3DreamBlocks {
 			}
 			path += parts[i] + "/0/" + parts[i + 1] + "/0";
 		}
-		ec.setServoCombined(NAME, path)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoCombined(NAME, path)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setTorque(args) {
 		const { NAME, PATH } = args;
-		ec.setServoTorque(NAME, PATH)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoTorque(NAME, PATH)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setPosition(args) {
@@ -428,10 +431,11 @@ class Scratch3DreamBlocks {
 			}
 			path += parts[i] + "/1/" + parts[i + 2] + "/" + parts[i + 1];
 		}
-		ec.setServoCombined(NAME, path)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoCombined(NAME, path)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setLEDModule(args) {
@@ -440,42 +444,47 @@ class Scratch3DreamBlocks {
 		if(PORT == 4) {
 			address = 213;
 		}
-		ec.setCustom(NAME, address + "/1/" + VALUE)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setCustom(NAME, address + "/1/" + VALUE)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setBuzzerNote(args) {
 		const { NAME, PITCH, DURATION } = args;
-		ec.setBuzzer(NAME, PITCH + "/" + DURATION)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setBuzzer(NAME, PITCH + "/" + DURATION)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setBuzzerMelody(args) {
 		const { NAME, MELODY } = args;
-		ec.setBuzzer(NAME, MELODY + "/255")
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setBuzzer(NAME, MELODY + "/255")
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	say(args) {
 		const { NAME, TEXT } = args;
-		ec.say(NAME, TEXT)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.say(NAME, TEXT)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	sayWait(args) {
 		const { NAME, TEXT } = args;
-		return ec.say(NAME, TEXT)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.say(NAME, TEXT)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getCurrentWord(args) {
@@ -491,10 +500,11 @@ class Scratch3DreamBlocks {
 	}
 
 	reset(args) {
-		return ec.reset(args.NAME)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.reset(args.NAME)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getStatus(args) {

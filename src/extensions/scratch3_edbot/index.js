@@ -38,10 +38,10 @@ class Scratch3EdbotBlocks {
 			ec = client;
 			rn = ec.getRobotNames("edbot");
 			if(rn.length < 1) {
-				if(!confirm("No Edbot Dreams found on the network. Continue with Demo blocks?")) {
+				if(!confirm("No Edbot Dreams found on the network.\nContinue in Demo mode?")) {
 					return Promise.reject();
 				}
-				rn = ["Demo"];
+				rn = [ "Demo" ];
 			}
 			return ec.getDefaultMotions("edbot").then(function(motions) {
 				mo = motions.data;
@@ -49,12 +49,110 @@ class Scratch3EdbotBlocks {
 			});
 		})
 		.catch(err => {
-			alert(
-				"Could not find an Edbot server on the network." +
-				"\n\n" +
-				"Please run the Edbot Software, version 5 or above."
-			);
-			return Promise.reject();
+			if(!confirm("Could not find an Edbot server on the network.\nContinue in Demo mode?")) {
+				return Promise.reject();
+			}
+			rn = [ "Demo" ];
+			mo = {
+				"All": [
+					{ "name": "backward roll", "id": 24 },
+					{ "name": "bow 1", "id": 5 },
+					{ "name": "bow 2", "id": 6 },
+					{ "name": "break dance", "id": 40 },
+					{ "name": "break dance flip", "id": 41 },
+					{ "name": "crouch", "id": 3 },
+					{ "name": "forward roll", "id": 21 },
+					{ "name": "gangnam", "id": 42 },
+					{ "name": "get up", "id": 2 },
+					{ "name": "goalie block", "id": 34 },
+					{ "name": "goalie left", "id": 35 },
+					{ "name": "goalie right", "id": 36 },
+					{ "name": "goalie spread", "id": 37 },
+					{ "name": "head stand", "id": 38 },
+					{ "name": "initial position", "id": 1 },
+					{ "name": "karate left 1", "id": 25 },
+					{ "name": "karate left 2", "id": 27 },
+					{ "name": "karate right 1", "id": 26 },
+					{ "name": "karate right 2", "id": 28 },
+					{ "name": "left hook", "id": 11 },
+					{ "name": "left jab", "id": 10 },
+					{ "name": "left kick", "id": 30 },
+					{ "name": "left side kick", "id": 32 },
+					{ "name": "left uppercut", "id": 12 },
+					{ "name": "left wave", "id": 14 },
+					{ "name": "push", "id": 29 },
+					{ "name": "push up", "id": 23 },
+					{ "name": "right hook", "id": 8 },
+					{ "name": "right jab", "id": 7 },
+					{ "name": "right kick", "id": 31 },
+					{ "name": "right side kick", "id": 33 },
+					{ "name": "right uppercut", "id": 9 },
+					{ "name": "right wave", "id": 13 },
+					{ "name": "run forwards", "id": 39 },
+					{ "name": "sidestep left", "id": 18 },
+					{ "name": "sidestep right", "id": 17 },
+					{ "name": "sit up", "id": 22 },
+					{ "name": "stand", "id": 4 },
+					{ "name": "turn left", "id": 16 },
+					{ "name": "turn right", "id": 15 },
+					{ "name": "walk backwards", "id": 20 },
+					{ "name": "walk forwards", "id": 19 }
+				],
+				"Basic": [
+					{ "name": "crouch", "id": 3 },
+					{ "name": "get up", "id": 2 },
+					{ "name": "initial position", "id": 1 },
+					{ "name": "run forwards", "id": 39 },
+					{ "name": "sidestep left", "id": 18 },
+					{ "name": "sidestep right", "id": 17 },
+					{ "name": "stand", "id": 4 },
+					{ "name": "turn left", "id": 16 },
+					{ "name": "turn right", "id": 15 },
+					{ "name": "walk backwards", "id": 20 },
+					{ "name": "walk forwards", "id": 19 }
+				],
+				"Sport": [
+					{ "name": "goalie block", "id": 34 },
+					{ "name": "goalie left", "id": 35 },
+					{ "name": "goalie right", "id": 36 },
+					{ "name": "goalie spread", "id": 37 },
+					{ "name": "left kick", "id": 30 },
+					{ "name": "left side kick", "id": 32 },
+					{ "name": "right kick", "id": 31 },
+					{ "name": "right side kick", "id": 33}
+				],
+				"Greet": [
+					{ "name": "bow 1", "id": 5 },
+					{ "name": "bow 2", "id": 6 },
+					{ "name": "left wave", "id": 14 },
+					{ "name": "right wave", "id": 13 }
+				],
+				"Dance": [
+					{ "name": "break dance", "id": 40 },
+					{ "name": "break dance flip", "id": 41 },
+					{ "name": "gangnam", "id": 42 }
+				],
+				"Gym": [
+					{ "name": "backward roll", "id": 24 },
+					{ "name": "forward roll", "id": 21 },
+					{ "name": "head stand", "id": 38 },
+					{ "name": "push up", "id": 23 },
+					{ "name": "sit up", "id": 22 }
+				],
+				"Fight": [
+					{ "name": "karate left 1", "id": 25 },
+					{ "name": "karate left 2", "id": 27 },
+					{ "name": "karate right 1", "id": 26 },
+					{ "name": "karate right 2", "id": 28 },
+					{ "name": "left hook", "id": 11 },
+					{ "name": "left jab", "id": 10 },
+					{ "name": "left uppercut", "id": 12 },
+					{ "name": "push", "id": 29 },
+					{ "name": "right hook", "id": 8 },
+					{ "name": "right jab", "id": 7 },
+					{ "name": "right uppercut", "id": 9 }
+				]
+			};
 		});
 	}
 
@@ -583,10 +681,11 @@ class Scratch3EdbotBlocks {
 	}
 	runMotion(args) {
 		const { NAME, MOTION } = args;
-		return ec.runMotion(NAME, MOTION)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.runMotion(NAME, MOTION)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	motionName(args) {
@@ -600,42 +699,47 @@ class Scratch3EdbotBlocks {
 
 	setMotionLights(args) {
 		const { NAME, TOGGLE } = args;
-		ec.setOptions(NAME, "motion_leds/" + TOGGLE)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setOptions(NAME, "motion_leds/" + TOGGLE)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoTorque(args) {
 		const { NAME, SERVO, TOGGLE } = args;
-		ec.setServoTorque(NAME, SERVO + "/" + TOGGLE)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoTorque(NAME, SERVO + "/" + TOGGLE)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoLED(args) {
 		const { NAME, SERVO, COLOUR } = args;
-		ec.setServoLED(NAME, SERVO + "/" + COLOUR)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoLED(NAME, SERVO + "/" + COLOUR)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoSpeed(args) {
 		const { NAME, SERVO, SPEED } = args;
-		ec.setServoSpeed(NAME, SERVO + "/" + SPEED)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoSpeed(NAME, SERVO + "/" + SPEED)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoPosition(args) {
 		const { NAME, SERVO, POSITION } = args;
-		ec.setServoPosition(NAME, SERVO + "/" + POSITION)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoPosition(NAME, SERVO + "/" + POSITION)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getServoPosition(args) {
@@ -660,34 +764,38 @@ class Scratch3EdbotBlocks {
 
 	setServoTorques(args) {
 		const { NAME, PATH } = args;
-		ec.setServoTorque(NAME, PATH)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoTorque(NAME, PATH)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoLEDs(args) {
 		const { NAME, PATH } = args;
-		ec.setServoLED(NAME, PATH)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoLED(NAME, PATH)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoSpeeds(args) {
 		const { NAME, PATH } = args;
-		ec.setServoSpeed(NAME, PATH)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoSpeed(NAME, PATH)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	setServoPositions(args) {
 		const { NAME, PATH } = args;
-		ec.setServoPosition(NAME, PATH)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setServoPosition(NAME, PATH)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getServoPositions(args) {
@@ -709,10 +817,11 @@ class Scratch3EdbotBlocks {
 
 	setHeadIRSensor(args) {
 		const { NAME, TOGGLE } = args;
-		ec.setOptions(NAME, "sensor_data/" + TOGGLE)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.setOptions(NAME, "sensor_data/" + TOGGLE)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getHeadIRSensor(args) {
@@ -735,18 +844,20 @@ class Scratch3EdbotBlocks {
 
 	say(args) {
 		const { NAME, TEXT } = args;
-		ec.say(NAME, TEXT)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.say(NAME, TEXT)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	sayWait(args) {
 		const { NAME, TEXT } = args;
-		return ec.say(NAME, TEXT)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.say(NAME, TEXT)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getCurrentWord(args) {
@@ -762,10 +873,11 @@ class Scratch3EdbotBlocks {
 	}
 
 	reset(args) {
-		return ec.reset(args.NAME)
-			.then(function(status) {
-				console.log(status);
-			});
+		if(ec != null)
+			return ec.reset(args.NAME)
+				.then(function(status) {
+					console.log(status);
+				});
 	}
 
 	getStatus(args) {
