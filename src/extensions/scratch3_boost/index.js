@@ -56,22 +56,12 @@ const BoostDevice = {
 };
 
 /**
- * Enum for connection/port ids assigned to internal Boost output devices.
- * @readonly
- * @enum {number}
- */
-// TODO: Check for these more accurately at startup?
-const BoostConnectID = {
-    LED: 6,
-    PIEZO: 5
-};
-
-/**
  * Enum for ids for various output commands on the Boost.
  * @readonly
  * @enum {number}
  */
 const BoostCommand = {
+    // TODO: Figure out if this enum is necessary or if we're always just sending 0x81
     OUTPUT: 0x81,
 };
 
@@ -563,7 +553,7 @@ class Boost {
         ];
 
         const cmd = this.generateOutputCommand(
-            50,
+            this._ports.indexOf(BoostDevice.LED),
             0x51,
             BoostMode.LED,
             rgb
@@ -594,9 +584,9 @@ class Boost {
      */
     stopLED () {
         const cmd = this.generateOutputCommand(
-            BoostConnectID.LED,
-            0x32,
-            BoostMode.LED,
+            this._ports.indexOf(BoostDevice.LED),
+            0x51,
+            BoostUnit.LED,
             [0, 0, 0]
         );
 
@@ -749,9 +739,8 @@ class Boost {
 
         command.unshift(command.length+1) // Prepend payload with length byte
 
-        // Add checksum
+        //DEBUG
         console.log(buf2hex(command))
-        //console.log(command)
 
         return command;
     }
@@ -761,8 +750,6 @@ class Boost {
      * @private
      */
     _onConnect () {
-        //this.setLEDMode();
-        //this.setLED(0x00FF00);
         this._ble.startNotifications(
             BLEService,
             BLECharacteristic,
@@ -839,9 +826,11 @@ class Boost {
                 break;
             case BoostMessageTypes.PORT_INPUT_FORMAT:
             case BoostMessageTypes.ERROR:
+                //DEBUG
                 console.log(buf2hex(data))
                 break;
             default:
+                //DEBUG
                 console.log(buf2hex(data))                
         }
     }
@@ -1010,7 +999,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.DEFAULT
+                            defaultValue: BoostMotorLabel.A
                         },
                         DURATION: {
                             type: ArgumentType.NUMBER,
@@ -1030,7 +1019,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.DEFAULT
+                            defaultValue: BoostMotorLabel.A
                         }
                     }
                 },
@@ -1046,7 +1035,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.DEFAULT
+                            defaultValue: BoostMotorLabel.A
                         }
                     }
                 },
@@ -1062,7 +1051,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.DEFAULT
+                            defaultValue: BoostMotorLabel.A
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -1082,7 +1071,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.DEFAULT
+                            defaultValue: BoostMotorLabel.A
                         },
                         MOTOR_DIRECTION: {
                             type: ArgumentType.STRING,
@@ -1213,14 +1202,14 @@ class Scratch3BoostBlocks {
                     opcode: 'getMotorPosition',
                     text: formatMessage({
                         id: 'boost.getMotorPosition',
-                        default: 'motor position [MOTOR_ID]',
+                        default: 'motor position [MOTOR_REPORTER_ID]',
                         description: 'the position returned by the motor'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
-                        MOTOR_ID: {
+                        MOTOR_REPORTER_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'MOTOR_ID',
+                            menu: 'MOTOR_REPORTER_ID',
                             defaultValue: BoostMotorLabel.A
                         }
                     }
@@ -1228,14 +1217,6 @@ class Scratch3BoostBlocks {
             ],
             menus: {
                 MOTOR_ID: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.default',
-                            default: 'motor',
-                            description: 'label for motor element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.DEFAULT
-                    },
                     {
                         text: formatMessage({
                             id: 'boost.motorId.a',
@@ -1275,6 +1256,40 @@ class Scratch3BoostBlocks {
                             description: 'label for all motors element in motor menu for LEGO Boost extension'
                         }),
                         value: BoostMotorLabel.ALL
+                    }
+                ],
+                MOTOR_REPORTER_ID: [
+                    {
+                        text: formatMessage({
+                            id: 'boost.motorReporterId.a',
+                            default: 'A',
+                            description: 'label for motor A element in motor menu for LEGO Boost extension'
+                        }),
+                        value: BoostMotorLabel.A
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'boost.motorReporterId.b',
+                            default: 'B',
+                            description: 'label for motor B element in motor menu for LEGO Boost extension'
+                        }),
+                        value: BoostMotorLabel.B
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'boost.motorReporterId.c',
+                            default: 'C',
+                            description: 'label for motor C element in motor menu for LEGO Boost extension'
+                        }),
+                        value: BoostMotorLabel.C
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'boost.motorReporterId.d',
+                            default: 'D',
+                            description: 'label for motor D element in motor menu for LEGO Boost extension'
+                        }),
+                        value: BoostMotorLabel.D
                     }
                 ],
                 MOTOR_DIRECTION: [
@@ -1644,7 +1659,7 @@ class Scratch3BoostBlocks {
      * @return {number} 
      */
     getMotorPosition (args) {
-        switch(args.MOTOR_ID) {
+        switch(args.MOTOR_REPORTER_ID) {
             // TODO: Handle negative rotation.
             case BoostMotorLabel.A:
                 return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.A].position, 0, 360);
