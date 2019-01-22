@@ -205,9 +205,18 @@ class BlockUtility {
      * @return {Array.<Thread>} List of threads started by this function.
      */
     startHats (requestedHat, optMatchFields, optTarget) {
-        return (
-            this.sequencer.runtime.startHats(requestedHat, optMatchFields, optTarget)
-        );
+        // Store thread and sequencer to ensure we can return to the calling block's context.
+        // startHats may execute further blocks and dirty the BlockUtility's execution context
+        // and confuse the calling block when we return to it.
+        const callerThread = this.thread;
+        const callerSequencer = this.sequencer;
+        const result = this.sequencer.runtime.startHats(requestedHat, optMatchFields, optTarget);
+
+        // Restore thread and sequencer to prior values before we return to the calling block.
+        this.thread = callerThread;
+        this.sequencer = callerSequencer;
+
+        return result;
     }
 
     /**
