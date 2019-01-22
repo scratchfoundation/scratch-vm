@@ -1,3 +1,6 @@
+const ScratchStorage = require('scratch-storage');
+const VirtualMachine = require('..');
+
 const Scratch = window.Scratch = window.Scratch || {};
 
 const ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
@@ -439,12 +442,12 @@ class ProfilerRun {
 const runBenchmark = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
-    const vm = new window.VirtualMachine();
+    const vm = new VirtualMachine();
     Scratch.vm = vm;
 
     vm.setTurboMode(true);
 
-    const storage = new ScratchStorage(); /* global ScratchStorage */
+    const storage = new ScratchStorage();
     const AssetType = storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
@@ -481,7 +484,6 @@ const runBenchmark = function () {
     vm.attachRenderer(renderer);
     const audioEngine = new window.AudioEngine();
     vm.attachAudioEngine(audioEngine);
-    /* global ScratchSVGRenderer */
     vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer());
     vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter());
 
@@ -555,7 +557,7 @@ const runBenchmark = function () {
  * @param {object} json data from a previous benchmark run.
  */
 const renderBenchmarkData = function (json) {
-    const vm = new window.VirtualMachine();
+    const vm = new VirtualMachine();
     new ProfilerRun({vm}).render(json);
     setShareLink(json);
 };
