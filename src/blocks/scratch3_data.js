@@ -52,8 +52,8 @@ class Scratch3DataBlocks {
         // If it is, report contents joined together with no separator.
         // If it's not, report contents joined together with a space.
         let allSingleLetters = true;
-        for (let i = 0; i < list.contents.length; i++) {
-            const listItem = list.contents[i];
+        for (let i = 0; i < list.value.length; i++) {
+            const listItem = list.value[i];
             if (!((typeof listItem === 'string') &&
                   (listItem.length === 1))) {
                 allSingleLetters = false;
@@ -61,73 +61,73 @@ class Scratch3DataBlocks {
             }
         }
         if (allSingleLetters) {
-            return list.contents.join('');
+            return list.value.join('');
         }
-        return list.contents.join(' ');
+        return list.value.join(' ');
 
     }
 
     addToList (args, util) {
         const list = util.target.lookupOrCreateList(args.LIST);
-        list.contents.push(args.ITEM);
+        list.value.push(args.ITEM);
     }
 
     deleteOfList (args, util) {
         const list = util.target.lookupOrCreateList(args.LIST);
-        const index = Cast.toListIndex(args.INDEX, list.contents.length);
+        const index = Cast.toListIndex(args.INDEX, list.value.length);
         if (index === Cast.LIST_INVALID) {
             return;
         } else if (index === Cast.LIST_ALL) {
-            list.contents = [];
+            list.value = [];
             return;
         }
-        list.contents.splice(index - 1, 1);
+        list.value.splice(index - 1, 1);
     }
 
     insertAtList (args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(args.LIST);
-        const index = Cast.toListIndex(args.INDEX, list.contents.length + 1);
+        const index = Cast.toListIndex(args.INDEX, list.value.length + 1);
         if (index === Cast.LIST_INVALID) {
             return;
         }
-        list.contents.splice(index - 1, 0, item);
+        list.value.splice(index - 1, 0, item);
     }
 
     replaceItemOfList (args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(args.LIST);
-        const index = Cast.toListIndex(args.INDEX, list.contents.length);
+        const index = Cast.toListIndex(args.INDEX, list.value.length);
         if (index === Cast.LIST_INVALID) {
             return;
         }
-        list.contents.splice(index - 1, 1, item);
+        list.value.splice(index - 1, 1, item);
     }
 
     getItemOfList (args, util) {
         const list = util.target.lookupOrCreateList(args.LIST);
-        const index = Cast.toListIndex(args.INDEX, list.contents.length);
+        const index = Cast.toListIndex(args.INDEX, list.value.length);
         if (index === Cast.LIST_INVALID) {
             return '';
         }
-        return list.contents[index - 1];
+        return list.value[index - 1];
     }
 
     lengthOfList (args, util) {
         const list = util.target.lookupOrCreateList(args.LIST);
-        return list.contents.length;
+        return list.value.length;
     }
 
     listContainsItem (args, util) {
         const item = args.ITEM;
         const list = util.target.lookupOrCreateList(args.LIST);
-        if (list.contents.indexOf(item) >= 0) {
+        if (list.value.indexOf(item) >= 0) {
             return true;
         }
         // Try using Scratch comparison operator on each item.
         // (Scratch considers the string '123' equal to the number 123).
-        for (let i = 0; i < list.contents.length; i++) {
-            if (Cast.compare(list.contents[i], item) === 0) {
+        for (let i = 0; i < list.value.length; i++) {
+            if (Cast.compare(list.value[i], item) === 0) {
                 return true;
             }
         }

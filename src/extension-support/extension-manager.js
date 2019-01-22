@@ -8,9 +8,11 @@ const BlockType = require('./block-type');
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 const Scratch3PenBlocks = require('../blocks/scratch3_pen');
 const Scratch3WeDo2Blocks = require('../blocks/scratch3_wedo2');
+const Scratch3MusicBlocks = require('../extensions/scratch3_music');
 const builtinExtensions = {
     pen: Scratch3PenBlocks,
-    wedo2: Scratch3WeDo2Blocks
+    wedo2: Scratch3WeDo2Blocks,
+    music: Scratch3MusicBlocks
 };
 
 /**
@@ -30,6 +32,7 @@ const builtinExtensions = {
  * @property {object.<string,ArgumentInfo>|undefined} arguments - information about this block's arguments, if any
  * @property {string|Function|undefined} func - the method for this block on the extension service (default: opcode)
  * @property {Array.<string>|undefined} filter - the list of targets for which this block should appear (default: all)
+ * @property {Boolean|undefined} hideFromPalette - true if should not be appear in the palette. (default false)
  */
 
 /**
@@ -71,6 +74,13 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
+         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
+         * @type {Set.<string>}
+         * @private
+         */
+        this._loadedExtensions = new Set();
+
+        /**
          * Keep a reference to the runtime so we can construct internal extension objects.
          * TODO: remove this in favor of extensions accessing the runtime as a service.
          * @type {Runtime}
@@ -83,15 +93,35 @@ class ExtensionManager {
     }
 
     /**
+     * Check whether an extension is registered or is in the process of loading. This is intended to control loading or
+     * adding extensions so it may return `true` before the extension is ready to be used. Use the promise returned by
+     * `loadExtensionURL` if you need to wait until the extension is truly ready.
+     * @param {string} extensionID - the ID of the extension.
+     * @returns {boolean} - true if loaded, false otherwise.
+     */
+    isExtensionLoaded (extensionID) {
+        return this._loadedExtensions.has(extensionID);
+    }
+
+    /**
      * Load an extension by URL or internal extension ID
      * @param {string} extensionURL - the URL for the extension to load OR the ID of an internal extension
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
+            /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
+            if (this.isExtensionLoaded(extensionURL)) {
+                const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
+                log.warn(message);
+                return Promise.reject(new Error(message));
+            }
+
             const extension = builtinExtensions[extensionURL];
             const extensionInstance = new extension(this.runtime);
-            return this._registerInternalExtension(extensionInstance);
+            return this._registerInternalExtension(extensionInstance).then(() => {
+                this._loadedExtensions.add(extensionURL);
+            });
         }
 
         return new Promise((resolve, reject) => {
@@ -110,12 +140,21 @@ class ExtensionManager {
         return [id, workerInfo.extensionURL];
     }
 
+    /**
+     * Collect extension metadata from the specified service and begin the extension registration process.
+     * @param {string} serviceName - the name of the service hosting the extension.
+     */
     registerExtensionService (serviceName) {
         dispatch.call(serviceName, 'getInfo').then(info => {
             this._registerExtensionInfo(serviceName, info);
         });
     }
 
+    /**
+     * Called by an extension worker to indicate that the worker has finished initialization.
+     * @param {int} id - the worker ID.
+     * @param {*?} e - the error encountered during initialization, if any.
+     */
     onWorkerInit (id, e) {
         const workerInfo = this.pendingWorkers[id];
         delete this.pendingWorkers[id];
@@ -133,11 +172,18 @@ class ExtensionManager {
      */
     _registerInternalExtension (extensionObject) {
         const extensionInfo = extensionObject.getInfo();
-        const serviceName = `extension.internal.${extensionInfo.id}`;
+        const fakeWorkerId = this.nextExtensionWorker++;
+        const serviceName = `extension.${fakeWorkerId}.${extensionInfo.id}`;
         return dispatch.setService(serviceName, extensionObject)
             .then(() => dispatch.call('extensions', 'registerExtensionService', serviceName));
     }
 
+    /**
+     * Sanitize extension info then register its primitives with the VM.
+     * @param {string} serviceName - the name of the service hosting the extension
+     * @param {ExtensionInfo} extensionInfo - the extension's metadata
+     * @private
+     */
     _registerExtensionInfo (serviceName, extensionInfo) {
         extensionInfo = this._prepareExtensionInfo(serviceName, extensionInfo);
         dispatch.call('runtime', '_registerExtensionPrimitives', extensionInfo).catch(e => {

@@ -33,7 +33,7 @@ class VirtualMachine extends EventEmitter {
         /**
          * The "currently editing"/selected target ID for the VM.
          * Block events from any Blockly workspace are routed to this target.
-         * @type {!string}
+         * @type {Target}
          */
         this.editingTarget = null;
         // Runtime emits are passed along as VM emits.
@@ -228,19 +228,42 @@ class VirtualMachine extends EventEmitter {
             deserializer = sb2;
         }
 
-        return deserializer.deserialize(json, this.runtime).then(targets => {
-            this.clear();
-            for (let n = 0; n < targets.length; n++) {
-                if (targets[n] !== null) {
-                    this.runtime.targets.push(targets[n]);
-                    targets[n].updateAllDrawableProperties();
-                }
+        return deserializer.deserialize(json, this.runtime)
+            .then(({targets, extensions}) =>
+                this.installTargets(targets, extensions, true));
+    }
+
+    /**
+     * Install `deserialize` results: zero or more targets after the extensions (if any) used by those targets.
+     * @param {Array.<Target>} targets - the targets to be installed
+     * @param {ImportedExtensionsInfo} extensions - metadata about extensions used by these targets
+     * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
+     * @returns {Promise} resolved once targets have been installed
+     */
+    installTargets (targets, extensions, wholeProject) {
+        const extensionPromises = [];
+        extensions.extensionIDs.forEach(extensionID => {
+            if (!this.extensionManager.isExtensionLoaded(extensionID)) {
+                const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
+                extensionPromises.push(this.extensionManager.loadExtensionURL(extensionURL));
             }
+        });
+
+        targets = targets.filter(target => !!target);
+
+        return Promise.all(extensionPromises).then(() => {
+            if (wholeProject) {
+                this.clear();
+            }
+            targets.forEach(target => {
+                this.runtime.targets.push(target);
+                (/** @type RenderedTarget */ target).updateAllDrawableProperties();
+            });
             // Select the first target for editing, e.g., the first sprite.
-            if (this.runtime.targets.length > 1) {
-                this.editingTarget = this.runtime.targets[1];
+            if (wholeProject && (targets.length > 1)) {
+                this.editingTarget = targets[1];
             } else {
-                this.editingTarget = this.runtime.targets[0];
+                this.editingTarget = targets[0];
             }
 
             // Update the VM user's knowledge of targets and blocks on the workspace.
@@ -267,17 +290,9 @@ class VirtualMachine extends EventEmitter {
             return;
         }
 
-        // Select new sprite.
-        return sb2.deserialize(json, this.runtime, true).then(targets => {
-            this.runtime.targets.push(targets[0]);
-            this.editingTarget = targets[0];
-            this.editingTarget.updateAllDrawableProperties();
-
-            // Update the VM user's knowledge of targets and blocks on the workspace.
-            this.emitTargetsUpdate();
-            this.emitWorkspaceUpdate();
-            this.runtime.setEditingTarget(this.editingTarget);
-        });
+        return sb2.deserialize(json, this.runtime, true)
+            .then(({targets, extensions}) =>
+                this.installTargets(targets, extensions, false));
     }
 
     /**
@@ -459,9 +474,9 @@ class VirtualMachine extends EventEmitter {
      */
     deleteSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
-        const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
 
         if (target) {
+            const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
             if (!target.isSprite()) {
                 throw new Error('Cannot delete non-sprite targets.');
             }
@@ -469,6 +484,7 @@ class VirtualMachine extends EventEmitter {
             if (!sprite) {
                 throw new Error('No sprite associated with this target.');
             }
+            this.runtime.requestRemoveMonitorByTargetId(targetId);
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
@@ -477,7 +493,11 @@ class VirtualMachine extends EventEmitter {
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
                     const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                    this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    if (this.runtime.targets.length > 0){
+                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    } else {
+                        this.editingTarget = null;
+                    }
                 }
             }
             // Sprite object should be deleted by GC.
@@ -490,6 +510,8 @@ class VirtualMachine extends EventEmitter {
     /**
      * Duplicate a sprite.
      * @param {string} targetId ID of a target whose sprite to duplicate.
+     * @returns {Promise} Promise that resolves when duplicated target has
+     *     been added to the runtime.
      */
     duplicateSprite (targetId) {
         const target = this.runtime.getTargetById(targetId);
@@ -500,7 +522,7 @@ class VirtualMachine extends EventEmitter {
         } else if (!target.sprite) {
             throw new Error('No sprite associated with this target.');
         }
-        target.duplicate().then(newTarget => {
+        return target.duplicate().then(newTarget => {
             this.runtime.targets.push(newTarget);
             this.setEditingTarget(newTarget.id);
         });

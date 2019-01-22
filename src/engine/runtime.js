@@ -7,6 +7,7 @@ const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
 const Sequencer = require('./sequencer');
 const Thread = require('./thread');
+const Profiler = require('./profiler');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -78,6 +79,24 @@ const ScratchBlocksConstants = {
      */
     OUTPUT_SHAPE_SQUARE: 3
 };
+
+/**
+ * Numeric ID for Runtime._step in Profiler instances.
+ * @type {number}
+ */
+let stepProfilerId = -1;
+
+/**
+ * Numeric ID for Sequencer.stepThreads in Profiler instances.
+ * @type {number}
+ */
+let stepThreadsProfilerId = -1;
+
+/**
+ * Numeric ID for RenderWebGL.draw in Profiler instances.
+ * @type {number}
+ */
+let rendererDrawProfilerId = -1;
 
 /**
  * Manages targets, scripts, and the sequencer.
@@ -177,6 +196,13 @@ class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * Map to look up all monitor block information by opcode.
+         * @type {object}
+         * @private
+         */
+        this.monitorBlockInfo = {};
+
+        /**
          * Ordered map of all monitors, which are MonitorReporter objects.
          */
         this._monitorState = OrderedMap({});
@@ -234,6 +260,13 @@ class Runtime extends EventEmitter {
             keyboard: new Keyboard(this),
             mouse: new Mouse(this)
         };
+
+        /**
+         * A runtime profiler that records timed events for later playback to
+         * diagnose Scratch performance.
+         * @type {Profiler}
+         */
+        this.profiler = null;
     }
 
     /**
@@ -397,6 +430,10 @@ class Runtime extends EventEmitter {
                         }
                     }
                 }
+                // Collect monitored from package.
+                if (packageObject.getMonitored) {
+                    this.monitorBlockInfo = Object.assign({}, this.monitorBlockInfo, packageObject.getMonitored());
+                }
             }
         }
     }
@@ -421,6 +458,7 @@ class Runtime extends EventEmitter {
         const categoryInfo = {
             id: extensionInfo.id,
             name: extensionInfo.name,
+            iconURI: extensionInfo.iconURI,
             color1: '#FF6680',
             color2: '#FF4D6A',
             color3: '#FF3355',
@@ -433,7 +471,7 @@ class Runtime extends EventEmitter {
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
                 const menuItems = extensionInfo.menus[menuName];
-                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, extensionInfo);
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
             }
         }
@@ -524,8 +562,21 @@ class Runtime extends EventEmitter {
         // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
         const argsMap = {};
 
-        blockJSON.message0 = blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
+        blockJSON.message0 = '';
 
+        // If an icon for the extension exists, prepend it to each block
+        if (categoryInfo.iconURI) {
+            blockJSON.message0 = '%1';
+            const iconJSON = {
+                type: 'field_image',
+                src: categoryInfo.iconURI,
+                width: 40,
+                height: 40
+            };
+            blockJSON.args0.push(iconJSON);
+        }
+
+        blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
             // Sanitize the placeholder to ensure valid XML
             placeholder = placeholder.replace(/[<"&]/, '_');
 
@@ -630,8 +681,9 @@ class Runtime extends EventEmitter {
         const xmlParts = [];
         for (const categoryInfo of this._blockInfo) {
             const {name, color1, color2} = categoryInfo;
+            const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
             xmlParts.push(`<category name="${name}" colour="${color1}" secondaryColour="${color2}">`);
-            xmlParts.push.apply(xmlParts, categoryInfo.blocks.map(blockInfo => blockInfo.xml));
+            xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
             xmlParts.push('</category>');
         }
         return xmlParts.join('\n');
@@ -763,6 +815,7 @@ class Runtime extends EventEmitter {
      * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
      * Test project: https://scratch.mit.edu/projects/130183108/
      * @param {!Thread} thread Thread object to restart.
+     * @return {Thread} The restarted thread.
      */
     _restartThread (thread) {
         const newThread = new Thread(thread.topBlock);
@@ -773,9 +826,10 @@ class Runtime extends EventEmitter {
         const i = this.threads.indexOf(thread);
         if (i > -1) {
             this.threads[i] = newThread;
-        } else {
-            this.threads.push(thread);
+            return newThread;
         }
+        this.threads.push(thread);
+        return thread;
     }
 
     /**
@@ -784,7 +838,11 @@ class Runtime extends EventEmitter {
      * @return {boolean} True if the thread is active/running.
      */
     isActiveThread (thread) {
-        return this.threads.indexOf(thread) > -1;
+        return (
+            (
+                thread.stack.length > 0 &&
+                thread.status !== Thread.STATUS_DONE) &&
+            this.threads.indexOf(thread) > -1);
     }
 
     /**
@@ -823,7 +881,7 @@ class Runtime extends EventEmitter {
     /**
      * Enqueue a script that when finished will update the monitor for the block.
      * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?string} optTarget target ID for target to run script on. If not supplied, uses editing target.
+     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
      */
     addMonitorScript (topBlockId, optTarget) {
         if (!optTarget) optTarget = this._editingTarget;
@@ -931,7 +989,7 @@ class Runtime extends EventEmitter {
                     if (instance.threads[i].topBlock === topBlockId &&
                         !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
                         instance.threads[i].target === target) {
-                        instance._restartThread(instance.threads[i]);
+                        newThreads.push(instance._restartThread(instance.threads[i]));
                         return;
                     }
                 }
@@ -1040,6 +1098,12 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+        if (this.profiler !== null) {
+            if (stepProfilerId === -1) {
+                stepProfilerId = this.profiler.idByName('Runtime._step');
+            }
+            this.profiler.start(stepProfilerId);
+        }
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
             if (!this._hats.hasOwnProperty(hatType)) continue;
@@ -1050,7 +1114,16 @@ class Runtime extends EventEmitter {
         }
         this.redrawRequested = false;
         this._pushMonitors();
+        if (this.profiler !== null) {
+            if (stepThreadsProfilerId === -1) {
+                stepThreadsProfilerId = this.profiler.idByName('Sequencer.stepThreads');
+            }
+            this.profiler.start(stepThreadsProfilerId);
+        }
         const doneThreads = this.sequencer.stepThreads();
+        if (this.profiler !== null) {
+            this.profiler.stop();
+        }
         this._updateGlows(doneThreads);
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
@@ -1059,7 +1132,16 @@ class Runtime extends EventEmitter {
                 this._getMonitorThreadCount([...this.threads, ...doneThreads]));
         if (this.renderer) {
             // @todo: Only render when this.redrawRequested or clones rendered.
+            if (this.profiler !== null) {
+                if (rendererDrawProfilerId === -1) {
+                    rendererDrawProfilerId = this.profiler.idByName('RenderWebGL.draw');
+                }
+                this.profiler.start(rendererDrawProfilerId);
+            }
             this.renderer.draw();
+            if (this.profiler !== null) {
+                this.profiler.stop();
+            }
         }
 
         if (this._refreshTargets) {
@@ -1070,6 +1152,11 @@ class Runtime extends EventEmitter {
         if (!this._prevMonitorState.equals(this._monitorState)) {
             this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
             this._prevMonitorState = this._monitorState;
+        }
+
+        if (this.profiler !== null) {
+            this.profiler.stop();
+            this.profiler.reportFrames();
         }
     }
 
@@ -1245,7 +1332,7 @@ class Runtime extends EventEmitter {
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.id, monitor);
+        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
     }
 
     /**
@@ -1256,9 +1343,10 @@ class Runtime extends EventEmitter {
      *     the old monitor will keep its old value.
      */
     requestUpdateMonitor (monitor) {
-        if (this._monitorState.has(monitor.get('id'))) {
+        const id = monitor.get('id');
+        if (this._monitorState.has(id)) {
             this._monitorState =
-                this._monitorState.set(monitor.get('id'), this._monitorState.get(monitor.get('id')).merge(monitor));
+                this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
         }
     }
 
@@ -1269,6 +1357,15 @@ class Runtime extends EventEmitter {
      */
     requestRemoveMonitor (monitorId) {
         this._monitorState = this._monitorState.delete(monitorId);
+    }
+
+    /**
+     * Removes all monitors with the given target ID from the state. Does nothing if
+     * the monitor already does not exist in the state.
+     * @param {!string} targetId Remove all monitors with given target ID.
+     */
+    requestRemoveMonitorByTargetId (targetId) {
+        this._monitorState = this._monitorState.filterNot(value => value.targetId === targetId);
     }
 
     /**
@@ -1397,6 +1494,24 @@ class Runtime extends EventEmitter {
         this._steppingInterval = setInterval(() => {
             this._step();
         }, interval);
+    }
+
+    /**
+     * Turn on profiling.
+     * @param {Profiler/FrameCallback} onFrame A callback handle passed a
+     * profiling frame when the profiler reports its collected data.
+     */
+    enableProfiling (onFrame) {
+        if (Profiler.available()) {
+            this.profiler = new Profiler(onFrame);
+        }
+    }
+
+    /**
+     * Turn off profiling.
+     */
+    disableProfiling () {
+        this.profiler = null;
     }
 }
 

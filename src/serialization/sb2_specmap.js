@@ -21,6 +21,26 @@
  * properties. By hand, I matched the opcode name to the 3.0 opcode.
  * Finally, I filled in the expected arguments as below.
  */
+
+const Variable = require('../engine/variable');
+
+/**
+ * @typedef {object} SB2SpecMap_blockInfo
+ * @property {string} opcode - the Scratch 3.0 block opcode. Use 'extensionID.opcode' for extension opcodes.
+ * @property {Array.<SB2SpecMap_argInfo>} argMap - metadata for this block's arguments.
+ */
+
+/**
+ * @typedef {object} SB2SpecMap_argInfo
+ * @property {string} type - the type of this arg (such as 'input' or 'field')
+ * @property {string} inputOp - the scratch-blocks shadow type for this arg
+ * @property {string} inputName - the name this argument will take when provided to the block implementation
+ */
+
+/**
+ * Mapping of Scratch 2.0 opcode to Scratch 3.0 block metadata.
+ * @type {object.<SB2SpecMap_blockInfo>}
+ */
 const specMap = {
     'forward:': {
         opcode: 'motion_movesteps',
@@ -400,7 +420,7 @@ const specMap = {
         ]
     },
     'playDrum': {
-        opcode: 'sound_playdrumforbeats',
+        opcode: 'music.playDrumForBeats',
         argMap: [
             {
                 type: 'input',
@@ -415,7 +435,7 @@ const specMap = {
         ]
     },
     'rest:elapsed:from:': {
-        opcode: 'sound_restforbeats',
+        opcode: 'music.restForBeats',
         argMap: [
             {
                 type: 'input',
@@ -425,7 +445,7 @@ const specMap = {
         ]
     },
     'noteOn:duration:elapsed:from:': {
-        opcode: 'sound_playnoteforbeats',
+        opcode: 'music.playNoteForBeats',
         argMap: [
             {
                 type: 'input',
@@ -440,7 +460,7 @@ const specMap = {
         ]
     },
     'instrument:': {
-        opcode: 'sound_setinstrumentto',
+        opcode: 'music.setInstrument',
         argMap: [
             {
                 type: 'input',
@@ -475,7 +495,7 @@ const specMap = {
         ]
     },
     'changeTempoBy:': {
-        opcode: 'sound_changetempoby',
+        opcode: 'music.changeTempo',
         argMap: [
             {
                 type: 'input',
@@ -485,7 +505,7 @@ const specMap = {
         ]
     },
     'setTempoTo:': {
-        opcode: 'sound_settempotobpm',
+        opcode: 'music.setTempo',
         argMap: [
             {
                 type: 'input',
@@ -495,7 +515,7 @@ const specMap = {
         ]
     },
     'tempo': {
-        opcode: 'sound_tempo',
+        opcode: 'music.getTempo',
         argMap: [
         ]
     },
@@ -535,7 +555,7 @@ const specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'COLOR'
+                inputName: 'HUE'
             }
         ]
     },
@@ -545,7 +565,7 @@ const specMap = {
             {
                 type: 'input',
                 inputOp: 'math_number',
-                inputName: 'COLOR'
+                inputName: 'HUE'
             }
         ]
     },
@@ -1183,7 +1203,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1192,7 +1213,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1206,7 +1228,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             },
             {
                 type: 'input',
@@ -1220,7 +1243,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
@@ -1229,16 +1253,18 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'VARIABLE'
+                fieldName: 'VARIABLE',
+                variableType: Variable.SCALAR_TYPE
             }
         ]
     },
     'contentsOfList:': {
-        opcode: 'data_list',
+        opcode: 'data_listcontents',
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1252,7 +1278,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1266,7 +1293,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1285,7 +1313,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1299,7 +1328,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1318,7 +1348,8 @@ const specMap = {
             },
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1327,7 +1358,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1336,7 +1368,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             },
             {
                 type: 'input',
@@ -1350,7 +1383,8 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
@@ -1359,21 +1393,204 @@ const specMap = {
         argMap: [
             {
                 type: 'field',
-                fieldName: 'LIST'
+                fieldName: 'LIST',
+                variableType: Variable.LIST_TYPE
             }
         ]
     },
     'procDef': {
-        opcode: 'procedures_defnoreturn',
+        opcode: 'procedures_definition',
         argMap: []
     },
     'getParam': {
-        opcode: 'procedures_param',
-        argMap: []
+        // Doesn't map to single opcode. Import step assigns final correct opcode.
+        opcode: 'argument_reporter_string_number',
+        argMap: [
+            {
+                type: 'field',
+                fieldName: 'VALUE'
+            }
+        ]
     },
     'call': {
-        opcode: 'procedures_callnoreturn',
+        opcode: 'procedures_call',
         argMap: []
     }
 };
+
+/**
+ * Add to the specMap entries for an opcode from a Scratch 2.0 extension. Two entries will be made with the same
+ * metadata; this is done to support projects saved by both older and newer versions of the Scratch 2.0 editor.
+ * @param {string} sb2Extension - the Scratch 2.0 name of the extension
+ * @param {string} sb2Opcode - the Scratch 2.0 opcode
+ * @param {SB2SpecMap_blockInfo} blockInfo - the Scratch 3.0 block info
+ */
+const addExtensionOp = function (sb2Extension, sb2Opcode, blockInfo) {
+    /**
+     * This string separates the name of an extension and the name of an opcode in more recent Scratch 2.0 projects.
+     * Earlier projects used '.' as a separator, up until we added the 'LEGO WeDo 2.0' extension...
+     * @type {string}
+     */
+    const sep = '\u001F'; // Unicode Unit Separator
+
+    // make one entry for projects saved by recent versions of the Scratch 2.0 editor
+    specMap[`${sb2Extension}${sep}${sb2Opcode}`] = blockInfo;
+
+    // make a second for projects saved by older versions of the Scratch 2.0 editor
+    specMap[`${sb2Extension}.${sb2Opcode}`] = blockInfo;
+};
+
+const weDo2 = 'LEGO WeDo 2.0';
+
+addExtensionOp(weDo2, 'motorOnFor', {
+    opcode: 'wedo2.motorOnFor',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorID',
+            inputName: 'MOTOR_ID'
+        },
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'DURATION'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'motorOn', {
+    opcode: 'wedo2.motorOn',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorID',
+            inputName: 'MOTOR_ID'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'motorOff', {
+    opcode: 'wedo2.motorOff',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorID',
+            inputName: 'MOTOR_ID'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'startMotorPower', {
+    opcode: 'wedo2.startMotorPower',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorID',
+            inputName: 'MOTOR_ID'
+        },
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'POWER'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'setMotorDirection', {
+    opcode: 'wedo2.setMotorDirection',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorID',
+            inputName: 'MOTOR_ID'
+        },
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.motorDirection',
+            inputName: 'DIRECTION'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'setLED', {
+    opcode: 'wedo2.setLightHue',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'HUE'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'playNote', {
+    opcode: 'wedo2.playNoteFor',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'NOTE'
+        },
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'DURATION'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'whenDistance', {
+    opcode: 'wedo2.whenDistance',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.lessMore',
+            inputName: 'OP'
+        },
+        {
+            type: 'input',
+            inputOp: 'math_number',
+            inputName: 'REFERENCE'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'whenTilted', {
+    opcode: 'wedo2.whenTilted',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.tiltDirectionAny',
+            inputName: 'DIRECTION'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'getDistance', {
+    opcode: 'wedo2.getDistance',
+    argMap: []
+});
+
+addExtensionOp(weDo2, 'isTilted', {
+    opcode: 'wedo2.isTilted',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.tiltDirectionAny',
+            inputName: 'DIRECTION'
+        }
+    ]
+});
+
+addExtensionOp(weDo2, 'getTilt', {
+    opcode: 'wedo2.getTiltAngle',
+    argMap: [
+        {
+            type: 'input',
+            inputOp: 'wedo2.menu.tiltDirection',
+            inputName: 'DIRECTION'
+        }
+    ]
+});
+
 module.exports = specMap;

@@ -40,6 +40,72 @@ const getAssetUrl = function (asset) {
     return assetUrlParts.join('');
 };
 
+const addProfilerPanels = function (
+    stats, vm, panelName = 'BLK%', panelFg = '#fff', panelBg = '#111') {
+
+    vm.runtime.enableProfiling();
+    if (vm.runtime.profiler === null) {
+        // Profiler isn't available on the local system.
+        return;
+    }
+
+    const blockPercentPanel = stats.addPanel(new window.Stats.Panel(panelName, panelFg, panelBg));
+
+    // Store the profiler reference for later.
+    const profiler = vm.runtime.profiler;
+    // Set profiler to null to disable profiling until later.
+    vm.runtime.profiler = null;
+
+    const stepThreadsProfilerId = profiler.idByName('Sequencer.stepThreads');
+    const blockFunctionProfilerId = profiler.idByName('blockFunction');
+
+    let blockFunctionTime = 0;
+    const stepValues = [];
+    let lastUpdate = Date.now();
+
+    // Collect time used by `blockFunction` calls in `execute` and add a column
+    // to the stats graph of the average for the last second of recordings.
+    profiler.onFrame = function ({id, totalTime}) {
+        if (id === stepThreadsProfilerId && totalTime > 0) {
+            // This frame wraps Sequencer.stepThreads.
+
+            // Push the most recently summed blockFunctionTime.
+            stepValues.push(blockFunctionTime / totalTime * 100);
+            // Every second, average the pushed values and render that as a new
+            // column in the stats graph.
+            if (Date.now() - lastUpdate > 1000) {
+                lastUpdate = Date.now();
+                const average = stepValues.reduce(
+                    (a, b) => a + b,
+                    0) / stepValues.length;
+                blockPercentPanel.update(average, 100);
+                stepValues.length = 0;
+            }
+            blockFunctionTime = 0;
+        } else if (id === blockFunctionProfilerId) {
+            // This frame wraps around each blockFunction call.
+            blockFunctionTime += totalTime;
+        }
+    };
+
+    // Set the stats panel to not display by default.
+    blockPercentPanel.dom.style.display = 'none';
+
+    // When the parent of the stats graphs is clicked, check if the
+    // blockPercentPanel is visible. If it is visible, enable profiling by
+    // setting the runtime's profiler to the stored Profiler instance. If it is
+    // not visible, disable profiling by setting the profiler to null.
+    stats.dom.addEventListener('click', () => {
+        if (blockPercentPanel.dom.style.display === 'block') {
+            vm.runtime.profiler = profiler;
+        } else {
+            vm.runtime.profiler = null;
+        }
+    });
+
+    return blockPercentPanel;
+};
+
 window.onload = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
@@ -99,6 +165,7 @@ window.onload = function () {
     const stats = new window.Stats();
     document.getElementById('tab-renderexplorer').appendChild(stats.dom);
     stats.dom.style.position = 'relative';
+    addProfilerPanels(stats, vm, 'BLK%', '#fff', '#111');
     stats.begin();
 
     // Playground data tabs.

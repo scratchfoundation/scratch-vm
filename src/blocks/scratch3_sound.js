@@ -91,10 +91,6 @@ class Scratch3SoundBlocks {
             sound_play: this.playSound,
             sound_playuntildone: this.playSoundAndWait,
             sound_stopallsounds: this.stopAllSounds,
-            sound_playnoteforbeats: this.playNoteForBeats,
-            sound_playdrumforbeats: this.playDrumForBeats,
-            sound_restforbeats: this.restForBeats,
-            sound_setinstrumentto: this.setInstrument,
             sound_seteffectto: this.setEffect,
             sound_changeeffectby: this.changeEffect,
             sound_cleareffects: this.clearEffects,
@@ -103,10 +99,13 @@ class Scratch3SoundBlocks {
             sound_effects_menu: this.effectsMenu,
             sound_setvolumeto: this.setVolume,
             sound_changevolumeby: this.changeVolume,
-            sound_volume: this.getVolume,
-            sound_settempotobpm: this.setTempo,
-            sound_changetempoby: this.changeTempo,
-            sound_tempo: this.getTempo
+            sound_volume: this.getVolume
+        };
+    }
+
+    getMonitored () {
+        return {
+            sound_volume: {}
         };
     }
 
@@ -165,50 +164,6 @@ class Scratch3SoundBlocks {
     stopAllSounds (args, util) {
         if (util.target.audioPlayer === null) return;
         util.target.audioPlayer.stopAllSounds();
-    }
-
-    playNoteForBeats (args, util) {
-        let note = Cast.toNumber(args.NOTE);
-        note = MathUtil.clamp(note, Scratch3SoundBlocks.MIDI_NOTE_RANGE.min, Scratch3SoundBlocks.MIDI_NOTE_RANGE.max);
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        const soundState = this._getSoundState(util.target);
-        const inst = soundState.currentInstrument;
-        const vol = soundState.volume;
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.playNoteForBeatsWithInstAndVol(note, beats, inst, vol);
-    }
-
-    playDrumForBeats (args, util) {
-        let drum = Cast.toNumber(args.DRUM);
-        drum -= 1; // drums are one-indexed
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        drum = MathUtil.wrapClamp(drum, 0, this.runtime.audioEngine.numDrums - 1);
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        if (util.target.audioPlayer === null) return;
-        return util.target.audioPlayer.playDrumForBeats(drum, beats);
-    }
-
-    restForBeats (args) {
-        let beats = Cast.toNumber(args.BEATS);
-        beats = this._clampBeats(beats);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.waitForBeats(beats);
-    }
-
-    _clampBeats (beats) {
-        return MathUtil.clamp(beats, Scratch3SoundBlocks.BEAT_RANGE.min, Scratch3SoundBlocks.BEAT_RANGE.max);
-    }
-
-    setInstrument (args, util) {
-        const soundState = this._getSoundState(util.target);
-        let instNum = Cast.toNumber(args.INSTRUMENT);
-        instNum -= 1; // instruments are one-indexed
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        instNum = MathUtil.wrapClamp(instNum, 0, this.runtime.audioEngine.numInstruments - 1);
-        soundState.currentInstrument = instNum;
-        return this.runtime.audioEngine.instrumentPlayer.loadInstrument(soundState.currentInstrument);
     }
 
     setEffect (args, util) {
@@ -271,29 +226,6 @@ class Scratch3SoundBlocks {
     getVolume (args, util) {
         const soundState = this._getSoundState(util.target);
         return soundState.volume;
-    }
-
-    setTempo (args) {
-        const tempo = Cast.toNumber(args.TEMPO);
-        this._updateTempo(tempo);
-    }
-
-    changeTempo (args) {
-        const change = Cast.toNumber(args.TEMPO);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        const tempo = change + this.runtime.audioEngine.currentTempo;
-        this._updateTempo(tempo);
-    }
-
-    _updateTempo (tempo) {
-        tempo = MathUtil.clamp(tempo, Scratch3SoundBlocks.TEMPO_RANGE.min, Scratch3SoundBlocks.TEMPO_RANGE.max);
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        this.runtime.audioEngine.setTempo(tempo);
-    }
-
-    getTempo () {
-        if (typeof this.runtime.audioEngine === 'undefined') return;
-        return this.runtime.audioEngine.currentTempo;
     }
 
     soundsMenu (args) {

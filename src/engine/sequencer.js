@@ -2,6 +2,42 @@ const Timer = require('../util/timer');
 const Thread = require('./thread');
 const execute = require('./execute.js');
 
+/**
+ * Profiler frame name for stepping a single thread.
+ * @const {string}
+ */
+const stepThreadProfilerFrame = 'Sequencer.stepThread';
+
+/**
+ * Profiler frame name for the inner loop of stepThreads.
+ * @const {string}
+ */
+const stepThreadsInnerProfilerFrame = 'Sequencer.stepThreads#inner';
+
+/**
+ * Profiler frame name for execute.
+ * @const {string}
+ */
+const executeProfilerFrame = 'execute';
+
+/**
+ * Profiler frame ID for stepThreadProfilerFrame.
+ * @type {number}
+ */
+let stepThreadProfilerId = -1;
+
+/**
+ * Profiler frame ID for stepThreadsInnerProfilerFrame.
+ * @type {number}
+ */
+let stepThreadsInnerProfilerId = -1;
+
+/**
+ * Profiler frame ID for executeProfilerFrame.
+ * @type {number}
+ */
+let executeProfilerId = -1;
+
 class Sequencer {
     constructor (runtime) {
         /**
@@ -38,7 +74,7 @@ class Sequencer {
         let numActiveThreads = Infinity;
         // Whether `stepThreads` has run through a full single tick.
         let ranFirstTick = false;
-        const doneThreads = [];
+        const doneThreads = this.runtime.threads.map(() => null);
         // Conditions for continuing to stepping threads:
         // 1. We must have threads in the list, and some must be active.
         // 2. Time elapsed must be less than WORK_TIME.
@@ -47,6 +83,13 @@ class Sequencer {
                numActiveThreads > 0 &&
                this.timer.timeElapsed() < WORK_TIME &&
                (this.runtime.turboMode || !this.runtime.redrawRequested)) {
+            if (this.runtime.profiler !== null) {
+                if (stepThreadsInnerProfilerId === -1) {
+                    stepThreadsInnerProfilerId = this.runtime.profiler.idByName(stepThreadsInnerProfilerFrame);
+                }
+                this.runtime.profiler.start(stepThreadsInnerProfilerId);
+            }
+
             numActiveThreads = 0;
             // Attempt to run each thread one time.
             for (let i = 0; i < this.runtime.threads.length; i++) {
@@ -54,10 +97,12 @@ class Sequencer {
                 if (activeThread.stack.length === 0 ||
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
-                    if (doneThreads.indexOf(activeThread) < 0) {
-                        doneThreads.push(activeThread);
-                    }
+                    doneThreads[i] = activeThread;
                     continue;
+                }
+                // A thread was removed, added or this thread was restarted.
+                if (doneThreads[i] !== null) {
+                    doneThreads[i] = null;
                 }
                 if (activeThread.status === Thread.STATUS_YIELD_TICK &&
                     !ranFirstTick) {
@@ -67,7 +112,16 @@ class Sequencer {
                 if (activeThread.status === Thread.STATUS_RUNNING ||
                     activeThread.status === Thread.STATUS_YIELD) {
                     // Normal-mode thread: step.
+                    if (this.runtime.profiler !== null) {
+                        if (stepThreadProfilerId === -1) {
+                            stepThreadProfilerId = this.runtime.profiler.idByName(stepThreadProfilerFrame);
+                        }
+                        this.runtime.profiler.start(stepThreadProfilerId);
+                    }
                     this.stepThread(activeThread);
+                    if (this.runtime.profiler !== null) {
+                        this.runtime.profiler.stop();
+                    }
                     activeThread.warpTimer = null;
                     if (activeThread.isKilled) {
                         i--; // if the thread is removed from the list (killed), do not increase index
@@ -80,14 +134,33 @@ class Sequencer {
             // We successfully ticked once. Prevents running STATUS_YIELD_TICK
             // threads on the next tick.
             ranFirstTick = true;
+
+            if (this.runtime.profiler !== null) {
+                this.runtime.profiler.stop();
+            }
         }
         // Filter inactive threads from `this.runtime.threads`.
-        this.runtime.threads = this.runtime.threads.filter(thread => {
-            if (doneThreads.indexOf(thread) > -1) {
-                return false;
+        numActiveThreads = 0;
+        for (let i = 0; i < this.runtime.threads.length; i++) {
+            const thread = this.runtime.threads[i];
+            if (doneThreads[i] === null) {
+                this.runtime.threads[numActiveThreads] = thread;
+                numActiveThreads++;
             }
-            return true;
-        });
+        }
+        this.runtime.threads.length = numActiveThreads;
+
+        // Filter undefined and null values from `doneThreads`.
+        let numDoneThreads = 0;
+        for (let i = 0; i < doneThreads.length; i++) {
+            const maybeThread = doneThreads[i];
+            if (maybeThread !== null) {
+                doneThreads[numDoneThreads] = maybeThread;
+                numDoneThreads++;
+            }
+        }
+        doneThreads.length = numDoneThreads;
+
         return doneThreads;
     }
 
@@ -112,7 +185,23 @@ class Sequencer {
             // Execute the current block.
             // Save the current block ID to notice if we did control flow.
             currentBlockId = thread.peekStack();
+            if (this.runtime.profiler !== null) {
+                if (executeProfilerId === -1) {
+                    executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
+                }
+                // The method commented below has its code inlined underneath to
+                // reduce the bias recorded for the profiler's calls in this
+                // time sensitive stepThread method.
+                //
+                // this.runtime.profiler.start(executeProfilerId, null);
+                this.runtime.profiler.records.push(
+                    this.runtime.profiler.START, executeProfilerId, null, performance.now());
+            }
             execute(this, thread);
+            if (this.runtime.profiler !== null) {
+                // this.runtime.profiler.stop();
+                this.runtime.profiler.records.push(this.runtime.profiler.STOP, performance.now());
+            }
             thread.blockGlowInFrame = currentBlockId;
             // If the thread has yielded or is waiting, yield to other threads.
             if (thread.status === Thread.STATUS_YIELD) {
