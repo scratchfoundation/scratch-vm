@@ -23,7 +23,7 @@ class BlockUtility {
         this.thread = thread;
 
         this._nowObj = {
-            now: () => this.runtime.currentMSecs
+            now: () => this.sequencer.runtime.currentMSecs
         };
     }
 
