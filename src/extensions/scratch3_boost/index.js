@@ -201,6 +201,13 @@ class BoostMotor {
         this._position = 0;
 
         /**
+         * This motor's current relative position
+         * @type {number}
+         * @private
+         */
+        this._positionZero = 0;
+
+        /**
          * Is this motor currently moving?
          * @type {boolean}
          * @private
@@ -296,6 +303,21 @@ class BoostMotor {
         this._position = value;
     }
 
+        /**
+     * @return {int} - 
+     */
+    get positionZero () {
+        return this._positionZero;
+    }
+
+    /**
+     * @param {int} value - 
+     */
+    set positionZero (value) {
+        // Todo: wrap around rotation to avoid extremely large numbers
+        this._positionZero = value;
+    }
+
     /**
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
@@ -348,6 +370,33 @@ class BoostMotor {
         this.turnOn();
         this._setNewTimeout(this.startBraking, milliseconds);
     }
+
+    /**
+     * Turn this motor on for a specific rotation in degrees.
+     * @param {number} degrees - run the motor for this amount of degrees.
+     */
+    turnOnForDegrees (degrees) {
+        if (this._power === 0) return;
+        console.log(degrees)
+        degrees = Math.max(0, degrees);
+        /* TODO: Position parameter must be given as int32. Convert degrees to int32.
+        var f = new DataView()
+        var d = new Int32Array(degrees.data.buffer);
+        console.table(d)
+        */
+        const cmd = this._parent.generateOutputCommand(
+            this._index,
+            0x0B,
+            null,
+            [0,0,0x01,degrees,
+            this._power * this._direction, // power in range 0-100
+            this._power * this._direction,
+            0x00,
+            0x00]
+        );
+
+        this._parent.send(BLECharacteristic, cmd);        
+    }    
 
     /**
      * Start active braking on this motor. After a short time, the motor will turn off.
@@ -689,7 +738,7 @@ class Boost {
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (connectID, subCommandID = 0x51, mode=0x00, values = null) {
+    generateOutputCommand (connectID, subCommandID = 0x51, mode=null, values = null) {
         let command = [0x00, BoostCommand.OUTPUT];
         if (values) {
             command = command.concat(
@@ -701,14 +750,15 @@ class Boost {
             if(subCommandID) {
                 command = command.concat(subCommandID);
             }
-            command = command.concat(mode)
-            
+            if(mode) {
+                command = command.concat(mode)
+            }
             command = command.concat(
                 values
             );
         }
         command.unshift(command.length +1)
-        console.log(command)
+        console.log(buf2hex(command))
         return command;
     }
 
@@ -1008,6 +1058,26 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
+                    opcode: 'motorOnForRotation',
+                    text: formatMessage({
+                        id: 'boost.motorOnForRotation',
+                        default: 'turn [MOTOR_ID] on for [ROTATION] rotations',
+                        description: 'turn a motor on for rotation'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'MOTOR_ID',
+                            defaultValue: BoostMotorLabel.A
+                        },
+                        ROTATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
                     opcode: 'motorOn',
                     text: formatMessage({
                         id: 'boost.motorOn',
@@ -1077,6 +1147,22 @@ class Scratch3BoostBlocks {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_DIRECTION',
                             defaultValue: BoostMotorDirection.FORWARD
+                        }
+                    }
+                },
+                {
+                    opcode: 'motorZero',
+                    text: formatMessage({
+                        id: 'boost.motorZero',
+                        default: 'zero [MOTOR_ID]',
+                        description: 'set a motor\'s position to 0'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MOTOR_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'MOTOR_ID',
+                            defaultValue: BoostMotorLabel.A
                         }
                     }
                 },
@@ -1465,6 +1551,30 @@ class Scratch3BoostBlocks {
     }
 
     /**
+     * Turn specified motor(s) on for a specified rotation in full rotations.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @property {int} ROTATION - the amount of full rotations to turn the motors.
+     * @return {Promise} - a promise which will resolve at the end of the duration.
+     */
+    motorOnForRotation (args) {
+        // TODO: cast args.MOTOR_ID?
+        let degrees = Cast.toNumber(args.ROTATION) * 360;
+        degrees = MathUtil.clamp(degrees, 0, 36000);
+        return new Promise(resolve => {
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.turnOnForDegrees(degrees);
+                }
+            });
+
+            // Run for some time even when no motor is connected
+            setTimeout(resolve, degrees);
+        });
+    }    
+
+    /**
      * Turn specified motor(s) on indefinitely.
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to activate.
@@ -1578,6 +1688,29 @@ class Scratch3BoostBlocks {
     }
 
     /**
+     * Set the motor(s) position to 0.
+     * @param {object} args - the block's arguments.
+     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @return {Promise} - a Promise that resolves after some delay.
+     */
+    motorZero (args) {
+        // TODO: cast args.MOTOR_ID?
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                // TODO: Do this on the hardware, i.e. https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#encoding-of-writedirectmodedata-0x81-0x51
+                motor.positionZero = motor.position;
+            }
+        });
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
+        });
+    }    
+
+    /**
      * Set the LED's hue.
      * @param {object} args - the block's arguments.
      * @property {number} HUE - the hue to set, in the range [0,100].
@@ -1662,13 +1795,13 @@ class Scratch3BoostBlocks {
         switch(args.MOTOR_REPORTER_ID) {
             // TODO: Handle negative rotation.
             case BoostMotorLabel.A:
-                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.A].position, 0, 360);
+                return this._peripheral._motors[BoostPort.A].position - this._peripheral._motors[BoostPort.A].positionZero
             case BoostMotorLabel.B:
-                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.B].position, 0, 360);
+                return this._peripheral._motors[BoostPort.B].position - this._peripheral._motors[BoostPort.B].positionZero
             case BoostMotorLabel.C:
-                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.C].position, 0, 360);
+                return this._peripheral._motors[BoostPort.C].position - this._peripheral._motors[BoostPort.C].positionZero
             case BoostMotorLabel.D:
-                return MathUtil.wrapClamp(this._peripheral._motors[BoostPort.D].position, 0, 360);
+                return this._peripheral._motors[BoostPort.D].position - this._peripheral._motors[BoostPort.D].positionZero
             default:
                 log.warn("Asked for a motor position that doesnt exist!")
                 return false;
