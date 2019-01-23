@@ -18,7 +18,7 @@ class Sprite {
         this.runtime = runtime;
         if (!blocks) {
             // Shared set of blocks for all clones.
-            blocks = new Blocks();
+            blocks = new Blocks(runtime);
         }
         this.blocks = blocks;
         /**

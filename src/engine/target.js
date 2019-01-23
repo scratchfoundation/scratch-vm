@@ -25,7 +25,7 @@ class Target extends EventEmitter {
         super();
 
         if (!blocks) {
-            blocks = new Blocks();
+            blocks = new Blocks(runtime);
         }
 
         /**
