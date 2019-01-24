@@ -1161,9 +1161,8 @@ class Runtime extends EventEmitter {
         }
 
         const defaultValue =
-            typeof argInfo.defaultValue === 'undefined'
-                ? ''
-                : escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+            typeof argInfo.defaultValue === 'undefined' ? '' :
+                escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
 
         if (argTypeInfo.check) {
             argJSON.check = argTypeInfo.check;
