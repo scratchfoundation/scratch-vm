@@ -377,23 +377,27 @@ class BoostMotor {
      */
     turnOnForDegrees (degrees) {
         if (this._power === 0) return;
-        console.log(degrees)
         degrees = Math.max(0, degrees);
-        /* TODO: Position parameter must be given as int32. Convert degrees to int32.
-        var f = new DataView()
-        var d = new Int32Array(degrees.data.buffer);
-        console.table(d)
-        */
+        console.log(degrees)
+        /* TODO: Position parameter must be given as int32. Convert degrees to int32. */
+        var buffer = new ArrayBuffer(4)        
+        var dataview = new DataView(buffer)
+        dataview.setInt32(0, degrees)
+
         const cmd = this._parent.generateOutputCommand(
             this._index,
             0x0B,
             null,
-            [0,0,0x01,degrees,
+            [dataview.getInt8(3),
+            dataview.getInt8(2),
+            dataview.getInt8(1),
+            dataview.getInt8(0),
             this._power * this._direction, // power in range 0-100
-            this._power * this._direction,
-            0x00,
-            0x00]
+            0xff,
+            0x00,0x03]
         );
+
+        this._isOn = true;
 
         this._parent.send(BLECharacteristic, cmd);        
     }    
@@ -735,6 +739,7 @@ class Boost {
      *
      * @param  {number} connectID - the port (Connect ID) to send a command to.
      * @param  {number} commandID - the id of the byte command.
+     * @param  {number} mode      - the mode
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
@@ -744,13 +749,13 @@ class Boost {
             command = command.concat(
                 connectID
             ).concat(
-                0x00 //  Execute immediately
+                0x11 //  Execute immediately
             );
 
             if(subCommandID) {
                 command = command.concat(subCommandID);
             }
-            if(mode) {
+            if(mode !== null) {
                 command = command.concat(mode)
             }
             command = command.concat(
@@ -1631,7 +1636,7 @@ class Scratch3BoostBlocks {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                motor.turnOn();
+                //motor.turnOn();
             }
         });
 
