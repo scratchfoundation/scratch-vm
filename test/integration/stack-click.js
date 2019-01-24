@@ -45,7 +45,7 @@ test('stack click activates the stack', t => {
                     blockContainer.blocklyListen({
                         blockId: blockId,
                         element: 'stackclick'
-                    }, vm.runtime);
+                    });
                 }
             }
 
