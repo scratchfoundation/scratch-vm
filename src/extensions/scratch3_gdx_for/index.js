@@ -27,6 +27,12 @@ const BLEUUID = {
 };
 
 /**
+ * Threshold for pushing and pulling force, for the whenForcePushedOrPulled hat block.
+ * @type {number}
+ */
+const FORCE_THRESHOLD = 5;
+
+/**
  * Manage communication with a GDX-FOR peripheral over a Scratch Link client socket.
  */
 class GdxFor {
@@ -314,13 +320,13 @@ class GdxFor {
 }
 
 /**
- * Enum for comparison operations.
+ * Enum for pushed and pulled menu options.
  * @readonly
  * @enum {string}
  */
-const ComparisonOptions = {
-    LESS_THAN: 'less_than',
-    GREATER_THAN: 'greater_than'
+const PushPullValues = {
+    PUSHED: 'pushed',
+    PULLED: 'pulled'
 };
 
 /**
@@ -332,7 +338,7 @@ class Scratch3GdxForBlocks {
      * @return {string} - the name of this extension.
      */
     static get EXTENSION_NAME () {
-        return 'GDX-FOR';
+        return 'Force and Acceleration';
     }
 
     /**
@@ -385,20 +391,26 @@ class Scratch3GdxForBlocks {
         ];
     }
 
-
-    get COMPARE_MENU () {
+    get PUSH_PULL_MENU () {
         return [
             {
-                text: '<',
-                value: ComparisonOptions.LESS_THAN
+                text: formatMessage({
+                    id: 'gdxfor.pushed',
+                    default: 'pushed',
+                    description: 'the force sensor was pushed inward'
+                }),
+                value: PushPullValues.PUSHED
             },
             {
-                text: '>',
-                value: ComparisonOptions.GREATER_THAN
+                text: formatMessage({
+                    id: 'gdxfor.pulled',
+                    default: 'pulled',
+                    description: 'the force sensor was pulled outward'
+                }),
+                value: PushPullValues.PULLED
             }
         ];
     }
-
 
     /**
      * Construct a set of GDX-FOR blocks.
@@ -426,66 +438,29 @@ class Scratch3GdxForBlocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'whenAccelerationCompare',
+                    opcode: 'whenForcePushedOrPulled',
                     text: formatMessage({
-                        id: 'gdxfor.whenAccelerationCompare',
-                        default: 'when acceleration [COMPARE] [VALUE]',
-                        description: 'when the meters/second^2 value measured by the ' +
-                            'acceleration sensor is compared to some value'
+                        id: 'gdxfor.whenForcePushedOrPulled',
+                        default: 'when force sensor [PUSH_PULL]',
+                        description: 'when the force sensor is pushed or pulled'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        COMPARE: {
+                        PUSH_PULL: {
                             type: ArgumentType.STRING,
-                            menu: 'compareOptions',
-                            defaultValue: ComparisonOptions.GREATER_THAN
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 5
+                            menu: 'pushPullOptions',
+                            defaultValue: PushPullValues.PUSHED
                         }
                     }
                 },
                 {
-                    opcode: 'whenSpinSpeedCompare',
+                    opcode: 'getForce',
                     text: formatMessage({
-                        id: 'gdxfor.whenSpinSpeedCompare',
-                        default: 'when spin speed [COMPARE] [VALUE]',
-                        description: 'when the degrees/second value measured by the ' +
-                            'gyroscope sensor is compared to some value'
+                        id: 'gdxfor.getForce',
+                        default: 'force',
+                        description: 'gets force'
                     }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        COMPARE: {
-                            type: ArgumentType.STRING,
-                            menu: 'compareOptions',
-                            defaultValue: ComparisonOptions.GREATER_THAN
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 5
-                        }
-                    }
-                },
-                {
-                    opcode: 'whenForceCompare',
-                    text: formatMessage({
-                        id: 'gdxfor.whenForceCompare',
-                        default: 'when force [COMPARE] [VALUE]',
-                        description: 'when the value measured by the force sensor is compared to some value'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        COMPARE: {
-                            type: ArgumentType.STRING,
-                            menu: 'compareOptions',
-                            defaultValue: ComparisonOptions.GREATER_THAN
-                        },
-                        VALUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 5
-                        }
-                    }
+                    blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'whenJumped',
@@ -545,15 +520,6 @@ class Scratch3GdxForBlocks {
                     }
                 },
                 {
-                    opcode: 'getForce',
-                    text: formatMessage({
-                        id: 'gdxfor.getForce',
-                        default: 'force',
-                        description: 'gets force'
-                    }),
-                    blockType: BlockType.REPORTER
-                },
-                {
                     opcode: 'isFacing',
                     text: formatMessage({
                         id: 'gdxfor.isFacing',
@@ -581,12 +547,28 @@ class Scratch3GdxForBlocks {
                 }
             ],
             menus: {
+                pushPullOptions: this.PUSH_PULL_MENU,
                 directionOptions: this.DIRECTIONS_MENU,
-                compareOptions: this.COMPARE_MENU,
                 tiltOptions: this.TILT_MENU,
                 faceOptions: this.FACE_MENU
             }
         };
+    }
+
+    whenForcePushedOrPulled (args) {
+        switch (args.PUSH_PULL) {
+        case PushPullValues.PUSHED:
+            return this._peripheral.getForce() < FORCE_THRESHOLD * -1;
+        case PushPullValues.PULLED:
+            return this._peripheral.getForce() > FORCE_THRESHOLD;
+        default:
+            log.warn(`unknown push/pull value in whenForcePushedOrPulled: ${args.PUSH_PULL}`);
+            return false;
+        }
+    }
+
+    getForce () {
+        return Math.round(this._peripheral.getForce());
     }
 
     /**
@@ -598,57 +580,8 @@ class Scratch3GdxForBlocks {
     magnitude (x, y, z) {
         return Math.sqrt((x * x) + (y * y) + (z * z));
     }
-
-    whenAccelerationCompare (args) {
-        let currentVal = this.magnitude(
-            this._peripheral.getAccelerationX(),
-            this._peripheral.getAccelerationY(),
-            this._peripheral.getAccelerationZ()
-        );
-
-        // Remove acceleration due to gravity
-        currentVal = currentVal - 9.8;
-
-        switch (args.COMPARE) {
-        case ComparisonOptions.LESS_THAN:
-            return currentVal < Cast.toNumber(args.VALUE);
-        case ComparisonOptions.GREATER_THAN:
-            return currentVal > Cast.toNumber(args.VALUE);
-        default:
-            log.warn(`Unknown comparison operator in whenAccelerationCompare: ${args.COMPARE}`);
-            return false;
-        }
-    }
     whenJumped () {
         return this.isFreeFalling();
-    }
-    whenSpinSpeedCompare (args) {
-        const currentVal = this.magnitude(
-            this._peripheral.getSpinSpeedX(),
-            this._peripheral.getSpinSpeedY(),
-            this._peripheral.getSpinSpeedZ()
-        );
-
-        switch (args.COMPARE) {
-        case ComparisonOptions.LESS_THAN:
-            return currentVal < Cast.toNumber(args.VALUE);
-        case ComparisonOptions.GREATER_THAN:
-            return currentVal > Cast.toNumber(args.VALUE);
-        default:
-            log.warn(`Unknown comparison operator in whenSpinSpeedCompare: ${args.COMPARE}`);
-            return false;
-        }
-    }
-    whenForceCompare (args) {
-        switch (args.COMPARE) {
-        case ComparisonOptions.LESS_THAN:
-            return this._peripheral.getForce() < Cast.toNumber(args.VALUE);
-        case ComparisonOptions.GREATER_THAN:
-            return this._peripheral.getForce() > Cast.toNumber(args.VALUE);
-        default:
-            log.warn(`Unknown comparison operator in whenForceCompare: ${args.COMPARE}`);
-            return false;
-        }
     }
     getAcceleration (args) {
         switch (args.DIRECTION) {
@@ -683,9 +616,6 @@ class Scratch3GdxForBlocks {
         default:
             log.warn(`Unknown direction in getTilt: ${args.TILT}`);
         }
-    }
-    getForce () {
-        return this._peripheral.getForce();
     }
     isFacing (args) {
         switch (args.FACING) {
