@@ -502,8 +502,8 @@ const serializeMonitors = function (monitors) {
             visible: monitorData.visible
         };
         if (monitorData.mode !== 'list') {
-            serializedMonitor.min = monitorData.sliderMin;
-            serializedMonitor.max = monitorData.sliderMax;
+            serializedMonitor.sliderMin = monitorData.sliderMin;
+            serializedMonitor.sliderMax = monitorData.sliderMax;
         }
         return serializedMonitor;
     });
@@ -556,7 +556,7 @@ const serialize = function (runtime, targetId) {
     meta.vm = vmPackage.version;
 
     // Attach full user agent string to metadata if available
-    meta.agent = null;
+    meta.agent = 'none';
     if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
 
     // Assemble payload and return
