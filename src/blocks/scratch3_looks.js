@@ -501,7 +501,6 @@ class Scratch3LooksBlocks {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         let value = Cast.toNumber(args.VALUE);
         if (effect === 'ghost') {
-            value = 
             value = MathUtil.clamp(Math.round(value),
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
