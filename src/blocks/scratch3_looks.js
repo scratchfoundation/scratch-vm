@@ -490,7 +490,7 @@ class Scratch3LooksBlocks {
         if (!util.target.effects.hasOwnProperty(effect)) return;
         let newValue = change + util.target.effects[effect];
         if (effect === 'ghost') {
-            newValue = MathUtil.clamp(newValue,
+            newValue = MathUtil.clamp(Math.round(newValue),
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
         }
@@ -501,7 +501,8 @@ class Scratch3LooksBlocks {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         let value = Cast.toNumber(args.VALUE);
         if (effect === 'ghost') {
-            value = MathUtil.clamp(value,
+            value = 
+            value = MathUtil.clamp(Math.round(value),
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
                 Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
         }
