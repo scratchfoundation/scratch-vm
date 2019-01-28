@@ -312,8 +312,7 @@ class GdxFor {
 
     _getAcceleration (sensorNum) {
         if (!this._canReadSensors()) return 0;
-        let val = this._device.getSensor(sensorNum).value;
-        val = Math.round(val);
+        const val = this._device.getSensor(sensorNum).value;
         return val;
     }
 
@@ -335,7 +334,6 @@ class GdxFor {
         val = MathUtil.radToDeg(val);
         const framesPerSec = 1000 / this._runtime.currentStepTime;
         val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-        val = Math.round(val);
         val = val * -1;
         return val;
     }
@@ -708,11 +706,11 @@ class Scratch3GdxForBlocks {
     getSpinSpeed (args) {
         switch (args.DIRECTION) {
         case AxisValues.X:
-            return this._peripheral.getSpinSpeedX();
+            return Math.round(this._peripheral.getSpinSpeedX());
         case AxisValues.Y:
-            return this._peripheral.getSpinSpeedY();
+            return Math.round(this._peripheral.getSpinSpeedY());
         case AxisValues.Z:
-            return this._peripheral.getSpinSpeedZ();
+            return Math.round(this._peripheral.getSpinSpeedZ());
         default:
             log.warn(`Unknown direction in getSpinSpeed: ${args.DIRECTION}`);
         }
