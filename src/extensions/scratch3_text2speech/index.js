@@ -265,7 +265,7 @@ class Scratch3Text2SpeechBlocks {
         if (this.isSupportedLanguage(this.getEditorLanguage())) {
             defaultTextToSpeak = formatMessage({
                 id: 'text2speech.defaultTextToSpeak',
-                default: defaultTextToSpeak,
+                default: 'hello',
                 description: 'hello: the default text to speak'
             });
         }
