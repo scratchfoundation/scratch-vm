@@ -755,14 +755,15 @@ class Scratch3GdxForBlocks {
 
     isFacing (args) {
         switch (args.FACING) {
-        case 'up':
-            return this._peripheral.getAccelerationZ() > 9;
-        case 'down':
-            return this._peripheral.getAccelerationZ() < -9;
+        case FaceValues.UP:
+            return this._peripheral.getAccelerationZ() > GRAVITY;
+        case FaceValues.DOWN:
+            return this._peripheral.getAccelerationZ() < GRAVITY * -1;
         default:
             log.warn(`Unknown direction in isFacing: ${args.FACING}`);
         }
     }
+
     isFreeFalling () {
         return this.accelMagnitude() < FREEFALL;
     }
