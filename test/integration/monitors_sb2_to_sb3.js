@@ -1,27 +1,27 @@
 const path = require('path');
-const test = require('tap').test;
+const tap = require('tap');
 const makeTestStorage = require('../fixtures/make-test-storage');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 
-const projectUri = path.resolve(__dirname, '../fixtures/monitors.sb2');
-const project = readFileToBuffer(projectUri);
+let vm;
 
-const vm = new VirtualMachine();
-vm.attachStorage(makeTestStorage());
+tap.beforeEach(() => {
+    const projectUri = path.resolve(__dirname, '../fixtures/monitors.sb2');
+    const project = readFileToBuffer(projectUri);
 
-// TODO figure out why running threads doesn't work in this test
-// vm.start();
-vm.clear();
-vm.setCompatibilityMode(false);
-vm.setTurboMode(false);
+    vm = new VirtualMachine();
+    vm.attachStorage(makeTestStorage());
 
-test('Set Up - load the sb2 project', t => {
-    vm.loadProject(project).then(() => {
-        t.pass('Successfully Loaded!');
-        t.end();
-    });
+    // TODO figure out why running threads doesn't work in this test
+    // vm.start();
+    vm.clear();
+    vm.setCompatibilityMode(false);
+    vm.setTurboMode(false);
+
+    return vm.loadProject(project);
 });
+const test = tap.test;
 
 test('saving and loading sb2 project with monitors preserves sliderMin and sliderMax', t => {
 
