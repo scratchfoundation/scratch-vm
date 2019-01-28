@@ -1,7 +1,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
-const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const BLE = require('../../io/ble');
@@ -31,6 +30,30 @@ const BLEUUID = {
  * @type {number}
  */
 const FORCE_THRESHOLD = 5;
+
+/**
+ * Threshold for acceleration magnitude, for the "moved" gesture.
+ * @type {number}
+ */
+const MOVED_THRESHOLD = 3;
+
+/**
+ * Threshold for acceleration magnitude, for the "shaken" gesture.
+ * @type {number}
+ */
+const SHAKEN_THRESHOLD = 30;
+
+/**
+ * Acceleration due to gravity, in m/s^2.
+ * @type {number}
+ */
+const GRAVITY = 9.8;
+
+/**
+ * Threshold for acceleration magnitude, below which we are in freefall.
+ * @type {number}
+ */
+const FREEFALL = 0.5;
 
 /**
  * Manage communication with a GDX-FOR peripheral over a Scratch Link client socket.
@@ -197,8 +220,8 @@ class GdxFor {
 
             // Compute the yz unit vector
             const z2 = z * z;
-            const y2 = y * y;
-            let value = z2 + y2;
+            const x2 = x * x;
+            let value = z2 + x2;
             value = Math.sqrt(value);
 
             // For sufficiently small zy vector values we are essentially at 90 degrees.
@@ -209,15 +232,15 @@ class GdxFor {
                 value = 90;
             } else {
                 // Compute the x-axis angle
-                value = x / value;
+                value = y / value;
                 value = Math.atan(value);
                 value *= 57.2957795; // convert from rad to deg
             }
             // Manage the sign of the result
-            let yzSign = ySign;
-            if (z > y) yzSign = zSign;
-            if (yzSign === -1) value = 180.0 - value;
-            value *= xSign;
+            let xzSign = xSign;
+            if (z > x) xzSign = zSign;
+            if (xzSign === -1) value = 180.0 - value;
+            value *= ySign;
             // Round the result to the nearest degree
             value += 0.5;
             return value;
@@ -247,8 +270,8 @@ class GdxFor {
 
             // Compute the yz unit vector
             const z2 = z * z;
-            const x2 = x * x;
-            let value = z2 + x2;
+            const y2 = y * y;
+            let value = z2 + y2;
             value = Math.sqrt(value);
 
             // For sufficiently small zy vector values we are essentially at 90 degrees.
@@ -259,15 +282,15 @@ class GdxFor {
                 value = 90;
             } else {
                 // Compute the x-axis angle
-                value = y / value;
+                value = x / value;
                 value = Math.atan(value);
                 value *= 57.2957795; // convert from rad to deg
             }
             // Manage the sign of the result
-            let xzSign = xSign;
-            if (z > x) xzSign = zSign;
-            if (xzSign === -1) value = 180.0 - value;
-            value *= ySign;
+            let yzSign = ySign;
+            if (z > y) yzSign = zSign;
+            if (yzSign === -1) value = 180.0 - value;
+            value *= xSign;
             // Round the result to the nearest degree
             value += 0.5;
             return value;
@@ -275,26 +298,23 @@ class GdxFor {
         return 0;
     }
 
-
     getAccelerationX () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(2).value;
-        }
-        return 0;
+        return this._getAcceleration(2);
     }
 
     getAccelerationY () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(3).value;
-        }
-        return 0;
+        return this._getAcceleration(3);
     }
 
     getAccelerationZ () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(4).value;
-        }
-        return 0;
+        return this._getAcceleration(4);
+    }
+
+    _getAcceleration (sensorNum) {
+        if (!this._canReadSensors()) return 0;
+        let val = this._device.getSensor(sensorNum).value;
+        val = Math.round(val);
+        return val;
     }
 
     getSpinSpeedX () {
@@ -330,6 +350,38 @@ const PushPullValues = {
 };
 
 /**
+ * Enum for motion gesture menu options.
+ * @readonly
+ * @enum {string}
+ */
+const GestureValues = {
+    MOVED: 'moved',
+    SHAKEN: 'shaken',
+    STARTED_FALLING: 'started falling'
+};
+
+/**
+ * Enum for tilt axis menu options.
+ * @readonly
+ * @enum {string}
+ */
+const TiltAxisValues = {
+    X: 'x',
+    Y: 'y'
+};
+
+/**
+ * Enum for axis menu options.
+ * @readonly
+ * @enum {string}
+ */
+const AxisValues = {
+    X: 'x',
+    Y: 'y',
+    Z: 'z'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a GDX-FOR peripheral.
  */
 class Scratch3GdxForBlocks {
@@ -348,19 +400,19 @@ class Scratch3GdxForBlocks {
         return 'gdxfor';
     }
 
-    get DIRECTIONS_MENU () {
+    get AXIS_MENU () {
         return [
             {
                 text: 'x',
-                value: 'x'
+                value: AxisValues.X
             },
             {
                 text: 'y',
-                value: 'y'
+                value: AxisValues.Y
             },
             {
                 text: 'z',
-                value: 'z'
+                value: AxisValues.Z
             }
         ];
     }
@@ -369,11 +421,11 @@ class Scratch3GdxForBlocks {
         return [
             {
                 text: 'x',
-                value: 'x'
+                value: TiltAxisValues.X
             },
             {
                 text: 'y',
-                value: 'y'
+                value: TiltAxisValues.Y
             }
         ];
     }
@@ -408,6 +460,35 @@ class Scratch3GdxForBlocks {
                     description: 'the force sensor was pulled outward'
                 }),
                 value: PushPullValues.PULLED
+            }
+        ];
+    }
+
+    get GESTURE_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'gdxfor.moved',
+                    default: 'moved',
+                    description: 'the sensor was moved'
+                }),
+                value: GestureValues.MOVED
+            },
+            {
+                text: formatMessage({
+                    id: 'gdxfor.shaken',
+                    default: 'shaken',
+                    description: 'the sensor was shaken'
+                }),
+                value: GestureValues.SHAKEN
+            },
+            {
+                text: formatMessage({
+                    id: 'gdxfor.startedFalling',
+                    default: 'started falling',
+                    description: 'the sensor started free falling'
+                }),
+                value: GestureValues.STARTED_FALLING
             }
         ];
     }
@@ -463,43 +544,18 @@ class Scratch3GdxForBlocks {
                     blockType: BlockType.REPORTER
                 },
                 {
-                    opcode: 'whenJumped',
+                    opcode: 'whenGesture',
                     text: formatMessage({
-                        id: 'gdxfor.whenJumped',
-                        default: 'when jumped',
-                        description: 'when the device has jumped'
+                        id: 'gdxfor.whenGesture',
+                        default: 'when [GESTURE]',
+                        description: 'when the sensor detects a gesture'
                     }),
-                    blockType: BlockType.HAT
-                },
-                {
-                    opcode: 'getAcceleration',
-                    text: formatMessage({
-                        id: 'gdxfor.getAcceleration',
-                        default: 'acceleration [DIRECTION]',
-                        description: 'gets acceleration'
-                    }),
-                    blockType: BlockType.REPORTER,
+                    blockType: BlockType.HAT,
                     arguments: {
-                        DIRECTION: {
+                        GESTURE: {
                             type: ArgumentType.STRING,
-                            menu: 'directionOptions',
-                            defaultValue: 'x'
-                        }
-                    }
-                },
-                {
-                    opcode: 'getSpinSpeed',
-                    text: formatMessage({
-                        id: 'gdxfor.getSpinSpeed',
-                        default: 'spin speed [DIRECTION]',
-                        description: 'gets spin speed'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'directionOptions',
-                            defaultValue: 'x'
+                            menu: 'gestureOptions',
+                            defaultValue: GestureValues.MOVED
                         }
                     }
                 },
@@ -515,7 +571,39 @@ class Scratch3GdxForBlocks {
                         TILT: {
                             type: ArgumentType.STRING,
                             menu: 'tiltOptions',
-                            defaultValue: 'x'
+                            defaultValue: TiltAxisValues.X
+                        }
+                    }
+                },
+                {
+                    opcode: 'getSpinSpeed',
+                    text: formatMessage({
+                        id: 'gdxfor.getSpinSpeed',
+                        default: 'spin speed [DIRECTION]',
+                        description: 'gets spin speed'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'axisOptions',
+                            defaultValue: AxisValues.Z
+                        }
+                    }
+                },
+                {
+                    opcode: 'getAcceleration',
+                    text: formatMessage({
+                        id: 'gdxfor.getAcceleration',
+                        default: 'acceleration [DIRECTION]',
+                        description: 'gets acceleration'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'axisOptions',
+                            defaultValue: AxisValues.X
                         }
                     }
                 },
@@ -539,8 +627,8 @@ class Scratch3GdxForBlocks {
                     opcode: 'isFreeFalling',
                     text: formatMessage({
                         id: 'gdxfor.isFreeFalling',
-                        default: 'free falling?',
-                        description: 'is the device in freefall?'
+                        default: 'falling?',
+                        description: 'is the device in free fall?'
                     }),
                     blockType: BlockType.BOOLEAN
 
@@ -548,7 +636,8 @@ class Scratch3GdxForBlocks {
             ],
             menus: {
                 pushPullOptions: this.PUSH_PULL_MENU,
-                directionOptions: this.DIRECTIONS_MENU,
+                gestureOptions: this.GESTURE_MENU,
+                axisOptions: this.AXIS_MENU,
                 tiltOptions: this.TILT_MENU,
                 faceOptions: this.FACE_MENU
             }
@@ -571,6 +660,57 @@ class Scratch3GdxForBlocks {
         return Math.round(this._peripheral.getForce());
     }
 
+    whenGesture (args) {
+        switch (args.GESTURE) {
+        case GestureValues.MOVED:
+            return this.gestureMagnitude() > MOVED_THRESHOLD;
+        case GestureValues.SHAKEN:
+            return this.gestureMagnitude() > SHAKEN_THRESHOLD;
+        case GestureValues.STARTED_FALLING:
+            return this.isFreeFalling();
+        default:
+            log.warn(`unknown gesture value in whenGesture: ${args.GESTURE}`);
+            return false;
+        }
+    }
+
+    getTilt (args) {
+        switch (args.TILT) {
+        case TiltAxisValues.X:
+            return Math.round(this._peripheral.getTiltX());
+        case TiltAxisValues.Y:
+            return Math.round(this._peripheral.getTiltY());
+        default:
+            log.warn(`Unknown direction in getTilt: ${args.TILT}`);
+        }
+    }
+
+    getSpinSpeed (args) {
+        switch (args.DIRECTION) {
+        case AxisValues.X:
+            return this._peripheral.getSpinSpeedX();
+        case AxisValues.Y:
+            return this._peripheral.getSpinSpeedY();
+        case AxisValues.Z:
+            return this._peripheral.getSpinSpeedZ();
+        default:
+            log.warn(`Unknown direction in getSpinSpeed: ${args.DIRECTION}`);
+        }
+    }
+
+    getAcceleration (args) {
+        switch (args.DIRECTION) {
+        case AxisValues.X:
+            return Math.round(this._peripheral.getAccelerationX());
+        case AxisValues.Y:
+            return Math.round(this._peripheral.getAccelerationY());
+        case AxisValues.Z:
+            return Math.round(this._peripheral.getAccelerationZ());
+        default:
+            log.warn(`Unknown direction in getAcceleration: ${args.DIRECTION}`);
+        }
+    }
+
     /**
      * @param {number} x - x axis vector
      * @param {number} y - y axis vector
@@ -580,43 +720,19 @@ class Scratch3GdxForBlocks {
     magnitude (x, y, z) {
         return Math.sqrt((x * x) + (y * y) + (z * z));
     }
-    whenJumped () {
-        return this.isFreeFalling();
+
+    accelMagnitude () {
+        return this.magnitude(
+            this._peripheral.getAccelerationX(),
+            this._peripheral.getAccelerationY(),
+            this._peripheral.getAccelerationZ()
+        );
     }
-    getAcceleration (args) {
-        switch (args.DIRECTION) {
-        case 'x':
-            return this._peripheral.getAccelerationX();
-        case 'y':
-            return this._peripheral.getAccelerationY();
-        case 'z':
-            return this._peripheral.getAccelerationZ();
-        default:
-            log.warn(`Unknown direction in getAcceleration: ${args.DIRECTION}`);
-        }
+
+    gestureMagnitude () {
+        return this.accelMagnitude() - GRAVITY;
     }
-    getSpinSpeed (args) {
-        switch (args.DIRECTION) {
-        case 'x':
-            return this._peripheral.getSpinSpeedX();
-        case 'y':
-            return this._peripheral.getSpinSpeedY();
-        case 'z':
-            return this._peripheral.getSpinSpeedZ();
-        default:
-            log.warn(`Unknown direction in getSpinSpeed: ${args.DIRECTION}`);
-        }
-    }
-    getTilt (args) {
-        switch (args.TILT) {
-        case 'x':
-            return this._peripheral.getTiltX();
-        case 'y':
-            return this._peripheral.getTiltY();
-        default:
-            log.warn(`Unknown direction in getTilt: ${args.TILT}`);
-        }
-    }
+
     isFacing (args) {
         switch (args.FACING) {
         case 'up':
@@ -628,13 +744,7 @@ class Scratch3GdxForBlocks {
         }
     }
     isFreeFalling () {
-        const currentVal = this.magnitude(
-            this._peripheral.getAccelerationX(),
-            this._peripheral.getAccelerationY(),
-            this._peripheral.getAccelerationZ()
-        );
-
-        return currentVal < .5;
+        return this.accelMagnitude() < FREEFALL;
     }
 }
 
