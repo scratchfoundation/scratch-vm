@@ -154,7 +154,8 @@ test('Reordering a sprite should emit a project changed event', t => {
 test('Reordering a costume should emit a project changed event', t => {
     t.equal(vm.editingTarget.sprite.costumes.length, 2);
     const spriteId = vm.editingTarget.id;
-    vm.reorderCostume(spriteId, 2, 1);
+    const reordered = vm.reorderCostume(spriteId, 1, 0);
+    t.equal(reordered, true);
     t.equal(projectChanged, true);
     t.end();
 });
@@ -172,7 +173,8 @@ test('Reordering a sound should emit a project changed event', t => {
         // Reset the project changed flag to ignore change from adding new sound
         projectChanged = false;
         t.equal(vm.editingTarget.sprite.sounds.length, 2);
-        vm.reorderSound(spriteId, 2, 1);
+        const reordered = vm.reorderSound(spriteId, 1, 0);
+        t.equal(reordered, true);
         t.equal(projectChanged, true);
         t.end();
     });
