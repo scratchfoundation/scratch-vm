@@ -318,24 +318,26 @@ class GdxFor {
     }
 
     getSpinSpeedX () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(5).value * (180 / Math.PI);
-        }
-        return 0;
+        return this._getSpinSpeed(5);
     }
 
     getSpinSpeedY () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(6).value * (180 / Math.PI);
-        }
-        return 0;
+        return this._getSpinSpeed(6);
     }
 
     getSpinSpeedZ () {
-        if (this._canReadSensors()) {
-            return this._device.getSensor(7).value * (180 / Math.PI);
-        }
-        return 0;
+        return this._getSpinSpeed(7);
+    }
+
+    _getSpinSpeed (sensorNum) {
+        if (!this._canReadSensors()) return 0;
+        let val = this._device.getSensor(sensorNum).value;
+        val = MathUtil.radToDeg(val);
+        const framesPerSec = 1000 / this._runtime.currentStepTime;
+        val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
+        val = Math.round(val);
+        val = val * -1;
+        return val;
     }
 }
 
