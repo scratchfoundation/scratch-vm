@@ -384,6 +384,16 @@ const AxisValues = {
 };
 
 /**
+ * Enum for face menu options.
+ * @readonly
+ * @enum {string}
+ */
+const FaceValues = {
+    UP: 'up',
+    DOWN: 'down'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a GDX-FOR peripheral.
  */
 class Scratch3GdxForBlocks {
@@ -435,12 +445,20 @@ class Scratch3GdxForBlocks {
     get FACE_MENU () {
         return [
             {
-                text: 'up',
-                value: 'up'
+                text: formatMessage({
+                    id: 'gdxfor.up',
+                    default: 'up',
+                    description: 'the sensor is facing up'
+                }),
+                value: FaceValues.UP
             },
             {
-                text: 'down',
-                value: 'down'
+                text: formatMessage({
+                    id: 'gdxfor.down',
+                    default: 'down',
+                    description: 'the sensor is facing down'
+                }),
+                value: FaceValues.DOWN
             }
         ];
     }
@@ -621,7 +639,7 @@ class Scratch3GdxForBlocks {
                         FACING: {
                             type: ArgumentType.STRING,
                             menu: 'faceOptions',
-                            defaultValue: 'up'
+                            defaultValue: FaceValues.UP
                         }
                     }
                 },
