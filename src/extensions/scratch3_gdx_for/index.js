@@ -44,6 +44,12 @@ const MOVED_THRESHOLD = 3;
 const SHAKEN_THRESHOLD = 30;
 
 /**
+ * Threshold for acceleration magnitude, to check if we are facing up.
+ * @type {number}
+ */
+const FACING_THRESHOLD = 9;
+
+/**
  * Acceleration due to gravity, in m/s^2.
  * @type {number}
  */
@@ -754,9 +760,9 @@ class Scratch3GdxForBlocks {
     isFacing (args) {
         switch (args.FACING) {
         case FaceValues.UP:
-            return this._peripheral.getAccelerationZ() > GRAVITY;
+            return this._peripheral.getAccelerationZ() > FACING_THRESHOLD;
         case FaceValues.DOWN:
-            return this._peripheral.getAccelerationZ() < GRAVITY * -1;
+            return this._peripheral.getAccelerationZ() < FACING_THRESHOLD * -1;
         default:
             log.warn(`Unknown direction in isFacing: ${args.FACING}`);
         }
