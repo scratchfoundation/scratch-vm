@@ -50,16 +50,16 @@ const SHAKEN_THRESHOLD = 30;
 const FACING_THRESHOLD = 9;
 
 /**
+ * Threshold for acceleration magnitude, below which we are in freefall.
+ * @type {number}
+ */
+const FREEFALL_THRESHOLD = 0.5;
+
+/**
  * Acceleration due to gravity, in m/s^2.
  * @type {number}
  */
 const GRAVITY = 9.8;
-
-/**
- * Threshold for acceleration magnitude, below which we are in freefall.
- * @type {number}
- */
-const FREEFALL = 0.5;
 
 /**
  * Manage communication with a GDX-FOR peripheral over a Scratch Link client socket.
@@ -769,7 +769,7 @@ class Scratch3GdxForBlocks {
     }
 
     isFreeFalling () {
-        return this.accelMagnitude() < FREEFALL;
+        return this.accelMagnitude() < FREEFALL_THRESHOLD;
     }
 }
 
