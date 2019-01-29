@@ -2,6 +2,7 @@ const test = require('tap').test;
 const Thread = require('../../src/engine/thread');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const Sprite = require('../../src/sprites/sprite');
+const Runtime = require('../../src/engine/runtime');
 
 test('spec', t => {
     t.type(Thread, 'function');
@@ -120,8 +121,9 @@ test('PushGetParam', t => {
 
 test('goToNextBlock', t => {
     const th = new Thread('arbitraryString');
-    const s = new Sprite();
-    const rt = new RenderedTarget(s, null);
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
     const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,
@@ -175,8 +177,9 @@ test('goToNextBlock', t => {
 
 test('stopThisScript', t => {
     const th = new Thread('arbitraryString');
-    const s = new Sprite();
-    const rt = new RenderedTarget(s, null);
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
     const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,
@@ -227,8 +230,9 @@ test('stopThisScript', t => {
 
 test('isRecursiveCall', t => {
     const th = new Thread('arbitraryString');
-    const s = new Sprite();
-    const rt = new RenderedTarget(s, null);
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
     const block1 = {fields: Object,
         id: 'arbitraryString',
         inputs: Object,

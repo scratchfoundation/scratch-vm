@@ -6,7 +6,7 @@ const Runtime = require('../../src/engine/runtime');
 const events = require('../fixtures/events.json');
 
 test('spec', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
 
     t.type(Target, 'function');
     t.type(target, 'object');
@@ -26,7 +26,7 @@ test('spec', t => {
 
 // Create Variable tests.
 test('createVariable', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo', 'bar', Variable.SCALAR_TYPE);
 
     const variables = target.variables;
@@ -43,7 +43,7 @@ test('createVariable', t => {
 
 // Create Same Variable twice.
 test('createVariable2', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo', 'bar', Variable.SCALAR_TYPE);
     target.createVariable('foo', 'bar', Variable.SCALAR_TYPE);
 
@@ -55,7 +55,7 @@ test('createVariable2', t => {
 
 // Create a list
 test('createListVariable creates a list', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo', 'bar', Variable.LIST_TYPE);
 
     const variables = target.variables;
@@ -123,7 +123,7 @@ test('createVariable does not call cloud io device\'s requestCreateVariable if t
 });
 
 test('createVariable throws when given invalid type', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     t.throws(
         (() => target.createVariable('foo', 'bar', 'baz')),
         new Error('Invalid variable type: baz')
@@ -134,7 +134,7 @@ test('createVariable throws when given invalid type', t => {
 
 // Rename Variable tests.
 test('renameVariable', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo', 'bar', Variable.SCALAR_TYPE);
     target.renameVariable('foo', 'bar2');
 
@@ -151,7 +151,7 @@ test('renameVariable', t => {
 
 // Rename Variable that doesn't exist.
 test('renameVariable2', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.renameVariable('foo', 'bar2');
 
     const variables = target.variables;
@@ -163,7 +163,7 @@ test('renameVariable2', t => {
 // Rename Variable that with id that exists as another variable's name.
 // Expect no change.
 test('renameVariable3', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo1', 'foo', Variable.SCALAR_TYPE);
     target.renameVariable('foo', 'bar2');
 
@@ -233,7 +233,7 @@ test('renameVariable does not call cloud io device\'s requestRenameVariable func
 
 // Delete Variable tests.
 test('deleteVariable', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('foo', 'bar', Variable.SCALAR_TYPE);
     target.deleteVariable('foo');
 
@@ -245,7 +245,7 @@ test('deleteVariable', t => {
 
 // Delete Variable that doesn't exist.
 test('deleteVariable2', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.deleteVariable('foo');
 
     const variables = target.variables;
@@ -300,7 +300,7 @@ test('deleteVariable calls cloud io device\'s requestRenameVariable function', t
 });
 
 test('duplicateVariable creates a new variable with a new ID by default', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('a var ID', 'foo', Variable.SCALAR_TYPE);
     t.equal(Object.keys(target.variables).length, 1);
     const originalVariable = target.variables['a var ID'];
@@ -324,7 +324,7 @@ test('duplicateVariable creates a new variable with a new ID by default', t => {
 });
 
 test('duplicateVariable creates new array reference for list variable.value', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const arr = [1, 2, 3];
     target.createVariable('a var ID', 'arr', Variable.LIST_TYPE);
     const originalVariable = target.variables['a var ID'];
@@ -337,7 +337,7 @@ test('duplicateVariable creates new array reference for list variable.value', t 
 });
 
 test('duplicateVariable creates a new variable with a original ID if specified', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('a var ID', 'foo', Variable.SCALAR_TYPE);
     t.equal(Object.keys(target.variables).length, 1);
     const originalVariable = target.variables['a var ID'];
@@ -362,7 +362,7 @@ test('duplicateVariable creates a new variable with a original ID if specified',
 });
 
 test('duplicateVariable returns null if variable with specified ID does not exist', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
 
     const variable = target.duplicateVariable('a var ID');
     t.equal(variable, null);
@@ -382,7 +382,7 @@ test('duplicateVariable returns null if variable with specified ID does not exis
 });
 
 test('duplicateVariables duplicates all variables', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     target.createVariable('var ID 1', 'var1', Variable.SCALAR_TYPE);
     target.createVariable('var ID 2', 'var2', Variable.SCALAR_TYPE);
 
@@ -434,7 +434,7 @@ test('duplicateVariables duplicates all variables', t => {
 });
 
 test('duplicateVariables re-IDs variables when a block container is provided', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
 
     target.createVariable('mock var id', 'a mock variable', Variable.SCALAR_TYPE);
     target.createVariable('another var id', 'var2', Variable.SCALAR_TYPE);
@@ -489,7 +489,7 @@ test('duplicateVariables re-IDs variables when a block container is provided', t
 });
 
 test('lookupOrCreateList creates a list if var with given id or var with given name does not exist', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const variables = target.variables;
 
     t.equal(Object.keys(variables).length, 0);
@@ -502,7 +502,7 @@ test('lookupOrCreateList creates a list if var with given id or var with given n
 });
 
 test('lookupOrCreateList returns list if one with given id exists', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const variables = target.variables;
 
     t.equal(Object.keys(variables).length, 0);
@@ -518,7 +518,7 @@ test('lookupOrCreateList returns list if one with given id exists', t => {
 });
 
 test('lookupOrCreateList succeeds in finding list if id is incorrect but name matches', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const variables = target.variables;
 
     t.equal(Object.keys(variables).length, 0);
@@ -534,7 +534,7 @@ test('lookupOrCreateList succeeds in finding list if id is incorrect but name ma
 });
 
 test('lookupBroadcastMsg returns the var with given id if exists', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const variables = target.variables;
 
     t.equal(Object.keys(variables).length, 0);
@@ -550,7 +550,7 @@ test('lookupBroadcastMsg returns the var with given id if exists', t => {
 });
 
 test('createComment adds a comment to the target', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const comments = target.comments;
 
     t.equal(Object.keys(comments).length, 0);
@@ -572,7 +572,7 @@ test('createComment adds a comment to the target', t => {
 });
 
 test('creating comment with id that already exists does not change existing comment', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const comments = target.comments;
 
     t.equal(Object.keys(comments).length, 0);
@@ -599,7 +599,7 @@ test('creating comment with id that already exists does not change existing comm
 });
 
 test('creating a comment with a blockId also updates the comment property on the block', t => {
-    const target = new Target();
+    const target = new Target(new Runtime());
     const comments = target.comments;
     // Create a mock block on the target
     target.blocks = {
