@@ -48,7 +48,7 @@ test('#760 - broadcastAndWait', t => {
 
     const rt = new Runtime();
     const e = new Event(rt);
-    const b = new Blocks();
+    const b = new Blocks(rt);
     b.createBlock(broadcastAndWaitBlock);
     b.createBlock(receiveMessageBlock);
     const tgt = new Target(rt, b);

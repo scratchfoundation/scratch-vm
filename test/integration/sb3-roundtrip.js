@@ -74,7 +74,7 @@ test('sb3-roundtrip', t => {
     const installThings = loadThings.then(results => {
         const [building, cat, squirrel, meow] = results;
 
-        const stageBlocks = new Blocks();
+        const stageBlocks = new Blocks(runtime1);
         const stage = new Sprite(stageBlocks, runtime1);
         stage.name = 'Stage';
         stage.costumes = [building];
@@ -82,7 +82,7 @@ test('sb3-roundtrip', t => {
         const stageClone = stage.createClone();
         stageClone.isStage = true;
 
-        const spriteBlocks = new Blocks();
+        const spriteBlocks = new Blocks(runtime1);
         const sprite = new Sprite(spriteBlocks, runtime1);
         sprite.name = 'Sprite';
         sprite.costumes = [cat, squirrel];
