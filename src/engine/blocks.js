@@ -674,8 +674,6 @@ class Blocks {
         }
         }
 
-        // TODO maybe track actual changes,
-        // but for now, emit a project change always
         this.emitProjectChanged();
 
         this.resetCache();

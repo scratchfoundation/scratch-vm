@@ -562,15 +562,14 @@ class VirtualMachine extends EventEmitter {
             .then(validatedInput => {
                 const projectVersion = validatedInput[0].projectVersion;
                 if (projectVersion === 2) {
-                    return this._addSprite2(validatedInput[0], validatedInput[1])
-                        .then(() => this.runtime.emitProjectChanged());
+                    return this._addSprite2(validatedInput[0], validatedInput[1]);
                 }
                 if (projectVersion === 3) {
-                    return this._addSprite3(validatedInput[0], validatedInput[1])
-                        .then(() => this.runtime.emitProjectChanged());
+                    return this._addSprite3(validatedInput[0], validatedInput[1]);
                 }
                 return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
+            .then(() => this.runtime.emitProjectChanged())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
                 if (error.hasOwnProperty('validationError')) {
