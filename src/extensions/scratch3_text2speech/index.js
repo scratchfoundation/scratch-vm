@@ -152,20 +152,56 @@ class Scratch3Text2SpeechBlocks {
      */
     get LANGUAGE_INFO () {
         return {
-            'Danish': 'da',
-            'Dutch': 'nl',
-            'English': 'en',
-            'French': 'fr',
-            'German': 'de',
-            'Icelandic': 'is',
-            'Italian': 'it',
-            'Japanese': 'ja',
-            'Polish': 'pl',
-            'Portuguese (Brazilian)': 'pt-br',
-            'Portuguese (European)': 'pt',
-            'Russian': 'ru',
-            'Spanish (European)': 'es',
-            'Spanish (Latin American)': 'es-419'
+            'da': {
+                name: 'Danish'
+            },
+            'nl': {
+                name: 'Dutch'
+            },
+            'en': {
+                name: 'English'
+            },
+            'fr': {
+                name: 'French'
+            },
+            'de': {
+                name: 'German'
+            },
+            'is': {
+                name: 'Icelandic'
+            },
+            'it': {
+                name: 'Italian'
+            },
+            'ja': {
+                name: 'Japanese'
+            },
+            'pl': {
+                name: 'Polish'
+            },
+            'pt-br': {
+                name: 'Portuguese (Brazilian)'
+            },
+            'pt': {
+                name: 'Portuguese (European)'
+            },
+            'ru': {
+                name: 'Russian'
+            },
+            'es': {
+                name: 'Spanish (European)'
+            },
+            'es-419': {
+                name: 'Spanish (Latin American)'
+            },
+            'zh-cn': {
+                name: 'Chinese (Simplified)',
+                singleGender: true
+            },
+            'zh-tw': {
+                name: 'Chinese (Traditional)',
+                singleGender: true
+            }
         };
     }
 
@@ -190,7 +226,9 @@ class Scratch3Text2SpeechBlocks {
             'pt': 'pt-PT', // Portuguese (European)
             'ru': 'ru-RU', // Russian
             'es': 'es-ES', // Spanish (European)
-            'es-419': 'es-US' // Spanish (Latin American)
+            'es-419': 'es-US', // Spanish (Latin American)
+            'zh-cn': 'cmn-CN', // Chinese (simplified) -> Mandarin
+            'zh-tw': 'cmn-CN' // Chinese (traditional) -> Mandarin
         };
         let converted = 'en-US';
         if (pollyLocales[locale]) {
@@ -382,7 +420,7 @@ class Scratch3Text2SpeechBlocks {
      * @returns {boolean} true if the language code is supported.
      */
     isSupportedLanguage (languageCode) {
-        return Object.values(this.LANGUAGE_INFO).includes(languageCode);
+        return Object.keys(this.LANGUAGE_INFO).includes(languageCode);
     }
 
     /**
@@ -401,9 +439,9 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        return Object.keys(this.LANGUAGE_INFO).map(languageName => ({
-            text: languageName,
-            value: this.LANGUAGE_INFO[languageName]
+        return Object.keys(this.LANGUAGE_INFO).map(key => ({
+            text: this.LANGUAGE_INFO[key].name,
+            value: key
         }));
     }
 
