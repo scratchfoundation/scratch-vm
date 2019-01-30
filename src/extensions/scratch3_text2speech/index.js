@@ -66,6 +66,11 @@ const GIANT_ID = 'GIANT';
 const KITTEN_ID = 'KITTEN';
 
 /**
+ * Playback rate for the tenor voice, for cases where we have only a female gender voice.
+ */
+const TENOR_RATE = 0.9;
+
+/**
  * Class for the text2speech blocks.
  * @constructor
  */
@@ -499,8 +504,15 @@ class Scratch3Text2SpeechBlocks {
 
         const state = this._getState(util.target);
 
-        const gender = this.VOICE_INFO[state.voiceId].gender;
-        const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
+        let gender = this.VOICE_INFO[state.voiceId].gender;
+        let playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
+
+        if (this.LANGUAGE_INFO[this.getCurrentLanguage()].singleGender) {
+            gender = 'female';
+            if (state.voiceId === TENOR_ID) {
+                playbackRate = TENOR_RATE;
+            }
+        }
 
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
