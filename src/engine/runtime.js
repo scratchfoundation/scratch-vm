@@ -185,14 +185,14 @@ class Runtime extends EventEmitter {
          * These will execute on `_editingTarget.`
          * @type {!Blocks}
          */
-        this.flyoutBlocks = new Blocks(true /* force no glow */);
+        this.flyoutBlocks = new Blocks(this, true /* force no glow */);
 
         /**
          * Storage container for monitor blocks.
          * These will execute on a target maybe
          * @type {!Blocks}
          */
-        this.monitorBlocks = new Blocks(true /* force no glow */);
+        this.monitorBlocks = new Blocks(this, true /* force no glow */);
 
         /**
          * Currently known editing target for the VM.

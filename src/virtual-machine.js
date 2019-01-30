@@ -213,7 +213,7 @@ class VirtualMachine extends EventEmitter {
         const threadData = this.runtime.threads.filter(thread => thread.target === instance.editingTarget);
         // Remove the target key, since it's a circular reference.
         const filteredThreadData = JSON.stringify(threadData, (key, value) => {
-            if (key === 'target') return;
+            if (key === 'target' || key === 'blockContainer') return;
             return value;
         }, 2);
         this.emit('playgroundData', {
@@ -1108,7 +1108,7 @@ class VirtualMachine extends EventEmitter {
      */
     blockListener (e) {
         if (this.editingTarget) {
-            this.editingTarget.blocks.blocklyListen(e, this.runtime);
+            this.editingTarget.blocks.blocklyListen(e);
         }
     }
 
@@ -1117,7 +1117,7 @@ class VirtualMachine extends EventEmitter {
      * @param {!Blockly.Event} e Any Blockly event.
      */
     flyoutBlockListener (e) {
-        this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
+        this.runtime.flyoutBlocks.blocklyListen(e);
     }
 
     /**
@@ -1128,7 +1128,7 @@ class VirtualMachine extends EventEmitter {
         // Filter events by type, since monitor blocks only need to listen to these events.
         // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
         if (['create', 'change'].indexOf(e.type) !== -1) {
-            this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
+            this.runtime.monitorBlocks.blocklyListen(e);
         }
     }
 
@@ -1140,8 +1140,7 @@ class VirtualMachine extends EventEmitter {
         // Filter events by type, since blocks only needs to listen to these
         // var events.
         if (['var_create', 'var_rename', 'var_delete'].indexOf(e.type) !== -1) {
-            this.runtime.getTargetForStage().blocks.blocklyListen(e,
-                this.runtime);
+            this.runtime.getTargetForStage().blocks.blocklyListen(e);
         }
     }
 

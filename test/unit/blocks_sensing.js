@@ -157,7 +157,7 @@ test('set drag mode', t => {
     const runtime = new Runtime();
     runtime.requestTargetsUpdate = () => {}; // noop for testing
     const sensing = new Sensing(runtime);
-    const s = new Sprite();
+    const s = new Sprite(null, runtime);
     const rt = new RenderedTarget(s, runtime);
 
     sensing.setDragMode({DRAG_MODE: 'not draggable'}, {target: rt});
@@ -232,7 +232,7 @@ test('loud? boolean', t => {
 test('get attribute of sprite variable', t => {
     const rt = new Runtime();
     const sensing = new Sensing(rt);
-    const s = new Sprite();
+    const s = new Sprite(null, rt);
     const target = new RenderedTarget(s, rt);
     const variable = {
         name: 'cars',
@@ -249,7 +249,7 @@ test('get attribute of sprite variable', t => {
 test('get attribute of variable that does not exist', t => {
     const rt = new Runtime();
     const sensing = new Sensing(rt);
-    const s = new Sprite();
+    const s = new Sprite(null, rt);
     const target = new RenderedTarget(s, rt);
     rt.getTargetForStage = () => target;
     t.equal(sensing.getAttributeOf({PROPERTY: 'variableThatDoesNotExist'}), 0);

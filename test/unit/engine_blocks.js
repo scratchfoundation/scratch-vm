@@ -3,9 +3,10 @@ const Blocks = require('../../src/engine/blocks');
 const Variable = require('../../src/engine/variable');
 const adapter = require('../../src/engine/adapter');
 const events = require('../fixtures/events.json');
+const Runtime = require('../../src/engine/runtime');
 
 test('spec', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
 
     t.type(Blocks, 'function');
     t.type(b, 'object');
@@ -31,7 +32,7 @@ test('spec', t => {
 
 // Getter tests
 test('getBlock', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -48,7 +49,7 @@ test('getBlock', t => {
 });
 
 test('getScripts', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     let scripts = b.getScripts();
     t.type(scripts, 'object');
     t.equals(scripts.length, 0);
@@ -89,7 +90,7 @@ test('getScripts', t => {
 });
 
 test('getNextBlock', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -123,7 +124,7 @@ test('getNextBlock', t => {
 });
 
 test('getBranch', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     // Single branch
     b.createBlock({
         id: 'foo',
@@ -158,7 +159,7 @@ test('getBranch', t => {
 });
 
 test('getBranch2', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     // Second branch
     b.createBlock({
         id: 'foo',
@@ -205,7 +206,7 @@ test('getBranch2', t => {
 });
 
 test('getBranch with none', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -220,7 +221,7 @@ test('getBranch with none', t => {
 });
 
 test('getOpcode', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     const block = {
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -240,7 +241,7 @@ test('getOpcode', t => {
 
 // Block events tests
 test('create', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -257,7 +258,7 @@ test('create', t => {
 });
 
 test('move', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -297,7 +298,7 @@ test('move', t => {
 });
 
 test('move into empty', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -324,7 +325,7 @@ test('move into empty', t => {
 });
 
 test('move no obscure shadow', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -358,7 +359,7 @@ test('move no obscure shadow', t => {
 });
 
 test('change', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -415,7 +416,7 @@ test('change', t => {
 });
 
 test('delete', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -434,7 +435,7 @@ test('delete', t => {
 test('delete chain', t => {
     // Create a chain of connected blocks and delete the top one.
     // All of them should be deleted.
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -472,7 +473,7 @@ test('delete chain', t => {
 test('delete inputs', t => {
     // Create a block with two inputs, one of which has its own input.
     // Delete the block - all of them should be deleted.
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         opcode: 'TEST_BLOCK',
@@ -543,7 +544,7 @@ test('delete inputs', t => {
 });
 
 test('updateAssetName function updates name in sound field', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         fields: {
@@ -560,7 +561,7 @@ test('updateAssetName function updates name in sound field', t => {
 });
 
 test('updateAssetName function updates name in costume field', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         fields: {
@@ -577,7 +578,7 @@ test('updateAssetName function updates name in costume field', t => {
 });
 
 test('updateAssetName function updates name in backdrop field', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'foo',
         fields: {
@@ -594,7 +595,7 @@ test('updateAssetName function updates name in backdrop field', t => {
 });
 
 test('updateAssetName function updates name in all sprite fields', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'id1',
         fields: {
@@ -677,7 +678,7 @@ test('updateAssetName function updates name in all sprite fields', t => {
 });
 
 test('updateAssetName function updates name according to asset type', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'id1',
         fields: {
@@ -706,7 +707,7 @@ test('updateAssetName function updates name according to asset type', t => {
 });
 
 test('updateAssetName only updates given name', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'id1',
         fields: {
@@ -734,7 +735,7 @@ test('updateAssetName only updates given name', t => {
 });
 
 test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'id1',
         fields: {
@@ -751,7 +752,7 @@ test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
 });
 
 test('updateTargetSpecificBlocks changes sprite clicked hat to stage clicked for stage', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     b.createBlock({
         id: 'originallySpriteClicked',
         opcode: 'event_whenthisspriteclicked'
@@ -781,13 +782,13 @@ test('updateTargetSpecificBlocks changes sprite clicked hat to stage clicked for
 });
 
 test('getAllVariableAndListReferences returns an empty map references when variable blocks do not exist', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
     t.equal(Object.keys(b.getAllVariableAndListReferences()).length, 0);
     t.end();
 });
 
 test('getAllVariableAndListReferences returns references when variable blocks exist', t => {
-    const b = new Blocks();
+    const b = new Blocks(new Runtime());
 
     let varListRefs = b.getAllVariableAndListReferences();
     t.equal(Object.keys(varListRefs).length, 0);

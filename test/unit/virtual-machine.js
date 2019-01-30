@@ -14,9 +14,9 @@ const test = tap.test;
 
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
-    const sprite = new Sprite();
-    sprite.sounds = [{id: 1}, {id: 2}, {id: 3}];
     const rt = new Runtime();
+    const sprite = new Sprite(null, rt);
+    sprite.sounds = [{id: 1}, {id: 2}, {id: 3}];
     const target = new RenderedTarget(sprite, rt);
     vm.editingTarget = target;
 
@@ -37,10 +37,10 @@ test('deleteSound returns function after deleting or null if nothing was deleted
 
 test('deleteCostume returns function after deleting or null if nothing was deleted', t => {
     const vm = new VirtualMachine();
-    const sprite = new Sprite();
+    const rt = new Runtime();
+    const sprite = new Sprite(null, rt);
     sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
     sprite.currentCostume = 0;
-    const rt = new Runtime();
     const target = new RenderedTarget(sprite, rt);
     vm.editingTarget = target;
 
