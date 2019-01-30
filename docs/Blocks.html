@@ -62,7 +62,7 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="Blocks"><span class="type-signature"></span>new Blocks<span class="signature">(optNoGlow)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Blocks"><span class="type-signature"></span>new Blocks<span class="signature">(runtime, optNoGlow)</span><span class="type-signature"></span></h4>
 
     
 
@@ -139,6 +139,29 @@
     </thead>
 
     <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>runtime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Runtime.html">Runtime</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The runtime this block container operates within</p></td>
+        </tr>
+
     
 
         <tr>
@@ -1668,7 +1691,7 @@ does not exist on the block with the given id.</p>
 
     
 
-    <h4 class="name" id="blocklyListen"><span class="type-signature"></span>blocklyListen<span class="signature">(e, optRuntime<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="blocklyListen"><span class="type-signature"></span>blocklyListen<span class="signature">(e)</span><span class="type-signature"></span></h4>
 
     
 
@@ -1743,8 +1766,6 @@ runtime interface.</p>
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -1770,51 +1791,10 @@ runtime interface.</p>
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
 
             <td class="description last"><p>Blockly &quot;block&quot; or &quot;variable&quot; event</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>optRuntime</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Runtime.html">Runtime</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-                    &lt;nullable><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Optional runtime to forward click events to.</p></td>
         </tr>
 
     
@@ -2015,7 +1995,7 @@ into a Blockly/scratch-blocks XML string.</p>
 
     
 
-    <h4 class="name" id="changeBlock"><span class="type-signature"></span>changeBlock<span class="signature">(args<span class="signature-attributes">non-null</span>, optRuntime<span class="signature-attributes">nullable</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="changeBlock"><span class="type-signature"></span>changeBlock<span class="signature">(args<span class="signature-attributes">non-null</span>)</span><span class="type-signature"></span></h4>
 
     
 
@@ -2088,8 +2068,6 @@ into a Blockly/scratch-blocks XML string.</p>
         <th>Type</th>
 
         
-        <th>Attributes</th>
-        
 
         
 
@@ -2115,51 +2093,10 @@ into a Blockly/scratch-blocks XML string.</p>
             </td>
 
             
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
 
             
 
             <td class="description last"><p>Blockly change event to be processed</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>optRuntime</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Runtime.html">Runtime</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-                    &lt;nullable><br>
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>Optional runtime to allow changeBlock to change VM state.</p></td>
         </tr>
 
     
