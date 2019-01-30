@@ -582,10 +582,6 @@ class Blocks {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
 
-                if (!this.runtime){
-                    log.warn('Runtime is not optional, it should get passed in when the block container is created.');
-                    break;
-                }
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.
                 // TODO: (#1787)
@@ -611,11 +607,6 @@ class Blocks {
             block.mutation = mutationAdapter(args.value);
             break;
         case 'checkbox': {
-            if (!this.runtime) {
-                log.warn('Runtime is not optional, it should get passed in when the block container is created.');
-                break;
-            }
-
             // A checkbox usually has a one to one correspondence with the monitor
             // block but in the case of monitored reporters that have arguments,
             // map the old id to a new id, creating a new monitor block if necessary
