@@ -725,7 +725,7 @@ const renderBenchmarkData = function (json) {
     setShareLink(json);
 };
 
-window.onload = function () {
+const onload = function () {
     if (location.hash.substring(1).startsWith('view')) {
         document.body.className = 'render';
         const data = location.hash.substring(6);
@@ -747,3 +747,5 @@ if (window.performance) {
 }
 
 window.ScratchVMEvalEnd = Date.now();
+
+onload();
