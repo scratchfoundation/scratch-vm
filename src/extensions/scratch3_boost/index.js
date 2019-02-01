@@ -134,25 +134,18 @@ const BoostMode = {
     UNKNOWN: 0
 };
 
-/**
- * Enum for units for input sensors on the Boost.
- *
- * 0 = raw
- * 1 = percent
- *
- * @enum {number}
- */
-const BoostUnit = {
-    TILT: 0,
-    DISTANCE: 1,
-    LED: 0,
-    MOTOR: 0,
-    COLOR: 0,
-    UNKNOWN:0
-};
-
 function buf2hex(buffer) { // buffer is an ArrayBuffer
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join(' ');
+}
+
+function number2int32array(number) {
+    var buffer = new ArrayBuffer(4)        
+    var dataview = new DataView(buffer)
+    dataview.setInt32(0, number)
+    return [dataview.getInt8(3),
+            dataview.getInt8(2),
+            dataview.getInt8(1),
+            dataview.getInt8(0)];
 }
 
 /**
@@ -388,13 +381,11 @@ class BoostMotor {
             this._index,
             0x0B,
             null,
-            [dataview.getInt8(3),
-            dataview.getInt8(2),
-            dataview.getInt8(1),
-            dataview.getInt8(0),
+            number2int32array(degrees).concat(
+            [
             this._power * this._direction, // power in range 0-100
             0xff,
-            0x00,0x03]
+            0x00,0x03])
         );
 
         this._isOn = true;
@@ -624,7 +615,6 @@ class Boost {
             this._ports.indexOf(BoostDevice.LED),
             BoostMode.LED,
             0,
-            BoostUnit.LED,
             false
         );
 
@@ -778,19 +768,18 @@ class Boost {
      * @param  {number}  connectID           - the port (Connect ID) to send a command to.
      * @param  {number}  mode                - the mode of the input sensor.
      * @param  {number}  delta               - the delta change needed to trigger notification.
-     * @param  {array}   units               - the unit of the input sensor value.
      * @param  {boolean} enableNotifications - whether to enable notifications.
      * @return {array}                       - a generated input command.
      */
-    generateInputCommand (connectID, mode, delta, units, enableNotifications) {
+    generateInputCommand (connectID, mode, delta, enableNotifications) {
         var command = [
             0x00, // Hub ID
             0x41, // Message Type (Port Input Format Setup (Single))
             connectID,
             mode,
-            delta,
+        ].concat(number2int32array(delta)).concat([
             enableNotifications
-        ];
+        ]);
 
         command.unshift(command.length+1) // Prepend payload with length byte
 
@@ -850,8 +839,9 @@ class Boost {
                 }
                 break;
             case BoostMessageTypes.PORT_VALUE:
+                //console.log(buf2hex(data))
                 var type = this._ports[data[3]];
-                var valueFormat = data.length
+                //var valueFormat = data.length
                 // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
                 switch(type) {
                     case BoostDevice.TILT:
@@ -919,8 +909,6 @@ class Boost {
                 break;
             case BoostDevice.LED:
                 typeString = 'LED'
-                console.log("NOW!")
-                console.log("LED: " + connectID + ", " + type)
                 this.setLEDMode();
                 this.setLED(0x00FF00);
                 break;
@@ -930,12 +918,11 @@ class Boost {
             default:
                 typeString = 'UNKNOWN'
         }
-        //const typeString = type === BoostDevice.DISTANCE ? 'DISTANCE' : 'TILT';
+        
         const cmd = this.generateInputCommand(
             connectID,
             BoostMode[typeString],
             1,
-            BoostUnit[typeString],
             true
         );
 
@@ -1216,7 +1203,7 @@ class Scratch3BoostBlocks {
                     blockType: BlockType.HAT,
                     arguments: {
                         COLOR: {
-                            type: ArgumentType.STRING,
+                            type: ArgumentType.NUMBER,
                             menu: 'COLOR',
                             defaultValue: BoostColor.RED
                         }
@@ -1856,7 +1843,7 @@ class Scratch3BoostBlocks {
      * @private
      */
     _isColor (color) {
-        return this.getColor() === color;
+        return this.getColor() == color;
     }
 
     /**
