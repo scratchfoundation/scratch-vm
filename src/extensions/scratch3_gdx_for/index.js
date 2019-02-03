@@ -101,6 +101,21 @@ class GdxFor {
          */
         this._extensionId = extensionId;
 
+        /**
+         * The most recently received value for each sensor.
+         * @type {Object.<string, number>}
+         * @private
+         */
+        this._sensors = {
+            force: 0,
+            accelerationX: 0,
+            accelerationY: 0,
+            accelerationZ: 0,
+            gyroX: 0,
+            gyroY: 0,
+            gyroZ: 0
+        };
+
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._sensorsEnabled = null;
@@ -181,6 +196,26 @@ class GdxFor {
         });
         this._device.on('measurements-started', () => {
             this._sensorsEnabled = true;
+            const enabledSensors = this._device.sensors.filter(s => s.enabled);
+            enabledSensors.forEach(sensor => {
+                sensor.on('value-changed', s => {
+                // log the sensor name, new value, and units.
+                    // console.log(`Sensor: ${s.name} value: ${s.value} units: ${s.units}`);
+                    console.log(typeof(s.name));
+                    console.log(s.name.valueOf());
+                    if (s.name.valueOf() === 'Force') {
+                        this._senors.accelerationX = s.value;
+                        console.log('HERE ============');
+                    }
+                    if (s.name === 'Y-axis acceleration') {
+                        this._senors.accelerationY = s.value;
+                    }
+                    if (s.name === 'Z-axis acceleration') {
+                        this._senors.accelerationZ = s.value;
+                    }
+                    // console.log(this._sensors);
+                });
+            });
         });
         this._device.start(10); // Set the period to 10 milliseconds
     }
