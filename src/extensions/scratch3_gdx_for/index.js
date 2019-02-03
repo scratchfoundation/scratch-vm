@@ -124,9 +124,9 @@ class GdxFor {
             accelerationX: 0,
             accelerationY: 0,
             accelerationZ: 0,
-            gyroX: 0,
-            gyroY: 0,
-            gyroZ: 0
+            spinSpeedX: 0,
+            spinSpeedY: 0,
+            spinSpeedZ: 0
         };
 
         this.disconnect = this.disconnect.bind(this);
@@ -227,19 +227,19 @@ class GdxFor {
                     case GDXFOR_SENSOR.ACCELERATION_Z:
                         this._sensors.accelerationZ = s.value;
                         break;
-                    case GDXFOR_SENSOR.GYRO_X:
+                    case GDXFOR_SENSOR.SPIN_SPEED_X:
                         val = MathUtil.radToDeg(val);
                         val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
                         val = val * -1;
                         this._sensors.spinSpeedX = val;
                         break;
-                    case GDXFOR_SENSOR.GYRO_Y:
+                    case GDXFOR_SENSOR.SPIN_SPEED_Y:
                         val = MathUtil.radToDeg(val);
                         val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
                         val = val * -1;
                         this._sensors.spinSpeedY = val;
                         break;
-                    case GDXFOR_SENSOR.GYRO_Z:
+                    case GDXFOR_SENSOR.SPIN_SPEED_Z:
                         val = MathUtil.radToDeg(val);
                         val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
                         val = val * -1;
