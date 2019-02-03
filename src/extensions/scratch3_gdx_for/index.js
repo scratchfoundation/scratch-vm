@@ -26,7 +26,7 @@ const BLEUUID = {
 };
 
 /**
- * TODO
+ * Sensor ID numbers for the GDX-FOR.
  */
 const GDXFOR_SENSOR = {
     FORCE: 1,
