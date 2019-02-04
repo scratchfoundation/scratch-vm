@@ -32,24 +32,51 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     });
 };
 
-const getCanvas = (function () {
-    const _canvases = [];
-    let clearSoon = null;
+const canvasPool = (function () {
+    /**
+     * A pool of canvas objects that can be reused to reduce memory
+     * allocations. And time spent in those allocations and the later garbage
+     * collection.
+     */
+    class CanvasPool {
+        constructor () {
+            this.pool = [];
+            this.clearSoon = null;
+        }
 
-    return Object.assign(() => (
-        _canvases.pop() || document.createElement('canvas')
-    ), {
-        release (canvas) {
-            if (!clearSoon) {
-                clearSoon = new Promise(resolve => setTimeout(resolve, 1000))
+        /**
+         * After a short wait period clear the pool to let the VM collect
+         * garbage.
+         */
+        clear () {
+            if (!this.clearSoon) {
+                this.clearSoon = new Promise(resolve => setTimeout(resolve, 1000))
                     .then(() => {
-                        _canvases.length = 0;
-                        clearSoon = null;
+                        this.pool.length = 0;
+                        this.clearSoon = null;
                     });
             }
-            _canvases.push(canvas);
         }
-    });
+
+        /**
+         * Return a canvas. Create the canvas if the pool is empty.
+         * @returns {HTMLCanvasElement} A canvas element.
+         */
+        create () {
+            return this.pool.pop() || document.createElement('canvas');
+        }
+
+        /**
+         * Release the canvas to be reused.
+         * @param {HTMLCanvasElement} canvas A canvas element.
+         */
+        release (canvas) {
+            this.clear();
+            this.pool.push(canvas);
+        }
+    }
+
+    return new CanvasPool();
 }());
 
 /**
@@ -101,7 +128,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
         });
     }))
         .then(([baseImageElement, textImageElement]) => {
-            const mergeCanvas = getCanvas();
+            const mergeCanvas = canvasPool.create();
 
             const scale = costume.bitmapResolution === 1 ? 2 : 1;
             mergeCanvas.width = baseImageElement.width;
@@ -112,6 +139,12 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             if (textImageElement) {
                 ctx.drawImage(textImageElement, 0, 0);
             }
+            // Track the canvas we merged the bitmaps onto separately from the
+            // canvas that we receive from resize if scale is not 1. We know
+            // resize treats mergeCanvas as read only data. We don't know when
+            // resize may use or modify the canvas. So we'll only release the
+            // mergeCanvas back into the canvas pool. Reusing the canvas from
+            // resize may cause errors.
             let canvas = mergeCanvas;
             if (scale !== 1) {
                 canvas = runtime.v2BitmapAdapter.resize(mergeCanvas, canvas.width * scale, canvas.height * scale);
@@ -181,7 +214,7 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
         .then(({canvas, mergeCanvas, rotationCenter}) => {
             // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
             costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
-            getCanvas.release(mergeCanvas);
+            canvasPool.release(mergeCanvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
             costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
 
