@@ -7,6 +7,7 @@ const uid = require('../util/uid');
 const {Map} = require('immutable');
 const log = require('../util/log');
 const StringUtil = require('../util/string-util');
+const VariableUtil = require('../util/variable-util');
 
 /**
  * @fileoverview
@@ -514,13 +515,7 @@ class Target extends EventEmitter {
             // for all references for a given ID instead of doing the below..?
             this.blocks.getAllVariableAndListReferences()[idToBeMerged];
 
-        referencesToChange.map(ref => {
-            ref.referencingField.id = idToMergeWith;
-            if (optNewName) {
-                ref.referencingField.value = optNewName;
-            }
-            return ref;
-        });
+        VariableUtil.mergeVariables(idToBeMerged, idToMergeWith, referencesToChange, optNewName);
     }
 
     /**
