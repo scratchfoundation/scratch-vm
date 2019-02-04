@@ -32,6 +32,26 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     });
 };
 
+const getCanvas = (function () {
+    const _canvases = [];
+    let clearSoon = null;
+
+    return Object.assign(() => (
+        _canvases.pop() || document.createElement('canvas')
+    ), {
+        release (canvas) {
+            if (!clearSoon) {
+                clearSoon = new Promise(resolve => setTimeout(resolve, 1000))
+                    .then(() => {
+                        _canvases.length = 0;
+                        clearSoon = null;
+                    });
+            }
+            _canvases.push(canvas);
+        }
+    });
+}());
+
 /**
  * Return a promise to fetch a bitmap from storage and return it as a canvas
  * If the costume has bitmapResolution 1, it will be converted to bitmapResolution 2 here (the standard for Scratch 3)
@@ -100,7 +120,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
     }).then(imageElements => {
         const [baseImageElement, textImageElement] = imageElements;
 
-        let canvas = document.createElement('canvas');
+        let canvas = getCanvas();
         const scale = costume.bitmapResolution === 1 ? 2 : 1;
         canvas.width = baseImageElement.width;
         canvas.height = baseImageElement.height;
@@ -171,6 +191,7 @@ const loadBitmap_ = function (costume, runtime, rotationCenter) {
         .then(canvas => {
             // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
             costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
+            getCanvas.release(canvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
             costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
 
