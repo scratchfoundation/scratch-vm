@@ -68,7 +68,12 @@ const KITTEN_ID = 'KITTEN';
 /**
  * Playback rate for the tenor voice, for cases where we have only a female gender voice.
  */
-const TENOR_RATE = 0.9;
+const FEMALE_TENOR_RATE = 0.89; // -2 semitones
+
+/**
+ * Playback rate for the giant voice, for cases where we have only a female gender voice.
+ */
+const FEMALE_GIANT_RATE = 0.79; // -4 semitones
 
 /**
  * Class for the text2speech blocks.
@@ -172,6 +177,10 @@ class Scratch3Text2SpeechBlocks {
             'de': {
                 name: 'German'
             },
+            'hi': {
+                name: 'Hindi',
+                singleGender: true
+            },
             'is': {
                 name: 'Icelandic'
             },
@@ -180,6 +189,14 @@ class Scratch3Text2SpeechBlocks {
             },
             'ja': {
                 name: 'Japanese'
+            },
+            'ko': {
+                name: 'Korean',
+                singleGender: true
+            },
+            'no': {
+                name: 'Norwegian',
+                singleGender: true
             },
             'pl': {
                 name: 'Polish'
@@ -223,9 +240,12 @@ class Scratch3Text2SpeechBlocks {
             'en': 'en-US', // English
             'fr': 'fr-FR', // French
             'de': 'de-DE', // German
+            'hi': 'en-IN', // Hindi
             'is': 'is-IS', // Icelandic
             'it': 'it-IT', // Italian
             'ja': 'ja-JP', // Japanese
+            'ko': 'ko-KR', // Korean
+            'no': 'nb-NO', // Norwegian
             'pl': 'pl-PL', // Polish
             'pt-br': 'pt-BR', // Portuguese (Brazilian)
             'pt': 'pt-PT', // Portuguese (European)
@@ -510,7 +530,10 @@ class Scratch3Text2SpeechBlocks {
         if (this.LANGUAGE_INFO[this.getCurrentLanguage()].singleGender) {
             gender = 'female';
             if (state.voiceId === TENOR_ID) {
-                playbackRate = TENOR_RATE;
+                playbackRate = FEMALE_TENOR_RATE;
+            }
+            if (state.voiceId === GIANT_ID) {
+                playbackRate = FEMALE_GIANT_RATE;
             }
         }
 
