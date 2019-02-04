@@ -4,6 +4,7 @@
  */
 
 const uid = require('../util/uid');
+const xmlEscape = require('../util/xml-escape');
 
 class Variable {
     /**
@@ -36,7 +37,7 @@ class Variable {
     toXML (isLocal) {
         isLocal = (isLocal === true);
         return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal
-        }" iscloud="${this.isCloud}">${this.name}</variable>`;
+        }" iscloud="${this.isCloud}">${xmlEscape(this.name)}</variable>`;
     }
 
     /**
