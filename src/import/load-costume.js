@@ -74,86 +74,70 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
         return Promise.reject('No V2 Bitmap adapter present.');
     }
 
-    return new Promise((resolve, reject) => {
-        const baseImageElement = new Image();
-        let textImageElement;
+    return Promise.all([costume.asset, costume.textLayerAsset].map(asset => {
+        if (!asset) {
+            return null;
+        }
 
-        // We need to wait for 2 images total to load. loadedOne will be true when one
-        // is done, and we are just waiting for one more.
-        let loadedOne = false;
+        if (typeof createImageBitmap !== 'undefined') {
+            return createImageBitmap(
+                new Blob([asset.data], {type: asset.assetType.contentType})
+            );
+        }
 
-        const onError = function () {
-            // eslint-disable-next-line no-use-before-define
-            removeEventListeners();
-            reject('Costume load failed. Asset could not be read.');
-        };
-        const onLoad = function () {
-            if (loadedOne) {
-                // eslint-disable-next-line no-use-before-define
-                removeEventListeners();
-                resolve([baseImageElement, textImageElement]);
-            } else {
-                loadedOne = true;
-            }
-        };
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = function () {
+                resolve(image);
+                image.onload = null;
+                image.onerror = null;
+            };
+            image.onerror = function () {
+                reject('Costume load failed. Asset could not be read.');
+                image.onload = null;
+                image.onerror = null;
+            };
+            image.src = asset.encodeDataURI();
+        });
+    }))
+        .then(([baseImageElement, textImageElement]) => {
+            const mergeCanvas = getCanvas();
 
-        const removeEventListeners = function () {
-            baseImageElement.removeEventListener('error', onError);
-            baseImageElement.removeEventListener('load', onLoad);
+            const scale = costume.bitmapResolution === 1 ? 2 : 1;
+            mergeCanvas.width = baseImageElement.width;
+            mergeCanvas.height = baseImageElement.height;
+
+            const ctx = mergeCanvas.getContext('2d');
+            ctx.drawImage(baseImageElement, 0, 0);
             if (textImageElement) {
-                textImageElement.removeEventListener('error', onError);
-                textImageElement.removeEventListener('load', onLoad);
+                ctx.drawImage(textImageElement, 0, 0);
             }
-        };
+            let canvas = mergeCanvas;
+            if (scale !== 1) {
+                canvas = runtime.v2BitmapAdapter.resize(mergeCanvas, canvas.width * scale, canvas.height * scale);
+            }
 
-        baseImageElement.addEventListener('load', onLoad);
-        baseImageElement.addEventListener('error', onError);
-        if (costume.textLayerAsset) {
-            textImageElement = new Image();
-            textImageElement.addEventListener('load', onLoad);
-            textImageElement.addEventListener('error', onError);
-            textImageElement.src = costume.textLayerAsset.encodeDataURI();
-        } else {
-            loadedOne = true;
-        }
-        baseImageElement.src = costume.asset.encodeDataURI();
-    }).then(imageElements => {
-        const [baseImageElement, textImageElement] = imageElements;
+            // By scaling, we've converted it to bitmap resolution 2
+            if (rotationCenter) {
+                rotationCenter[0] = rotationCenter[0] * scale;
+                rotationCenter[1] = rotationCenter[1] * scale;
+                costume.rotationCenterX = rotationCenter[0];
+                costume.rotationCenterY = rotationCenter[1];
+            }
+            costume.bitmapResolution = 2;
 
-        let canvas = getCanvas();
-        const scale = costume.bitmapResolution === 1 ? 2 : 1;
-        canvas.width = baseImageElement.width;
-        canvas.height = baseImageElement.height;
+            // Clean up the costume object
+            delete costume.textLayerMD5;
+            delete costume.textLayerAsset;
 
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(baseImageElement, 0, 0);
-        if (textImageElement) {
-            ctx.drawImage(textImageElement, 0, 0);
-        }
-        if (scale !== 1) {
-            canvas = runtime.v2BitmapAdapter.resize(canvas, canvas.width * scale, canvas.height * scale);
-        }
-
-        // By scaling, we've converted it to bitmap resolution 2
-        if (rotationCenter) {
-            rotationCenter[0] = rotationCenter[0] * scale;
-            rotationCenter[1] = rotationCenter[1] * scale;
-            costume.rotationCenterX = rotationCenter[0];
-            costume.rotationCenterY = rotationCenter[1];
-        }
-        costume.bitmapResolution = 2;
-
-        // Clean up the costume object
-        delete costume.textLayerMD5;
-        delete costume.textLayerAsset;
-
-        return {
-            canvas: canvas,
-            rotationCenter: rotationCenter,
-            // True if the asset matches the base layer; false if it required adjustment
-            assetMatchesBase: scale === 1 && !textImageElement
-        };
-    })
+            return {
+                canvas,
+                mergeCanvas,
+                rotationCenter,
+                // True if the asset matches the base layer; false if it required adjustment
+                assetMatchesBase: scale === 1 && !textImageElement
+            };
+        })
         .catch(() => {
             // Clean up the text layer properties if it fails to load
             delete costume.textLayerMD5;
@@ -161,37 +145,43 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
         });
 };
 
-const loadBitmap_ = function (costume, runtime, rotationCenter) {
-    return fetchBitmapCanvas_(costume, runtime, rotationCenter).then(fetched => new Promise(resolve => {
-        rotationCenter = fetched.rotationCenter;
+const loadBitmap_ = function (costume, runtime, _rotationCenter) {
+    return fetchBitmapCanvas_(costume, runtime, _rotationCenter)
+        .then(fetched => {
+            const updateCostumeAsset = function (dataURI) {
+                if (!runtime.v2BitmapAdapter) {
+                    // TODO: This might be a bad practice since the returned
+                    // promise isn't acted on. If this is something we should be
+                    // creating a rejected promise for we should also catch it
+                    // somewhere and act on that error (like logging).
+                    //
+                    // Return a rejection to stop executing updateCostumeAsset.
+                    return Promise.reject('No V2 Bitmap adapter present.');
+                }
 
-        const updateCostumeAsset = function (dataURI) {
-            if (!runtime.v2BitmapAdapter) {
-                return Promise.reject('No V2 Bitmap adapter present.');
+                const storage = runtime.storage;
+                costume.asset = storage.createAsset(
+                    storage.AssetType.ImageBitmap,
+                    storage.DataFormat.PNG,
+                    runtime.v2BitmapAdapter.convertDataURIToBinary(dataURI),
+                    null,
+                    true // generate md5
+                );
+                costume.dataFormat = storage.DataFormat.PNG;
+                costume.assetId = costume.asset.assetId;
+                costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+            };
+
+            if (!fetched.assetMatchesBase) {
+                updateCostumeAsset(fetched.canvas.toDataURL());
             }
 
-            const storage = runtime.storage;
-            costume.asset = storage.createAsset(
-                storage.AssetType.ImageBitmap,
-                storage.DataFormat.PNG,
-                runtime.v2BitmapAdapter.convertDataURIToBinary(dataURI),
-                null,
-                true // generate md5
-            );
-            costume.dataFormat = storage.DataFormat.PNG;
-            costume.assetId = costume.asset.assetId;
-            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
-        };
-
-        if (!fetched.assetMatchesBase) {
-            updateCostumeAsset(fetched.canvas.toDataURL());
-        }
-        resolve(fetched.canvas);
-    }))
-        .then(canvas => {
+            return fetched;
+        })
+        .then(({canvas, mergeCanvas, rotationCenter}) => {
             // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
             costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
-            getCanvas.release(canvas);
+            getCanvas.release(mergeCanvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
             costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
 
