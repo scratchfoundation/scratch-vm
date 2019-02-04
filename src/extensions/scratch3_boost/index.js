@@ -65,6 +65,20 @@ const BoostCommand = {
     OUTPUT: 0x81,
 };
 
+/**
+ * Enum for ids for various output commands on the Boost.
+ * @readonly
+ * @enum {number}
+ */
+const BoostOutputCommandFeedback = {
+    // TODO: Figure out if this enum is necessary or if we're always just sending 0x81
+    BUFFER_EMPTY_COMMAND_IN_PROGRESS: 0x01,
+    BUFFER_EMPTY_COMMAND_COMPLETED: 0x02,
+    CURRENT_COMMAND_DISCARDED: 0x04,
+    IDLE: 0x08,
+    BUSY_OR_FULL: 0x10,
+};
+
 
 /**
  * Enum for physical Boost Ports
@@ -205,7 +219,7 @@ class BoostMotor {
          * @type {boolean}
          * @private
          */
-        this._isOn = false;
+        this._status = BoostOutputCommandFeedback.IDLE;
 
         /**
          * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
@@ -228,6 +242,14 @@ class BoostMotor {
          * @private
          */
         this._pendingTimeoutDelay = null;
+
+        /**
+         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
+         * the end-of-action handler. Cancel this when changing plans.
+         * @type {Object}
+         * @private
+         */
+        this._pendingPromiseFunction = null;
 
         this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
@@ -271,13 +293,14 @@ class BoostMotor {
      */
     set power (value) {
         const p = Math.max(0, Math.min(value, 100));
-        // Lego Boost hub only turns motors at power range [30 - 100], so
-        // map value from [0 - 100] to [30 - 100].
+
+        // Lego Boost hub only turns motors at power range [20 - 100], so
+        // map value from [0 - 100] to [20 - 100].
         if (p === 0) {
             this._power = 0;
         } else {
             const delta = 100 / p;
-            this._power = 30 + (70 / delta);
+            this._power = 20 + (80 / delta);
         }
     }
 
@@ -292,11 +315,10 @@ class BoostMotor {
      * @param {int} value - 
      */
     set position (value) {
-        // Todo: wrap around rotation to avoid extremely large numbers
         this._position = value;
     }
 
-        /**
+    /**
      * @return {int} - 
      */
     get positionZero () {
@@ -307,7 +329,6 @@ class BoostMotor {
      * @param {int} value - 
      */
     set positionZero (value) {
-        // Todo: wrap around rotation to avoid extremely large numbers
         this._positionZero = value;
     }
 
@@ -315,7 +336,7 @@ class BoostMotor {
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
     get isOn () {
-        return this._isOn;
+        return this._status;
     }
 
     /**
@@ -333,6 +354,14 @@ class BoostMotor {
     }
 
     /**
+     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+     */
+    get pendingPromiseFunction () {
+        return this._pendingPromiseFunction;
+    }
+
+
+    /**
      * Turn this motor on indefinitely.
      */
     turnOn () {
@@ -348,7 +377,7 @@ class BoostMotor {
 
         this._parent.send(BLECharacteristic, cmd);
 
-        this._isOn = true;
+        this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
         this._clearTimeout();
     }
 
@@ -371,11 +400,6 @@ class BoostMotor {
     turnOnForDegrees (degrees) {
         if (this._power === 0) return;
         degrees = Math.max(0, degrees);
-        console.log(degrees)
-        /* TODO: Position parameter must be given as int32. Convert degrees to int32. */
-        var buffer = new ArrayBuffer(4)        
-        var dataview = new DataView(buffer)
-        dataview.setInt32(0, degrees)
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
@@ -388,7 +412,7 @@ class BoostMotor {
             0x00,0x03])
         );
 
-        this._isOn = true;
+        this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
 
         this._parent.send(BLECharacteristic, cmd);        
     }    
@@ -409,7 +433,7 @@ class BoostMotor {
 
         this._parent.send(BLECharacteristic, cmd);
 
-        this._isOn = false;
+        this._status = BoostOutputCommandFeedback.IDLE;
         this._setNewTimeout(this.turnOff, BoostMotor.BRAKE_TIME_MS);
     }
 
@@ -429,7 +453,7 @@ class BoostMotor {
 
         this._parent.send(BLECharacteristic, cmd, useLimiter);
 
-        this._isOn = false;
+        this._status = BoostOutputCommandFeedback.IDLE;
     }
 
     /**
@@ -727,17 +751,17 @@ class Boost {
      *
      * This sends a command to the Boost to actuate the specified outputs.
      *
-     * @param  {number} connectID - the port (Connect ID) to send a command to.
+     * @param  {number} portID - the port (Connect ID) to send a command to.
      * @param  {number} commandID - the id of the byte command.
      * @param  {number} mode      - the mode
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (connectID, subCommandID = 0x51, mode=null, values = null) {
+    generateOutputCommand (portID, subCommandID = 0x51, mode=null, values = null) {
         let command = [0x00, BoostCommand.OUTPUT];
         if (values) {
             command = command.concat(
-                connectID
+                portID
             ).concat(
                 0x11 //  Execute immediately
             );
@@ -765,17 +789,17 @@ class Boost {
      * This sends a command to the Boost that sets that input format
      * of the specified inputs and sets value change notifications.
      *
-     * @param  {number}  connectID           - the port (Connect ID) to send a command to.
+     * @param  {number}  portID           - the port (Connect ID) to send a command to.
      * @param  {number}  mode                - the mode of the input sensor.
      * @param  {number}  delta               - the delta change needed to trigger notification.
      * @param  {boolean} enableNotifications - whether to enable notifications.
      * @return {array}                       - a generated input command.
      */
-    generateInputCommand (connectID, mode, delta, enableNotifications) {
+    generateInputCommand (portID, mode, delta, enableNotifications) {
         var command = [
             0x00, // Hub ID
             0x41, // Message Type (Port Input Format Setup (Single))
-            connectID,
+            portID,
             mode,
         ].concat(number2int32array(delta)).concat([
             enableNotifications
@@ -818,7 +842,10 @@ class Boost {
          * We base our switch-case on Message Type
          */
 
-        switch (data[2]) {
+        var messageType = data[2];
+        var portID = data[3];
+
+        switch (messageType) {
             case BoostMessageTypes.HUB_ATTACHED_IO: // IO Attach/Detach events
 
         /*
@@ -829,10 +856,10 @@ class Boost {
                 switch (data[4]) {
                     case BoostIOEvent.ATTACHED:
                     //case BoostIOEvent.ATTACHED_VIRTUAL:
-                        this._registerSensorOrMotor(data[3], data[5])
+                        this._registerSensorOrMotor(portID, data[5])
                         break;
                     case BoostIOEvent.DETACHED:
-                        this._clearPort(data[3]);
+                        this._clearPort(portID);
                         break;
                     default:
                         console.log("No I/O Event case found!")
@@ -840,7 +867,7 @@ class Boost {
                 break;
             case BoostMessageTypes.PORT_VALUE:
                 //console.log(buf2hex(data))
-                var type = this._ports[data[3]];
+                var type = this._ports[portID];
                 //var valueFormat = data.length
                 // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
                 switch(type) {
@@ -858,15 +885,24 @@ class Boost {
                         if (value > 0x7fffffff) {
                             value = value - 0x100000000;
                         }
-                        //console.log(value);
-                        this._motors[data[3]]._position = value
+                        this._motors[portID]._position = value
                         break;
                     case BoostDevice.CURRENT:
                     case BoostDevice.VOLTAGE:
                         break;
-                        // Do nothing
                     default:
                         console.log("Unknown sensor value! Type: " + type)
+                }
+                break;
+            case BoostMessageTypes.PORT_OUTPUT_COMMAND_FEEDBACK:
+                //TODO: Handle messages that contain feedback from more than one port.
+                var feedback = data[4];
+                switch(feedback) {
+                    case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
+                        this._motors[portID].pendingPromiseFunction(); 
+                        break;
+                    default:
+                        console.log("Got it but didn't find a motor on: " + portID)
                 }
                 break;
             case BoostMessageTypes.PORT_INPUT_FORMAT:
@@ -884,17 +920,17 @@ class Boost {
      * Register a new sensor or motor connected at a port.  Store the type of
      * sensor or motor internally, and then register for notifications on input
      * values if it is a sensor.
-     * @param {number} connectID - the port to register a sensor or motor on.
+     * @param {number} portID - the port to register a sensor or motor on.
      * @param {number} type - the type ID of the sensor or motor
      * @private
      */
-    _registerSensorOrMotor (connectID, type) {
+    _registerSensorOrMotor (portID, type) {
         // Record which port is connected to what type of device
-        this._ports[connectID] = type;
+        this._ports[portID] = type;
 
         // Record motor port
         if (type === BoostDevice.MOTORINT || type === BoostDevice.MOTOREXT) {
-            this._motors[connectID] = new BoostMotor(this, connectID);
+            this._motors[portID] = new BoostMotor(this, portID);
         } 
 
         // Set input format for tilt or distance sensor
@@ -920,7 +956,7 @@ class Boost {
         }
         
         const cmd = this.generateInputCommand(
-            connectID,
+            portID,
             BoostMode[typeString],
             1,
             true
@@ -931,19 +967,19 @@ class Boost {
 
     /**
      * Clear the sensor or motor present at port 1 or 2.
-     * @param {number} connectID - the port to clear.
+     * @param {number} portID - the port to clear.
      * @private
      */
-    _clearPort (connectID) {
-        const type = this._ports[connectID];
+    _clearPort (portID) {
+        const type = this._ports[portID];
         if (type === BoostDevice.TILT) {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
         if (type === BoostDevice.DISTANCE) {
             this._sensors.distance = 0;
         }
-        this._ports[connectID] = 'none';
-        this._motors[connectID] = null;
+        this._ports[portID] = 'none';
+        this._motors[portID] = null;
     }
 }
 
@@ -1173,7 +1209,7 @@ class Scratch3BoostBlocks {
                         }
                     }
                 },
-                {
+                /*{
                     opcode: 'whenDistance',
                     text: formatMessage({
                         id: 'boost.whenDistance',
@@ -1192,7 +1228,7 @@ class Scratch3BoostBlocks {
                             defaultValue: 50
                         }
                     }
-                },
+                },*/
                 {
                     opcode: 'whenColor',
                     text: formatMessage({
@@ -1226,7 +1262,7 @@ class Scratch3BoostBlocks {
                         }
                     }
                 },
-                {
+                /*{
                     opcode: 'getDistance',
                     text: formatMessage({
                         id: 'boost.getDistance',
@@ -1250,7 +1286,7 @@ class Scratch3BoostBlocks {
                             defaultValue: BoostTiltDirection.ANY
                         }
                     }
-                },
+                },*/
                 {
                     opcode: 'getTiltAngle',
                     text: formatMessage({
@@ -1558,11 +1594,9 @@ class Scratch3BoostBlocks {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOnForDegrees(degrees);
+                    motor._pendingPromiseFunction = resolve
                 }
             });
-
-            // Run for some time even when no motor is connected
-            setTimeout(resolve, degrees);
         });
     }    
 
@@ -1733,7 +1767,7 @@ class Scratch3BoostBlocks {
      * @property {string} OP - the comparison operation: '<' or '>'.
      * @property {number} REFERENCE - the value to compare against.
      * @return {boolean} - the result of the comparison, or false on error.
-     */
+     
     whenDistance (args) {
         switch (args.OP) {
         case '<':
@@ -1745,6 +1779,7 @@ class Scratch3BoostBlocks {
             return false;
         }
     }
+    */
 
     /**
      * Test whether the tilt sensor is currently tilted.
@@ -1768,10 +1803,10 @@ class Scratch3BoostBlocks {
 
     /**
      * @return {number} - the distance sensor's value, scaled to the [0,100] range.
-     */
+     
     getDistance () {
         return this._peripheral.distance;
-    }
+    }*/
 
     /**
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
