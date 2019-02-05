@@ -69,6 +69,12 @@ const FACING_THRESHOLD = 9;
 const FREEFALL_THRESHOLD = 0.5;
 
 /**
+ * Factor used to account for influence of rotation during freefall.
+ * @type {number}
+ */
+const FREEFALL_ROTATION_FACTOR = 0.3;
+
+/**
  * Acceleration due to gravity, in m/s^2.
  * @type {number}
  */
@@ -800,6 +806,14 @@ class Scratch3GdxForBlocks {
         return this.accelMagnitude() - GRAVITY;
     }
 
+    spinMagnitude () {
+        return this.magnitude(
+            this._peripheral.getSpinSpeedX(),
+            this._peripheral.getSpinSpeedY(),
+            this._peripheral.getSpinSpeedZ()
+        );
+    }
+
     isFacing (args) {
         switch (args.FACING) {
         case FaceValues.UP:
@@ -812,7 +826,18 @@ class Scratch3GdxForBlocks {
     }
 
     isFreeFalling () {
-        return this.accelMagnitude() < FREEFALL_THRESHOLD;
+        const accelMag = this.accelMagnitude();
+        const spinMag = this.spinMagnitude();
+
+        // We want to account for rotation during freefall,
+        // so we tack on a an estimated "rotational effect"
+        // The FREEFALL_ROTATION_FACTOR const is used to both scale the
+        // gyro measurements and convert them to radians/second.
+        // So, we compare our accel magnitude against:
+        // FREEFALL_THRESHOLD + (some_scaled_magnitude_of_rotation).
+        const ffThresh = FREEFALL_THRESHOLD + (FREEFALL_ROTATION_FACTOR * spinMag);
+
+        return accelMag < ffThresh;
     }
 }
 
