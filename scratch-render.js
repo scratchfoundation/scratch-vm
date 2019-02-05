@@ -13432,10 +13432,24 @@ var RenderWebGL = function (_EventEmitter) {
             var scratchY = this._nativeSize[1] * (y / this._gl.canvas.clientHeight - 0.5);
 
             var gl = this._gl;
-            twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
 
             var bounds = drawable.getFastBounds();
             bounds.snapToInt();
+
+            // Set a reasonable max limit width and height for the bufferInfo bounds
+            var maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+            var clampedWidth = Math.min(2048, bounds.width, maxTextureSize);
+            var clampedHeight = Math.min(2048, bounds.height, maxTextureSize);
+
+            // Make a new bufferInfo since this._queryBufferInfo is limited to 480x360
+            var attachments = [{ format: gl.RGBA }, { format: gl.DEPTH_STENCIL }];
+            var bufferInfo = twgl.createFramebufferInfo(gl, attachments, clampedWidth, clampedHeight);
+
+            // If the new bufferInfo is invalid, fall back to using the smaller _queryBufferInfo
+            twgl.bindFramebufferInfo(gl, bufferInfo);
+            if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+                twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
+            }
 
             // Translate to scratch units relative to the drawable
             var pickX = scratchX - bounds.left;
@@ -16689,6 +16703,7 @@ class SvgRenderer {
             this._transformGradients();
         }
         transformStrokeWidths(this._svgTag, window);
+        this._transformImages(this._svgTag);
         if (fromVersion2) {
             // Transform all text elements.
             this._transformText();
@@ -16806,25 +16821,53 @@ class SvgRenderer {
     }
 
     /**
-     * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
-     * SVG defaults to x2 = 1 when missing.
+     * @param {string} tagName svg tag to search for
+     * @return {Array} a list of elements with the given tagname in _svgTag
      */
-    _transformGradients () {
-        // Collect all gradient elements into a list.
-        const linearGradientElements = [];
+    _collectElements (tagName) {
+        const elts = [];
         const collectElements = domElement => {
-            if (domElement.localName === 'linearGradient') {
-                linearGradientElements.push(domElement);
+            if (domElement.localName === tagName) {
+                elts.push(domElement);
             }
             for (let i = 0; i < domElement.childNodes.length; i++) {
                 collectElements(domElement.childNodes[i]);
             }
         };
         collectElements(this._svgTag);
+        return elts;
+    }
+
+    /**
+     * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
+     * SVG defaults to x2 = 1 when missing.
+     */
+    _transformGradients () {
+        const linearGradientElements = this._collectElements('linearGradient');
+
         // For each gradient element, supply x2 if necessary.
         for (const gradientElement of linearGradientElements) {
             if (!gradientElement.getAttribute('x2')) {
                 gradientElement.setAttribute('x2', '0');
+            }
+        }
+    }
+
+    /**
+     * Fix SVGs to match appearance in Scratch 2, which used nearest neighbor scaling for bitmaps
+     * within SVGs.
+     */
+    _transformImages () {
+        const imageElements = this._collectElements('image');
+
+        // For each image element, set image rendering to pixelated"
+        const pixelatedImages = 'image-rendering: optimizespeed; image-rendering: pixelated;';
+        for (const elt of imageElements) {
+            if (elt.getAttribute('style')) {
+                elt.setAttribute('style',
+                    `${pixelatedImages} ${elt.getAttribute('style')}`);
+            } else {
+                elt.setAttribute('style', pixelatedImages);
             }
         }
     }
@@ -16904,7 +16947,14 @@ class SvgRenderer {
         // Enlarge the bbox from the largest found stroke width
         // This may have false-positives, but at least the bbox will always
         // contain the full graphic including strokes.
-        const halfStrokeWidth = this._findLargestStrokeWidth(this._svgTag) / 2;
+        // If the width or height is zero however, don't enlarge since
+        // they won't have a stroke width that needs to be enlarged.
+        let halfStrokeWidth;
+        if (bbox.width === 0 || bbox.height === 0) {
+            halfStrokeWidth = 0;
+        } else {
+            halfStrokeWidth = this._findLargestStrokeWidth(this._svgTag) / 2;
+        }
         const width = bbox.width + (halfStrokeWidth * 2);
         const height = bbox.height + (halfStrokeWidth * 2);
         const x = bbox.x - halfStrokeWidth;
