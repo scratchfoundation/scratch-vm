@@ -1160,7 +1160,7 @@ const replaceUnsafeCharsInVariableIds = function (targets) {
         // We're calling this on the stage target because we need a
         // target to call on but this shouldn't matter because we're passing
         // in all the varRefs we want to operate on
-        VariableUtil.mergeVariables(id, newId, allVarRefs);
+        VariableUtil.updateVariableIdentifiers(allVarRefs[id], newId);
     }
     return targets;
 };

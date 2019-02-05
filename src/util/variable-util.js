@@ -25,18 +25,17 @@ class VariableUtil {
     }
 
     /**
-     * Merge variable references with another variable.
-     * @param {string} idToBeMerged ID of the variable whose references need to be updated
-     * @param {string} idToMergeWith ID of the variable that the old references should be replaced with
+     * Give all variable references provided a new id and possibly new name.
      * @param {Array<object>} referencesToUpdate Context of the change, the object containing variable
      * references to update.
+     * @param {string} newId ID of the variable that the old references should be replaced with
      * @param {?string} optNewName New variable name to merge with. The old
      * variable name in the references being updated should be replaced with this new name.
      * If this parameter is not provided or is '', no name change occurs.
      */
-    static mergeVariables (idToBeMerged, idToMergeWith, referencesToUpdate, optNewName) {
+    static updateVariableIdentifiers (referencesToUpdate, newId, optNewName) {
         referencesToUpdate.map(ref => {
-            ref.referencingField.id = idToMergeWith;
+            ref.referencingField.id = newId;
             if (optNewName) {
                 ref.referencingField.value = optNewName;
             }

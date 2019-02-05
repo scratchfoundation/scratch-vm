@@ -515,7 +515,7 @@ class Target extends EventEmitter {
             // for all references for a given ID instead of doing the below..?
             this.blocks.getAllVariableAndListReferences()[idToBeMerged];
 
-        VariableUtil.mergeVariables(idToBeMerged, idToMergeWith, referencesToChange, optNewName);
+        VariableUtil.updateVariableIdentifiers(referencesToChange, idToMergeWith, optNewName);
     }
 
     /**
