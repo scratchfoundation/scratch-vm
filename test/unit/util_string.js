@@ -84,3 +84,28 @@ test('stringify', t => {
     t.equal(parsed.f.nested, 0);
     t.end();
 });
+
+test('replaceUnsafeChars', t => {
+    const empty = '';
+    t.equal(StringUtil.replaceUnsafeChars(empty), empty);
+
+    const safe = 'hello';
+    t.equal(StringUtil.replaceUnsafeChars(safe), safe);
+
+    const unsafe = '< > & \' "';
+    t.equal(StringUtil.replaceUnsafeChars(unsafe), 'lt gt amp apos quot');
+
+    const single = '&';
+    t.equal(StringUtil.replaceUnsafeChars(single), 'amp');
+
+    const mix = '<a>b& c\'def_-"';
+    t.equal(StringUtil.replaceUnsafeChars(mix), 'ltagtbamp caposdef_-quot');
+
+    const dupes = '<<&_"_"_&>>';
+    t.equal(StringUtil.replaceUnsafeChars(dupes), 'ltltamp_quot_quot_ampgtgt');
+
+    const emoji = '(>^_^)>';
+    t.equal(StringUtil.replaceUnsafeChars(emoji), '(gt^_^)gt');
+
+    t.end();
+});
