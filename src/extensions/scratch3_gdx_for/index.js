@@ -26,6 +26,19 @@ const BLEUUID = {
 };
 
 /**
+ * Sensor ID numbers for the GDX-FOR.
+ */
+const GDXFOR_SENSOR = {
+    FORCE: 1,
+    ACCELERATION_X: 2,
+    ACCELERATION_Y: 3,
+    ACCELERATION_Z: 4,
+    SPIN_SPEED_X: 5,
+    SPIN_SPEED_Y: 6,
+    SPIN_SPEED_Z: 7
+};
+
+/**
  * Threshold for pushing and pulling force, for the whenForcePushedOrPulled hat block.
  * @type {number}
  */
@@ -101,9 +114,23 @@ class GdxFor {
          */
         this._extensionId = extensionId;
 
+        /**
+         * The most recently received value for each sensor.
+         * @type {Object.<string, number>}
+         * @private
+         */
+        this._sensors = {
+            force: 0,
+            accelerationX: 0,
+            accelerationY: 0,
+            accelerationZ: 0,
+            spinSpeedX: 0,
+            spinSpeedY: 0,
+            spinSpeedZ: 0
+        };
+
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
-        this._sensorsEnabled = null;
     }
 
 
@@ -140,7 +167,15 @@ class GdxFor {
      * Disconnect from the GDX FOR.
      */
     disconnect () {
-        this._sensorsEnabled = false;
+        this._sensors = {
+            force: 0,
+            accelerationX: 0,
+            accelerationY: 0,
+            accelerationZ: 0,
+            spinSpeedX: 0,
+            spinSpeedY: 0,
+            spinSpeedZ: 0
+        };
         if (this._scratchLinkSocket) {
             this._scratchLinkSocket.disconnect();
         }
@@ -165,183 +200,191 @@ class GdxFor {
     _onConnect () {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
+            // Setup device
             this._device = device;
             this._device.keepValues = false; // todo: possibly remove after updating Vernier godirect module
-            this._startMeasurements();
+
+            // Enable sensors
+            this._device.sensors.forEach(sensor => {
+                sensor.setEnabled(true);
+            });
+
+            // Set sensor value-update behavior
+            this._device.on('measurements-started', () => {
+                const enabledSensors = this._device.sensors.filter(s => s.enabled);
+                enabledSensors.forEach(sensor => {
+                    sensor.on('value-changed', s => {
+                        this._onSensorValueChanged(s);
+                    });
+                });
+            });
+
+            // Start device
+            this._device.start(10); // Set the period to 10 milliseconds
         });
     }
 
     /**
-     * Enable and begin reading measurements
+     * Handler for sensor value changes from the goforce device.
+     * @param {object} sensor - goforce device sensor whose value has changed
      * @private
      */
-    _startMeasurements () {
-        this._device.sensors.forEach(sensor => {
-            sensor.setEnabled(true);
-        });
-        this._device.on('measurements-started', () => {
-            this._sensorsEnabled = true;
-        });
-        this._device.start(10); // Set the period to 10 milliseconds
-    }
-
-    /**
-     * Device is connected and measurements enabled
-     * @return {boolean} - whether the goforce is connected and measurements started.
-     */
-    _canReadSensors () {
-        return this.isConnected() && this._sensorsEnabled;
-    }
-
-    getForce () {
-        if (this._canReadSensors()) {
-            let force = this._device.getSensor(1).value;
+    _onSensorValueChanged (sensor) {
+        switch (sensor.number) {
+        case GDXFOR_SENSOR.FORCE:
             // Normalize the force, which can be measured between -50 and 50 N,
             // to be a value between -100 and 100.
-            force = MathUtil.clamp(force * 2, -100, 100);
-            return force;
+            this._sensors.force = MathUtil.clamp(sensor.value * 2, -100, 100);
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_X:
+            this._sensors.accelerationX = sensor.value;
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_Y:
+            this._sensors.accelerationY = sensor.value;
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_Z:
+            this._sensors.accelerationZ = sensor.value;
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_X:
+            this._sensors.spinSpeedX = this._spinSpeedFromGyro(sensor.value);
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_Y:
+            this._sensors.spinSpeedY = this._spinSpeedFromGyro(sensor.value);
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_Z:
+            this._sensors.spinSpeedZ = this._spinSpeedFromGyro(sensor.value);
+            break;
         }
-        return 0;
     }
 
-    getTiltX () {
-        if (this._canReadSensors()) {
-            let x = this.getAccelerationX();
-            let y = this.getAccelerationY();
-            let z = this.getAccelerationZ();
-
-            let xSign = 1;
-            let ySign = 1;
-            let zSign = 1;
-
-            if (x < 0.0) {
-                x *= -1.0; xSign = -1;
-            }
-            if (y < 0.0) {
-                y *= -1.0; ySign = -1;
-            }
-            if (z < 0.0) {
-                z *= -1.0; zSign = -1;
-            }
-
-            // Compute the yz unit vector
-            const z2 = z * z;
-            const x2 = x * x;
-            let value = z2 + x2;
-            value = Math.sqrt(value);
-
-            // For sufficiently small zy vector values we are essentially at 90 degrees.
-            // The following snaps to 90 and avoids divide-by-zero errors.
-            // The snap factor was derived through observation -- just enough to
-            // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-            if (value < 0.35) {
-                value = 90;
-            } else {
-                // Compute the x-axis angle
-                value = y / value;
-                value = Math.atan(value);
-                value *= 57.2957795; // convert from rad to deg
-            }
-            // Manage the sign of the result
-            let xzSign = xSign;
-            if (z > x) xzSign = zSign;
-            if (xzSign === -1) value = 180.0 - value;
-            value *= ySign;
-            // Round the result to the nearest degree
-            value += 0.5;
-            return value;
-        }
-        return 0;
-    }
-
-    getTiltY () {
-        if (this._canReadSensors()) {
-            let x = this.getAccelerationX();
-            let y = this.getAccelerationY();
-            let z = this.getAccelerationZ();
-
-            let xSign = 1;
-            let ySign = 1;
-            let zSign = 1;
-
-            if (x < 0.0) {
-                x *= -1.0; xSign = -1;
-            }
-            if (y < 0.0) {
-                y *= -1.0; ySign = -1;
-            }
-            if (z < 0.0) {
-                z *= -1.0; zSign = -1;
-            }
-
-            // Compute the yz unit vector
-            const z2 = z * z;
-            const y2 = y * y;
-            let value = z2 + y2;
-            value = Math.sqrt(value);
-
-            // For sufficiently small zy vector values we are essentially at 90 degrees.
-            // The following snaps to 90 and avoids divide-by-zero errors.
-            // The snap factor was derived through observation -- just enough to
-            // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
-            if (value < 0.35) {
-                value = 90;
-            } else {
-                // Compute the x-axis angle
-                value = x / value;
-                value = Math.atan(value);
-                value *= 57.2957795; // convert from rad to deg
-            }
-            // Manage the sign of the result
-            let yzSign = ySign;
-            if (z > y) yzSign = zSign;
-            if (yzSign === -1) value = 180.0 - value;
-            value *= xSign;
-            // Round the result to the nearest degree
-            value += 0.5;
-            return value;
-        }
-        return 0;
-    }
-
-    getAccelerationX () {
-        return this._getAcceleration(2);
-    }
-
-    getAccelerationY () {
-        return this._getAcceleration(3);
-    }
-
-    getAccelerationZ () {
-        return this._getAcceleration(4);
-    }
-
-    _getAcceleration (sensorNum) {
-        if (!this._canReadSensors()) return 0;
-        const val = this._device.getSensor(sensorNum).value;
-        return val;
-    }
-
-    getSpinSpeedX () {
-        return this._getSpinSpeed(5);
-    }
-
-    getSpinSpeedY () {
-        return this._getSpinSpeed(6);
-    }
-
-    getSpinSpeedZ () {
-        return this._getSpinSpeed(7);
-    }
-
-    _getSpinSpeed (sensorNum) {
-        if (!this._canReadSensors()) return 0;
-        let val = this._device.getSensor(sensorNum).value;
-        val = MathUtil.radToDeg(val);
+    _spinSpeedFromGyro (val) {
         const framesPerSec = 1000 / this._runtime.currentStepTime;
+        val = MathUtil.radToDeg(val);
         val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
         val = val * -1;
         return val;
+    }
+
+    getForce () {
+        return this._sensors.force;
+    }
+
+    getTiltX () {
+        let x = this.getAccelerationX();
+        let y = this.getAccelerationY();
+        let z = this.getAccelerationZ();
+
+        let xSign = 1;
+        let ySign = 1;
+        let zSign = 1;
+
+        if (x < 0.0) {
+            x *= -1.0; xSign = -1;
+        }
+        if (y < 0.0) {
+            y *= -1.0; ySign = -1;
+        }
+        if (z < 0.0) {
+            z *= -1.0; zSign = -1;
+        }
+
+        // Compute the yz unit vector
+        const z2 = z * z;
+        const x2 = x * x;
+        let value = z2 + x2;
+        value = Math.sqrt(value);
+
+        // For sufficiently small zy vector values we are essentially at 90 degrees.
+        // The following snaps to 90 and avoids divide-by-zero errors.
+        // The snap factor was derived through observation -- just enough to
+        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
+        if (value < 0.35) {
+            value = 90;
+        } else {
+            // Compute the x-axis angle
+            value = y / value;
+            value = Math.atan(value);
+            value *= 57.2957795; // convert from rad to deg
+        }
+        // Manage the sign of the result
+        let xzSign = xSign;
+        if (z > x) xzSign = zSign;
+        if (xzSign === -1) value = 180.0 - value;
+        value *= ySign;
+        // Round the result to the nearest degree
+        value += 0.5;
+        return value;
+    }
+
+    getTiltY () {
+        let x = this.getAccelerationX();
+        let y = this.getAccelerationY();
+        let z = this.getAccelerationZ();
+
+        let xSign = 1;
+        let ySign = 1;
+        let zSign = 1;
+
+        if (x < 0.0) {
+            x *= -1.0; xSign = -1;
+        }
+        if (y < 0.0) {
+            y *= -1.0; ySign = -1;
+        }
+        if (z < 0.0) {
+            z *= -1.0; zSign = -1;
+        }
+
+        // Compute the yz unit vector
+        const z2 = z * z;
+        const y2 = y * y;
+        let value = z2 + y2;
+        value = Math.sqrt(value);
+
+        // For sufficiently small zy vector values we are essentially at 90 degrees.
+        // The following snaps to 90 and avoids divide-by-zero errors.
+        // The snap factor was derived through observation -- just enough to
+        // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
+        if (value < 0.35) {
+            value = 90;
+        } else {
+            // Compute the x-axis angle
+            value = x / value;
+            value = Math.atan(value);
+            value *= 57.2957795; // convert from rad to deg
+        }
+        // Manage the sign of the result
+        let yzSign = ySign;
+        if (z > y) yzSign = zSign;
+        if (yzSign === -1) value = 180.0 - value;
+        value *= xSign;
+        // Round the result to the nearest degree
+        value += 0.5;
+        return value;
+    }
+
+    getAccelerationX () {
+        return this._sensors.accelerationX;
+    }
+
+    getAccelerationY () {
+        return this._sensors.accelerationY;
+    }
+
+    getAccelerationZ () {
+        return this._sensors.accelerationZ;
+    }
+
+    getSpinSpeedX () {
+        return this._sensors.spinSpeedX;
+    }
+
+    getSpinSpeedY () {
+        return this._sensors.spinSpeedY;
+    }
+
+    getSpinSpeedZ () {
+        return this._sensors.spinSpeedZ;
     }
 }
 
