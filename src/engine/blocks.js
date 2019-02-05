@@ -371,8 +371,13 @@ class Blocks {
             if (e.isLocal && editingTarget && !editingTarget.isStage && !e.isCloud) {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
+                    this.emitProjectChanged();
                 }
             } else {
+                if (stage.lookupVariableById(e.varId)) {
+                    // Do not re-create a variable if it already exists
+                    return;
+                }
                 // Check for name conflicts in all of the targets
                 const allTargets = this.runtime.targets.filter(t => t.isOriginal);
                 for (const target of allTargets) {
@@ -381,6 +386,7 @@ class Blocks {
                     }
                 }
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
+                this.emitProjectChanged();
             }
             break;
         case 'var_rename':
@@ -400,11 +406,13 @@ class Blocks {
                     currTarget.blocks.updateBlocksAfterVarRename(e.varId, e.newName);
                 }
             }
+            this.emitProjectChanged();
             break;
         case 'var_delete': {
             const target = (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) ?
                 editingTarget : stage;
             target.deleteVariable(e.varId);
+            this.emitProjectChanged();
             break;
         }
         case 'comment_create':
@@ -425,6 +433,7 @@ class Blocks {
                     currTarget.comments[e.commentId].y = e.xy.y;
                 }
             }
+            this.emitProjectChanged();
             break;
         case 'comment_change':
             if (this.runtime.getEditingTarget()) {
@@ -445,6 +454,7 @@ class Blocks {
                 if (change.hasOwnProperty('text')) {
                     comment.text = change.text;
                 }
+                this.emitProjectChanged();
             }
             break;
         case 'comment_move':
@@ -458,6 +468,8 @@ class Blocks {
                 const newCoord = e.newCoordinate_;
                 comment.x = newCoord.x;
                 comment.y = newCoord.y;
+
+                this.emitProjectChanged();
             }
             break;
         case 'comment_delete':
@@ -479,13 +491,11 @@ class Blocks {
                     }
                     delete block.comment;
                 }
+
+                this.emitProjectChanged();
             }
             break;
         }
-
-        // forceNoGlow is set to true on containers that don't affect the project serialization,
-        // e.g., the toolbox or monitor containers.
-        if (!this.forceNoGlow) this.runtime.emitProjectChanged();
     }
 
     // ---------------------------------------------------------------------
@@ -499,6 +509,16 @@ class Blocks {
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
         this._cache._monitored = null;
+    }
+
+    /**
+     * Emit a project changed event if this is a block container
+     * that can affect the project state.
+     */
+    emitProjectChanged () {
+        if (!this.forceNoGlow) {
+            this.runtime.emitProjectChanged();
+        }
     }
 
     /**
@@ -521,6 +541,10 @@ class Blocks {
         }
 
         this.resetCache();
+
+        // A new block was actually added to the block container,
+        // emit a project changed event
+        this.emitProjectChanged();
     }
 
     /**
@@ -558,10 +582,6 @@ class Blocks {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
 
-                if (!this.runtime){
-                    log.warn('Runtime is not optional, it should get passed in when the block container is created.');
-                    break;
-                }
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.
                 // TODO: (#1787)
@@ -587,11 +607,6 @@ class Blocks {
             block.mutation = mutationAdapter(args.value);
             break;
         case 'checkbox': {
-            if (!this.runtime) {
-                log.warn('Runtime is not optional, it should get passed in when the block container is created.');
-                break;
-            }
-
             // A checkbox usually has a one to one correspondence with the monitor
             // block but in the case of monitored reporters that have arguments,
             // map the old id to a new id, creating a new monitor block if necessary
@@ -659,6 +674,8 @@ class Blocks {
         }
         }
 
+        this.emitProjectChanged();
+
         this.resetCache();
     }
 
@@ -671,10 +688,19 @@ class Blocks {
             return;
         }
 
+        const block = this._blocks[e.id];
+        // Track whether a change actually occurred
+        // ignoring changes like routine re-positioning
+        // of a block when loading a workspace
+        let didChange = false;
+
         // Move coordinate changes.
         if (e.newCoordinate) {
-            this._blocks[e.id].x = e.newCoordinate.x;
-            this._blocks[e.id].y = e.newCoordinate.y;
+
+            didChange = (block.x !== e.newCoordinate.x) || (block.y !== e.newCoordinate.y);
+
+            block.x = e.newCoordinate.x;
+            block.y = e.newCoordinate.y;
         }
 
         // Remove from any old parent.
@@ -689,9 +715,10 @@ class Blocks {
                 oldParent.next = null;
             }
             this._blocks[e.id].parent = null;
+            didChange = true;
         }
 
-        // Has the block become a top-level block?
+        // Is this block a top-level block?
         if (typeof e.newParent === 'undefined') {
             this._addScript(e.id);
         } else {
@@ -715,8 +742,11 @@ class Blocks {
                 };
             }
             this._blocks[e.id].parent = e.newParent;
+            didChange = true;
         }
         this.resetCache();
+
+        if (didChange) this.emitProjectChanged();
     }
 
 
@@ -784,6 +814,7 @@ class Blocks {
         delete this._blocks[blockId];
 
         this.resetCache();
+        this.emitProjectChanged();
     }
 
     /**
