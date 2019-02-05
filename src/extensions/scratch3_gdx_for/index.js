@@ -200,65 +200,70 @@ class GdxFor {
     _onConnect () {
         const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
+            // Setup device
             this._device = device;
             this._device.keepValues = false; // todo: possibly remove after updating Vernier godirect module
-            this._startMeasurements();
+
+            // Enable sensors
+            this._device.sensors.forEach(sensor => {
+                sensor.setEnabled(true);
+            });
+
+            // Set sensor value-update behavior
+            this._device.on('measurements-started', () => {
+                const enabledSensors = this._device.sensors.filter(s => s.enabled);
+                enabledSensors.forEach(sensor => {
+                    sensor.on('value-changed', s => {
+                        this._onSensorValueChanged(s);
+                    });
+                });
+            });
+
+            // Start device
+            this._device.start(10); // Set the period to 10 milliseconds
         });
     }
 
-    /**
-     * Enable and begin reading measurements
-     * @private
-     */
-    _startMeasurements () {
-        this._device.sensors.forEach(sensor => {
-            sensor.setEnabled(true);
-        });
-        this._device.on('measurements-started', () => {
-            const enabledSensors = this._device.sensors.filter(s => s.enabled);
-            enabledSensors.forEach(sensor => {
-                sensor.on('value-changed', s => {
-                    let val = s.value; // TODO: rename/replace
-                    const framesPerSec = 1000 / this._runtime.currentStepTime;
-                    switch (s.number) {
-                    case GDXFOR_SENSOR.FORCE:
-                        // Normalize the force, which can be measured between -50 and 50 N,
-                        // to be a value between -100 and 100.
-                        val = MathUtil.clamp(val * 2, -100, 100);
-                        this._sensors.force = val;
-                        break;
-                    case GDXFOR_SENSOR.ACCELERATION_X:
-                        this._sensors.accelerationX = s.value;
-                        break;
-                    case GDXFOR_SENSOR.ACCELERATION_Y:
-                        this._sensors.accelerationY = s.value;
-                        break;
-                    case GDXFOR_SENSOR.ACCELERATION_Z:
-                        this._sensors.accelerationZ = s.value;
-                        break;
-                    case GDXFOR_SENSOR.SPIN_SPEED_X:
-                        val = MathUtil.radToDeg(val);
-                        val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-                        val = val * -1;
-                        this._sensors.spinSpeedX = val;
-                        break;
-                    case GDXFOR_SENSOR.SPIN_SPEED_Y:
-                        val = MathUtil.radToDeg(val);
-                        val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-                        val = val * -1;
-                        this._sensors.spinSpeedY = val;
-                        break;
-                    case GDXFOR_SENSOR.SPIN_SPEED_Z:
-                        val = MathUtil.radToDeg(val);
-                        val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-                        val = val * -1;
-                        this._sensors.spinSpeedZ = val;
-                        break;
-                    }
-                });
-            });
-        });
-        this._device.start(10); // Set the period to 10 milliseconds
+    // TODO: JSDoc
+    _onSensorValueChanged (sensor) {
+        let val = sensor.value;
+        const framesPerSec = 1000 / this._runtime.currentStepTime;
+
+        switch (sensor.number) {
+        case GDXFOR_SENSOR.FORCE:
+            // Normalize the force, which can be measured between -50 and 50 N,
+            // to be a value between -100 and 100.
+            val = MathUtil.clamp(val * 2, -100, 100);
+            this._sensors.force = val;
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_X:
+            this._sensors.accelerationX = sensor.value;
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_Y:
+            this._sensors.accelerationY = sensor.value;
+            break;
+        case GDXFOR_SENSOR.ACCELERATION_Z:
+            this._sensors.accelerationZ = sensor.value;
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_X:
+            val = MathUtil.radToDeg(val);
+            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
+            val = val * -1;
+            this._sensors.spinSpeedX = val;
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_Y:
+            val = MathUtil.radToDeg(val);
+            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
+            val = val * -1;
+            this._sensors.spinSpeedY = val;
+            break;
+        case GDXFOR_SENSOR.SPIN_SPEED_Z:
+            val = MathUtil.radToDeg(val);
+            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
+            val = val * -1;
+            this._sensors.spinSpeedZ = val;
+            break;
+        }
     }
 
     getForce () {
