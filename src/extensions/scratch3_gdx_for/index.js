@@ -610,6 +610,7 @@ class Scratch3GdxForBlocks {
                     }),
                     blockType: BlockType.REPORTER
                 },
+                '---',
                 {
                     opcode: 'whenGesture',
                     text: formatMessage({
@@ -674,6 +675,7 @@ class Scratch3GdxForBlocks {
                         }
                     }
                 },
+                '---',
                 {
                     opcode: 'isFacing',
                     text: formatMessage({
