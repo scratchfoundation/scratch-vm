@@ -224,7 +224,11 @@ class GdxFor {
         });
     }
 
-    // TODO: JSDoc
+    /**
+     * Handler for sensor value changes from the goforce device.
+     * @param {object} sensor - goforce device sensor whose value has changed
+     * @private
+     */
     _onSensorValueChanged (sensor) {
         let val = sensor.value;
         const framesPerSec = 1000 / this._runtime.currentStepTime;
