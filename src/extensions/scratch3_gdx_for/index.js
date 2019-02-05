@@ -167,6 +167,15 @@ class GdxFor {
      * Disconnect from the GDX FOR.
      */
     disconnect () {
+        this._sensors = {
+            force: 0,
+            accelerationX: 0,
+            accelerationY: 0,
+            accelerationZ: 0,
+            spinSpeedX: 0,
+            spinSpeedY: 0,
+            spinSpeedZ: 0
+        };
         if (this._scratchLinkSocket) {
             this._scratchLinkSocket.disconnect();
         }
