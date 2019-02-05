@@ -647,7 +647,7 @@ class Scratch3GdxForBlocks {
                     opcode: 'getSpinSpeed',
                     text: formatMessage({
                         id: 'gdxfor.getSpinSpeed',
-                        default: 'spin speed [DIRECTION]',
+                        default: 'spin [DIRECTION]',
                         description: 'gets spin speed'
                     }),
                     blockType: BlockType.REPORTER,
