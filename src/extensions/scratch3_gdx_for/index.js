@@ -230,15 +230,11 @@ class GdxFor {
      * @private
      */
     _onSensorValueChanged (sensor) {
-        let val = sensor.value;
-        const framesPerSec = 1000 / this._runtime.currentStepTime;
-
         switch (sensor.number) {
         case GDXFOR_SENSOR.FORCE:
             // Normalize the force, which can be measured between -50 and 50 N,
             // to be a value between -100 and 100.
-            val = MathUtil.clamp(val * 2, -100, 100);
-            this._sensors.force = val;
+            this._sensors.force = MathUtil.clamp(sensor.value * 2, -100, 100);
             break;
         case GDXFOR_SENSOR.ACCELERATION_X:
             this._sensors.accelerationX = sensor.value;
@@ -250,24 +246,23 @@ class GdxFor {
             this._sensors.accelerationZ = sensor.value;
             break;
         case GDXFOR_SENSOR.SPIN_SPEED_X:
-            val = MathUtil.radToDeg(val);
-            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-            val = val * -1;
-            this._sensors.spinSpeedX = val;
+            this._sensors.spinSpeedX = this._spinSpeedFromGyro(sensor.value);
             break;
         case GDXFOR_SENSOR.SPIN_SPEED_Y:
-            val = MathUtil.radToDeg(val);
-            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-            val = val * -1;
-            this._sensors.spinSpeedY = val;
+            this._sensors.spinSpeedY = this._spinSpeedFromGyro(sensor.value);
             break;
         case GDXFOR_SENSOR.SPIN_SPEED_Z:
-            val = MathUtil.radToDeg(val);
-            val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
-            val = val * -1;
-            this._sensors.spinSpeedZ = val;
+            this._sensors.spinSpeedZ = this._spinSpeedFromGyro(sensor.value);
             break;
         }
+    }
+
+    _spinSpeedFromGyro (val) {
+        const framesPerSec = 1000 / this._runtime.currentStepTime;
+        val = MathUtil.radToDeg(val);
+        val = val / framesPerSec; // convert to from degrees per sec to degrees per frame
+        val = val * -1;
+        return val;
     }
 
     getForce () {
