@@ -60,7 +60,7 @@ class StringUtil {
     /**
      * A function to replace unsafe characters (not allowed in XML) with safe ones. This is used
      * in cases where we're replacing non-user facing strings (e.g. variable IDs).
-     * When replacing user facing strings, the xmlEscpe utility function should be used
+     * When replacing user facing strings, the xmlEscape utility function should be used
      * instead so that the user facing string does not change how it displays.
      * @param {!string} unsafe Unsafe string possibly containing unicode control characters.
      * @return {string} String with control characters replaced.
