@@ -15,12 +15,13 @@ class VariableUtil {
      * in the project.
      * @param {Array.<Target>} targets The list of targets to get the variable
      * and list references from.
+     * @param {boolean} shouldIncludeBroadcast Whether to include broadcast message fields.
      * @return {object} An object with variable ids as the keys and a list of block fields referencing
      * the variable.
      */
-    static getAllVarRefsForTargets (targets) {
+    static getAllVarRefsForTargets (targets, shouldIncludeBroadcast) {
         return targets
-            .map(t => t.blocks.getAllVariableAndListReferences())
+            .map(t => t.blocks.getAllVariableAndListReferences(null, shouldIncludeBroadcast))
             .reduce(VariableUtil._mergeVarRefObjects, {});
     }
 
