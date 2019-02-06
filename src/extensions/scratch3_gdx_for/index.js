@@ -451,19 +451,35 @@ class Scratch3GdxForBlocks {
     get TILT_MENU () {
         return [
             {
-                text: 'front',
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.front',
+                    default: 'front',
+                    description: 'label for front element in tilt direction picker for gdxfor extension'
+                }),
                 value: TiltAxisValues.FRONT
             },
             {
-                text: 'back',
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.back',
+                    default: 'back',
+                    description: 'label for back element in tilt direction picker for gdxfor extension'
+                }),
                 value: TiltAxisValues.BACK
             },
             {
-                text: 'left',
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.left',
+                    default: 'left',
+                    description: 'label for left element in tilt direction picker for gdxfor extension'
+                }),
                 value: TiltAxisValues.LEFT
             },
             {
-                text: 'right',
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.right',
+                    default: 'right',
+                    description: 'label for right element in tilt direction picker for gdxfor extension'
+                }),
                 value: TiltAxisValues.RIGHT
             }
         ];
