@@ -10,7 +10,7 @@ const VariableUtil = require('../../src/util/variable-util');
 const projectUri = path.resolve(__dirname, '../fixtures/variable_characters.sb3');
 const project = readFileToBuffer(projectUri);
 
-test('importing sb2 project with special chars in variable names', t => {
+test('importing sb3 project with special chars in variable names', t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());
 
