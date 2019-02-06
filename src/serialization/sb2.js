@@ -227,7 +227,7 @@ const globalBroadcastMsgStateGenerator = (function () {
                 if (name === '') {
                     name = emptyStringName;
                 }
-                broadcastMsgNameMap[name] = `broadcastMsgId-${name}`;
+                broadcastMsgNameMap[name] = `broadcastMsgId-${StringUtil.replaceUnsafeChars(name)}`;
                 allBroadcastFields.push(field);
                 return broadcastMsgNameMap[name];
             },
