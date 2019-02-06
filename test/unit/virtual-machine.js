@@ -786,10 +786,14 @@ test('shareBlocksToTarget shares global variables without any name changes', t =
         t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
         t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
 
-        t.type(stage.blocks.getBlock('a block'), 'object');
-        t.type(stage.blocks.getBlock('a block').fields, 'object');
-        t.type(stage.blocks.getBlock('a block').fields.VARIABLE, 'object');
-        t.equal(stage.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
+        const newBlockId = Object.keys(stage.blocks._blocks)[0];
+        t.type(stage.blocks.getBlock(newBlockId), 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields, 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields.VARIABLE, 'object');
+        t.equal(stage.blocks.getBlock(newBlockId).fields.VARIABLE.id, 'mock var id');
+
+        // Verify the shared block id is different
+        t.notEqual(newBlockId, 'a block');
 
         // Verify that the variables haven't changed, the variable still exists on the
         // stage, it should still have the same name and value, and there should be
@@ -845,10 +849,11 @@ test('shareBlocksToTarget shares a local variable to the stage, creating a globa
         t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
         t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
 
-        t.type(stage.blocks.getBlock('a block'), 'object');
-        t.type(stage.blocks.getBlock('a block').fields, 'object');
-        t.type(stage.blocks.getBlock('a block').fields.VARIABLE, 'object');
-        t.equal(stage.blocks.getBlock('a block').fields.VARIABLE.id, 'StageVarFromLocal_mock var id');
+        const newBlockId = Object.keys(stage.blocks._blocks)[0];
+        t.type(stage.blocks.getBlock(newBlockId), 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields, 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields.VARIABLE, 'object');
+        t.equal(stage.blocks.getBlock(newBlockId).fields.VARIABLE.id, 'StageVarFromLocal_mock var id');
 
         // Verify that a new global variable was created, the old one still exists on
         // the target and still has the same name and value, and the new one has
@@ -919,10 +924,11 @@ test('shareBlocksToTarget chooses a fresh name for a new global variable checkin
         t.type(target.blocks.getBlock('a block').fields.VARIABLE, 'object');
         t.equal(target.blocks.getBlock('a block').fields.VARIABLE.id, 'mock var id');
 
-        t.type(stage.blocks.getBlock('a block'), 'object');
-        t.type(stage.blocks.getBlock('a block').fields, 'object');
-        t.type(stage.blocks.getBlock('a block').fields.VARIABLE, 'object');
-        t.equal(stage.blocks.getBlock('a block').fields.VARIABLE.id, 'StageVarFromLocal_mock var id');
+        const newBlockId = Object.keys(stage.blocks._blocks)[0];
+        t.type(stage.blocks.getBlock(newBlockId), 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields, 'object');
+        t.type(stage.blocks.getBlock(newBlockId).fields.VARIABLE, 'object');
+        t.equal(stage.blocks.getBlock(newBlockId).fields.VARIABLE.id, 'StageVarFromLocal_mock var id');
 
         // Verify that a new global variable was created, the old one still exists on
         // the target and still has the same name and value, and the new one has
