@@ -275,29 +275,15 @@ class GdxFor {
         return this._sensors.force;
     }
 
-    getTiltX () {
-        let x = this.getAccelerationX();
-        let y = this.getAccelerationY();
-        let z = this.getAccelerationZ();
-
-        let xSign = 1;
-        let ySign = 1;
-        let zSign = 1;
-
-        if (x < 0.0) {
-            x *= -1.0; xSign = -1;
-        }
-        if (y < 0.0) {
-            y *= -1.0; ySign = -1;
-        }
-        if (z < 0.0) {
-            z *= -1.0; zSign = -1;
-        }
+    getTiltFrontBack (back = false) {
+        const x = this.getAccelerationX();
+        const y = this.getAccelerationY();
+        const z = this.getAccelerationZ();
 
         // Compute the yz unit vector
+        const y2 = y * y;
         const z2 = z * z;
-        const x2 = x * x;
-        let value = z2 + x2;
+        let value = y2 + z2;
         value = Math.sqrt(value);
 
         // For sufficiently small zy vector values we are essentially at 90 degrees.
@@ -305,46 +291,28 @@ class GdxFor {
         // The snap factor was derived through observation -- just enough to
         // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
         if (value < 0.35) {
-            value = 90;
+            value = (x < 0) ? 90 : -90;
         } else {
-            // Compute the x-axis angle
-            value = y / value;
+            value = x / value;
             value = Math.atan(value);
-            value *= 57.2957795; // convert from rad to deg
+            value = MathUtil.radToDeg(value) * -1;
         }
-        // Manage the sign of the result
-        let xzSign = xSign;
-        if (z > x) xzSign = zSign;
-        if (xzSign === -1) value = 180.0 - value;
-        value *= ySign;
-        // Round the result to the nearest degree
-        value += 0.5;
+
+        // Back is the inverse of front
+        if (back) value *= -1;
+
         return value;
     }
 
-    getTiltY () {
-        let x = this.getAccelerationX();
-        let y = this.getAccelerationY();
-        let z = this.getAccelerationZ();
-
-        let xSign = 1;
-        let ySign = 1;
-        let zSign = 1;
-
-        if (x < 0.0) {
-            x *= -1.0; xSign = -1;
-        }
-        if (y < 0.0) {
-            y *= -1.0; ySign = -1;
-        }
-        if (z < 0.0) {
-            z *= -1.0; zSign = -1;
-        }
+    getTiltLeftRight (right = false) {
+        const x = this.getAccelerationX();
+        const y = this.getAccelerationY();
+        const z = this.getAccelerationZ();
 
         // Compute the yz unit vector
+        const x2 = x * x;
         const z2 = z * z;
-        const y2 = y * y;
-        let value = z2 + y2;
+        let value = x2 + z2;
         value = Math.sqrt(value);
 
         // For sufficiently small zy vector values we are essentially at 90 degrees.
@@ -352,20 +320,16 @@ class GdxFor {
         // The snap factor was derived through observation -- just enough to
         // still allow single degree steps up to 90 (..., 87, 88, 89, 90).
         if (value < 0.35) {
-            value = 90;
+            value = (y < 0) ? 90 : -90;
         } else {
-            // Compute the x-axis angle
-            value = x / value;
+            value = y / value;
             value = Math.atan(value);
-            value *= 57.2957795; // convert from rad to deg
+            value = MathUtil.radToDeg(value) * -1;
         }
-        // Manage the sign of the result
-        let yzSign = ySign;
-        if (z > y) yzSign = zSign;
-        if (yzSign === -1) value = 180.0 - value;
-        value *= xSign;
-        // Round the result to the nearest degree
-        value += 0.5;
+
+        // Right is the inverse of left
+        if (right) value *= -1;
+
         return value;
     }
 
@@ -421,8 +385,10 @@ const GestureValues = {
  * @enum {string}
  */
 const TiltAxisValues = {
-    X: 'x',
-    Y: 'y'
+    FRONT: 'front',
+    BACK: 'back',
+    LEFT: 'left',
+    RIGHT: 'right'
 };
 
 /**
@@ -485,12 +451,20 @@ class Scratch3GdxForBlocks {
     get TILT_MENU () {
         return [
             {
-                text: 'x',
-                value: TiltAxisValues.X
+                text: 'front',
+                value: TiltAxisValues.FRONT
             },
             {
-                text: 'y',
-                value: TiltAxisValues.Y
+                text: 'back',
+                value: TiltAxisValues.BACK
+            },
+            {
+                text: 'left',
+                value: TiltAxisValues.LEFT
+            },
+            {
+                text: 'right',
+                value: TiltAxisValues.RIGHT
             }
         ];
     }
@@ -644,7 +618,7 @@ class Scratch3GdxForBlocks {
                         TILT: {
                             type: ArgumentType.STRING,
                             menu: 'tiltOptions',
-                            defaultValue: TiltAxisValues.X
+                            defaultValue: TiltAxisValues.FRONT
                         }
                     }
                 },
@@ -749,10 +723,14 @@ class Scratch3GdxForBlocks {
 
     getTilt (args) {
         switch (args.TILT) {
-        case TiltAxisValues.X:
-            return Math.round(this._peripheral.getTiltX());
-        case TiltAxisValues.Y:
-            return Math.round(this._peripheral.getTiltY());
+        case TiltAxisValues.FRONT:
+            return Math.round(this._peripheral.getTiltFrontBack(false));
+        case TiltAxisValues.BACK:
+            return Math.round(this._peripheral.getTiltFrontBack(true));
+        case TiltAxisValues.LEFT:
+            return Math.round(this._peripheral.getTiltLeftRight(false));
+        case TiltAxisValues.RIGHT:
+            return Math.round(this._peripheral.getTiltLeftRight(true));
         default:
             log.warn(`Unknown direction in getTilt: ${args.TILT}`);
         }
