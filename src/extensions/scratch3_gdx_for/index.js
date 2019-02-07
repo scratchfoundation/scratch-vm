@@ -39,6 +39,11 @@ const GDXFOR_SENSOR = {
 };
 
 /**
+ * The update rate, in milliseconds, for sensor data input from the peripheral.
+ */
+const GDXFOR_UPDATE_RATE = 100;
+
+/**
  * Threshold for pushing and pulling force, for the whenForcePushedOrPulled hat block.
  * @type {number}
  */
@@ -220,7 +225,7 @@ class GdxFor {
             });
 
             // Start device
-            this._device.start(10); // Set the period to 10 milliseconds
+            this._device.start(GDXFOR_UPDATE_RATE);
         });
     }
 
