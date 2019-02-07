@@ -1141,7 +1141,7 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
 // This is to fix up projects imported from 2.0 where xml-unsafe names
 // were getting added to the variable ids.
 const replaceUnsafeCharsInVariableIds = function (targets) {
-    const allVarRefs = VariableUtil.getAllVarRefsForTargets(targets);
+    const allVarRefs = VariableUtil.getAllVarRefsForTargets(targets, true);
     // Re-id the variables in the actual targets
     targets.forEach(t => {
         Object.keys(t.variables).forEach(id => {
