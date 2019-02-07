@@ -2460,7 +2460,7 @@ that can affect the project state.</p>
 
     
 
-    <h4 class="name" id="getAllVariableAndListReferences"><span class="type-signature"></span>getAllVariableAndListReferences<span class="signature">(optBlocks)</span><span class="type-signature"> &rarr; {object}</span></h4>
+    <h4 class="name" id="getAllVariableAndListReferences"><span class="type-signature"></span>getAllVariableAndListReferences<span class="signature">(optBlocks, optIncludeBroadcast<span class="signature-attributes">nullable</span>)</span><span class="type-signature"> &rarr; {object}</span></h4>
 
     
 
@@ -2534,6 +2534,8 @@ in this block container.</p>
         <th>Type</th>
 
         
+        <th>Attributes</th>
+        
 
         
 
@@ -2559,12 +2561,53 @@ in this block container.</p>
             </td>
 
             
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
 
             
 
             <td class="description last"><p>Optional list of blocks to constrain the search to.
 This is useful for getting variable/list references for a stack of blocks instead
 of all blocks on the workspace</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>optIncludeBroadcast</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+                    &lt;nullable><br>
+                
+
+                
+                </td>
+            
+
+            
+
+            <td class="description last"><p>Optional whether to include broadcast fields.</p></td>
         </tr>
 
     
