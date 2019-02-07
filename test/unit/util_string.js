@@ -109,3 +109,21 @@ test('replaceUnsafeChars', t => {
 
     t.end();
 });
+
+test('replaceUnsafeChars should handle non strings', t => {
+    const array = ['hello', 'world'];
+    t.equal(StringUtil.replaceUnsafeChars(array), String(array));
+
+    const arrayWithSpecialChar = ['hello', '<world>'];
+    t.equal(StringUtil.replaceUnsafeChars(arrayWithSpecialChar), 'hello,ltworldgt');
+
+    const arrayWithNumbers = [1, 2, 3];
+    t.equal(StringUtil.replaceUnsafeChars(arrayWithNumbers), '1,2,3');
+
+    // Objects shouldn't get provided to replaceUnsafeChars, but in the event
+    // they do, it should just return the object (and log an error)
+    const object = {hello: 'world'};
+    t.equal(StringUtil.replaceUnsafeChars(object), object);
+
+    t.end();
+});
