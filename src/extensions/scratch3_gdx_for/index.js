@@ -26,6 +26,18 @@ const BLEUUID = {
 };
 
 /**
+ * A time interval to wait (in milliseconds) before reporting to the BLE socket
+ * that data has stopped coming from the peripheral.
+ */
+const BLETimeout = 4500;
+
+/**
+ * A string to report to the BLE socket when the GdxFor has stopped receiving data.
+ * @type {string}
+ */
+const BLEDataStoppedError = 'Force and Acceleration extension stopped receiving data';
+
+/**
  * Sensor ID numbers for the GDX-FOR.
  */
 const GDXFOR_SENSOR = {
@@ -140,6 +152,13 @@ class GdxFor {
             spinSpeedZ: 0
         };
 
+        /**
+         * Interval ID for data reading timeout.
+         * @type {number}
+         * @private
+         */
+        this._timeoutID = null;
+
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
     }
@@ -160,7 +179,7 @@ class GdxFor {
             optionalServices: [
                 BLEUUID.service
             ]
-        }, this._onConnect);
+        }, this._onConnect, this.disconnect);
     }
 
     /**
@@ -178,6 +197,7 @@ class GdxFor {
      * Disconnect from the GDX FOR.
      */
     disconnect () {
+        window.clearInterval(this._timeoutID);
         this._sensors = {
             force: 0,
             accelerationX: 0,
@@ -228,6 +248,10 @@ class GdxFor {
                         this._onSensorValueChanged(s);
                     });
                 });
+                this._timeoutID = window.setInterval(
+                    () => this._scratchLinkSocket.handleDisconnectError(BLEDataStoppedError),
+                    BLETimeout
+                );
             });
 
             // Start device
@@ -266,6 +290,12 @@ class GdxFor {
             this._sensors.spinSpeedZ = this._spinSpeedFromGyro(sensor.value);
             break;
         }
+        // cancel disconnect timeout and start a new one
+        window.clearInterval(this._timeoutID);
+        this._timeoutID = window.setInterval(
+            () => this._scratchLinkSocket.handleDisconnectError(BLEDataStoppedError),
+            BLETimeout
+        );
     }
 
     _spinSpeedFromGyro (val) {
