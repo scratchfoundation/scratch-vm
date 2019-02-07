@@ -775,6 +775,13 @@ class Scratch3GdxForBlocks {
     }
 
     getTilt (args) {
+        // When the peripheral is not connected, the acceleration magnitude
+        // is 0 instead of ~9.8, which ends up registering a tilt value; so
+        // we need to return 0 here to prevent returning a tilt value.
+        if (!this._peripheral.isConnected()) {
+            return 0;
+        }
+
         switch (args.TILT) {
         case TiltAxisValues.FRONT:
             return Math.round(this._peripheral.getTiltFrontBack(false));
