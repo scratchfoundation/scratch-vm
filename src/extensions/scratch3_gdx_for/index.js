@@ -822,6 +822,13 @@ class Scratch3GdxForBlocks {
     }
 
     isFreeFalling () {
+        // When the peripheral is not connected, the acceleration magnitude
+        // is 0 instead of ~9.8, which ends up calculating as a positive
+        // free fall; so we need to return 'false' here to prevent returning 'true'.
+        if (!this._peripheral.isConnected()) {
+            return false;
+        }
+
         const accelMag = this.accelMagnitude();
         const spinMag = this.spinMagnitude();
 
