@@ -16,6 +16,7 @@ const formatMessage = require('format-message');
 const validate = require('scratch-parser');
 
 const Variable = require('./engine/variable');
+const newBlockIds = require('./util/new-block-ids');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -1184,6 +1185,7 @@ class VirtualMachine extends EventEmitter {
      */
     shareBlocksToTarget (blocks, targetId, optFromTargetId) {
         const copiedBlocks = JSON.parse(JSON.stringify(blocks));
+        newBlockIds(copiedBlocks);
         const target = this.runtime.getTargetById(targetId);
 
         if (optFromTargetId) {
