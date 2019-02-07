@@ -162,6 +162,10 @@ class Scratch3Text2SpeechBlocks {
      */
     get LANGUAGE_INFO () {
         return {
+            'cy': {
+                name: 'Welsh',
+                singleGender: true
+            },
             'da': {
                 name: 'Danish'
             },
@@ -213,6 +217,14 @@ class Scratch3Text2SpeechBlocks {
             'es': {
                 name: 'Spanish (European)'
             },
+            'sv': {
+                name: 'Swedish',
+                singleGender: true
+            },
+            'tr': {
+                name: 'Turkish',
+                singleGender: true
+            },
             'es-419': {
                 name: 'Spanish (Latin American)'
             },
@@ -235,6 +247,7 @@ class Scratch3Text2SpeechBlocks {
      */
     localeToPolly (locale) {
         const pollyLocales = {
+            'cy': 'cy-GB', // Welsh
             'da': 'da-DK', // Danish
             'nl': 'nl-NL', // Dutch
             'en': 'en-US', // English
@@ -252,6 +265,8 @@ class Scratch3Text2SpeechBlocks {
             'ru': 'ru-RU', // Russian
             'es': 'es-ES', // Spanish (European)
             'es-419': 'es-US', // Spanish (Latin American)
+            'sv': 'sv-SE', // Swedish
+            'tr': 'tr-TR', // Turkish
             'zh-cn': 'cmn-CN', // Chinese (simplified) -> Mandarin
             'zh-tw': 'cmn-CN' // Chinese (traditional) -> Mandarin
         };
