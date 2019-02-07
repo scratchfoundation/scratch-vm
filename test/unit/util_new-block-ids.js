@@ -23,7 +23,7 @@ tap.beforeEach(done => {
  *      1: looks_size (parent: 0)
  *      2: obscured shadow for moveTo input (parent: 0)
  *      3: stopAllSounds (parent: 0)
- * Inspect fixtures/blocks for the full object.
+ * Inspect fixtures/simple-stack for the full object.
  */
 
 test('top-level block IDs have all changed', t => {
