@@ -32,7 +32,7 @@ test('start / timeElapsed', t => {
     timer.start();
 
     // Wait and measure timer
-    setTimeout(() => {
+    timer.setTimeout(() => {
         const timeElapsed = timer.timeElapsed();
         t.ok(timeElapsed >= 0);
         t.ok(timeElapsed >= (delay - threshold) &&

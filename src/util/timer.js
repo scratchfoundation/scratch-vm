@@ -90,6 +90,15 @@ class Timer {
     timeElapsed () {
         return this.nowObj.now() - this.startTime;
     }
+
+    /**
+     * Call a handler function after a specified amount of time has elapsed.
+     * @param {function} handler - function to call after the timeout
+     * @param {number} timeout - number of milliseconds to delay before calling the handler
+     */
+    setTimeout (handler, timeout) {
+        global.setTimeout(handler, timeout);
+    }
 }
 
 module.exports = Timer;
