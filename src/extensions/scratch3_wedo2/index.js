@@ -1290,8 +1290,9 @@ class Scratch3WeDo2Blocks {
                 }
             });
 
-            // Run for some time even when no motor is connected
-            setTimeout(resolve, durationMS);
+            // Run for some time even when no motor is connected, include
+            // the time needed to brake the motor
+            setTimeout(resolve, durationMS + WeDo2Motor.BRAKE_TIME_MS);
         });
     }
 
