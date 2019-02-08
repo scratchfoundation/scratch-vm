@@ -211,11 +211,18 @@ class Scratch3Text2SpeechBlocks {
             'pt': {
                 name: 'Portuguese (European)'
             },
+            'ro': {
+                name: 'Romanian',
+                singleGender: true
+            },
             'ru': {
                 name: 'Russian'
             },
             'es': {
                 name: 'Spanish (European)'
+            },
+            'es-419': {
+                name: 'Spanish (Latin American)'
             },
             'sv': {
                 name: 'Swedish',
@@ -224,9 +231,6 @@ class Scratch3Text2SpeechBlocks {
             'tr': {
                 name: 'Turkish',
                 singleGender: true
-            },
-            'es-419': {
-                name: 'Spanish (Latin American)'
             },
             'zh-cn': {
                 name: 'Chinese (Simplified)',
@@ -262,6 +266,7 @@ class Scratch3Text2SpeechBlocks {
             'pl': 'pl-PL', // Polish
             'pt-br': 'pt-BR', // Portuguese (Brazilian)
             'pt': 'pt-PT', // Portuguese (European)
+            'ro': 'ro-RO', // Romanian
             'ru': 'ru-RU', // Russian
             'es': 'es-ES', // Spanish (European)
             'es-419': 'es-US', // Spanish (Latin American)
