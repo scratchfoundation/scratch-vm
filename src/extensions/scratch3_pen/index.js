@@ -675,7 +675,6 @@ class Scratch3PenBlocks {
         const hueValue = Cast.toNumber(args.HUE);
         const colorValue = hueValue / 2;
         this._setOrChangeColorParam(ColorParam.COLOR, colorValue, penState, false);
-        penState = this._getPenState(util.target);
         this._setOrChangeColorParam(ColorParam.TRANSPARENCY, 0, penState, false);
         this._legacyUpdatePenColor(penState);
     }
