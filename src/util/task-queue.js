@@ -154,7 +154,7 @@ class TaskQueue {
                 }
                 resolve();
             };
-            this._timeout = timeout = setTimeout(onTimeout, estimatedWait);
+            this._timeout = timeout = this._timer.setTimeout(onTimeout, estimatedWait);
         });
     }
 }
