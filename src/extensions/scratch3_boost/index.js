@@ -18,13 +18,13 @@ const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYAAACOE
 
 /**
  * Boost BLE service UUID.
- * @enum
+ * @type {string}
  */
 const BLEService = '00001623-1212-efde-1623-785feabcd123';
 
 /**
  * Boost BLE characteristic UUID.
- * @enum
+ * @type {string}
  */
 const BLECharacteristic = '00001624-1212-efde-1623-785feabcd123';
 
@@ -45,7 +45,7 @@ const BLESendRateMax = 20;
  * @readonly
  * @enum {number}
  */
-const BoostDevice = {
+const BoostIO = {
     MOTORINT: 0x27,
     MOTOREXT: 0x26,
     LED: 0x17,
@@ -53,16 +53,6 @@ const BoostDevice = {
     COLOR: 0x25,
     VOLTAGE: 0x14,
     CURRENT: 0x15, 
-};
-
-/**
- * Enum for ids for various output commands on the Boost.
- * @readonly
- * @enum {number}
- */
-const BoostCommand = {
-    // TODO: Figure out if this enum is necessary or if we're always just sending 0x81
-    OUTPUT: 0x81,
 };
 
 /**
@@ -108,7 +98,7 @@ const BoostColor = {
  * @enum {number}
  */
 
-const BoostMessageTypes = {
+const BoostMessage = {
     HUB_PROPERTIES: 0x01,
     HUB_ACTIONS: 0x02,
     HUB_ALERTS: 0x03,
@@ -120,6 +110,8 @@ const BoostMessageTypes = {
     PORT_VALUE_COMBINED: 0x46,
     PORT_INPUT_FORMAT: 0x47,
     PORT_INPUT_FORMAT_COMBINED: 0x48,
+    WRITE_DIRECT_MODE_DATA: 0x51,
+    OUTPUT: 0x81,
     PORT_OUTPUT_COMMAND_FEEDBACK: 0x82
 }
 
@@ -368,7 +360,7 @@ class BoostMotor {
         if (this._power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            0x51,
+            BoostMessage.WRITE_DIRECT_MODE_DATA,
             0x00,
             [this._power * this._direction] // power in range 0-100
         );
@@ -424,7 +416,7 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostCommand.MOTOR_POWER,
+            BoostMessage.MOTOR_POWER,
             0x00,
             [127] // 127 = break
         );
@@ -444,7 +436,7 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostCommand.MOTOR_POWER,
+            BoostMessage.MOTOR_POWER,
             0x00,
             [0] // 0 = stop
         );
@@ -619,8 +611,8 @@ class Boost {
         ];
 
         const cmd = this.generateOutputCommand(
-            this._ports.indexOf(BoostDevice.LED),
-            0x51,
+            this._ports.indexOf(BoostIO.LED),
+            BoostMessage.WRITE_DIRECT_MODE_DATA,
             BoostMode.LED,
             rgb
         );
@@ -634,7 +626,7 @@ class Boost {
      */
     setLEDMode () {
         const cmd = this.generateInputCommand(
-            this._ports.indexOf(BoostDevice.LED),
+            this._ports.indexOf(BoostIO.LED),
             BoostMode.LED,
             0,
             false
@@ -649,8 +641,8 @@ class Boost {
      */
     stopLED () {
         const cmd = this.generateOutputCommand(
-            this._ports.indexOf(BoostDevice.LED),
-            0x51,
+            this._ports.indexOf(BoostIO.LED),
+            BoostMessage.WRITE_DIRECT_MODE_DATA,
             BoostUnit.LED,
             [0, 0, 0]
         );
@@ -761,8 +753,8 @@ class Boost {
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (portID, subCommandID = 0x51, mode=null, values = null) {
-        let command = [0x00, BoostCommand.OUTPUT];
+    generateOutputCommand (portID, subCommandID = BoostMessage.WRITE_DIRECT_MODE_DATA, mode=null, values = null) {
+        let command = [0x00, BoostMessage.OUTPUT];
         if (values) {
             command = command.concat(
                 portID
@@ -852,7 +844,7 @@ class Boost {
          * 5: IO Type ID
         */
 
-            case BoostMessageTypes.HUB_ATTACHED_IO: // IO Attach/Detach events
+            case BoostMessage.HUB_ATTACHED_IO: // IO Attach/Detach events
 
             const event = data[4]
             const typeId = data[5]
@@ -869,19 +861,19 @@ class Boost {
                         console.log("No I/O Event case found!")
                 }
                 break;
-            case BoostMessageTypes.PORT_VALUE:
+            case BoostMessage.PORT_VALUE:
                 var type = this._ports[portID];
                 // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
                 switch(type) {
-                    case BoostDevice.TILT:
+                    case BoostIO.TILT:
                         this._sensors.tiltX = data[4]
                         this._sensors.tiltY = data[5]
                         break;
-                    case BoostDevice.COLOR:
+                    case BoostIO.COLOR:
                         this._sensors.color = data[4];
                         break;
-                    case BoostDevice.MOTOREXT:
-                    case BoostDevice.MOTORINT:
+                    case BoostIO.MOTOREXT:
+                    case BoostIO.MOTORINT:
                         // Taken from EV3 extension tacho motor calculation
                         let value = data[4] + (data[5] * 256) + (data[6] * 256 * 256) + (data[7] * 256 * 256 * 256);
                         if (value > 0x7fffffff) {
@@ -889,14 +881,14 @@ class Boost {
                         }
                         this._motors[portID]._position = value
                         break;
-                    case BoostDevice.CURRENT:
-                    case BoostDevice.VOLTAGE:
+                    case BoostIO.CURRENT:
+                    case BoostIO.VOLTAGE:
                         break;
                     default:
                         console.log("Unknown sensor value! Type: " + type)
                 }
                 break;
-            case BoostMessageTypes.PORT_OUTPUT_COMMAND_FEEDBACK:
+            case BoostMessage.PORT_OUTPUT_COMMAND_FEEDBACK:
                 //TODO: Handle messages that contain feedback from more than one port.
                 var feedback = data[4];
                 switch(feedback) {
@@ -907,8 +899,8 @@ class Boost {
                         console.log("Got it but didn't find a motor on: " + portID)
                 }
                 break;
-            case BoostMessageTypes.PORT_INPUT_FORMAT:
-            case BoostMessageTypes.ERROR:
+            case BoostMessage.PORT_INPUT_FORMAT:
+            case BoostMessage.ERROR:
                 //DEBUG
                 console.log(buf2hex(data))
                 break;
@@ -931,26 +923,26 @@ class Boost {
         this._ports[portID] = type;
 
         // Record motor port
-        if (type === BoostDevice.MOTORINT || type === BoostDevice.MOTOREXT) {
+        if (type === BoostIO.MOTORINT || type === BoostIO.MOTOREXT) {
             this._motors[portID] = new BoostMotor(this, portID);
         } 
 
         // Set input format for tilt or distance sensor
         var typeString = ''
         switch(type) {
-            case BoostDevice.MOTORINT:
-            case BoostDevice.MOTOREXT:
+            case BoostIO.MOTORINT:
+            case BoostIO.MOTOREXT:
                 typeString = 'MOTOR'
                 break;
-            case BoostDevice.COLOR:
+            case BoostIO.COLOR:
                 typeString = 'COLOR'
                 break;
-            case BoostDevice.LED:
+            case BoostIO.LED:
                 typeString = 'LED'
                 this.setLEDMode();
                 this.setLED(0x00FF00);
                 break;
-            case BoostDevice.TILT:
+            case BoostIO.TILT:
                 typeString = 'TILT'
                 break;
             default:
@@ -974,10 +966,10 @@ class Boost {
      */
     _clearPort (portID) {
         const type = this._ports[portID];
-        if (type === BoostDevice.TILT) {
+        if (type === BoostIO.TILT) {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
-        if (type === BoostDevice.DISTANCE) {
+        if (type === BoostIO.DISTANCE) {
             this._sensors.distance = 0;
         }
         this._ports[portID] = 'none';
