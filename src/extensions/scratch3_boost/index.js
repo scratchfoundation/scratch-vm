@@ -366,8 +366,6 @@ class BoostMotor {
      */
     turnOn () {
         if (this._power === 0) return;
-        //console.log(this._index)
-        //console.log(this._power * this._direction)
         const cmd = this._parent.generateOutputCommand(
             this._index,
             0x51,
@@ -677,7 +675,13 @@ class Boost {
         }
         this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
-                services: [BLEService]
+                services: [BLEService],
+                manufacturerData: {
+                    0x0397: {
+                        dataPrefix: [0x97, 0x03, 0x00, 0x40],
+                        mask: [0xFF, 0xFF, 0, 0xFF]
+                    }
+                }
             }],
             optionalServices: []
         }, this._onConnect);
@@ -777,7 +781,6 @@ class Boost {
             );
         }
         command.unshift(command.length +1)
-        console.log(buf2hex(command))
         return command;
     }
 
@@ -806,9 +809,6 @@ class Boost {
         ]);
 
         command.unshift(command.length+1) // Prepend payload with length byte
-
-        //DEBUG
-        console.log(buf2hex(command))
 
         return command;
     }
@@ -842,21 +842,25 @@ class Boost {
          * We base our switch-case on Message Type
          */
 
-        var messageType = data[2];
-        var portID = data[3];
+        const messageType = data[2];
+        const portID = data[3];
 
         switch (messageType) {
-            case BoostMessageTypes.HUB_ATTACHED_IO: // IO Attach/Detach events
-
+            
         /*
-         * 3: Port ID
          * 4: Event
          * 5: IO Type ID
         */
-                switch (data[4]) {
+
+            case BoostMessageTypes.HUB_ATTACHED_IO: // IO Attach/Detach events
+
+            const event = data[4]
+            const typeId = data[5]
+            
+            switch (event) {
                     case BoostIOEvent.ATTACHED:
                     //case BoostIOEvent.ATTACHED_VIRTUAL:
-                        this._registerSensorOrMotor(portID, data[5])
+                        this._registerSensorOrMotor(portID, typeId)
                         break;
                     case BoostIOEvent.DETACHED:
                         this._clearPort(portID);
@@ -866,9 +870,7 @@ class Boost {
                 }
                 break;
             case BoostMessageTypes.PORT_VALUE:
-                //console.log(buf2hex(data))
                 var type = this._ports[portID];
-                //var valueFormat = data.length
                 // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
                 switch(type) {
                     case BoostDevice.TILT:
@@ -1069,7 +1071,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOnFor',
                     text: formatMessage({
                         id: 'boost.motorOnFor',
-                        default: 'turn [MOTOR_ID] on for [DURATION] seconds',
+                        default: 'turn motor [MOTOR_ID] on for [DURATION] seconds',
                         description: 'turn a motor on for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1089,7 +1091,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOnForRotation',
                     text: formatMessage({
                         id: 'boost.motorOnForRotation',
-                        default: 'turn [MOTOR_ID] on for [ROTATION] rotations',
+                        default: 'turn motor [MOTOR_ID] on for [ROTATION] rotations',
                         description: 'turn a motor on for rotation'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1109,7 +1111,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOn',
                     text: formatMessage({
                         id: 'boost.motorOn',
-                        default: 'turn [MOTOR_ID] on',
+                        default: 'turn motor [MOTOR_ID] on',
                         description: 'turn a motor on indefinitely'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1125,7 +1127,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOff',
                     text: formatMessage({
                         id: 'boost.motorOff',
-                        default: 'turn [MOTOR_ID] off',
+                        default: 'turn motor [MOTOR_ID] off',
                         description: 'turn a motor off'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1141,7 +1143,7 @@ class Scratch3BoostBlocks {
                     opcode: 'startMotorPower',
                     text: formatMessage({
                         id: 'boost.startMotorPower',
-                        default: 'set [MOTOR_ID] power to [POWER]',
+                        default: 'set motor [MOTOR_ID] power to [POWER] %',
                         description: 'set the motor\'s power and turn it on'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1161,7 +1163,7 @@ class Scratch3BoostBlocks {
                     opcode: 'setMotorDirection',
                     text: formatMessage({
                         id: 'boost.setMotorDirection',
-                        default: 'set [MOTOR_ID] direction to [MOTOR_DIRECTION]',
+                        default: 'set motor [MOTOR_ID] direction to [MOTOR_DIRECTION]',
                         description: 'set the motor\'s turn direction'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1182,7 +1184,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorZero',
                     text: formatMessage({
                         id: 'boost.motorZero',
-                        default: 'zero [MOTOR_ID]',
+                        default: 'zero motor [MOTOR_ID]',
                         description: 'set a motor\'s position to 0'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1334,7 +1336,7 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.motorId.a',
-                            default: 'motor A',
+                            default: 'A',
                             description: 'label for motor A element in motor menu for LEGO Boost extension'
                         }),
                         value: BoostMotorLabel.A
@@ -1342,7 +1344,7 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.motorId.b',
-                            default: 'motor B',
+                            default: 'B',
                             description: 'label for motor B element in motor menu for LEGO Boost extension'
                         }),
                         value: BoostMotorLabel.B
@@ -1350,7 +1352,7 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.motorId.c',
-                            default: 'motor C',
+                            default: 'C',
                             description: 'label for motor C element in motor menu for LEGO Boost extension'
                         }),
                         value: BoostMotorLabel.C
@@ -1358,7 +1360,7 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.motorId.d',
-                            default: 'motor D',
+                            default: 'D',
                             description: 'label for motor D element in motor menu for LEGO Boost extension'
                         }),
                         value: BoostMotorLabel.D
