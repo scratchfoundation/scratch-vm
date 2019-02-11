@@ -28,10 +28,18 @@ class MockTimer {
         this.startTime = 0;
 
         /**
-         * Array of pending timeout callbacks
-         * @type {Array.<Object>}
+         * The ID to use the next time `setTimeout` is called.
+         * @type {number}
          */
-        this._timeouts = [];
+        this._nextTimeoutId = 1;
+
+        /**
+         * Map of timeout ID to pending timeout callback info.
+         * @type {Map.<Object>}
+         * @property {number} time - the time at/after which this handler should run
+         * @property {Function} handler - the handler to call when the time comes
+         */
+        this._timeouts = new Map();
     }
 
     /**
@@ -85,14 +93,35 @@ class MockTimer {
      * Guaranteed to happen in between "ticks" of JavaScript.
      * @param {function} handler - function to call after the timeout
      * @param {number} timeout - number of milliseconds to delay before calling the handler
+     * @returns {number} - the ID of the new timeout.
      * @memberof MockTimer
      */
     setTimeout (handler, timeout) {
-        this._timeouts.push({
+        const timeoutId = this._nextTimeoutId++;
+        this._timeouts.set(timeoutId, {
             time: this._mockTime + timeout,
             handler
         });
         this._runTimeouts();
+        return timeoutId;
+    }
+
+    /**
+     * Clear a particular timeout from the pending timeout pool.
+     * @param {number} timeoutId - the value returned from `setTimeout()`
+     * @memberof MockTimer
+     */
+    clearTimeout (timeoutId) {
+        this._timeouts.delete(timeoutId);
+    }
+
+    /**
+     * WARNING: this method has no equivalent in `Timer`. Do not use this method outside of tests!
+     * @returns {boolean} - true if there are any pending timeouts, false otherwise.
+     * @memberof MockTimer
+     */
+    hasTimeouts () {
+        return this._timeouts.size > 0;
     }
 
     /**
@@ -101,15 +130,17 @@ class MockTimer {
      */
     _runTimeouts () {
         const ready = [];
-        const waiting = [];
 
-        // partition timeout records by whether or not they're ready to call
-        this._timeouts.forEach(o => {
-            const isReady = o.time <= this._mockTime;
-            (isReady ? ready : waiting).push(o);
+        this._timeouts.forEach((timeoutRecord, timeoutId) => {
+            const isReady = timeoutRecord.time <= this._mockTime;
+            if (isReady) {
+                ready.push(timeoutRecord);
+                this._timeouts.delete(timeoutId);
+            }
         });
 
-        this._timeouts = waiting;
+        // sort so that earlier timeouts run before later timeouts
+        ready.sort((a, b) => a.time < b.time);
 
         // next tick, call everything that's ready
         global.setTimeout(() => {

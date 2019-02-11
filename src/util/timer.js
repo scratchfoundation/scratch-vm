@@ -95,9 +95,19 @@ class Timer {
      * Call a handler function after a specified amount of time has elapsed.
      * @param {function} handler - function to call after the timeout
      * @param {number} timeout - number of milliseconds to delay before calling the handler
+     * @returns {number} - the ID of the new timeout
      */
     setTimeout (handler, timeout) {
-        global.setTimeout(handler, timeout);
+        return global.setTimeout(handler, timeout);
+    }
+
+    /**
+     * Clear a timeout from the pending timeout pool.
+     * @param {number} timeoutId - the ID returned by `setTimeout()`
+     * @memberof Timer
+     */
+    clearTimeout (timeoutId) {
+        global.clearTimeout(timeoutId);
     }
 }
 
