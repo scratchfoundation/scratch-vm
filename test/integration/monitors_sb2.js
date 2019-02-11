@@ -37,6 +37,7 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.mode, 'slider');
         t.equal(monitorRecord.sliderMin, -200); // Make sure these are imported for sliders.
         t.equal(monitorRecord.sliderMax, 30);
+        t.equal(monitorRecord.isDiscrete, false);
         t.equal(monitorRecord.x, 5); // These are imported for all monitors, just check once.
         t.equal(monitorRecord.y, 59);
         t.equal(monitorRecord.visible, true);

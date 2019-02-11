@@ -381,6 +381,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         mode: object.mode,
         sliderMin: object.sliderMin,
         sliderMax: object.sliderMax,
+        isDiscrete: object.isDiscrete,
         x: object.x,
         y: object.y,
         width: object.width,

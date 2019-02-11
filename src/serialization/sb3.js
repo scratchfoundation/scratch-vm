@@ -504,6 +504,7 @@ const serializeMonitors = function (monitors) {
         if (monitorData.mode !== 'list') {
             serializedMonitor.sliderMin = monitorData.sliderMin;
             serializedMonitor.sliderMax = monitorData.sliderMax;
+            serializedMonitor.isDiscrete = monitorData.isDiscrete;
         }
         return serializedMonitor;
     });

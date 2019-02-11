@@ -12,6 +12,7 @@ const MonitorRecord = Record({
     mode: 'default',
     sliderMin: 0,
     sliderMax: 100,
+    isDiscrete: true,
     x: null, // (x: null, y: null) Indicates that the monitor should be auto-positioned
     y: null,
     width: 0,
