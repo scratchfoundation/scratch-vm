@@ -78,8 +78,8 @@ test('saving and loading sb2 project with monitors preserves sliderMin and slide
         t.equal(monitorRecord.opcode, 'data_listcontents');
         t.equal(monitorRecord.mode, 'list');
         t.equal(monitorRecord.visible, true);
-        t.equal(monitorRecord.width, 104); // Make sure these are imported from lists.
-        t.equal(monitorRecord.height, 204);
+        t.equal(monitorRecord.width, 106); // Make sure these are imported from lists.
+        t.equal(monitorRecord.height, 206);
 
         // Backdrop name monitor is visible, not sprite specific
         // should get imported with id that references the name parameter
