@@ -8,5 +8,9 @@ module.exports = {
     extractProjectJson: function (path) {
         const zip = new AdmZip(path);
         return JSON.parse(zip.readAsText('project.json', 'utf8'));
+    },
+    extractNestedProjectJson: function (path, folder) {
+        const zip = new AdmZip(path);
+        return JSON.parse(zip.readAsText(`${folder}/project.json`, 'utf8'));
     }
 };
