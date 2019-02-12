@@ -265,7 +265,7 @@ class Scratch3Text2SpeechBlocks {
         if (this.isSupportedLanguage(this.getEditorLanguage())) {
             defaultTextToSpeak = formatMessage({
                 id: 'text2speech.defaultTextToSpeak',
-                default: defaultTextToSpeak,
+                default: 'hello',
                 description: 'hello: the default text to speak'
             });
         }
@@ -457,20 +457,21 @@ class Scratch3Text2SpeechBlocks {
     speakAndWait (args, util) {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
+        let locale = this.localeToPolly(this.getCurrentLanguage());
 
         const state = this._getState(util.target);
 
         const gender = this.VOICE_INFO[state.voiceId].gender;
         const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        // @todo localize this?
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
+            locale = 'en-US';
         }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.localeToPolly(this.getCurrentLanguage())}`;
+        path += `?locale=${locale}`;
         path += `&gender=${gender}`;
         path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
 

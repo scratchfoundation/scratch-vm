@@ -16,6 +16,7 @@ const formatMessage = require('format-message');
 const validate = require('scratch-parser');
 
 const Variable = require('./engine/variable');
+const newBlockIds = require('./util/new-block-ids');
 
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
@@ -94,8 +95,8 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.VISUAL_REPORT, visualReport => {
             this.emit(Runtime.VISUAL_REPORT, visualReport);
         });
-        this.runtime.on(Runtime.TARGETS_UPDATE, () => {
-            this.emitTargetsUpdate();
+        this.runtime.on(Runtime.TARGETS_UPDATE, emitProjectChanged => {
+            this.emitTargetsUpdate(emitProjectChanged);
         });
         this.runtime.on(Runtime.MONITORS_UPDATE, monitorList => {
             this.emit(Runtime.MONITORS_UPDATE, monitorList);
@@ -108,6 +109,9 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
             this.emit(Runtime.EXTENSION_ADDED, blocksInfo);
+        });
+        this.runtime.on(Runtime.EXTENSION_FIELD_ADDED, (fieldName, fieldImplementation) => {
+            this.emit(Runtime.EXTENSION_FIELD_ADDED, fieldName, fieldImplementation);
         });
         this.runtime.on(Runtime.BLOCKSINFO_UPDATE, blocksInfo => {
             this.emit(Runtime.BLOCKSINFO_UPDATE, blocksInfo);
@@ -124,8 +128,11 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
         );
-        this.runtime.on(Runtime.PERIPHERAL_DISCONNECT_ERROR, data =>
-            this.emit(Runtime.PERIPHERAL_DISCONNECT_ERROR, data)
+        this.runtime.on(Runtime.PERIPHERAL_DISCONNECTED, () =>
+            this.emit(Runtime.PERIPHERAL_DISCONNECTED)
+        );
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTION_LOST_ERROR, data =>
+            this.emit(Runtime.PERIPHERAL_CONNECTION_LOST_ERROR, data)
         );
         this.runtime.on(Runtime.PERIPHERAL_SCAN_TIMEOUT, () =>
             this.emit(Runtime.PERIPHERAL_SCAN_TIMEOUT)
@@ -198,7 +205,7 @@ class VirtualMachine extends EventEmitter {
     clear () {
         this.runtime.dispose();
         this.editingTarget = null;
-        this.emitTargetsUpdate();
+        this.emitTargetsUpdate(false /* Don't emit project change */);
     }
 
     /**
@@ -210,7 +217,7 @@ class VirtualMachine extends EventEmitter {
         const threadData = this.runtime.threads.filter(thread => thread.target === instance.editingTarget);
         // Remove the target key, since it's a circular reference.
         const filteredThreadData = JSON.stringify(threadData, (key, value) => {
-            if (key === 'target') return;
+            if (key === 'target' || key === 'blockContainer') return;
             return value;
         }, 2);
         this.emit('playgroundData', {
@@ -495,11 +502,18 @@ class VirtualMachine extends EventEmitter {
 
         return Promise.all(extensionPromises).then(() => {
             targets.forEach(target => {
-                this.runtime.targets.push(target);
+                this.runtime.addTarget(target);
                 (/** @type RenderedTarget */ target).updateAllDrawableProperties();
                 // Ensure unique sprite name
                 if (target.isSprite()) this.renameSprite(target.id, target.getName());
             });
+            // Sort the executable targets by layerOrder.
+            // Remove layerOrder property after use.
+            this.runtime.executableTargets.sort((a, b) => a.layerOrder - b.layerOrder);
+            targets.forEach(target => {
+                delete target.layerOrder;
+            });
+
             // Select the first target for editing, e.g., the first sprite.
             if (wholeProject && (targets.length > 1)) {
                 this.editingTarget = targets[1];
@@ -559,6 +573,7 @@ class VirtualMachine extends EventEmitter {
                 }
                 return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
+            .then(() => this.runtime.emitProjectChanged())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
                 if (error.hasOwnProperty('validationError')) {
@@ -617,6 +632,7 @@ class VirtualMachine extends EventEmitter {
                 target.setCostume(
                     target.getCostumes().length - 1
                 );
+                this.runtime.emitProjectChanged();
             });
         }
         // If the target cannot be found by id, return a rejected promise
@@ -688,6 +704,7 @@ class VirtualMachine extends EventEmitter {
         const deletedCostume = this.editingTarget.deleteCostume(costumeIndex);
         if (deletedCostume) {
             const target = this.editingTarget;
+            this.runtime.emitProjectChanged();
             return () => {
                 target.addCostume(deletedCostume);
                 this.emitTargetsUpdate();
@@ -787,6 +804,7 @@ class VirtualMachine extends EventEmitter {
         const target = this.editingTarget;
         const deletedSound = this.editingTarget.deleteSound(soundIndex);
         if (deletedSound) {
+            this.runtime.emitProjectChanged();
             const restoreFun = () => {
                 target.addSound(deletedSound);
                 this.emitTargetsUpdate();
@@ -918,6 +936,7 @@ class VirtualMachine extends EventEmitter {
             const stage = this.runtime.getTargetForStage();
             stage.addCostume(backdropObject);
             stage.setCostume(stage.getCostumes().length - 1);
+            this.runtime.emitProjectChanged();
         });
     }
 
@@ -948,8 +967,9 @@ class VirtualMachine extends EventEmitter {
                     const currTarget = allTargets[i];
                     currTarget.blocks.updateAssetName(oldName, newName, 'sprite');
                 }
+
+                if (newUnusedName !== oldName) this.emitTargetsUpdate();
             }
-            this.emitTargetsUpdate();
         } else {
             throw new Error('No target with the provided id.');
         }
@@ -1016,7 +1036,8 @@ class VirtualMachine extends EventEmitter {
             throw new Error('No sprite associated with this target.');
         }
         return target.duplicate().then(newTarget => {
-            this.runtime.targets.push(newTarget);
+            this.runtime.addTarget(newTarget);
+            newTarget.goBehindOther(target);
             this.setEditingTarget(newTarget.id);
         });
     }
@@ -1097,7 +1118,7 @@ class VirtualMachine extends EventEmitter {
      */
     blockListener (e) {
         if (this.editingTarget) {
-            this.editingTarget.blocks.blocklyListen(e, this.runtime);
+            this.editingTarget.blocks.blocklyListen(e);
         }
     }
 
@@ -1106,7 +1127,7 @@ class VirtualMachine extends EventEmitter {
      * @param {!Blockly.Event} e Any Blockly event.
      */
     flyoutBlockListener (e) {
-        this.runtime.flyoutBlocks.blocklyListen(e, this.runtime);
+        this.runtime.flyoutBlocks.blocklyListen(e);
     }
 
     /**
@@ -1117,7 +1138,7 @@ class VirtualMachine extends EventEmitter {
         // Filter events by type, since monitor blocks only need to listen to these events.
         // Monitor blocks shouldn't be destroyed when flyout blocks are deleted.
         if (['create', 'change'].indexOf(e.type) !== -1) {
-            this.runtime.monitorBlocks.blocklyListen(e, this.runtime);
+            this.runtime.monitorBlocks.blocklyListen(e);
         }
     }
 
@@ -1129,8 +1150,7 @@ class VirtualMachine extends EventEmitter {
         // Filter events by type, since blocks only needs to listen to these
         // var events.
         if (['var_create', 'var_rename', 'var_delete'].indexOf(e.type) !== -1) {
-            this.runtime.getTargetForStage().blocks.blocklyListen(e,
-                this.runtime);
+            this.runtime.getTargetForStage().blocks.blocklyListen(e);
         }
     }
 
@@ -1168,6 +1188,7 @@ class VirtualMachine extends EventEmitter {
      */
     shareBlocksToTarget (blocks, targetId, optFromTargetId) {
         const copiedBlocks = JSON.parse(JSON.stringify(blocks));
+        newBlockIds(copiedBlocks);
         const target = this.runtime.getTargetById(targetId);
 
         if (optFromTargetId) {
@@ -1271,7 +1292,9 @@ class VirtualMachine extends EventEmitter {
             // Currently editing target id.
             editingTarget: this.editingTarget ? this.editingTarget.id : null
         });
-        if (triggerProjectChange) this.runtime.emitProjectChanged();
+        if (triggerProjectChange) {
+            this.runtime.emitProjectChanged();
+        }
     }
 
     /**
@@ -1373,7 +1396,11 @@ class VirtualMachine extends EventEmitter {
     reorderCostume (targetId, costumeIndex, newIndex) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            return target.reorderCostume(costumeIndex, newIndex);
+            const reorderSuccessful = target.reorderCostume(costumeIndex, newIndex);
+            if (reorderSuccessful) {
+                this.runtime.emitProjectChanged();
+            }
+            return reorderSuccessful;
         }
         return false;
     }
@@ -1388,7 +1415,11 @@ class VirtualMachine extends EventEmitter {
     reorderSound (targetId, soundIndex, newIndex) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            return target.reorderSound(soundIndex, newIndex);
+            const reorderSuccessful = target.reorderSound(soundIndex, newIndex);
+            if (reorderSuccessful) {
+                this.runtime.emitProjectChanged();
+            }
+            return reorderSuccessful;
         }
         return false;
     }
@@ -1430,6 +1461,11 @@ class VirtualMachine extends EventEmitter {
         } else {
             this.editingTarget.postSpriteInfo(data);
         }
+        // Post sprite info means the gui has changed something about a sprite,
+        // either through the sprite info pane fields (e.g. direction, size) or
+        // through dragging a sprite on the stage
+        // Emit a project changed event.
+        this.runtime.emitProjectChanged();
     }
 
     /**

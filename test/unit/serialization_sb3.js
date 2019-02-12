@@ -1,6 +1,7 @@
 const test = require('tap').test;
 const path = require('path');
 const VirtualMachine = require('../../src/index');
+const Runtime = require('../../src/engine/runtime');
 const sb3 = require('../../src/serialization/sb3');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const exampleProjectPath = path.resolve(__dirname, '../fixtures/clone-cleanup.sb2');
@@ -147,10 +148,10 @@ test('deserialize sb3 project with comments - no duplicate id serialization', t 
         });
 });
 
-test('serialize sb3 preserves sprite layer order', t => {
+test('serializing and deserializing sb3 preserves sprite layer order', t => {
     const vm = new VirtualMachine();
     vm.attachRenderer(new FakeRenderer());
-    vm.loadProject(readFileToBuffer(path.resolve(__dirname, '../fixtures/ordering.sb2')))
+    return vm.loadProject(readFileToBuffer(path.resolve(__dirname, '../fixtures/ordering.sb2')))
         .then(() => {
             // Target get layer order needs a renderer,
             // fake the numbers we would get back from the
@@ -182,8 +183,28 @@ test('serialize sb3 preserves sprite layer order', t => {
             t.equal(result.targets[2].layerOrder, 1);
             t.equal(result.targets[3].layerOrder, 3);
 
-            t.end();
-        });
+            return result;
+        })
+        .then(serializedObject =>
+            sb3.deserialize(
+                JSON.parse(JSON.stringify(serializedObject)), new Runtime(), null, false)
+                .then(({targets}) => {
+                    // First check that the sprites are ordered correctly (as they would
+                    // appear in the target pane)
+                    t.equal(targets[0].sprite.name, 'Stage');
+                    t.equal(targets[1].sprite.name, 'First');
+                    t.equal(targets[2].sprite.name, 'Second');
+                    t.equal(targets[3].sprite.name, 'Third');
+
+                    // Check that they are in the correct layer order (as they would render
+                    // back to front on the stage)
+                    t.equal(targets[0].layerOrder, 0);
+                    t.equal(targets[1].layerOrder, 2);
+                    t.equal(targets[2].layerOrder, 1);
+                    t.equal(targets[3].layerOrder, 3);
+
+                    t.end();
+                }));
 });
 
 test('serializeBlocks', t => {

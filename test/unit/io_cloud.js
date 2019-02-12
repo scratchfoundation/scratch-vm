@@ -45,7 +45,8 @@ test('setProvider sets the provider', t => {
 });
 
 test('postData update message updates the variable', t => {
-    const stage = new Target();
+    const runtime = new Runtime();
+    const stage = new Target(runtime);
     const fooVar = new Variable(
         'a fake var id',
         'foo',
@@ -56,7 +57,6 @@ test('postData update message updates the variable', t => {
 
     t.strictEquals(fooVar.value, 0);
 
-    const runtime = new Runtime();
     const cloud = new Cloud(runtime);
     cloud.setStage(stage);
     cloud.postData({varUpdate: {

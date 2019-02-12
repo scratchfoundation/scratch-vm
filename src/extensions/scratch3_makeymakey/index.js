@@ -175,7 +175,11 @@ class Scratch3MakeyMakeyBlocks {
             blocks: [
                 {
                     opcode: 'whenMakeyKeyPressed',
-                    text: 'when [KEY] key pressed',
+                    text: formatMessage({
+                        id: 'makeymakey.whenKeyPressed',
+                        default: 'when [KEY] key pressed',
+                        description: 'when a keyboard key is pressed'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         KEY: {
@@ -187,7 +191,11 @@ class Scratch3MakeyMakeyBlocks {
                 },
                 {
                     opcode: 'whenCodePressed',
-                    text: 'when [SEQUENCE] pressed in order',
+                    text: formatMessage({
+                        id: 'makeymakey.whenKeysPressedInOrder',
+                        default: 'when [SEQUENCE] pressed in order',
+                        description: 'when a sequence of keyboard keys is pressed in a specific order'
+                    }),
                     blockType: BlockType.HAT,
                     arguments: {
                         SEQUENCE: {

@@ -56,9 +56,9 @@ test('importing an sb2 project with cloud variables at the limit for a project',
         const stage = vm.runtime.targets[0];
         const stageVars = Object.values(stage.variables);
 
-        t.equal(stageVars.length, 8);
+        t.equal(stageVars.length, 10);
         // All of the 8 stage variables should be cloud variables
-        t.equal(stageVars.filter(v => v.isCloud).length, 8);
+        t.equal(stageVars.filter(v => v.isCloud).length, 10);
 
         t.end();
     });
@@ -83,7 +83,7 @@ test('importing an sb2 project with cloud variables exceeding the limit for a pr
 
         t.equal(stageVars.length, 15);
         // Only 8 of the variables should have the isCloud flag set to true
-        t.equal(stageVars.filter(v => v.isCloud).length, 8);
+        t.equal(stageVars.filter(v => v.isCloud).length, 10);
 
         t.end();
     });

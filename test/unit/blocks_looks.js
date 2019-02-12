@@ -48,7 +48,7 @@ const testCostume = (costumes, arg, currentCostume = 1, isStage = false) => {
 
     if (isStage) {
         target.isStage = true;
-        rt.targets.push(target);
+        rt.addTarget(target);
         looks.switchBackdrop({BACKDROP: arg}, {target});
     } else {
         looks.switchCostume({COSTUME: arg}, {target});

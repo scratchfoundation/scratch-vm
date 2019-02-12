@@ -99,7 +99,7 @@ const ArgumentTypeMap = (() => {
  * cloud variable.
  */
 const cloudDataManager = () => {
-    const limit = 8;
+    const limit = 10;
     let count = 0;
 
     const canAddCloudVariable = () => count < limit;
@@ -185,14 +185,14 @@ class Runtime extends EventEmitter {
          * These will execute on `_editingTarget.`
          * @type {!Blocks}
          */
-        this.flyoutBlocks = new Blocks(true /* force no glow */);
+        this.flyoutBlocks = new Blocks(this, true /* force no glow */);
 
         /**
          * Storage container for monitor blocks.
          * These will execute on a target maybe
          * @type {!Blocks}
          */
-        this.monitorBlocks = new Blocks(true /* force no glow */);
+        this.monitorBlocks = new Blocks(this, true /* force no glow */);
 
         /**
          * Currently known editing target for the VM.
@@ -557,7 +557,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that an extension as asked for a custom field to be added
+     * @const {string}
+     */
+    static get EXTENSION_FIELD_ADDED () {
+        return 'EXTENSION_FIELD_ADDED';
+    }
+
+    /**
      * Event name for updating the available set of peripheral devices.
+     * This causes the peripheral connection modal to update a list of
+     * available peripherals.
      * @const {string}
      */
     static get PERIPHERAL_LIST_UPDATE () {
@@ -566,6 +576,7 @@ class Runtime extends EventEmitter {
 
     /**
      * Event name for reporting that a peripheral has connected.
+     * This causes the status button in the blocks menu to indicate 'connected'.
      * @const {string}
      */
     static get PERIPHERAL_CONNECTED () {
@@ -573,7 +584,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for reporting that a peripheral has been intentionally disconnected.
+     * This causes the status button in the blocks menu to indicate 'disconnected'.
+     * @const {string}
+     */
+    static get PERIPHERAL_DISCONNECTED () {
+        return 'PERIPHERAL_DISCONNECTED';
+    }
+
+    /**
      * Event name for reporting that a peripheral has encountered a request error.
+     * This causes the peripheral connection modal to switch to an error state.
      * @const {string}
      */
     static get PERIPHERAL_REQUEST_ERROR () {
@@ -581,15 +602,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for reporting that a peripheral has encountered a disconnect error.
+     * Event name for reporting that a peripheral connection has been lost.
+     * This causes a 'peripheral connection lost' error alert to display.
      * @const {string}
      */
-    static get PERIPHERAL_DISCONNECT_ERROR () {
-        return 'PERIPHERAL_DISCONNECT_ERROR';
+    static get PERIPHERAL_CONNECTION_LOST_ERROR () {
+        return 'PERIPHERAL_CONNECTION_LOST_ERROR';
     }
 
     /**
      * Event name for reporting that a peripheral has not been discovered.
+     * This causes the peripheral connection modal to show a timeout state.
      * @const {string}
      */
     static get PERIPHERAL_SCAN_TIMEOUT () {
@@ -764,6 +787,7 @@ class Runtime extends EventEmitter {
             color1: extensionInfo.colour || '#0FBD8C',
             color2: extensionInfo.colourSecondary || '#0DA57A',
             color3: extensionInfo.colourTertiary || '#0B8E69',
+            customFieldTypes: {},
             blocks: [],
             menus: []
         };
@@ -772,7 +796,23 @@ class Runtime extends EventEmitter {
 
         this._fillExtensionCategory(categoryInfo, extensionInfo);
 
-        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+        const fieldTypeDefinitionsForScratch = [];
+        for (const fieldTypeName in categoryInfo.customFieldTypes) {
+            if (extensionInfo.customFieldTypes.hasOwnProperty(fieldTypeName)) {
+                const fieldTypeInfo = categoryInfo.customFieldTypes[fieldTypeName];
+                fieldTypeDefinitionsForScratch.push(fieldTypeInfo.scratchBlocksDefinition);
+
+                // Emit events for custom field types from extension
+                this.emit(Runtime.EXTENSION_FIELD_ADDED, {
+                    name: `field_${fieldTypeInfo.extendedName}`,
+                    implementation: fieldTypeInfo.fieldImplementation
+                });
+            }
+        }
+
+        const allBlocks = fieldTypeDefinitionsForScratch.concat(categoryInfo.blocks).concat(categoryInfo.menus);
+
+        this.emit(Runtime.EXTENSION_ADDED, allBlocks);
     }
 
     /**
@@ -796,7 +836,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Read extension information, convert menus and blocks, and store the results in the provided category object.
+     *  Read extension information, convert menus, blocks and custom field types
+     * and store the results in the provided category object.
      * @param {CategoryInfo} categoryInfo - the category to be filled
      * @param {ExtensionMetadata} extensionInfo - the extension metadata to read
      * @private
@@ -807,6 +848,19 @@ class Runtime extends EventEmitter {
                 const menuItems = extensionInfo.menus[menuName];
                 const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
+            }
+        }
+        for (const fieldTypeName in extensionInfo.customFieldTypes) {
+            if (extensionInfo.customFieldTypes.hasOwnProperty(fieldTypeName)) {
+                const fieldType = extensionInfo.customFieldTypes[fieldTypeName];
+                const fieldTypeInfo = this._buildCustomFieldInfo(
+                    fieldTypeName,
+                    fieldType,
+                    extensionInfo.id,
+                    categoryInfo
+                );
+
+                categoryInfo.customFieldTypes[fieldTypeName] = fieldTypeInfo;
             }
         }
 
@@ -876,6 +930,55 @@ class Runtime extends EventEmitter {
                         type: 'field_dropdown',
                         name: menuName,
                         options: options
+                    }
+                ]
+            }
+        };
+    }
+
+    _buildCustomFieldInfo (fieldName, fieldInfo, extensionId, categoryInfo) {
+        const extendedName = `${extensionId}_${fieldName}`;
+        return {
+            fieldName: fieldName,
+            extendedName: extendedName,
+            argumentTypeInfo: {
+                shadowType: extendedName,
+                fieldType: `field_${extendedName}`
+            },
+            scratchBlocksDefinition: this._buildCustomFieldTypeForScratchBlocks(
+                extendedName,
+                fieldInfo.output,
+                fieldInfo.outputShape,
+                categoryInfo
+            ),
+            fieldImplementation: fieldInfo.implementation
+        };
+    }
+
+    /**
+     * Build the scratch-blocks JSON needed for a fieldType.
+     * Custom field types need to be namespaced to the extension so that extensions can't interfere with each other
+     * @param  {string} fieldName - The name of the field
+     * @param {string} output - The output of the field
+     * @param {number} outputShape - Shape of the field (from ScratchBlocksConstants)
+     * @param {object} categoryInfo - The category the field belongs to (Used to set its colors)
+     * @returns {object} - Object to be inserted into scratch-blocks
+     */
+    _buildCustomFieldTypeForScratchBlocks (fieldName, output, outputShape, categoryInfo) {
+        return {
+            json: {
+                type: fieldName,
+                message0: '%1',
+                inputsInline: true,
+                output: output,
+                colour: categoryInfo.color1,
+                colourSecondary: categoryInfo.color2,
+                colourTertiary: categoryInfo.color3,
+                outputShape: outputShape,
+                args0: [
+                    {
+                        name: `field_${fieldName}`,
+                        type: `field_${fieldName}`
                     }
                 ]
             }
@@ -1050,10 +1153,16 @@ class Runtime extends EventEmitter {
         };
 
         const argInfo = context.blockInfo.arguments[placeholder] || {};
-        const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
-        const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
-            '' :
-            escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString()));
+        let argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+
+        // Field type not a standard field type, see if extension has registered custom field type
+        if (!ArgumentTypeMap[argInfo.type] && context.categoryInfo.customFieldTypes[argInfo.type]) {
+            argTypeInfo = context.categoryInfo.customFieldTypes[argInfo.type].argumentTypeInfo;
+        }
+
+        const defaultValue =
+            typeof argInfo.defaultValue === 'undefined' ? '' :
+                escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
 
         if (argTypeInfo.check) {
             argJSON.check = argTypeInfo.check;
@@ -1088,6 +1197,7 @@ class Runtime extends EventEmitter {
         blockArgs.push(argJSON);
         const argNum = blockArgs.length;
         context.argsMap[placeholder] = argNum;
+
         return `%${argNum}`;
     }
 
@@ -1560,11 +1670,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Add a target to the execution order.
-     * @param {Target} executableTarget target to add
+     * Add a target to the runtime. This tracks the sprite pane
+     * ordering of the target. The target still needs to be put
+     * into the correct execution order after calling this function.
+     * @param {Target} target target to add
      */
-    addExecutable (executableTarget) {
-        this.executableTargets.push(executableTarget);
+    addTarget (target) {
+        this.targets.push(target);
+        this.executableTargets.push(target);
     }
 
     /**
@@ -1752,7 +1865,7 @@ class Runtime extends EventEmitter {
         }
 
         if (this._refreshTargets) {
-            this.emit(Runtime.TARGETS_UPDATE);
+            this.emit(Runtime.TARGETS_UPDATE, false /* Don't emit project changed */);
             this._refreshTargets = false;
         }
 

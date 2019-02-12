@@ -4,6 +4,7 @@ const RenderedTarget = require('../sprites/rendered-target');
 const uid = require('../util/uid');
 const StageLayering = require('../engine/stage-layering');
 const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
+const MathUtil = require('../util/math-util');
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -65,6 +66,14 @@ class Scratch3LooksBlocks {
      */
     static get SAY_BUBBLE_LIMIT () {
         return 330;
+    }
+
+    /**
+     * Limit for ghost effect
+     * @const {object}
+     */
+    static get EFFECT_GHOST_LIMIT (){
+        return {min: 0, max: 100};
     }
 
     /**
@@ -479,13 +488,23 @@ class Scratch3LooksBlocks {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         const change = Cast.toNumber(args.CHANGE);
         if (!util.target.effects.hasOwnProperty(effect)) return;
-        const newValue = change + util.target.effects[effect];
+        let newValue = change + util.target.effects[effect];
+        if (effect === 'ghost') {
+            newValue = MathUtil.clamp(newValue,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
+        }
         util.target.setEffect(effect, newValue);
     }
 
     setEffect (args, util) {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
-        const value = Cast.toNumber(args.VALUE);
+        let value = Cast.toNumber(args.VALUE);
+        if (effect === 'ghost') {
+            value = MathUtil.clamp(value,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
+        }
         util.target.setEffect(effect, value);
     }
 

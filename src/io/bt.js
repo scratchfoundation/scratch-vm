@@ -11,24 +11,26 @@ class BT extends JSONRPCWebSocket {
      * @param {string} extensionId - the id of the extension using this socket.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
+     * @param {object} disconnectCallback - a callback for disconnection.
      * @param {object} messageCallback - a callback for message sending.
      */
-    constructor (runtime, extensionId, peripheralOptions, connectCallback, messageCallback) {
+    constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null, messageCallback) {
         const ws = new WebSocket(ScratchLinkWebSocket);
         super(ws);
 
         this._ws = ws;
         this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._sendRequestError.bind(this, 'ws onerror');
-        this._ws.onclose = this._sendDisconnectError.bind(this, 'ws onclose');
+        this._ws.onerror = this._handleRequestError.bind(this, 'ws onerror');
+        this._ws.onclose = this.handleDisconnectError.bind(this, 'ws onclose');
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
+        this._disconnectCallback = disconnectCallback;
+        this._discoverTimeoutID = null;
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
-        this._discoverTimeoutID = null;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
     }
@@ -43,10 +45,10 @@ class BT extends JSONRPCWebSocket {
             if (this._discoverTimeoutID) {
                 window.clearTimeout(this._discoverTimeoutID);
             }
-            this._discoverTimeoutID = window.setTimeout(this._sendDiscoverTimeout.bind(this), 15000);
+            this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
             this.sendRemoteRequest('discover', this._peripheralOptions)
                 .catch(
-                    e => this._sendRequestError(e)
+                    e => this._handleRequestError(e)
                 );
         }
         // TODO: else?
@@ -65,7 +67,7 @@ class BT extends JSONRPCWebSocket {
                 this._connectCallback();
             })
             .catch(e => {
-                this._sendRequestError(e);
+                this._handleRequestError(e);
             });
     }
 
@@ -73,10 +75,15 @@ class BT extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
+        if (!this._connected) return;
+
         this._ws.close();
+        this._connected = false;
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
     }
 
     /**
@@ -89,7 +96,7 @@ class BT extends JSONRPCWebSocket {
     sendMessage (options) {
         return this.sendRemoteRequest('send', options)
             .catch(e => {
-                this._sendDisconnectError(e);
+                this.handleDisconnectError(e);
             });
     }
 
@@ -120,7 +127,36 @@ class BT extends JSONRPCWebSocket {
         }
     }
 
-    _sendRequestError (/* e */) {
+    /**
+     * Handle an error resulting from losing connection to a peripheral.
+     *
+     * This could be due to:
+     * - battery depletion
+     * - going out of bluetooth range
+     * - being powered down
+     *
+     * Disconnect the socket, and if the extension using this socket has a
+     * disconnect callback, call it. Finally, emit an error to the runtime.
+     */
+    handleDisconnectError (/* e */) {
+        // log.error(`BT error: ${JSON.stringify(e)}`);
+
+        if (!this._connected) return;
+
+        // TODO: Fix branching by splitting up cleanup/disconnect in extension
+        if (this._disconnectCallback) {
+            this._disconnectCallback(); // must call disconnect()
+        } else {
+            this.disconnect();
+        }
+
+        this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
+            message: `Scratch lost connection to`,
+            extensionId: this._extensionId
+        });
+    }
+
+    _handleRequestError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
@@ -129,20 +165,7 @@ class BT extends JSONRPCWebSocket {
         });
     }
 
-    _sendDisconnectError (/* e */) {
-        // log.error(`BT error: ${JSON.stringify(e)}`);
-
-        if (!this._connected) return;
-
-        this._connected = false;
-
-        this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECT_ERROR, {
-            message: `Scratch lost connection to`,
-            extensionId: this._extensionId
-        });
-    }
-
-    _sendDiscoverTimeout () {
+    _handleDiscoverTimeout () {
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }

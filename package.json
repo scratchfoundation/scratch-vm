@@ -29,6 +29,7 @@
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "dependencies": {
+    "@vernier/godirect": "1.4.1",
     "arraybuffer-loader": "^1.0.6",
     "atob": "2.1.2",
     "btoa": "1.2.1",
@@ -43,7 +44,7 @@
     "minilog": "3.1.0",
     "nets": "3.2.0",
     "scratch-parser": "4.3.3",
-    "scratch-sb1-converter": "0.2.5",
+    "scratch-sb1-converter": "0.2.6",
     "scratch-translate-extension-languages": "0.0.20181205140428",
     "socket.io-client": "2.0.4",
     "text-encoding": "0.6.4",

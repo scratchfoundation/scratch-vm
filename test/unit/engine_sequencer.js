@@ -67,7 +67,7 @@ const generateBlockInput = function (id, next, inp) {
 };
 
 const generateThread = function (runtime) {
-    const s = new Sprite();
+    const s = new Sprite(null, runtime);
     const rt = new RenderedTarget(s, runtime);
     const th = new Thread(randomString());
     

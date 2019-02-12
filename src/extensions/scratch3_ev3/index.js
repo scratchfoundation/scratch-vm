@@ -476,6 +476,7 @@ class EV3 {
         this._bt = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._pollValues = this._pollValues.bind(this);
@@ -561,7 +562,7 @@ class EV3 {
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onConnect, this._onMessage);
+        }, this._onConnect, this.disconnect, this._onMessage);
     }
 
     /**
