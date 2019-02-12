@@ -13712,21 +13712,20 @@ var RenderWebGL = function (_EventEmitter) {
 
             var dx = x - drawable._position[0];
             var dy = y - drawable._position[1];
-
             var aabb = drawable.getFastBounds();
             var inset = Math.floor(Math.min(aabb.width, aabb.height) / 2);
 
             var sx = this._xRight - Math.min(FENCE_WIDTH, inset);
             if (aabb.right + dx < -sx) {
-                x = drawable._position[0] - (sx + aabb.right);
+                x = Math.ceil(drawable._position[0] - (sx + aabb.right));
             } else if (aabb.left + dx > sx) {
-                x = drawable._position[0] + (sx - aabb.left);
+                x = Math.floor(drawable._position[0] + (sx - aabb.left));
             }
             var sy = this._yTop - Math.min(FENCE_WIDTH, inset);
             if (aabb.top + dy < -sy) {
-                y = drawable._position[1] - (sy + aabb.top);
+                y = Math.ceil(drawable._position[1] - (sy + aabb.top));
             } else if (aabb.bottom + dy > sy) {
-                y = drawable._position[1] + (sy - aabb.bottom);
+                y = Math.floor(drawable._position[1] + (sy - aabb.bottom));
             }
             return [x, y];
         }
