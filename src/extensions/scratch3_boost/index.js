@@ -10,6 +10,11 @@ const RateLimiter = require('../../util/rateLimiter.js');
 const log = require('../../util/log');
 
 /**
+ * The LEGO Wireless Protocol documentation used to create this extension can be found at:
+ * https://lego.github.io/lego-ble-wireless-protocol-docs/index.html
+ */
+
+/**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
  * @type {string}
  */
@@ -41,7 +46,7 @@ const BLESendInterval = 100;
 const BLESendRateMax = 20;
 
 /**
- * Enum for Boost sensor and output types.
+ * Enum for Boost sensor and actuator types.
  * @readonly
  * @enum {number}
  */
@@ -56,7 +61,7 @@ const BoostIO = {
 };
 
 /**
- * Enum for ids for various output commands on the Boost.
+ * Enum for ids for various output command feedback types on the Boost.
  * @readonly
  * @enum {number}
  */
@@ -110,13 +115,34 @@ const BoostMessage = {
     PORT_VALUE_COMBINED: 0x46,
     PORT_INPUT_FORMAT: 0x47,
     PORT_INPUT_FORMAT_COMBINED: 0x48,
-    WRITE_DIRECT_MODE_DATA: 0x51,
     OUTPUT: 0x81,
     PORT_OUTPUT_COMMAND_FEEDBACK: 0x82
 }
 
 /**
- * Enum for Attached IO Message Lengths
+ * Enum for Motor Subcommands (for 0x81)
+ * @readonly
+ * @enum {number}
+ */
+
+const BoostOutputSubCommand = {
+    START_POWER_PAIR: 0x02,
+    SET_ACC_TIME: 0x05,
+    SET_DEC_TIME: 0x06,
+    START_SPEED: 0x07,
+    START_SPEED_PAIR: 0x08,
+    START_SPEED_FOR_TIME: 0x09,
+    START_SPEED_FOR_TIME_PAIR: 0x0A,
+    START_SPEED_FOR_DEGREES: 0x0B,
+    START_SPEED_FOR_DEGREES_PAIR: 0x0C,
+    GO_TO_ABS_POSITION: 0x0D,
+    GO_TO_ABS_POSITION_PAIR: 0x0E,
+    PRESET_ENCODER: 0x14,
+    WRITE_DIRECT_MODE_DATA: 0x51,
+}
+
+/**
+ * Enum for when Boost IO's are attached/detached
  * @readonly
  * @enum {number}
  */
@@ -155,7 +181,7 @@ function number2int32array(number) {
 }
 
 /**
- * Manage power, direction, and timers for one Boost motor.
+ * Manage power, direction, position, and timers for one Boost motor.
  */
 class BoostMotor {
     /**
@@ -360,7 +386,7 @@ class BoostMotor {
         if (this._power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostMessage.WRITE_DIRECT_MODE_DATA,
+            BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
             0x00,
             [this._power * this._direction] // power in range 0-100
         );
@@ -398,8 +424,9 @@ class BoostMotor {
             number2int32array(degrees).concat(
             [
             this._power * this._direction, // power in range 0-100
-            0xff,
-            0x00,0x03])
+            0xff, // max speed
+            0x00,
+            0x03])
         );
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
@@ -612,7 +639,7 @@ class Boost {
 
         const cmd = this.generateOutputCommand(
             this._ports.indexOf(BoostIO.LED),
-            BoostMessage.WRITE_DIRECT_MODE_DATA,
+            BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
             BoostMode.LED,
             rgb
         );
@@ -642,7 +669,7 @@ class Boost {
     stopLED () {
         const cmd = this.generateOutputCommand(
             this._ports.indexOf(BoostIO.LED),
-            BoostMessage.WRITE_DIRECT_MODE_DATA,
+            BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
             BoostUnit.LED,
             [0, 0, 0]
         );
@@ -748,18 +775,18 @@ class Boost {
      * This sends a command to the Boost to actuate the specified outputs.
      *
      * @param  {number} portID - the port (Connect ID) to send a command to.
-     * @param  {number} commandID - the id of the byte command.
+     * @param  {number} subCommandID - the id of the byte command.
      * @param  {number} mode      - the mode
      * @param  {array}  values    - the list of values to write to the command.
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (portID, subCommandID = BoostMessage.WRITE_DIRECT_MODE_DATA, mode=null, values = null) {
+    generateOutputCommand (portID, subCommandID = BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA, mode=null, values = null) {
         let command = [0x00, BoostMessage.OUTPUT];
         if (values) {
             command = command.concat(
                 portID
             ).concat(
-                0x11 //  Execute immediately
+                0x11 // Execute immediately TODO: Use enum!
             );
 
             if(subCommandID) {
@@ -793,7 +820,7 @@ class Boost {
     generateInputCommand (portID, mode, delta, enableNotifications) {
         var command = [
             0x00, // Hub ID
-            0x41, // Message Type (Port Input Format Setup (Single))
+            0x41, // Message Type (Port Input Format Setup (Single)) TODO: Use enum
             portID,
             mode,
         ].concat(number2int32array(delta)).concat([
@@ -851,14 +878,15 @@ class Boost {
             
             switch (event) {
                     case BoostIOEvent.ATTACHED:
-                    //case BoostIOEvent.ATTACHED_VIRTUAL:
                         this._registerSensorOrMotor(portID, typeId)
                         break;
                     case BoostIOEvent.DETACHED:
                         this._clearPort(portID);
                         break;
+                    case BoostIOEvent.ATTACHED_VIRTUAL:
                     default:
-                        console.log("No I/O Event case found!")
+                        // Ignore
+                        //console.log("No I/O Event case found!")
                 }
                 break;
             case BoostMessage.PORT_VALUE:
