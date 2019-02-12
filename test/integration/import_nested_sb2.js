@@ -1,7 +1,7 @@
 const path = require('path');
 const test = require('tap').test;
 const makeTestStorage = require('../fixtures/make-test-storage');
-const extractNestedProjectJson = require('../fixtures/readProjectFile').extractNestedProjectJson;
+const extractProjectJson = require('../fixtures/readProjectFile').extractProjectJson;
 
 const renderedTarget = require('../../src/sprites/rendered-target');
 const runtime = require('../../src/engine/runtime');
@@ -15,7 +15,7 @@ test('spec', t => {
 test('nested default/*', t => {
     // Get SB2 JSON (string)
     const uri = path.resolve(__dirname, '../fixtures/default_nested.sb2');
-    const json = extractNestedProjectJson(uri, 'default');
+    const json = extractProjectJson(uri, 'default');
 
     // Create runtime instance & load SB2 into it
     const rt = new runtime();
