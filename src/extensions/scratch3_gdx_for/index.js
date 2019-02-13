@@ -775,9 +775,8 @@ class Scratch3GdxForBlocks {
     }
 
     getTilt (args) {
-        // When the peripheral is not connected, the acceleration magnitude
-        // is 0 instead of ~9.8, which ends up registering a tilt value; so
-        // we need to return 0 here to prevent returning a tilt value.
+        // Tilt values are calculated using acceleration due to gravity,
+        // so we need to return 0 when the peripheral is not connected.
         if (!this._peripheral.isConnected()) {
             return 0;
         }
