@@ -37,6 +37,7 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.mode, 'slider');
         t.equal(monitorRecord.sliderMin, -200); // Make sure these are imported for sliders.
         t.equal(monitorRecord.sliderMax, 30);
+        t.equal(monitorRecord.isDiscrete, false);
         t.equal(monitorRecord.x, 5); // These are imported for all monitors, just check once.
         t.equal(monitorRecord.y, 59);
         t.equal(monitorRecord.visible, true);
@@ -61,8 +62,8 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.opcode, 'data_listcontents');
         t.equal(monitorRecord.mode, 'list');
         t.equal(monitorRecord.visible, true);
-        t.equal(monitorRecord.width, 104); // Make sure these are imported from lists.
-        t.equal(monitorRecord.height, 204);
+        t.equal(monitorRecord.width, 106); // Make sure these are imported from lists.
+        t.equal(monitorRecord.height, 206);
 
         // Backdrop name monitor is visible, not sprite specific
         // should get imported with id that references the name parameter
