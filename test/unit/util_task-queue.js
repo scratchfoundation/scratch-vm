@@ -8,8 +8,12 @@ const testCompare = require('../fixtures/test-compare');
 // Max tokens = 1000
 // Refill 1000 tokens per second (1 per millisecond)
 // Token bucket starts empty
+// Max total cost of queued tasks = 10000 tokens = 10 seconds
 const makeTestQueue = () => {
-    const bukkit = new TaskQueue(1000, 1000, 0);
+    const bukkit = new TaskQueue(1000, 1000, {
+        startingTokens: 0,
+        maxTotalCost: 10000
+    });
 
     const mockTimer = new MockTimer();
     bukkit._timer = mockTimer;
@@ -145,3 +149,35 @@ test('cancelAll', async t => {
     });
 });
 
+test('max total cost', async t => {
+    const bukkit = makeTestQueue();
+
+    let numTasks = 0;
+
+    const task = () => ++numTasks;
+
+    // Fill the queue
+    for (let i = 0; i < 10; ++i) {
+        bukkit.do(task, 1000);
+    }
+
+    // This one should be rejected because the queue is full
+    bukkit
+        .do(task, 1000)
+        .then(
+            () => {
+                t.fail('Full queue did not reject task');
+            },
+            () => {
+                t.pass();
+            }
+        );
+
+    while (bukkit.length > 0) {
+        await bukkit._timer.advanceMockTimeAsync(1000);
+    }
+
+    // this should be 10 if the last task is rejected or 11 if it runs
+    t.equal(numTasks, 10);
+    t.end();
+});

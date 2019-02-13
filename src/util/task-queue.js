@@ -12,14 +12,17 @@ class TaskQueue {
      *
      * @param {number} maxTokens - the maximum number of tokens in the bucket (burst size).
      * @param {number} refillRate - the number of tokens to be added per second (sustain rate).
-     * @param {number} [startingTokens=maxTokens] - the number of tokens the bucket starts with.
+     * @param {object} options - optional settings for the new task queue instance.
+     * @property {number} startingTokens - the number of tokens the bucket starts with (default: `maxTokens`).
+     * @property {number} maxTotalCost - reject a task if total queue cost would pass this limit (default: no limit).
      * @memberof TaskQueue
      */
-    constructor (maxTokens, refillRate, startingTokens = maxTokens) {
+    constructor (maxTokens, refillRate, options = null) {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
         this._pendingTaskRecords = [];
-        this._tokenCount = startingTokens;
+        this._tokenCount = options.hasOwnProperty('startingTokens') ? options.startingTokens : maxTokens;
+        this._maxTotalCost = options.hasOwnProperty('maxTotalCost') ? options.maxTotalCost : Infinity;
         this._timer = new Timer();
         this._timer.start();
         this._timeout = null;
@@ -47,6 +50,12 @@ class TaskQueue {
      * @memberof TaskQueue
      */
     do (task, cost = 1) {
+        if (this._maxTotalCost < Infinity) {
+            const currentTotalCost = this._pendingTaskRecords.reduce((t, r) => t + r.cost, 0);
+            if (currentTotalCost + cost > this._maxTotalCost) {
+                return Promise.reject('Maximum total cost exceeded');
+            }
+        }
         const newRecord = {
             cost
         };
