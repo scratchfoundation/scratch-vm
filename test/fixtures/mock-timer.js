@@ -44,15 +44,30 @@ class MockTimer {
 
     /**
      * Advance this MockTimer's idea of "current time", running timeout handlers if appropriate.
-     * @param {number} delta - the amount of time to add to the current mock time value, in milliseconds.
+     *
+     * @param {number} milliseconds - the amount of time to add to the current mock time value, in milliseconds.
      * @memberof MockTimer
      */
-    advanceMockTime (delta) {
-        if (delta < 0) {
+    advanceMockTime (milliseconds) {
+        if (milliseconds < 0) {
             throw new Error('Time may not move backward');
         }
-        this._mockTime += delta;
+        this._mockTime += milliseconds;
         this._runTimeouts();
+    }
+
+    /**
+     * Advance this MockTimer's idea of "current time", running timeout handlers if appropriate.
+     *
+     * @param {number} milliseconds - the amount of time to add to the current mock time value, in milliseconds.
+     * @returns {Promise} - promise which resolves after timeout handlers have had an opportunity to run.
+     * @memberof MockTimer
+     */
+    advanceMockTimeAsync (milliseconds) {
+        return new Promise(resolve => {
+            this.advanceMockTime(milliseconds);
+            global.setTimeout(resolve, 0);
+        });
     }
 
     /**

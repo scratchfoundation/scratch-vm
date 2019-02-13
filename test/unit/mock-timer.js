@@ -16,6 +16,8 @@ test('spec', t => {
     t.type(timer.clearTimeout, 'function');
 
     // A few members of MockTimer have no Timer equivalent and should only be used in tests.
+    t.type(timer.advanceMockTime, 'function');
+    t.type(timer.advanceMockTimeAsync, 'function');
     t.type(timer.hasTimeouts, 'function');
 
     t.end();

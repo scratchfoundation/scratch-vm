@@ -30,6 +30,7 @@ class TaskQueue {
 
     /**
      * Get the number of queued tasks which have not yet started.
+     *
      * @readonly
      * @memberof TaskQueue
      */
@@ -49,12 +50,8 @@ class TaskQueue {
         const newRecord = {
             cost
         };
-        const promise = new Promise((resolve, reject) => {
+        newRecord.promise = new Promise((resolve, reject) => {
             newRecord.cancel = () => {
-                const index = this._pendingTaskRecords.indexOf(newRecord);
-                if (index >= 0) {
-                    this._pendingTaskRecords.splice(index, 1);
-                }
                 reject(new Error('Task canceled'));
             };
 
@@ -74,7 +71,27 @@ class TaskQueue {
             this._runTasks();
         }
 
-        return promise;
+        return newRecord.promise;
+    }
+
+    /**
+     * Cancel one pending task, rejecting its promise.
+     *
+     * @param {Promise} taskPromise - the promise returned by `do()`.
+     * @returns {boolean} - true if the task was found, or false otherwise.
+     * @memberof TaskQueue
+     */
+    cancel (taskPromise) {
+        const taskIndex = this._pendingTaskRecords.findIndex(r => r.promise === taskPromise);
+        if (taskIndex !== -1) {
+            const [taskRecord] = this._pendingTaskRecords.splice(taskIndex, 1);
+            taskRecord.cancel();
+            if (taskIndex === 0 && this._pendingTaskRecords.length > 0) {
+                this._runTasks();
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -140,6 +157,7 @@ class TaskQueue {
     /**
      * Loop until the task queue is empty, running each task and spending tokens to do so.
      * Any time the bucket can't afford the next task, delay asynchronously until it can.
+     *
      * @memberof TaskQueue
      */
     _runTasks () {
