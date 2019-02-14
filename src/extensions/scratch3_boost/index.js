@@ -570,6 +570,7 @@ class Boost {
          */
         this._rateLimiter = new RateLimiter(BLESendRateMax);
 
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
     }
@@ -703,7 +704,7 @@ class Boost {
                 }
             }],
             optionalServices: []
-        }, this._onConnect);
+        }, this._onConnect, this.disconnect);
     }
 
     /**
@@ -921,9 +922,11 @@ class Boost {
                 var feedback = data[4];
                 switch(feedback) {
                     case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
+                    case BoostOutputCommandFeedback.CURRENT_COMMAND_DISCARDED ^ BoostOutputCommandFeedback.IDLE: // Resolve even if command didn't complete successfully
                         this._motors[portID].pendingPromiseFunction(); 
                         break;
                     default:
+                        console.log(buf2hex(data))
                         console.log("Got it but didn't find a motor on: " + portID)
                 }
                 break;
