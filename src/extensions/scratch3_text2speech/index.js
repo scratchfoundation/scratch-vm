@@ -66,6 +66,15 @@ const GIANT_ID = 'GIANT';
 const KITTEN_ID = 'KITTEN';
 
 /**
+ * Language ids.
+ */
+const ENGLISH_ID = 'ENGLISH';
+const CHINESE_ID = 'CHINESE';
+const TURKISH_ID = 'TURKISH';
+const JAPANESE_ID = 'JAPANESE';
+
+
+/**
  * Playback rate for the tenor voice, for cases where we have only a female gender voice.
  */
 const FEMALE_TENOR_RATE = 0.89; // -2 semitones
@@ -162,6 +171,30 @@ class Scratch3Text2SpeechBlocks {
      */
     get LANGUAGE_INFO () {
         return {
+            [CHINESE_ID]: {
+                name: 'Chinese (Mandarin)',
+                singleGender: true,
+                locales: ['zh-cn', 'zh-tw'],
+                pollyLocale: 'cmn-CN'
+            },
+            [ENGLISH_ID]: {
+                name: 'English',
+                locales: ['en'],
+                pollyLocale: 'en-US'
+            },
+            [JAPANESE_ID]: {
+                name: 'Japanese',
+                locales: ['ja', 'ja-Hira'],
+                pollyLocale: 'ja-JP'
+            },
+            [TURKISH_ID]: {
+                name: 'Turkish',
+                singleGender: true,
+                locales: ['tr'],
+                pollyLocale: 'tr-TR'
+            }
+
+            /*
             'cy': {
                 name: 'Welsh',
                 singleGender: true
@@ -240,6 +273,7 @@ class Scratch3Text2SpeechBlocks {
                 name: 'Chinese (Traditional)',
                 singleGender: true
             }
+            */
         };
     }
 
@@ -249,38 +283,38 @@ class Scratch3Text2SpeechBlocks {
      * @param {string} locale the Scratch locale to convert.
      * @return {string} the Amazon polly locale.
      */
-    localeToPolly (locale) {
-        const pollyLocales = {
-            'cy': 'cy-GB', // Welsh
-            'da': 'da-DK', // Danish
-            'nl': 'nl-NL', // Dutch
-            'en': 'en-US', // English
-            'fr': 'fr-FR', // French
-            'de': 'de-DE', // German
-            'hi': 'en-IN', // Hindi
-            'is': 'is-IS', // Icelandic
-            'it': 'it-IT', // Italian
-            'ja': 'ja-JP', // Japanese
-            'ko': 'ko-KR', // Korean
-            'no': 'nb-NO', // Norwegian
-            'pl': 'pl-PL', // Polish
-            'pt-br': 'pt-BR', // Portuguese (Brazilian)
-            'pt': 'pt-PT', // Portuguese (European)
-            'ro': 'ro-RO', // Romanian
-            'ru': 'ru-RU', // Russian
-            'es': 'es-ES', // Spanish (European)
-            'es-419': 'es-US', // Spanish (Latin American)
-            'sv': 'sv-SE', // Swedish
-            'tr': 'tr-TR', // Turkish
-            'zh-cn': 'cmn-CN', // Chinese (simplified) -> Mandarin
-            'zh-tw': 'cmn-CN' // Chinese (traditional) -> Mandarin
-        };
-        let converted = 'en-US';
-        if (pollyLocales[locale]) {
-            converted = pollyLocales[locale];
-        }
-        return converted;
-    }
+    // localeToPolly (locale) {
+    //     const pollyLocales = {
+    //         'cy': 'cy-GB', // Welsh
+    //         'da': 'da-DK', // Danish
+    //         'nl': 'nl-NL', // Dutch
+    //         'en': 'en-US', // English
+    //         'fr': 'fr-FR', // French
+    //         'de': 'de-DE', // German
+    //         'hi': 'en-IN', // Hindi
+    //         'is': 'is-IS', // Icelandic
+    //         'it': 'it-IT', // Italian
+    //         'ja': 'ja-JP', // Japanese
+    //         'ko': 'ko-KR', // Korean
+    //         'no': 'nb-NO', // Norwegian
+    //         'pl': 'pl-PL', // Polish
+    //         'pt-br': 'pt-BR', // Portuguese (Brazilian)
+    //         'pt': 'pt-PT', // Portuguese (European)
+    //         'ro': 'ro-RO', // Romanian
+    //         'ru': 'ru-RU', // Russian
+    //         'es': 'es-ES', // Spanish (European)
+    //         'es-419': 'es-US', // Spanish (Latin American)
+    //         'sv': 'sv-SE', // Swedish
+    //         'tr': 'tr-TR', // Turkish
+    //         'zh-cn': 'cmn-CN', // Chinese (simplified) -> Mandarin
+    //         'zh-tw': 'cmn-CN' // Chinese (traditional) -> Mandarin
+    //     };
+    //     let converted = 'en-US';
+    //     if (pollyLocales[locale]) {
+    //         converted = pollyLocales[locale];
+    //     }
+    //     return converted;
+    // }
 
     /**
      * The key to load & store a target's text2speech state.
