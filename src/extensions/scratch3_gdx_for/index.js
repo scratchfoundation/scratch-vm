@@ -775,6 +775,12 @@ class Scratch3GdxForBlocks {
     }
 
     getTilt (args) {
+        // Tilt values are calculated using acceleration due to gravity,
+        // so we need to return 0 when the peripheral is not connected.
+        if (!this._peripheral.isConnected()) {
+            return 0;
+        }
+
         switch (args.TILT) {
         case TiltAxisValues.FRONT:
             return Math.round(this._peripheral.getTiltFrontBack(false));

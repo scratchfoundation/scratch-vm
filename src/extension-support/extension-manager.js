@@ -322,13 +322,17 @@ class ExtensionManager {
         const menuItems = menuFunc.call(extensionObject, editingTargetID).map(
             item => {
                 item = maybeFormatMessage(item, extensionMessageContext);
-                if (typeof item === 'object') {
+                switch (typeof item) {
+                case 'object':
                     return [
                         maybeFormatMessage(item.text, extensionMessageContext),
                         item.value
                     ];
+                case 'string':
+                    return [item, item];
+                default:
+                    return item;
                 }
-                return item;
             });
 
         if (!menuItems || menuItems.length < 1) {

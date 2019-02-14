@@ -7,6 +7,10 @@ module.exports = {
     },
     extractProjectJson: function (path) {
         const zip = new AdmZip(path);
-        return JSON.parse(zip.readAsText('project.json', 'utf8'));
+        const projectEntry = zip.getEntries().filter(item => item.entryName.match(/project\.json/))[0];
+        if (projectEntry) {
+            return JSON.parse(zip.readAsText(projectEntry.entryName, 'utf8'));
+        }
+        return null;
     }
 };
