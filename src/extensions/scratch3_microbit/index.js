@@ -139,6 +139,14 @@ class MicroBit {
         this._busy = false;
 
         /**
+         * A task queue to track timed tasks over the socket.
+         * TODO: what to set maxTokens?
+         * TODO: what to set refillRate?
+         * @type {TaskQueue}
+         */
+        this._queue = new TaskQueue(1, 30, {maxTotalCost: 300});
+
+        /**
          * ID for a timeout which is used to clear the busy flag if it has been
          * true for a long time.
          */

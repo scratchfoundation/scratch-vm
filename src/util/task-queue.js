@@ -21,8 +21,15 @@ class TaskQueue {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
         this._pendingTaskRecords = [];
+<<<<<<< HEAD
         this._tokenCount = options.hasOwnProperty('startingTokens') ? options.startingTokens : maxTokens;
         this._maxTotalCost = options.hasOwnProperty('maxTotalCost') ? options.maxTotalCost : Infinity;
+=======
+        // this._tokenCount = options.hasOwnProperty('startingTokens') ? options.startingTokens : maxTokens;
+        this._tokenCount = options ? maxTokens : maxTokens;
+        // this._maxTotalCost = options.hasOwnProperty('maxTotalCost') ? options.maxTotalCost : Infinity;
+        this._maxTotalCost = options ? options.maxTotalCost : Infinity;
+>>>>>>> Continuing to test the newest TaskQueue with microbit.
         this._timer = new Timer();
         this._timer.start();
         this._timeout = null;
