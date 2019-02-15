@@ -1,3 +1,20 @@
+// Track loading time with timestamps and if possible the performance api.
+if (window.performance) {
+    // Mark with the performance API when benchmark.js and its dependecies start
+    // evaluation. This can tell us once measured how long the code spends time
+    // turning into execution code for the first time. Skipping evaluation of
+    // some of the code can help us make it faster.
+    performance.mark('Scratch.EvalStart');
+}
+
+const ScratchStorage = require('scratch-storage');
+const VirtualMachine = require('..');
+const Runtime = require('../engine/runtime');
+
+const ScratchRender = require('scratch-render');
+const AudioEngine = require('scratch-audio');
+const ScratchSVGRenderer = require('scratch-svg-renderer');
+
 const Scratch = window.Scratch = window.Scratch || {};
 
 const ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
@@ -65,19 +82,48 @@ class LoadingProgress {
         this.callback = callback;
     }
 
-    on (storage) {
+    on (storage, vm) {
         const _this = this;
         const _load = storage.webHelper.load;
         storage.webHelper.load = function (...args) {
+            if (_this.complete === 0 && window.performance) {
+                // Mark in browser inspectors how long it takes to load the
+                // projects initial data file.
+                performance.mark('Scratch.LoadDataStart');
+            }
+
             const result = _load.call(this, ...args);
             _this.total += 1;
             _this.callback(_this);
             result.then(() => {
+                if (_this.complete === 0 && window.performance) {
+                    // How long did loading the data file take?
+                    performance.mark('Scratch.LoadDataEnd');
+                    performance.measure('Scratch.LoadData', 'Scratch.LoadDataStart', 'Scratch.LoadDataEnd');
+                }
+
                 _this.complete += 1;
                 _this.callback(_this);
             });
             return result;
         };
+        vm.runtime.on(Runtime.PROJECT_LOADED, () => {
+            // Currently LoadingProgress tracks when the data has been loaded
+            // and not when the data has been decoded. It may be difficult to
+            // track that but it isn't hard to track when its all been decoded.
+            if (window.performance) {
+                // How long did it take to load the html, js, and all the
+                // project assets?
+                performance.mark('Scratch.LoadEnd');
+                performance.measure('Scratch.Load', 'Scratch.LoadStart', 'Scratch.LoadEnd');
+            }
+
+            window.ScratchVMLoadEnd = Date.now();
+
+            // With this event lets update LoadingProgress a final time so its
+            // displayed loading time is accurate.
+            _this.callback(_this);
+        });
     }
 }
 
@@ -439,12 +485,12 @@ class ProfilerRun {
 const runBenchmark = function () {
     // Lots of global variables to make debugging easier
     // Instantiate the VM.
-    const vm = new window.VirtualMachine();
+    const vm = new VirtualMachine();
     Scratch.vm = vm;
 
     vm.setTurboMode(true);
 
-    const storage = new ScratchStorage(); /* global ScratchStorage */
+    const storage = new ScratchStorage();
     const AssetType = storage.AssetType;
     storage.addWebSource([AssetType.Project], getProjectUrl);
     storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
@@ -455,7 +501,9 @@ const runBenchmark = function () {
             .innerText = progress.total;
         document.getElementsByClassName('loading-complete')[0]
             .innerText = progress.complete;
-    }).on(storage);
+        document.getElementsByClassName('loading-time')[0]
+            .innerText = `(${(window.ScratchVMLoadEnd || Date.now()) - window.ScratchVMLoadStart}ms)`;
+    }).on(storage, vm);
 
     let warmUpTime = 4000;
     let maxRecordedTime = 6000;
@@ -476,12 +524,11 @@ const runBenchmark = function () {
 
     // Instantiate the renderer and connect it to the VM.
     const canvas = document.getElementById('scratch-stage');
-    const renderer = new window.ScratchRender(canvas);
+    const renderer = new ScratchRender(canvas);
     Scratch.renderer = renderer;
     vm.attachRenderer(renderer);
-    const audioEngine = new window.AudioEngine();
+    const audioEngine = new AudioEngine();
     vm.attachAudioEngine(audioEngine);
-    /* global ScratchSVGRenderer */
     vm.attachV2SVGAdapter(new ScratchSVGRenderer.SVGRenderer());
     vm.attachV2BitmapAdapter(new ScratchSVGRenderer.BitmapAdapter());
 
@@ -555,7 +602,7 @@ const runBenchmark = function () {
  * @param {object} json data from a previous benchmark run.
  */
 const renderBenchmarkData = function (json) {
-    const vm = new window.VirtualMachine();
+    const vm = new VirtualMachine();
     new ProfilerRun({vm}).render(json);
     setShareLink(json);
 };
@@ -575,3 +622,10 @@ window.onload = function () {
 window.onhashchange = function () {
     location.reload();
 };
+
+if (window.performance) {
+    performance.mark('Scratch.EvalEnd');
+    performance.measure('Scratch.Eval', 'Scratch.EvalStart', 'Scratch.EvalEnd');
+}
+
+window.ScratchVMEvalEnd = Date.now();
