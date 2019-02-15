@@ -593,6 +593,10 @@ const cancelExecution = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
     const {blockCached} = getBlockCached(currentBlockId, thread, runtime);
 
+    if (!blockCached) {
+        return;
+    }
+
     // Only the last op is actually a block and not an input; it is the one
     // that may have a cancel implementation.
     const ops = blockCached._ops;
