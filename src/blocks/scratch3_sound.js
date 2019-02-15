@@ -143,6 +143,16 @@ class Scratch3SoundBlocks {
         };
     }
 
+    /**
+     * Retrieve the cancel block primitives implemented by this package.
+     * @return {object.<string, FUnction>} Mapping of opcode to Function.
+     */
+    getCancelPrimitives () {
+        return {
+            sound_playuntildone: this.cancelPlaySoundAndWait
+        };
+    }
+
     getMonitored () {
         return {
             sound_volume: {
@@ -162,11 +172,10 @@ class Scratch3SoundBlocks {
     }
 
     _playSound (args, util, storeWaiting) {
-        const index = this._getSoundIndex(args.SOUND_MENU, util);
-        if (index >= 0) {
+        const soundId = this._getSoundId(args.SOUND_MENU, util);
+        if (soundId) {
             const {target} = util;
             const {sprite} = target;
-            const {soundId} = sprite.sounds[index];
             if (sprite.soundBank) {
                 if (storeWaiting === STORE_WAITING) {
                     this._addWaitingSound(target.id, soundId);
@@ -176,6 +185,26 @@ class Scratch3SoundBlocks {
                 return sprite.soundBank.playSound(target, soundId);
             }
         }
+    }
+
+    cancelPlaySoundAndWait (args, util) {
+        const soundId = this._getSoundId(args.SOUND_MENU, util);
+        const {target} = util;
+        const {sprite} = target;
+        if (sprite.soundBank) {
+            sprite.soundBank.stop(target, soundId);
+        }
+    }
+
+    _getSoundId (indexArg, util) {
+        const index = this._getSoundIndex(indexArg, util);
+        if (index >= 0) {
+            const {target} = util;
+            const {sprite} = target;
+            const {soundId} = sprite.sounds[index];
+            return soundId;
+        }
+        return null;
     }
 
     _addWaitingSound (targetId, soundId) {

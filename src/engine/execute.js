@@ -210,6 +210,18 @@ class BlockCached {
         this._definedBlockFunction = false;
 
         /**
+         * The block opcode's "cancel" implementation function.
+         * @type {?function}
+         */
+        this._cancelBlockFunction = null;
+
+        /**
+         * Is the cancel block function defined for this opcode?
+         * @type {boolean}
+         */
+        this._definedCancelBlockFunction = false;
+
+        /**
          * Is this block a block with no function but a static value to return.
          * @type {boolean}
          */
@@ -279,7 +291,9 @@ class BlockCached {
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
+        this._cancelBlockFunction = runtime.getCancelOpcodeFunction(opcode);
         this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+        this._definedCancelBlockFunction = typeof this._cancelBlockFunction !== 'undefined';
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
@@ -370,6 +384,16 @@ class BlockCached {
     }
 }
 
+const getBlockCached = function (currentBlockId, thread, runtime) {
+    let blockContainer = thread.blockContainer;
+    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+    if (blockCached === null) {
+        blockContainer = runtime.flyoutBlocks;
+        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+    }
+    return {blockCached, blockContainer};
+};
+
 /**
  * Execute a block.
  * @param {!Sequencer} sequencer Which sequencer is executing.
@@ -386,18 +410,13 @@ const execute = function (sequencer, thread) {
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
+    const {blockCached, blockContainer} = getBlockCached(currentBlockId, thread, runtime);
 
-    let blockContainer = thread.blockContainer;
-    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+    // Stop if block or target no longer exists.
     if (blockCached === null) {
-        blockContainer = runtime.flyoutBlocks;
-        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
-        // Stop if block or target no longer exists.
-        if (blockCached === null) {
-            // No block found: stop the thread; script no longer exists.
-            sequencer.retireThread(thread);
-            return;
-        }
+        // No block found: stop the thread; script no longer exists.
+        sequencer.retireThread(thread);
+        return;
     }
 
     const ops = blockCached._ops;
@@ -559,5 +578,37 @@ const execute = function (sequencer, thread) {
         }
     }
 };
+
+/**
+ * Cancel the block which is currently running, if implementation is provided.
+ * @param {!Sequencer} sequencer Which sequencer is executing.
+ * @param {!Thread} thread Thread which to read and execute.
+ */
+const cancelExecution = function (sequencer, thread) {
+    const runtime = sequencer.runtime;
+
+    blockUtility.sequencer = sequencer;
+    blockUtility.thread = thread;
+
+    const currentBlockId = thread.peekStack();
+    const {blockCached} = getBlockCached(currentBlockId, thread, runtime);
+
+    // Only the last op is actually a block and not an input; it is the one
+    // that may have a cancel implementation.
+    const ops = blockCached._ops;
+    const opCached = ops[ops.length - 1];
+
+    // If there is no cancel implementation provided, stop.
+    if (!opCached._definedCancelBlockFunction) {
+        return;
+    }
+
+    // Execute the cancel function.
+    const cancelBlockFunction = opCached._cancelBlockFunction;
+    const argValues = opCached._argValues;
+    cancelBlockFunction(argValues, blockUtility);
+};
+
+execute.cancelExecution = cancelExecution;
 
 module.exports = execute;

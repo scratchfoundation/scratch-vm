@@ -208,6 +208,12 @@ class Runtime extends EventEmitter {
         this._primitives = {};
 
         /**
+         * Map to look up a block primitive's "cancel" implementation function by its opcode.
+         * @type {Object.<string, Function>}
+         */
+        this._cancelPrimitives = {};
+
+        /**
          * Map to look up all block information by extended opcode.
          * @type {Array.<CategoryInfo>}
          * @private
@@ -723,6 +729,15 @@ class Runtime extends EventEmitter {
                     for (const op in packagePrimitives) {
                         if (packagePrimitives.hasOwnProperty(op)) {
                             this._primitives[op] =
+                                packagePrimitives[op].bind(packageObject);
+                        }
+                    }
+                }
+                if (packageObject.getCancelPrimitives) {
+                    const packagePrimitives = packageObject.getCancelPrimitives();
+                    for (const op in packagePrimitives) {
+                        if (packagePrimitives.hasOwnProperty(op)) {
+                            this._cancelPrimitives[op] =
                                 packagePrimitives[op].bind(packageObject);
                         }
                     }
@@ -1312,6 +1327,15 @@ class Runtime extends EventEmitter {
      */
     getOpcodeFunction (opcode) {
         return this._primitives[opcode];
+    }
+
+    /**
+     * Retrieve the function associated with cancelling a call to the given opcode.
+     * @param {!string} opcode The opcode to look up.
+     * @return {Function} The function which implements cancelling the opcode.
+     */
+    getCancelOpcodeFunction (opcode) {
+        return this._cancelPrimitives[opcode];
     }
 
     /**

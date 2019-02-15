@@ -350,6 +350,11 @@ class Sequencer {
      * @param {!Thread} thread Thread object to retire.
      */
     retireThread (thread) {
+        // Run the currently executing block's "cancel" function if present.
+        // This is used to cancel actions that have not yet finished, such as
+        // playing a sound or spinning a motor.
+        execute.cancelExecution(this, thread);
+
         thread.stack = [];
         thread.stackFrame = [];
         thread.requestScriptGlowInFrame = false;
