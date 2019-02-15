@@ -17,7 +17,7 @@ class TaskQueue {
      * @property {number} maxTotalCost - reject a task if total queue cost would pass this limit (default: no limit).
      * @memberof TaskQueue
      */
-    constructor (maxTokens, refillRate, options = null) {
+    constructor (maxTokens, refillRate, options = {}) {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
         this._pendingTaskRecords = [];
