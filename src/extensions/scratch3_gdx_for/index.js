@@ -647,7 +647,7 @@ class Scratch3GdxForBlocks {
                     opcode: 'getTilt',
                     text: formatMessage({
                         id: 'gdxfor.getTilt',
-                        default: 'tilt [TILT]',
+                        default: 'tilt angle [TILT]',
                         description: 'gets tilt'
                     }),
                     blockType: BlockType.REPORTER,
@@ -663,7 +663,7 @@ class Scratch3GdxForBlocks {
                     opcode: 'getSpinSpeed',
                     text: formatMessage({
                         id: 'gdxfor.getSpin',
-                        default: 'spin [DIRECTION]',
+                        default: 'spin speed [DIRECTION]',
                         description: 'gets spin speed'
                     }),
                     blockType: BlockType.REPORTER,
