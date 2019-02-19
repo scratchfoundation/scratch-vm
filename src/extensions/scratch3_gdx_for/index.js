@@ -62,12 +62,6 @@ const GDXFOR_UPDATE_RATE = 100;
 const FORCE_THRESHOLD = 5;
 
 /**
- * Threshold for acceleration magnitude, for the "moved" gesture.
- * @type {number}
- */
-const MOVED_THRESHOLD = 3;
-
-/**
  * Threshold for acceleration magnitude, for the "shaken" gesture.
  * @type {number}
  */
@@ -409,7 +403,6 @@ const PushPullValues = {
  * @enum {string}
  */
 const GestureValues = {
-    MOVED: 'moved',
     SHAKEN: 'shaken',
     STARTED_FALLING: 'started falling'
 };
@@ -566,14 +559,6 @@ class Scratch3GdxForBlocks {
         return [
             {
                 text: formatMessage({
-                    id: 'gdxfor.moved',
-                    default: 'moved',
-                    description: 'the sensor was moved'
-                }),
-                value: GestureValues.MOVED
-            },
-            {
-                text: formatMessage({
                     id: 'gdxfor.shaken',
                     default: 'shaken',
                     description: 'the sensor was shaken'
@@ -654,7 +639,7 @@ class Scratch3GdxForBlocks {
                         GESTURE: {
                             type: ArgumentType.STRING,
                             menu: 'gestureOptions',
-                            defaultValue: GestureValues.MOVED
+                            defaultValue: GestureValues.SHAKEN
                         }
                     }
                 },
@@ -762,8 +747,6 @@ class Scratch3GdxForBlocks {
 
     whenGesture (args) {
         switch (args.GESTURE) {
-        case GestureValues.MOVED:
-            return this.gestureMagnitude() > MOVED_THRESHOLD;
         case GestureValues.SHAKEN:
             return this.gestureMagnitude() > SHAKEN_THRESHOLD;
         case GestureValues.STARTED_FALLING:
