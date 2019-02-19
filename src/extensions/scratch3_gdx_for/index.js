@@ -53,7 +53,7 @@ const GDXFOR_SENSOR = {
 /**
  * The update rate, in milliseconds, for sensor data input from the peripheral.
  */
-const GDXFOR_UPDATE_RATE = 100;
+const GDXFOR_UPDATE_RATE = 80;
 
 /**
  * Threshold for pushing and pulling force, for the whenForcePushedOrPulled hat block.
