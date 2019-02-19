@@ -86,6 +86,12 @@ const FREEFALL_THRESHOLD = 0.5;
 const FREEFALL_ROTATION_FACTOR = 0.3;
 
 /**
+ * Threshold in degrees for reporting that the sensor is tilted.
+ * @type {number}
+ */
+const TILT_THRESHOLD = 15;
+
+/**
  * Acceleration due to gravity, in m/s^2.
  * @type {number}
  */
@@ -628,6 +634,22 @@ class Scratch3GdxForBlocks {
                 },
                 '---',
                 {
+                    opcode: 'whenTilted',
+                    text: formatMessage({
+                        id: 'gdxfor.whenTilted',
+                        default: 'when tilted [TILT]',
+                        description: 'when the sensor detects tilt'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        TILT: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltOptions',
+                            defaultValue: TiltAxisValues.FRONT
+                        }
+                    }
+                },
+                {
                     opcode: 'whenGesture',
                     text: formatMessage({
                         id: 'gdxfor.whenGesture',
@@ -716,7 +738,22 @@ class Scratch3GdxForBlocks {
                         description: 'is the device in free fall?'
                     }),
                     blockType: BlockType.BOOLEAN
-
+                },
+                {
+                    opcode: 'isTilted',
+                    text: formatMessage({
+                        id: 'gdxfor.isTilted',
+                        default: 'tilted [TILT]?',
+                        description: 'is the device tilted?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        TILT: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltOptions',
+                            defaultValue: TiltAxisValues.FRONT
+                        }
+                    }
                 }
             ],
             menus: {
@@ -757,24 +794,36 @@ class Scratch3GdxForBlocks {
         }
     }
 
+    whenTilted (args) {
+        return this._getTiltAngle(args.TILT) > TILT_THRESHOLD;
+    }
+
     getTilt (args) {
+        return this._getTiltAngle(args.TILT);
+    }
+
+    isTilted (args) {
+        return this._getTiltAngle(args.TILT) > TILT_THRESHOLD;
+    }
+
+    _getTiltAngle (direction) {
         // Tilt values are calculated using acceleration due to gravity,
         // so we need to return 0 when the peripheral is not connected.
         if (!this._peripheral.isConnected()) {
             return 0;
         }
 
-        switch (args.TILT) {
+        switch (direction) {
         case TiltAxisValues.FRONT:
-            return Math.round(this._peripheral.getTiltFrontBack(false));
-        case TiltAxisValues.BACK:
             return Math.round(this._peripheral.getTiltFrontBack(true));
+        case TiltAxisValues.BACK:
+            return Math.round(this._peripheral.getTiltFrontBack(false));
         case TiltAxisValues.LEFT:
-            return Math.round(this._peripheral.getTiltLeftRight(false));
-        case TiltAxisValues.RIGHT:
             return Math.round(this._peripheral.getTiltLeftRight(true));
+        case TiltAxisValues.RIGHT:
+            return Math.round(this._peripheral.getTiltLeftRight(false));
         default:
-            log.warn(`Unknown direction in getTilt: ${args.TILT}`);
+            log.warn(`Unknown direction in getTilt: ${direction}`);
         }
     }
 
