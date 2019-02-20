@@ -714,6 +714,31 @@ class Scratch3GdxForBlocks {
                 },
                 '---',
                 {
+                    opcode: 'isFacing',
+                    text: formatMessage({
+                        id: 'gdxfor.isFacing',
+                        default: 'facing [FACING]?',
+                        description: 'is the device facing up or down?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        FACING: {
+                            type: ArgumentType.STRING,
+                            menu: 'faceOptions',
+                            defaultValue: FaceValues.UP
+                        }
+                    }
+                },
+                {
+                    opcode: 'isFreeFalling',
+                    text: formatMessage({
+                        id: 'gdxfor.isFreeFalling',
+                        default: 'falling?',
+                        description: 'is the device in free fall?'
+                    }),
+                    blockType: BlockType.BOOLEAN
+                },
+                {
                     opcode: 'getSpinSpeed',
                     text: formatMessage({
                         id: 'gdxfor.getSpin',
@@ -744,31 +769,6 @@ class Scratch3GdxForBlocks {
                             defaultValue: AxisValues.X
                         }
                     }
-                },
-                {
-                    opcode: 'isFacing',
-                    text: formatMessage({
-                        id: 'gdxfor.isFacing',
-                        default: 'facing [FACING]?',
-                        description: 'is the device facing up or down?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        FACING: {
-                            type: ArgumentType.STRING,
-                            menu: 'faceOptions',
-                            defaultValue: FaceValues.UP
-                        }
-                    }
-                },
-                {
-                    opcode: 'isFreeFalling',
-                    text: formatMessage({
-                        id: 'gdxfor.isFreeFalling',
-                        default: 'falling?',
-                        description: 'is the device in free fall?'
-                    }),
-                    blockType: BlockType.BOOLEAN
                 }
             ],
             menus: {
