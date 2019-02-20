@@ -422,7 +422,8 @@ const TiltAxisValues = {
     FRONT: 'front',
     BACK: 'back',
     LEFT: 'left',
-    RIGHT: 'right'
+    RIGHT: 'right',
+    ANY: 'any'
 };
 
 /**
@@ -515,6 +516,20 @@ class Scratch3GdxForBlocks {
                     description: 'label for right element in tilt direction picker for gdxfor extension'
                 }),
                 value: TiltAxisValues.RIGHT
+            }
+        ];
+    }
+
+    get TILT_MENU_ANY () {
+        return [
+            ...this.TILT_MENU,
+            {
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for gdxfor extension'
+                }),
+                value: TiltAxisValues.ANY
             }
         ];
     }
@@ -644,8 +659,8 @@ class Scratch3GdxForBlocks {
                     arguments: {
                         TILT: {
                             type: ArgumentType.STRING,
-                            menu: 'tiltOptions',
-                            defaultValue: TiltAxisValues.FRONT
+                            menu: 'tiltAnyOptions',
+                            defaultValue: TiltAxisValues.ANY
                         }
                     }
                 },
@@ -750,8 +765,8 @@ class Scratch3GdxForBlocks {
                     arguments: {
                         TILT: {
                             type: ArgumentType.STRING,
-                            menu: 'tiltOptions',
-                            defaultValue: TiltAxisValues.FRONT
+                            menu: 'tiltAnyOptions',
+                            defaultValue: TiltAxisValues.ANY
                         }
                     }
                 }
@@ -761,6 +776,7 @@ class Scratch3GdxForBlocks {
                 gestureOptions: this.GESTURE_MENU,
                 axisOptions: this.AXIS_MENU,
                 tiltOptions: this.TILT_MENU,
+                tiltAnyOptions: this.TILT_MENU_ANY,
                 faceOptions: this.FACE_MENU
             }
         };
@@ -795,15 +811,27 @@ class Scratch3GdxForBlocks {
     }
 
     whenTilted (args) {
-        return this._getTiltAngle(args.TILT) > TILT_THRESHOLD;
+        return this._isTilted(args.TILT);
+    }
+
+    isTilted (args) {
+        return this._isTilted(args.TILT);
     }
 
     getTilt (args) {
         return this._getTiltAngle(args.TILT);
     }
 
-    isTilted (args) {
-        return this._getTiltAngle(args.TILT) > TILT_THRESHOLD;
+    _isTilted (direction) {
+        switch (direction) {
+        case TiltAxisValues.ANY:
+            return this._getTiltAngle(TiltAxisValues.FRONT) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.BACK) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.LEFT) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.RIGHT) > TILT_THRESHOLD;
+        default:
+            return this._getTiltAngle(direction) > TILT_THRESHOLD;
+        }
     }
 
     _getTiltAngle (direction) {
