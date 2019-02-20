@@ -623,6 +623,22 @@ class Scratch3GdxForBlocks {
             showStatusButton: true,
             blocks: [
                 {
+                    opcode: 'whenGesture',
+                    text: formatMessage({
+                        id: 'gdxfor.whenGesture',
+                        default: 'when [GESTURE]',
+                        description: 'when the sensor detects a gesture'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        GESTURE: {
+                            type: ArgumentType.STRING,
+                            menu: 'gestureOptions',
+                            defaultValue: GestureValues.SHAKEN
+                        }
+                    }
+                },
+                {
                     opcode: 'whenForcePushedOrPulled',
                     text: formatMessage({
                         id: 'gdxfor.whenForcePushedOrPulled',
@@ -665,18 +681,18 @@ class Scratch3GdxForBlocks {
                     }
                 },
                 {
-                    opcode: 'whenGesture',
+                    opcode: 'isTilted',
                     text: formatMessage({
-                        id: 'gdxfor.whenGesture',
-                        default: 'when [GESTURE]',
-                        description: 'when the sensor detects a gesture'
+                        id: 'gdxfor.isTilted',
+                        default: 'tilted [TILT]?',
+                        description: 'is the device tilted?'
                     }),
-                    blockType: BlockType.HAT,
+                    blockType: BlockType.BOOLEAN,
                     arguments: {
-                        GESTURE: {
+                        TILT: {
                             type: ArgumentType.STRING,
-                            menu: 'gestureOptions',
-                            defaultValue: GestureValues.SHAKEN
+                            menu: 'tiltAnyOptions',
+                            defaultValue: TiltAxisValues.ANY
                         }
                     }
                 },
@@ -696,6 +712,7 @@ class Scratch3GdxForBlocks {
                         }
                     }
                 },
+                '---',
                 {
                     opcode: 'getSpinSpeed',
                     text: formatMessage({
@@ -728,7 +745,6 @@ class Scratch3GdxForBlocks {
                         }
                     }
                 },
-                '---',
                 {
                     opcode: 'isFacing',
                     text: formatMessage({
@@ -753,22 +769,6 @@ class Scratch3GdxForBlocks {
                         description: 'is the device in free fall?'
                     }),
                     blockType: BlockType.BOOLEAN
-                },
-                {
-                    opcode: 'isTilted',
-                    text: formatMessage({
-                        id: 'gdxfor.isTilted',
-                        default: 'tilted [TILT]?',
-                        description: 'is the device tilted?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        TILT: {
-                            type: ArgumentType.STRING,
-                            menu: 'tiltAnyOptions',
-                            defaultValue: TiltAxisValues.ANY
-                        }
-                    }
                 }
             ],
             menus: {
