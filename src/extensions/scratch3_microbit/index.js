@@ -157,6 +157,12 @@ class MicroBit {
         this._onMessage = this._onMessage.bind(this);
     }
 
+    stopAll () {
+        console.log('*** STOPALL()');
+        console.log('*** TASKQUEUE CANCEL_ALL');
+        this._queue.cancelAll();
+    }
+
     /**
      * @param {string} text - the text to display.
      * @return {Promise} - a Promise that resolves when writing to peripheral.
@@ -819,25 +825,24 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
-        const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
-        const reducer = (accumulator, c, index) => {
-            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
-            return value;
-        };
-        const hex = symbol.split('').reduce(reducer, 0);
-        if (hex !== null) {
-            this._peripheral.ledMatrixState[0] = hex & 0x1F;
-            this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
-            this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
-            this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
-            this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
-            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        return this._peripheral._queue.do(() => {
+            const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
+            const reducer = (accumulator, c, index) => {
+                const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
+                return value;
+            };
+            const hex = symbol.split('').reduce(reducer, 0);
+            if (hex !== null) {
+                this._peripheral.ledMatrixState[0] = hex & 0x1F;
+                this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
+                this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
+                this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
+                this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
+                this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
+            }
+        }).catch(e => {
+            console.log('*** CATCH DISPLAY_SYMBOL REJECTION');
+            // console.log(e);
         });
     }
 
@@ -862,6 +867,9 @@ class Scratch3MicroBitBlocks {
                     resolve();
                 }, yieldDelay);
             });
+        }).catch(e => {
+            console.log('*** CATCH DISPLAY_TEXT REJECTION');
+            // console.log(e);
         });
     }
 
@@ -870,15 +878,14 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displayClear () {
-        for (let i = 0; i < 5; i++) {
-            this._peripheral.ledMatrixState[i] = 0;
-        }
-        this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        return this._peripheral._queue.do(() => {
+            for (let i = 0; i < 5; i++) {
+                this._peripheral.ledMatrixState[i] = 0;
+            }
+            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
+        }).catch(e => {
+            console.log('*** CATCH DISPLAY_CLEAR REJECTION');
+            // console.log(e);
         });
     }
 
