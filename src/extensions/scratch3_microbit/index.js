@@ -852,14 +852,16 @@ class Scratch3MicroBitBlocks {
      * 1px before the string, and 5px after the string.
      */
     displayText (args) {
-        const text = String(args.TEXT).substring(0, 19);
-        if (text.length > 0) this._peripheral.displayText(text);
-        const yieldDelay = 120 * ((6 * text.length) + 6);
+        return this._peripheral._queue.do(() => {
+            const text = String(args.TEXT).substring(0, 19);
+            if (text.length > 0) this._peripheral.displayText(text);
+            const yieldDelay = 120 * ((6 * text.length) + 6);
 
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, yieldDelay);
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, yieldDelay);
+            });
         });
     }
 
