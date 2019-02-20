@@ -408,7 +408,7 @@ class Scratch3LooksBlocks {
                 const numCostumes = stage.getCostumes().length;
                 if (numCostumes > 1) {
                     let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
-                    if (selectedIndex === stage.currentCostume) selectedIndex += 1;
+                    if (selectedIndex === stage.currentCostume) selectedIndex = numCostumes - 1;
                     stage.setCostume(selectedIndex);
                 }
             // Try to cast the string to a number (and treat it as a costume index)
