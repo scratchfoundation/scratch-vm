@@ -158,19 +158,23 @@ const BoostIOEvent = {
  * @enum {number}
  */
 const BoostMode = {
-    TILT: 0, // angle
-    DISTANCE: 0, // detect
-    LED: 1, // RGB
-    COLOR: 0, // Indexed colors
-    MOTOR: 2, // Position
-    UNKNOWN: 0
+    TILT: 0, // angle (pitch/yaw)
+    LED: 1, // Set LED to accept RGB values
+    COLOR: 0, // Read indexed colors from Vision Sensor
+    MOTOR: 2, // Set motors to report their position
+    UNKNOWN: 0 // Anything else will use the default mode (mode 0)
 };
 
+// Debug function
 function buf2hex(buffer) { // buffer is an ArrayBuffer
     return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join(' ');
 }
 
-function number2int32array(number) {
+/**
+ * Helper function for converting a number to a Int32Array
+ * @param {number} number 
+ */
+function numberToInt32Array(number) {
     var buffer = new ArrayBuffer(4)        
     var dataview = new DataView(buffer)
     dataview.setInt32(0, number)
@@ -178,6 +182,16 @@ function number2int32array(number) {
             dataview.getInt8(2),
             dataview.getInt8(1),
             dataview.getInt8(0)];
+}
+
+/**
+ * Helper function for converting a regular array to a Little Endian INT32-value
+ * @param {Array} array 
+ */
+function int32ArrayToNumber(array) {
+    var i = Uint8Array.from(array)
+    var d = new DataView(i.buffer);
+    return d.getInt32(0,true);
 }
 
 /**
@@ -226,7 +240,7 @@ class BoostMotor {
         this._position = 0;
 
         /**
-         * This motor's current relative position
+         * This motor's current zero position, which the relative position can be calculated against.
          * @type {number}
          * @private
          */
@@ -262,12 +276,12 @@ class BoostMotor {
         this._pendingTimeoutDelay = null;
 
         /**
-         * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
-         * the end-of-action handler. Cancel this when changing plans.
+         * If the motor has been turned on run for a specific duration, 
+         * this is the function that will be called once Scratch VM gets a notification from the Move Hub.
          * @type {Object}
          * @private
          */
-        this._pendingPromiseFunction = null;
+        this._pendingPromiseFunction = true;
 
         this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
@@ -421,7 +435,7 @@ class BoostMotor {
             this._index,
             0x0B,
             null,
-            number2int32array(degrees).concat(
+            numberToInt32Array(degrees).concat(
             [
             this._power * this._direction, // power in range 0-100
             0xff, // max speed
@@ -553,6 +567,12 @@ class Boost {
             distance: 0,
             color: 0,
         };
+
+        /*
+        ** TODO: Clean up
+        */
+       
+        this._led = 50
 
         /**
          * The Bluetooth connection socket for reading/writing peripheral data.
@@ -697,7 +717,7 @@ class Boost {
             filters: [{
                 services: [BLEService],
                 manufacturerData: {
-                    0x0397: {
+                    0: {
                         dataPrefix: [0x97, 0x03, 0x00, 0x40],
                         mask: [0xFF, 0xFF, 0, 0xFF]
                     }
@@ -824,7 +844,7 @@ class Boost {
             0x41, // Message Type (Port Input Format Setup (Single)) TODO: Use enum
             portID,
             mode,
-        ].concat(number2int32array(delta)).concat([
+        ].concat(numberToInt32Array(delta)).concat([
             enableNotifications
         ]);
 
@@ -904,11 +924,11 @@ class Boost {
                     case BoostIO.MOTOREXT:
                     case BoostIO.MOTORINT:
                         // Taken from EV3 extension tacho motor calculation
-                        let value = data[4] + (data[5] * 256) + (data[6] * 256 * 256) + (data[7] * 256 * 256 * 256);
+                        /*let value = data[4] + (data[5] * 256) + (data[6] * 256 * 256) + (data[7] * 256 * 256 * 256);
                         if (value > 0x7fffffff) {
                             value = value - 0x100000000;
-                        }
-                        this._motors[portID]._position = value
+                        }*/
+                        this._motors[portID]._position = int32ArrayToNumber(data.slice(4,8))
                         break;
                     case BoostIO.CURRENT:
                     case BoostIO.VOLTAGE:
@@ -923,8 +943,10 @@ class Boost {
                 switch(feedback) {
                     case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
                     case BoostOutputCommandFeedback.CURRENT_COMMAND_DISCARDED ^ BoostOutputCommandFeedback.IDLE: // Resolve even if command didn't complete successfully
-                        this._motors[portID].pendingPromiseFunction(); 
-                        break;
+                        if(this._motors[portID]) {
+                            this._motors[portID].pendingPromiseFunction();
+                            break;
+                        }
                     default:
                         console.log(buf2hex(data))
                         console.log("Got it but didn't find a motor on: " + portID)
@@ -1207,7 +1229,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorZero',
                     text: formatMessage({
                         id: 'boost.motorZero',
-                        default: 'zero motor [MOTOR_ID]',
+                        default: 'reset motor position [MOTOR_ID]',
                         description: 'set a motor\'s position to 0'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1234,6 +1256,21 @@ class Scratch3BoostBlocks {
                         }
                     }
                 },
+                {
+                    opcode: 'changeLightHueBy',
+                    text: formatMessage({
+                        id: 'boost.changeLightHueBy',
+                        default: 'change light color by [HUE]',
+                        description: 'change the LED color by a given amount'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 5
+                        }
+                    }
+                },                
                 /*{
                     opcode: 'whenDistance',
                     text: formatMessage({
@@ -1777,6 +1814,7 @@ class Scratch3BoostBlocks {
 
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
+        this._peripheral._led = inputHue;
         this._peripheral.setLED(rgbDecimal);
 
         return new Promise(resolve => {
@@ -1784,6 +1822,19 @@ class Scratch3BoostBlocks {
                 resolve();
             }, BLESendInterval);
         });
+    }
+
+    /**
+     * Change the LED's hue by a give number.
+     * @param {object} args - the block's arguments.
+     * @property {number} HUE - the hue to set, in the range [0,100].
+     * @return {Promise} - a Promise that resolves after some delay.
+     */
+    changeLightHueBy (args) {
+        // TODO: Clean up this block and its opcode
+        let n = {};
+        n.HUE = Cast.toNumber(args.HUE) + this._peripheral._led;
+        this.setLightHue(n);
     }
 
     /**
@@ -1915,13 +1966,13 @@ class Scratch3BoostBlocks {
     _getTiltAngle (direction) {
         switch (direction) {
         case BoostTiltDirection.UP:
-            return this._peripheral.tiltY > 45 ? 256 - this._peripheral.tiltY : -this._peripheral.tiltY;
+            return this._peripheral.tiltY > 90 ? 256 - this._peripheral.tiltY : -this._peripheral.tiltY;
         case BoostTiltDirection.DOWN:
-            return this._peripheral.tiltY > 45 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
+            return this._peripheral.tiltY > 90 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
         case BoostTiltDirection.LEFT:
-            return this._peripheral.tiltX > 45 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
+            return this._peripheral.tiltX > 90 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
         case BoostTiltDirection.RIGHT:
-            return this._peripheral.tiltX > 45 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
+            return this._peripheral.tiltX > 90 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
