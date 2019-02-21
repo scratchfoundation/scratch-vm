@@ -66,7 +66,6 @@ const BoostIO = {
  * @enum {number}
  */
 const BoostOutputCommandFeedback = {
-    // TODO: Figure out if this enum is necessary or if we're always just sending 0x81
     BUFFER_EMPTY_COMMAND_IN_PROGRESS: 0x01,
     BUFFER_EMPTY_COMMAND_COMPLETED: 0x02,
     CURRENT_COMMAND_DISCARDED: 0x04,
@@ -109,6 +108,8 @@ const BoostMessage = {
     HUB_ALERTS: 0x03,
     HUB_ATTACHED_IO: 0x04,
     ERROR: 0x05,
+    PORT_INPUT_FORMAT_SETUP_SINGLE: 0x41,
+    PORT_INPUT_FORMAT_SETUP_COMBINED: 0x42,
     PORT_INFORMATION: 0x43,
     PORT_MODEINFORMATION: 0x44,
     PORT_VALUE: 0x45,
@@ -142,6 +143,51 @@ const BoostOutputSubCommand = {
 }
 
 /**
+ * Enum for Startup/Completion information for an output command.
+ * Startup and completion bytes must be OR'ed to be combined to a single byte.
+ * @readonly
+ * @enum {number}
+ */
+
+const BoostOutputExecution = {
+    // Startup information
+    BUFFER_IF_NECESSARY: 0x00,
+    EXECUTE_IMMEDIATELY: 0x10,
+    // Completion information
+    NO_ACTION: 0x00,
+    COMMAND_FEEDBACK: 0x01,
+
+
+}
+
+
+
+/**
+ * Enum for Boost Motor end states
+ * @readonly
+ * @enum {number}
+ */
+
+const BoostMotorEndState = {
+    FLOAT: 0,
+    HOLD: 126,
+    BRAKE: 127 
+}
+
+/**
+ * Enum for Boost Motor Acceleration/Deceleration profiles
+ * @readyonly
+ * @enum {number}
+ */
+
+const BoostMotorProfile = {
+    DO_NOT_USE: 0x00,
+    ACCELERATION: 0x01,
+    DECELERATION: 0x02
+}
+
+
+/**
  * Enum for when Boost IO's are attached/detached
  * @readonly
  * @enum {number}
@@ -161,7 +207,8 @@ const BoostMode = {
     TILT: 0, // angle (pitch/yaw)
     LED: 1, // Set LED to accept RGB values
     COLOR: 0, // Read indexed colors from Vision Sensor
-    MOTOR: 2, // Set motors to report their position
+    MOTOR_SENSOR: 2, // Set motors to report their position
+    MOTOR_OUTPUT: 0,
     UNKNOWN: 0 // Anything else will use the default mode (mode 0)
 };
 
@@ -401,7 +448,7 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
-            0x00,
+            BoostMode.MOTOR_OUTPUT,
             [this._power * this._direction] // power in range 0-100
         );
 
@@ -433,14 +480,13 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            0x0B,
+            BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
             null,
             numberToInt32Array(degrees).concat(
-            [
-            this._power * this._direction, // power in range 0-100
-            0xff, // max speed
-            0x00,
-            0x03])
+            [this._power * this._direction, // power in range 0-100
+            0xFF, // max speed
+            BoostMotorEndState.FLOAT, 
+            BoostMotorProfile.DO_NOT_USE]) // byte for using acceleration/braking profile
         );
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
@@ -458,8 +504,8 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostMessage.MOTOR_POWER,
-            0x00,
-            [127] // 127 = break
+            BoostMode.MOTOR_OUTPUT,
+            [BoostMotorEndState.BRAKE]
         );
 
         this._parent.send(BLECharacteristic, cmd);
@@ -478,8 +524,8 @@ class BoostMotor {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostMessage.MOTOR_POWER,
-            0x00,
-            [0] // 0 = stop
+            BoostMode.MOTOR_OUTPUT,
+            [BoostMotorEndState.FLOAT]
         );
 
         this._parent.send(BLECharacteristic, cmd, useLimiter);
@@ -802,12 +848,11 @@ class Boost {
      * @return {array}            - a generated output command.
      */
     generateOutputCommand (portID, subCommandID = BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA, mode=null, values = null) {
-        let command = [0x00, BoostMessage.OUTPUT];
+        let command = [0x00 /* Hub ID (always 0 for now) */, BoostMessage.OUTPUT];
         if (values) {
-            command = command.concat(
-                portID
-            ).concat(
-                0x11 // Execute immediately TODO: Use enum!
+            command = command.concat(portID).concat(
+                BoostOutputExecution.EXECUTE_IMMEDIATELY ^
+                BoostOutputExecution.COMMAND_FEEDBACK
             );
 
             if(subCommandID) {
@@ -841,7 +886,7 @@ class Boost {
     generateInputCommand (portID, mode, delta, enableNotifications) {
         var command = [
             0x00, // Hub ID
-            0x41, // Message Type (Port Input Format Setup (Single)) TODO: Use enum
+            BoostMessage.PORT_INPUT_FORMAT_SETUP_SINGLE,
             portID,
             mode,
         ].concat(numberToInt32Array(delta)).concat([
@@ -985,7 +1030,7 @@ class Boost {
         switch(type) {
             case BoostIO.MOTORINT:
             case BoostIO.MOTOREXT:
-                typeString = 'MOTOR'
+                typeString = 'MOTOR_SENSOR'
                 break;
             case BoostIO.COLOR:
                 typeString = 'COLOR'
@@ -1896,7 +1941,6 @@ class Scratch3BoostBlocks {
      */
     getMotorPosition (args) {
         switch(args.MOTOR_REPORTER_ID) {
-            // TODO: Handle negative rotation.
             case BoostMotorLabel.A:
                 return this._peripheral._motors[BoostPort.A].position - this._peripheral._motors[BoostPort.A].positionZero
             case BoostMotorLabel.B:
