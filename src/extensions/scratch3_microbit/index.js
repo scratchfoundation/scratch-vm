@@ -299,7 +299,7 @@ class MicroBit {
      */
     _onConnect () {
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this._onMessage);
-        this._timeoutID = window.setInterval(
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
@@ -330,7 +330,7 @@ class MicroBit {
 
         // cancel disconnect timeout and start a new one
         window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
