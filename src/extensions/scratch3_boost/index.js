@@ -328,7 +328,7 @@ class BoostMotor {
          * @type {Object}
          * @private
          */
-        this._pendingPromiseFunction = true;
+        this._pendingPromiseFunction = null;
 
         this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
@@ -447,10 +447,11 @@ class BoostMotor {
         if (this._power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
-            BoostMode.MOTOR_OUTPUT,
-            [this._power * this._direction] // power in range 0-100
-        );
+            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
+            BoostOutputSubCommand.START_SPEED,
+            [this._power * this._direction,
+            this._power * this._direction,
+            BoostMotorProfile.DO_NOT_USE]);
 
         this._parent.send(BLECharacteristic, cmd);
 
@@ -480,13 +481,13 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
+            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
-            null,
-            numberToInt32Array(degrees).concat(
-            [this._power * this._direction, // power in range 0-100
+            [...numberToInt32Array(degrees),
+            this._power * this._direction, // power in range 0-100
             0xFF, // max speed
             BoostMotorEndState.FLOAT, 
-            BoostMotorProfile.DO_NOT_USE]) // byte for using acceleration/braking profile
+            BoostMotorProfile.DO_NOT_USE] // byte for using acceleration/braking profile
         );
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
@@ -503,9 +504,11 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostMessage.MOTOR_POWER,
-            BoostMode.MOTOR_OUTPUT,
-            [BoostMotorEndState.BRAKE]
+            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
+            BoostOutputSubCommand.START_SPEED,
+            [BoostMotorEndState.FLOAT,
+            BoostMotorEndState.FLOAT,
+            BoostMotorProfile.DO_NOT_USE]
         );
 
         this._parent.send(BLECharacteristic, cmd);
@@ -523,9 +526,11 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostMessage.MOTOR_POWER,
-            BoostMode.MOTOR_OUTPUT,
-            [BoostMotorEndState.FLOAT]
+            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
+            BoostOutputSubCommand.START_SPEED,
+            [BoostMotorEndState.FLOAT,
+            BoostMotorEndState.FLOAT,
+            BoostMotorProfile.DO_NOT_USE]
         );
 
         this._parent.send(BLECharacteristic, cmd, useLimiter);
@@ -706,9 +711,10 @@ class Boost {
 
         const cmd = this.generateOutputCommand(
             this._ports.indexOf(BoostIO.LED),
+            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
-            BoostMode.LED,
-            rgb
+            [BoostMode.LED,
+            ...rgb]
         );
 
         return this.send(BLECharacteristic, cmd);
@@ -724,21 +730,6 @@ class Boost {
             BoostMode.LED,
             0,
             false
-        );
-
-        return this.send(BLECharacteristic, cmd);
-    }
-
-    /**
-     * Switch off the LED on the Boost.
-     * @return {Promise} - a promise of the completion of the stop led send operation.
-     */
-    stopLED () {
-        const cmd = this.generateOutputCommand(
-            this._ports.indexOf(BoostIO.LED),
-            BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
-            BoostUnit.LED,
-            [0, 0, 0]
         );
 
         return this.send(BLECharacteristic, cmd);
@@ -837,34 +828,19 @@ class Boost {
 
     /**
      * Generate a Boost 'Output Command' in the byte array format
-     * (CONNECT ID, COMMAND ID, NUMBER OF BYTES, VALUES ...).
+     * (COMMON HEADER, PORT ID, EXECUTION BYTE, SUBCOMMAND ID, PAYLOAD).
      *
-     * This sends a command to the Boost to actuate the specified outputs.
+     * Payload is accepted as an array since these vary across different subcommands.
      *
      * @param  {number} portID - the port (Connect ID) to send a command to.
-     * @param  {number} subCommandID - the id of the byte command.
-     * @param  {number} mode      - the mode
-     * @param  {array}  values    - the list of values to write to the command.
+     * @param  {number} execution - Byte containing startup/completion information
+     * @param  {number} subCommandID - the id of the subcommand byte.
+     * @param  {array}  payload    - the list of bytes to send as subcommand payload
      * @return {array}            - a generated output command.
      */
-    generateOutputCommand (portID, subCommandID = BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA, mode=null, values = null) {
-        let command = [0x00 /* Hub ID (always 0 for now) */, BoostMessage.OUTPUT];
-        if (values) {
-            command = command.concat(portID).concat(
-                BoostOutputExecution.EXECUTE_IMMEDIATELY ^
-                BoostOutputExecution.COMMAND_FEEDBACK
-            );
-
-            if(subCommandID) {
-                command = command.concat(subCommandID);
-            }
-            if(mode !== null) {
-                command = command.concat(mode)
-            }
-            command = command.concat(
-                values
-            );
-        }
+    generateOutputCommand (portID, execution, subCommand, payload) {
+        let hubID = 0x00
+        let command = [hubID, BoostMessage.OUTPUT, portID, execution, subCommand, ...payload]
         command.unshift(command.length +1)
         return command;
     }
@@ -988,10 +964,12 @@ class Boost {
                 switch(feedback) {
                     case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
                     case BoostOutputCommandFeedback.CURRENT_COMMAND_DISCARDED ^ BoostOutputCommandFeedback.IDLE: // Resolve even if command didn't complete successfully
-                        if(this._motors[portID]) {
+                        if(this._motors[portID] && this._motors[portID].pendingPromiseFunction) {
                             this._motors[portID].pendingPromiseFunction();
-                            break;
                         }
+                        break;
+                    case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS:
+                        break;
                     default:
                         console.log(buf2hex(data))
                         console.log("Got it but didn't find a motor on: " + portID)
