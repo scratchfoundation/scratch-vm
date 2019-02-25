@@ -87,7 +87,7 @@ var VirtualMachine =
 /************************************************************************/
 /******/ ({
 
-/***/ 40:
+/***/ 42:
 /***/ (function(module, exports) {
 
 /**
@@ -215,7 +215,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(40),
+var _require = __webpack_require__(42),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -832,7 +832,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * Video motion sensing primitives.
  */
-var _require = __webpack_require__(40),
+var _require = __webpack_require__(42),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 /**
