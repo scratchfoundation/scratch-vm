@@ -22,16 +22,14 @@ const log = require('../../util/log');
 const iconURI = 'data:image/png;base64,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';
 
 /**
- * Boost BLE service UUID.
- * @type {string}
+ * Boost BLE UUIDs.
+ * @enum {string}
  */
-const BLEService = '00001623-1212-efde-1623-785feabcd123';
 
-/**
- * Boost BLE characteristic UUID.
- * @type {string}
- */
-const BLECharacteristic = '00001624-1212-efde-1623-785feabcd123';
+const BoostBLE = {
+    service: '00001623-1212-efde-1623-785feabcd123',
+    characteristic: '00001624-1212-efde-1623-785feabcd123'
+}
 
 /**
  * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
@@ -51,13 +49,23 @@ const BLESendRateMax = 20;
  * @enum {number}
  */
 const BoostIO = {
-    MOTORINT: 0x27,
-    MOTOREXT: 0x26,
-    LED: 0x17,
-    TILT: 0x28,
-    COLOR: 0x25,
+    MOTOR_WEDO: 0x01,
+    MOTOR_SYSTEM: 0x02,
+    BUTTON: 0x05,
+    LIGHT: 0x08,
+    LIGHT1:0x09,
+    LIGHT2:0x0A,
     VOLTAGE: 0x14,
-    CURRENT: 0x15, 
+    CURRENT: 0x15,
+    PIEZO: 0x16,
+    LED: 0x17,
+    TILT_EXTERNAL: 0x22,
+    MOTION_SENSOR: 0x23,
+    COLOR: 0x25,
+    MOTOREXT: 0x26,
+    MOTORINT: 0x27,
+    TILT: 0x28,
+    
 };
 
 /**
@@ -86,6 +94,11 @@ const BoostPort = {
     D: 2
 };
 
+/**
+ * Enum for indexed colors read by the Boost Vision Sensor
+ * @readonly
+ * @enum {number}
+ */
 const BoostColor = {
     NONE: 255,
     RED: 9,
@@ -101,7 +114,6 @@ const BoostColor = {
  * @readonly
  * @enum {number}
  */
-
 const BoostMessage = {
     HUB_PROPERTIES: 0x01,
     HUB_ACTIONS: 0x02,
@@ -125,7 +137,6 @@ const BoostMessage = {
  * @readonly
  * @enum {number}
  */
-
 const BoostOutputSubCommand = {
     START_POWER_PAIR: 0x02,
     SET_ACC_TIME: 0x05,
@@ -148,7 +159,6 @@ const BoostOutputSubCommand = {
  * @readonly
  * @enum {number}
  */
-
 const BoostOutputExecution = {
     // Startup information
     BUFFER_IF_NECESSARY: 0x00,
@@ -156,8 +166,6 @@ const BoostOutputExecution = {
     // Completion information
     NO_ACTION: 0x00,
     COMMAND_FEEDBACK: 0x01,
-
-
 }
 
 
@@ -167,7 +175,6 @@ const BoostOutputExecution = {
  * @readonly
  * @enum {number}
  */
-
 const BoostMotorEndState = {
     FLOAT: 0,
     HOLD: 126,
@@ -175,11 +182,10 @@ const BoostMotorEndState = {
 }
 
 /**
- * Enum for Boost Motor Acceleration/Deceleration profiles
+ * Enum for Boost Motor acceleration/deceleration profiles
  * @readyonly
  * @enum {number}
  */
-
 const BoostMotorProfile = {
     DO_NOT_USE: 0x00,
     ACCELERATION: 0x01,
@@ -192,7 +198,6 @@ const BoostMotorProfile = {
  * @readonly
  * @enum {number}
  */
-
 const BoostIOEvent = {
     ATTACHED: 0x01,
     DETACHED: 0x00,
@@ -200,7 +205,7 @@ const BoostIOEvent = {
 }
 
 /**
- * Enum for modes for input sensors on the Boost.
+ * Enum for selected sensor modes.
  * @enum {number}
  */
 const BoostMode = {
@@ -208,7 +213,6 @@ const BoostMode = {
     LED: 1, // Set LED to accept RGB values
     COLOR: 0, // Read indexed colors from Vision Sensor
     MOTOR_SENSOR: 2, // Set motors to report their position
-    MOTOR_OUTPUT: 0,
     UNKNOWN: 0 // Anything else will use the default mode (mode 0)
 };
 
@@ -384,28 +388,28 @@ class BoostMotor {
     }
 
     /**
-     * @return {int} - 
+     * @return {int} - this motor's current position, in the range of [-MIN_INT32,MAX_INT32]
      */
     get position () {
         return this._position;
     }
 
     /**
-     * @param {int} value - 
+     * @param {int} value - set this motor's current position.
      */
     set position (value) {
         this._position = value;
     }
 
     /**
-     * @return {int} - 
+     * @return {int} - this motor's current zero position, which the current position is relative to. 
      */
     get positionZero () {
         return this._positionZero;
     }
 
     /**
-     * @param {int} value - 
+     * @param {int} value - set this motor's zero position.
      */
     set positionZero (value) {
         this._positionZero = value;
@@ -450,10 +454,10 @@ class BoostMotor {
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED,
             [this._power * this._direction,
-            this._power * this._direction,
+            this._power* this._direction,
             BoostMotorProfile.DO_NOT_USE]);
 
-        this._parent.send(BLECharacteristic, cmd);
+        this._parent.send(BoostBLE.characteristic, cmd);
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
         this._clearTimeout();
@@ -485,19 +489,19 @@ class BoostMotor {
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
             [...numberToInt32Array(degrees),
             this._power * this._direction, // power in range 0-100
-            0xFF, // max speed
-            BoostMotorEndState.FLOAT, 
+            this._power * this._direction, // max speed
+            BoostMotorEndState.BRAKE, 
             BoostMotorProfile.DO_NOT_USE] // byte for using acceleration/braking profile
         );
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
-
-        this._parent.send(BLECharacteristic, cmd);        
+        this._parent.send(BoostBLE.characteristic, cmd);        
     }    
 
     /**
      * Start active braking on this motor. After a short time, the motor will turn off.
      * // TODO: rename this to coastAfter?
+     * // TODO: eliminate this function by changing turnOff() to use BoostMotorEndState.BRAKE?
      */
     startBraking () {
         if (this._power === 0) return;
@@ -511,7 +515,7 @@ class BoostMotor {
             BoostMotorProfile.DO_NOT_USE]
         );
 
-        this._parent.send(BLECharacteristic, cmd);
+        this._parent.send(BoostBLE.characteristic, cmd);
 
         this._status = BoostOutputCommandFeedback.IDLE;
         this._setNewTimeout(this.turnOff, BoostMotor.BRAKE_TIME_MS);
@@ -533,7 +537,7 @@ class BoostMotor {
             BoostMotorProfile.DO_NOT_USE]
         );
 
-        this._parent.send(BLECharacteristic, cmd, useLimiter);
+        this._parent.send(BoostBLE.characteristic, cmd, useLimiter);
 
         this._status = BoostOutputCommandFeedback.IDLE;
     }
@@ -615,7 +619,6 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            distance: 0,
             color: 0,
         };
 
@@ -662,10 +665,11 @@ class Boost {
 
     /**
      * @return {number} - the latest value received from the distance sensor.
-     */
+    *//*
     get distance () {
         return this._sensors.distance;
     }
+    */
 
     /**
      * @return {number} - the latest color value received from the vision sensor.
@@ -717,7 +721,7 @@ class Boost {
             ...rgb]
         );
 
-        return this.send(BLECharacteristic, cmd);
+        return this.send(BoostBLE.characteristic, cmd);
     }
 
     /**
@@ -732,7 +736,7 @@ class Boost {
             false
         );
 
-        return this.send(BLECharacteristic, cmd);
+        return this.send(BoostBLE.characteristic, cmd);
     }
 
     /**
@@ -752,7 +756,7 @@ class Boost {
         }
         this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
-                services: [BLEService],
+                services: [BoostBLE.service],
                 manufacturerData: {
                     0: {
                         dataPrefix: [0x97, 0x03, 0x00, 0x40],
@@ -783,7 +787,6 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            distance: 0,
             color: 0
         };
 
@@ -819,7 +822,7 @@ class Boost {
         }
 
         return this._ble.write(
-            BLEService,
+            BoostBLE.service,
             uuid,
             Base64Util.uint8ArrayToBase64(message),
             'base64'
@@ -880,8 +883,8 @@ class Boost {
      */
     _onConnect () {
         this._ble.startNotifications(
-            BLEService,
-            BLECharacteristic,
+            BoostBLE.service,
+            BoostBLE.characteristic,
             this._onMessage
         );
     }
@@ -918,7 +921,7 @@ class Boost {
             const event = data[4]
             const typeId = data[5]
             
-            switch (event) {
+                switch (event) {
                     case BoostIOEvent.ATTACHED:
                         this._registerSensorOrMotor(portID, typeId)
                         break;
@@ -949,6 +952,7 @@ class Boost {
                         if (value > 0x7fffffff) {
                             value = value - 0x100000000;
                         }*/
+                        //console.log(data)
                         this._motors[portID]._position = int32ArrayToNumber(data.slice(4,8))
                         break;
                     case BoostIO.CURRENT:
@@ -971,18 +975,16 @@ class Boost {
                     case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS:
                         break;
                     default:
-                        console.log(buf2hex(data))
                         console.log("Got it but didn't find a motor on: " + portID)
                 }
                 break;
-            case BoostMessage.PORT_INPUT_FORMAT:
             case BoostMessage.ERROR:
                 //DEBUG
-                console.log(buf2hex(data))
+                console.log("Error in BLE message: " + buf2hex(data))
                 break;
             default:
                 //DEBUG
-                console.log(buf2hex(data))                
+                //console.log(buf2hex(data))                
         }
     }
 
@@ -998,45 +1000,48 @@ class Boost {
         // Record which port is connected to what type of device
         this._ports[portID] = type;
 
+
         // Record motor port
         if (type === BoostIO.MOTORINT || type === BoostIO.MOTOREXT) {
             this._motors[portID] = new BoostMotor(this, portID);
         } 
 
         // Set input format for tilt or distance sensor
-        var typeString = ''
+
+        var m = null
+
         switch(type) {
             case BoostIO.MOTORINT:
             case BoostIO.MOTOREXT:
-                typeString = 'MOTOR_SENSOR'
+                m = BoostMode.MOTOR_SENSOR
                 break;
             case BoostIO.COLOR:
-                typeString = 'COLOR'
+                m = BoostMode.COLOR
                 break;
             case BoostIO.LED:
-                typeString = 'LED'
+                m = BoostMode.LED
                 this.setLEDMode();
                 this.setLED(0x00FF00);
                 break;
             case BoostIO.TILT:
-                typeString = 'TILT'
+                m = BoostMode.TILT
                 break;
             default:
-                typeString = 'UNKNOWN'
+                m = BoostMode.UNKNOWN
         }
         
         const cmd = this.generateInputCommand(
             portID,
-            BoostMode[typeString],
+            m,
             1,
             true
         );
 
-        this.send(BLECharacteristic, cmd);
+        this.send(BoostBLE.characteristic, cmd);
     }
 
     /**
-     * Clear the sensor or motor present at port 1 or 2.
+     * Clear the sensors or motors present on the ports.
      * @param {number} portID - the port to clear.
      * @private
      */
@@ -1045,8 +1050,8 @@ class Boost {
         if (type === BoostIO.TILT) {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
-        if (type === BoostIO.DISTANCE) {
-            this._sensors.distance = 0;
+        if (type === BoostIO.COLOR) {
+            this._sensors.color = 0;
         }
         this._ports[portID] = 'none';
         this._motors[portID] = null;
@@ -1219,7 +1224,7 @@ class Scratch3BoostBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: BoostMotorLabel.A
+                            defaultValue: BoostMotorLabel.ALL
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -1355,7 +1360,7 @@ class Scratch3BoostBlocks {
                         description: 'the value returned by the distance sensor'
                     }),
                     blockType: BlockType.REPORTER
-                },
+                },*/
                 {
                     opcode: 'isTilted',
                     text: formatMessage({
@@ -1371,7 +1376,7 @@ class Scratch3BoostBlocks {
                             defaultValue: BoostTiltDirection.ANY
                         }
                     }
-                },*/
+                },
                 {
                     opcode: 'getTiltAngle',
                     text: formatMessage({
@@ -1918,19 +1923,29 @@ class Scratch3BoostBlocks {
      * @return {number} 
      */
     getMotorPosition (args) {
+        var portID = null
         switch(args.MOTOR_REPORTER_ID) {
+            
             case BoostMotorLabel.A:
-                return this._peripheral._motors[BoostPort.A].position - this._peripheral._motors[BoostPort.A].positionZero
+                portID = BoostPort.A
+                break;
             case BoostMotorLabel.B:
-                return this._peripheral._motors[BoostPort.B].position - this._peripheral._motors[BoostPort.B].positionZero
+                portID = BoostPort.B
+                break;
             case BoostMotorLabel.C:
-                return this._peripheral._motors[BoostPort.C].position - this._peripheral._motors[BoostPort.C].positionZero
+                portID = BoostPort.C
+                break;
             case BoostMotorLabel.D:
-                return this._peripheral._motors[BoostPort.D].position - this._peripheral._motors[BoostPort.D].positionZero
+                portID = BoostPort.D
+                break;
             default:
                 log.warn("Asked for a motor position that doesnt exist!")
                 return false;
         }
+        if(portID && this._peripheral._motors[portID]) {
+            return this._peripheral._motors[portID].position - this._peripheral._motors[portID].positionZero
+        }
+        return false;
     }        
 
     /**
