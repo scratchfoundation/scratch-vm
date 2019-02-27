@@ -1387,9 +1387,9 @@ class Scratch3BoostBlocks {
                     blockType: BlockType.HAT,
                     arguments: {
                         COLOR: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.STRING,
                             menu: 'COLOR',
-                            defaultValue: BoostColor.RED
+                            defaultValue: 'red'
                         }
                     }
                 },
@@ -1582,37 +1582,42 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.color.red',
-                            default: 'red'
+                            default: 'red',
+                            description: 'red'
                         }),
-                        value: BoostColor.RED
+                        value: 'red'
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.blue',
-                            default: 'blue'
+                            default: 'blue',
+                            description: 'blue'
                         }),
-                        value: BoostColor.BLUE
+                        value: 'blue'
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.green',
-                            default: 'green'
+                            default: 'green',
+                            description: 'green'
                         }),
-                        value: BoostColor.GREEN
+                        value: 'green'
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.yellow',
-                            default: 'yellow'
+                            default: 'yellow',
+                            description: 'yellow'
                         }),
-                        value: BoostColor.YELLOW
+                        value: 'yellow'
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.white',
-                            default: 'white'
+                            default: 'white',
+                            desription: 'white'
                         }),
-                        value: BoostColor.WHITE
+                        value: 'white'
                     },
                     {
                         text: formatMessage({
@@ -1620,7 +1625,7 @@ class Scratch3BoostBlocks {
                             default: 'black',
                             description: 'black'
                         }),
-                        value: BoostColor.BLACK
+                        value: 'black'
                     }
                 ],
                 OP: ['<', '>']
@@ -1900,7 +1905,8 @@ class Scratch3BoostBlocks {
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
      */
     getColor () {
-        return this._peripheral.color;
+        //return this._peripheral.color;
+        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color).toLowerCase()
     }    
 
     /**
