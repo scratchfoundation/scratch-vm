@@ -1254,17 +1254,17 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
-                    opcode: 'motorZero',
+                    opcode: 'getMotorPosition',
                     text: formatMessage({
-                        id: 'boost.motorZero',
-                        default: 'reset motor position [MOTOR_ID]',
-                        description: 'set a motor\'s position to 0'
+                        id: 'boost.getMotorPosition',
+                        default: 'motor position [MOTOR_REPORTER_ID]',
+                        description: 'the position returned by the motor'
                     }),
-                    blockType: BlockType.COMMAND,
+                    blockType: BlockType.REPORTER,
                     arguments: {
-                        MOTOR_ID: {
+                        MOTOR_REPORTER_ID: {
                             type: ArgumentType.STRING,
-                            menu: 'MOTOR_ID',
+                            menu: 'MOTOR_REPORTER_ID',
                             defaultValue: BoostMotorLabel.A
                         }
                     }
@@ -1318,23 +1318,7 @@ class Scratch3BoostBlocks {
                             defaultValue: 50
                         }
                     }
-                },*/
-                {
-                    opcode: 'whenColor',
-                    text: formatMessage({
-                        id: 'boost.whenColor',
-                        default: 'when color [COLOR]',
-                        description: 'check for when color'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        COLOR: {
-                            type: ArgumentType.NUMBER,
-                            menu: 'COLOR',
-                            defaultValue: BoostColor.RED
-                        }
-                    }
-                },                
+                },*/                
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
@@ -1394,6 +1378,22 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
+                    opcode: 'whenColor',
+                    text: formatMessage({
+                        id: 'boost.whenColor',
+                        default: 'when color [COLOR]',
+                        description: 'check for when color'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'COLOR',
+                            defaultValue: BoostColor.RED
+                        }
+                    }
+                },
+                {
                     opcode: 'getColor',
                     text: formatMessage({
                         id: 'boost.getColor',
@@ -1401,22 +1401,6 @@ class Scratch3BoostBlocks {
                         description: 'the color returned by the vision sensor'
                     }),
                     blockType: BlockType.REPORTER
-                },
-                {
-                    opcode: 'getMotorPosition',
-                    text: formatMessage({
-                        id: 'boost.getMotorPosition',
-                        default: 'motor position [MOTOR_REPORTER_ID]',
-                        description: 'the position returned by the motor'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        MOTOR_REPORTER_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'MOTOR_REPORTER_ID',
-                            defaultValue: BoostMotorLabel.A
-                        }
-                    }
                 }
             ],
             menus: {
@@ -1943,7 +1927,7 @@ class Scratch3BoostBlocks {
                 return false;
         }
         if(portID && this._peripheral._motors[portID]) {
-            return this._peripheral._motors[portID].position - this._peripheral._motors[portID].positionZero
+            return MathUtil.wrapClamp(this._peripheral._motors[portID].position,0,360);
         }
         return false;
     }        
