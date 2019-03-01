@@ -139,7 +139,7 @@ class MicroBit {
         this._busy = false;
 
         /**
-         * A task queue to track timed tasks over the socket.
+         * A task queue to track communication tasks sent over the socket.
          * The max tokens for the task queue bucket is set to 1, the refill rate
          * is set to 10/second.  The max total cost is set to 30, meaning that the
          * task queue will not add any new tasks if it contains tasks adding up to
