@@ -19,7 +19,7 @@ const log = require('../../util/log');
  * @type {string}
  */
 // eslint-disable-next-line max-len
-const iconURI = 'data:image/png;base64,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';
+const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5zwKfAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAACpQTFRF////fIel5ufolZ62/2YavsPS+YZOkJmy9/j53+Hk6+zs6N/b6dfO////tDhMHAAAAA50Uk5T/////////////////wBFwNzIAAAA6ElEQVR42uzX2w6DIBAEUGDVtlr//3dLaLwgiwUd2z7MJPJg5EQWiGhGcAxBggQJEiT436CIfqXJPTn3MKNYYMSDFpoAmp24OaYgvwKnFgL2zvVTCwHrMoMi+nUQLFthaNCCa0iwclLkDgYVsQp0mzxuqXgK1MRzoCLWgkPXNN2wI/q6Kvt7u/cX0HtejN8x2sXpnpb8J8D3b0Keuhh3X975M+i0xNVbg3s1TIasgK21bQyGO+s2PykaGMYbge8KrNrssvkOWDXkErB8UuBHETjoYLkKBA8ZfuDkbwVBggQJEiR4MC8BBgDTtMZLx2nFCQAAAABJRU5ErkJggg==';
 
 /**
  * Boost BLE UUIDs.
@@ -454,7 +454,7 @@ class BoostMotor {
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED,
             [this._power * this._direction,
-            this._power* this._direction,
+            this._power * this._direction,
             BoostMotorProfile.DO_NOT_USE]);
 
         this._parent.send(BoostBLE.characteristic, cmd);
@@ -787,7 +787,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: 0
+            color: 0,
+            oldColor: 0,
         };
 
         if (this._ble) {
@@ -1097,6 +1098,21 @@ const BoostTiltDirection = {
 };
 
 /**
+ * Enum for vision sensor colors.
+ * @readonly
+ * @enum {string}
+ */
+const BoostColorLabel = {
+    ANY: 'any',
+    RED: 'red',
+    BLUE: 'blue',
+    GREEN: 'green',
+    YELLOW: 'yellow',
+    BLACK: 'black',
+    WHITE: 'white'
+};
+
+/**
  * Scratch 3.0 blocks to interact with a LEGO Boost peripheral.
  */
 class Scratch3BoostBlocks {
@@ -1270,55 +1286,30 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
-                    opcode: 'setLightHue',
+                    opcode: 'whenColor',
                     text: formatMessage({
-                        id: 'boost.setLightHue',
-                        default: 'set light color to [HUE]',
-                        description: 'set the LED color'
+                        id: 'boost.whenColor',
+                        default: 'when color [COLOR]',
+                        description: 'check for when color'
                     }),
-                    blockType: BlockType.COMMAND,
+                    blockType: BlockType.HAT,
                     arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
+                        COLOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'COLOR',
+                            defaultValue: BoostColorLabel.ANY
                         }
                     }
                 },
                 {
-                    opcode: 'changeLightHueBy',
+                    opcode: 'getColor',
                     text: formatMessage({
-                        id: 'boost.changeLightHueBy',
-                        default: 'change light color by [HUE]',
-                        description: 'change the LED color by a given amount'
+                        id: 'boost.getColor',
+                        default: 'color',
+                        description: 'the color returned by the vision sensor'
                     }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 5
-                        }
-                    }
-                },                
-                /*{
-                    opcode: 'whenDistance',
-                    text: formatMessage({
-                        id: 'boost.whenDistance',
-                        default: 'when distance [OP] [REFERENCE]',
-                        description: 'check for when distance is < or > than reference'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        OP: {
-                            type: ArgumentType.STRING,
-                            menu: 'OP',
-                            defaultValue: '<'
-                        },
-                        REFERENCE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                },*/                
+                    blockType: BlockType.REPORTER
+                },
                 {
                     opcode: 'whenTilted',
                     text: formatMessage({
@@ -1378,30 +1369,55 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
-                    opcode: 'whenColor',
+                    opcode: 'setLightHue',
                     text: formatMessage({
-                        id: 'boost.whenColor',
-                        default: 'when color [COLOR]',
-                        description: 'check for when color'
+                        id: 'boost.setLightHue',
+                        default: 'set light color to [HUE]',
+                        description: 'set the LED color'
                     }),
-                    blockType: BlockType.HAT,
+                    blockType: BlockType.COMMAND,
                     arguments: {
-                        COLOR: {
-                            type: ArgumentType.STRING,
-                            menu: 'COLOR',
-                            defaultValue: 'red'
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
                         }
                     }
                 },
                 {
-                    opcode: 'getColor',
+                    opcode: 'changeLightHueBy',
                     text: formatMessage({
-                        id: 'boost.getColor',
-                        default: 'color',
-                        description: 'the color returned by the vision sensor'
+                        id: 'boost.changeLightHueBy',
+                        default: 'change light color by [HUE]',
+                        description: 'change the LED color by a given amount'
                     }),
-                    blockType: BlockType.REPORTER
-                }
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 5
+                        }
+                    }
+                },                
+                /*{
+                    opcode: 'whenDistance',
+                    text: formatMessage({
+                        id: 'boost.whenDistance',
+                        default: 'when distance [OP] [REFERENCE]',
+                        description: 'check for when distance is < or > than reference'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        OP: {
+                            type: ArgumentType.STRING,
+                            menu: 'OP',
+                            defaultValue: '<'
+                        },
+                        REFERENCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 50
+                        }
+                    }
+                },*/                
             ],
             menus: {
                 MOTOR_ID: [
@@ -1582,50 +1598,58 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.color.red',
-                            default: 'red',
-                            description: 'red'
+                            default: BoostColorLabel.RED,
+                            description: BoostColorLabel.RED
                         }),
-                        value: 'red'
+                        value: BoostColorLabel.RED
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.blue',
-                            default: 'blue',
-                            description: 'blue'
+                            default: BoostColorLabel.BLUE,
+                            description: BoostColorLabel.BLUE
                         }),
-                        value: 'blue'
+                        value: BoostColorLabel.BLUE
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.green',
-                            default: 'green',
-                            description: 'green'
+                            default: BoostColorLabel.GREEN,
+                            description: BoostColorLabel.GREEN
                         }),
-                        value: 'green'
+                        value: BoostColorLabel.GREEN
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.yellow',
-                            default: 'yellow',
-                            description: 'yellow'
+                            default: BoostColorLabel.YELLOW,
+                            description: BoostColorLabel.YELLOW
                         }),
-                        value: 'yellow'
+                        value: BoostColorLabel.YELLOW
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.white',
-                            default: 'white',
-                            desription: 'white'
+                            default: BoostColorLabel.WHITE,
+                            desription: BoostColorLabel.WHITE
                         }),
-                        value: 'white'
+                        value: BoostColorLabel.WHITE
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.black',
-                            default: 'black',
-                            description: 'black'
+                            default: BoostColorLabel.BLACK,
+                            description: BoostColorLabel.BLACK
                         }),
-                        value: 'black'
+                        value: BoostColorLabel.BLACK
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'boost.color.any',
+                            default: BoostColorLabel.ANY,
+                            description: BoostColorLabel.ANY
+                        }),
+                        value: BoostColorLabel.ANY
                     }
                 ],
                 OP: ['<', '>']
@@ -1910,6 +1934,31 @@ class Scratch3BoostBlocks {
     }    
 
     /**
+     * Test whether the vision sensor is detecting a certain color.
+     * @param {Color} color - the color to test.
+     * @return {boolean} - true when the color sensor senses the specified color.
+     * @private
+     */
+    _isColor (color) {
+        switch(color) {
+            case BoostColorLabel.ANY:
+                //console.log(this.getColor() + " versus " + Object.keys(BoostColor).find(key => BoostColor[key]).toLowerCase())
+                if(Object.keys(BoostColor).find(key => BoostColor[key]).toLowerCase() != this.getColor()) {
+                    if(this.getColor() == this._peripheral.oldColor) {
+                        return false
+                    } else {
+                        this._peripheral.oldColor = this.getColor()
+                        return true
+                    }
+                }
+                //console.log(this.getColor() != 'none')
+                //return this.getColor() != 'none';
+            default:
+                return this.getColor() == color;
+        }
+    }
+
+    /**
      * @return {number} 
      */
     getMotorPosition (args) {
@@ -1972,16 +2021,6 @@ class Scratch3BoostBlocks {
         default:
             return this._getTiltAngle(direction) >= Scratch3BoostBlocks.TILT_THRESHOLD;
         }
-    }
-
-    /**
-     * Test whether the vision sensor is detecting a certain color.
-     * @param {Color} color - the color to test.
-     * @return {boolean} - true when the color sensor senses the specified color.
-     * @private
-     */
-    _isColor (color) {
-        return this.getColor() == color;
     }
 
     /**
