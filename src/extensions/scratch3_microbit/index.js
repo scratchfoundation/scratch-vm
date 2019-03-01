@@ -140,8 +140,10 @@ class MicroBit {
 
         /**
          * A task queue to track timed tasks over the socket.
-         * TODO: what to set maxTokens?
-         * TODO: what to set refillRate?
+         * The max tokens for the task queue bucket is set to 1, the refill rate
+         * is set to 10/second.  The max total cost is set to 30, meaning that the
+         * task queue will not add any new tasks if it contains tasks adding up to
+         * a cost of 30.
          * @type {TaskQueue}
          */
         this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
@@ -157,6 +159,9 @@ class MicroBit {
         this._onMessage = this._onMessage.bind(this);
     }
 
+    /**
+     * Stop all the communication tasks pending on the task queue.
+     */
     stopAll () {
         console.log('*** STOPALL()');
         console.log('*** TASKQUEUE CANCEL_ALL');
