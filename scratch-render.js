@@ -10540,6 +10540,18 @@ var Skin = function (_EventEmitter) {
     }
 
     /**
+     * Get the bounds of the drawable for determining its fenced position.
+     * @param {Array<number>} drawable - The Drawable instance this skin is using.
+     * @return {!Rectangle} The drawable's bounds.
+     */
+
+  }, {
+    key: 'getFenceBounds',
+    value: function getFenceBounds(drawable) {
+      return drawable.getFastBounds();
+    }
+
+    /**
      * Update and returns the uniforms for this skin.
      * @param {Array<number>} scale - The scaling factors to be used.
      * @returns {object.<string, *>} the shader uniforms to be used when rendering with this Skin.
@@ -12409,6 +12421,9 @@ var RenderWebGL = function (_EventEmitter) {
             throw new Error('Could not get WebGL context: this browser or environment may not support WebGL.');
         }
 
+        /** @type {RenderWebGL.UseGpuModes} */
+        _this._useGpuMode = RenderWebGL.UseGpuModes.Automatic;
+
         /** @type {Drawable[]} */
         _this._allDrawables = [];
 
@@ -12520,6 +12535,17 @@ var RenderWebGL = function (_EventEmitter) {
         key: 'setDebugCanvas',
         value: function setDebugCanvas(canvas) {
             this._debugCanvas = canvas;
+        }
+
+        /**
+         * Control the use of the GPU or CPU paths in `isTouchingColor`.
+         * @param {RenderWebGL.UseGpuModes} useGpuMode - automatically decide, force CPU, or force GPU.
+         */
+
+    }, {
+        key: 'setUseGpuMode',
+        value: function setUseGpuMode(useGpuMode) {
+            this._useGpuMode = useGpuMode;
         }
 
         /**
@@ -13080,9 +13106,16 @@ var RenderWebGL = function (_EventEmitter) {
 
             var bounds = this._candidatesBounds(candidates);
 
-            // if there are just too many pixels to CPU render efficently, we
-            // need to let readPixels happen
-            if (bounds.width * bounds.height * (candidates.length + 1) >= __cpuTouchingColorPixelCount) {
+            var maxPixelsForCPU = this._getMaxPixelsForCPU();
+
+            var debugCanvasContext = this._debugCanvas && this._debugCanvas.getContext('2d');
+            if (debugCanvasContext) {
+                this._debugCanvas.width = bounds.width;
+                this._debugCanvas.height = bounds.height;
+            }
+
+            // if there are just too many pixels to CPU render efficiently, we need to let readPixels happen
+            if (bounds.width * bounds.height * (candidates.length + 1) >= maxPixelsForCPU) {
                 this._isTouchingColorGpuStart(drawableID, candidates.map(function (_ref) {
                     var id = _ref.id;
                     return id;
@@ -13094,24 +13127,42 @@ var RenderWebGL = function (_EventEmitter) {
             var color = __touchingColor;
             var hasMask = Boolean(mask3b);
 
+            // Scratch Space - +y is top
             for (var y = bounds.bottom; y <= bounds.top; y++) {
-                if (bounds.width * (y - bounds.bottom) * (candidates.length + 1) >= __cpuTouchingColorPixelCount) {
+                if (bounds.width * (y - bounds.bottom) * (candidates.length + 1) >= maxPixelsForCPU) {
                     return this._isTouchingColorGpuFin(bounds, color3b, y - bounds.bottom);
                 }
-                // Scratch Space - +y is top
                 for (var x = bounds.left; x <= bounds.right; x++) {
                     point[1] = y;
                     point[0] = x;
-                    if (
-                    // if we use a mask, check our sample color
-                    (hasMask ? maskMatches(Drawable.sampleColor4b(point, drawable, color), mask3b) : drawable.isTouching(point)) &&
-                    // and the target color is drawn at this pixel
-                    colorMatches(RenderWebGL.sampleColor3b(point, candidates, color), color3b, 0)) {
-                        return true;
+                    // if we use a mask, check our sample color...
+                    if (hasMask ? maskMatches(Drawable.sampleColor4b(point, drawable, color), mask3b) : drawable.isTouching(point)) {
+                        RenderWebGL.sampleColor3b(point, candidates, color);
+                        if (debugCanvasContext) {
+                            debugCanvasContext.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
+                            debugCanvasContext.fillRect(x - bounds.left, bounds.bottom - y, 1, 1);
+                        }
+                        // ...and the target color is drawn at this pixel
+                        if (colorMatches(color, color3b, 0)) {
+                            return true;
+                        }
                     }
                 }
             }
             return false;
+        }
+    }, {
+        key: '_getMaxPixelsForCPU',
+        value: function _getMaxPixelsForCPU() {
+            switch (this._useGpuMode) {
+                case RenderWebGL.UseGpuModes.ForceCPU:
+                    return Infinity;
+                case RenderWebGL.UseGpuModes.ForceGPU:
+                    return 0;
+                case RenderWebGL.UseGpuModes.Automatic:
+                default:
+                    return __cpuTouchingColorPixelCount;
+            }
         }
     }, {
         key: '_isTouchingColorGpuStart',
@@ -13712,7 +13763,7 @@ var RenderWebGL = function (_EventEmitter) {
 
             var dx = x - drawable._position[0];
             var dy = y - drawable._position[1];
-            var aabb = drawable.getFastBounds();
+            var aabb = drawable._skin.getFenceBounds(drawable);
             var inset = Math.floor(Math.min(aabb.width, aabb.height) / 2);
 
             var sx = this._xRight - Math.min(FENCE_WIDTH, inset);
@@ -14218,6 +14269,27 @@ var RenderWebGL = function (_EventEmitter) {
 
 RenderWebGL.prototype.canHazPixels = RenderWebGL.prototype.extractDrawable;
 
+/**
+ * Values for setUseGPU()
+ * @enum {string}
+ */
+RenderWebGL.UseGpuModes = {
+    /**
+     * Heuristically decide whether to use the GPU path, the CPU path, or a dynamic mixture of the two.
+     */
+    Automatic: 'Automatic',
+
+    /**
+     * Always use the GPU path.
+     */
+    ForceGPU: 'ForceGPU',
+
+    /**
+     * Always use the CPU path.
+     */
+    ForceCPU: 'ForceCPU'
+};
+
 module.exports = RenderWebGL;
 
 /***/ }),
@@ -14684,6 +14756,18 @@ var BitmapSkin = function (_Skin) {
         // eslint-disable-next-line no-unused-vars
         value: function getTexture(scale) {
             return this._texture;
+        }
+
+        /**
+         * Get the bounds of the drawable for determining its fenced position.
+         * @param {Array<number>} drawable - The Drawable instance this skin is using.
+         * @return {!Rectangle} The drawable's bounds. For compatibility with Scratch 2, we always use getAABB for bitmaps.
+         */
+
+    }, {
+        key: 'getFenceBounds',
+        value: function getFenceBounds(drawable) {
+            return drawable.getAABB();
         }
 
         /**
