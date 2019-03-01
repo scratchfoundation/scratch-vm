@@ -140,10 +140,10 @@ class MicroBit {
 
         /**
          * A task queue to track communication tasks sent over the socket.
-         * The max tokens for the task queue bucket is set to 1, the refill rate
-         * is set to 10/second.  The max total cost is set to 30, meaning that the
-         * task queue will not add any new tasks if it contains tasks adding up to
-         * a cost of 30.
+         * The bucket in this task queue holds 1 task at a time, and refills
+         * at a rate of 10 tasks per second, from a queue that holds at maximum
+         * 30 tasks.  If more than 30 tasks are added to the task queue in a short
+         * period, some tasks may be rejected (ignored) by the task queue.
          * @type {TaskQueue}
          */
         this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
