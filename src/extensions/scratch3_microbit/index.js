@@ -144,7 +144,7 @@ class MicroBit {
          * TODO: what to set refillRate?
          * @type {TaskQueue}
          */
-        this._queue = new TaskQueue(1, 30, {maxTotalCost: 300});
+        this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
 
         /**
          * ID for a timeout which is used to clear the busy flag if it has been
