@@ -1,5 +1,7 @@
 const Timer = require('../util/timer');
 
+const noop = () => {};
+
 /**
  * This class uses the token bucket algorithm to control a queue of tasks.
  */
@@ -46,10 +48,37 @@ class TaskQueue {
      *
      * @param {Function} task - the task to run.
      * @param {number} [cost=1] - the number of tokens this task consumes from the bucket.
-     * @returns {Promise} - a promise for the task's return value.
+     * @returns {Promise} - a promise for the task's return value, or `undefined` if the task gets canceled.
      * @memberof TaskQueue
      */
     do (task, cost = 1) {
+        return this._do(task, false, cost);
+    }
+
+    /**
+     * Wait until the token bucket is full enough, then run the provided task.
+     *
+     * @param {Function} task - the task to run.
+     * @param {number} [cost=1] - the number of tokens this task consumes from the bucket.
+     * @returns {Promise} - a promise for the task's return value. This promise will reject if the task gets canceled.
+     * @memberof TaskQueue
+     */
+    doOrReject (task, cost = 1) {
+        return this._do(task, true, cost);
+    }
+
+    /**
+     * Wait until the token bucket is full enough, then run the provided task.
+     *
+     * @param {Function} task - the task to run.
+     * @param {boolean} rejectOnCancel - choose what happens if the queue cancels this task:
+     *   true: reject the promise returned by this function
+     *   false: resolve the promise returned by this function with a value of `undefined`
+     * @param {number} [cost=1] - the number of tokens this task consumes from the bucket.
+     * @returns {Promise} - a promise for the task's return value.
+     * @memberof TaskQueue
+     */
+    _do (task, rejectOnCancel, cost) {
         if (this._maxTotalCost < Infinity) {
             const currentTotalCost = this._pendingTaskRecords.reduce((t, r) => t + r.cost, 0);
             if (currentTotalCost + cost > this._maxTotalCost) {
@@ -60,9 +89,13 @@ class TaskQueue {
             cost
         };
         newRecord.promise = new Promise((resolve, reject) => {
-            newRecord.cancel = () => {
-                reject(new Error('Task canceled'));
-            };
+            if (rejectOnCancel) {
+                newRecord.cancel = () => {
+                    reject(new Error('Task canceled'));
+                };
+            } else {
+                newRecord.cancel = noop;
+            }
 
             // The caller, `_runTasks()`, is responsible for cost-checking and spending tokens.
             newRecord.wrappedTask = () => {
