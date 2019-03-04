@@ -7,6 +7,7 @@ const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
 const RateLimiter = require('../../util/rateLimiter.js');
+const TaskQueue = require('../../util/task-queue');
 const log = require('../../util/log');
 
 /**
