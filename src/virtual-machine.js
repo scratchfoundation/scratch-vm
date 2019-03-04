@@ -678,7 +678,7 @@ class VirtualMachine extends EventEmitter {
     duplicateSound (soundIndex) {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
-        return loadSound(clone, this.runtime, this.editingTarget.sprite).then(() => {
+        return loadSound(clone, this.runtime, this.editingTarget.sprite.soundBank).then(() => {
             this.editingTarget.addSound(clone, soundIndex + 1);
             this.emitTargetsUpdate();
         });
@@ -723,7 +723,7 @@ class VirtualMachine extends EventEmitter {
         const target = optTargetId ? this.runtime.getTargetById(optTargetId) :
             this.editingTarget;
         if (target) {
-            return loadSound(soundObject, this.runtime, target.sprite).then(() => {
+            return loadSound(soundObject, this.runtime, target.sprite.soundBank).then(() => {
                 target.addSound(soundObject);
                 this.emitTargetsUpdate();
             });
@@ -1250,7 +1250,7 @@ class VirtualMachine extends EventEmitter {
         const originalSound = this.editingTarget.getSounds()[soundIndex];
         const clone = Object.assign({}, originalSound);
         const target = this.runtime.getTargetById(targetId);
-        return loadSound(clone, this.runtime, target.sprite).then(() => {
+        return loadSound(clone, this.runtime, target.sprite.soundBank).then(() => {
             if (target) {
                 target.addSound(clone);
                 this.emitTargetsUpdate();
