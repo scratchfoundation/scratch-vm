@@ -168,8 +168,6 @@ const BoostOutputExecution = {
     COMMAND_FEEDBACK: 0x01,
 }
 
-
-
 /**
  * Enum for Boost Motor end states
  * @readonly
@@ -191,7 +189,6 @@ const BoostMotorProfile = {
     ACCELERATION: 0x01,
     DECELERATION: 0x02
 }
-
 
 /**
  * Enum for when Boost IO's are attached/detached
@@ -291,13 +288,6 @@ class BoostMotor {
         this._position = 0;
 
         /**
-         * This motor's current zero position, which the relative position can be calculated against.
-         * @type {number}
-         * @private
-         */
-        this._positionZero = 0;
-
-        /**
          * Is this motor currently moving?
          * @type {boolean}
          * @private
@@ -334,16 +324,8 @@ class BoostMotor {
          */
         this._pendingPromiseFunction = null;
 
-        this.startBraking = this.startBraking.bind(this);
+        //this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
-    }
-
-    /**
-     * @return {number} - the duration of active braking after a call to startBraking(). Afterward, turn the motor off.
-     * @constructor
-     */
-    static get BRAKE_TIME_MS () {
-        return 1000;
     }
 
     /**
@@ -402,20 +384,6 @@ class BoostMotor {
     }
 
     /**
-     * @return {int} - this motor's current zero position, which the current position is relative to. 
-     */
-    get positionZero () {
-        return this._positionZero;
-    }
-
-    /**
-     * @param {int} value - set this motor's zero position.
-     */
-    set positionZero (value) {
-        this._positionZero = value;
-    }
-
-    /**
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
     get isOn () {
@@ -443,7 +411,6 @@ class BoostMotor {
         return this._pendingPromiseFunction;
     }
 
-
     /**
      * Turn this motor on indefinitely.
      */
@@ -454,8 +421,10 @@ class BoostMotor {
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED,
             [this._power * this._direction,
-            this._power * this._direction,
+            this._power,
             BoostMotorProfile.DO_NOT_USE]);
+        
+        console.log(this._power * this._direction)
 
         this._parent.send(BoostBLE.characteristic, cmd);
 
@@ -472,14 +441,15 @@ class BoostMotor {
 
         milliseconds = Math.max(0, milliseconds);
         this.turnOn();
-        this._setNewTimeout(this.startBraking, milliseconds);
+        this._setNewTimeout(this.turnOff, milliseconds);
     }
 
     /**
      * Turn this motor on for a specific rotation in degrees.
      * @param {number} degrees - run the motor for this amount of degrees.
+     * @param {number} direction - rotate in this direction
      */
-    turnOnForDegrees (degrees) {
+    turnOnForDegrees (degrees, direction) {
         if (this._power === 0) return;
         degrees = Math.max(0, degrees);
 
@@ -488,8 +458,8 @@ class BoostMotor {
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
             [...numberToInt32Array(degrees),
-            this._power * this._direction, // power in range 0-100
-            this._power * this._direction, // max speed
+            this._power * this._direction * direction, // power in range 0-100
+            this._power, // max speed
             BoostMotorEndState.BRAKE, 
             BoostMotorProfile.DO_NOT_USE] // byte for using acceleration/braking profile
         );
@@ -497,29 +467,6 @@ class BoostMotor {
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
         this._parent.send(BoostBLE.characteristic, cmd);        
     }    
-
-    /**
-     * Start active braking on this motor. After a short time, the motor will turn off.
-     * // TODO: rename this to coastAfter?
-     * // TODO: eliminate this function by changing turnOff() to use BoostMotorEndState.BRAKE?
-     */
-    startBraking () {
-        if (this._power === 0) return;
-
-        const cmd = this._parent.generateOutputCommand(
-            this._index,
-            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
-            BoostOutputSubCommand.START_SPEED,
-            [BoostMotorEndState.FLOAT,
-            BoostMotorEndState.FLOAT,
-            BoostMotorProfile.DO_NOT_USE]
-        );
-
-        this._parent.send(BoostBLE.characteristic, cmd);
-
-        this._status = BoostOutputCommandFeedback.IDLE;
-        this._setNewTimeout(this.turnOff, BoostMotor.BRAKE_TIME_MS);
-    }
 
     /**
      * Turn this motor off.
@@ -619,7 +566,7 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: 0,
+            color: BoostColor.NONE,
         };
 
         /*
@@ -662,14 +609,6 @@ class Boost {
     get tiltY () {
         return this._sensors.tiltY;
     }
-
-    /**
-     * @return {number} - the latest value received from the distance sensor.
-    *//*
-    get distance () {
-        return this._sensors.distance;
-    }
-    */
 
     /**
      * @return {number} - the latest color value received from the vision sensor.
@@ -787,8 +726,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: 0,
-            oldColor: 0,
+            color: BoostColor.NONE,
+            oldColor: BoostColor.NONE,
         };
 
         if (this._ble) {
@@ -948,12 +887,6 @@ class Boost {
                         break;
                     case BoostIO.MOTOREXT:
                     case BoostIO.MOTORINT:
-                        // Taken from EV3 extension tacho motor calculation
-                        /*let value = data[4] + (data[5] * 256) + (data[6] * 256 * 256) + (data[7] * 256 * 256 * 256);
-                        if (value > 0x7fffffff) {
-                            value = value - 0x100000000;
-                        }*/
-                        //console.log(data)
                         this._motors[portID]._position = int32ArrayToNumber(data.slice(4,8))
                         break;
                     case BoostIO.CURRENT:
@@ -1009,31 +942,31 @@ class Boost {
 
         // Set input format for tilt or distance sensor
 
-        var m = null
+        var mode = null
 
         switch(type) {
             case BoostIO.MOTORINT:
             case BoostIO.MOTOREXT:
-                m = BoostMode.MOTOR_SENSOR
+                mode = BoostMode.MOTOR_SENSOR
                 break;
             case BoostIO.COLOR:
-                m = BoostMode.COLOR
+                mode = BoostMode.COLOR
                 break;
             case BoostIO.LED:
-                m = BoostMode.LED
+                mode = BoostMode.LED
                 this.setLEDMode();
                 this.setLED(0x00FF00);
                 break;
             case BoostIO.TILT:
-                m = BoostMode.TILT
+                mode = BoostMode.TILT
                 break;
             default:
-                m = BoostMode.UNKNOWN
+                mode = BoostMode.UNKNOWN
         }
         
         const cmd = this.generateInputCommand(
             portID,
-            m,
+            mode,
             1,
             true
         );
@@ -1052,7 +985,7 @@ class Boost {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
         if (type === BoostIO.COLOR) {
-            this._sensors.color = 0;
+            this._sensors.color = BoostColor.NONE;
         }
         this._ports[portID] = 'none';
         this._motors[portID] = null;
@@ -1065,11 +998,10 @@ class Boost {
  * @enum {string}
  */
 const BoostMotorLabel = {
-    DEFAULT: 'motor',
-    A: 'motor A',
-    B: 'motor B',
-    C: 'motor C',
-    D: 'motor D',
+    A: 'A',
+    B: 'B',
+    C: 'C',
+    D: 'D',
     ALL: 'all motors'
 };
 
@@ -1229,11 +1161,11 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
-                    opcode: 'startMotorPower',
+                    opcode: 'setMotorPower',
                     text: formatMessage({
-                        id: 'boost.startMotorPower',
+                        id: 'boost.setMotorPower',
                         default: 'set motor [MOTOR_ID] power to [POWER] %',
-                        description: 'set the motor\'s power and turn it on'
+                        description: 'set the motor\'s power without turning it on'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -1253,7 +1185,7 @@ class Scratch3BoostBlocks {
                     text: formatMessage({
                         id: 'boost.setMotorDirection',
                         default: 'set motor [MOTOR_ID] direction to [MOTOR_DIRECTION]',
-                        description: 'set the motor\'s turn direction'
+                        description: 'set the motor\'s turn direction without turning it on'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -1327,15 +1259,6 @@ class Scratch3BoostBlocks {
                         }
                     }
                 },
-                /*{
-                    opcode: 'getDistance',
-                    text: formatMessage({
-                        id: 'boost.getDistance',
-                        default: 'distance',
-                        description: 'the value returned by the distance sensor'
-                    }),
-                    blockType: BlockType.REPORTER
-                },*/
                 {
                     opcode: 'isTilted',
                     text: formatMessage({
@@ -1397,27 +1320,7 @@ class Scratch3BoostBlocks {
                             defaultValue: 5
                         }
                     }
-                },                
-                /*{
-                    opcode: 'whenDistance',
-                    text: formatMessage({
-                        id: 'boost.whenDistance',
-                        default: 'when distance [OP] [REFERENCE]',
-                        description: 'check for when distance is < or > than reference'
-                    }),
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        OP: {
-                            type: ArgumentType.STRING,
-                            menu: 'OP',
-                            defaultValue: '<'
-                        },
-                        REFERENCE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                },*/                
+                },               
             ],
             menus: {
                 MOTOR_ID: [
@@ -1691,12 +1594,16 @@ class Scratch3BoostBlocks {
     motorOnForRotation (args) {
         // TODO: cast args.MOTOR_ID?
         let degrees = Cast.toNumber(args.ROTATION) * 360;
-        degrees = MathUtil.clamp(degrees, 0, 36000);
+        console.log(degrees)
+        // TODO: Clamps to 100 rotations. Does that make sense?
+        let sign = Math.sign(degrees)
+        degrees = Math.abs(MathUtil.clamp(degrees, -360000, 360000));
+        console.log(degrees)
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    motor.turnOnForDegrees(degrees);
+                    motor.turnOnForDegrees(degrees, sign);
                     motor._pendingPromiseFunction = resolve
                 }
             });
@@ -1748,13 +1655,13 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Turn specified motor(s) off.
+     * Set the power level of the specified motor(s).
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {int} POWER - the new power level for the motor(s).
      * @return {Promise} - a Promise that resolves after some delay.
      */
-    startMotorPower (args) {
+    setMotorPower (args) {
         // TODO: cast args.MOTOR_ID?
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
@@ -1803,7 +1710,7 @@ class Scratch3BoostBlocks {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                     } else {
-                        motor.turnOn();
+                        //motor.turnOn();
                     }
                 }
             }
@@ -1814,30 +1721,7 @@ class Scratch3BoostBlocks {
                 resolve();
             }, BLESendInterval);
         });
-    }
-
-    /**
-     * Set the motor(s) position to 0.
-     * @param {object} args - the block's arguments.
-     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-     * @return {Promise} - a Promise that resolves after some delay.
-     */
-    motorZero (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                // TODO: Do this on the hardware, i.e. https://lego.github.io/lego-ble-wireless-protocol-docs/index.html#encoding-of-writedirectmodedata-0x81-0x51
-                motor.positionZero = motor.position;
-            }
-        });
-
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
-        });
-    }    
+    } 
 
     /**
      * Set the LED's hue.
@@ -1879,26 +1763,6 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Compare the distance sensor's value to a reference.
-     * @param {object} args - the block's arguments.
-     * @property {string} OP - the comparison operation: '<' or '>'.
-     * @property {number} REFERENCE - the value to compare against.
-     * @return {boolean} - the result of the comparison, or false on error.
-     
-    whenDistance (args) {
-        switch (args.OP) {
-        case '<':
-            return this._peripheral.distance < Cast.toNumber(args.REFERENCE);
-        case '>':
-            return this._peripheral.distance > Cast.toNumber(args.REFERENCE);
-        default:
-            log.warn(`Unknown comparison operator in whenDistance: ${args.OP}`);
-            return false;
-        }
-    }
-    */
-
-    /**
      * Test whether the tilt sensor is currently tilted.
      * @param {object} args - the block's arguments.
      * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
@@ -1919,17 +1783,10 @@ class Scratch3BoostBlocks {
     }    
 
     /**
-     * @return {number} - the distance sensor's value, scaled to the [0,100] range.
-     
-    getDistance () {
-        return this._peripheral.distance;
-    }*/
-
-    /**
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
      */
     getColor () {
-        //return this._peripheral.color;
+        // To get a string representation, lookup the key of the BoostColor-enum value
         return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color).toLowerCase()
     }    
 
@@ -1942,7 +1799,6 @@ class Scratch3BoostBlocks {
     _isColor (color) {
         switch(color) {
             case BoostColorLabel.ANY:
-                //console.log(this.getColor() + " versus " + Object.keys(BoostColor).find(key => BoostColor[key]).toLowerCase())
                 if(Object.keys(BoostColor).find(key => BoostColor[key]).toLowerCase() != this.getColor()) {
                     if(this.getColor() == this._peripheral.oldColor) {
                         return false
@@ -1951,8 +1807,6 @@ class Scratch3BoostBlocks {
                         return true
                     }
                 }
-                //console.log(this.getColor() != 'none')
-                //return this.getColor() != 'none';
             default:
                 return this.getColor() == color;
         }
@@ -1984,7 +1838,7 @@ class Scratch3BoostBlocks {
         if(portID && this._peripheral._motors[portID]) {
             return MathUtil.wrapClamp(this._peripheral._motors[portID].position,0,360);
         }
-        return false;
+        return 0;
     }        
 
     /**
@@ -2036,9 +1890,9 @@ class Scratch3BoostBlocks {
         case BoostTiltDirection.DOWN:
             return this._peripheral.tiltY > 90 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
         case BoostTiltDirection.LEFT:
-            return this._peripheral.tiltX > 90 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
-        case BoostTiltDirection.RIGHT:
             return this._peripheral.tiltX > 90 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
+        case BoostTiltDirection.RIGHT:
+            return this._peripheral.tiltX > 90 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
@@ -2066,7 +1920,6 @@ class Scratch3BoostBlocks {
             motors = [BoostPort.D];
             break;
         case BoostMotorLabel.ALL:
-        case BoostMotorLabel.DEFAULT:
             motors = [BoostPort.A, BoostPort.B, BoostPort.C, BoostPort.D];
             break;
         default:
