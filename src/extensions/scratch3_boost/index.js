@@ -29,7 +29,7 @@ const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5z
 const BoostBLE = {
     service: '00001623-1212-efde-1623-785feabcd123',
     characteristic: '00001624-1212-efde-1623-785feabcd123'
-}
+};
 
 /**
  * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
@@ -53,8 +53,8 @@ const BoostIO = {
     MOTOR_SYSTEM: 0x02,
     BUTTON: 0x05,
     LIGHT: 0x08,
-    LIGHT1:0x09,
-    LIGHT2:0x0A,
+    LIGHT1: 0x09,
+    LIGHT2: 0x0A,
     VOLTAGE: 0x14,
     CURRENT: 0x15,
     PIEZO: 0x16,
@@ -64,8 +64,7 @@ const BoostIO = {
     COLOR: 0x25,
     MOTOREXT: 0x26,
     MOTORINT: 0x27,
-    TILT: 0x28,
-    
+    TILT: 0x28
 };
 
 /**
@@ -78,7 +77,7 @@ const BoostOutputCommandFeedback = {
     BUFFER_EMPTY_COMMAND_COMPLETED: 0x02,
     CURRENT_COMMAND_DISCARDED: 0x04,
     IDLE: 0x08,
-    BUSY_OR_FULL: 0x10,
+    BUSY_OR_FULL: 0x10
 };
 
 
@@ -107,7 +106,7 @@ const BoostColor = {
     YELLOW: 7,
     WHITE: 10,
     BLACK: 0
-}
+};
 
 /**
  * Enum for Message Types
@@ -130,7 +129,7 @@ const BoostMessage = {
     PORT_INPUT_FORMAT_COMBINED: 0x48,
     OUTPUT: 0x81,
     PORT_OUTPUT_COMMAND_FEEDBACK: 0x82
-}
+};
 
 /**
  * Enum for Motor Subcommands (for 0x81)
@@ -150,8 +149,8 @@ const BoostOutputSubCommand = {
     GO_TO_ABS_POSITION: 0x0D,
     GO_TO_ABS_POSITION_PAIR: 0x0E,
     PRESET_ENCODER: 0x14,
-    WRITE_DIRECT_MODE_DATA: 0x51,
-}
+    WRITE_DIRECT_MODE_DATA: 0x51
+};
 
 /**
  * Enum for Startup/Completion information for an output command.
@@ -165,8 +164,8 @@ const BoostOutputExecution = {
     EXECUTE_IMMEDIATELY: 0x10,
     // Completion information
     NO_ACTION: 0x00,
-    COMMAND_FEEDBACK: 0x01,
-}
+    COMMAND_FEEDBACK: 0x01
+};
 
 /**
  * Enum for Boost Motor end states
@@ -176,8 +175,8 @@ const BoostOutputExecution = {
 const BoostMotorEndState = {
     FLOAT: 0,
     HOLD: 126,
-    BRAKE: 127 
-}
+    BRAKE: 127
+};
 
 /**
  * Enum for Boost Motor acceleration/deceleration profiles
@@ -188,7 +187,7 @@ const BoostMotorProfile = {
     DO_NOT_USE: 0x00,
     ACCELERATION: 0x01,
     DECELERATION: 0x02
-}
+};
 
 /**
  * Enum for when Boost IO's are attached/detached
@@ -199,7 +198,7 @@ const BoostIOEvent = {
     ATTACHED: 0x01,
     DETACHED: 0x00,
     ATTACHED_VIRTUAL: 0x02
-}
+};
 
 /**
  * Enum for selected sensor modes.
@@ -213,34 +212,42 @@ const BoostMode = {
     UNKNOWN: 0 // Anything else will use the default mode (mode 0)
 };
 
-// Debug function
-function buf2hex(buffer) { // buffer is an ArrayBuffer
-    return Array.prototype.map.call(new Uint8Array(buffer), x => ('00' + x.toString(16)).slice(-2)).join(' ');
-}
+/**
+ * Debug function for converting bytes received to hex
+ * @param {array} buffer - an array of bytes
+ * @return {string} - a string of hex values.
+ */
+const buf2hex = function (buffer) { // buffer is an ArrayBuffer
+    return Array.prototype.map.call(new Uint8Array(buffer), x => (`00${x.toString(16)}`).slice(-2)).join(' ');
+};
 
 /**
- * Helper function for converting a number to a Int32Array
- * @param {number} number 
+ * Helper function for converting a JavaScript number to an INT32-number
+ * @param {number} number - a number
+ * @return {array} - a 4-byte array of Int8-values representing an INT32-number
  */
-function numberToInt32Array(number) {
-    var buffer = new ArrayBuffer(4)        
-    var dataview = new DataView(buffer)
-    dataview.setInt32(0, number)
-    return [dataview.getInt8(3),
-            dataview.getInt8(2),
-            dataview.getInt8(1),
-            dataview.getInt8(0)];
-}
+const numberToInt32Array = function (number) {
+    const buffer = new ArrayBuffer(4);
+    const dataview = new DataView(buffer);
+    dataview.setInt32(0, number);
+    return [
+        dataview.getInt8(3),
+        dataview.getInt8(2),
+        dataview.getInt8(1),
+        dataview.getInt8(0)
+    ];
+};
 
 /**
  * Helper function for converting a regular array to a Little Endian INT32-value
- * @param {Array} array 
+ * @param {Array} array - an array containing UInt8-values
+ * @return {number} - a number
  */
-function int32ArrayToNumber(array) {
-    var i = Uint8Array.from(array)
-    var d = new DataView(i.buffer);
-    return d.getInt32(0,true);
-}
+const int32ArrayToNumber = function (array) {
+    const i = Uint8Array.from(array);
+    const d = new DataView(i.buffer);
+    return d.getInt32(0, true);
+};
 
 /**
  * Manage power, direction, position, and timers for one Boost motor.
@@ -317,14 +324,13 @@ class BoostMotor {
         this._pendingTimeoutDelay = null;
 
         /**
-         * If the motor has been turned on run for a specific duration, 
+         * If the motor has been turned on run for a specific duration,
          * this is the function that will be called once Scratch VM gets a notification from the Move Hub.
          * @type {Object}
          * @private
          */
         this._pendingPromiseFunction = null;
 
-        //this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
     }
 
@@ -420,11 +426,11 @@ class BoostMotor {
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED,
-            [this._power * this._direction,
-            this._power,
-            BoostMotorProfile.DO_NOT_USE]);
-        
-        console.log(this._power * this._direction)
+            [
+                this._power * this._direction,
+                this._power,
+                BoostMotorProfile.DO_NOT_USE
+            ]);
 
         this._parent.send(BoostBLE.characteristic, cmd);
 
@@ -457,16 +463,18 @@ class BoostMotor {
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
-            [...numberToInt32Array(degrees),
-            this._power * this._direction * direction, // power in range 0-100
-            this._power, // max speed
-            BoostMotorEndState.BRAKE, 
-            BoostMotorProfile.DO_NOT_USE] // byte for using acceleration/braking profile
+            [
+                ...numberToInt32Array(degrees),
+                this._power * this._direction * direction, // power in range 0-100
+                this._power, // max speed
+                BoostMotorEndState.BRAKE,
+                BoostMotorProfile.DO_NOT_USE
+            ] // byte for using acceleration/braking profile
         );
 
         this._status = BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS;
-        this._parent.send(BoostBLE.characteristic, cmd);        
-    }    
+        this._parent.send(BoostBLE.characteristic, cmd);
+    }
 
     /**
      * Turn this motor off.
@@ -479,9 +487,11 @@ class BoostMotor {
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.START_SPEED,
-            [BoostMotorEndState.FLOAT,
-            BoostMotorEndState.FLOAT,
-            BoostMotorProfile.DO_NOT_USE]
+            [
+                BoostMotorEndState.FLOAT,
+                BoostMotorEndState.FLOAT,
+                BoostMotorProfile.DO_NOT_USE
+            ]
         );
 
         this._parent.send(BoostBLE.characteristic, cmd, useLimiter);
@@ -566,14 +576,14 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: BoostColor.NONE,
+            color: BoostColor.NONE
         };
 
         /*
         ** TODO: Clean up
         */
        
-        this._led = 50
+        this._led = 50;
 
         /**
          * The Bluetooth connection socket for reading/writing peripheral data.
@@ -657,7 +667,7 @@ class Boost {
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
             BoostOutputSubCommand.WRITE_DIRECT_MODE_DATA,
             [BoostMode.LED,
-            ...rgb]
+                ...rgb]
         );
 
         return this.send(BoostBLE.characteristic, cmd);
@@ -727,7 +737,7 @@ class Boost {
             tiltX: 0,
             tiltY: 0,
             color: BoostColor.NONE,
-            oldColor: BoostColor.NONE,
+            oldColor: BoostColor.NONE
         };
 
         if (this._ble) {
@@ -777,14 +787,15 @@ class Boost {
      *
      * @param  {number} portID - the port (Connect ID) to send a command to.
      * @param  {number} execution - Byte containing startup/completion information
-     * @param  {number} subCommandID - the id of the subcommand byte.
+     * @param  {number} subCommand - the id of the subcommand byte.
      * @param  {array}  payload    - the list of bytes to send as subcommand payload
      * @return {array}            - a generated output command.
      */
     generateOutputCommand (portID, execution, subCommand, payload) {
-        let hubID = 0x00
-        let command = [hubID, BoostMessage.OUTPUT, portID, execution, subCommand, ...payload]
-        command.unshift(command.length +1)
+        const hubID = 0x00;
+        const command = [hubID, BoostMessage.OUTPUT, portID, execution, subCommand, ...payload];
+        command.unshift(command.length + 1);
+
         return command;
     }
 
@@ -803,18 +814,18 @@ class Boost {
      * @return {array}                       - a generated input command.
      */
     generateInputCommand (portID, mode, delta, enableNotifications) {
-        var command = [
+        const command = [
             0x00, // Hub ID
             BoostMessage.PORT_INPUT_FORMAT_SETUP_SINGLE,
             portID,
-            mode,
+            mode
         ].concat(numberToInt32Array(delta)).concat([
             enableNotifications
         ]);
 
-        command.unshift(command.length+1) // Prepend payload with length byte
+        command.unshift(command.length + 1);
 
-        return command;
+        return command; // Prepend payload with length byte;
     }
 
     /**
@@ -842,7 +853,6 @@ class Boost {
          * 0: Length of message
          * 1: Hub ID (always 0x00 at the moment)
          * 2: Message Type
-         * 
          * We base our switch-case on Message Type
          */
 
@@ -856,69 +866,69 @@ class Boost {
          * 5: IO Type ID
         */
 
-            case BoostMessage.HUB_ATTACHED_IO: // IO Attach/Detach events
-
-            const event = data[4]
-            const typeId = data[5]
-            
-                switch (event) {
-                    case BoostIOEvent.ATTACHED:
-                        this._registerSensorOrMotor(portID, typeId)
-                        break;
-                    case BoostIOEvent.DETACHED:
-                        this._clearPort(portID);
-                        break;
-                    case BoostIOEvent.ATTACHED_VIRTUAL:
-                    default:
-                        // Ignore
-                        //console.log("No I/O Event case found!")
-                }
+        case BoostMessage.HUB_ATTACHED_IO: { // IO Attach/Detach events
+            const event = data[4];
+            const typeId = data[5];
+        
+            switch (event) {
+            case BoostIOEvent.ATTACHED:
+                this._registerSensorOrMotor(portID, typeId);
                 break;
-            case BoostMessage.PORT_VALUE:
-                var type = this._ports[portID];
-                // TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages instead of hardcoding value-handling
-                switch(type) {
-                    case BoostIO.TILT:
-                        this._sensors.tiltX = data[4]
-                        this._sensors.tiltY = data[5]
-                        break;
-                    case BoostIO.COLOR:
-                        this._sensors.color = data[4];
-                        break;
-                    case BoostIO.MOTOREXT:
-                    case BoostIO.MOTORINT:
-                        this._motors[portID]._position = int32ArrayToNumber(data.slice(4,8))
-                        break;
-                    case BoostIO.CURRENT:
-                    case BoostIO.VOLTAGE:
-                        break;
-                    default:
-                        console.log("Unknown sensor value! Type: " + type)
-                }
+            case BoostIOEvent.DETACHED:
+                this._clearPort(portID);
                 break;
-            case BoostMessage.PORT_OUTPUT_COMMAND_FEEDBACK:
-                //TODO: Handle messages that contain feedback from more than one port.
-                var feedback = data[4];
-                switch(feedback) {
-                    case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
-                    case BoostOutputCommandFeedback.CURRENT_COMMAND_DISCARDED ^ BoostOutputCommandFeedback.IDLE: // Resolve even if command didn't complete successfully
-                        if(this._motors[portID] && this._motors[portID].pendingPromiseFunction) {
-                            this._motors[portID].pendingPromiseFunction();
-                        }
-                        break;
-                    case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS:
-                        break;
-                    default:
-                        console.log("Got it but didn't find a motor on: " + portID)
-                }
+            case BoostIOEvent.ATTACHED_VIRTUAL:
+            default:
+            }
+            break;
+        }
+        case BoostMessage.PORT_VALUE: {
+            const type = this._ports[portID];
+            /**
+             * TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages
+             * instead of hardcoding value-handling
+             */
+            switch (type) {
+            case BoostIO.TILT:
+                this._sensors.tiltX = data[4];
+                this._sensors.tiltY = data[5];
                 break;
-            case BoostMessage.ERROR:
-                //DEBUG
-                console.log("Error in BLE message: " + buf2hex(data))
+            case BoostIO.COLOR:
+                this._sensors.color = data[4];
+                break;
+            case BoostIO.MOTOREXT:
+            case BoostIO.MOTORINT:
+                this._motors[portID]._position = int32ArrayToNumber(data.slice(4, 8));
+                break;
+            case BoostIO.CURRENT:
+            case BoostIO.VOLTAGE:
                 break;
             default:
-                //DEBUG
-                //console.log(buf2hex(data))                
+                log.warn(`Unknown sensor value! Type: ${type}`);
+            }
+            break;
+        }
+        case BoostMessage.PORT_OUTPUT_COMMAND_FEEDBACK: {
+            // TODO: Handle messages that contain feedback from more than one port.
+            const feedback = data[4];
+            switch (feedback) {
+            case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE:
+            case BoostOutputCommandFeedback.CURRENT_COMMAND_DISCARDED ^ BoostOutputCommandFeedback.IDLE:
+                if (this._motors[portID] && this._motors[portID].pendingPromiseFunction) {
+                    this._motors[portID].pendingPromiseFunction();
+                }
+                break;
+            case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS:
+                break;
+            default:
+                log.warn(`Did not find a motor on portID: ${portID}`);
+            }
+            break;
+        }
+        case BoostMessage.ERROR:
+            log.warn(`Error in BLE message: ${buf2hex(data)}`);
+            break;
+        default:
         }
     }
 
@@ -938,30 +948,30 @@ class Boost {
         // Record motor port
         if (type === BoostIO.MOTORINT || type === BoostIO.MOTOREXT) {
             this._motors[portID] = new BoostMotor(this, portID);
-        } 
+        }
 
         // Set input format for tilt or distance sensor
 
-        var mode = null
+        let mode = null;
 
-        switch(type) {
-            case BoostIO.MOTORINT:
-            case BoostIO.MOTOREXT:
-                mode = BoostMode.MOTOR_SENSOR
-                break;
-            case BoostIO.COLOR:
-                mode = BoostMode.COLOR
-                break;
-            case BoostIO.LED:
-                mode = BoostMode.LED
-                this.setLEDMode();
-                this.setLED(0x00FF00);
-                break;
-            case BoostIO.TILT:
-                mode = BoostMode.TILT
-                break;
-            default:
-                mode = BoostMode.UNKNOWN
+        switch (type) {
+        case BoostIO.MOTORINT:
+        case BoostIO.MOTOREXT:
+            mode = BoostMode.MOTOR_SENSOR;
+            break;
+        case BoostIO.COLOR:
+            mode = BoostMode.COLOR;
+            break;
+        case BoostIO.LED:
+            mode = BoostMode.LED;
+            this.setLEDMode();
+            this.setLED(0x00FF00);
+            break;
+        case BoostIO.TILT:
+            mode = BoostMode.TILT;
+            break;
+        default:
+            mode = BoostMode.UNKNOWN;
         }
         
         const cmd = this.generateInputCommand(
@@ -1092,7 +1102,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOnFor',
                     text: formatMessage({
                         id: 'boost.motorOnFor',
-                        default: 'turn motor [MOTOR_ID] on for [DURATION] seconds',
+                        default: 'turn motor [MOTOR_ID] for [DURATION] seconds',
                         description: 'turn a motor on for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1112,7 +1122,7 @@ class Scratch3BoostBlocks {
                     opcode: 'motorOnForRotation',
                     text: formatMessage({
                         id: 'boost.motorOnForRotation',
-                        default: 'turn motor [MOTOR_ID] on for [ROTATION] rotations',
+                        default: 'turn motor [MOTOR_ID] for [ROTATION] rotations',
                         description: 'turn a motor on for rotation'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1184,7 +1194,7 @@ class Scratch3BoostBlocks {
                     opcode: 'setMotorDirection',
                     text: formatMessage({
                         id: 'boost.setMotorDirection',
-                        default: 'set motor [MOTOR_ID] direction to [MOTOR_DIRECTION]',
+                        default: 'set motor [MOTOR_ID] to turn [MOTOR_DIRECTION]',
                         description: 'set the motor\'s turn direction without turning it on'
                     }),
                     blockType: BlockType.COMMAND,
@@ -1320,7 +1330,7 @@ class Scratch3BoostBlocks {
                             defaultValue: 5
                         }
                     }
-                },               
+                }
             ],
             menus: {
                 MOTOR_ID: [
@@ -1594,21 +1604,19 @@ class Scratch3BoostBlocks {
     motorOnForRotation (args) {
         // TODO: cast args.MOTOR_ID?
         let degrees = Cast.toNumber(args.ROTATION) * 360;
-        console.log(degrees)
-        // TODO: Clamps to 100 rotations. Does that make sense?
-        let sign = Math.sign(degrees)
+        // TODO: Clamps to 100 rotations. Consider changing.
+        const sign = Math.sign(degrees);
         degrees = Math.abs(MathUtil.clamp(degrees, -360000, 360000));
-        console.log(degrees)
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOnForDegrees(degrees, sign);
-                    motor._pendingPromiseFunction = resolve
+                    motor._pendingPromiseFunction = resolve;
                 }
             });
         });
-    }    
+    }
 
     /**
      * Turn specified motor(s) on indefinitely.
@@ -1667,7 +1675,6 @@ class Scratch3BoostBlocks {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                //motor.turnOn();
             }
         });
 
@@ -1709,8 +1716,6 @@ class Scratch3BoostBlocks {
                 if (motor.isOn) {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else {
-                        //motor.turnOn();
                     }
                 }
             }
@@ -1721,7 +1726,7 @@ class Scratch3BoostBlocks {
                 resolve();
             }, BLESendInterval);
         });
-    } 
+    }
 
     /**
      * Set the LED's hue.
@@ -1753,11 +1758,10 @@ class Scratch3BoostBlocks {
      * Change the LED's hue by a give number.
      * @param {object} args - the block's arguments.
      * @property {number} HUE - the hue to set, in the range [0,100].
-     * @return {Promise} - a Promise that resolves after some delay.
      */
     changeLightHueBy (args) {
         // TODO: Clean up this block and its opcode
-        let n = {};
+        const n = {};
         n.HUE = Cast.toNumber(args.HUE) + this._peripheral._led;
         this.setLightHue(n);
     }
@@ -1780,66 +1784,69 @@ class Scratch3BoostBlocks {
      */
     whenColor (args) {
         return this._isColor(args.COLOR);
-    }    
+    }
 
     /**
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
      */
     getColor () {
         // To get a string representation, lookup the key of the BoostColor-enum value
-        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color).toLowerCase()
-    }    
+        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color)
+            .toLowerCase();
+    }
 
     /**
      * Test whether the vision sensor is detecting a certain color.
-     * @param {Color} color - the color to test.
+     * @param {number} args - the color to test.
      * @return {boolean} - true when the color sensor senses the specified color.
      * @private
      */
-    _isColor (color) {
-        switch(color) {
-            case BoostColorLabel.ANY:
-                if(Object.keys(BoostColor).find(key => BoostColor[key]).toLowerCase() != this.getColor()) {
-                    if(this.getColor() == this._peripheral.oldColor) {
-                        return false
-                    } else {
-                        this._peripheral.oldColor = this.getColor()
-                        return true
-                    }
+    _isColor (args) {
+        switch (args) {
+        case BoostColorLabel.ANY:
+            if (Object.keys(BoostColor).find(key => BoostColor[key])
+                .toLowerCase() !== this.getColor()) {
+                if (this.getColor() === this._peripheral.oldColor) {
+                    return false;
                 }
-            default:
-                return this.getColor() == color;
+                this._peripheral.oldColor = this.getColor();
+                return true;
+            }
+            break;
+        default:
+            return this.getColor() === color;
         }
     }
 
     /**
-     * @return {number} 
+     * @param {object} args - the block's arguments.
+     * @return {number} - returns the motor's position.
      */
     getMotorPosition (args) {
-        var portID = null
-        switch(args.MOTOR_REPORTER_ID) {
+        let portID = null;
+        switch (args.MOTOR_REPORTER_ID) {
             
-            case BoostMotorLabel.A:
-                portID = BoostPort.A
-                break;
-            case BoostMotorLabel.B:
-                portID = BoostPort.B
-                break;
-            case BoostMotorLabel.C:
-                portID = BoostPort.C
-                break;
-            case BoostMotorLabel.D:
-                portID = BoostPort.D
-                break;
-            default:
-                log.warn("Asked for a motor position that doesnt exist!")
-                return false;
+        case BoostMotorLabel.A:
+            portID = BoostPort.A;
+            break;
+        case BoostMotorLabel.B:
+            portID = BoostPort.B;
+            break;
+        case BoostMotorLabel.C:
+            portID = BoostPort.C;
+            break;
+        case BoostMotorLabel.D:
+            portID = BoostPort.D;
+            break;
+        default:
+            log.warn('Asked for a motor position that doesnt exist!');
+            return false;
         }
-        if(portID && this._peripheral._motors[portID]) {
-            return MathUtil.wrapClamp(this._peripheral._motors[portID].position,0,360);
+        if (portID && this._peripheral._motors[portID]) {
+            return MathUtil.wrapClamp(this._peripheral._motors[portID].position, 0, 360);
         }
         return 0;
-    }        
+    }
 
     /**
      * Test whether the tilt sensor is currently tilted.
