@@ -43,7 +43,7 @@
     "jszip": "^3.1.5",
     "minilog": "3.1.0",
     "nets": "3.2.0",
-    "scratch-parser": "4.3.4",
+    "scratch-parser": "4.3.5",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20181205140428",
     "socket.io-client": "2.0.4",
@@ -79,6 +79,7 @@
     "stats.js": "^0.17.0",
     "tap": "^12.0.1",
     "tiny-worker": "^2.1.1",
+    "uglifyjs-webpack-plugin": "1.2.7",
     "webpack": "^4.16.5",
     "webpack-cli": "^3.1.0",
     "webpack-dev-server": "^3.1.5"

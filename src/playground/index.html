@@ -5,6 +5,18 @@
     <meta charset="utf-8">
     <title>Scratch VM Benchmark</title>
     <link rel="stylesheet" href="./benchmark.css" type="text/css" media="screen">
+    <script>
+        // Track loading time with timestamps and if possible the performance
+        // api.
+
+        // Start tracking loading of Scratch before the body dom is evaluated.
+        window.ScratchVMLoadStart = Date.now();
+        if (window.performance) {
+            // Mark for browser performance inspectors and if we want to use
+            // other performance apis.
+            performance.mark('Scratch.LoadStart');
+        }
+    </script>
 </head>
 <body>
   <h2>Scratch VM Benchmark</h2>
@@ -28,31 +40,45 @@
 
   <canvas id="scratch-stage"></canvas><br />
 
-  <div class="loading">
-    <label>Loading:</label>
-    <span class="loading-complete">0</span> / <span class="loading-total">0</span>
-  </div>
-  <div class="profile-count-group">
-    <div class="profile-count">
-      <label>Percent of time worked:</label>
-      <span class="profile-count-value profile-count-amount-recorded">...</span>
+  <div class="layer">
+    <div class="loading">
+      <label>Loading Data:</label>
+      <span class="loading-complete">0</span> / <span class="loading-total">0</span> <span class="loading-time">(--ms)</span>
     </div>
-    <div class="profile-count">
-      <label>Steps looped:</label>
-      <span class="profile-count-value profile-count-steps-looped">...</span>
+    <div class="loading">
+      <label>Loading Content:</label>
+      <span class="loading-content-complete">0</span> / <span class="loading-content-total">0</span> <span class="loading-content-time">(--ms)</span>
     </div>
-    <div class="profile-count">
-      <label>Blocks executed:</label>
-      <span class="profile-count-value profile-count-blocks-executed">...</span>
+    <div class="loading">
+      <label>Hydrating:</label>
+      <span class="loading-hydrate-complete">0</span> / <span class="loading-hydrate-total">0</span> <span class="loading-hydrate-time">(--ms)</span>
+     </div>
+    <div class="loading">
+      <label>Memory:</label>
+      <span class="loading-memory-current">--</span> / <span class="loading-memory-peak">--</span>
+     </div>
+    <div class="profile-count-group">
+      <div class="profile-count">
+        <label>Percent of time worked:</label>
+        <span class="profile-count-value profile-count-amount-recorded">...</span>
+      </div>
+      <div class="profile-count">
+        <label>Steps looped:</label>
+        <span class="profile-count-value profile-count-steps-looped">...</span>
+      </div>
+      <div class="profile-count">
+        <label>Blocks executed:</label>
+        <span class="profile-count-value profile-count-blocks-executed">...</span>
+      </div>
+      <a class="share"><div class="profile-count">
+        <label>Share this report</label>
+      </div></a>
+      <a class="share" target="_parent">
+          <div class="profile-count">
+              <label>Run the full suite</label>
+          </div>
+      </a>
     </div>
-    <a class="share"><div class="profile-count">
-      <label>Share this report</label>
-    </div></a>
-    <a class="share" target="_parent">
-        <div class="profile-count">
-            <label>Run the full suite</label>
-        </div>
-    </a>
   </div>
 
   <div class="profile-tables">
@@ -79,16 +105,6 @@
 
   <div id="blocks"></div>
 
-  <!-- FPS counter, Blocks, Renderer -->
-  <script src="./vendor.js"></script>
-  <!-- Storage module -->
-  <script src="./scratch-storage.js"></script>
-  <!-- Stage rendering -->
-  <script src="./scratch-render.js"></script>
-  <!-- SVG rendering -->
-  <script src="./scratch-svg-renderer.js"></script>
-  <!-- VM -->
-  <script src="./scratch-vm.js"></script>
   <!-- Playground -->
   <script src="./benchmark.js"></script>
 </body>

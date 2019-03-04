@@ -12,18 +12,33 @@ class TaskQueue {
      *
      * @param {number} maxTokens - the maximum number of tokens in the bucket (burst size).
      * @param {number} refillRate - the number of tokens to be added per second (sustain rate).
-     * @param {number} [startingTokens=maxTokens] - the number of tokens the bucket starts with.
+     * @param {object} options - optional settings for the new task queue instance.
+     * @property {number} startingTokens - the number of tokens the bucket starts with (default: `maxTokens`).
+     * @property {number} maxTotalCost - reject a task if total queue cost would pass this limit (default: no limit).
      * @memberof TaskQueue
      */
-    constructor (maxTokens, refillRate, startingTokens = maxTokens) {
+    constructor (maxTokens, refillRate, options = {}) {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
         this._pendingTaskRecords = [];
-        this._tokenCount = startingTokens;
+        this._tokenCount = options.hasOwnProperty('startingTokens') ? options.startingTokens : maxTokens;
+        this._maxTotalCost = options.hasOwnProperty('maxTotalCost') ? options.maxTotalCost : Infinity;
         this._timer = new Timer();
         this._timer.start();
         this._timeout = null;
         this._lastUpdateTime = this._timer.timeElapsed();
+
+        this._runTasks = this._runTasks.bind(this);
+    }
+
+    /**
+     * Get the number of queued tasks which have not yet started.
+     *
+     * @readonly
+     * @memberof TaskQueue
+     */
+    get length () {
+        return this._pendingTaskRecords.length;
     }
 
     /**
@@ -35,38 +50,57 @@ class TaskQueue {
      * @memberof TaskQueue
      */
     do (task, cost = 1) {
-        const newRecord = {};
-        const promise = new Promise((resolve, reject) => {
-            newRecord.wrappedTask = () => {
-                const canRun = this._refillAndSpend(cost);
-                if (canRun) {
-                    // Remove this task from the queue and run it
-                    this._pendingTaskRecords.shift();
-                    try {
-                        resolve(task());
-                    } catch (e) {
-                        reject(e);
-                    }
+        if (this._maxTotalCost < Infinity) {
+            const currentTotalCost = this._pendingTaskRecords.reduce((t, r) => t + r.cost, 0);
+            if (currentTotalCost + cost > this._maxTotalCost) {
+                return Promise.reject('Maximum total cost exceeded');
+            }
+        }
+        const newRecord = {
+            cost
+        };
+        newRecord.promise = new Promise((resolve, reject) => {
+            newRecord.cancel = () => {
+                reject(new Error('Task canceled'));
+            };
 
-                    // Tell the next wrapper to start trying to run its task
-                    if (this._pendingTaskRecords.length > 0) {
-                        const nextRecord = this._pendingTaskRecords[0];
-                        nextRecord.wrappedTask();
-                    }
-                } else {
-                    // This task can't run yet. Estimate when it will be able to, then try again.
-                    newRecord.reject = reject;
-                    this._waitUntilAffordable(cost).then(() => newRecord.wrappedTask());
+            // The caller, `_runTasks()`, is responsible for cost-checking and spending tokens.
+            newRecord.wrappedTask = () => {
+                try {
+                    resolve(task());
+                } catch (e) {
+                    reject(e);
                 }
             };
         });
         this._pendingTaskRecords.push(newRecord);
 
+        // If the queue has been idle we need to prime the pump
         if (this._pendingTaskRecords.length === 1) {
-            newRecord.wrappedTask();
+            this._runTasks();
         }
 
-        return promise;
+        return newRecord.promise;
+    }
+
+    /**
+     * Cancel one pending task, rejecting its promise.
+     *
+     * @param {Promise} taskPromise - the promise returned by `do()`.
+     * @returns {boolean} - true if the task was found, or false otherwise.
+     * @memberof TaskQueue
+     */
+    cancel (taskPromise) {
+        const taskIndex = this._pendingTaskRecords.findIndex(r => r.promise === taskPromise);
+        if (taskIndex !== -1) {
+            const [taskRecord] = this._pendingTaskRecords.splice(taskIndex, 1);
+            taskRecord.cancel();
+            if (taskIndex === 0 && this._pendingTaskRecords.length > 0) {
+                this._runTasks();
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -76,15 +110,16 @@ class TaskQueue {
      */
     cancelAll () {
         if (this._timeout !== null) {
-            clearTimeout(this._timeout);
+            this._timer.clearTimeout(this._timeout);
             this._timeout = null;
         }
-        this._pendingTaskRecords.forEach(r => r.reject());
+        const oldTasks = this._pendingTaskRecords;
         this._pendingTaskRecords = [];
+        oldTasks.forEach(r => r.cancel());
     }
 
     /**
-     * Shorthand for calling @ _refill() then _spend(cost).
+     * Shorthand for calling _refill() then _spend(cost).
      *
      * @see {@link TaskQueue#_refill}
      * @see {@link TaskQueue#_spend}
@@ -129,33 +164,37 @@ class TaskQueue {
     }
 
     /**
-     * Create a Promise which will resolve when the bucket will be able to "afford" the given cost.
-     * Note that this won't refill the bucket, so make sure to refill after the promise resolves.
+     * Loop until the task queue is empty, running each task and spending tokens to do so.
+     * Any time the bucket can't afford the next task, delay asynchronously until it can.
      *
-     * @param {number} cost - wait until the token count is at least this much.
-     * @returns {Promise} - to be resolved once the bucket is due for a token count greater than or equal to the cost.
      * @memberof TaskQueue
      */
-    _waitUntilAffordable (cost) {
-        if (cost <= this._tokenCount) {
-            return Promise.resolve();
+    _runTasks () {
+        if (this._timeout) {
+            this._timer.clearTimeout(this._timeout);
+            this._timeout = null;
         }
-        if (!(cost <= this._maxTokens)) {
-            return Promise.reject(new Error(`Task cost ${cost} is greater than bucket limit ${this._maxTokens}`));
+        for (;;) {
+            const nextRecord = this._pendingTaskRecords.shift();
+            if (!nextRecord) {
+                // We ran out of work. Go idle until someone adds another task to the queue.
+                return;
+            }
+            if (nextRecord.cost > this._maxTokens) {
+                throw new Error(`Task cost ${nextRecord.cost} is greater than bucket limit ${this._maxTokens}`);
+            }
+            // Refill before each task in case the time it took for the last task to run was enough to afford the next.
+            if (this._refillAndSpend(nextRecord.cost)) {
+                nextRecord.wrappedTask();
+            } else {
+                // We can't currently afford this task. Put it back and wait until we can and try again.
+                this._pendingTaskRecords.unshift(nextRecord);
+                const tokensNeeded = Math.max(nextRecord.cost - this._tokenCount, 0);
+                const estimatedWait = Math.ceil(1000 * tokensNeeded / this._refillRate);
+                this._timeout = this._timer.setTimeout(this._runTasks, estimatedWait);
+                return;
+            }
         }
-        return new Promise(resolve => {
-            const tokensNeeded = Math.max(cost - this._tokenCount, 0);
-            const estimatedWait = Math.ceil(1000 * tokensNeeded / this._refillRate);
-
-            let timeout = null;
-            const onTimeout = () => {
-                if (this._timeout === timeout) {
-                    this._timeout = null;
-                }
-                resolve();
-            };
-            this._timeout = timeout = setTimeout(onTimeout, estimatedWait);
-        });
     }
 }
 

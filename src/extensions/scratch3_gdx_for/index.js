@@ -12,7 +12,14 @@ const ScratchLinkDeviceAdapter = require('./scratch-link-device-adapter');
  * @type {string}
  */
 // eslint-disable-next-line max-len
-const blockIconURI = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoOCAuNSkiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+PHBhdGggZD0iTTEyIDM5LjVBMi41IDIuNSAwIDAgMSA5LjUgMzdjMC0uMy4yLS41LjUtLjVzLjUuMi41LjVhMS41IDEuNSAwIDEgMCAzIDB2LS4yYzAtLjQtLjItLjgtLjUtMWwtLjgtLjljLS41LS40LS43LTEtLjctMS43VjMxYzAtLjMuMi0uNS41LS41cy41LjIuNS41djIuMmMwIC40LjEuOC40IDFsLjguOWMuNS40LjggMSAuOCAxLjd2LjJjMCAxLjQtMS4xIDIuNS0yLjUgMi41eiIgZmlsbD0iI0U2RTdFOCIvPjxwYXRoIGQ9Ik0yMy43LjNBMSAxIDAgMCAwIDIzIDBIMWExIDEgMCAwIDAtLjcuM0ExIDEgMCAwIDAgMCAxdjI2YzAgLjMuMS41LjMuNy4yLjIuNC4zLjcuM2gyMmMuMyAwIC41LS4xLjctLjMuMi0uMi4zLS40LjMtLjdWMWExIDEgMCAwIDAtLjMtLjd6TTEyIDRjMiAwIDMuMyAyIDIuNiAzLjhMMTMuMyAxMWExLjQgMS40IDAgMCAxLTIuNyAwTDkuNSA3LjdsLS4yLTFDOS4yIDUuNCAxMC40IDQgMTIgNHoiIHN0cm9rZT0iIzdDODdBNSIgZmlsbD0iIzg1OTJBRiIgZmlsbC1ydWxlPSJub256ZXJvIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz48cGF0aCBkPSJNMiAydjI0aDIwVjJIMnptMTAgMmMyIDAgMy4zIDIgMi42IDMuOEwxMy4zIDExYTEuNCAxLjQgMCAwIDEtMi43IDBMOS41IDcuN2wtLjItMUM5LjIgNS40IDEwLjQgNCAxMiA0eiIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjNUNCMUQ2IiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxwYXRoIHN0cm9rZT0iIzdDODdBNSIgZmlsbD0iIzg1OTJBRiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBkPSJNMjIgMjZIMnYtNmwyMC00eiIvPjxwYXRoIGQ9Ik0uMyAyNy43TDIgMjZNLjMuM0wyIDJNMjIgMkwyMy43LjNNMjMuNyAyNy43TDIyIDI2IiBzdHJva2U9IiM3Qzg3QTUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPjxjaXJjbGUgZmlsbD0iI0ZGQkYwMCIgY3g9IjEyIiBjeT0iMTQuOCIgcj0iMS4yIi8+PHBhdGggc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGQ9Ik0xMCAyOGg0djRoLTR6Ii8+PHBhdGggZD0iTTE1LjUgMjJoLTdhLjUuNSAwIDAgMS0uNS0uNWMwLS4zLjItLjUuNS0uNWg3Yy4zIDAgLjUuMi41LjVzLS4yLjUtLjUuNXpNMTcuNSAyNGgtMTFhLjUuNSAwIDAgMS0uNS0uNWMwLS4zLjItLjUuNS0uNWgxMWMuMyAwIC41LjIuNS41cy0uMi41LS41LjV6IiBmaWxsPSIjRkZCRjAwIi8+PC9nPjwvc3ZnPg==';
+const blockIconURI = 'data:image/png;base64,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';
+
+/**
+ * Icon png to be displayed in the blocks category menu, encoded as a data URI.
+ * @type {string}
+ */
+// eslint-disable-next-line max-len
+const menuIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYAAACM/rhtAAAABGdBTUEAALGPC/xhBQAAA9dJREFUWAnNmE2IFEcUgF/9dE/v7LoaM9kkK4JBRA0EFBIPRm85hBAvEXHXwyo5eFE87GFcReMkObgJiQnkkJzEg9n8HIJixKNe1IMKihgiCbviwV11V3d0d3pmuqsqr5ppcEnb3TNVggVFVVe9eu+r97qqq4tASqp8/fsboQgmU0TMugi571K29bPy9ovPU8Sf16HbpQj3EkYFBcJcr5Am2nZfs94AIWVfqMQeHNwhICUBZ4ypUIA/X2sbIm2AW8AJK0lkEP6TJpfqwXgg4QxmF/fB7Gtvxk1G5ZKHU1CqTgPJoSUXYJYeohSUJu+qrqdVUGh2/pVX4VFffx77WaqBZkrkEFj271+qWH0sXcU3FBzyQe/Mg7B//LbKMTRTxNiDbsMHHjTJlyM7HEJIBHXs2KXFj+oTNSdoQOCYLS5jD9IwBMm5H8NplwwPb/QV4yEIcycaAza9IuA76B38fuz1OF5RXUkmHCdu6rg0BpSMgV/sAe7DdzGFrvvdi0D3mSZjQA0wt7REQsY+iWF0XbfFzyal8SLRxuteD+Du4h4Z/flbqaBHibAQtZmQtcZaAZSMwtTylaR/4vaw1ju5YhWG10pwwAqghmp2FeHO2+t11WqyM80W0m7vAOhsM1kD7CGz8L57Jsq6bitZC/GcWgLf1H6KuHT92cTDAFy/BgXMXm0OCpgV50Bo9kK3BqiBboabQMMU/WoL5im4jToeq/AIgXsiRx5KKCjcwPEsiAv/BQMu9EwyDHXd/3kqCOSzDk6t5/YglQKKeJwq+PNRmJI8kwSTaj1HZy5AhSHqnXkIvU9mMUwEw4Q5wTM57LUtkg8QPw/cdcBJ+PhvKJ0Gj80nGq6JXrg6/XFiX97GXIBpyqTieKpKViOl+WEhWXMaUavvvdIZ8Giy5+Lh3bwKm/t+Be3JazMfxc1tldY26rastiHcsQevTG9pw0znovkAcRWHzSDKnZtaOJLSfMFLB5RqtRBS4LbCurqLCy0YPkU3C0IIPEimMqR2ei7ZX2+KQdRi/WahNT/GmfOD4Vyzhx/66pcjp85dUvcmp6J8+txldXh07PPskdkS+V6EbD0vTOKlB0x9B/O6BS8ULly9PgE6x4kDPR/XX5pyYKj8xcCucsUmkNUQE0JvKKm2VioVK5HRE7UKOHbi6B94RzP+93jtpC0vWgXUF0hr3ipuw8uadwd3jXxoA9IK4Pah8t6BneV9GgjD28Svw1mlxFobgFbeFTz13cKbth93fDryp2CEq0a4hTA+aAPQ/ESJFDdvXLzzzrqNjlTqOP6uDeFf0uhvJ0ZP2QD8D6ZzU6u8YIbBAAAAAElFTkSuQmCC';
 
 /**
  * Enum for Vernier godirect protocol.
@@ -53,19 +60,13 @@ const GDXFOR_SENSOR = {
 /**
  * The update rate, in milliseconds, for sensor data input from the peripheral.
  */
-const GDXFOR_UPDATE_RATE = 100;
+const GDXFOR_UPDATE_RATE = 80;
 
 /**
  * Threshold for pushing and pulling force, for the whenForcePushedOrPulled hat block.
  * @type {number}
  */
 const FORCE_THRESHOLD = 5;
-
-/**
- * Threshold for acceleration magnitude, for the "moved" gesture.
- * @type {number}
- */
-const MOVED_THRESHOLD = 3;
 
 /**
  * Threshold for acceleration magnitude, for the "shaken" gesture.
@@ -90,6 +91,12 @@ const FREEFALL_THRESHOLD = 0.5;
  * @type {number}
  */
 const FREEFALL_ROTATION_FACTOR = 0.3;
+
+/**
+ * Threshold in degrees for reporting that the sensor is tilted.
+ * @type {number}
+ */
+const TILT_THRESHOLD = 15;
 
 /**
  * Acceleration due to gravity, in m/s^2.
@@ -409,7 +416,6 @@ const PushPullValues = {
  * @enum {string}
  */
 const GestureValues = {
-    MOVED: 'moved',
     SHAKEN: 'shaken',
     STARTED_FALLING: 'started falling'
 };
@@ -423,7 +429,8 @@ const TiltAxisValues = {
     FRONT: 'front',
     BACK: 'back',
     LEFT: 'left',
-    RIGHT: 'right'
+    RIGHT: 'right',
+    ANY: 'any'
 };
 
 /**
@@ -520,6 +527,20 @@ class Scratch3GdxForBlocks {
         ];
     }
 
+    get TILT_MENU_ANY () {
+        return [
+            ...this.TILT_MENU,
+            {
+                text: formatMessage({
+                    id: 'gdxfor.tiltDirectionMenu.any',
+                    default: 'any',
+                    description: 'label for any direction element in tilt direction picker for gdxfor extension'
+                }),
+                value: TiltAxisValues.ANY
+            }
+        ];
+    }
+
     get FACE_MENU () {
         return [
             {
@@ -566,14 +587,6 @@ class Scratch3GdxForBlocks {
         return [
             {
                 text: formatMessage({
-                    id: 'gdxfor.moved',
-                    default: 'moved',
-                    description: 'the sensor was moved'
-                }),
-                value: GestureValues.MOVED
-            },
-            {
-                text: formatMessage({
                     id: 'gdxfor.shaken',
                     default: 'shaken',
                     description: 'the sensor was shaken'
@@ -614,8 +627,25 @@ class Scratch3GdxForBlocks {
             id: Scratch3GdxForBlocks.EXTENSION_ID,
             name: Scratch3GdxForBlocks.EXTENSION_NAME,
             blockIconURI: blockIconURI,
+            menuIconURI: menuIconURI,
             showStatusButton: true,
             blocks: [
+                {
+                    opcode: 'whenGesture',
+                    text: formatMessage({
+                        id: 'gdxfor.whenGesture',
+                        default: 'when [GESTURE]',
+                        description: 'when the sensor detects a gesture'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        GESTURE: {
+                            type: ArgumentType.STRING,
+                            menu: 'gestureOptions',
+                            defaultValue: GestureValues.SHAKEN
+                        }
+                    }
+                },
                 {
                     opcode: 'whenForcePushedOrPulled',
                     text: formatMessage({
@@ -643,18 +673,34 @@ class Scratch3GdxForBlocks {
                 },
                 '---',
                 {
-                    opcode: 'whenGesture',
+                    opcode: 'whenTilted',
                     text: formatMessage({
-                        id: 'gdxfor.whenGesture',
-                        default: 'when [GESTURE]',
-                        description: 'when the sensor detects a gesture'
+                        id: 'gdxfor.whenTilted',
+                        default: 'when tilted [TILT]',
+                        description: 'when the sensor detects tilt'
                     }),
                     blockType: BlockType.HAT,
                     arguments: {
-                        GESTURE: {
+                        TILT: {
                             type: ArgumentType.STRING,
-                            menu: 'gestureOptions',
-                            defaultValue: GestureValues.MOVED
+                            menu: 'tiltAnyOptions',
+                            defaultValue: TiltAxisValues.ANY
+                        }
+                    }
+                },
+                {
+                    opcode: 'isTilted',
+                    text: formatMessage({
+                        id: 'gdxfor.isTilted',
+                        default: 'tilted [TILT]?',
+                        description: 'is the device tilted?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        TILT: {
+                            type: ArgumentType.STRING,
+                            menu: 'tiltAnyOptions',
+                            defaultValue: TiltAxisValues.ANY
                         }
                     }
                 },
@@ -662,7 +708,7 @@ class Scratch3GdxForBlocks {
                     opcode: 'getTilt',
                     text: formatMessage({
                         id: 'gdxfor.getTilt',
-                        default: 'tilt [TILT]',
+                        default: 'tilt angle [TILT]',
                         description: 'gets tilt'
                     }),
                     blockType: BlockType.REPORTER,
@@ -671,38 +717,6 @@ class Scratch3GdxForBlocks {
                             type: ArgumentType.STRING,
                             menu: 'tiltOptions',
                             defaultValue: TiltAxisValues.FRONT
-                        }
-                    }
-                },
-                {
-                    opcode: 'getSpinSpeed',
-                    text: formatMessage({
-                        id: 'gdxfor.getSpin',
-                        default: 'spin [DIRECTION]',
-                        description: 'gets spin speed'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'axisOptions',
-                            defaultValue: AxisValues.Z
-                        }
-                    }
-                },
-                {
-                    opcode: 'getAcceleration',
-                    text: formatMessage({
-                        id: 'gdxfor.getAcceleration',
-                        default: 'acceleration [DIRECTION]',
-                        description: 'gets acceleration'
-                    }),
-                    blockType: BlockType.REPORTER,
-                    arguments: {
-                        DIRECTION: {
-                            type: ArgumentType.STRING,
-                            menu: 'axisOptions',
-                            defaultValue: AxisValues.X
                         }
                     }
                 },
@@ -731,7 +745,38 @@ class Scratch3GdxForBlocks {
                         description: 'is the device in free fall?'
                     }),
                     blockType: BlockType.BOOLEAN
-
+                },
+                {
+                    opcode: 'getSpinSpeed',
+                    text: formatMessage({
+                        id: 'gdxfor.getSpin',
+                        default: 'spin speed [DIRECTION]',
+                        description: 'gets spin speed'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'axisOptions',
+                            defaultValue: AxisValues.Z
+                        }
+                    }
+                },
+                {
+                    opcode: 'getAcceleration',
+                    text: formatMessage({
+                        id: 'gdxfor.getAcceleration',
+                        default: 'acceleration [DIRECTION]',
+                        description: 'gets acceleration'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        DIRECTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'axisOptions',
+                            defaultValue: AxisValues.X
+                        }
+                    }
                 }
             ],
             menus: {
@@ -739,6 +784,7 @@ class Scratch3GdxForBlocks {
                 gestureOptions: this.GESTURE_MENU,
                 axisOptions: this.AXIS_MENU,
                 tiltOptions: this.TILT_MENU,
+                tiltAnyOptions: this.TILT_MENU_ANY,
                 faceOptions: this.FACE_MENU
             }
         };
@@ -762,8 +808,6 @@ class Scratch3GdxForBlocks {
 
     whenGesture (args) {
         switch (args.GESTURE) {
-        case GestureValues.MOVED:
-            return this.gestureMagnitude() > MOVED_THRESHOLD;
         case GestureValues.SHAKEN:
             return this.gestureMagnitude() > SHAKEN_THRESHOLD;
         case GestureValues.STARTED_FALLING:
@@ -774,24 +818,48 @@ class Scratch3GdxForBlocks {
         }
     }
 
+    whenTilted (args) {
+        return this._isTilted(args.TILT);
+    }
+
+    isTilted (args) {
+        return this._isTilted(args.TILT);
+    }
+
     getTilt (args) {
+        return this._getTiltAngle(args.TILT);
+    }
+
+    _isTilted (direction) {
+        switch (direction) {
+        case TiltAxisValues.ANY:
+            return this._getTiltAngle(TiltAxisValues.FRONT) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.BACK) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.LEFT) > TILT_THRESHOLD ||
+                this._getTiltAngle(TiltAxisValues.RIGHT) > TILT_THRESHOLD;
+        default:
+            return this._getTiltAngle(direction) > TILT_THRESHOLD;
+        }
+    }
+
+    _getTiltAngle (direction) {
         // Tilt values are calculated using acceleration due to gravity,
         // so we need to return 0 when the peripheral is not connected.
         if (!this._peripheral.isConnected()) {
             return 0;
         }
 
-        switch (args.TILT) {
+        switch (direction) {
         case TiltAxisValues.FRONT:
-            return Math.round(this._peripheral.getTiltFrontBack(false));
-        case TiltAxisValues.BACK:
             return Math.round(this._peripheral.getTiltFrontBack(true));
+        case TiltAxisValues.BACK:
+            return Math.round(this._peripheral.getTiltFrontBack(false));
         case TiltAxisValues.LEFT:
-            return Math.round(this._peripheral.getTiltLeftRight(false));
-        case TiltAxisValues.RIGHT:
             return Math.round(this._peripheral.getTiltLeftRight(true));
+        case TiltAxisValues.RIGHT:
+            return Math.round(this._peripheral.getTiltLeftRight(false));
         default:
-            log.warn(`Unknown direction in getTilt: ${args.TILT}`);
+            log.warn(`Unknown direction in getTilt: ${direction}`);
         }
     }
 

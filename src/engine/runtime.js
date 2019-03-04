@@ -1556,6 +1556,8 @@ class Runtime extends EventEmitter {
         }
         const instance = this;
         const newThreads = [];
+        // Look up metadata for the relevant hat.
+        const hatMeta = instance._hats[requestedHatOpcode];
 
         for (const opts in optMatchFields) {
             if (!optMatchFields.hasOwnProperty(opts)) continue;
@@ -1602,8 +1604,6 @@ class Runtime extends EventEmitter {
                 }
             }
 
-            // Look up metadata for the relevant hat.
-            const hatMeta = instance._hats[requestedHatOpcode];
             if (hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
