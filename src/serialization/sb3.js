@@ -914,7 +914,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeSound(sound, runtime, zip)
-            .then(() => loadSound(sound, runtime, sprite));
+            .then(() => loadSound(sound, runtime, sprite.soundBank));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });

@@ -239,7 +239,7 @@ class MicroBit {
      * Disconnect from the micro:bit.
      */
     disconnect () {
-        window.clearInterval(this._timeoutID);
+        window.clearTimeout(this._timeoutID);
         if (this._ble) {
             this._ble.disconnect();
         }
@@ -299,7 +299,7 @@ class MicroBit {
      */
     _onConnect () {
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this._onMessage);
-        this._timeoutID = window.setInterval(
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
@@ -329,8 +329,8 @@ class MicroBit {
         this._sensors.gestureState = data[9];
 
         // cancel disconnect timeout and start a new one
-        window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(
+        window.clearTimeout(this._timeoutID);
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
