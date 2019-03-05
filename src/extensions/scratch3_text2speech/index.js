@@ -186,152 +186,129 @@ class Scratch3Text2SpeechBlocks {
     /**
      * An object with language names mapped to their language codes.
      */
+
     get LANGUAGE_INFO () {
         return {
             [CHINESE_ID]: {
                 name: 'Chinese (Mandarin)',
-                singleGender: true,
                 locales: ['zh-cn', 'zh-tw'],
-                pollyLocale: 'cmn-CN'
+                speechSynthLocale: 'cmn-CN',
+                singleGender: true
+            },
+            [DANISH_ID]: {
+                name: 'Danish',
+                locales: ['da'],
+                speechSynthLocale: 'da-DK'
+            },
+            [DUTCH_ID]: {
+                name: 'Dutch',
+                locales: ['nl'],
+                speechSynthLocale: 'nl-NL'
             },
             [ENGLISH_ID]: {
                 name: 'English',
                 locales: ['en'],
-                pollyLocale: 'en-US'
+                speechSynthLocale: 'en-US'
+            },
+            [FRENCH_ID]: {
+                name: 'French',
+                locales: ['fr'],
+                speechSynthLocale: 'fr-FR'
+            },
+            [GERMAN_ID]: {
+                name: 'German',
+                locales: ['de'],
+                speechSynthLocale: 'de-DE'
+            },
+            [HINDI_ID]: {
+                name: 'Hindi',
+                locales: ['hi'],
+                speechSynthLocale: 'en-IN', // should be hi-IN, but this one is not working?
+                singleGender: true
+            },
+            [ICELANDIC_ID]: {
+                name: 'Icelandic',
+                locales: ['is'],
+                speechSynthLocale: 'is-IS'
+            },
+            [ITALIAN_ID]: {
+                name: 'Italian',
+                locales: ['it'],
+                speechSynthLocale: 'it-IT'
             },
             [JAPANESE_ID]: {
                 name: 'Japanese',
                 locales: ['ja', 'ja-Hira'],
-                pollyLocale: 'ja-JP'
+                speechSynthLocale: 'ja-JP'
+            },
+            [KOREAN_ID]: {
+                name: 'Korean',
+                locales: ['ko'],
+                speechSynthLocale: 'ko-KR',
+                singleGender: true
+            },
+            [NORWEGIAN_ID]: {
+                name: 'Norwegian',
+                locales: ['nb', 'nn'],
+                speechSynthLocale: 'nb-NO',
+                singleGender: true
+            },
+            [POLISH_ID]: {
+                name: 'Polish',
+                locales: ['pl'],
+                speechSynthLocale: 'pl-PL'
+            },
+            [PORTUGUESE_BR_ID]: {
+                name: 'Portuguese (Brazilian)',
+                locales: ['pt-br'],
+                speechSynthLocale: 'pt-BR'
+            },
+            [PORTUGUESE_ID]: {
+                name: 'Portuguese (European)',
+                locales: ['pt'],
+                speechSynthLocale: 'pt-PT'
+            },
+            [ROMANIAN_ID]: {
+                name: 'Romanian',
+                locales: ['ro'],
+                speechSynthLocale: 'ro-RO',
+                singleGender: true
+            },
+            [RUSSIAN_ID]: {
+                name: 'Russian',
+                locales: ['ru'],
+                speechSynthLocale: 'ru-RU'
+            },
+            [SPANISH_ID]: {
+                name: 'Spanish (European)',
+                locales: ['es'],
+                speechSynthLocale: 'es-ES'
+            },
+            [SPANISH_419_ID]: {
+                name: 'Spanish (Latin American)',
+                locales: ['es-419'],
+                speechSynthLocale: 'es-US'
+            },
+            [SWEDISH_ID]: {
+                name: 'Swedish',
+                locales: ['sv'],
+                speechSynthLocale: 'sv-SE',
+                singleGender: true
             },
             [TURKISH_ID]: {
                 name: 'Turkish',
-                singleGender: true,
                 locales: ['tr'],
-                pollyLocale: 'tr-TR'
-            }
-
-            /*
-            'cy': {
+                speechSynthLocale: 'tr-TR',
+                singleGender: true
+            },
+            [WELSH_ID]: {
                 name: 'Welsh',
-                singleGender: true
-            },
-            'da': {
-                name: 'Danish'
-            },
-            'nl': {
-                name: 'Dutch'
-            },
-            'en': {
-                name: 'English'
-            },
-            'fr': {
-                name: 'French'
-            },
-            'de': {
-                name: 'German'
-            },
-            'hi': {
-                name: 'Hindi',
-                singleGender: true
-            },
-            'is': {
-                name: 'Icelandic'
-            },
-            'it': {
-                name: 'Italian'
-            },
-            'ja': {
-                name: 'Japanese'
-            },
-            'ko': {
-                name: 'Korean',
-                singleGender: true
-            },
-            'no': {
-                name: 'Norwegian',
-                singleGender: true
-            },
-            'pl': {
-                name: 'Polish'
-            },
-            'pt-br': {
-                name: 'Portuguese (Brazilian)'
-            },
-            'pt': {
-                name: 'Portuguese (European)'
-            },
-            'ro': {
-                name: 'Romanian',
-                singleGender: true
-            },
-            'ru': {
-                name: 'Russian'
-            },
-            'es': {
-                name: 'Spanish (European)'
-            },
-            'es-419': {
-                name: 'Spanish (Latin American)'
-            },
-            'sv': {
-                name: 'Swedish',
-                singleGender: true
-            },
-            'tr': {
-                name: 'Turkish',
-                singleGender: true
-            },
-            'zh-cn': {
-                name: 'Chinese (Simplified)',
-                singleGender: true
-            },
-            'zh-tw': {
-                name: 'Chinese (Traditional)',
+                locales: ['cy'],
+                speechSynthLocale: 'cy-GB',
                 singleGender: true
             }
-            */
         };
     }
-
-    /**
-     * This is a temporary adapter to convert Scratch locale codes to Amazon polly's locale codes.
-     * @todo remove this once the speech synthesis server can perform this conversion
-     * @param {string} locale the Scratch locale to convert.
-     * @return {string} the Amazon polly locale.
-     */
-    // localeToPolly (locale) {
-    //     const pollyLocales = {
-    //         'cy': 'cy-GB', // Welsh
-    //         'da': 'da-DK', // Danish
-    //         'nl': 'nl-NL', // Dutch
-    //         'en': 'en-US', // English
-    //         'fr': 'fr-FR', // French
-    //         'de': 'de-DE', // German
-    //         'hi': 'en-IN', // Hindi
-    //         'is': 'is-IS', // Icelandic
-    //         'it': 'it-IT', // Italian
-    //         'ja': 'ja-JP', // Japanese
-    //         'ko': 'ko-KR', // Korean
-    //         'no': 'nb-NO', // Norwegian
-    //         'pl': 'pl-PL', // Polish
-    //         'pt-br': 'pt-BR', // Portuguese (Brazilian)
-    //         'pt': 'pt-PT', // Portuguese (European)
-    //         'ro': 'ro-RO', // Romanian
-    //         'ru': 'ru-RU', // Russian
-    //         'es': 'es-ES', // Spanish (European)
-    //         'es-419': 'es-US', // Spanish (Latin American)
-    //         'sv': 'sv-SE', // Swedish
-    //         'tr': 'tr-TR', // Turkish
-    //         'zh-cn': 'cmn-CN', // Chinese (simplified) -> Mandarin
-    //         'zh-tw': 'cmn-CN' // Chinese (traditional) -> Mandarin
-    //     };
-    //     let converted = 'en-US';
-    //     if (pollyLocales[locale]) {
-    //         converted = pollyLocales[locale];
-    //     }
-    //     return converted;
-    // }
 
     /**
      * The key to load & store a target's text2speech state.
