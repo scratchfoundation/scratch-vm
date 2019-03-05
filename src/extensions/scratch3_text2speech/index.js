@@ -66,15 +66,6 @@ const GIANT_ID = 'GIANT';
 const KITTEN_ID = 'KITTEN';
 
 /**
- * Language ids.
- */
-const ENGLISH_ID = 'ENGLISH';
-const CHINESE_ID = 'CHINESE';
-const TURKISH_ID = 'TURKISH';
-const JAPANESE_ID = 'JAPANESE';
-
-
-/**
  * Playback rate for the tenor voice, for cases where we have only a female gender voice.
  */
 const FEMALE_TENOR_RATE = 0.89; // -2 semitones
@@ -83,6 +74,32 @@ const FEMALE_TENOR_RATE = 0.89; // -2 semitones
  * Playback rate for the giant voice, for cases where we have only a female gender voice.
  */
 const FEMALE_GIANT_RATE = 0.79; // -4 semitones
+
+/**
+ * Language ids. The value for each language id must be a valid Scratch locale.
+ */
+const CHINESE_ID = 'zh-cn';
+const DANISH_ID = 'da';
+const DUTCH_ID = 'nl';
+const ENGLISH_ID = 'en';
+const FRENCH_ID = 'fr';
+const GERMAN_ID = 'de';
+const HINDI_ID = 'hi';
+const ICELANDIC_ID = 'is';
+const ITALIAN_ID = 'it';
+const JAPANESE_ID = 'ja';
+const KOREAN_ID = 'ko';
+const NORWEGIAN_ID = 'no';
+const POLISH_ID = 'pl';
+const PORTUGUESE_BR_ID = 'pt-br';
+const PORTUGUESE_ID = 'pt';
+const ROMANIAN_ID = 'ro';
+const RUSSIAN_ID = 'ru';
+const SPANISH_ID = 'es';
+const SPANISH_419_ID = 'es-419';
+const SWEDISH_ID = 'sv';
+const TURKISH_ID = 'tr';
+const WELSH_ID = 'cy';
 
 /**
  * Class for the text2speech blocks.
