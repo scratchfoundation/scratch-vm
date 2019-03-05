@@ -453,8 +453,8 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Get the language for speech synthesis.
-     * @returns {string} the language code.
+     * Get the language code currently set for the extension.
+     * @returns {string} a Scratch locale code.
      */
     getCurrentLanguage () {
         const stage = this.runtime.getTargetForStage();
@@ -467,9 +467,9 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Set the language for speech synthesis.
+     * Set the language code for the extension.
      * It is stored in the stage so it can be saved and loaded with the project.
-     * @param {string} languageCode a locale code to set.
+     * @param {string} languageCode a Scratch locale code.
      */
     setCurrentLanguage (languageCode) {
         const stage = this.runtime.getTargetForStage();
@@ -484,6 +484,19 @@ class Scratch3Text2SpeechBlocks {
         if (!stage.textToSpeechLanguage) {
             stage.textToSpeechLanguage = this.DEFAULT_LANGUAGE;
         }
+    }
+
+    /**
+     * Get the locale code used by the speech synthesis server corresponding to
+     * the current language code set for the extension.
+     * @returns {string} the speech synthesis locale.
+     */
+    _getSpeechSynthLocale () {
+        let speechSynthLocale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
+        if (this.LANGUAGE_INFO[this.getCurrentLanguage()]) {
+            speechSynthLocale = this.LANGUAGE_INFO[this.getCurrentLanguage()].speechSynthLocale;
+        }
+        return speechSynthLocale;
     }
 
     /**
@@ -568,13 +581,16 @@ class Scratch3Text2SpeechBlocks {
     speakAndWait (args, util) {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
-        let locale = this.localeToPolly(this.getCurrentLanguage());
+        let locale = this._getSpeechSynthLocale();
 
         const state = this._getState(util.target);
 
         let gender = this.VOICE_INFO[state.voiceId].gender;
         let playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
+        // Special case for voices where the synthesis service only provides a
+        // single gender voice. In that case, always request the female voice,
+        // and set special playback rates for the tenor and giant voices.
         if (this.LANGUAGE_INFO[this.getCurrentLanguage()].singleGender) {
             gender = 'female';
             if (state.voiceId === TENOR_ID) {
@@ -587,7 +603,7 @@ class Scratch3Text2SpeechBlocks {
 
         if (state.voiceId === KITTEN_ID) {
             words = words.replace(/\S+/g, 'meow');
-            locale = 'en-US';
+            locale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
         }
 
         // Build up URL
