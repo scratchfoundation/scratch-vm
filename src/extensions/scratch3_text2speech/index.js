@@ -476,7 +476,14 @@ class Scratch3Text2SpeechBlocks {
         if (!stage) return;
         // Only set the language if it is in the list.
         if (this.isSupportedLanguage(languageCode)) {
-            stage.textToSpeechLanguage = languageCode;
+            // Set the language code used by the extension. There are a few
+            // languages where we map multiple written languages to one spoken
+            // language.
+            for (const lang in this.LANGUAGE_INFO) {
+                if (this.LANGUAGE_INFO[lang].locales.includes(languageCode)) {
+                    stage.textToSpeechLanguage = lang;
+                }
+            }
         }
         // If the language is null, set it to the default language.
         // This can occur e.g. if the extension was loaded with the editor
@@ -500,13 +507,18 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Check if a language code is in the list of supported languages for the
+     * Check if a Scratch language code is in the list of supported languages for the
      * speech synthesis service.
      * @param {string} languageCode the language code to check.
      * @returns {boolean} true if the language code is supported.
      */
     isSupportedLanguage (languageCode) {
-        return Object.keys(this.LANGUAGE_INFO).includes(languageCode);
+        for (const lang in this.LANGUAGE_INFO) {
+            if (this.LANGUAGE_INFO[lang].locales.includes(languageCode)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
