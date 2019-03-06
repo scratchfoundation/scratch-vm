@@ -76,7 +76,7 @@ const FEMALE_TENOR_RATE = 0.89; // -2 semitones
 const FEMALE_GIANT_RATE = 0.79; // -4 semitones
 
 /**
- * Language ids. The value for each language id must be a valid Scratch locale.
+ * Language ids. The value for each language id is a valid Scratch locale.
  */
 const CHINESE_ID = 'zh-cn';
 const DANISH_ID = 'da';
@@ -190,7 +190,24 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * An object with language names mapped to their language codes.
+     * An object with information for each language.
+     *
+     * A note on the different sets of locales referred to in this extension:
+     *
+     * SCRATCH LOCALE
+     *      Set by the editor, and used to store the language state in the project.
+     *      Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+     * SUPPORTED LOCALE
+     *      A Scratch locale that has a corresponding extension locale.
+     * EXTENSION LOCALE
+     *      A locale corresponding to one of the available spoken languages
+     *      in the extension. There can be multiple supported locales for a single
+     *      extension locale. For example, for both written versions of chinese,
+     *      zh-cn and zh-tw, we use a single spoken language (Mandarin). So there
+     *      are two supported locales, with a single extension locale.
+     * SPEECH SYNTH LOCALE
+     *      A different locale code system, used by our speech synthesis service.
+     *      Each extension locale has a speech synth locale.
      */
     get LANGUAGE_INFO () {
         return {
@@ -450,7 +467,7 @@ class Scratch3Text2SpeechBlocks {
     /**
      * Get the language code currently set in the editor, or fall back to the
      * browser locale.
-     * @return {string} the language code.
+     * @return {string} a Scratch locale code.
      */
     getEditorLanguage () {
         return formatMessage.setup().locale ||
