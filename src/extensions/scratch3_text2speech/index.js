@@ -186,7 +186,6 @@ class Scratch3Text2SpeechBlocks {
     /**
      * An object with language names mapped to their language codes.
      */
-
     get LANGUAGE_INFO () {
         return {
             [CHINESE_ID]: {
@@ -223,7 +222,7 @@ class Scratch3Text2SpeechBlocks {
             [HINDI_ID]: {
                 name: 'Hindi',
                 locales: ['hi'],
-                speechSynthLocale: 'en-IN', // should be hi-IN, but this one is not working?
+                speechSynthLocale: 'en-IN',
                 singleGender: true
             },
             [ICELANDIC_ID]: {
