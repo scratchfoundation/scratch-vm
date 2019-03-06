@@ -6,7 +6,6 @@ const color = require('../../util/color');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
-const RateLimiter = require('../../util/rateLimiter.js');
 const TaskQueue = require('../../util/task-queue');
 const log = require('../../util/log');
 
@@ -58,12 +57,6 @@ const BLEBatteryCheckInterval = 5000;
  * @type {number}
  */
 const BLESendInterval = 100;
-
-/**
- * A maximum number of BLE message sends per second, to be enforced by the rate limiter.
- * @type {number}
- */
-const BLESendRateMax = 20;
 
 /**
  * Enum for WeDo 2.0 sensor and output types.
@@ -317,9 +310,8 @@ class WeDo2Motor {
 
     /**
      * Turn this motor off.
-     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    turnOff (useLimiter = true) {
+    turnOff () {
         if (this._power === 0) return;
 
         const cmd = this._parent.generateOutputCommand(
@@ -328,7 +320,7 @@ class WeDo2Motor {
             [0] // 0 = stop
         );
 
-        this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd, useLimiter);
+        this._parent.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
 
         this._isOn = false;
     }
@@ -421,14 +413,6 @@ class WeDo2 {
         this._ble = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
-        /**
-         * A rate limiter utility, to help limit the rate at which we send BLE messages
-         * over the socket to Scratch Link to a maximum number of sends per second.
-         * @type {RateLimiter}
-         * @private
-         */
-        this._rateLimiter = new RateLimiter(BLESendRateMax);
-
          /**
          * A task queue to track communication tasks sent over the socket.
          * The bucket in this task queue holds 1 task at a time, and refills
@@ -488,10 +472,7 @@ class WeDo2 {
     stopAllMotors () {
         this._motors.forEach(motor => {
             if (motor) {
-                // Send the motor off command without using the rate limiter.
-                // This allows the stop button to stop motors even if we are
-                // otherwise flooded with commands.
-                motor.turnOff(false);
+                motor.turnOff();
             }
         });
     }
@@ -579,18 +560,18 @@ class WeDo2 {
             WeDo2Command.STOP_TONE
         );
 
-        // Send this command without using the rate limiter, because it is
-        // only triggered by the stop button.
-        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd, false);
+        return this.send(BLECharacteristic.OUTPUT_COMMAND, cmd);
     }
 
     /**
-     * Stop the tone playing and motors on the WeDo 2.0 peripheral.
+     * Stop the tone playing and motors on the WeDo 2.0 peripheral and
+     * cancel any pending communication tasks on the task queue.
      */
     stopAll () {
         if (!this.isConnected()) return;
         this.stopTone();
         this.stopAllMotors();
+        this._queue.cancelAll();
     }
 
     /**
@@ -656,15 +637,10 @@ class WeDo2 {
      * Write a message to the WeDo 2.0 peripheral BLE socket.
      * @param {number} uuid - the UUID of the characteristic to write to
      * @param {Array} message - the message to write.
-     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the write operation
      */
-    send (uuid, message, useLimiter = true) {
+    send (uuid, message) {
         if (!this.isConnected()) return Promise.resolve();
-
-        if (useLimiter) {
-            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
-        }
 
         return this._ble.write(
             BLEService.IO_SERVICE,
