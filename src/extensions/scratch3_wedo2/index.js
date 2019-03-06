@@ -1396,16 +1396,15 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     setLightHue (args) {
+        // Convert from [0,100] to [0,360]
+        let inputHue = Cast.toNumber(args.HUE);
+        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
+        const hue = inputHue * 360 / 100;
+        
+        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
+        const rgbDecimal = color.rgbToDecimal(rgbObject);
+
         return this._peripheral._queue.do(() => {
-            // Convert from [0,100] to [0,360]
-            let inputHue = Cast.toNumber(args.HUE);
-            inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
-            const hue = inputHue * 360 / 100;
-
-            const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
-
-            const rgbDecimal = color.rgbToDecimal(rgbObject);
-
             this._peripheral.setLED(rgbDecimal);
         }).catch(e => {
             console.log('*** CATCH SET_LIGHT_HUE REJECTION');
