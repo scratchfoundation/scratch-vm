@@ -332,7 +332,7 @@ class Scratch3Text2SpeechBlocks {
      * @type {string}
      */
     get DEFAULT_LANGUAGE () {
-        return 'en';
+        return ENGLISH_ID;
     }
 
     /**
