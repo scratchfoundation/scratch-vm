@@ -1400,8 +1400,9 @@ class Scratch3WeDo2Blocks {
         let inputHue = Cast.toNumber(args.HUE);
         inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
         const hue = inputHue * 360 / 100;
-        
+
         const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
+
         const rgbDecimal = color.rgbToDecimal(rgbObject);
 
         return this._peripheral._queue.do(() => {
