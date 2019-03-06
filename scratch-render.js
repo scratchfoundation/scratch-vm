@@ -14887,13 +14887,13 @@ var __SilhouetteUpdateCanvas = void 0;
 var getPoint = function getPoint(_ref, x, y) {
     var width = _ref._width,
         height = _ref._height,
-        data = _ref._data;
+        data = _ref._colorData;
 
     // 0 if outside bouds, otherwise read from data.
     if (x >= width || y >= height || x < 0 || y < 0) {
         return 0;
     }
-    return data[y * width + x];
+    return data[(y * width + x) * 4 + 3];
 };
 
 /**
@@ -14946,7 +14946,6 @@ var Silhouette = function () {
          * The data representing a skin's silhouette shape.
          * @type {Uint8ClampedArray}
          */
-        this._data = null;
         this._colorData = null;
 
         this.colorAtNearest = this.colorAtLinear = function (_, dst) {
@@ -14976,16 +14975,11 @@ var Silhouette = function () {
             ctx.drawImage(bitmapData, 0, 0, width, height);
             var imageData = ctx.getImageData(0, 0, width, height);
 
-            this._data = new Uint8ClampedArray(imageData.data.length / 4);
             this._colorData = imageData.data;
             // delete our custom overriden "uninitalized" color functions
             // let the prototype work for itself
             delete this.colorAtNearest;
             delete this.colorAtLinear;
-
-            for (var i = 0; i < imageData.data.length; i += 4) {
-                this._data[i / 4] = imageData.data[i + 3];
-            }
         }
 
         /**
@@ -15046,7 +15040,7 @@ var Silhouette = function () {
     }, {
         key: 'isTouchingNearest',
         value: function isTouchingNearest(vec) {
-            if (!this._data) return;
+            if (!this._colorData) return;
             return getPoint(this, Math.floor(vec[0] * (this._width - 1)), Math.floor(vec[1] * (this._height - 1))) > 0;
         }
 
@@ -15060,7 +15054,7 @@ var Silhouette = function () {
     }, {
         key: 'isTouchingLinear',
         value: function isTouchingLinear(vec) {
-            if (!this._data) return;
+            if (!this._colorData) return;
             var x = Math.floor(vec[0] * (this._width - 1));
             var y = Math.floor(vec[1] * (this._height - 1));
             return getPoint(this, x, y) > 0 || getPoint(this, x + 1, y) > 0 || getPoint(this, x, y + 1) > 0 || getPoint(this, x + 1, y + 1) > 0;
