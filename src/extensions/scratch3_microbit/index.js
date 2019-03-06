@@ -830,21 +830,22 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displaySymbol (args) {
+        const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
+        const reducer = (accumulator, c, index) => {
+            const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
+            return value;
+        };
+        const hex = symbol.split('').reduce(reducer, 0);
+
+        if (hex === null) return;
+
         return this._peripheral._queue.do(() => {
-            const symbol = cast.toString(args.MATRIX).replace(/\s/g, '');
-            const reducer = (accumulator, c, index) => {
-                const value = (c === '0') ? accumulator : accumulator + Math.pow(2, index);
-                return value;
-            };
-            const hex = symbol.split('').reduce(reducer, 0);
-            if (hex !== null) {
-                this._peripheral.ledMatrixState[0] = hex & 0x1F;
-                this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
-                this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
-                this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
-                this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
-                this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-            }
+            this._peripheral.ledMatrixState[0] = hex & 0x1F;
+            this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
+            this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
+            this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
+            this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
+            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
         }).catch(e => {
             console.log('*** CATCH DISPLAY_SYMBOL REJECTION');
             // console.log(e);
@@ -862,8 +863,9 @@ class Scratch3MicroBitBlocks {
      * 1px before the string, and 5px after the string.
      */
     displayText (args) {
+        const text = String(args.TEXT).substring(0, 19);
+        
         return this._peripheral._queue.do(() => {
-            const text = String(args.TEXT).substring(0, 19);
             if (text.length > 0) this._peripheral.displayText(text);
             const yieldDelay = 120 * ((6 * text.length) + 6);
 
