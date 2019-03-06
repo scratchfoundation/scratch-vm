@@ -128,6 +128,12 @@ class Scratch3Text2SpeechBlocks {
         if (this.runtime) {
             runtime.on('targetWasCreated', this._onTargetCreated);
         }
+
+        /**
+         * A list of all Scratch locales that are supported by the extension.
+         * @type {Array}
+         */
+        this._supportedLocales = this._getSupportedLocales();
     }
 
     /**
@@ -468,22 +474,16 @@ class Scratch3Text2SpeechBlocks {
     /**
      * Set the language code for the extension.
      * It is stored in the stage so it can be saved and loaded with the project.
-     * @param {string} languageCode a Scratch locale code.
+     * @param {string} locale a locale code.
      */
-    setCurrentLanguage (languageCode) {
+    setCurrentLanguage (locale) {
         const stage = this.runtime.getTargetForStage();
         if (!stage) return;
-        // Only set the language if it is in the list.
-        if (this.isSupportedLanguage(languageCode)) {
-            // Set the language code used by the extension. There are a few
-            // languages where we map multiple written languages to one spoken
-            // language.
-            for (const lang in this.LANGUAGE_INFO) {
-                if (this.LANGUAGE_INFO[lang].locales.includes(languageCode)) {
-                    stage.textToSpeechLanguage = lang;
-                }
-            }
+
+        if (this.isSupportedLanguage(locale)) {
+            stage.textToSpeechLanguage = this._getExtensionLocaleForSupportedLocale(locale);
         }
+
         // If the language is null, set it to the default language.
         // This can occur e.g. if the extension was loaded with the editor
         // set to a language that is not in the list.
@@ -493,9 +493,23 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
+     * Get the extension locale for a supported locale, or null.
+     * @param {string} locale a locale code.
+     * @returns {?string} a locale supported by the extension, or null.
+     */
+    _getExtensionLocaleForSupportedLocale (locale) {
+        for (const lang in this.LANGUAGE_INFO) {
+            if (this.LANGUAGE_INFO[lang].locales.includes(locale)) {
+                return lang;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the locale code used by the speech synthesis server corresponding to
      * the current language code set for the extension.
-     * @returns {string} the speech synthesis locale.
+     * @returns {string} a speech synthesis locale.
      */
     _getSpeechSynthLocale () {
         let speechSynthLocale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
@@ -506,18 +520,22 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
+     * Get an array of the locales supported by this extension.
+     * @returns {Array} An array of locale strings.
+     */
+    _getSupportedLocales () {
+        return Object.keys(this.LANGUAGE_INFO).reduce((acc, cur) =>
+            acc.concat(this.LANGUAGE_INFO[cur].locales), []);
+    }
+
+    /**
      * Check if a Scratch language code is in the list of supported languages for the
      * speech synthesis service.
      * @param {string} languageCode the language code to check.
      * @returns {boolean} true if the language code is supported.
      */
     isSupportedLanguage (languageCode) {
-        for (const lang in this.LANGUAGE_INFO) {
-            if (this.LANGUAGE_INFO[lang].locales.includes(languageCode)) {
-                return true;
-            }
-        }
-        return false;
+        return this._supportedLocales.includes(languageCode);
     }
 
     /**
