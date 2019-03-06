@@ -144,8 +144,6 @@ class MicroBit {
      * Stop all the communication tasks pending on the task queue.
      */
     stopAll () {
-        console.log('*** STOPALL()');
-        console.log('*** TASKQUEUE CANCEL_ALL');
         this._queue.cancelAll();
     }
 
