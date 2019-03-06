@@ -69,6 +69,7 @@ class MicroBit {
          * @private
          */
         this._runtime = runtime;
+        this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
          * The BluetoothLowEnergy connection socket for reading/writing peripheral data.
