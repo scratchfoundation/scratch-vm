@@ -53,12 +53,6 @@ const BLECharacteristic = {
 const BLEBatteryCheckInterval = 5000;
 
 /**
- * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
- * @type {number}
- */
-const BLESendInterval = 100;
-
-/**
  * Enum for WeDo 2.0 sensor and output types.
  * @readonly
  * @enum {number}
@@ -1289,18 +1283,18 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOn (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOn();
-            }
-        });
+        return this._peripheral._queue.do(() => {
+            // TODO: cast args.MOTOR_ID?
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.turnOn();
+                }
+            });
 
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        }).catch(e => {
+            console.log('*** CATCH MOTOR_ON REJECTION');
+            // console.log(e);
         });
     }
 
@@ -1311,18 +1305,18 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOff (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOff();
-            }
-        });
+        return this._peripheral._queue.do(() => {
+            // TODO: cast args.MOTOR_ID?
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.turnOff();
+                }
+            });
 
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        }).catch(e => {
+            console.log('*** CATCH MOTOR_OFF REJECTION');
+            // console.log(e);
         });
     }
 
@@ -1334,19 +1328,19 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     startMotorPower (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                motor.turnOn();
-            }
-        });
+        return this._peripheral._queue.do(() => {
+            // TODO: cast args.MOTOR_ID?
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
+                    motor.turnOn();
+                }
+            });
 
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        }).catch(e => {
+            console.log('*** CATCH START_MOTOR_POWER REJECTION');
+            // console.log(e);
         });
     }
 
@@ -1359,39 +1353,39 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     setMotorDirection (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                switch (args.MOTOR_DIRECTION) {
-                case WeDo2MotorDirection.FORWARD:
-                    motor.direction = 1;
-                    break;
-                case WeDo2MotorDirection.BACKWARD:
-                    motor.direction = -1;
-                    break;
-                case WeDo2MotorDirection.REVERSE:
-                    motor.direction = -motor.direction;
-                    break;
-                default:
-                    log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
-                    break;
-                }
-                // keep the motor on if it's running, and update the pending timeout if needed
-                if (motor.isOn) {
-                    if (motor.pendingTimeoutDelay) {
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else {
-                        motor.turnOn();
+        return this._peripheral._queue.do(() => {
+            // TODO: cast args.MOTOR_ID?
+            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                const motor = this._peripheral.motor(motorIndex);
+                if (motor) {
+                    switch (args.MOTOR_DIRECTION) {
+                    case WeDo2MotorDirection.FORWARD:
+                        motor.direction = 1;
+                        break;
+                    case WeDo2MotorDirection.BACKWARD:
+                        motor.direction = -1;
+                        break;
+                    case WeDo2MotorDirection.REVERSE:
+                        motor.direction = -motor.direction;
+                        break;
+                    default:
+                        log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
+                        break;
+                    }
+                    // keep the motor on if it's running, and update the pending timeout if needed
+                    if (motor.isOn) {
+                        if (motor.pendingTimeoutDelay) {
+                            motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                        } else {
+                            motor.turnOn();
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+        }).catch(e => {
+            console.log('*** CATCH SET_MOTOR_DIRECTION REJECTION');
+            // console.log(e);
         });
     }
 
@@ -1402,21 +1396,20 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     setLightHue (args) {
-        // Convert from [0,100] to [0,360]
-        let inputHue = Cast.toNumber(args.HUE);
-        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
-        const hue = inputHue * 360 / 100;
+        return this._peripheral._queue.do(() => {
+            // Convert from [0,100] to [0,360]
+            let inputHue = Cast.toNumber(args.HUE);
+            inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
+            const hue = inputHue * 360 / 100;
 
-        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
+            const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
 
-        const rgbDecimal = color.rgbToDecimal(rgbObject);
+            const rgbDecimal = color.rgbToDecimal(rgbObject);
 
-        this._peripheral.setLED(rgbDecimal);
-
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BLESendInterval);
+            this._peripheral.setLED(rgbDecimal);
+        }).catch(e => {
+            console.log('*** CATCH SET_LIGHT_HUE REJECTION');
+            // console.log(e);
         });
     }
 
