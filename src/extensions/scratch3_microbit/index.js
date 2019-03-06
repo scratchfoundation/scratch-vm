@@ -5,6 +5,7 @@ const cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
+const TaskQueue = require('../../util/task-queue');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
