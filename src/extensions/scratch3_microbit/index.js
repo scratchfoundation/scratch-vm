@@ -33,12 +33,6 @@ const BLECommand = {
 const BLETimeout = 4500;
 
 /**
- * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
- * @type {number}
- */
-const BLESendInterval = 100;
-
-/**
  * A string to report to the BLE socket when the micro:bit has stopped receiving data.
  * @type {string}
  */
@@ -132,13 +126,6 @@ class MicroBit {
         this._timeoutID = null;
 
         /**
-         * A flag that is true while we are busy sending data to the BLE socket.
-         * @type {boolean}
-         * @private
-         */
-        this._busy = false;
-
-        /**
          * A task queue to track communication tasks sent over the socket.
          * The bucket in this task queue holds 1 task at a time, and refills
          * at a rate of 10 tasks per second, from a queue that holds at maximum
@@ -147,12 +134,6 @@ class MicroBit {
          * @type {TaskQueue}
          */
         this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
-
-        /**
-         * ID for a timeout which is used to clear the busy flag if it has been
-         * true for a long time.
-         */
-        this._busyTimeoutID = null;
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -283,19 +264,6 @@ class MicroBit {
      */
     send (command, message) {
         if (!this.isConnected()) return;
-        if (this._busy) return;
-
-        // Set a busy flag so that while we are sending a message and waiting for
-        // the response, additional messages are ignored.
-        this._busy = true;
-
-        // Set a timeout after which to reset the busy flag. This is used in case
-        // a BLE message was sent for which we never received a response, because
-        // e.g. the peripheral was turned off after the message was sent. We reset
-        // the busy flag after a while so that it is possible to try again later.
-        this._busyTimeoutID = window.setTimeout(() => {
-            this._busy = false;
-        }, 5000);
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -304,12 +272,7 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
-            () => {
-                this._busy = false;
-                window.clearTimeout(this._busyTimeoutID);
-            }
-        );
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true);
     }
 
     /**
