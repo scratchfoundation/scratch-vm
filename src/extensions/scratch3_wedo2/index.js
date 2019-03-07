@@ -1445,10 +1445,10 @@ class Scratch3WeDo2Blocks {
         const tone = this._noteToTone(note);
 
         return this._peripheral._queue.do(() => new Promise(resolve => {
-                this._peripheral.playTone(tone, durationMS);
+            this._peripheral.playTone(tone, durationMS);
 
-                // Run for some time even when no piezo is connected
-                setTimeout(resolve, durationMS);
+            // Run for some time even when no piezo is connected
+            setTimeout(resolve, durationMS);
         })).catch(() => {
             // console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
             // console.log(e);
