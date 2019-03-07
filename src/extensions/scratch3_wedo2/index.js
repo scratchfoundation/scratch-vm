@@ -1278,7 +1278,7 @@ class Scratch3WeDo2Blocks {
                 setTimeout(resolve, durationMS);
             });
         }).catch(e => {
-            console.log('*** CATCH MOTOR_ON_FOR REJECTION');
+            // console.log('*** CATCH MOTOR_ON_FOR REJECTION');
             // console.log(e);
         });
     }
@@ -1300,7 +1300,7 @@ class Scratch3WeDo2Blocks {
                 }
             });
         }).catch(e => {
-            console.log('*** CATCH MOTOR_ON REJECTION');
+            // console.log('*** CATCH MOTOR_ON REJECTION');
             // console.log(e);
         });
     }
@@ -1322,7 +1322,7 @@ class Scratch3WeDo2Blocks {
                 }
             });
         }).catch(e => {
-            console.log('*** CATCH MOTOR_OFF REJECTION');
+            // console.log('*** CATCH MOTOR_OFF REJECTION');
             // console.log(e);
         });
     }
@@ -1347,7 +1347,7 @@ class Scratch3WeDo2Blocks {
                 }
             });
         }).catch(e => {
-            console.log('*** CATCH START_MOTOR_POWER REJECTION');
+            // console.log('*** CATCH START_MOTOR_POWER REJECTION');
             // console.log(e);
         });
     }
@@ -1393,7 +1393,7 @@ class Scratch3WeDo2Blocks {
                 }
             });
         }).catch(e => {
-            console.log('*** CATCH SET_MOTOR_DIRECTION REJECTION');
+            // console.log('*** CATCH SET_MOTOR_DIRECTION REJECTION');
             // console.log(e);
         });
     }
@@ -1417,7 +1417,7 @@ class Scratch3WeDo2Blocks {
         return this._peripheral._queue.do(() => {
             this._peripheral.setLED(rgbDecimal);
         }).catch(e => {
-            console.log('*** CATCH SET_LIGHT_HUE REJECTION');
+            // console.log('*** CATCH SET_LIGHT_HUE REJECTION');
             // console.log(e);
         });
     }
@@ -1447,7 +1447,7 @@ class Scratch3WeDo2Blocks {
                 setTimeout(resolve, durationMS);
             });
         }).catch(e => {
-            console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
+            // console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
             // console.log(e);
         });
     }
