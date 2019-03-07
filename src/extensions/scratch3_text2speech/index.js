@@ -541,8 +541,8 @@ class Scratch3Text2SpeechBlocks {
      * @returns {Array} An array of locale strings.
      */
     _getSupportedLocales () {
-        return Object.keys(this.LANGUAGE_INFO).reduce((acc, cur) =>
-            acc.concat(this.LANGUAGE_INFO[cur].locales), []);
+        return Object.keys(this.LANGUAGE_INFO).reduce((acc, lang) =>
+            acc.concat(this.LANGUAGE_INFO[lang].locales), []);
     }
 
     /**
