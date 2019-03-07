@@ -1260,12 +1260,14 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnFor (args) {
+        const motorID = Cast.toString(args.MOTOR_ID);
+        const duration = Cast.toNumber(args.DURATION);
+
         return this._peripheral._queue.do(() => {
-            // TODO: cast args.MOTOR_ID?
-            let durationMS = Cast.toNumber(args.DURATION) * 1000;
+            let durationMS = Cast.toNumber(duration) * 1000;
             durationMS = MathUtil.clamp(durationMS, 0, 15000);
             return new Promise(resolve => {
-                this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                this._forEachMotor(motorID, motorIndex => {
                     const motor = this._peripheral.motor(motorIndex);
                     if (motor) {
                         motor.turnOnFor(durationMS);
@@ -1288,9 +1290,10 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOn (args) {
+        const motorID = Cast.toString(args.MOTOR_ID);
+
         return this._peripheral._queue.do(() => {
-            // TODO: cast args.MOTOR_ID?
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._forEachMotor(motorID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOn();
@@ -1310,9 +1313,10 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     motorOff (args) {
+        const motorID = Cast.toString(args.MOTOR_ID);
+
         return this._peripheral._queue.do(() => {
-            // TODO: cast args.MOTOR_ID?
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._forEachMotor(motorID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOff();
@@ -1333,12 +1337,14 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     startMotorPower (args) {
+        const motorID = Cast.toString(args.MOTOR_ID);
+        const power = Cast.toNumber(args.POWER);
+
         return this._peripheral._queue.do(() => {
-            // TODO: cast args.MOTOR_ID?
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._forEachMotor(motorID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
+                    motor.power = MathUtil.clamp(power, 0, 100);
                     motor.turnOn();
                 }
             });
@@ -1358,12 +1364,14 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a Promise that resolves after some delay.
      */
     setMotorDirection (args) {
+        const motorID = Cast.toString(args.MOTOR_ID);
+        const motorDirection = args.MOTOR_DIRECTION;
+
         return this._peripheral._queue.do(() => {
-            // TODO: cast args.MOTOR_ID?
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._forEachMotor(motorID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    switch (args.MOTOR_DIRECTION) {
+                    switch (motorDirection) {
                     case WeDo2MotorDirection.FORWARD:
                         motor.direction = 1;
                         break;
@@ -1374,7 +1382,7 @@ class Scratch3WeDo2Blocks {
                         motor.direction = -motor.direction;
                         break;
                     default:
-                        log.warn(`Unknown motor direction in setMotorDirection: ${args.DIRECTION}`);
+                        log.warn(`Unknown motor direction in setMotorDirection: ${motorDirection}`);
                         break;
                     }
                     // keep the motor on if it's running, and update the pending timeout if needed
@@ -1426,13 +1434,17 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playNoteFor (args) {
+        const duration = Cast.toNumber(args.DURATION);
+        let note = Cast.toNumber(args.NOTE);
+        let durationMS = duration * 1000;
+        durationMS = MathUtil.clamp(durationMS, 0, 3000);
+        note = MathUtil.clamp(note, 25, 125); // valid WeDo 2.0 sounds
+        if (durationMS === 0) return; // WeDo 2.0 plays duration '0' forever
+        
+        const tone = this._noteToTone(note);
+
         return this._peripheral._queue.do(() => {
-            let durationMS = Cast.toNumber(args.DURATION) * 1000;
-            durationMS = MathUtil.clamp(durationMS, 0, 3000);
-            const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo 2.0 sounds
-            if (durationMS === 0) return; // WeDo 2.0 plays duration '0' forever
             return new Promise(resolve => {
-                const tone = this._noteToTone(note);
                 this._peripheral.playTone(tone, durationMS);
 
                 // Run for some time even when no piezo is connected
