@@ -1299,7 +1299,6 @@ class Scratch3WeDo2Blocks {
                     motor.turnOn();
                 }
             });
-
         }).catch(e => {
             console.log('*** CATCH MOTOR_ON REJECTION');
             // console.log(e);
@@ -1322,7 +1321,6 @@ class Scratch3WeDo2Blocks {
                     motor.turnOff();
                 }
             });
-
         }).catch(e => {
             console.log('*** CATCH MOTOR_OFF REJECTION');
             // console.log(e);
@@ -1348,7 +1346,6 @@ class Scratch3WeDo2Blocks {
                     motor.turnOn();
                 }
             });
-
         }).catch(e => {
             console.log('*** CATCH START_MOTOR_POWER REJECTION');
             // console.log(e);
@@ -1395,7 +1392,6 @@ class Scratch3WeDo2Blocks {
                     }
                 }
             });
-
         }).catch(e => {
             console.log('*** CATCH SET_MOTOR_DIRECTION REJECTION');
             // console.log(e);
