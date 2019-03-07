@@ -407,17 +407,17 @@ class WeDo2 {
         this._ble = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
-         /**
+        /**
          * A task queue to limit the rate of Bluetooth message sends by limiting
          * the rate of execution of blocks which send Bluetooth messages.
-         * 
+         *
          * The bucket in this task queue holds 1 task at a time, and refills
          * at a rate of 10 tasks per second, from a queue that holds tasks with
          * a maximum total cost of 30. Since most tasks have a cost of 1 this
          * means the queue will generally have at most 30 tasks. If more than 30
          * tasks are added to the task queue in a short period, some tasks may
          * be rejected (ignored) by the task queue.
-         * 
+         *
          * @type {TaskQueue}
          */
         this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
@@ -1444,14 +1444,12 @@ class Scratch3WeDo2Blocks {
         
         const tone = this._noteToTone(note);
 
-        return this._peripheral._queue.do(() => {
-            return new Promise(resolve => {
+        return this._peripheral._queue.do(() => new Promise(resolve => {
                 this._peripheral.playTone(tone, durationMS);
 
                 // Run for some time even when no piezo is connected
                 setTimeout(resolve, durationMS);
-            });
-        }).catch(() => {
+        })).catch(() => {
             // console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
             // console.log(e);
         });
