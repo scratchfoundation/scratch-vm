@@ -1260,19 +1260,24 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnFor (args) {
-        // TODO: cast args.MOTOR_ID?
-        let durationMS = Cast.toNumber(args.DURATION) * 1000;
-        durationMS = MathUtil.clamp(durationMS, 0, 15000);
-        return new Promise(resolve => {
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                const motor = this._peripheral.motor(motorIndex);
-                if (motor) {
-                    motor.turnOnFor(durationMS);
-                }
-            });
+        return this._peripheral._queue.do(() => {
+            // TODO: cast args.MOTOR_ID?
+            let durationMS = Cast.toNumber(args.DURATION) * 1000;
+            durationMS = MathUtil.clamp(durationMS, 0, 15000);
+            return new Promise(resolve => {
+                this._forEachMotor(args.MOTOR_ID, motorIndex => {
+                    const motor = this._peripheral.motor(motorIndex);
+                    if (motor) {
+                        motor.turnOnFor(durationMS);
+                    }
+                });
 
-            // Run for some time even when no motor is connected
-            setTimeout(resolve, durationMS);
+                // Run for some time even when no motor is connected
+                setTimeout(resolve, durationMS);
+            });
+        }).catch(e => {
+            console.log('*** CATCH MOTOR_ON_FOR REJECTION');
+            // console.log(e);
         });
     }
 
@@ -1421,16 +1426,21 @@ class Scratch3WeDo2Blocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     playNoteFor (args) {
-        let durationMS = Cast.toNumber(args.DURATION) * 1000;
-        durationMS = MathUtil.clamp(durationMS, 0, 3000);
-        const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo 2.0 sounds
-        if (durationMS === 0) return; // WeDo 2.0 plays duration '0' forever
-        return new Promise(resolve => {
-            const tone = this._noteToTone(note);
-            this._peripheral.playTone(tone, durationMS);
+        return this._peripheral._queue.do(() => {
+            let durationMS = Cast.toNumber(args.DURATION) * 1000;
+            durationMS = MathUtil.clamp(durationMS, 0, 3000);
+            const note = MathUtil.clamp(Cast.toNumber(args.NOTE), 25, 125); // valid WeDo 2.0 sounds
+            if (durationMS === 0) return; // WeDo 2.0 plays duration '0' forever
+            return new Promise(resolve => {
+                const tone = this._noteToTone(note);
+                this._peripheral.playTone(tone, durationMS);
 
-            // Run for some time even when no piezo is connected
-            setTimeout(resolve, durationMS);
+                // Run for some time even when no piezo is connected
+                setTimeout(resolve, durationMS);
+            });
+        }).catch(e => {
+            console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
+            // console.log(e);
         });
     }
 
