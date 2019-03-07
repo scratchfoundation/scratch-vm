@@ -1282,7 +1282,7 @@ class Scratch3WeDo2Blocks {
                 // Run for some time even when no motor is connected
                 setTimeout(resolve, durationMS);
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH MOTOR_ON_FOR REJECTION');
             // console.log(e);
         });
@@ -1304,7 +1304,7 @@ class Scratch3WeDo2Blocks {
                     motor.turnOn();
                 }
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH MOTOR_ON REJECTION');
             // console.log(e);
         });
@@ -1326,7 +1326,7 @@ class Scratch3WeDo2Blocks {
                     motor.turnOff();
                 }
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH MOTOR_OFF REJECTION');
             // console.log(e);
         });
@@ -1351,7 +1351,7 @@ class Scratch3WeDo2Blocks {
                     motor.turnOn();
                 }
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH START_MOTOR_POWER REJECTION');
             // console.log(e);
         });
@@ -1397,7 +1397,7 @@ class Scratch3WeDo2Blocks {
                     }
                 }
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH SET_MOTOR_DIRECTION REJECTION');
             // console.log(e);
         });
@@ -1421,7 +1421,7 @@ class Scratch3WeDo2Blocks {
 
         return this._peripheral._queue.do(() => {
             this._peripheral.setLED(rgbDecimal);
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH SET_LIGHT_HUE REJECTION');
             // console.log(e);
         });
@@ -1451,7 +1451,7 @@ class Scratch3WeDo2Blocks {
                 // Run for some time even when no piezo is connected
                 setTimeout(resolve, durationMS);
             });
-        }).catch(e => {
+        }).catch(() => {
             // console.log('*** CATCH PLAY_NOTE_FOR REJECTION');
             // console.log(e);
         });
