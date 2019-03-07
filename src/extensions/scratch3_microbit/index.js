@@ -815,7 +815,7 @@ class Scratch3MicroBitBlocks {
             this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
         }).catch(e => {
-            console.log('*** CATCH DISPLAY_SYMBOL REJECTION');
+            // console.log('*** CATCH DISPLAY_SYMBOL REJECTION');
             // console.log(e);
         });
     }
@@ -843,7 +843,7 @@ class Scratch3MicroBitBlocks {
                 }, yieldDelay);
             });
         }).catch(e => {
-            console.log('*** CATCH DISPLAY_TEXT REJECTION');
+            // console.log('*** CATCH DISPLAY_TEXT REJECTION');
             // console.log(e);
         });
     }
@@ -859,7 +859,7 @@ class Scratch3MicroBitBlocks {
             }
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
         }).catch(e => {
-            console.log('*** CATCH DISPLAY_CLEAR REJECTION');
+            // console.log('*** CATCH DISPLAY_CLEAR REJECTION');
             // console.log(e);
         });
     }
