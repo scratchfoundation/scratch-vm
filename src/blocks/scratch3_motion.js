@@ -87,6 +87,7 @@ class Scratch3MotionBlocks {
             targetX = Math.round(stageWidth * (Math.random() - 0.5));
             targetY = Math.round(stageHeight * (Math.random() - 0.5));
         } else {
+            targetName = Cast.toString(targetName);
             const goToTarget = this.runtime.getSpriteTargetByName(targetName);
             if (!goToTarget) return;
             targetX = goToTarget.x;
@@ -127,6 +128,7 @@ class Scratch3MotionBlocks {
             util.target.setDirection(Math.round(Math.random() * 360) - 180);
             return;
         } else {
+            args.TOWARDS = Cast.toString(args.TOWARDS);
             const pointTarget = this.runtime.getSpriteTargetByName(args.TOWARDS);
             if (!pointTarget) return;
             targetX = pointTarget.x;
