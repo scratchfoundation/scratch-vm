@@ -403,13 +403,17 @@ class Scratch3LooksBlocks {
             } else if (requestedBackdrop === 'previous backdrop') {
                 stage.setCostume(stage.currentCostume - 1);
             } else if (requestedBackdrop === 'random backdrop') {
-                // Don't pick the current backdrop, so that the block
-                // will always have an observable effect.
                 const numCostumes = stage.getCostumes().length;
                 if (numCostumes > 1) {
-                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
-                    if (selectedIndex === stage.currentCostume) selectedIndex = numCostumes - 1;
-                    stage.setCostume(selectedIndex);
+                    // Don't pick the current backdrop, so that the block
+                    // will always have an observable effect.
+                    const lowerBound = 0;
+                    const upperBound = numCostumes - 1;
+                    const costumeToExclude = stage.currentCostume;
+                    
+                    const nextCostume = MathUtil.inclusiveRandIntWithout(lowerBound, upperBound, costumeToExclude);
+
+                    stage.setCostume(nextCostume);
                 }
             // Try to cast the string to a number (and treat it as a costume index)
             // Pure whitespace should not be treated as a number
