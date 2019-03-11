@@ -735,6 +735,12 @@ class Blocks {
                 if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
                     oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
                 }
+
+                // If the block being attached is itself a shadow, make sure to set
+                // both block and shadow to that blocks ID. This happens when adding
+                // inputs to a custom procedure.
+                if (this._blocks[e.id].shadow) oldShadow = e.id;
+
                 this._blocks[e.newParent].inputs[e.newInput] = {
                     name: e.newInput,
                     block: e.id,
