@@ -92,16 +92,13 @@ class MathUtil {
     static inclusiveRandIntWithout(lower, upper, excluded) {
         // Note that subtraction is the number of items in the
         // inclusive range [lower, upper] minus 1 already
-        // (e.g. in the set {3, 4, 5}, 5 - 3 = 2)
+        // (e.g. in the set {3, 4, 5}, 5 - 3 = 2).
         const possibleOptions = upper - lower;
 
         const randInt = lower + Math.floor(Math.random() * possibleOptions);
-        if (randInt === excluded) {
-            // We've picked the excluded number.
-            return upper;
+        if (randInt >= excluded) {
+            return randInt + 1;
         } else {
-            // We haven't picked the excluded number, so this
-            // value maps to itself.
             return randInt;
         }
     }
