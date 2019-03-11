@@ -75,7 +75,7 @@ class BT extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
-        if (!this._connected) return;
+        if (this._ws.readyState !== this._ws.OPEN) return;
 
         this._ws.close();
         this._connected = false;
