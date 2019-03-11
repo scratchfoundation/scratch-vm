@@ -48,3 +48,21 @@ test('reducedSortOrdering', t => {
     t.deepEqual(math.reducedSortOrdering([5, 1, 56, 19]), [1, 0, 3, 2]);
     t.end();
 });
+
+test('inclusiveRandIntWithout', t => {
+    const withRandomValue = function (randValue, ...args) {
+        const oldMathRandom = Math.random;
+        Object.assign(global.Math, {random: () => randValue});
+        const result = math.inclusiveRandIntWithout(...args);
+        Object.assign(global.Math, {random: oldMathRandom});
+        return result;
+    };
+
+    t.strictEqual(withRandomValue(3 / 5, 0, 6, 2), 4);
+    t.strictEqual(withRandomValue(2 / 5, 0, 6, 2), 3);
+    t.strictEqual(withRandomValue(1 / 5, 0, 6, 2), 1);
+    t.strictEqual(withRandomValue(1.9 / 5, 0, 6, 2), 1);
+
+    t.strictEqual(withRandomValue(3 / 4, 10, 14, 10), 13);
+    t.strictEqual(withRandomValue(0 / 4, 10, 14, 10), 11);
+});
