@@ -87,9 +87,10 @@ class MathUtil {
      *
      * @param {number} lower - The lower bound (inlcusive)
      * @param {number} upper - The upper bound (inclusive), such that lower <= upper
-     * @param {number} exclude - The number to exclude (MUST be in the range)
+     * @param {number} excluded - The number to exclude (MUST be in the range)
+     * @return {number} A random integer in the range [lower, upper] that is not "excluded"
      */
-    static inclusiveRandIntWithout(lower, upper, excluded) {
+    static inclusiveRandIntWithout (lower, upper, excluded) {
         // Note that subtraction is the number of items in the
         // inclusive range [lower, upper] minus 1 already
         // (e.g. in the set {3, 4, 5}, 5 - 3 = 2).
@@ -98,9 +99,9 @@ class MathUtil {
         const randInt = lower + Math.floor(Math.random() * possibleOptions);
         if (randInt >= excluded) {
             return randInt + 1;
-        } else {
-            return randInt;
         }
+
+        return randInt;
     }
 }
 
