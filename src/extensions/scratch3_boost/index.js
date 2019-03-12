@@ -28,20 +28,17 @@ const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5z
 
 const BoostBLE = {
     service: '00001623-1212-efde-1623-785feabcd123',
-    characteristic: '00001624-1212-efde-1623-785feabcd123'
+    characteristic: '00001624-1212-efde-1623-785feabcd123',
+    sendInterval: 100,
+    sendRateMax: 20
 };
 
 /**
- * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
- * @type {number}
+ * Boost Motor Max Power.
+ * @constant {number}
  */
-const BLESendInterval = 100;
 
-/**
- * A maximum number of BLE message sends per second, to be enforced by the rate limiter.
- * @type {number}
- */
-const BLESendRateMax = 20;
+const BoostMotorMaxPower = 100;
 
 /**
  * Enum for Boost sensor and actuator types.
@@ -79,7 +76,6 @@ const BoostOutputCommandFeedback = {
     IDLE: 0x08,
     BUSY_OR_FULL: 0x10
 };
-
 
 /**
  * Enum for physical Boost Ports
@@ -364,14 +360,11 @@ class BoostMotor {
      */
     set power (value) {
         const p = Math.max(0, Math.min(value, 100));
-
-        // Lego Boost hub only turns motors at power range [20 - 100], so
-        // map value from [0 - 100] to [20 - 100].
-        if (p === 0) {
-            this._power = 0;
+        // The Boost motors barely move at speed 1 - solution is to step up to 2.
+        if (p === 1) {
+            this._power = 2;
         } else {
-            const delta = 100 / p;
-            this._power = 20 + (80 / delta);
+            this._power = p;
         }
     }
 
@@ -428,7 +421,7 @@ class BoostMotor {
             BoostOutputSubCommand.START_SPEED,
             [
                 this._power * this._direction,
-                this._power,
+                BoostMotorMaxPower,
                 BoostMotorProfile.DO_NOT_USE
             ]);
 
@@ -466,7 +459,7 @@ class BoostMotor {
             [
                 ...numberToInt32Array(degrees),
                 this._power * this._direction * direction, // power in range 0-100
-                this._power, // max speed
+                BoostMotorMaxPower, // max speed
                 BoostMotorEndState.BRAKE,
                 BoostMotorProfile.DO_NOT_USE
             ] // byte for using acceleration/braking profile
@@ -599,7 +592,7 @@ class Boost {
          * @type {RateLimiter}
          * @private
          */
-        this._rateLimiter = new RateLimiter(BLESendRateMax);
+        this._rateLimiter = new RateLimiter(BoostBLE.sendRateMax);
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
@@ -1636,7 +1629,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, BoostBLE.sendInterval);
         });
     }
 
@@ -1658,7 +1651,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, BoostBLE.sendInterval);
         });
     }
 
@@ -1681,7 +1674,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, BoostBLE.sendInterval);
         });
     }
 
@@ -1724,7 +1717,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, BoostBLE.sendInterval);
         });
     }
 
@@ -1750,7 +1743,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
-            }, BLESendInterval);
+            }, BoostBLE.sendInterval);
         });
     }
 
