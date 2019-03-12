@@ -87,7 +87,7 @@ var VirtualMachine =
 /************************************************************************/
 /******/ ({
 
-/***/ 42:
+/***/ 43:
 /***/ (function(module, exports) {
 
 /**
@@ -195,7 +195,7 @@ module.exports = {
  * @file debug.js
  */
 
-const VideoMotion = __webpack_require__(71);
+const VideoMotion = __webpack_require__(72);
 const VideoMotionView = __webpack_require__(485);
 
 module.exports = {
@@ -215,7 +215,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(42),
+var _require = __webpack_require__(43),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -815,7 +815,7 @@ module.exports = g;
 
 /***/ }),
 
-/***/ 71:
+/***/ 72:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -832,7 +832,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * Video motion sensing primitives.
  */
-var _require = __webpack_require__(42),
+var _require = __webpack_require__(43),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 /**
