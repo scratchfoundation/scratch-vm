@@ -1,4 +1,10 @@
-const TextEncoder = require('text-encoding').TextEncoder;
+let _TextEncoder;
+if (typeof TextEncoder === 'undefined') {
+    _TextEncoder = require('text-encoding').TextEncoder;
+} else {
+    /* global TextEncoder */
+    _TextEncoder = TextEncoder;
+}
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
@@ -8,12 +14,8 @@ const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
-const {SB1File, ValidationError} = require('scratch-sb1-converter');
-const sb2 = require('./serialization/sb2');
-const sb3 = require('./serialization/sb3');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
-const validate = require('scratch-parser');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
@@ -297,6 +299,7 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
+            const validate = require('scratch-parser');
             // The second argument of false below indicates to the validator that the
             // input should be parsed/validated as an entire project (and not a single sprite)
             validate(input, false, (error, res) => {
@@ -305,6 +308,8 @@ class VirtualMachine extends EventEmitter {
             });
         })
             .catch(error => {
+                const {SB1File, ValidationError} = require('scratch-sb1-converter');
+
                 try {
                     const sb1 = new SB1File(input);
                     const json = sb1.json;
@@ -410,6 +415,8 @@ class VirtualMachine extends EventEmitter {
      * specified by optZipType or blob by default.
      */
     exportSprite (targetId, optZipType) {
+        const sb3 = require('./serialization/sb3');
+
         const soundDescs = serializeSounds(this.runtime, targetId);
         const costumeDescs = serializeCostumes(this.runtime, targetId);
         const spriteJson = StringUtil.stringify(sb3.serialize(this.runtime, targetId));
@@ -432,6 +439,7 @@ class VirtualMachine extends EventEmitter {
      * @return {string} Serialized state of the runtime.
      */
     toJSON () {
+        const sb3 = require('./serialization/sb3');
         return StringUtil.stringify(sb3.serialize(this.runtime));
     }
 
@@ -461,9 +469,11 @@ class VirtualMachine extends EventEmitter {
         const deserializePromise = function () {
             const projectVersion = projectJSON.projectVersion;
             if (projectVersion === 2) {
+                const sb2 = require('./serialization/sb2');
                 return sb2.deserialize(projectJSON, runtime, false, zip);
             }
             if (projectVersion === 3) {
+                const sb3 = require('./serialization/sb3');
                 return sb3.deserialize(projectJSON, runtime, zip);
             }
             return Promise.reject('Unable to verify Scratch Project version.');
@@ -553,6 +563,7 @@ class VirtualMachine extends EventEmitter {
         }
 
         const validationPromise = new Promise((resolve, reject) => {
+            const validate = require('scratch-parser');
             // The second argument of true below indicates to the parser/validator
             // that the given input should be treated as a single sprite and not
             // an entire project
@@ -592,6 +603,7 @@ class VirtualMachine extends EventEmitter {
     _addSprite2 (sprite, zip) {
         // Validate & parse
 
+        const sb2 = require('./serialization/sb2');
         return sb2.deserialize(sprite, this.runtime, true, zip)
             .then(({targets, extensions}) =>
                 this.installTargets(targets, extensions, false));
@@ -605,7 +617,7 @@ class VirtualMachine extends EventEmitter {
      */
     _addSprite3 (sprite, zip) {
         // Validate & parse
-
+        const sb3 = require('./serialization/sb3');
         return sb3
             .deserialize(sprite, this.runtime, zip, true)
             .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
@@ -912,7 +924,7 @@ class VirtualMachine extends EventEmitter {
         costume.asset = storage.createAsset(
             storage.AssetType.ImageVector,
             costume.dataFormat,
-            (new TextEncoder()).encode(svg),
+            (new _TextEncoder()).encode(svg),
             null,
             true // generate md5
         );
@@ -1187,6 +1199,8 @@ class VirtualMachine extends EventEmitter {
      * @return {!Promise} Promise that resolves when the extensions and blocks have been added.
      */
     shareBlocksToTarget (blocks, targetId, optFromTargetId) {
+        const sb3 = require('./serialization/sb3');
+
         const copiedBlocks = JSON.parse(JSON.stringify(blocks));
         newBlockIds(copiedBlocks);
         const target = this.runtime.getTargetById(targetId);
