@@ -512,7 +512,7 @@ class Scratch3Text2SpeechBlocks {
     /**
      * Get the extension locale for a supported locale, or null.
      * @param {string} locale a locale code.
-     * @returns {?string} a locale supported by the extension, or null.
+     * @returns {?string} a locale supported by the extension.
      */
     _getExtensionLocaleForSupportedLocale (locale) {
         for (const lang in this.LANGUAGE_INFO) {
@@ -520,7 +520,7 @@ class Scratch3Text2SpeechBlocks {
                 return lang;
             }
         }
-        return null;
+        log.error(`cannot find extension locale for locale ${locale}`);
     }
 
     /**
