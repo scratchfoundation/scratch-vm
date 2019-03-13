@@ -41,6 +41,12 @@ const BoostBLE = {
 const BoostMotorMaxPower = 100;
 
 /**
+ * A time interval to wait (in milliseconds) in between battery check calls.
+ * @type {number}
+ */
+const BoostPingInterval = 5000;
+
+/**
  * Enum for Boost sensor and actuator types.
  * @readonly
  * @enum {number}
@@ -594,9 +600,17 @@ class Boost {
          */
         this._rateLimiter = new RateLimiter(BoostBLE.sendRateMax);
 
+        /**
+         * An interval id for the battery check interval.
+         * @type {number}
+         * @private
+         */
+        this._pingDeviceId = null;
+
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+        this._pingDevice = this._pingDevice.bind(this);
     }
 
     /**
@@ -698,13 +712,13 @@ class Boost {
         }
         this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
-                services: [BoostBLE.service],
+                services: [BoostBLE.service]/* ,
                 manufacturerData: {
                     0: {
                         dataPrefix: [0x97, 0x03, 0x00, 0x40],
                         mask: [0xFF, 0xFF, 0, 0xFF]
                     }
-                }
+                } */
             }],
             optionalServices: []
         }, this._onConnect, this.disconnect);
@@ -735,6 +749,11 @@ class Boost {
 
         if (this._ble) {
             this._ble.disconnect();
+        }
+
+        if (this._pingDevice) {
+            window.clearInterval(this._pingDeviceId);
+            this._pingDeviceId = null;
         }
     }
 
@@ -831,6 +850,7 @@ class Boost {
             BoostBLE.characteristic,
             this._onMessage
         );
+        this._pingDeviceId = window.setInterval(this._pingDevice, BoostPingInterval);
     }
 
     /**
@@ -926,6 +946,20 @@ class Boost {
     }
 
     /**
+     * Ping the Boost hub. If the Boost hub has disconnected
+     * for some reason, the BLE socket will get an error back and automatically
+     * close the socket.
+     */
+
+    _pingDevice () {
+        this._ble.read(
+            BoostBLE.service,
+            BoostBLE.characteristic,
+            false
+        );
+    }
+
+    /**
      * Register a new sensor or motor connected at a port.  Store the type of
      * sensor or motor internally, and then register for notifications on input
      * values if it is a sensor.
@@ -958,7 +992,7 @@ class Boost {
         case BoostIO.LED:
             mode = BoostMode.LED;
             this.setLEDMode();
-            this.setLED(0x00FF00);
+            this.setLED(0x0000FF);
             break;
         case BoostIO.TILT:
             mode = BoostMode.TILT;
