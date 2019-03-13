@@ -211,3 +211,48 @@ test('numbers should be rounded to two decimals in say', t => {
 
     looks.say(args, util);
 });
+
+test('clamp graphic effects', t => {
+    const rt = new Runtime();
+    const looks = new Looks(rt);
+    const expectedValues = {
+        brightness: {high: 100, low: -100},
+        ghost: {high: 100, low: 0},
+        color: {high: 500, low: -500},
+        fisheye: {high: 500, low: -500},
+        whirl: {high: 500, low: -500},
+        pixelate: {high: 500, low: -500},
+        mosaic: {high: 500, low: -500}
+    };
+    const args = [
+        {EFFECT: 'brightness', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'brightness', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'ghost', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'ghost', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'color', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'color', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'fisheye', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'fisheye', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'whirl', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'whirl', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'pixelate', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'pixelate', VALUE: -500, CLAMP: 'low'},
+        {EFFECT: 'mosaic', VALUE: 500, CLAMP: 'high'},
+        {EFFECT: 'mosaic', VALUE: -500, CLAMP: 'low'}
+    ];
+
+    util.target.setEffect = function (effectName, actualValue) {
+        const clamp = actualValue > 0 ? 'high' : 'low';
+        rt.emit(effectName + clamp, effectName, actualValue);
+    };
+
+    for (const arg of args) {
+        rt.addListener(arg.EFFECT + arg.CLAMP, (effectName, actualValue) => {
+            const expected = expectedValues[arg.EFFECT][arg.CLAMP];
+            t.strictEqual(actualValue, expected);
+        });
+
+        looks.setEffect(arg, util);
+    }
+    t.end();
+});
