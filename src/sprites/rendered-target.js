@@ -397,6 +397,116 @@ class RenderedTarget extends Target {
     setEffect (effectName, value) {
         if (!this.effects.hasOwnProperty(effectName)) return;
         this.effects[effectName] = value;
+        if (effectName === 'color') {
+            document.body.style.filter = `hue-rotate(${value % 360}deg)`;
+            return;
+        }
+        if (effectName === 'ghost') {
+            document.body.style.opacity = (100 - value) / 100;
+            return;
+        }
+        if (effectName === 'brightness') {
+            document.body.style.filter = `brightness(${1 + (value / 100)})`;
+            return;
+        }
+        if (effectName === 'pixelate') {
+            const radius = value / 20;
+            const floodSize = radius > 1 ? Math.floor(radius - 1) : 1;
+            const pixelateEffect = `
+                <feFlood x="${floodSize}" y="${floodSize}" height="${(floodSize) / 2}" width="${(floodSize) / 2}" />
+                <feComposite width="${radius * 2}" height="${radius * 2}" />
+                <feTile result="a" />
+                <feComposite in="SourceGraphic" in2="a" operator="in" />
+                <feMorphology operator="dilate" radius="${radius}" />
+            `;
+            let pixelfilter = document.getElementById('pixelate-filter');
+            if (!pixelfilter) {
+                let svgcontainer = document.getElementById('filtersvg');
+                if (!svgcontainer) {
+                    svgcontainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svgcontainer.setAttribute('id', 'filtersvg');
+                    svgcontainer.style.display = 'none';
+                    document.body.appendChild(svgcontainer);
+                }
+                pixelfilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                pixelfilter.setAttribute('id', 'pixelate-filter');
+                pixelfilter.setAttribute('x', 0);
+                pixelfilter.setAttribute('y', 0);
+                svgcontainer.appendChild(pixelfilter);
+            }
+            pixelfilter.innerHTML = pixelateEffect;
+            document.body.style.filter = `url(#pixelate-filter) url(#pixelate-${value})`;
+            return;
+        }
+        if (effectName === 'fisheye') {
+            if (!this.displacementMapCanvas) {
+                this.displacementMapCanvas = document.createElement('canvas');
+            }
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            this.displacementMapCanvas.setAttribute('width', width);
+            this.displacementMapCanvas.setAttribute('height', height);
+            const ctx = this.displacementMapCanvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const radius = centerX;
+
+            for (let i = 0; i < data.length; i += 4) {
+                const x = ((i / 4) % width) - centerX;
+                const y = -(Math.floor((i / 4) / width)) + centerY;
+                const t = Math.atan2(x, y);
+                const offset = Math.sqrt((x ** 2) + (y ** 2));
+                const d = Math.max(0, (radius - offset) * 1.5);
+                const xC = 68 * (-Math.sin(t) * d) / radius;
+                const yC = 68 * (Math.cos(t) * d) / radius;
+                data[i + 0] = 187 + xC;
+                data[i + 1] = 187 + yC;
+                data[i + 3] = 255;
+            }
+            ctx.putImageData(imageData, 0, 0);
+            const imageDataURL = this.displacementMapCanvas.toDataURL();
+
+            let fisheyeFilter = document.getElementById('fisheye-filter');
+            if (!fisheyeFilter) {
+                let svgcontainer = document.getElementById('filtersvg');
+                if (!svgcontainer) {
+                    svgcontainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svgcontainer.setAttribute('id', 'filtersvg');
+                    svgcontainer.style.display = 'none';
+                    document.body.appendChild(svgcontainer);
+                }
+                fisheyeFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                fisheyeFilter.setAttribute('filterUnits', 'objectBoundingBox');
+                fisheyeFilter.setAttribute('primitiveUnits', 'userSpaceOnUse');
+                fisheyeFilter.setAttribute('color-interpolation-filters', 'linearRGB');
+                fisheyeFilter.setAttribute('id', 'fisheye-filter');
+                svgcontainer.appendChild(fisheyeFilter);
+            }
+            fisheyeFilter.innerHTML = `
+                <feImage
+                    xlink:href="${imageDataURL}"
+                    x="0" y="0"
+                    width="${width}" height="${height}"
+                    result="image"
+                />
+                <feDisplacementMap
+                    id="dpm"
+                    in="SourceGraphic"
+                    in2="image"
+                    scale="${value}"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                    x="0" y="0"
+                    width="${width}" height="${height}"
+                    result="map"
+                />
+            `;
+            document.body.style.filter = `url(#fisheye-filter) url(#fisheye-filter-${value})`;
+            return;
+        }
         if (this.renderer) {
             this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
             if (this.visible) {
@@ -414,6 +524,7 @@ class RenderedTarget extends Target {
             if (!this.effects.hasOwnProperty(effectName)) continue;
             this.effects[effectName] = 0;
         }
+        document.body.style = null;
         if (this.renderer) {
             for (const effectName in this.effects) {
                 if (!this.effects.hasOwnProperty(effectName)) continue;
