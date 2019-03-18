@@ -904,7 +904,7 @@ class Scratch3MicroBitBlocks {
         switch (direction) {
         case MicroBitTiltDirection.ANY:
             return (Math.abs(this._peripheral.tiltX / 10) >= Scratch3MicroBitBlocks.TILT_THRESHOLD) ||
-                    (Math.abs(this._peripheral.tiltY / 10) >= Scratch3MicroBitBlocks.TILT_THRESHOLD);
+                (Math.abs(this._peripheral.tiltY / 10) >= Scratch3MicroBitBlocks.TILT_THRESHOLD);
         default:
             return this._getTiltAngle(direction) >= Scratch3MicroBitBlocks.TILT_THRESHOLD;
         }
