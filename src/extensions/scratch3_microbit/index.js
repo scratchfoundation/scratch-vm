@@ -5,7 +5,6 @@ const cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
-const TaskQueue = require('../../util/task-queue');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -32,6 +31,12 @@ const BLECommand = {
  * that data has stopped coming from the peripheral.
  */
 const BLETimeout = 4500;
+
+/**
+ * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
+ * @type {number}
+ */
+const BLESendInterval = 100;
 
 /**
  * A string to report to the BLE socket when the micro:bit has stopped receiving data.
@@ -69,7 +74,6 @@ class MicroBit {
          * @private
          */
         this._runtime = runtime;
-        this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
          * The BluetoothLowEnergy connection socket for reading/writing peripheral data.
@@ -128,30 +132,21 @@ class MicroBit {
         this._timeoutID = null;
 
         /**
-         * A task queue to limit the rate of Bluetooth message sends by limiting
-         * the rate of execution of blocks which send Bluetooth messages.
-         *
-         * The bucket in this task queue holds 1 task at a time, and refills
-         * at a rate of 10 tasks per second, from a queue that holds tasks with
-         * a maximum total cost of 30. Since most tasks have a cost of 1 this
-         * means the queue will generally have at most 30 tasks. If more than 30
-         * tasks are added to the task queue in a short period, some tasks may
-         * be rejected (ignored) by the task queue.
-         *
-         * @type {TaskQueue}
+         * A flag that is true while we are busy sending data to the BLE socket.
+         * @type {boolean}
+         * @private
          */
-        this._queue = new TaskQueue(1, 10, {maxTotalCost: 30});
+        this._busy = false;
+
+        /**
+         * ID for a timeout which is used to clear the busy flag if it has been
+         * true for a long time.
+         */
+        this._busyTimeoutID = null;
 
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
-    }
-
-    /**
-     * Stop all the communication tasks pending on the task queue.
-     */
-    stopAll () {
-        this._queue.cancelAll();
     }
 
     /**
@@ -269,6 +264,19 @@ class MicroBit {
      */
     send (command, message) {
         if (!this.isConnected()) return;
+        if (this._busy) return;
+
+        // Set a busy flag so that while we are sending a message and waiting for
+        // the response, additional messages are ignored.
+        this._busy = true;
+
+        // Set a timeout after which to reset the busy flag. This is used in case
+        // a BLE message was sent for which we never received a response, because
+        // e.g. the peripheral was turned off after the message was sent. We reset
+        // the busy flag after a while so that it is possible to try again later.
+        this._busyTimeoutID = window.setTimeout(() => {
+            this._busy = false;
+        }, 5000);
 
         const output = new Uint8Array(message.length + 1);
         output[0] = command; // attach command to beginning of message
@@ -277,7 +285,12 @@ class MicroBit {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
-        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true);
+        this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
+            () => {
+                this._busy = false;
+                window.clearTimeout(this._busyTimeoutID);
+            }
+        );
     }
 
     /**
@@ -804,19 +817,19 @@ class Scratch3MicroBitBlocks {
             return value;
         };
         const hex = symbol.split('').reduce(reducer, 0);
-
-        if (hex === null) return;
-
-        return this._peripheral._queue.do(() => {
+        if (hex !== null) {
             this._peripheral.ledMatrixState[0] = hex & 0x1F;
             this._peripheral.ledMatrixState[1] = (hex >> 5) & 0x1F;
             this._peripheral.ledMatrixState[2] = (hex >> 10) & 0x1F;
             this._peripheral.ledMatrixState[3] = (hex >> 15) & 0x1F;
             this._peripheral.ledMatrixState[4] = (hex >> 20) & 0x1F;
             this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }).catch(() => {
-            // console.log('*** CATCH DISPLAY_SYMBOL REJECTION');
-            // console.log(e);
+        }
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
         });
     }
 
@@ -832,19 +845,13 @@ class Scratch3MicroBitBlocks {
      */
     displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        
-        return this._peripheral._queue.do(() => {
-            if (text.length > 0) this._peripheral.displayText(text);
-            const yieldDelay = 120 * ((6 * text.length) + 6);
+        if (text.length > 0) this._peripheral.displayText(text);
+        const yieldDelay = 120 * ((6 * text.length) + 6);
 
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve();
-                }, yieldDelay);
-            });
-        }).catch(() => {
-            // console.log('*** CATCH DISPLAY_TEXT REJECTION');
-            // console.log(e);
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, yieldDelay);
         });
     }
 
@@ -853,14 +860,15 @@ class Scratch3MicroBitBlocks {
      * @return {Promise} - a Promise that resolves after a tick.
      */
     displayClear () {
-        return this._peripheral._queue.do(() => {
-            for (let i = 0; i < 5; i++) {
-                this._peripheral.ledMatrixState[i] = 0;
-            }
-            this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
-        }).catch(() => {
-            // console.log('*** CATCH DISPLAY_CLEAR REJECTION');
-            // console.log(e);
+        for (let i = 0; i < 5; i++) {
+            this._peripheral.ledMatrixState[i] = 0;
+        }
+        this._peripheral.displayMatrix(this._peripheral.ledMatrixState);
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, BLESendInterval);
         });
     }
 
