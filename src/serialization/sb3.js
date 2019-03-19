@@ -823,46 +823,32 @@ const deserializeBlocks = function (blocks) {
 
 
 /**
- * Parse a single "Scratch object" and create all its in-memory VM objects.
+ * Parse the assets of a single "Scratch object" and load them. This
+ * preprocesses objects to support loading the data for those assets over a
+ * network while the objects are further processed into Blocks, Sprites, and a
+ * list of needed Extensions.
  * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
  * @param {!Runtime} runtime Runtime object to load all structures into.
- * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
  * @param {JSZip} zip Sb3 file describing this project (to load assets from)
- * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
+ * @return {?{costumePromises:Array.<Promise>,soundPromises:Array.<Promise>,soundBank:SoundBank}}
+ * Object of arrays of promises for asset objects used in Sprites. As well as a
+ * SoundBank for the sound assets. null for unsupported objects.
  */
-const parseScratchObject = function (object, runtime, extensions, zip) {
+const parseScratchAssets = function (object, runtime, zip) {
     if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
         return Promise.resolve(null);
     }
-    // Blocks container for this object.
-    const blocks = new Blocks(runtime);
 
-    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
-    const sprite = new Sprite(blocks, runtime);
+    const assets = {
+        costumePromises: null,
+        soundPromises: null,
+        soundBank: runtime.audioEngine && runtime.audioEngine.createBank()
+    };
 
-    // Sprite/stage name from JSON.
-    if (object.hasOwnProperty('name')) {
-        sprite.name = object.name;
-    }
-    if (object.hasOwnProperty('blocks')) {
-        deserializeBlocks(object.blocks);
-        // Take a second pass to create objects and add extensions
-        for (const blockId in object.blocks) {
-            if (!object.blocks.hasOwnProperty(blockId)) continue;
-            const blockJSON = object.blocks[blockId];
-            blocks.createBlock(blockJSON);
-
-            // If the block is from an extension, record it.
-            const extensionID = getExtensionIdForOpcode(blockJSON.opcode);
-            if (extensionID) {
-                extensions.extensionIDs.add(extensionID);
-            }
-        }
-    }
     // Costumes from JSON.
-    const costumePromises = (object.costumes || []).map(costumeSource => {
+    assets.costumePromises = (object.costumes || []).map(costumeSource => {
         // @todo: Make sure all the relevant metadata is being pulled out.
         const costume = {
             // costumeSource only has an asset if an image is being uploaded as
@@ -894,7 +880,7 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // process has been completed
     });
     // Sounds from JSON
-    const soundPromises = (object.sounds || []).map(soundSource => {
+    assets.soundPromises = (object.sounds || []).map(soundSource => {
         const sound = {
             assetId: soundSource.assetId,
             format: soundSource.format,
@@ -914,10 +900,59 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
         return deserializeSound(sound, runtime, zip)
-            .then(() => loadSound(sound, runtime, sprite.soundBank));
+            .then(() => loadSound(sound, runtime, assets.soundBank));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });
+
+    return assets;
+};
+
+/**
+ * Parse a single "Scratch object" and create all its in-memory VM objects.
+ * @param {!object} object From-JSON "Scratch object:" sprite, stage, watcher.
+ * @param {!Runtime} runtime Runtime object to load all structures into.
+ * @param {ImportedExtensionsInfo} extensions - (in/out) parsed extension information will be stored here.
+ * @param {JSZip} zip Sb3 file describing this project (to load assets from)
+ * @param {object} assets - Promises for assets of this scratch object grouped
+ *   into costumes and sounds
+ * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
+ */
+const parseScratchObject = function (object, runtime, extensions, zip, assets) {
+    if (!object.hasOwnProperty('name')) {
+        // Watcher/monitor - skip this object until those are implemented in VM.
+        // @todo
+        return Promise.resolve(null);
+    }
+    // Blocks container for this object.
+    const blocks = new Blocks(runtime);
+
+    // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
+    const sprite = new Sprite(blocks, runtime);
+
+    // Sprite/stage name from JSON.
+    if (object.hasOwnProperty('name')) {
+        sprite.name = object.name;
+    }
+    if (object.hasOwnProperty('blocks')) {
+        deserializeBlocks(object.blocks);
+        // Take a second pass to create objects and add extensions
+        for (const blockId in object.blocks) {
+            if (!object.blocks.hasOwnProperty(blockId)) continue;
+            const blockJSON = object.blocks[blockId];
+            blocks.createBlock(blockJSON);
+
+            // If the block is from an extension, record it.
+            const extensionID = getExtensionIdForOpcode(blockJSON.opcode);
+            if (extensionID) {
+                extensions.extensionIDs.add(extensionID);
+            }
+        }
+    }
+    // Costumes from JSON.
+    const {costumePromises} = assets;
+    // Sounds from JSON
+    const {soundBank, soundPromises} = assets;
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone(object.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
     // Load target properties from JSON.
@@ -1039,6 +1074,8 @@ const parseScratchObject = function (object, runtime, extensions, zip) {
     });
     Promise.all(soundPromises).then(sounds => {
         sprite.sounds = sounds;
+        // Make sure if soundBank is undefined, sprite.soundBank is then null.
+        sprite.soundBank = soundBank || null;
     });
     return Promise.all(costumePromises.concat(soundPromises)).then(() => target);
 };
@@ -1190,10 +1227,16 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
 
     const monitorObjects = json.monitors || [];
 
-    return Promise.all(
+    return Promise.resolve(
         targetObjects.map(target =>
-            parseScratchObject(target, runtime, extensions, zip))
+            parseScratchAssets(target, runtime, zip))
     )
+        // Force this promise to wait for the next loop in the js tick. Let
+        // storage have some time to send off asset requests.
+        .then(assets => Promise.resolve(assets))
+        .then(assets => Promise.all(targetObjects
+            .map((target, index) =>
+                parseScratchObject(target, runtime, extensions, zip, assets[index]))))
         .then(targets => targets // Re-sort targets back into original sprite-pane ordering
             .map((t, i) => {
                 // Add layer order property to deserialized targets.
