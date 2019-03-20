@@ -73,14 +73,19 @@ class BLE extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
-        if (this._ws.readyState !== this._ws.OPEN) return;
+        if (this._ws.readyState === this._ws.OPEN) {
+            this._ws.close();
+        }
 
-        this._ws.close();
-        this._connected = false;
+        if (this._connected) {
+            this._connected = false;
+        }
+        
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
 
+        // Sets connection status icon to orange
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
     }
 
