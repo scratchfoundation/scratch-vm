@@ -56,8 +56,6 @@ const BoostIO = {
     MOTOR_SYSTEM: 0x02,
     BUTTON: 0x05,
     LIGHT: 0x08,
-    LIGHT1: 0x09,
-    LIGHT2: 0x0A,
     VOLTAGE: 0x14,
     CURRENT: 0x15,
     PIEZO: 0x16,
@@ -75,10 +73,10 @@ const BoostIO = {
  * @readonly
  * @enum {number}
  */
-const BoostOutputCommandFeedback = {
-    BUFFER_EMPTY_COMMAND_IN_PROGRESS: 0x01,
-    BUFFER_EMPTY_COMMAND_COMPLETED: 0x02,
-    CURRENT_COMMAND_DISCARDED: 0x04,
+const BoostPortFeedback = {
+    IN_PROGRESS: 0x01,
+    COMPLETED: 0x02,
+    DISCARDED: 0x04,
     IDLE: 0x08,
     BUSY_OR_FULL: 0x10
 };
@@ -130,7 +128,7 @@ const BoostMessage = {
     PORT_INPUT_FORMAT: 0x47,
     PORT_INPUT_FORMAT_COMBINED: 0x48,
     OUTPUT: 0x81,
-    PORT_OUTPUT_COMMAND_FEEDBACK: 0x82
+    PORT_FEEDBACK: 0x82
 };
 
 /**
@@ -215,15 +213,6 @@ const BoostMode = {
 };
 
 /**
- * Debug function for converting bytes received to hex
- * @param {array} buffer - an array of bytes
- * @return {string} - a string of hex values.
- */
-const buf2hex = function (buffer) { // buffer is an ArrayBuffer
-    return Array.prototype.map.call(new Uint8Array(buffer), x => (`00${x.toString(16)}`).slice(-2)).join(' ');
-};
-
-/**
  * Helper function for converting a JavaScript number to an INT32-number
  * @param {number} number - a number
  * @return {array} - a 4-byte array of Int8-values representing an INT32-number
@@ -301,7 +290,7 @@ class BoostMotor {
          * @type {boolean}
          * @private
          */
-        this._status = BoostOutputCommandFeedback.IDLE;
+        this._status = BoostPortFeedback.IDLE;
 
         /**
          * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
@@ -324,13 +313,6 @@ class BoostMotor {
          * @private
          */
         this._pendingTimeoutDelay = null;
-
-        /**
-         * The origin position of a turn-based command.
-         * @type {number}
-         * @private
-         */
-        this._pendingPositionOrigin = null;
 
         /**
          * The target position of a turn-based command.
@@ -406,8 +388,7 @@ class BoostMotor {
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
     get isOn () {
-        if (this._status & (BoostOutputCommandFeedback.BUSY_OR_FULL ^
-            BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS)) {
+        if (this._status & (BoostPortFeedback.BUSY_OR_FULL ^ BoostPortFeedback.IN_PROGRESS)) {
             return true;
         }
         return false;
@@ -607,12 +588,6 @@ class Boost {
             tiltY: 0,
             color: BoostColor.NONE
         };
-
-        /*
-        ** TODO: Clean up
-        */
-       
-        this._led = 50;
 
         /**
          * The Bluetooth connection socket for reading/writing peripheral data.
@@ -951,28 +926,21 @@ class Boost {
             }
             break;
         }
-        case BoostMessage.PORT_OUTPUT_COMMAND_FEEDBACK: {
+        case BoostMessage.PORT_FEEDBACK: {
             // TODO: Handle messages that contain feedback from more than one port.
             const feedback = data[4];
-            if (this.motor(portID)) {
-                this.motor(portID)._status = feedback;
-            }
-            switch (feedback) {
-            case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_COMPLETED ^ BoostOutputCommandFeedback.IDLE: {
-                const motor = this.motor(portID);
-                if (motor && motor.pendingPromiseFunction) {
+            const motor = this.motor(portID);
+            if (motor) {
+                motor._status = feedback;
+                if (feedback === (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.IDLE) &&
+                    motor.pendingPromiseFunction) {
                     motor.pendingPromiseFunction();
                 }
-                break;
-            }
-            case BoostOutputCommandFeedback.BUFFER_EMPTY_COMMAND_IN_PROGRESS:
-            default:
-                log.warn(`Feedback from ${portID}: ${feedback}`);
             }
             break;
         }
         case BoostMessage.ERROR:
-            log.warn(`Error in BLE message: ${buf2hex(data)}`);
+            log.warn(`Error reported by hub: ${data}`);
             break;
         default:
         }
@@ -1645,15 +1613,24 @@ class Scratch3BoostBlocks {
         // TODO: Clamps to 100 rotations. Consider changing.
         const sign = Math.sign(degrees);
         degrees = Math.abs(MathUtil.clamp(degrees, -360000, 360000));
-        return new Promise(resolve => {
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
-                const motor = this._peripheral.motor(motorIndex);
-                if (motor) {
+
+        const motors = [];
+        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            motors.push(motorIndex);
+        });
+
+        const promises = motors.map(portID => {
+            const motor = this._peripheral.motor(portID);
+            if (motor) {
+                return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
                     motor.pendingPromiseFunction = resolve;
-                }
-            });
+                });
+            }
+            return null;
         });
+        // To prevent the block from returning a value, an empty function is added to the .then
+        return Promise.all(promises).then(() => {});
     }
 
     /**
