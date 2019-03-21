@@ -1221,8 +1221,8 @@ class Scratch3BoostBlocks {
                     opcode: 'setMotorPower',
                     text: formatMessage({
                         id: 'boost.setMotorPower',
-                        default: 'set motor [MOTOR_ID] power to [POWER] %',
-                        description: 'set the motor\'s power without turning it on'
+                        default: 'set motor [MOTOR_ID] speed to [POWER] %',
+                        description: 'set the motor\'s speed without turning it on'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
