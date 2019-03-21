@@ -943,7 +943,6 @@ class Boost {
             break;
         }
         case BoostMessage.PORT_FEEDBACK: {
-            // TODO: If extension will receive feedback from multiple ports simultaneously, this case will need to handle it.
             const feedback = data[4];
             const motor = this.motor(portID);
             if (motor) {
@@ -1759,96 +1758,6 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Set the LED's hue.
-     * @param {object} args - the block's arguments.
-     * @property {number} HUE - the hue to set, in the range [0,100].
-     * @return {Promise} - a Promise that resolves after some delay.
-     */
-    setLightHue (args) {
-        // Convert from [0,100] to [0,360]
-        let inputHue = Cast.toNumber(args.HUE);
-        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
-        const hue = inputHue * 360 / 100;
-
-        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
-
-        const rgbDecimal = color.rgbToDecimal(rgbObject);
-
-        this._peripheral._led = inputHue;
-        this._peripheral.setLED(rgbDecimal);
-
-        return new Promise(resolve => {
-            window.setTimeout(() => {
-                resolve();
-            }, BoostBLE.sendInterval);
-        });
-    }
-
-    /**
-     * Change the LED's hue by a give number.
-     * @param {object} args - the block's arguments.
-     * @property {number} HUE - the hue to set, in the range [0,100].
-     */
-    changeLightHueBy (args) {
-        // TODO: Clean up this block and its opcode
-        const n = {};
-        n.HUE = Cast.toNumber(args.HUE) + this._peripheral._led;
-        this.setLightHue(n);
-    }
-
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {object} args - the block's arguments.
-     * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     */
-    whenTilted (args) {
-        return this._isTilted(args.TILT_DIRECTION_ANY);
-    }
-
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {object} args - the block's arguments.
-     * @property {Color} COLOR - the color to test.
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     */
-    whenColor (args) {
-        return this._isColor(args.COLOR);
-    }
-
-    /**
-     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
-     */
-    getColor () {
-        // To get a string representation, lookup the key of the BoostColor-enum value
-        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color)
-            .toLowerCase();
-    }
-
-    /**
-     * Test whether the vision sensor is detecting a certain color.
-     * @param {number} args - the color to test.
-     * @return {boolean} - true when the color sensor senses the specified color.
-     * @private
-     */
-    _isColor (args) {
-        switch (args) {
-        case BoostColorLabel.ANY:
-            if (Object.keys(BoostColor).find(key => BoostColor[key])
-                .toLowerCase() !== this.getColor()) {
-                if (this.getColor() === this._peripheral.oldColor) {
-                    return false;
-                }
-                this._peripheral.oldColor = this.getColor();
-                return true;
-            }
-            break;
-        default:
-            return this.getColor() === color;
-        }
-    }
-
-    /**
      * @param {object} args - the block's arguments.
      * @return {number} - returns the motor's position.
      */
@@ -1876,6 +1785,53 @@ class Scratch3BoostBlocks {
             return MathUtil.wrapClamp(this._peripheral._motors[portID].position, 0, 360);
         }
         return 0;
+    }
+
+    /**
+     * Call a callback for each motor indexed by the provided motor ID.
+     * @param {MotorID} motorID - the ID specifier.
+     * @param {Function} callback - the function to call with the numeric motor index for each motor.
+     * @private
+     */
+    _forEachMotor (motorID, callback) {
+        let motors;
+        switch (motorID) {
+        case BoostMotorLabel.A:
+            motors = [BoostPort.A];
+            break;
+        case BoostMotorLabel.B:
+            motors = [BoostPort.B];
+            break;
+        case BoostMotorLabel.C:
+            motors = [BoostPort.C];
+            break;
+        case BoostMotorLabel.D:
+            motors = [BoostPort.D];
+            break;
+        case BoostMotorLabel.AB:
+            motors = [BoostPort.A, BoostPort.B];
+            break;
+        case BoostMotorLabel.ALL:
+            motors = [BoostPort.A, BoostPort.B, BoostPort.C, BoostPort.D];
+            break;
+        default:
+            log.warn(`Invalid motor ID: ${motorID}`);
+            motors = [];
+            break;
+        }
+        for (const index of motors) {
+            callback(index);
+        }
+    }
+
+    /**
+     * Test whether the tilt sensor is currently tilted.
+     * @param {object} args - the block's arguments.
+     * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
+     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     */
+    whenTilted (args) {
+        return this._isTilted(args.TILT_DIRECTION_ANY);
     }
 
     /**
@@ -1936,40 +1892,71 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Call a callback for each motor indexed by the provided motor ID.
-     * @param {MotorID} motorID - the ID specifier.
-     * @param {Function} callback - the function to call with the numeric motor index for each motor.
+     * Test whether the tilt sensor is currently tilted.
+     * @param {object} args - the block's arguments.
+     * @property {Color} COLOR - the color to test.
+     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     */
+    whenColor (args) {
+        return this._isColor(args.COLOR);
+    }
+
+    /**
+     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
+     */
+    getColor () {
+        // To get a string representation, lookup the key of the BoostColor-enum value
+        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color)
+            .toLowerCase();
+    }
+
+    /**
+     * Test whether the vision sensor is detecting a certain color.
+     * @param {number} args - the color to test.
+     * @return {boolean} - true when the color sensor senses the specified color.
      * @private
      */
-    _forEachMotor (motorID, callback) {
-        let motors;
-        switch (motorID) {
-        case BoostMotorLabel.A:
-            motors = [BoostPort.A];
-            break;
-        case BoostMotorLabel.B:
-            motors = [BoostPort.B];
-            break;
-        case BoostMotorLabel.C:
-            motors = [BoostPort.C];
-            break;
-        case BoostMotorLabel.D:
-            motors = [BoostPort.D];
-            break;
-        case BoostMotorLabel.AB:
-            motors = [BoostPort.A, BoostPort.B];
-            break;
-        case BoostMotorLabel.ALL:
-            motors = [BoostPort.A, BoostPort.B, BoostPort.C, BoostPort.D];
+    _isColor (args) {
+        switch (args) {
+        case BoostColorLabel.ANY:
+            if (Object.keys(BoostColor).find(key => BoostColor[key])
+                .toLowerCase() !== this.getColor()) {
+                if (this.getColor() === this._peripheral.oldColor) {
+                    return false;
+                }
+                this._peripheral.oldColor = this.getColor();
+                return true;
+            }
             break;
         default:
-            log.warn(`Invalid motor ID: ${motorID}`);
-            motors = [];
-            break;
+            return this.getColor() === color;
         }
-        for (const index of motors) {
-            callback(index);
-        }
+    }
+
+    /**
+     * Set the LED's hue.
+     * @param {object} args - the block's arguments.
+     * @property {number} HUE - the hue to set, in the range [0,100].
+     * @return {Promise} - a Promise that resolves after some delay.
+     */
+    setLightHue (args) {
+        // Convert from [0,100] to [0,360]
+        let inputHue = Cast.toNumber(args.HUE);
+        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
+        const hue = inputHue * 360 / 100;
+
+        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
+
+        const rgbDecimal = color.rgbToDecimal(rgbObject);
+
+        this._peripheral._led = inputHue;
+        this._peripheral.setLED(rgbDecimal);
+
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BoostBLE.sendInterval);
+        });
     }
 }
 
