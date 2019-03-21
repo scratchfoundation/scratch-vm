@@ -47,6 +47,13 @@ const BoostMotorMaxPower = 100;
 const BoostPingInterval = 5000;
 
 /**
+ * The number of continuous samples the color-sensor will evaluate color from.
+ * @type {number}
+ */
+
+const BoostColorSampleSize = 3;
+
+/**
  * Enum for Boost sensor and actuator types.
  * @readonly
  * @enum {number}
@@ -589,6 +596,8 @@ class Boost {
             color: BoostColor.NONE
         };
 
+        this._colorBucket = [];
+
         /**
          * The Bluetooth connection socket for reading/writing peripheral data.
          * @type {BLE}
@@ -902,17 +911,24 @@ class Boost {
         }
         case BoostMessage.PORT_VALUE: {
             const type = this._ports[portID];
-            /**
-             * TODO: Build a proper value-formatting based on the PORT_INPUT_FORMAT-messages
-             * instead of hardcoding value-handling
-             */
+            
             switch (type) {
             case BoostIO.TILT:
                 this._sensors.tiltX = data[4];
                 this._sensors.tiltY = data[5];
                 break;
             case BoostIO.COLOR:
-                this._sensors.color = data[4];
+                this._colorBucket.unshift(data[4]);
+                if (this._colorBucket.length > BoostColorSampleSize) {
+                    this._colorBucket.pop();
+                    if (this._colorBucket.every((v, i, arr) => v === arr[0])) {
+                        this._sensors.color = this._colorBucket[0];
+                    } else {
+                        this._sensors.color = BoostColor.NONE;
+                    }
+                } else {
+                    this._sensors.color = BoostColor.NONE;
+                }
                 break;
             case BoostIO.MOTOREXT:
             case BoostIO.MOTORINT:
@@ -927,7 +943,7 @@ class Boost {
             break;
         }
         case BoostMessage.PORT_FEEDBACK: {
-            // TODO: Handle messages that contain feedback from more than one port.
+            // TODO: If extension will receive feedback from multiple ports simultaneously, this case will need to handle it.
             const feedback = data[4];
             const motor = this.motor(portID);
             if (motor) {
@@ -981,6 +997,7 @@ class Boost {
         // Set input format for tilt or distance sensor
 
         let mode = null;
+        let delta = 1;
 
         switch (type) {
         case BoostIO.MOTORINT:
@@ -989,6 +1006,7 @@ class Boost {
             break;
         case BoostIO.COLOR:
             mode = BoostMode.COLOR;
+            delta = 0;
             break;
         case BoostIO.LED:
             mode = BoostMode.LED;
@@ -1005,7 +1023,7 @@ class Boost {
         const cmd = this.generateInputCommand(
             portID,
             mode,
-            1,
+            delta,
             true
         );
 
