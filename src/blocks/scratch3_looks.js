@@ -77,6 +77,14 @@ class Scratch3LooksBlocks {
     }
 
     /**
+     * Limit for brightness effect
+     * @const {object}
+     */
+    static get EFFECT_BRIGHTNESS_LIMIT (){
+        return {min: -100, max: 100};
+    }
+
+    /**
      * @param {Target} target - collect bubble state for this target. Probably, but not necessarily, a RenderedTarget.
      * @returns {BubbleState} the mutable bubble state associated with that target. This will be created if necessary.
      * @private
@@ -484,27 +492,36 @@ class Scratch3LooksBlocks {
         );
     }
 
+    clampEffect (effect, value) {
+        let clampedValue = value;
+        switch (effect) {
+        case 'ghost':
+            clampedValue = MathUtil.clamp(value,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
+                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
+            break;
+        case 'brightness':
+            clampedValue = MathUtil.clamp(value,
+                Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.min,
+                Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.max);
+            break;
+        }
+        return clampedValue;
+    }
+
     changeEffect (args, util) {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         const change = Cast.toNumber(args.CHANGE);
         if (!util.target.effects.hasOwnProperty(effect)) return;
         let newValue = change + util.target.effects[effect];
-        if (effect === 'ghost') {
-            newValue = MathUtil.clamp(newValue,
-                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
-                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
-        }
+        newValue = this.clampEffect(effect, newValue);
         util.target.setEffect(effect, newValue);
     }
 
     setEffect (args, util) {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         let value = Cast.toNumber(args.VALUE);
-        if (effect === 'ghost') {
-            value = MathUtil.clamp(value,
-                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.min,
-                Scratch3LooksBlocks.EFFECT_GHOST_LIMIT.max);
-        }
+        value = this.clampEffect(effect, value);
         util.target.setEffect(effect, value);
     }
 

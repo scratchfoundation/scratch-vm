@@ -358,6 +358,43 @@ test('move no obscure shadow', t => {
     t.end();
 });
 
+test('move - attaching new shadow', t => {
+    const b = new Blocks(new Runtime());
+    // Block/shadow are null to mimic state right after a procedure_call block
+    // is mutated by adding an input. The "move" will attach the new shadow.
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            fooInput: {
+                name: 'fooInput',
+                block: null,
+                shadow: null
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        shadow: true,
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.shadow, 'bar');
+    t.end();
+});
+
 test('change', t => {
     const b = new Blocks(new Runtime());
     b.createBlock({
