@@ -51,7 +51,7 @@ const BoostPingInterval = 5000;
  * @type {number}
  */
 
-const BoostColorSampleSize = 3;
+const BoostColorSampleSize = 5;
 
 /**
  * Enum for Boost sensor and actuator types.
