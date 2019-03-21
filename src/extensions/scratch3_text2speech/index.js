@@ -84,7 +84,6 @@ const DUTCH_ID = 'nl';
 const ENGLISH_ID = 'en';
 const FRENCH_ID = 'fr';
 const GERMAN_ID = 'de';
-const HINDI_ID = 'hi';
 const ICELANDIC_ID = 'is';
 const ITALIAN_ID = 'it';
 const JAPANESE_ID = 'ja';
@@ -241,12 +240,6 @@ class Scratch3Text2SpeechBlocks {
                 name: 'German',
                 locales: ['de'],
                 speechSynthLocale: 'de-DE'
-            },
-            [HINDI_ID]: {
-                name: 'Hindi',
-                locales: ['hi'],
-                speechSynthLocale: 'en-IN',
-                singleGender: true
             },
             [ICELANDIC_ID]: {
                 name: 'Icelandic',
