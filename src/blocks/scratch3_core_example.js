@@ -36,7 +36,8 @@ class Scratch3CoreExample {
      * @returns {string} The name of the first target in the project.
      */
     exampleOpcode () {
-        return this.runtime.getTargetForStage().getName();
+        const stage = this.runtime.getTargetForStage();
+        return stage ? stage.getName() : 'no stage yet';
     }
 
 }
