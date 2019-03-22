@@ -417,7 +417,9 @@ const PushPullValues = {
  */
 const GestureValues = {
     SHAKEN: 'shaken',
-    STARTED_FALLING: 'started falling'
+    STARTED_FALLING: 'started falling',
+    TURNED_FACE_UP: 'turned face up',
+    TURNED_FACE_DOWN: 'turned face down'
 };
 
 /**
@@ -442,16 +444,6 @@ const AxisValues = {
     X: 'x',
     Y: 'y',
     Z: 'z'
-};
-
-/**
- * Enum for face menu options.
- * @readonly
- * @enum {string}
- */
-const FaceValues = {
-    UP: 'up',
-    DOWN: 'down'
 };
 
 /**
@@ -541,27 +533,6 @@ class Scratch3GdxForBlocks {
         ];
     }
 
-    get FACE_MENU () {
-        return [
-            {
-                text: formatMessage({
-                    id: 'gdxfor.up',
-                    default: 'up',
-                    description: 'the sensor is facing up'
-                }),
-                value: FaceValues.UP
-            },
-            {
-                text: formatMessage({
-                    id: 'gdxfor.down',
-                    default: 'down',
-                    description: 'the sensor is facing down'
-                }),
-                value: FaceValues.DOWN
-            }
-        ];
-    }
-
     get PUSH_PULL_MENU () {
         return [
             {
@@ -600,6 +571,22 @@ class Scratch3GdxForBlocks {
                     description: 'the sensor started free falling'
                 }),
                 value: GestureValues.STARTED_FALLING
+            },
+            {
+                text: formatMessage({
+                    id: 'gdxfor.turnedFaceUp',
+                    default: 'turned face up',
+                    description: 'the sensor was turned to face up'
+                }),
+                value: GestureValues.TURNED_FACE_UP
+            },
+            {
+                text: formatMessage({
+                    id: 'gdxfor.turnedFaceDown',
+                    default: 'turned face down',
+                    description: 'the sensor was turned to face down'
+                }),
+                value: GestureValues.TURNED_FACE_DOWN
             }
         ];
     }
@@ -722,22 +709,6 @@ class Scratch3GdxForBlocks {
                 },
                 '---',
                 {
-                    opcode: 'isFacing',
-                    text: formatMessage({
-                        id: 'gdxfor.isFacing',
-                        default: 'facing [FACING]?',
-                        description: 'is the device facing up or down?'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        FACING: {
-                            type: ArgumentType.STRING,
-                            menu: 'faceOptions',
-                            defaultValue: FaceValues.UP
-                        }
-                    }
-                },
-                {
                     opcode: 'isFreeFalling',
                     text: formatMessage({
                         id: 'gdxfor.isFreeFalling',
@@ -784,8 +755,7 @@ class Scratch3GdxForBlocks {
                 gestureOptions: this.GESTURE_MENU,
                 axisOptions: this.AXIS_MENU,
                 tiltOptions: this.TILT_MENU,
-                tiltAnyOptions: this.TILT_MENU_ANY,
-                faceOptions: this.FACE_MENU
+                tiltAnyOptions: this.TILT_MENU_ANY
             }
         };
     }
@@ -812,6 +782,10 @@ class Scratch3GdxForBlocks {
             return this.gestureMagnitude() > SHAKEN_THRESHOLD;
         case GestureValues.STARTED_FALLING:
             return this.isFreeFalling();
+        case GestureValues.TURNED_FACE_UP:
+            return this._peripheral.getAccelerationZ() > FACING_THRESHOLD;
+        case GestureValues.TURNED_FACE_DOWN:
+            return this._peripheral.getAccelerationZ() < FACING_THRESHOLD * -1;
         default:
             log.warn(`unknown gesture value in whenGesture: ${args.GESTURE}`);
             return false;
@@ -917,17 +891,6 @@ class Scratch3GdxForBlocks {
             this._peripheral.getSpinSpeedY(),
             this._peripheral.getSpinSpeedZ()
         );
-    }
-
-    isFacing (args) {
-        switch (args.FACING) {
-        case FaceValues.UP:
-            return this._peripheral.getAccelerationZ() > FACING_THRESHOLD;
-        case FaceValues.DOWN:
-            return this._peripheral.getAccelerationZ() < FACING_THRESHOLD * -1;
-        default:
-            log.warn(`Unknown direction in isFacing: ${args.FACING}`);
-        }
     }
 
     isFreeFalling () {
