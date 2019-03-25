@@ -123,7 +123,7 @@ class ExtensionManager {
             if (this.isExtensionLoaded(extensionId)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
                 log.warn(message);
-                return; // TODO Do we want to throw an error here?
+                return;
             }
 
             const extension = builtinExtensions[extensionId];

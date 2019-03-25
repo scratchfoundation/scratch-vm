@@ -47,12 +47,12 @@ class CentralDispatch extends SharedDispatch {
         const {provider, isRemote} = this._getServiceProvider(service);
         if (provider) {
             if (isRemote) {
-                log.error("Cannot use 'callSync' on a remote service provider.");
-                return;
+                throw new Error(`Cannot use 'callSync' on remote provider for service ${service}.`);
             }
 
             return provider[method].apply(provider, args);
         }
+        throw new Error(`Provider not found for service: ${service}`);
     }
 
     /**
