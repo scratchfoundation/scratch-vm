@@ -66,6 +66,42 @@ const GIANT_ID = 'GIANT';
 const KITTEN_ID = 'KITTEN';
 
 /**
+ * Playback rate for the tenor voice, for cases where we have only a female gender voice.
+ */
+const FEMALE_TENOR_RATE = 0.89; // -2 semitones
+
+/**
+ * Playback rate for the giant voice, for cases where we have only a female gender voice.
+ */
+const FEMALE_GIANT_RATE = 0.79; // -4 semitones
+
+/**
+ * Language ids. The value for each language id is a valid Scratch locale.
+ */
+const CHINESE_ID = 'zh-cn';
+const DANISH_ID = 'da';
+const DUTCH_ID = 'nl';
+const ENGLISH_ID = 'en';
+const FRENCH_ID = 'fr';
+const GERMAN_ID = 'de';
+const HINDI_ID = 'hi';
+const ICELANDIC_ID = 'is';
+const ITALIAN_ID = 'it';
+const JAPANESE_ID = 'ja';
+const KOREAN_ID = 'ko';
+const NORWEGIAN_ID = 'nb';
+const POLISH_ID = 'pl';
+const PORTUGUESE_BR_ID = 'pt-br';
+const PORTUGUESE_ID = 'pt';
+const ROMANIAN_ID = 'ro';
+const RUSSIAN_ID = 'ru';
+const SPANISH_ID = 'es';
+const SPANISH_419_ID = 'es-419';
+const SWEDISH_ID = 'sv';
+const TURKISH_ID = 'tr';
+const WELSH_ID = 'cy';
+
+/**
  * Class for the text2speech blocks.
  * @constructor
  */
@@ -76,12 +112,6 @@ class Scratch3Text2SpeechBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
-
-        /**
-         * The current language code to use for speech synthesis.
-         * @type {string}
-         */
-        this.currentLanguage = 'en-US';
 
         /**
          * Map of soundPlayers by sound id.
@@ -98,6 +128,12 @@ class Scratch3Text2SpeechBlocks {
         if (this.runtime) {
             runtime.on('targetWasCreated', this._onTargetCreated);
         }
+
+        /**
+         * A list of all Scratch locales that are supported by the extension.
+         * @type {Array}
+         */
+        this._supportedLocales = this._getSupportedLocales();
     }
 
     /**
@@ -154,24 +190,145 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * An object with language names mapped to their language codes.
+     * An object with information for each language.
+     *
+     * A note on the different sets of locales referred to in this extension:
+     *
+     * SCRATCH LOCALE
+     *      Set by the editor, and used to store the language state in the project.
+     *      Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+     * SUPPORTED LOCALE
+     *      A Scratch locale that has a corresponding extension locale.
+     * EXTENSION LOCALE
+     *      A locale corresponding to one of the available spoken languages
+     *      in the extension. There can be multiple supported locales for a single
+     *      extension locale. For example, for both written versions of chinese,
+     *      zh-cn and zh-tw, we use a single spoken language (Mandarin). So there
+     *      are two supported locales, with a single extension locale.
+     * SPEECH SYNTH LOCALE
+     *      A different locale code system, used by our speech synthesis service.
+     *      Each extension locale has a speech synth locale.
      */
     get LANGUAGE_INFO () {
         return {
-            'Danish': 'da-DK',
-            'Dutch': 'nl-NL',
-            'English': 'en-US',
-            'French': 'fr-FR',
-            'German': 'de-DE',
-            'Icelandic': 'is-IS',
-            'Italian': 'it-IT',
-            'Japanese': 'ja-JP',
-            'Polish': 'pl-PL',
-            'Portuguese (Brazilian)': 'pt-BR',
-            'Portuguese (European)': 'pt-PT',
-            'Russian': 'ru-RU',
-            'Spanish (European)': 'es-ES',
-            'Spanish (Latin American)': 'es-US'
+            [CHINESE_ID]: {
+                name: 'Chinese (Mandarin)',
+                locales: ['zh-cn', 'zh-tw'],
+                speechSynthLocale: 'cmn-CN',
+                singleGender: true
+            },
+            [DANISH_ID]: {
+                name: 'Danish',
+                locales: ['da'],
+                speechSynthLocale: 'da-DK'
+            },
+            [DUTCH_ID]: {
+                name: 'Dutch',
+                locales: ['nl'],
+                speechSynthLocale: 'nl-NL'
+            },
+            [ENGLISH_ID]: {
+                name: 'English',
+                locales: ['en'],
+                speechSynthLocale: 'en-US'
+            },
+            [FRENCH_ID]: {
+                name: 'French',
+                locales: ['fr'],
+                speechSynthLocale: 'fr-FR'
+            },
+            [GERMAN_ID]: {
+                name: 'German',
+                locales: ['de'],
+                speechSynthLocale: 'de-DE'
+            },
+            [HINDI_ID]: {
+                name: 'Hindi',
+                locales: ['hi'],
+                speechSynthLocale: 'hi-IN',
+                singleGender: true
+            },
+            [ICELANDIC_ID]: {
+                name: 'Icelandic',
+                locales: ['is'],
+                speechSynthLocale: 'is-IS'
+            },
+            [ITALIAN_ID]: {
+                name: 'Italian',
+                locales: ['it'],
+                speechSynthLocale: 'it-IT'
+            },
+            [JAPANESE_ID]: {
+                name: 'Japanese',
+                locales: ['ja', 'ja-Hira'],
+                speechSynthLocale: 'ja-JP'
+            },
+            [KOREAN_ID]: {
+                name: 'Korean',
+                locales: ['ko'],
+                speechSynthLocale: 'ko-KR',
+                singleGender: true
+            },
+            [NORWEGIAN_ID]: {
+                name: 'Norwegian',
+                locales: ['nb', 'nn'],
+                speechSynthLocale: 'nb-NO',
+                singleGender: true
+            },
+            [POLISH_ID]: {
+                name: 'Polish',
+                locales: ['pl'],
+                speechSynthLocale: 'pl-PL'
+            },
+            [PORTUGUESE_BR_ID]: {
+                name: 'Portuguese (Brazilian)',
+                locales: ['pt-br'],
+                speechSynthLocale: 'pt-BR'
+            },
+            [PORTUGUESE_ID]: {
+                name: 'Portuguese (European)',
+                locales: ['pt'],
+                speechSynthLocale: 'pt-PT'
+            },
+            [ROMANIAN_ID]: {
+                name: 'Romanian',
+                locales: ['ro'],
+                speechSynthLocale: 'ro-RO',
+                singleGender: true
+            },
+            [RUSSIAN_ID]: {
+                name: 'Russian',
+                locales: ['ru'],
+                speechSynthLocale: 'ru-RU'
+            },
+            [SPANISH_ID]: {
+                name: 'Spanish (European)',
+                locales: ['es'],
+                speechSynthLocale: 'es-ES'
+            },
+            [SPANISH_419_ID]: {
+                name: 'Spanish (Latin American)',
+                locales: ['es-419'],
+                speechSynthLocale: 'es-US'
+            },
+            [SWEDISH_ID]: {
+                name: 'Swedish',
+                locales: ['sv'],
+                speechSynthLocale: 'sv-SE',
+                singleGender: true
+            },
+            [TURKISH_ID]: {
+                name: 'Turkish',
+                locales: ['tr'],
+                speechSynthLocale: 'tr-TR',
+                singleGender: true
+            },
+            [WELSH_ID]: {
+                name: 'Welsh',
+                locales: ['cy'],
+                speechSynthLocale: 'cy-GB',
+                singleGender: true
+            }
         };
     }
 
@@ -191,6 +348,14 @@ class Scratch3Text2SpeechBlocks {
         return {
             voiceId: ALTO_ID
         };
+    }
+
+    /**
+     * A default language to use for speech synthesis.
+     * @type {string}
+     */
+    get DEFAULT_LANGUAGE () {
+        return ENGLISH_ID;
     }
 
     /**
@@ -227,9 +392,24 @@ class Scratch3Text2SpeechBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
+        // Only localize the default input to the "speak" block if we are in a
+        // supported language.
+        let defaultTextToSpeak = 'hello';
+        if (this.isSupportedLanguage(this.getEditorLanguage())) {
+            defaultTextToSpeak = formatMessage({
+                id: 'text2speech.defaultTextToSpeak',
+                default: 'hello',
+                description: 'hello: the default text to speak'
+            });
+        }
+
         return {
             id: 'text2speech',
-            name: 'Text to Speech',
+            name: formatMessage({
+                id: 'text2speech.categoryName',
+                default: 'Text to Speech',
+                description: 'Name of the Text to Speech extension.'
+            }),
             blockIconURI: blockIconURI,
             menuIconURI: menuIconURI,
             blocks: [
@@ -244,11 +424,7 @@ class Scratch3Text2SpeechBlocks {
                     arguments: {
                         WORDS: {
                             type: ArgumentType.STRING,
-                            defaultValue: formatMessage({
-                                id: 'text2speech.defaultTextToSpeak',
-                                default: 'hello',
-                                description: 'hello: the default text to speak'
-                            })
+                            defaultValue: defaultTextToSpeak
                         }
                     }
                 },
@@ -280,7 +456,7 @@ class Scratch3Text2SpeechBlocks {
                         LANGUAGE: {
                             type: ArgumentType.STRING,
                             menu: 'languages',
-                            defaultValue: this.currentLanguage
+                            defaultValue: this.getCurrentLanguage()
                         }
                     }
                 }
@@ -293,20 +469,94 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Get the viewer's language code.
-     * @return {string} the language code.
+     * Get the language code currently set in the editor, or fall back to the
+     * browser locale.
+     * @return {string} a Scratch locale code.
      */
-    getViewerLanguageCode () {
-        // @todo This should be the language code of the project *creator*
-        // rather than the project viewer.
-        // @todo Amazon Polly needs the locale in a two part form (e.g. ja-JP),
-        // so we probably need to create a lookup table. It will convert from these codes:
-        // https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
-        // to these codes:
-        // https://docs.aws.amazon.com/polly/latest/dg/SupportedLanguage.html
-        // but note also that only a subset of these languages have both male and female voices:
-        // https://docs.aws.amazon.com/polly/latest/dg/voicelist.html
-        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
+    getEditorLanguage () {
+        return formatMessage.setup().locale ||
+            navigator.language || navigator.userLanguage || this.DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Get the language code currently set for the extension.
+     * @returns {string} a Scratch locale code.
+     */
+    getCurrentLanguage () {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage) return this.DEFAULT_LANGUAGE;
+        // If no language has been set, set it to the editor locale (or default).
+        if (!stage.textToSpeechLanguage) {
+            this.setCurrentLanguage(this.getEditorLanguage());
+        }
+        return stage.textToSpeechLanguage;
+    }
+
+    /**
+     * Set the language code for the extension.
+     * It is stored in the stage so it can be saved and loaded with the project.
+     * @param {string} locale a locale code.
+     */
+    setCurrentLanguage (locale) {
+        const stage = this.runtime.getTargetForStage();
+        if (!stage) return;
+
+        if (this.isSupportedLanguage(locale)) {
+            stage.textToSpeechLanguage = this._getExtensionLocaleForSupportedLocale(locale);
+        }
+
+        // If the language is null, set it to the default language.
+        // This can occur e.g. if the extension was loaded with the editor
+        // set to a language that is not in the list.
+        if (!stage.textToSpeechLanguage) {
+            stage.textToSpeechLanguage = this.DEFAULT_LANGUAGE;
+        }
+    }
+
+    /**
+     * Get the extension locale for a supported locale, or null.
+     * @param {string} locale a locale code.
+     * @returns {?string} a locale supported by the extension.
+     */
+    _getExtensionLocaleForSupportedLocale (locale) {
+        for (const lang in this.LANGUAGE_INFO) {
+            if (this.LANGUAGE_INFO[lang].locales.includes(locale)) {
+                return lang;
+            }
+        }
+        log.error(`cannot find extension locale for locale ${locale}`);
+    }
+
+    /**
+     * Get the locale code used by the speech synthesis server corresponding to
+     * the current language code set for the extension.
+     * @returns {string} a speech synthesis locale.
+     */
+    _getSpeechSynthLocale () {
+        let speechSynthLocale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
+        if (this.LANGUAGE_INFO[this.getCurrentLanguage()]) {
+            speechSynthLocale = this.LANGUAGE_INFO[this.getCurrentLanguage()].speechSynthLocale;
+        }
+        return speechSynthLocale;
+    }
+
+    /**
+     * Get an array of the locales supported by this extension.
+     * @returns {Array} An array of locale strings.
+     */
+    _getSupportedLocales () {
+        return Object.keys(this.LANGUAGE_INFO).reduce((acc, lang) =>
+            acc.concat(this.LANGUAGE_INFO[lang].locales), []);
+    }
+
+    /**
+     * Check if a Scratch language code is in the list of supported languages for the
+     * speech synthesis service.
+     * @param {string} languageCode the language code to check.
+     * @returns {boolean} true if the language code is supported.
+     */
+    isSupportedLanguage (languageCode) {
+        return this._supportedLocales.includes(languageCode);
     }
 
     /**
@@ -325,9 +575,9 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        return Object.keys(this.LANGUAGE_INFO).map(languageName => ({
-            text: languageName,
-            value: this.LANGUAGE_INFO[languageName]
+        return Object.keys(this.LANGUAGE_INFO).map(key => ({
+            text: this.LANGUAGE_INFO[key].name,
+            value: key
         }));
     }
 
@@ -360,10 +610,7 @@ class Scratch3Text2SpeechBlocks {
      * @param  {object} args Block arguments
      */
     setLanguage (args) {
-        // Only set the language if the arg is a valid language code.
-        if (Object.values(this.LANGUAGE_INFO).includes(args.LANGUAGE)) {
-            this.currentLanguage = args.LANGUAGE;
-        }
+        this.setCurrentLanguage(args.LANGUAGE);
     }
 
     /**
@@ -384,22 +631,36 @@ class Scratch3Text2SpeechBlocks {
     speakAndWait (args, util) {
         // Cast input to string
         let words = Cast.toString(args.WORDS);
+        let locale = this._getSpeechSynthLocale();
 
         const state = this._getState(util.target);
 
-        const gender = this.VOICE_INFO[state.voiceId].gender;
-        const playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
+        let gender = this.VOICE_INFO[state.voiceId].gender;
+        let playbackRate = this.VOICE_INFO[state.voiceId].playbackRate;
 
-        // @todo localize this?
+        // Special case for voices where the synthesis service only provides a
+        // single gender voice. In that case, always request the female voice,
+        // and set special playback rates for the tenor and giant voices.
+        if (this.LANGUAGE_INFO[this.getCurrentLanguage()].singleGender) {
+            gender = 'female';
+            if (state.voiceId === TENOR_ID) {
+                playbackRate = FEMALE_TENOR_RATE;
+            }
+            if (state.voiceId === GIANT_ID) {
+                playbackRate = FEMALE_GIANT_RATE;
+            }
+        }
+
         if (state.voiceId === KITTEN_ID) {
-            words = words.replace(/\w+/g, 'meow');
+            words = words.replace(/\S+/g, 'meow');
+            locale = this.LANGUAGE_INFO[this.DEFAULT_LANGUAGE].speechSynthLocale;
         }
 
         // Build up URL
         let path = `${SERVER_HOST}/synth`;
-        path += `?locale=${this.currentLanguage}`;
+        path += `?locale=${locale}`;
         path += `&gender=${gender}`;
-        path += `&text=${encodeURI(words.substring(0, 128))}`;
+        path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
 
         // Perform HTTP request to get audio file
         return new Promise(resolve => {

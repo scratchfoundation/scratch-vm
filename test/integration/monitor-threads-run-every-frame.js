@@ -6,7 +6,7 @@ const VirtualMachine = require('../../src/index');
 const Thread = require('../../src/engine/thread');
 const Runtime = require('../../src/engine/runtime');
 
-const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
+const projectUri = path.resolve(__dirname, '../fixtures/timer-monitor.sb3');
 const project = readFileToBuffer(projectUri);
 
 const checkMonitorThreadPresent = (t, threads) => {
@@ -14,14 +14,11 @@ const checkMonitorThreadPresent = (t, threads) => {
     const monitorThread = threads[0];
     t.equal(monitorThread.stackClick, false);
     t.equal(monitorThread.updateMonitor, true);
-    t.equal(monitorThread.topBlock.toString(), 'sensing_timer');
+    t.equal(monitorThread.topBlock.toString(), 'timer');
 };
 
 /**
  * Creates a monitor and then checks if it gets run every frame.
- */
-/* TODO: when loadProject loads monitors, we can create a project with a monitor and will
- * not have to do the create monitor step manually.
  */
 test('monitor thread runs every frame', t => {
     const vm = new VirtualMachine();
@@ -31,22 +28,6 @@ test('monitor thread runs every frame', t => {
     t.doesNotThrow(() => {
         // Note: don't run vm.start(), we handle calling _step() manually in this test
         vm.runtime.currentStepTime = Runtime.THREAD_STEP_INTERVAL;
-
-        // Manually populate the monitor block and set its isMonitored to true.
-        vm.runtime.monitorBlocks.createBlock({
-            id: 'sensing_timer',
-            opcode: 'sensing_timer',
-            inputs: {},
-            fields: {},
-            next: null,
-            topLevel: true,
-            parent: null,
-            shadow: false,
-            isMonitored: true,
-            x: '0',
-            y: '0'
-        });
-
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
@@ -55,13 +36,19 @@ test('monitor thread runs every frame', t => {
             t.equal(vm.runtime.threads.length, 0);
 
             vm.runtime._step();
-            checkMonitorThreadPresent(t, vm.runtime.threads);
-            t.assert(vm.runtime.threads[0].status === Thread.STATUS_DONE);
+            let doneThreads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(doneThreads.length, 1);
+            checkMonitorThreadPresent(t, doneThreads);
+            t.assert(doneThreads[0].status === Thread.STATUS_DONE);
 
             // Check that both are added again when another step is taken
             vm.runtime._step();
-            checkMonitorThreadPresent(t, vm.runtime.threads);
-            t.assert(vm.runtime.threads[0].status === Thread.STATUS_DONE);
+            doneThreads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(doneThreads.length, 1);
+            checkMonitorThreadPresent(t, doneThreads);
+            t.assert(doneThreads[0].status === Thread.STATUS_DONE);
             t.end();
         });
     });
@@ -80,21 +67,6 @@ test('monitor thread not added twice', t => {
         // Note: don't run vm.start(), we handle calling _step() manually in this test
         vm.runtime.currentStepTime = 0;
 
-        // Manually populate the monitor block and set its isMonitored to true.
-        vm.runtime.monitorBlocks.createBlock({
-            id: 'sensing_timer',
-            opcode: 'sensing_timer',
-            inputs: {},
-            fields: {},
-            next: null,
-            topLevel: true,
-            parent: null,
-            shadow: false,
-            isMonitored: true,
-            x: '0',
-            y: '0'
-        });
-
         vm.clear();
         vm.setCompatibilityMode(false);
         vm.setTurboMode(false);
@@ -103,12 +75,18 @@ test('monitor thread not added twice', t => {
             t.equal(vm.runtime.threads.length, 0);
 
             vm.runtime._step();
+            let doneThreads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 1);
+            t.equal(doneThreads.length, 0);
             checkMonitorThreadPresent(t, vm.runtime.threads);
             t.assert(vm.runtime.threads[0].status === Thread.STATUS_RUNNING);
             const prevThread = vm.runtime.threads[0];
 
             // Check that both are added again when another step is taken
             vm.runtime._step();
+            doneThreads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 1);
+            t.equal(doneThreads.length, 0);
             checkMonitorThreadPresent(t, vm.runtime.threads);
             t.equal(vm.runtime.threads[0], prevThread);
             t.end();

@@ -2,6 +2,12 @@ const MathUtil = require('../util/math-util');
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
 
+/**
+ * Occluded boolean value to make its use more understandable.
+ * @const {boolean}
+ */
+const STORE_WAITING = true;
+
 class Scratch3SoundBlocks {
     constructor (runtime) {
         /**
@@ -10,10 +16,16 @@ class Scratch3SoundBlocks {
          */
         this.runtime = runtime;
 
+        this.waitingSounds = {};
+
         // Clear sound effects on green flag and stop button events.
+        this.stopAllSounds = this.stopAllSounds.bind(this);
+        this._stopWaitingSoundsForTarget = this._stopWaitingSoundsForTarget.bind(this);
         this._clearEffectsForAllTargets = this._clearEffectsForAllTargets.bind(this);
         if (this.runtime) {
+            this.runtime.on('PROJECT_STOP_ALL', this.stopAllSounds);
             this.runtime.on('PROJECT_STOP_ALL', this._clearEffectsForAllTargets);
+            this.runtime.on('STOP_FOR_TARGET', this._stopWaitingSoundsForTarget);
             this.runtime.on('PROJECT_START', this._clearEffectsForAllTargets);
         }
 
@@ -134,26 +146,50 @@ class Scratch3SoundBlocks {
     getMonitored () {
         return {
             sound_volume: {
-                getId: () => 'volume'
+                isSpriteSpecific: true,
+                getId: targetId => `${targetId}_volume`
             }
         };
     }
 
     playSound (args, util) {
         // Don't return the promise, it's the only difference for AndWait
-        this.playSoundAndWait(args, util);
+        this._playSound(args, util);
     }
 
     playSoundAndWait (args, util) {
+        return this._playSound(args, util, STORE_WAITING);
+    }
+
+    _playSound (args, util, storeWaiting) {
         const index = this._getSoundIndex(args.SOUND_MENU, util);
         if (index >= 0) {
             const {target} = util;
             const {sprite} = target;
             const {soundId} = sprite.sounds[index];
             if (sprite.soundBank) {
+                if (storeWaiting === STORE_WAITING) {
+                    this._addWaitingSound(target.id, soundId);
+                } else {
+                    this._removeWaitingSound(target.id, soundId);
+                }
                 return sprite.soundBank.playSound(target, soundId);
             }
         }
+    }
+
+    _addWaitingSound (targetId, soundId) {
+        if (!this.waitingSounds[targetId]) {
+            this.waitingSounds[targetId] = new Set();
+        }
+        this.waitingSounds[targetId].add(soundId);
+    }
+
+    _removeWaitingSound (targetId, soundId) {
+        if (!this.waitingSounds[targetId]) {
+            return;
+        }
+        this.waitingSounds[targetId].delete(soundId);
     }
 
     _getSoundIndex (soundName, util) {
@@ -201,6 +237,20 @@ class Scratch3SoundBlocks {
     _stopAllSoundsForTarget (target) {
         if (target.sprite.soundBank) {
             target.sprite.soundBank.stopAllSounds(target);
+            if (this.waitingSounds[target.id]) {
+                this.waitingSounds[target.id].clear();
+            }
+        }
+    }
+
+    _stopWaitingSoundsForTarget (target) {
+        if (target.sprite.soundBank) {
+            if (this.waitingSounds[target.id]) {
+                for (const soundId of this.waitingSounds[target.id].values()) {
+                    target.sprite.soundBank.stop(target, soundId);
+                }
+                this.waitingSounds[target.id].clear();
+            }
         }
     }
 

@@ -67,7 +67,7 @@ const generateBlockInput = function (id, next, inp) {
 };
 
 const generateThread = function (runtime) {
-    const s = new Sprite();
+    const s = new Sprite(null, runtime);
     const rt = new RenderedTarget(s, runtime);
     const th = new Thread(randomString());
     
@@ -181,8 +181,7 @@ test('stepThreads', t => {
     t.strictEquals(s.stepThreads().length, 0);
     generateThread(r);
     t.strictEquals(r.threads.length, 1);
-    t.strictEquals(s.stepThreads().length, 0);
-    r.threads[0].status = Thread.STATUS_RUNNING;
+    // Threads should be marked DONE and removed in the same step they finish.
     t.strictEquals(s.stepThreads().length, 1);
     
     t.end();

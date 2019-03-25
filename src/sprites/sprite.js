@@ -18,7 +18,7 @@ class Sprite {
         this.runtime = runtime;
         if (!blocks) {
             // Shared set of blocks for all clones.
-            blocks = new Blocks();
+            blocks = new Blocks(runtime);
         }
         this.blocks = blocks;
         /**
@@ -146,15 +146,14 @@ class Sprite {
 
         newSprite.costumes = this.costumes_.map(costume => {
             const newCostume = Object.assign({}, costume);
-            const costumeAsset = this.runtime.storage.get(costume.assetId);
-            assetPromises.push(loadCostumeFromAsset(newCostume, costumeAsset, this.runtime));
+            assetPromises.push(loadCostumeFromAsset(newCostume, this.runtime));
             return newCostume;
         });
 
         newSprite.sounds = this.sounds.map(sound => {
             const newSound = Object.assign({}, sound);
-            const soundAsset = this.runtime.storage.get(sound.assetId);
-            assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime, newSprite));
+            const soundAsset = sound.asset;
+            assetPromises.push(loadSoundFromAsset(newSound, soundAsset, this.runtime, newSprite.soundBank));
             return newSound;
         });
 

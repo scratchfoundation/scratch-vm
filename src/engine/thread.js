@@ -322,6 +322,16 @@ class Thread {
     }
 
     /**
+     * Initialize procedure parameters on this stack frame.
+     */
+    initParams () {
+        const stackFrame = this.peekStackFrame();
+        if (stackFrame.params === null) {
+            stackFrame.params = {};
+        }
+    }
+
+    /**
      * Add a parameter to the stack frame.
      * Use when calling a procedure with parameter values.
      * @param {!string} paramName Name of parameter.
@@ -329,9 +339,6 @@ class Thread {
      */
     pushParam (paramName, value) {
         const stackFrame = this.peekStackFrame();
-        if (stackFrame.params === null) {
-            stackFrame.params = {};
-        }
         stackFrame.params[paramName] = value;
     }
 
@@ -349,6 +356,7 @@ class Thread {
             if (frame.params.hasOwnProperty(paramName)) {
                 return frame.params[paramName];
             }
+            return null;
         }
         return null;
     }

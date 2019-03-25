@@ -1,12 +1,16 @@
 const test = require('tap').test;
 const path = require('path');
 const VirtualMachine = require('../../src/index');
+const Runtime = require('../../src/engine/runtime');
 const sb3 = require('../../src/serialization/sb3');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const exampleProjectPath = path.resolve(__dirname, '../fixtures/clone-cleanup.sb2');
 const commentsSB2ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb2');
 const commentsSB3ProjectPath = path.resolve(__dirname, '../fixtures/comments.sb3');
 const commentsSB3NoDupeIds = path.resolve(__dirname, '../fixtures/comments_no_duplicate_id_serialization.sb3');
+const variableReporterSB2ProjectPath = path.resolve(__dirname, '../fixtures/top-level-variable-reporter.sb2');
+const topLevelReportersProjectPath = path.resolve(__dirname, '../fixtures/top-level-reporters.sb3');
+const draggableSB3ProjectPath = path.resolve(__dirname, '../fixtures/draggable.sb3');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
 test('serialize', t => {
@@ -144,10 +148,10 @@ test('deserialize sb3 project with comments - no duplicate id serialization', t 
         });
 });
 
-test('serialize sb3 preserves sprite layer order', t => {
+test('serializing and deserializing sb3 preserves sprite layer order', t => {
     const vm = new VirtualMachine();
     vm.attachRenderer(new FakeRenderer());
-    vm.loadProject(readFileToBuffer(path.resolve(__dirname, '../fixtures/ordering.sb2')))
+    return vm.loadProject(readFileToBuffer(path.resolve(__dirname, '../fixtures/ordering.sb2')))
         .then(() => {
             // Target get layer order needs a renderer,
             // fake the numbers we would get back from the
@@ -179,8 +183,28 @@ test('serialize sb3 preserves sprite layer order', t => {
             t.equal(result.targets[2].layerOrder, 1);
             t.equal(result.targets[3].layerOrder, 3);
 
-            t.end();
-        });
+            return result;
+        })
+        .then(serializedObject =>
+            sb3.deserialize(
+                JSON.parse(JSON.stringify(serializedObject)), new Runtime(), null, false)
+                .then(({targets}) => {
+                    // First check that the sprites are ordered correctly (as they would
+                    // appear in the target pane)
+                    t.equal(targets[0].sprite.name, 'Stage');
+                    t.equal(targets[1].sprite.name, 'First');
+                    t.equal(targets[2].sprite.name, 'Second');
+                    t.equal(targets[3].sprite.name, 'Third');
+
+                    // Check that they are in the correct layer order (as they would render
+                    // back to front on the stage)
+                    t.equal(targets[0].layerOrder, 0);
+                    t.equal(targets[1].layerOrder, 2);
+                    t.equal(targets[2].layerOrder, 1);
+                    t.equal(targets[3].layerOrder, 3);
+
+                    t.end();
+                }));
 });
 
 test('serializeBlocks', t => {
@@ -193,6 +217,38 @@ test('serializeBlocks', t => {
             t.type(result[0], 'object');
             t.ok(Object.keys(result[0]).length < Object.keys(blocks).length, 'less blocks in serialized format');
             t.ok(Array.isArray(result[1]));
+            t.end();
+        });
+});
+
+test('serializeBlocks serializes x and y for topLevel blocks with x,y of 0,0', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(topLevelReportersProjectPath))
+        .then(() => {
+            // Verify that there are 2 blocks and they are both top level
+            const blocks = vm.runtime.targets[1].blocks._blocks;
+            const blockIds = Object.keys(blocks);
+            t.equal(blockIds.length, 2);
+            const blocksArray = blockIds.map(key => blocks[key]);
+            t.equal(blocksArray.every(b => b.topLevel), true);
+            // Simulate cleaning up the blocks by resetting x and y positions to 0
+            blockIds.forEach(blockId => {
+                blocks[blockId].x = 0;
+                blocks[blockId].y = 0;
+            });
+            const result = sb3.serializeBlocks(blocks);
+            const serializedBlocks = result[0];
+
+            t.type(serializedBlocks, 'object');
+            const serializedBlockIds = Object.keys(serializedBlocks);
+            t.equal(serializedBlockIds.length, 2);
+            const firstBlock = serializedBlocks[serializedBlockIds[0]];
+            const secondBlock = serializedBlocks[serializedBlockIds[1]];
+            t.equal(firstBlock.x, 0);
+            t.equal(firstBlock.y, 0);
+            t.equal(secondBlock.x, 0);
+            t.equal(secondBlock.y, 0);
+
             t.end();
         });
 });
@@ -218,6 +274,50 @@ test('deserializeBlocks on already deserialized input', t => {
             const deserialized = sb3.deserializeBlocks(serialized);
             const deserializedAgain = sb3.deserializeBlocks(deserialized);
             t.deepEqual(deserialized, deserializedAgain, 'no change from second pass of deserialize');
+            t.end();
+        });
+});
+
+test('getExtensionIdForOpcode', t => {
+    t.equal(sb3.getExtensionIdForOpcode('wedo_loopy'), 'wedo');
+
+    // does not consider CORE to be extensions
+    t.false(sb3.getExtensionIdForOpcode('control_loopy'));
+
+    // only considers things before the first underscore
+    t.equal(sb3.getExtensionIdForOpcode('hello_there_loopy'), 'hello');
+
+    // does not return anything for opcodes with no extension
+    t.false(sb3.getExtensionIdForOpcode('hello'));
+
+    t.end();
+});
+
+test('(#1608) serializeBlocks maintains top level variable reporters', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(variableReporterSB2ProjectPath))
+        .then(() => {
+            const blocks = vm.runtime.targets[0].blocks._blocks;
+            const result = sb3.serialize(vm.runtime);
+            // Project should have 1 block, a top-level variable reporter
+            t.equal(Object.keys(blocks).length, 1);
+            t.equal(Object.keys(result.targets[0].blocks).length, 1);
+
+            // Make sure deserializing these blocks works
+            t.doesNotThrow(() => {
+                sb3.deserialize(JSON.parse(JSON.stringify(result)), vm.runtime);
+            });
+            t.end();
+        });
+});
+
+test('(#1850) sprite draggability state read when loading SB3 file', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(draggableSB3ProjectPath))
+        .then(() => {
+            const sprite1Obj = vm.runtime.targets.find(target => target.sprite.name === 'Sprite1');
+            // Sprite1 in project should have draggable set to true
+            t.equal(sprite1Obj.draggable, true);
             t.end();
         });
 });

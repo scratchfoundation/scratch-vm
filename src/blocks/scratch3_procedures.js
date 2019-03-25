@@ -27,20 +27,26 @@ class Scratch3ProcedureBlocks {
     call (args, util) {
         if (!util.stackFrame.executed) {
             const procedureCode = args.mutation.proccode;
-            const paramNamesAndIds = util.getProcedureParamNamesAndIds(procedureCode);
+            const paramNamesIdsAndDefaults = util.getProcedureParamNamesIdsAndDefaults(procedureCode);
 
             // If null, procedure could not be found, which can happen if custom
             // block is dragged between sprites without the definition.
             // Match Scratch 2.0 behavior and noop.
-            if (paramNamesAndIds === null) {
+            if (paramNamesIdsAndDefaults === null) {
                 return;
             }
 
-            const [paramNames, paramIds] = paramNamesAndIds;
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
 
+            // Initialize params for the current stackFrame to {}, even if the procedure does
+            // not take any arguments. This is so that `getParam` down the line does not look
+            // at earlier stack frames for the values of a given parameter (#1729)
+            util.initParams();
             for (let i = 0; i < paramIds.length; i++) {
                 if (args.hasOwnProperty(paramIds[i])) {
                     util.pushParam(paramNames[i], args[paramIds[i]]);
+                } else {
+                    util.pushParam(paramNames[i], paramDefaults[i]);
                 }
             }
 
@@ -52,7 +58,9 @@ class Scratch3ProcedureBlocks {
     argumentReporterStringNumber (args, util) {
         const value = util.getParam(args.VALUE);
         if (value === null) {
-            return '';
+            // When the parameter is not found in the most recent procedure
+            // call, the default is always 0.
+            return 0;
         }
         return value;
     }
@@ -60,7 +68,9 @@ class Scratch3ProcedureBlocks {
     argumentReporterBoolean (args, util) {
         const value = util.getParam(args.VALUE);
         if (value === null) {
-            return false;
+            // When the parameter is not found in the most recent procedure
+            // call, the default is always 0.
+            return 0;
         }
         return value;
     }

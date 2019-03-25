@@ -7,16 +7,17 @@ const FakeRenderer = require('../fixtures/fake-renderer');
 test('clone effects', t => {
     // Create two clones and ensure they have different graphic effect objects.
     // Regression test for Github issue #224
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
-    const b = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
+    const b = new RenderedTarget(spr, r);
     t.ok(a.effects !== b.effects);
     t.end();
 });
 
 test('setxy', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -27,8 +28,8 @@ test('setxy', t => {
 });
 
 test('direction', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -38,8 +39,8 @@ test('direction', t => {
 });
 
 test('setSay', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -49,8 +50,8 @@ test('setSay', t => {
 });
 
 test('setVisible', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -59,8 +60,8 @@ test('setVisible', t => {
 });
 
 test('setSize', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -70,8 +71,8 @@ test('setSize', t => {
 });
 
 test('set and clear effects', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -88,8 +89,8 @@ test('set and clear effects', t => {
 
 test('setCostume', t => {
     const o = new Object();
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     s.costumes = [o];
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
@@ -105,8 +106,8 @@ test('deleteCostume', t => {
     const o4 = {id: 4};
     const o5 = {id: 5};
 
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     s.costumes = [o1, o2, o3];
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
@@ -208,8 +209,8 @@ test('deleteSound', t => {
     const o2 = {id: 2};
     const o3 = {id: 3};
 
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     s.sounds = [o1, o2, o3];
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
@@ -228,8 +229,8 @@ test('deleteSound', t => {
 });
 
 test('setRotationStyle', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
@@ -238,8 +239,8 @@ test('setRotationStyle', t => {
 });
 
 test('getBounds', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -251,8 +252,8 @@ test('getBounds', t => {
 });
 
 test('isTouchingPoint', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -262,8 +263,8 @@ test('isTouchingPoint', t => {
 });
 
 test('isTouchingEdge', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -275,8 +276,8 @@ test('isTouchingEdge', t => {
 });
 
 test('isTouchingSprite', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -286,8 +287,8 @@ test('isTouchingSprite', t => {
 });
 
 test('isTouchingColor', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -297,8 +298,8 @@ test('isTouchingColor', t => {
 });
 
 test('colorIsTouchingColor', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -308,8 +309,8 @@ test('colorIsTouchingColor', t => {
 });
 
 test('layers', t => { // TODO this tests fake functionality. Move layering tests into Render.
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     const o = new Object();
     r.attachRenderer(renderer);
@@ -332,8 +333,8 @@ test('layers', t => { // TODO this tests fake functionality. Move layering tests
 });
 
 test('getLayerOrder returns result of renderer getDrawableOrder or null if renderer is not attached', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
 
     // getLayerOrder should return null if there is no renderer attached to the runtime
@@ -349,8 +350,8 @@ test('getLayerOrder returns result of renderer getDrawableOrder or null if rende
 });
 
 test('keepInFence', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const renderer = new FakeRenderer();
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
@@ -363,8 +364,8 @@ test('keepInFence', t => {
 });
 
 test('#stopAll clears graphics effects', t => {
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     const a = new RenderedTarget(s, r);
     const effectName = 'brightness';
     a.setEffect(effectName, 100);
@@ -374,8 +375,9 @@ test('#stopAll clears graphics effects', t => {
 });
 
 test('#getCostumes returns the costumes', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     a.sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
     t.equals(a.getCostumes().length, 3);
     t.equals(a.getCostumes()[0].id, 1);
@@ -385,8 +387,9 @@ test('#getCostumes returns the costumes', t => {
 });
 
 test('#getSounds returns the sounds', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     const sounds = [1, 2, 3];
     a.sprite.sounds = sounds;
     t.equals(a.getSounds(), sounds);
@@ -394,8 +397,9 @@ test('#getSounds returns the sounds', t => {
 });
 
 test('#toJSON returns the sounds and costumes', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     const sounds = [1, 2, 3];
     a.sprite.sounds = sounds;
     a.sprite.costumes = [{id: 1}, {id: 2}, {id: 3}];
@@ -405,8 +409,9 @@ test('#toJSON returns the sounds and costumes', t => {
 });
 
 test('#addSound does not duplicate names', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     a.sprite.sounds = [{name: 'first'}];
     a.addSound({name: 'first'});
     t.deepEqual(a.sprite.sounds, [{name: 'first'}, {name: 'first2'}]);
@@ -414,8 +419,9 @@ test('#addSound does not duplicate names', t => {
 });
 
 test('#addCostume does not duplicate names', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     a.addCostume({name: 'first'});
     a.addCostume({name: 'first'});
     t.equal(a.sprite.costumes.length, 2);
@@ -425,8 +431,9 @@ test('#addCostume does not duplicate names', t => {
 });
 
 test('#renameSound does not duplicate names', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     a.sprite.sounds = [{name: 'first'}, {name: 'second'}];
     a.renameSound(0, 'first'); // Shouldn't increment the name, noop
     t.deepEqual(a.sprite.sounds, [{name: 'first'}, {name: 'second'}]);
@@ -436,8 +443,9 @@ test('#renameSound does not duplicate names', t => {
 });
 
 test('#renameCostume does not duplicate names', t => {
-    const spr = new Sprite();
-    const a = new RenderedTarget(spr, null);
+    const r = new Runtime();
+    const spr = new Sprite(null, r);
+    const a = new RenderedTarget(spr, r);
     a.sprite.costumes = [{name: 'first'}, {name: 'second'}];
     a.renameCostume(0, 'first'); // Shouldn't increment the name, noop
     t.equal(a.sprite.costumes.length, 2);
@@ -456,8 +464,8 @@ test('#reorderCostume', t => {
     const o3 = {id: 2};
     const o4 = {id: 3};
     const o5 = {id: 4};
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     s.costumes = [o1, o2, o3, o4, o5];
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
@@ -510,8 +518,8 @@ test('#reorderSound', t => {
     const o3 = {id: 2, name: 'name2'};
     const o4 = {id: 3, name: 'name3'};
     const o5 = {id: 4, name: 'name4'};
-    const s = new Sprite();
     const r = new Runtime();
+    const s = new Sprite(null, r);
     s.sounds = [o1, o2, o3, o4, o5];
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();

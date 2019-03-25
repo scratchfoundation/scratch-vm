@@ -14,11 +14,18 @@ test('importing sb2 project with monitors', t => {
     // Evaluate playground data and exit
     vm.on('playgroundData', e => {
         const threads = JSON.parse(e.threads);
-        // All monitors should leave threads running
-        t.equal(threads.length, 5);
+        // All monitors should create threads that finish during the step and
+        // are revoved from runtime.threads.
+        t.equal(threads.length, 0);
+
+        // we care that the last step updated the right number of monitors
+        // we don't care whether the last step ran other threads or not
+        const lastStepUpdatedMonitorThreads = vm.runtime._lastStepDoneThreads.filter(thread => thread.updateMonitor);
+        t.equal(lastStepUpdatedMonitorThreads.length, 8);
+
         // There should be one additional hidden monitor that is in the monitorState but
         // does not start a thread.
-        t.equal(vm.runtime._monitorState.size, 6);
+        t.equal(vm.runtime._monitorState.size, 9);
 
         const stage = vm.runtime.targets[0];
         const target = vm.runtime.targets[1];
@@ -30,6 +37,7 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.mode, 'slider');
         t.equal(monitorRecord.sliderMin, -200); // Make sure these are imported for sliders.
         t.equal(monitorRecord.sliderMax, 30);
+        t.equal(monitorRecord.isDiscrete, false);
         t.equal(monitorRecord.x, 5); // These are imported for all monitors, just check once.
         t.equal(monitorRecord.y, 59);
         t.equal(monitorRecord.visible, true);
@@ -54,11 +62,13 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.opcode, 'data_listcontents');
         t.equal(monitorRecord.mode, 'list');
         t.equal(monitorRecord.visible, true);
-        t.equal(monitorRecord.width, 102); // Make sure these are imported from lists.
-        t.equal(monitorRecord.height, 202);
+        t.equal(monitorRecord.width, 106); // Make sure these are imported from lists.
+        t.equal(monitorRecord.height, 206);
 
         // Backdrop name monitor is visible, not sprite specific
-        monitorRecord = vm.runtime._monitorState.get('backdropnumbername');
+        // should get imported with id that references the name parameter
+        // via '_name' at the end since the 3.0 block has a dropdown.
+        monitorRecord = vm.runtime._monitorState.get('backdropnumbername_name');
         t.equal(monitorRecord.opcode, 'looks_backdropnumbername');
         t.equal(monitorRecord.mode, 'default');
         t.equal(monitorRecord.visible, true);
@@ -72,6 +82,45 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.visible, true);
         t.equal(monitorRecord.spriteName, 'Sprite1');
         t.equal(monitorRecord.targetId, target.id);
+
+
+        let monitorId;
+        let monitorBlock;
+
+        // The monitor IDs for the sensing_current block should be unique
+        // to the parameter that is selected on the block being monitored.
+        // The paramater portion of the id should be lowercase even
+        // though the field value on the block is uppercase.
+
+        monitorId = 'current_date';
+        monitorRecord = vm.runtime._monitorState.get(monitorId);
+        t.equal(monitorRecord.opcode, 'sensing_current');
+        monitorBlock = vm.runtime.monitorBlocks.getBlock(monitorId);
+        t.equal(monitorBlock.fields.CURRENTMENU.value, 'DATE');
+        t.equal(monitorRecord.mode, 'default');
+        t.equal(monitorRecord.visible, true);
+        t.equal(monitorRecord.spriteName, null);
+        t.equal(monitorRecord.targetId, null);
+
+        monitorId = 'current_minute';
+        monitorRecord = vm.runtime._monitorState.get(monitorId);
+        t.equal(monitorRecord.opcode, 'sensing_current');
+        monitorBlock = vm.runtime.monitorBlocks.getBlock(monitorId);
+        t.equal(monitorBlock.fields.CURRENTMENU.value, 'MINUTE');
+        t.equal(monitorRecord.mode, 'default');
+        t.equal(monitorRecord.visible, true);
+        t.equal(monitorRecord.spriteName, null);
+        t.equal(monitorRecord.targetId, null);
+
+        monitorId = 'current_dayofweek';
+        monitorRecord = vm.runtime._monitorState.get(monitorId);
+        t.equal(monitorRecord.opcode, 'sensing_current');
+        monitorBlock = vm.runtime.monitorBlocks.getBlock(monitorId);
+        t.equal(monitorBlock.fields.CURRENTMENU.value, 'DAYOFWEEK');
+        t.equal(monitorRecord.mode, 'default');
+        t.equal(monitorRecord.visible, true);
+        t.equal(monitorRecord.spriteName, null);
+        t.equal(monitorRecord.targetId, null);
 
         t.end();
         process.nextTick(process.exit);

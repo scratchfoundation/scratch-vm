@@ -11,6 +11,8 @@ test('spec', t => {
     t.type(timer.time, 'function');
     t.type(timer.start, 'function');
     t.type(timer.timeElapsed, 'function');
+    t.type(timer.setTimeout, 'function');
+    t.type(timer.clearTimeout, 'function');
 
     t.end();
 });
@@ -32,7 +34,7 @@ test('start / timeElapsed', t => {
     timer.start();
 
     // Wait and measure timer
-    setTimeout(() => {
+    timer.setTimeout(() => {
         const timeElapsed = timer.timeElapsed();
         t.ok(timeElapsed >= 0);
         t.ok(timeElapsed >= (delay - threshold) &&
@@ -40,3 +42,15 @@ test('start / timeElapsed', t => {
         t.end();
     }, delay);
 });
+
+test('setTimeout / clearTimeout', t => new Promise((resolve, reject) => {
+    const timer = new Timer();
+    const cancelId = timer.setTimeout(() => {
+        reject(new Error('Canceled task ran'));
+    }, 1);
+    timer.setTimeout(() => {
+        resolve('Non-canceled task ran');
+        t.end();
+    }, 2);
+    timer.clearTimeout(cancelId);
+}));

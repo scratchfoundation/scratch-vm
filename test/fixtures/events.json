@@ -97,6 +97,12 @@
             "outerHTML": "<block type='data_variable' id='a block' x='0' y='0'><field name='VARIABLE' id='mock var id' variabletype=''>a mock variable</field></block>"
         }
     },
+    "mockBroadcastBlock": {
+        "name": "block",
+        "xml": {
+            "outerHTML": "<block type='event_broadcast' id='a broadcast block' x='0' y='0'><value name='BROADCAST_INPUT' id='mock broadcast input'><shadow id='boadcast shadow' type='event_broadcast_menu'><field name='BROADCAST_OPTION' id='mock broadcast message id' variabletype='broadcast-msg'>my message</field></shadow></value></block>"
+        }
+    },
     "mockListBlock": {
         "name": "block",
         "xml": {

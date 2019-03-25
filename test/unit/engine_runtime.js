@@ -1,13 +1,27 @@
-const test = require('tap').test;
+const tap = require('tap');
+const path = require('path');
+const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
+const VirtualMachine = require('../../src/virtual-machine');
 const Runtime = require('../../src/engine/runtime');
 const MonitorRecord = require('../../src/engine/monitor-record');
 const {Map} = require('immutable');
+
+tap.tearDown(() => process.nextTick(process.exit));
+
+const test = tap.test;
 
 test('spec', t => {
     const r = new Runtime();
 
     t.type(Runtime, 'function');
     t.type(r, 'object');
+
+    // Test types of cloud data managing functions
+    t.type(r.hasCloudData, 'function');
+    t.type(r.canAddCloudVariable, 'function');
+    t.type(r.addCloudVariable, 'function');
+    t.type(r.removeCloudVariable, 'function');
+
     t.ok(r instanceof Runtime);
 
     t.end();
@@ -106,5 +120,133 @@ test('getLabelForOpcode', t => {
     t.type(result2.label, 'string');
     t.equals(result2.label, 'Fake Extension: Foo 2');
 
+    t.end();
+});
+
+test('Project loaded emits runtime event', t => {
+    const vm = new VirtualMachine();
+    const projectUri = path.resolve(__dirname, '../fixtures/default.sb2');
+    const project = readFileToBuffer(projectUri);
+    let projectLoaded = false;
+
+    vm.runtime.addListener('PROJECT_LOADED', () => {
+        projectLoaded = true;
+    });
+
+    vm.loadProject(project).then(() => {
+        t.equal(projectLoaded, true, 'Project load event emitted');
+        t.end();
+    });
+});
+
+test('Cloud variable limit allows only 10 cloud variables', t => {
+    // This is a test of just the cloud variable limit mechanism
+    // The functions being tested below need to be used when
+    // creating and deleting cloud variables in the runtime.
+
+    const rt = new Runtime();
+
+    t.equal(rt.hasCloudData(), false);
+
+    for (let i = 0; i < 10; i++) {
+        t.equal(rt.canAddCloudVariable(), true);
+        rt.addCloudVariable();
+        // Adding a cloud variable should change the
+        // result of the hasCloudData check
+        t.equal(rt.hasCloudData(), true);
+    }
+
+
+    // We should be at the cloud variable limit now
+    t.equal(rt.canAddCloudVariable(), false);
+
+    // Removing a cloud variable should allow the addition of exactly one more
+    // when we are at the cloud variable limit
+    rt.removeCloudVariable();
+
+    t.equal(rt.canAddCloudVariable(), true);
+    rt.addCloudVariable();
+    t.equal(rt.canAddCloudVariable(), false);
+
+    // Disposing of the runtime should reset the cloud variable limitations
+    rt.dispose();
+    t.equal(rt.hasCloudData(), false);
+
+    for (let i = 0; i < 10; i++) {
+        t.equal(rt.canAddCloudVariable(), true);
+        rt.addCloudVariable();
+        t.equal(rt.hasCloudData(), true);
+    }
+
+    // We should be at the cloud variable limit now
+    t.equal(rt.canAddCloudVariable(), false);
+
+    t.end();
+
+});
+
+test('Starting the runtime emits an event', t => {
+    let started = false;
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+    rt.start();
+    t.equal(started, true);
+    t.end();
+});
+
+test('Runtime cannot be started while already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it can be started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    // Starting again should not emit another event
+    rt.start();
+    t.equal(started, false);
+    t.end();
+});
+
+test('setCompatibilityMode restarts if it was already running', t => {
+    const rt = new Runtime();
+    rt.start(); // Start the first time
+
+    // Set up a flag/listener to check if it gets started again
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    rt.setCompatibilityMode(true);
+    t.equal(started, true);
+    t.end();
+});
+
+test('setCompatibilityMode does not restart if it was not running', t => {
+    const rt = new Runtime();
+
+    let started = false;
+    rt.addListener('RUNTIME_STARTED', () => {
+        started = true;
+    });
+
+    rt.setCompatibilityMode(true);
+    t.equal(started, false);
+    t.end();
+});
+
+test('Disposing the runtime emits an event', t => {
+    let disposed = false;
+    const rt = new Runtime();
+    rt.addListener('RUNTIME_DISPOSED', () => {
+        disposed = true;
+    });
+    rt.dispose();
+    t.equal(disposed, true);
     t.end();
 });

@@ -63,3 +63,67 @@ test('unusedName', t => {
     );
     t.end();
 });
+
+test('stringify', t => {
+    const obj = {
+        a: Infinity,
+        b: NaN,
+        c: -Infinity,
+        d: 23,
+        e: 'str',
+        f: {
+            nested: Infinity
+        }
+    };
+    const parsed = JSON.parse(StringUtil.stringify(obj));
+    t.equal(parsed.a, 0);
+    t.equal(parsed.b, 0);
+    t.equal(parsed.c, 0);
+    t.equal(parsed.d, 23);
+    t.equal(parsed.e, 'str');
+    t.equal(parsed.f.nested, 0);
+    t.end();
+});
+
+test('replaceUnsafeChars', t => {
+    const empty = '';
+    t.equal(StringUtil.replaceUnsafeChars(empty), empty);
+
+    const safe = 'hello';
+    t.equal(StringUtil.replaceUnsafeChars(safe), safe);
+
+    const unsafe = '< > & \' "';
+    t.equal(StringUtil.replaceUnsafeChars(unsafe), 'lt gt amp apos quot');
+
+    const single = '&';
+    t.equal(StringUtil.replaceUnsafeChars(single), 'amp');
+
+    const mix = '<a>b& c\'def_-"';
+    t.equal(StringUtil.replaceUnsafeChars(mix), 'ltagtbamp caposdef_-quot');
+
+    const dupes = '<<&_"_"_&>>';
+    t.equal(StringUtil.replaceUnsafeChars(dupes), 'ltltamp_quot_quot_ampgtgt');
+
+    const emoji = '(>^_^)>';
+    t.equal(StringUtil.replaceUnsafeChars(emoji), '(gt^_^)gt');
+
+    t.end();
+});
+
+test('replaceUnsafeChars should handle non strings', t => {
+    const array = ['hello', 'world'];
+    t.equal(StringUtil.replaceUnsafeChars(array), String(array));
+
+    const arrayWithSpecialChar = ['hello', '<world>'];
+    t.equal(StringUtil.replaceUnsafeChars(arrayWithSpecialChar), 'hello,ltworldgt');
+
+    const arrayWithNumbers = [1, 2, 3];
+    t.equal(StringUtil.replaceUnsafeChars(arrayWithNumbers), '1,2,3');
+
+    // Objects shouldn't get provided to replaceUnsafeChars, but in the event
+    // they do, it should just return the object (and log an error)
+    const object = {hello: 'world'};
+    t.equal(StringUtil.replaceUnsafeChars(object), object);
+
+    t.end();
+});

@@ -49,7 +49,8 @@ test('local', t => {
 
 test('remote', t => {
     const fixturesDir = path.resolve(__dirname, '../fixtures');
-    const worker = new Worker('./test/fixtures/dispatch-test-worker-shim.js', null, {cwd: fixturesDir});
+    const shimPath = path.resolve(fixturesDir, 'dispatch-test-worker-shim.js');
+    const worker = new Worker(shimPath, null, {cwd: fixturesDir});
     dispatch.addWorker(worker);
 
     const waitForWorker = new Promise(resolve => {

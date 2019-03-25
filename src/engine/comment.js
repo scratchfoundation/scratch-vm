@@ -4,7 +4,6 @@
  */
 
 const uid = require('../util/uid');
-const Cast = require('../util/cast');
 const xmlEscape = require('../util/xml-escape');
 
 class Comment {
@@ -23,8 +22,8 @@ class Comment {
         this.text = text;
         this.x = x;
         this.y = y;
-        this.width = Math.max(Cast.toNumber(width), Comment.MIN_WIDTH);
-        this.height = Math.max(Cast.toNumber(height), Comment.MIN_HEIGHT);
+        this.width = Math.max(Number(width), Comment.MIN_WIDTH);
+        this.height = Math.max(Number(height), Comment.MIN_HEIGHT);
         this.minimized = minimized || false;
         this.blockId = null;
     }
