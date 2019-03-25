@@ -81,6 +81,12 @@ const SHAKEN_THRESHOLD = 30;
 const FACING_THRESHOLD = 9;
 
 /**
+ * An offset for the facing threshold, used to check that we are no longer facing up.
+ * @type {number}
+ */
+const FACING_THRESHOLD_OFFSET = 5;
+
+/**
  * Threshold for acceleration magnitude, below which we are in freefall.
  * @type {number}
  */
@@ -783,11 +789,40 @@ class Scratch3GdxForBlocks {
         case GestureValues.STARTED_FALLING:
             return this.isFreeFalling();
         case GestureValues.TURNED_FACE_UP:
-            return this._peripheral.getAccelerationZ() > FACING_THRESHOLD;
+            return this._isFacing(GestureValues.TURNED_FACE_UP);
         case GestureValues.TURNED_FACE_DOWN:
-            return this._peripheral.getAccelerationZ() < FACING_THRESHOLD * -1;
+            return this._isFacing(GestureValues.TURNED_FACE_DOWN);
         default:
             log.warn(`unknown gesture value in whenGesture: ${args.GESTURE}`);
+            return false;
+        }
+    }
+
+    _isFacing (direction) {
+        if (typeof this._facingUp === 'undefined') {
+            this._facingUp = false;
+        }
+        if (typeof this._facingDown === 'undefined') {
+            this._facingDown = false;
+        }
+
+        // If the sensor is already facing up or down, reduce the threshold.
+        // This prevents small fluctations in acceleration while it is being
+        // turned from causing the hat block to trigger multiple times.
+        let threshold = FACING_THRESHOLD;
+        if (this._facingUp || this._facingDown) {
+            threshold -= FACING_THRESHOLD_OFFSET;
+        }
+
+        this._facingUp = this._peripheral.getAccelerationZ() > threshold;
+        this._facingDown = this._peripheral.getAccelerationZ() < threshold * -1;
+
+        switch (direction) {
+        case GestureValues.TURNED_FACE_UP:
+            return this._facingUp;
+        case GestureValues.TURNED_FACE_DOWN:
+            return this._facingDown;
+        default:
             return false;
         }
     }
