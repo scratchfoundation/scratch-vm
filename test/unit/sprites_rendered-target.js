@@ -1,4 +1,5 @@
 const test = require('tap').test;
+const Blocks = require('../../src/engine/blocks');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 const Sprite = require('../../src/sprites/sprite');
 const Runtime = require('../../src/engine/runtime');
@@ -25,6 +26,24 @@ test('setxy', t => {
     t.equals(a.x, 123);
     t.equals(a.y, 321);
     t.end();
+});
+
+test('blocks get new id on duplicate', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
+    const block = {
+        id: 'id1',
+        topLevel: true,
+        fields: {}
+    };
+
+    rt.blocks.createBlock(block);
+
+    return rt.duplicate().then(duplicate => {
+        t.notOk(duplicate.blocks._blocks.hasOwnProperty(block.id));
+        t.end();
+    });
 });
 
 test('direction', t => {
