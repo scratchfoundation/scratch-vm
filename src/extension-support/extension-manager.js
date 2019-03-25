@@ -18,10 +18,8 @@ const builtinExtensions = {
     videoSensing: () => require('../extensions/scratch3_video_sensing'),
     speech2text: () => require('../extensions/scratch3_speech2text'),
     ev3: () => require('../extensions/scratch3_ev3'),
-    makeymakey: () => require('../extensions/scratch3_makeymakey')
-    // todo: only load this extension once we have a compatible way to load its
-    // Vernier module dependency.
-    // gdxfor: () => require('../extensions/scratch3_gdx_for')
+    makeymakey: () => require('../extensions/scratch3_makeymakey'),
+    gdxfor: () => require('../extensions/scratch3_gdx_for')
 };
 
 /**
