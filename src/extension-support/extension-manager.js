@@ -149,9 +149,9 @@ class ExtensionManager {
 
             const extension = builtinExtensions[extensionURL]();
             const extensionInstance = new extension(this.runtime);
-            return Promise.resolve(this._registerInternalExtension(extensionInstance)).then(serviceName => {
-                this._loadedExtensions.set(extensionURL, serviceName);
-            });
+            const serviceName = this._registerInternalExtension(extensionInstance);
+            this._loadedExtensions.set(extensionURL, serviceName);
+            return Promise.resolve();
         }
 
         return new Promise((resolve, reject) => {
