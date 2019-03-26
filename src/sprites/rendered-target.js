@@ -164,8 +164,13 @@ class RenderedTarget extends Target {
 
         this.worldStage = false;
         this.stageEffects = ['color', 'ghost', 'brightness', 'pixelate', 'whirl', 'fisheye'];
-        if (window.localStorage && localStorage.getItem && localStorage.getItem('worldStage') === 'true') {
-            this.worldStage = true;
+        try {
+            if (window.localStorage && localStorage.getItem && localStorage.getItem('worldStage') === 'true') {
+                this.worldStage = true;
+                document.addEventListener('click', this.stopIfEffectsActive.bind(this));
+            }
+        } catch (e) {
+            // Local Storage is unavailable
         }
     }
 
@@ -1322,6 +1327,20 @@ class RenderedTarget extends Target {
 
         document.body.style.filter = styles.filters.join(' ');
         document.body.style.opacity = styles.opacity;
+    }
+
+    stopIfEffectsActive () {
+        if (!this.worldStage) return;
+        if (
+            this.effects.fisheye === 0 &&
+            this.effects.whirl === 0 &&
+            this.effects.pixelate === 0 &&
+            this.effects.brightness === 0 &&
+            this.effects.ghost === 0
+        ) {
+            return;
+        }
+        this.runtime.stopAll();
     }
 }
 
