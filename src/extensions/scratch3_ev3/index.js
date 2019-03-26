@@ -490,7 +490,7 @@ class EV3 {
         this._runtime.registerPeripheralExtension(extensionId, this);
 
         /**
-         * A rate limiter utility, to help limit the rate at which we send BLE messages
+         * A rate limiter utility, to help limit the rate at which we send BT messages
          * over the socket to Scratch Link to a maximum number of sends per second.
          * @type {RateLimiter}
          * @private
