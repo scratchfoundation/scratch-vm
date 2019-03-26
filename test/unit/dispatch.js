@@ -75,11 +75,8 @@ test('local, sync', t => {
     const c = dispatch.callSync('SyncDispatchTest', 'doubleArgument', 123);
     t.equal(c, 246);
 
-    try {
-        dispatch.callSync('SyncDispatchTest', 'throwException');
-    } catch (e) {
-        t.equal(e.message, 'This is a test exception thrown by DispatchTest');
-    }
+    t.throws(() => dispatch.callSync('SyncDispatchTest', 'throwException'),
+        new Error('This is a test exception thrown by DispatchTest'));
 
     t.end();
 });

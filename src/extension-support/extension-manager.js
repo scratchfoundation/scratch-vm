@@ -11,7 +11,7 @@ const BlockType = require('./block-type');
 const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
-    coreExample: require('../blocks/scratch3_core_example'),
+    coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
@@ -118,19 +118,22 @@ class ExtensionManager {
      * @param {string} extensionId - the ID of an internal extension
      */
     loadExtensionIdSync (extensionId) {
-        if (builtinExtensions.hasOwnProperty(extensionId)) {
-            /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-            if (this.isExtensionLoaded(extensionId)) {
-                const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
-                log.warn(message);
-                return;
-            }
-
-            const extension = builtinExtensions[extensionId];
-            const extensionInstance = new extension(this.runtime);
-            const serviceName = this._registerInternalExtension(extensionInstance);
-            this._loadedExtensions.set(extensionId, serviceName);
+        if (!builtinExtensions.hasOwnProperty(extensionId)) {
+            log.warn(`Could not find extension ${extensionId} in the built in extensions.`);
+            return;
         }
+
+        /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
+        if (this.isExtensionLoaded(extensionId)) {
+            const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
+            log.warn(message);
+            return;
+        }
+
+        const extension = builtinExtensions[extensionId]();
+        const extensionInstance = new extension(this.runtime);
+        const serviceName = this._registerInternalExtension(extensionInstance);
+        this._loadedExtensions.set(extensionId, serviceName);
     }
 
     /**
