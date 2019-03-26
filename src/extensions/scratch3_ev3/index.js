@@ -370,7 +370,7 @@ class EV3Motor {
             ]
         );
 
-        this._parent.send(cmd, false);
+        this._parent.send(cmd, false); // don't use rate limiter to ensure motor stops
     }
 
     /**
@@ -562,7 +562,7 @@ class EV3 {
             ]
         );
 
-        this.send(cmd, false);
+        this.send(cmd, false); // don't use rate limiter to ensure sound stops
     }
 
     stopAllMotors () {
