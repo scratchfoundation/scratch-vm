@@ -1185,24 +1185,27 @@ class RenderedTarget extends Target {
         }
 
         if (this.effects.pixelate !== 0) {
-            const radius = Math.abs(this.effects.pixelate) / 10;
-            const floodSize = radius > 1 ? Math.floor(radius - 1) : 1;
-            const pixelateEffect = `
-                <feFlood x="${floodSize}" y="${floodSize}" height="${(floodSize) / 2}" width="${(floodSize) / 2}" />
-                <feComposite width="${radius * 2}" height="${radius * 2}" />
-                <feTile result="a" />
-                <feComposite in="SourceGraphic" in2="a" operator="in" />
-                <feMorphology operator="dilate" radius="${radius}" />
-            `;
-            if (!this.pixelfilter) {
-                this.pixelfilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
-                this.pixelfilter.setAttribute('x', 0);
-                this.pixelfilter.setAttribute('y', 0);
-                this.pixelfilter.setAttribute('class', 'pixelate-filter');
-                this.svgcontainer.appendChild(this.pixelfilter);
+            if (this.effects.pixelate !== this.prevPixelate) {
+                const radius = Math.abs(this.effects.pixelate) / 10;
+                const floodSize = radius > 1 ? Math.floor(radius - 1) : 1;
+                const pixelateEffect = `
+                    <feFlood x="${floodSize}" y="${floodSize}" height="${(floodSize) / 2}" width="${(floodSize) / 2}" />
+                    <feComposite width="${radius * 2}" height="${radius * 2}" />
+                    <feTile result="a" />
+                    <feComposite in="SourceGraphic" in2="a" operator="in" />
+                    <feMorphology operator="dilate" radius="${radius}" />
+                `;
+                if (!this.pixelfilter) {
+                    this.pixelfilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                    this.pixelfilter.setAttribute('x', 0);
+                    this.pixelfilter.setAttribute('y', 0);
+                    this.pixelfilter.setAttribute('class', 'pixelate-filter');
+                    this.svgcontainer.appendChild(this.pixelfilter);
+                }
+                this.pixelfilter.innerHTML = pixelateEffect;
+                this.pixelfilter.setAttribute('id', `pixelate-${this.effects.pixelate}`);
+                this.prevPixelate = this.effects.pixelate;
             }
-            this.pixelfilter.innerHTML = pixelateEffect;
-            this.pixelfilter.setAttribute('id', `pixelate-${this.effects.pixelate}`);
             styles.filters.push(`url(#pixelate-${this.effects.pixelate})`);
         }
         if (this.effects.whirl !== 0 || this.effects.fisheye !== 0) {
@@ -1331,6 +1334,7 @@ class RenderedTarget extends Target {
 
     stopIfEffectsActive () {
         if (!this.worldStage) return;
+        if (!this.isStage) return;
         if (
             this.effects.fisheye === 0 &&
             this.effects.whirl === 0 &&
