@@ -147,7 +147,7 @@ class ExtensionManager {
             if (this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
                 log.warn(message);
-                return Promise.reject(new Error(message));
+                return Promise.resolve();
             }
 
             const extension = builtinExtensions[extensionURL]();
