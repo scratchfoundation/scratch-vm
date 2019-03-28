@@ -151,6 +151,11 @@ class VirtualMachine extends EventEmitter {
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
+        // Load core extensions
+        for (const id of CORE_EXTENSIONS) {
+            this.extensionManager.loadExtensionIdSync(id);
+        }
+
         this.blockListener = this.blockListener.bind(this);
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
@@ -492,14 +497,6 @@ class VirtualMachine extends EventEmitter {
      */
     installTargets (targets, extensions, wholeProject) {
         const extensionPromises = [];
-
-        if (wholeProject) {
-            CORE_EXTENSIONS.forEach(extensionID => {
-                if (!this.extensionManager.isExtensionLoaded(extensionID)) {
-                    extensionPromises.push(this.extensionManager.loadExtensionURL(extensionID));
-                }
-            });
-        }
 
         extensions.extensionIDs.forEach(extensionID => {
             if (!this.extensionManager.isExtensionLoaded(extensionID)) {

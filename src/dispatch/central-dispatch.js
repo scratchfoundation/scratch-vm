@@ -36,6 +36,39 @@ class CentralDispatch extends SharedDispatch {
     }
 
     /**
+     * Synchronously call a particular method on a particular service provided locally.
+     * Calling this function on a remote service will fail.
+     * @param {string} service - the name of the service.
+     * @param {string} method - the name of the method.
+     * @param {*} [args] - the arguments to be copied to the method, if any.
+     * @returns {*} - the return value of the service method.
+     */
+    callSync (service, method, ...args) {
+        const {provider, isRemote} = this._getServiceProvider(service);
+        if (provider) {
+            if (isRemote) {
+                throw new Error(`Cannot use 'callSync' on remote provider for service ${service}.`);
+            }
+
+            return provider[method].apply(provider, args);
+        }
+        throw new Error(`Provider not found for service: ${service}`);
+    }
+
+    /**
+     * Synchronously set a local object as the global provider of the specified service.
+     * WARNING: Any method on the provider can be called from any worker within the dispatch system.
+     * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
+     * @param {object} provider - a local object which provides this service.
+     */
+    setServiceSync (service, provider) {
+        if (this.services.hasOwnProperty(service)) {
+            log.warn(`Central dispatch replacing existing service provider for ${service}`);
+        }
+        this.services[service] = provider;
+    }
+
+    /**
      * Set a local object as the global provider of the specified service.
      * WARNING: Any method on the provider can be called from any worker within the dispatch system.
      * @param {string} service - a globally unique string identifying this service. Examples: 'vm', 'gui', 'extension9'.
@@ -45,10 +78,7 @@ class CentralDispatch extends SharedDispatch {
     setService (service, provider) {
         /** Return a promise for consistency with {@link WorkerDispatch#setService} */
         try {
-            if (this.services.hasOwnProperty(service)) {
-                log.warn(`Central dispatch replacing existing service provider for ${service}`);
-            }
-            this.services[service] = provider;
+            this.setServiceSync(service, provider);
             return Promise.resolve();
         } catch (e) {
             return Promise.reject(e);
