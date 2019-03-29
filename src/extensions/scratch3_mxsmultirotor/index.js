@@ -65,7 +65,7 @@ const CMD_Type = {
     CMD_INTERACTIVE: 0xA3,
     CMD_CTROL: 0xA4,
     CMD_MATH: 0xA5,
-    CMD_EXECUTION:0xFC
+    CMD_EXECUTION: 0xFC
 };
 
 /**
@@ -756,9 +756,9 @@ class Scratch3MutiRotorBlocks {
         command[2] = CMD_Type.CMD_EXECUTION;
         command[3] = 0x46; //指令序号  (暂时保留)
 
-        command[4] = 0x43; //高八位
+        command[4] = CmdSequence >>8 & 0xFF; //高八位
 
-        command[5] = 0x4D; //低八位
+        command[5] = CmdSequence     & 0xFF; //低八位
 
         var len = byteCommands.length;
         command[6] = len; // 消息长度，不包括前7字节
@@ -810,10 +810,10 @@ class Scratch3MutiRotorBlocks {
         byteCommands[3] = SECONDS >> 0 * 8 & 0xFF; // byteCommands[2] = 3;
 
         var cmd = this.generateCommand(
-            HEAD_CMD.HEAD_MULTIROTOR, 
-            CMD_DIRECTION.SEND, 
-            CMD_Type.CMD_MOTION, 
-            CMD_METHOD.MOVE_TYPE_HOVERING, 
+            HEAD_CMD.HEAD_MULTIROTOR,
+            CMD_DIRECTION.SEND,
+            CMD_Type.CMD_MOTION,
+            CMD_METHOD.MOVE_TYPE_HOVERING,
 
             byteCommands
         ); //console.log(cmd.toString('hex'));
@@ -868,8 +868,12 @@ class Scratch3MutiRotorBlocks {
             HIGHT = parseFloat(args.HEIGHT);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_TAKEOFF;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = HIGHT;
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = HIGHT >> 8 & 0xFF; //高八位  
+        byteCommands[4] = HIGHT & 0xFF; //低八位
+
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -898,8 +902,9 @@ class Scratch3MutiRotorBlocks {
         }
 
         byteCommands[0] = FLY_DIRECTION.DIRECTION_LAND;
-        byteCommands[1] = SPEED;
-        // byteCommands[2] = 3;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
 
 
         const cmd = this.generateCommand(
@@ -936,8 +941,12 @@ class Scratch3MutiRotorBlocks {
             HIGHT = parseFloat(args.HEIGHT);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_UP;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = HIGHT;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = HIGHT >> 8 & 0xFF; //高八位  
+        byteCommands[4] = HIGHT & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -973,8 +982,12 @@ class Scratch3MutiRotorBlocks {
             HIGHT = parseFloat(args.HEIGHT);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_DOWN;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = HIGHT;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = HIGHT >> 8 & 0xFF; //高八位  
+        byteCommands[4] = HIGHT & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1007,11 +1020,15 @@ class Scratch3MutiRotorBlocks {
         } else if (LENGTH >= 100) {
             LENGTH = 100; //厘米为单位
         } else {
-            LENGTH = parseFloat(args.LENGTH);
+            LENGTH = parseFloat(args.LEN);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_FORWARD;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = LENGTH >> 8 & 0xFF; //高八位  
+        byteCommands[4] = LENGTH ; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1044,11 +1061,15 @@ class Scratch3MutiRotorBlocks {
         } else if (LENGTH >= 100) {
             LENGTH = 100; //厘米为单位
         } else {
-            LENGTH = parseFloat(args.LENGTH);
+            LENGTH = parseFloat(args.LEN);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_BACKWARD;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = LENGTH >> 8 & 0xFF; //高八位
+        byteCommands[4] = LENGTH & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1084,8 +1105,12 @@ class Scratch3MutiRotorBlocks {
             LENGTH = parseFloat(args.LEN);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_LEFT;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = LENGTH >> 8 & 0xFF; //高八位  
+        byteCommands[4] = LENGTH & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1121,8 +1146,12 @@ class Scratch3MutiRotorBlocks {
             LENGTH = parseFloat(args.LEN);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_RIGHT;
-        byteCommands[1] = SPEED;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = SPEED >> 8 & 0xFF; //高八位
+        byteCommands[2] = SPEED & 0xFF; //低八位
+
+        byteCommands[3] = LENGTH >> 8 & 0xFF; //高八位  
+        byteCommands[4] = LENGTH & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1140,7 +1169,7 @@ class Scratch3MutiRotorBlocks {
     yawCw(args) {
         const byteCommands = []; // a compound command
         var DEGRPS = parseFloat(args.DEGRPS);
-        var LENGTH = parseFloat(args.ANGLE);
+        var ANGLE = parseFloat(args.ANGLE);
 
         if (DEGRPS <= 0) {
             DEGRPS = 0;
@@ -1150,16 +1179,20 @@ class Scratch3MutiRotorBlocks {
             DEGRPS = parseFloat(args.DEGRPS);
         }
 
-        if (LENGTH <= 0) {
-            LENGTH = 0;
-        } else if (LENGTH >= 180) {
-            LENGTH = 180; //分米为单位
+        if (ANGLE <= 0) {
+            ANGLE = 0;
+        } else if (ANGLE >= 180) {
+            ANGLE = 180; //分米为单位
         } else {
-            LENGTH = parseFloat(args.ANGLE);
+            ANGLE = parseFloat(args.ANGLE);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_CLOCKWISE;
-        byteCommands[1] = DEGRPS;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = DEGRPS >> 8 & 0xFF; //高八位
+        byteCommands[2] = DEGRPS & 0xFF; //低八位
+
+        byteCommands[3] = ANGLE >> 8 & 0xFF; //高八位
+        byteCommands[4] = ANGLE & 0xFF; //低八位
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
@@ -1177,7 +1210,7 @@ class Scratch3MutiRotorBlocks {
     yawCcw(args) {
         const byteCommands = []; // a compound command
         var DEGRPS = parseFloat(args.DEGRPS);
-        var LENGTH = parseFloat(args.ANGLE);
+        var ANGLE = parseFloat(args.ANGLE);
 
         if (DEGRPS <= 0) {
             DEGRPS = 0;
@@ -1187,16 +1220,20 @@ class Scratch3MutiRotorBlocks {
             DEGRPS = parseFloat(args.DEGRPS);
         }
 
-        if (LENGTH <= 0) {
-            LENGTH = 0;
-        } else if (LENGTH >= 180) {
-            LENGTH = 180; //分米为单位
+        if (ANGLE <= 0) {
+            ANGLE = 0;
+        } else if (ANGLE >= 180) {
+            ANGLE = 180; //分米为单位
         } else {
-            LENGTH = parseFloat(args.ANGLE);
+            ANGLE = parseFloat(args.ANGLE);
         }
         byteCommands[0] = FLY_DIRECTION.DIRECTION_COUNTER_CLOCKWISE;
-        byteCommands[1] = DEGRPS;
-        byteCommands[2] = LENGTH;
+
+        byteCommands[1] = DEGRPS >> 8 & 0xFF; //高八位
+        byteCommands[2] = DEGRPS & 0xFF; //低八位
+  
+        byteCommands[3] = ANGLE >> 8 & 0xFF;
+        byteCommands[4] = ANGLE & 0xFF;
 
         const cmd = this.generateCommand(
             HEAD_CMD.HEAD_MULTIROTOR,
