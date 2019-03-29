@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 const BlockType = require('../../extension-support/block-type');
 const ArgumentType = require('../../extension-support/argument-type');
 const log = require('../../util/log');
