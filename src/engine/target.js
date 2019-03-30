@@ -132,6 +132,23 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Look up a variable object by name.
+     * Create a new variable with a generated ID if lookup fails.
+     * @param {string} name Name of the variable.
+     * @param {string} [type] Optional type of the variable (default: scalar).
+     * @return {!Variable} Variable object.
+     */
+    lookupOrCreateVariableByNameAndType (name, type = Variable.SCALAR_TYPE) {
+        let variable = this.lookupVariableByNameAndType(name, type);
+        if (!variable) {
+            // No variable with this name exists - create it locally.
+            variable = new Variable(uid(), name, Variable.SCALAR_TYPE, false);
+            this.variables[variable.id] = variable;
+        }
+        return variable;
+    }
+
+    /**
      * Look up a broadcast message object with the given id and return it
      * if it exists.
      * @param {string} id Id of the variable.
