@@ -441,7 +441,7 @@ class RenderedTarget extends Target {
             this.isStage &&
             this.worldStage
         ) {
-            document.body.style = null;
+            document.documentElement.style = null;
         }
         if (this.renderer) {
             for (const effectName in this.effects) {
@@ -1157,13 +1157,13 @@ class RenderedTarget extends Target {
             styles.filters.push(`brightness(${1 + (this.effects.brightness / 100)})`);
         }
 
-        document.body.style.filter = styles.filters.join(' ');
+        document.documentElement.style.filter = styles.filters.join(' ');
         if (typeof styles.opacity !== 'undefined') {
-            document.body.style.opacity = styles.opacity;
-            document.body.style.backgroundImage = 'url(https://assets.scratch.mit.edu/62ed6f412aae07a575faa51451009168.svg)';
-            document.body.style.backgroundPosition = 'center';
-            document.body.style.backgroundRepeat = 'no-repeat';
-            document.body.style.backgroundSize = '300px';
+            document.documentElement.style.opacity = styles.opacity;
+            document.documentElement.style.backgroundImage = 'url(https://assets.scratch.mit.edu/62ed6f412aae07a575faa51451009168.svg)';
+            document.documentElement.style.backgroundPosition = 'center';
+            document.documentElement.style.backgroundRepeat = 'no-repeat';
+            document.documentElement.style.backgroundSize = '300px';
         }
     }
 
