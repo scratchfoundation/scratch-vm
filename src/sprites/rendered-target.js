@@ -1160,10 +1160,6 @@ class RenderedTarget extends Target {
         document.documentElement.style.filter = styles.filters.join(' ');
         if (typeof styles.opacity !== 'undefined') {
             document.documentElement.style.opacity = styles.opacity;
-            document.documentElement.style.backgroundImage = 'url(https://assets.scratch.mit.edu/62ed6f412aae07a575faa51451009168.svg)';
-            document.documentElement.style.backgroundPosition = 'center';
-            document.documentElement.style.backgroundRepeat = 'no-repeat';
-            document.documentElement.style.backgroundSize = '300px';
         }
     }
 
