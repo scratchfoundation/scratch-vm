@@ -25,7 +25,6 @@ const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAMAAAC5z
  * Boost BLE UUIDs.
  * @enum {string}
  */
-
 const BoostBLE = {
     service: '00001623-1212-efde-1623-785feabcd123',
     characteristic: '00001624-1212-efde-1623-785feabcd123',
@@ -37,7 +36,6 @@ const BoostBLE = {
  * Boost Motor Max Power.
  * @constant {number}
  */
-
 const BoostMotorMaxPower = 100;
 
 /**
@@ -50,7 +48,6 @@ const BoostPingInterval = 5000;
  * The number of continuous samples the color-sensor will evaluate color from.
  * @type {number}
  */
-
 const BoostColorSampleSize = 5;
 
 /**
@@ -596,6 +593,11 @@ class Boost {
             color: BoostColor.NONE
         };
 
+        /**
+         * An array of values from the Boost Vision Sensor.
+         * @type {Array}
+         * @private
+         */
         this._colorBucket = [];
 
         /**
@@ -820,7 +822,7 @@ class Boost {
     generateOutputCommand (portID, execution, subCommand, payload) {
         const hubID = 0x00;
         const command = [hubID, BoostMessage.OUTPUT, portID, execution, subCommand, ...payload];
-        command.unshift(command.length + 1);
+        command.unshift(command.length + 1); // Prepend payload with length byte;
 
         return command;
     }
@@ -848,14 +850,13 @@ class Boost {
         ].concat(numberToInt32Array(delta)).concat([
             enableNotifications
         ]);
+        command.unshift(command.length + 1); // Prepend payload with length byte;
 
-        command.unshift(command.length + 1);
-
-        return command; // Prepend payload with length byte;
+        return command;
     }
 
     /**
-     * Sets LED mode and initial color and starts reading data from peripheral after BLE has connected.
+     * Starts reading data from peripheral after BLE has connected.
      * @private
      */
     _onConnect () {
@@ -880,6 +881,7 @@ class Boost {
          * 0: Length of message
          * 1: Hub ID (always 0x00 at the moment)
          * 2: Message Type
+         * 3: Port ID
          * We base our switch-case on Message Type
          */
 
@@ -887,12 +889,6 @@ class Boost {
         const portID = data[3];
 
         switch (messageType) {
-            
-        /*
-         * 4: Event
-         * 5: IO Type ID
-        */
-
         case BoostMessage.HUB_ATTACHED_IO: { // IO Attach/Detach events
             const event = data[4];
             const typeId = data[5];
@@ -965,8 +961,8 @@ class Boost {
      * Ping the Boost hub. If the Boost hub has disconnected
      * for some reason, the BLE socket will get an error back and automatically
      * close the socket.
+     * @private
      */
-
     _pingDevice () {
         this._ble.read(
             BoostBLE.service,
@@ -987,14 +983,12 @@ class Boost {
         // Record which port is connected to what type of device
         this._ports[portID] = type;
 
-
         // Record motor port
         if (type === BoostIO.MOTORINT || type === BoostIO.MOTOREXT) {
             this._motors[portID] = new BoostMotor(this, portID);
         }
 
         // Set input format for tilt or distance sensor
-
         let mode = null;
         let delta = 1;
 
@@ -1009,6 +1003,10 @@ class Boost {
             break;
         case BoostIO.LED:
             mode = BoostMode.LED;
+            /**
+             * Sets the LED to blue to give an indication on the hub
+             * that it has connected successfully.
+             */
             this.setLEDMode();
             this.setLED(0x0000FF);
             break;
@@ -1023,7 +1021,7 @@ class Boost {
             portID,
             mode,
             delta,
-            true
+            true // Receive feedback
         );
 
         this.send(BoostBLE.characteristic, cmd);
@@ -1636,6 +1634,10 @@ class Scratch3BoostBlocks {
             motors.push(motorIndex);
         });
 
+        /**
+         * Checks that the motors given in args.MOTOR_ID exist,
+         * and maps a promise for each of the motor-commands to an array.
+         */
         const promises = motors.map(portID => {
             const motor = this._peripheral.motor(portID);
             if (motor) {
@@ -1646,7 +1648,10 @@ class Scratch3BoostBlocks {
             }
             return null;
         });
-        // To prevent the block from returning a value, an empty function is added to the .then
+        /**
+         * Make sure all promises are resolved, i.e. all motor-commands have completed.
+         * To prevent the block from returning a value, an empty function is added to the .then
+         */
         return Promise.all(promises).then(() => {});
     }
 
