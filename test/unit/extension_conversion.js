@@ -13,6 +13,11 @@ const testExtensionInfo = {
     name: 'fake test extension',
     blocks: [
         {
+            func: 'CREATE_VARIABLE',
+            blockType: BlockType.BUTTON,
+            text: 'this is a button'
+        },
+        {
             opcode: 'reporter',
             blockType: BlockType.REPORTER,
             text: 'simple text'
@@ -58,6 +63,11 @@ const testExtensionInfo = {
     ]
 };
 
+const testButton = function (t, button) {
+    t.same(button.json, null); // should be null or undefined
+    t.equal(button.xml, '<button text="this is a button" callbackKey="CREATE_VARIABLE"></button>');
+};
+
 const testReporter = function (t, reporter) {
     t.equal(reporter.json.type, 'test_reporter');
     t.equal(reporter.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_ROUND);
@@ -72,7 +82,7 @@ const testReporter = function (t, reporter) {
 };
 
 const testSeparator = function (t, separator) {
-    t.equal(separator.json, null);
+    t.same(separator.json, null); // should be null or undefined
     t.equal(separator.xml, '<sep gap="36"/>');
 };
 
@@ -154,8 +164,9 @@ test('registerExtensionPrimitives', t => {
         t.equal(blocksInfo.length, testExtensionInfo.blocks.length);
 
         // Note that this also implicitly tests that block order is preserved
-        const [reporter, separator, command, conditional, loop] = blocksInfo;
+        const [button, reporter, separator, command, conditional, loop] = blocksInfo;
 
+        testButton(t, button);
         testReporter(t, reporter);
         testSeparator(t, separator);
         testCommand(t, command);
