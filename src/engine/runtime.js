@@ -983,7 +983,7 @@ class Runtime extends EventEmitter {
      */
     _convertForScratchBlocks (blockInfo, categoryInfo) {
         if (blockInfo === '---') {
-            return this._convertSeparatorForScratchBlocks();
+            return this._convertSeparatorForScratchBlocks(blockInfo);
         }
 
         if (blockInfo.blockType === BlockType.BUTTON) {
