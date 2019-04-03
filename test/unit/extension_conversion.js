@@ -163,6 +163,11 @@ test('registerExtensionPrimitives', t => {
     runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
         t.equal(blocksInfo.length, testExtensionInfo.blocks.length);
 
+        blocksInfo.forEach(blockInfo => {
+            // `true` here means "either an object or a non-empty string but definitely not null or undefined"
+            t.true(blockInfo.info, 'Every block and pseudo-block must have a non-empty "info" field');
+        });
+
         // Note that this also implicitly tests that block order is preserved
         const [button, reporter, separator, command, conditional, loop] = blocksInfo;
 
