@@ -83,13 +83,18 @@ test('load sync', t => {
     t.ok(vm.extensionManager.isExtensionLoaded('coreExample'));
 
     t.equal(vm.runtime._blockInfo.length, 1);
-    t.equal(vm.runtime._blockInfo[0].blocks.length, 1);
+
+    // blocks should be an array of two items: a button pseudo-block and a reporter block.
+    t.equal(vm.runtime._blockInfo[0].blocks.length, 2);
     t.type(vm.runtime._blockInfo[0].blocks[0].info, 'object');
-    t.equal(vm.runtime._blockInfo[0].blocks[0].info.opcode, 'exampleOpcode');
-    t.equal(vm.runtime._blockInfo[0].blocks[0].info.blockType, 'reporter');
+    t.type(vm.runtime._blockInfo[0].blocks[0].info.func, 'MAKE_A_VARIABLE');
+    t.equal(vm.runtime._blockInfo[0].blocks[0].info.blockType, 'button');
+    t.type(vm.runtime._blockInfo[0].blocks[1].info, 'object');
+    t.equal(vm.runtime._blockInfo[0].blocks[1].info.opcode, 'exampleOpcode');
+    t.equal(vm.runtime._blockInfo[0].blocks[1].info.blockType, 'reporter');
 
     // Test the opcode function
-    t.equal(vm.runtime._blockInfo[0].blocks[0].info.func(), 'no stage yet');
+    t.equal(vm.runtime._blockInfo[0].blocks[1].info.func(), 'no stage yet');
 
     const sprite = new Sprite(null, vm.runtime);
     sprite.name = 'Stage';
@@ -97,7 +102,7 @@ test('load sync', t => {
     stage.isStage = true;
     vm.runtime.targets = [stage];
 
-    t.equal(vm.runtime._blockInfo[0].blocks[0].info.func(), 'Stage');
+    t.equal(vm.runtime._blockInfo[0].blocks[1].info.func(), 'Stage');
 
     t.end();
 });

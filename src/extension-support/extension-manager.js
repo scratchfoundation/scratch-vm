@@ -375,16 +375,28 @@ class ExtensionManager {
             blockAllThreads: false,
             arguments: {}
         }, blockInfo);
-        blockInfo.opcode = this._sanitizeID(blockInfo.opcode);
+        blockInfo.opcode = blockInfo.opcode && this._sanitizeID(blockInfo.opcode);
         blockInfo.text = blockInfo.text || blockInfo.opcode;
 
-        if (blockInfo.blockType !== BlockType.EVENT) {
+        switch (blockInfo.blockType) {
+        case BlockType.EVENT:
+            if (blockInfo.func) {
+                log.warn(`Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`);
+            }
+            break;
+        case BlockType.BUTTON:
+            if (blockInfo.opcode) {
+                log.warn(`Ignoring opcode "${blockInfo.opcode}" for button with text: ${blockInfo.text}`);
+            }
+            break;
+        default:
+            if (!blockInfo.opcode) {
+                throw new Error('Missing opcode for block');
+            }
+
             blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
 
-            /**
-             * This is only here because the VM performs poorly when blocks return promises.
-             * @TODO make it possible for the VM to resolve a promise and continue during the same Scratch "tick"
-             */
+            // Avoid promise overhead if possible
             if (dispatch._isRemoteService(serviceName)) {
                 blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
             } else {
@@ -392,12 +404,11 @@ class ExtensionManager {
                 const func = serviceObject[blockInfo.func];
                 if (func) {
                     blockInfo.func = func.bind(serviceObject);
-                } else if (blockInfo.blockType !== BlockType.EVENT) {
+                } else {
                     throw new Error(`Could not find extension block function called ${blockInfo.func}`);
                 }
             }
-        } else if (blockInfo.func) {
-            log.warn(`Ignoring function "${blockInfo.func}" for event block ${blockInfo.opcode}`);
+            break;
         }
 
         return blockInfo;
