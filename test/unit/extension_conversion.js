@@ -13,7 +13,7 @@ const testExtensionInfo = {
     name: 'fake test extension',
     blocks: [
         {
-            func: 'CREATE_VARIABLE',
+            func: 'MAKE_A_VARIABLE',
             blockType: BlockType.BUTTON,
             text: 'this is a button'
         },
@@ -65,7 +65,7 @@ const testExtensionInfo = {
 
 const testButton = function (t, button) {
     t.same(button.json, null); // should be null or undefined
-    t.equal(button.xml, '<button text="this is a button" callbackKey="CREATE_VARIABLE"></button>');
+    t.equal(button.xml, '<button text="this is a button" callbackKey="MAKE_A_VARIABLE"></button>');
 };
 
 const testReporter = function (t, reporter) {
