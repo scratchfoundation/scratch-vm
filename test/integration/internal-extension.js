@@ -83,6 +83,8 @@ test('load sync', t => {
     t.ok(vm.extensionManager.isExtensionLoaded('coreExample'));
 
     t.equal(vm.runtime._blockInfo.length, 1);
+
+    // blocks should be an array of two items: a button pseudo-block and a reporter block.
     t.equal(vm.runtime._blockInfo[0].blocks.length, 2);
     t.type(vm.runtime._blockInfo[0].blocks[0].info, 'object');
     t.type(vm.runtime._blockInfo[0].blocks[0].info.func, 'MAKE_A_VARIABLE');
