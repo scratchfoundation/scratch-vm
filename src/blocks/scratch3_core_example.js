@@ -23,6 +23,11 @@ class Scratch3CoreExample {
             name: 'CoreEx', // This string does not need to be translated as this extension is only used as an example.
             blocks: [
                 {
+                    func: 'MAKE_A_VARIABLE',
+                    blockType: BlockType.BUTTON,
+                    text: 'make a variable (CoreEx)'
+                },
+                {
                     opcode: 'exampleOpcode',
                     blockType: BlockType.REPORTER,
                     text: 'example block'
