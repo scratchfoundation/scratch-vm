@@ -390,6 +390,10 @@ class ExtensionManager {
             }
             break;
         default:
+            if (!blockInfo.opcode) {
+                throw new Error('Missing opcode for block');
+            }
+
             blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
 
             // Avoid promise overhead if possible
