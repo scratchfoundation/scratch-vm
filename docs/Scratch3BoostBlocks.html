@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>Scratch3Text2SpeechBlocks - Documentation</title>
+    <title>Scratch3BoostBlocks - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -31,7 +31,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">Scratch3Text2SpeechBlocks</h1>
+    <h1 class="page-title">Scratch3BoostBlocks</h1>
     
 
     
@@ -44,10 +44,10 @@
 <header>
     
         <h2>
-        Scratch3Text2SpeechBlocks
+        Scratch3BoostBlocks
         </h2>
         
-            <div class="class-description"><p>Class for the text2speech blocks.</p></div>
+            <div class="class-description"><p>Scratch 3.0 blocks to interact with a LEGO Boost peripheral.</p></div>
         
     
 </header>
@@ -62,7 +62,7 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="Scratch3Text2SpeechBlocks"><span class="type-signature"></span>new Scratch3Text2SpeechBlocks<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Scratch3BoostBlocks"><span class="type-signature"></span>new Scratch3BoostBlocks<span class="signature">(runtime)</span><span class="type-signature"></span></h4>
 
     
 
@@ -108,6 +108,9 @@
 
 
 
+<div class="description">
+    <p>Construct a set of Boost blocks.</p>
+</div>
 
 
 
@@ -116,6 +119,56 @@
 
 
 
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>runtime</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Runtime.html">Runtime</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the Scratch 3.0 runtime.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -151,7 +204,7 @@
 
         
             
-<h4 class="name" id=".DEFAULT_TEXT2SPEECH_STATE"><span class="type-signature">(static) </span>DEFAULT_TEXT2SPEECH_STATE<span class="type-signature"> :Text2SpeechState</span></h4>
+<h4 class="name" id=".EXTENSION_ID"><span class="type-signature">(static) </span>EXTENSION_ID<span class="type-signature"></span></h4>
 
 
 
@@ -195,78 +248,6 @@
 
 
 
-
-<div class="description">
-    <p>The default state, to be used when a target has no existing state.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Text2SpeechState</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id=".STATE_KEY"><span class="type-signature">(static) </span>STATE_KEY<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>The key to load &amp; store a target's text2speech state.</p>
-</div>
 
 
 
@@ -277,7 +258,7 @@
 
         
             
-<h4 class="name" id="_soundPlayers"><span class="type-signature"></span>_soundPlayers<span class="type-signature"> :Map.&lt;string, SoundPlayer></span></h4>
+<h4 class="name" id=".TILT_THRESHOLD"><span class="type-signature">(static) </span>TILT_THRESHOLD<span class="type-signature"></span></h4>
 
 
 
@@ -321,229 +302,6 @@
 
 
 
-
-<div class="description">
-    <p>Map of soundPlayers by sound id.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Map.&lt;string, SoundPlayer></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_supportedLocales"><span class="type-signature"></span>_supportedLocales<span class="type-signature"> :Array</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>A list of all Scratch locales that are supported by the extension.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Array</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="DEFAULT_LANGUAGE"><span class="type-signature"></span>DEFAULT_LANGUAGE<span class="type-signature"> :string</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>A default language to use for speech synthesis.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">string</span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="LANGUAGE_INFO"><span class="type-signature"></span>LANGUAGE_INFO<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>An object with information for each language.</p>
-<p>A note on the different sets of locales referred to in this extension:</p>
-<p>SCRATCH LOCALE
-     Set by the editor, and used to store the language state in the project.
-     Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
-SUPPORTED LOCALE
-     A Scratch locale that has a corresponding extension locale.
-EXTENSION LOCALE
-     A locale corresponding to one of the available spoken languages
-     in the extension. There can be multiple supported locales for a single
-     extension locale. For example, for both written versions of chinese,
-     zh-cn and zh-tw, we use a single spoken language (Mandarin). So there
-     are two supported locales, with a single extension locale.
-SPEECH SYNTH LOCALE
-     A different locale code system, used by our speech synthesis service.
-     Each extension locale has a speech synth locale.</p>
-</div>
 
 
 
@@ -600,7 +358,7 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>The runtime instantiating this block package.</p>
+    <p>The Scratch 3.0 runtime.</p>
 </div>
 
 
@@ -621,64 +379,6 @@ SPEECH SYNTH LOCALE
 
 
         
-            
-<h4 class="name" id="VOICE_INFO"><span class="type-signature"></span>VOICE_INFO<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>An object with info for each voice.</p>
-</div>
-
-
-
-
-
-
-
-
-        
     
 
     
@@ -689,7 +389,7 @@ SPEECH SYNTH LOCALE
 
     
 
-    <h4 class="name" id="_getExtensionLocaleForSupportedLocale"><span class="type-signature"></span>_getExtensionLocaleForSupportedLocale<span class="signature">(locale)</span><span class="type-signature"> &rarr; (nullable) {string}</span></h4>
+    <h4 class="name" id="_forEachMotor"><span class="type-signature">(private) </span>_forEachMotor<span class="signature">(motorID, callback)</span><span class="type-signature"></span></h4>
 
     
 
@@ -736,7 +436,7 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>Get the extension locale for a supported locale, or null.</p>
+    <p>Call a callback for each motor indexed by the provided motor ID.</p>
 </div>
 
 
@@ -774,13 +474,13 @@ SPEECH SYNTH LOCALE
 
         <tr>
             
-                <td class="name"><code>locale</code></td>
+                <td class="name"><code>motorID</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">MotorID</span>
 
 
             
@@ -790,7 +490,30 @@ SPEECH SYNTH LOCALE
 
             
 
-            <td class="description last"><p>a locale code.</p></td>
+            <td class="description last"><p>the ID specifier.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>callback</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">function</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the function to call with the numeric motor index for each motor.</p></td>
         </tr>
 
     
@@ -810,28 +533,6 @@ SPEECH SYNTH LOCALE
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a locale supported by the extension.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
         
@@ -839,109 +540,7 @@ SPEECH SYNTH LOCALE
 
     
 
-    <h4 class="name" id="_getSpeechSynthLocale"><span class="type-signature"></span>_getSpeechSynthLocale<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the locale code used by the speech synthesis server corresponding to
-the current language code set for the extension.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a speech synthesis locale.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_getState"><span class="type-signature">(private) </span>_getState<span class="signature">(target)</span><span class="type-signature"> &rarr; {Text2SpeechState}</span></h4>
+    <h4 class="name" id="_getTiltAngle"><span class="type-signature">(private) </span>_getTiltAngle<span class="signature">(direction)</span><span class="type-signature"> &rarr; {number}</span></h4>
 
     
 
@@ -1022,13 +621,13 @@ the current language code set for the extension.</p>
 
         <tr>
             
-                <td class="name"><code>target</code></td>
+                <td class="name"><code>direction</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Target.html">Target</a></span>
+<span class="param-type">TiltDirection</span>
 
 
             
@@ -1038,7 +637,7 @@ the current language code set for the extension.</p>
 
             
 
-            <td class="description last"><p>collect  state for this target.</p></td>
+            <td class="description last"><p>the direction (up, down, left, right) to check.</p></td>
         </tr>
 
     
@@ -1062,464 +661,10 @@ the current language code set for the extension.</p>
 
         
 <div class="param-desc">
-    <p>the mutable state associated with that target. This will be created if necessary.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Text2SpeechState</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_getSupportedLocales"><span class="type-signature"></span>_getSupportedLocales<span class="signature">()</span><span class="type-signature"> &rarr; {Array}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get an array of the locales supported by this extension.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>An array of locale strings.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">Array</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_onTargetCreated"><span class="type-signature">(private) </span>_onTargetCreated<span class="signature">(newTarget, sourceTarget<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>When a Target is cloned, clone the state.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-        <th>Attributes</th>
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>newTarget</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Target.html">Target</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>the newly created target.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>sourceTarget</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><a href="Target.html">Target</a></span>
-
-
-            
-            </td>
-
-            
-                <td class="attributes">
-                
-                    &lt;optional><br>
-                
-
-                
-
-                
-                </td>
-            
-
-            
-
-            <td class="description last"><p>the target used as a source for the new clone, if any.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-<h5>Listens to Events:</h5>
-<ul>
-    <li><a href="Runtime.html#event:targetWasCreated">Runtime#event:targetWasCreated</a></li>
+    <ul>
+<li>the tilt sensor's angle in the specified direction.
+Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).</li>
 </ul>
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_stopAllSpeech"><span class="type-signature"></span>_stopAllSpeech<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Stop all currently playing speech sounds.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getCurrentLanguage"><span class="type-signature"></span>getCurrentLanguage<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the language code currently set for the extension.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a Scratch locale code.</p>
 </div>
 
 
@@ -1530,7 +675,7 @@ the current language code set for the extension.</p>
     </dt>
     <dd>
         
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
     </dd>
@@ -1544,7 +689,7 @@ the current language code set for the extension.</p>
 
     
 
-    <h4 class="name" id="getEditorLanguage"><span class="type-signature"></span>getEditorLanguage<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id="_isColor"><span class="type-signature">(private) </span>_isColor<span class="signature">(args)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
 
     
 
@@ -1591,9 +736,308 @@ the current language code set for the extension.</p>
 
 
 <div class="description">
-    <p>Get the language code currently set in the editor, or fall back to the
-browser locale.</p>
+    <p>Test whether the vision sensor is detecting a certain color.</p>
 </div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the color to test.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>true when the color sensor senses the specified color.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="_isTilted"><span class="type-signature">(private) </span>_isTilted<span class="signature">(direction)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Test whether the tilt sensor is currently tilted.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>direction</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">TiltDirection</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the tilt direction to test (up, down, left, right, or any).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>true if the tilt sensor is tilted past a threshold in the specified direction.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="getColor"><span class="type-signature"></span>getColor<span class="signature">()</span><span class="type-signature"> &rarr; {number}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
 
 
 
@@ -1621,7 +1065,9 @@ browser locale.</p>
 
         
 <div class="param-desc">
-    <p>a Scratch locale code.</p>
+    <ul>
+<li>the vision sensor's color value. Indexed LEGO brick colors.</li>
+</ul>
 </div>
 
 
@@ -1632,7 +1078,7 @@ browser locale.</p>
     </dt>
     <dd>
         
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
     </dd>
@@ -1743,7 +1189,7 @@ browser locale.</p>
 
     
 
-    <h4 class="name" id="getLanguageMenu"><span class="type-signature"></span>getLanguageMenu<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="getMotorPosition"><span class="type-signature"></span>getMotorPosition<span class="signature">(args)</span><span class="type-signature"> &rarr; {number}</span></h4>
 
     
 
@@ -1789,9 +1235,6 @@ browser locale.</p>
 
 
 
-<div class="description">
-    <p>Get the menu of languages for the &quot;set language&quot; block.</p>
-</div>
 
 
 
@@ -1801,6 +1244,54 @@ browser locale.</p>
 
 
 
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -1819,7 +1310,9 @@ browser locale.</p>
 
         
 <div class="param-desc">
-    <p>the text and value for each menu item.</p>
+    <ul>
+<li>returns the motor's position.</li>
+</ul>
 </div>
 
 
@@ -1830,7 +1323,7 @@ browser locale.</p>
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">number</span>
 
 
     </dd>
@@ -1844,7 +1337,7 @@ browser locale.</p>
 
     
 
-    <h4 class="name" id="getVoiceMenu"><span class="type-signature"></span>getVoiceMenu<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
+    <h4 class="name" id="getTiltAngle"><span class="type-signature"></span>getTiltAngle<span class="signature">(args)</span><span class="type-signature"> &rarr; {number}</span></h4>
 
     
 
@@ -1888,11 +1381,54 @@ browser locale.</p>
 
 
 
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>TILT_DIRECTION</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">TiltDirection</span>
 
 
-<div class="description">
-    <p>Get the menu of voices for the &quot;set voice&quot; block.</p>
-</div>
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the direction (up, down, left, right) to check.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -1902,6 +1438,60 @@ browser locale.</p>
 
 
 
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
 
 
 
@@ -1920,7 +1510,10 @@ browser locale.</p>
 
         
 <div class="param-desc">
-    <p>the text and value for each menu item.</p>
+    <ul>
+<li>the tilt sensor's angle in the specified direction.
+Note that getTiltAngle(up) = -getTiltAngle(down) and getTiltAngle(left) = -getTiltAngle(right).</li>
+</ul>
 </div>
 
 
@@ -1931,7 +1524,7 @@ browser locale.</p>
     </dt>
     <dd>
         
-<span class="param-type">array</span>
+<span class="param-type">number</span>
 
 
     </dd>
@@ -1945,7 +1538,7 @@ browser locale.</p>
 
     
 
-    <h4 class="name" id="isSupportedLanguage"><span class="type-signature"></span>isSupportedLanguage<span class="signature">(languageCode)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+    <h4 class="name" id="isTilted"><span class="type-signature"></span>isTilted<span class="signature">(args)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
 
     
 
@@ -1989,11 +1582,62 @@ browser locale.</p>
 
 
 
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>TILT_DIRECTION_ANY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">TiltDirection</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the tilt direction to test (up, down, left, right, or any).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
 
 
 <div class="description">
-    <p>Check if a Scratch language code is in the list of supported languages for the
-speech synthesis service.</p>
+    <p>Test whether the tilt sensor is currently tilted.</p>
 </div>
 
 
@@ -2031,13 +1675,13 @@ speech synthesis service.</p>
 
         <tr>
             
-                <td class="name"><code>languageCode</code></td>
+                <td class="name"><code>args</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">object</span>
 
 
             
@@ -2047,7 +1691,7 @@ speech synthesis service.</p>
 
             
 
-            <td class="description last"><p>the language code to check.</p></td>
+            <td class="description last"><p>the block's arguments.</p></td>
         </tr>
 
     
@@ -2071,7 +1715,9 @@ speech synthesis service.</p>
 
         
 <div class="param-desc">
-    <p>true if the language code is supported.</p>
+    <ul>
+<li>true if the tilt sensor is tilted past a threshold in the specified direction.</li>
+</ul>
 </div>
 
 
@@ -2096,7 +1742,7 @@ speech synthesis service.</p>
 
     
 
-    <h4 class="name" id="setCurrentLanguage"><span class="type-signature"></span>setCurrentLanguage<span class="signature">(locale)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="motorOff"><span class="type-signature"></span>motorOff<span class="signature">(args)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
 
     
 
@@ -2140,27 +1786,11 @@ speech synthesis service.</p>
 
 
 
+    <h5 class="subsection-title">Properties:</h5>
 
-
-<div class="description">
-    <p>Set the language code for the extension.
-It is stored in the stage so it can be saved and loaded with the project.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
     
 
-<table class="params">
+<table class="props">
     <thead>
     <tr>
         
@@ -2182,13 +1812,13 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 
         <tr>
             
-                <td class="name"><code>locale</code></td>
+                <td class="name"><code>MOTOR_ID</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">MotorID</span>
 
 
             
@@ -2198,7 +1828,7 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 
             
 
-            <td class="description last"><p>a locale code.</p></td>
+            <td class="description last"><p>the motor(s) to deactivate.</p></td>
         </tr>
 
     
@@ -2210,69 +1840,8 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 
 
 
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="setLanguage"><span class="type-signature"></span>setLanguage<span class="signature">(args)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
 <div class="description">
-    <p>Set the language for speech synthesis.</p>
+    <p>Turn specified motor(s) off.</p>
 </div>
 
 
@@ -2326,309 +1895,7 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 
             
 
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="setVoice"><span class="type-signature"></span>setVoice<span class="signature">(args, util)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Set the voice for speech synthesis for this sprite.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>util</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Utility object provided by the runtime.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="speakAndWait"><span class="type-signature"></span>speakAndWait<span class="signature">(args, util)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Convert the provided text into a sound file and then play the file.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>util</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Utility object provided by the runtime.</p></td>
+            <td class="description last"><p>the block's arguments.</p></td>
         </tr>
 
     
@@ -2652,7 +1919,9 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 
         
 <div class="param-desc">
-    <p>A promise that resolves after playing the sound</p>
+    <ul>
+<li>a Promise that resolves after some delay.</li>
+</ul>
 </div>
 
 
@@ -2664,6 +1933,1683 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
     <dd>
         
 <span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="motorOn"><span class="type-signature"></span>motorOn<span class="signature">(args)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_ID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorID</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the motor(s) to activate.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Turn specified motor(s) on indefinitely.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a Promise that resolves after some delay.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="motorOnFor"><span class="type-signature"></span>motorOnFor<span class="signature">(args)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_ID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorID</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the motor(s) to activate.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>DURATION</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the amount of time to run the motors.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Turn specified motor(s) on for a specified duration.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise which will resolve at the end of the duration.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="motorOnForRotation"><span class="type-signature"></span>motorOnForRotation<span class="signature">(args)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_ID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorID</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the motor(s) to activate.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>ROTATION</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the amount of full rotations to turn the motors.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Turn specified motor(s) on for a specified rotation in full rotations.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise which will resolve at the end of the duration.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setLightHue"><span class="type-signature"></span>setLightHue<span class="signature">(args)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>HUE</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the hue to set, in the range [0,100].</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Set the LED's hue.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a Promise that resolves after some delay.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setMotorDirection"><span class="type-signature"></span>setMotorDirection<span class="signature">(args)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_ID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorID</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the motor(s) to be affected.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_DIRECTION</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorDirection</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the new direction for the motor(s).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Set the direction of rotation for specified motor(s).
+If the direction is 'reverse' the motor(s) will be reversed individually.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setMotorPower"><span class="type-signature"></span>setMotorPower<span class="signature">(args)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>MOTOR_ID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">MotorID</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the motor(s) to be affected.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>POWER</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the new power level for the motor(s).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Set the power level of the specified motor(s).</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="whenColor"><span class="type-signature"></span>whenColor<span class="signature">(args)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>COLOR</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Color.html">Color</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the color to test.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Test whether the tilt sensor is currently tilted.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>true if the tilt sensor is tilted past a threshold in the specified direction.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="whenTilted"><span class="type-signature"></span>whenTilted<span class="signature">(args)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>TILT_DIRECTION_ANY</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">TiltDirection</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the tilt direction to test (up, down, left, right, or any).</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<div class="description">
+    <p>Test whether the tilt sensor is currently tilted.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>args</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the block's arguments.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>true if the tilt sensor is tilted past a threshold in the specified direction.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">boolean</span>
 
 
     </dd>

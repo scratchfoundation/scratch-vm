@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>Scratch3Text2SpeechBlocks - Documentation</title>
+    <title>Boost - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -31,7 +31,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">Scratch3Text2SpeechBlocks</h1>
+    <h1 class="page-title">Boost</h1>
     
 
     
@@ -44,10 +44,10 @@
 <header>
     
         <h2>
-        Scratch3Text2SpeechBlocks
+        Boost
         </h2>
         
-            <div class="class-description"><p>Class for the text2speech blocks.</p></div>
+            <div class="class-description"><p>Manage communication with a Boost peripheral over a Bluetooth Low Energy client socket.</p></div>
         
     
 </header>
@@ -62,7 +62,7 @@
     <h2>Constructor</h2>
     
 
-    <h4 class="name" id="Scratch3Text2SpeechBlocks"><span class="type-signature"></span>new Scratch3Text2SpeechBlocks<span class="signature">()</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="Boost"><span class="type-signature"></span>new Boost<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -151,7 +151,7 @@
 
         
             
-<h4 class="name" id=".DEFAULT_TEXT2SPEECH_STATE"><span class="type-signature">(static) </span>DEFAULT_TEXT2SPEECH_STATE<span class="type-signature"> :Text2SpeechState</span></h4>
+<h4 class="name" id="_ble"><span class="type-signature">(private) </span>_ble<span class="type-signature"> :<a href="BLE.html">BLE</a></span></h4>
 
 
 
@@ -197,7 +197,7 @@
 
 
 <div class="description">
-    <p>The default state, to be used when a target has no existing state.</p>
+    <p>The Bluetooth connection socket for reading/writing peripheral data.</p>
 </div>
 
 
@@ -206,7 +206,7 @@
     <ul>
         <li>
             
-<span class="param-type">Text2SpeechState</span>
+<span class="param-type"><a href="BLE.html">BLE</a></span>
 
 
         </li>
@@ -219,7 +219,7 @@
 
         
             
-<h4 class="name" id=".STATE_KEY"><span class="type-signature">(static) </span>STATE_KEY<span class="type-signature"></span></h4>
+<h4 class="name" id="_colorBucket"><span class="type-signature">(private) </span>_colorBucket<span class="type-signature"> :Array</span></h4>
 
 
 
@@ -265,133 +265,7 @@
 
 
 <div class="description">
-    <p>The key to load &amp; store a target's text2speech state.</p>
-</div>
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_soundPlayers"><span class="type-signature"></span>_soundPlayers<span class="type-signature"> :Map.&lt;string, SoundPlayer></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Map of soundPlayers by sound id.</p>
-</div>
-
-
-
-    <h5>Type:</h5>
-    <ul>
-        <li>
-            
-<span class="param-type">Map.&lt;string, SoundPlayer></span>
-
-
-        </li>
-    </ul>
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="_supportedLocales"><span class="type-signature"></span>_supportedLocales<span class="type-signature"> :Array</span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>A list of all Scratch locales that are supported by the extension.</p>
+    <p>An array of values from the Boost Vision Sensor.</p>
 </div>
 
 
@@ -413,7 +287,7 @@
 
         
             
-<h4 class="name" id="DEFAULT_LANGUAGE"><span class="type-signature"></span>DEFAULT_LANGUAGE<span class="type-signature"> :string</span></h4>
+<h4 class="name" id="_extensionId"><span class="type-signature"></span>_extensionId<span class="type-signature"></span></h4>
 
 
 
@@ -459,7 +333,65 @@
 
 
 <div class="description">
-    <p>A default language to use for speech synthesis.</p>
+    <p>The id of the extension this peripheral belongs to.</p>
+</div>
+
+
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="_motors"><span class="type-signature">(private) </span>_motors<span class="type-signature"> :Array.&lt;<a href="BoostMotor.html">BoostMotor</a>></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>A list of motors registered by the Boost hardware.</p>
 </div>
 
 
@@ -468,7 +400,7 @@
     <ul>
         <li>
             
-<span class="param-type">string</span>
+<span class="param-type">Array.&lt;<a href="BoostMotor.html">BoostMotor</a>></span>
 
 
         </li>
@@ -481,7 +413,7 @@
 
         
             
-<h4 class="name" id="LANGUAGE_INFO"><span class="type-signature"></span>LANGUAGE_INFO<span class="type-signature"></span></h4>
+<h4 class="name" id="_pingDeviceId"><span class="type-signature">(private) </span>_pingDeviceId<span class="type-signature"> :number</span></h4>
 
 
 
@@ -527,25 +459,20 @@
 
 
 <div class="description">
-    <p>An object with information for each language.</p>
-<p>A note on the different sets of locales referred to in this extension:</p>
-<p>SCRATCH LOCALE
-     Set by the editor, and used to store the language state in the project.
-     Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
-SUPPORTED LOCALE
-     A Scratch locale that has a corresponding extension locale.
-EXTENSION LOCALE
-     A locale corresponding to one of the available spoken languages
-     in the extension. There can be multiple supported locales for a single
-     extension locale. For example, for both written versions of chinese,
-     zh-cn and zh-tw, we use a single spoken language (Mandarin). So there
-     are two supported locales, with a single extension locale.
-SPEECH SYNTH LOCALE
-     A different locale code system, used by our speech synthesis service.
-     Each extension locale has a speech synth locale.</p>
+    <p>An interval id for the battery check interval.</p>
 </div>
 
 
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">number</span>
+
+
+        </li>
+    </ul>
 
 
 
@@ -554,7 +481,7 @@ SPEECH SYNTH LOCALE
 
         
             
-<h4 class="name" id="runtime"><span class="type-signature"></span>runtime<span class="type-signature"> :<a href="Runtime.html">Runtime</a></span></h4>
+<h4 class="name" id="_ports"><span class="type-signature">(private) </span>_ports<span class="type-signature"> :Array.&lt;string></span></h4>
 
 
 
@@ -600,7 +527,144 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>The runtime instantiating this block package.</p>
+    <p>A list of the ids of the physical or virtual sensors.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Array.&lt;string></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="_rateLimiter"><span class="type-signature">(private) </span>_rateLimiter<span class="type-signature"> :<a href="RateLimiter.html">RateLimiter</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>A rate limiter utility, to help limit the rate at which we send BLE messages
+over the socket to Scratch Link to a maximum number of sends per second.</p>
+</div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type"><a href="RateLimiter.html">RateLimiter</a></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="_runtime"><span class="type-signature">(private) </span>_runtime<span class="type-signature"> :<a href="Runtime.html">Runtime</a></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>The Scratch 3.0 runtime used to trigger the green flag button.</p>
 </div>
 
 
@@ -622,7 +686,7 @@ SPEECH SYNTH LOCALE
 
         
             
-<h4 class="name" id="VOICE_INFO"><span class="type-signature"></span>VOICE_INFO<span class="type-signature"></span></h4>
+<h4 class="name" id="_sensors"><span class="type-signature">(private) </span>_sensors<span class="type-signature"> :Object.&lt;string, number></span></h4>
 
 
 
@@ -668,8 +732,180 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>An object with info for each voice.</p>
+    <p>The most recently received value for each sensor.</p>
 </div>
+
+
+
+    <h5>Type:</h5>
+    <ul>
+        <li>
+            
+<span class="param-type">Object.&lt;string, number></span>
+
+
+        </li>
+    </ul>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="color"><span class="type-signature"></span>color<span class="type-signature"></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="tiltX"><span class="type-signature"></span>tiltX<span class="type-signature"></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+<h4 class="name" id="tiltY"><span class="type-signature"></span>tiltY<span class="type-signature"></span></h4>
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
 
 
 
@@ -689,7 +925,7 @@ SPEECH SYNTH LOCALE
 
     
 
-    <h4 class="name" id="_getExtensionLocaleForSupportedLocale"><span class="type-signature"></span>_getExtensionLocaleForSupportedLocale<span class="signature">(locale)</span><span class="type-signature"> &rarr; (nullable) {string}</span></h4>
+    <h4 class="name" id="_clearPort"><span class="type-signature">(private) </span>_clearPort<span class="signature">(portID)</span><span class="type-signature"></span></h4>
 
     
 
@@ -736,7 +972,7 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>Get the extension locale for a supported locale, or null.</p>
+    <p>Clear the sensors or motors present on the ports.</p>
 </div>
 
 
@@ -774,13 +1010,13 @@ SPEECH SYNTH LOCALE
 
         <tr>
             
-                <td class="name"><code>locale</code></td>
+                <td class="name"><code>portID</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type">string</span>
+<span class="param-type">number</span>
 
 
             
@@ -790,7 +1026,7 @@ SPEECH SYNTH LOCALE
 
             
 
-            <td class="description last"><p>a locale code.</p></td>
+            <td class="description last"><p>the port to clear.</p></td>
         </tr>
 
     
@@ -810,28 +1046,6 @@ SPEECH SYNTH LOCALE
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a locale supported by the extension.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
         
@@ -839,7 +1053,7 @@ SPEECH SYNTH LOCALE
 
     
 
-    <h4 class="name" id="_getSpeechSynthLocale"><span class="type-signature"></span>_getSpeechSynthLocale<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
+    <h4 class="name" id="_onConnect"><span class="type-signature">(private) </span>_onConnect<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
 
@@ -886,8 +1100,7 @@ SPEECH SYNTH LOCALE
 
 
 <div class="description">
-    <p>Get the locale code used by the speech synthesis server corresponding to
-the current language code set for the extension.</p>
+    <p>Starts reading data from peripheral after BLE has connected.</p>
 </div>
 
 
@@ -912,28 +1125,6 @@ the current language code set for the extension.</p>
 
 
 
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a speech synthesis locale.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
 
 
         
@@ -941,7 +1132,7 @@ the current language code set for the extension.</p>
 
     
 
-    <h4 class="name" id="_getState"><span class="type-signature">(private) </span>_getState<span class="signature">(target)</span><span class="type-signature"> &rarr; {Text2SpeechState}</span></h4>
+    <h4 class="name" id="_onMessage"><span class="type-signature">(private) </span>_onMessage<span class="signature">(base64)</span><span class="type-signature"></span></h4>
 
     
 
@@ -986,6 +1177,10 @@ the current language code set for the extension.</p>
 
 
 
+
+<div class="description">
+    <p>Process the sensor data from the incoming BLE characteristic.</p>
+</div>
 
 
 
@@ -1022,13 +1217,13 @@ the current language code set for the extension.</p>
 
         <tr>
             
-                <td class="name"><code>target</code></td>
+                <td class="name"><code>base64</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Target.html">Target</a></span>
+<span class="param-type">object</span>
 
 
             
@@ -1038,7 +1233,649 @@ the current language code set for the extension.</p>
 
             
 
-            <td class="description last"><p>collect  state for this target.</p></td>
+            <td class="description last"><p>the incoming BLE data.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="_pingDevice"><span class="type-signature">(private) </span>_pingDevice<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Ping the Boost hub. If the Boost hub has disconnected
+for some reason, the BLE socket will get an error back and automatically
+close the socket.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="_registerSensorOrMotor"><span class="type-signature">(private) </span>_registerSensorOrMotor<span class="signature">(portID, type)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Register a new sensor or motor connected at a port.  Store the type of
+sensor or motor internally, and then register for notifications on input
+values if it is a sensor.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>portID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the port to register a sensor or motor on.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the type ID of the sensor or motor</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="connect"><span class="type-signature"></span>connect<span class="signature">(id)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Called by the runtime when user wants to connect to a certain Boost peripheral.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>id</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the id of the peripheral to connect to.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="disconnect"><span class="type-signature"></span>disconnect<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Disconnects from the current BLE socket.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="generateInputCommand"><span class="type-signature"></span>generateInputCommand<span class="signature">(portID, mode, delta, enableNotifications)</span><span class="type-signature"> &rarr; {array}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Generate a Boost 'Input Command' in the byte array format
+(COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
+UNIT, NOTIFICATIONS ENABLED).</p>
+<p>This sends a command to the Boost that sets that input format
+of the specified inputs and sets value change notifications.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>portID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the port (Connect ID) to send a command to.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>mode</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the mode of the input sensor.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>delta</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the delta change needed to trigger notification.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>enableNotifications</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>whether to enable notifications.</p></td>
         </tr>
 
     
@@ -1062,7 +1899,9 @@ the current language code set for the extension.</p>
 
         
 <div class="param-desc">
-    <p>the mutable state associated with that target. This will be created if necessary.</p>
+    <ul>
+<li>a generated input command.</li>
+</ul>
 </div>
 
 
@@ -1073,7 +1912,7 @@ the current language code set for the extension.</p>
     </dt>
     <dd>
         
-<span class="param-type">Text2SpeechState</span>
+<span class="param-type">array</span>
 
 
     </dd>
@@ -1087,7 +1926,7 @@ the current language code set for the extension.</p>
 
     
 
-    <h4 class="name" id="_getSupportedLocales"><span class="type-signature"></span>_getSupportedLocales<span class="signature">()</span><span class="type-signature"> &rarr; {Array}</span></h4>
+    <h4 class="name" id="generateOutputCommand"><span class="type-signature"></span>generateOutputCommand<span class="signature">(portID, execution, subCommand, payload)</span><span class="type-signature"> &rarr; {array}</span></h4>
 
     
 
@@ -1134,7 +1973,230 @@ the current language code set for the extension.</p>
 
 
 <div class="description">
-    <p>Get an array of the locales supported by this extension.</p>
+    <p>Generate a Boost 'Output Command' in the byte array format
+(COMMON HEADER, PORT ID, EXECUTION BYTE, SUBCOMMAND ID, PAYLOAD).</p>
+<p>Payload is accepted as an array since these vary across different subcommands.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>portID</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the port (Connect ID) to send a command to.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>execution</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Byte containing startup/completion information</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>subCommand</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">number</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the id of the subcommand byte.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>payload</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">array</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the list of bytes to send as subcommand payload</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a generated output command.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">array</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="isConnected"><span class="type-signature"></span>isConnected<span class="signature">()</span><span class="type-signature"> &rarr; {boolean}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Called by the runtime to detect whether the Boost peripheral is connected.</p>
 </div>
 
 
@@ -1163,7 +2225,9 @@ the current language code set for the extension.</p>
 
         
 <div class="param-desc">
-    <p>An array of locale strings.</p>
+    <ul>
+<li>the connected state.</li>
+</ul>
 </div>
 
 
@@ -1174,7 +2238,7 @@ the current language code set for the extension.</p>
     </dt>
     <dd>
         
-<span class="param-type">Array</span>
+<span class="param-type">boolean</span>
 
 
     </dd>
@@ -1188,7 +2252,7 @@ the current language code set for the extension.</p>
 
     
 
-    <h4 class="name" id="_onTargetCreated"><span class="type-signature">(private) </span>_onTargetCreated<span class="signature">(newTarget, sourceTarget<span class="signature-attributes">opt</span>)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="motor"><span class="type-signature"></span>motor<span class="signature">(index)</span><span class="type-signature"> &rarr; {<a href="BoostMotor.html">BoostMotor</a>}</span></h4>
 
     
 
@@ -1235,7 +2299,238 @@ the current language code set for the extension.</p>
 
 
 <div class="description">
-    <p>When a Target is cloned, clone the state.</p>
+    <p>Access a particular motor on this peripheral.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>index</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>the index of the desired motor.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>the BoostMotor instance, if any, at that index.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type"><a href="BoostMotor.html">BoostMotor</a></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="scan"><span class="type-signature"></span>scan<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Called by the runtime when user wants to scan for a Boost peripheral.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="send"><span class="type-signature"></span>send<span class="signature">(uuid, message, useLimiter<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Write a message to the Boost peripheral BLE socket.</p>
 </div>
 
 
@@ -1265,6 +2560,8 @@ the current language code set for the extension.</p>
         
 
         
+        <th>Default</th>
+        
 
         <th class="last">Description</th>
     </tr>
@@ -1275,13 +2572,13 @@ the current language code set for the extension.</p>
 
         <tr>
             
-                <td class="name"><code>newTarget</code></td>
+                <td class="name"><code>uuid</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Target.html">Target</a></span>
+<span class="param-type">number</span>
 
 
             
@@ -1298,21 +2595,60 @@ the current language code set for the extension.</p>
             
 
             
+                <td class="default">
+                
+                </td>
+            
 
-            <td class="description last"><p>the newly created target.</p></td>
+            <td class="description last"><p>the UUID of the characteristic to write to</p></td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>sourceTarget</code></td>
+                <td class="name"><code>message</code></td>
             
 
             <td class="type">
             
                 
-<span class="param-type"><a href="Target.html">Target</a></span>
+<span class="param-type">Array</span>
+
+
+            
+            </td>
+
+            
+                <td class="attributes">
+                
+
+                
+
+                
+                </td>
+            
+
+            
+                <td class="default">
+                
+                </td>
+            
+
+            <td class="description last"><p>the message to write.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>useLimiter</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">boolean</span>
 
 
             
@@ -1331,8 +2667,14 @@ the current language code set for the extension.</p>
             
 
             
+                <td class="default">
+                
+                    <code>true</code>
+                
+                </td>
+            
 
-            <td class="description last"><p>the target used as a source for the new clone, if any.</p></td>
+            <td class="description last"><p>if true, use the rate limiter</p></td>
         </tr>
 
     
@@ -1346,1313 +2688,19 @@ the current language code set for the extension.</p>
 
 
 
-<h5>Listens to Events:</h5>
-<ul>
-    <li><a href="Runtime.html#event:targetWasCreated">Runtime#event:targetWasCreated</a></li>
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise result of the write operation</li>
 </ul>
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="_stopAllSpeech"><span class="type-signature"></span>_stopAllSpeech<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Stop all currently playing speech sounds.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getCurrentLanguage"><span class="type-signature"></span>getCurrentLanguage<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the language code currently set for the extension.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a Scratch locale code.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getEditorLanguage"><span class="type-signature"></span>getEditorLanguage<span class="signature">()</span><span class="type-signature"> &rarr; {string}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the language code currently set in the editor, or fall back to the
-browser locale.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>a Scratch locale code.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">string</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getInfo"><span class="type-signature"></span>getInfo<span class="signature">()</span><span class="type-signature"> &rarr; {object}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>metadata for this extension and its blocks.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">object</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getLanguageMenu"><span class="type-signature"></span>getLanguageMenu<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the menu of languages for the &quot;set language&quot; block.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the text and value for each menu item.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">array</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="getVoiceMenu"><span class="type-signature"></span>getVoiceMenu<span class="signature">()</span><span class="type-signature"> &rarr; {array}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Get the menu of voices for the &quot;set voice&quot; block.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>the text and value for each menu item.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">array</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="isSupportedLanguage"><span class="type-signature"></span>isSupportedLanguage<span class="signature">(languageCode)</span><span class="type-signature"> &rarr; {boolean}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Check if a Scratch language code is in the list of supported languages for the
-speech synthesis service.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>languageCode</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the language code to check.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>true if the language code is supported.</p>
-</div>
-
-
-
-<dl class="param-type">
-    <dt>
-        Type
-    </dt>
-    <dd>
-        
-<span class="param-type">boolean</span>
-
-
-    </dd>
-</dl>
-
-    
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="setCurrentLanguage"><span class="type-signature"></span>setCurrentLanguage<span class="signature">(locale)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Set the language code for the extension.
-It is stored in the stage so it can be saved and loaded with the project.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>locale</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>a locale code.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="setLanguage"><span class="type-signature"></span>setLanguage<span class="signature">(args)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Set the language for speech synthesis.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="setVoice"><span class="type-signature"></span>setVoice<span class="signature">(args, util)</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Set the voice for speech synthesis for this sprite.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>util</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Utility object provided by the runtime.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-            
-
-    
-
-    <h4 class="name" id="speakAndWait"><span class="type-signature"></span>speakAndWait<span class="signature">(args, util)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description">
-    <p>Convert the provided text into a sound file and then play the file.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>args</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Block arguments</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>util</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">object</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>Utility object provided by the runtime.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<h5>Returns:</h5>
-
-        
-<div class="param-desc">
-    <p>A promise that resolves after playing the sound</p>
 </div>
 
 
@@ -2670,6 +2718,419 @@ It is stored in the stage so it can be saved and loaded with the project.</p>
 </dl>
 
     
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setLED"><span class="type-signature"></span>setLED<span class="signature">(inputRGB)</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Set the Boost peripheral's LED to a specific color.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>inputRGB</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">int</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>a 24-bit RGB color in 0xRRGGBB format.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise of the completion of the set led send operation.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="setLEDMode"><span class="type-signature"></span>setLEDMode<span class="signature">()</span><span class="type-signature"> &rarr; {Promise}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Sets the input mode of the LED to RGB.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+<div class="param-desc">
+    <ul>
+<li>a promise returned by the send operation.</li>
+</ul>
+</div>
+
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="stopAll"><span class="type-signature"></span>stopAll<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Stop the motors on the Boost peripheral.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="stopAllMotors"><span class="type-signature"></span>stopAllMotors<span class="signature">()</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description">
+    <p>Stop all the motors that are currently running.</p>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         
