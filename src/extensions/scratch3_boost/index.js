@@ -33,10 +33,13 @@ const BoostBLE = {
 };
 
 /**
- * Boost Motor Max Power.
+ * Boost Motor Max Power Add. Defines how much more power than the target speed
+ * the motors may supply to reach the target speed faster.
+ * Lower number == softer, slower reached target speed.
+ * Higher number == harder, faster reached target speed.
  * @constant {number}
  */
-const BoostMotorMaxPower = 100;
+const BoostMotorMaxPowerAdd = 10;
 
 /**
  * A time interval to wait (in milliseconds) in between battery check calls.
@@ -280,7 +283,7 @@ class BoostMotor {
          * @type {number}
          * @private
          */
-        this._power = 100;
+        this._power = 50;
 
         /**
          * This motor's current relative position
@@ -440,13 +443,14 @@ class BoostMotor {
         if (this._power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
+            BoostOutputExecution.EXECUTE_IMMEDIATELY,
             BoostOutputSubCommand.START_SPEED,
             [
                 this._power * this._direction,
-                BoostMotorMaxPower,
+                MathUtil.wrapClamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorProfile.DO_NOT_USE
             ]);
+        this._status = BoostPortFeedback.BUSY_OR_FULL;
 
         this._parent.send(BoostBLE.characteristic, cmd);
 
@@ -476,12 +480,12 @@ class BoostMotor {
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
+            (BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK),
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
             [
                 ...numberToInt32Array(degrees),
                 this._power * this._direction * direction,
-                BoostMotorMaxPower,
+                MathUtil.wrapClamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorEndState.BRAKE,
                 BoostMotorProfile.DO_NOT_USE
             ]
@@ -590,7 +594,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: BoostColor.NONE
+            color: BoostColor.NONE,
+            previousColor: BoostColor.NONE
         };
 
         /**
@@ -598,7 +603,7 @@ class Boost {
          * @type {Array}
          * @private
          */
-        this._colorBucket = [];
+        this._colorSamples = [];
 
         /**
          * The Bluetooth connection socket for reading/writing peripheral data.
@@ -734,7 +739,7 @@ class Boost {
                         dataPrefix: [0x97, 0x03, 0x00, 0x40],
                         mask: [0xFF, 0xFF, 0, 0xFF]
                     }
-                } */
+                } commented out until feature is enabled in scratch-link */
             }],
             optionalServices: []
         }, this._onConnect, this.disconnect);
@@ -760,7 +765,7 @@ class Boost {
             tiltX: 0,
             tiltY: 0,
             color: BoostColor.NONE,
-            oldColor: BoostColor.NONE
+            previousColor: BoostColor.NONE
         };
 
         if (this._ble) {
@@ -879,7 +884,7 @@ class Boost {
         /**
          * First three bytes are the common header:
          * 0: Length of message
-         * 1: Hub ID (always 0x00 at the moment)
+         * 1: Hub ID (always 0x00 at the moment, unused)
          * 2: Message Type
          * 3: Port ID
          * We base our switch-case on Message Type
@@ -914,11 +919,11 @@ class Boost {
                 this._sensors.tiltY = data[5];
                 break;
             case BoostIO.COLOR:
-                this._colorBucket.unshift(data[4]);
-                if (this._colorBucket.length > BoostColorSampleSize) {
-                    this._colorBucket.pop();
-                    if (this._colorBucket.every((v, i, arr) => v === arr[0])) {
-                        this._sensors.color = this._colorBucket[0];
+                this._colorSamples.unshift(data[4]);
+                if (this._colorSamples.length > BoostColorSampleSize) {
+                    this._colorSamples.pop();
+                    if (this._colorSamples.every((v, i, arr) => v === arr[0])) {
+                        this._sensors.color = this._colorSamples[0];
                     } else {
                         this._sensors.color = BoostColor.NONE;
                     }
@@ -953,7 +958,6 @@ class Boost {
         case BoostMessage.ERROR:
             log.warn(`Error reported by hub: ${data}`);
             break;
-        default:
         }
     }
 
@@ -1926,10 +1930,10 @@ class Scratch3BoostBlocks {
         case BoostColorLabel.ANY:
             if (Object.keys(BoostColor).find(key => BoostColor[key])
                 .toLowerCase() !== this.getColor()) {
-                if (this.getColor() === this._peripheral.oldColor) {
+                if (this.getColor() === this._peripheral._sensors.previousColor) {
                     return false;
                 }
-                this._peripheral.oldColor = this.getColor();
+                this._peripheral._sensors.previousColor = this.getColor();
                 return true;
             }
             break;
