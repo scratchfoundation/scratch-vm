@@ -1719,8 +1719,8 @@ class Scratch3BoostBlocks {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                     } else if (motor.pendingPositionDestination) {
-                        const p = motor.pendingPositionDestination - motor.position;
-                        motor.turnOnForDegrees(p, Math.sign(p) * motor.direction);
+                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
+                        motor.turnOnForDegrees(p, Math.sign(p));
                     }
                 }
             }
@@ -1758,8 +1758,8 @@ class Scratch3BoostBlocks {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                     } else if (motor.pendingPositionDestination) {
-                        const p = motor.pendingPositionDestination - motor.position;
-                        motor.turnOnForDegrees(p, Math.sign(p) * motor.direction);
+                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
+                        motor.turnOnForDegrees(p, Math.sign(p));
                     }
                 }
             }
