@@ -471,7 +471,11 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
-        if (this._power === 0) return;
+        if (this._power === 0) {
+            this.pendingPromiseFunction();
+            return;
+        }
+        
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -1642,8 +1646,8 @@ class Scratch3BoostBlocks {
             const motor = this._peripheral.motor(portID);
             if (motor) {
                 return new Promise(resolve => {
-                    motor.turnOnForDegrees(degrees, sign);
                     motor.pendingPromiseFunction = resolve;
+                    motor.turnOnForDegrees(degrees, sign);
                 });
             }
             return null;
