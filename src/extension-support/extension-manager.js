@@ -391,23 +391,22 @@ class ExtensionManager {
             }
             break;
         default:
-            if (!blockInfo.opcode) {
-                throw new Error('Missing opcode for block');
-            }
+            if (blockInfo.opcode) {
+                const funcName = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
 
-            blockInfo.func = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
-
-            // Avoid promise overhead if possible
-            if (dispatch._isRemoteService(serviceName)) {
-                blockInfo.func = dispatch.call.bind(dispatch, serviceName, blockInfo.func);
-            } else {
-                const serviceObject = dispatch.services[serviceName];
-                const func = serviceObject[blockInfo.func];
-                if (func) {
-                    blockInfo.func = func.bind(serviceObject);
+                // Avoid promise latency unless necessary
+                if (dispatch._isRemoteService(serviceName)) {
+                    blockInfo.func = (args, util) => dispatch.call(serviceName, funcName, args, util, blockInfo);
                 } else {
-                    throw new Error(`Could not find extension block function called ${blockInfo.func}`);
+                    const serviceObject = dispatch.services[serviceName];
+                    if (!serviceObject[funcName]) {
+                        // The function might show up later as a dynamic property of the service object
+                        log.warn(`Could not find extension block function called ${funcName}`);
+                    }
+                    blockInfo.func = (args, util) => serviceObject[funcName](args, util, blockInfo);
                 }
+            } else {
+                throw new Error('Missing opcode for block');
             }
             break;
         }
