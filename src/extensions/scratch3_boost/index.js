@@ -447,7 +447,7 @@ class BoostMotor {
             BoostOutputSubCommand.START_SPEED,
             [
                 this._power * this._direction,
-                MathUtil.wrapClamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
+                MathUtil.clamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorProfile.DO_NOT_USE
             ]);
         this._status = BoostPortFeedback.BUSY_OR_FULL;
@@ -485,7 +485,7 @@ class BoostMotor {
             [
                 ...numberToInt32Array(degrees),
                 this._power * this._direction * direction,
-                MathUtil.wrapClamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
+                MathUtil.clamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorEndState.BRAKE,
                 BoostMotorProfile.DO_NOT_USE
             ]
@@ -1721,6 +1721,8 @@ class Scratch3BoostBlocks {
                     } else if (motor.pendingPositionDestination) {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
                         motor.turnOnForDegrees(p, Math.sign(p));
+                    } else {
+                        motor.turnOn();
                     }
                 }
             }
@@ -1760,6 +1762,8 @@ class Scratch3BoostBlocks {
                     } else if (motor.pendingPositionDestination) {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
                         motor.turnOnForDegrees(p, Math.sign(p));
+                    } else {
+                        motor.turnOn();
                     }
                 }
             }
