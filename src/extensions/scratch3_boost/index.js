@@ -365,16 +365,16 @@ class BoostMotor {
     }
 
     /**
-     * @param {int} value - this motor's new power level, in the range [0,100].
+     * @param {int} value - this motor's new power level, in the range [10,100].
      */
     set power (value) {
-        const p = Math.max(0, Math.min(value, 100));
-        // The Boost motors barely move at speed 1 - solution is to step up to 2.
-        if (p === 1) {
-            this._power = 2;
-        } else {
-            this._power = p;
-        }
+        /**
+         * Scale the motor power to a range between 10 and 100,
+         * to make sure the motors will run with something built onto them.
+         */
+        const p = MathUtil.scale(value, 0, 100, 10, 100);
+        
+        this._power = p;
     }
 
     /**
