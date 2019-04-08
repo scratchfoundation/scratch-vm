@@ -446,8 +446,8 @@ class BoostMotor {
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
             BoostOutputSubCommand.START_SPEED,
             [
-                this._power * this._direction,
-                MathUtil.clamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
+                this.power * this.direction,
+                MathUtil.clamp(this.power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorProfile.DO_NOT_USE
             ]);
         this._status = BoostPortFeedback.BUSY_OR_FULL;
@@ -462,7 +462,7 @@ class BoostMotor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
-        if (this._power === 0) return;
+        if (this.power === 0) return;
 
         milliseconds = Math.max(0, milliseconds);
         this.turnOn();
@@ -475,7 +475,7 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
-        if (this._power === 0) return;
+        if (this.power === 0) return;
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -484,15 +484,15 @@ class BoostMotor {
             BoostOutputSubCommand.START_SPEED_FOR_DEGREES,
             [
                 ...numberToInt32Array(degrees),
-                this._power * this._direction * direction,
-                MathUtil.clamp(this._power + BoostMotorMaxPowerAdd, 0, 100),
+                this.power * this.direction * direction,
+                MathUtil.clamp(this.power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorEndState.BRAKE,
                 BoostMotorProfile.DO_NOT_USE
             ]
         );
 
-        this._pendingPositionOrigin = this._position;
-        this._pendingPositionDestination = this._position + (degrees * this._direction * direction);
+        this._pendingPositionOrigin = this.position;
+        this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
     }
 
@@ -501,7 +501,7 @@ class BoostMotor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
-        if (this._power === 0) return;
+        if (this.power === 0) return;
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
@@ -1794,7 +1794,7 @@ class Scratch3BoostBlocks {
             log.warn('Asked for a motor position that doesnt exist!');
             return false;
         }
-        if (portID && this._peripheral._motors[portID]) {
+        if (portID && this.motor([portID])) {
             return MathUtil.wrapClamp(this._peripheral._motors[portID].position, 0, 360);
         }
         return 0;
