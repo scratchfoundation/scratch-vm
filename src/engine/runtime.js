@@ -7,6 +7,7 @@ const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
+const execute = require('./execute.js');
 const ScratchBlocksConstants = require('./scratch-blocks-constants');
 const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
@@ -120,16 +121,6 @@ const cloudDataManager = () => {
         removeCloudVariable,
         hasCloudVariables
     };
-};
-
-/**
- * Predefined "Converted block info" for a separator between blocks in a block category
- * @type {ConvertedBlockInfo}
- */
-const ConvertedSeparator = {
-    info: {},
-    json: null,
-    xml: '<sep gap="36"/>'
 };
 
 /**
@@ -316,7 +307,7 @@ class Runtime extends EventEmitter {
         // I/O related data.
         /** @type {Object.<string, Object>} */
         this.ioDevices = {
-            clock: new Clock(),
+            clock: new Clock(this),
             cloud: new Cloud(this),
             keyboard: new Keyboard(this),
             mouse: new Mouse(this),
@@ -865,22 +856,20 @@ class Runtime extends EventEmitter {
         }
 
         for (const blockInfo of extensionInfo.blocks) {
-            if (blockInfo === '---') {
-                categoryInfo.blocks.push(ConvertedSeparator);
-                continue;
-            }
             try {
                 const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-                const opcode = convertedBlock.json.type;
                 categoryInfo.blocks.push(convertedBlock);
-                if (blockInfo.blockType !== BlockType.EVENT) {
-                    this._primitives[opcode] = convertedBlock.info.func;
-                }
-                if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
-                    this._hats[opcode] = {
-                        edgeActivated: blockInfo.isEdgeActivated,
-                        restartExistingThreads: blockInfo.shouldRestartExistingThreads
-                    };
+                if (convertedBlock.json) {
+                    const opcode = convertedBlock.json.type;
+                    if (blockInfo.blockType !== BlockType.EVENT) {
+                        this._primitives[opcode] = convertedBlock.info.func;
+                    }
+                    if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
+                        this._hats[opcode] = {
+                            edgeActivated: blockInfo.isEdgeActivated,
+                            restartExistingThreads: blockInfo.shouldRestartExistingThreads
+                        };
+                    }
                 }
             } catch (e) {
                 log.error('Error parsing block: ', {block: blockInfo, error: e});
@@ -986,13 +975,32 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Convert ExtensionBlockMetadata into data ready for scratch-blocks.
+     * @param {ExtensionBlockMetadata} blockInfo - the block info to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {ConvertedBlockInfo} - the converted & original block information
+     * @private
+     */
+    _convertForScratchBlocks (blockInfo, categoryInfo) {
+        if (blockInfo === '---') {
+            return this._convertSeparatorForScratchBlocks(blockInfo);
+        }
+
+        if (blockInfo.blockType === BlockType.BUTTON) {
+            return this._convertButtonForScratchBlocks(blockInfo);
+        }
+
+        return this._convertBlockForScratchBlocks(blockInfo, categoryInfo);
+    }
+
+    /**
      * Convert ExtensionBlockMetadata into scratch-blocks JSON & XML, and generate a proxy function.
      * @param {ExtensionBlockMetadata} blockInfo - the block to convert
      * @param {CategoryInfo} categoryInfo - the category for this block
      * @returns {ConvertedBlockInfo} - the converted & original block information
      * @private
      */
-    _convertForScratchBlocks (blockInfo, categoryInfo) {
+    _convertBlockForScratchBlocks (blockInfo, categoryInfo) {
         const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
 
         const blockJSON = {
@@ -1131,6 +1139,43 @@ class Runtime extends EventEmitter {
             info: context.blockInfo,
             json: context.blockJSON,
             xml: blockXML
+        };
+    }
+
+    /**
+     * Generate a separator between blocks categories or sub-categories.
+     * @param {ExtensionBlockMetadata} blockInfo - the block to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {ConvertedBlockInfo} - the converted & original block information
+     * @private
+     */
+    _convertSeparatorForScratchBlocks (blockInfo) {
+        return {
+            info: blockInfo,
+            xml: '<sep gap="36"/>'
+        };
+    }
+
+    /**
+     * Convert a button for scratch-blocks. A button has no opcode but specifies a callback name in the `func` field.
+     * @param {ExtensionBlockMetadata} buttonInfo - the button to convert
+     * @property {string} func - the callback name
+     * @param {CategoryInfo} categoryInfo - the category for this button
+     * @returns {ConvertedBlockInfo} - the converted & original button information
+     * @private
+     */
+    _convertButtonForScratchBlocks (buttonInfo) {
+        // for now we only support these pre-defined callbacks handled in scratch-blocks
+        const supportedCallbackKeys = ['MAKE_A_LIST', 'MAKE_A_PROCEDURE', 'MAKE_A_VARIABLE'];
+        if (supportedCallbackKeys.indexOf(buttonInfo.func) < 0) {
+            log.error(`Custom button callbacks not supported yet: ${buttonInfo.func}`);
+        }
+
+        const extensionMessageContext = this.makeMessageContextForTarget();
+        const buttonText = maybeFormatMessage(buttonInfo.text, extensionMessageContext);
+        return {
+            info: buttonInfo,
+            xml: `<button text="${buttonText}" callbackKey="${buttonInfo.func}"></button>`
         };
     }
 
@@ -1631,6 +1676,12 @@ class Runtime extends EventEmitter {
             // Start the thread with this top block.
             newThreads.push(instance._pushThread(topBlockId, target));
         }, optTarget);
+        // For compatibility with Scratch 2, edge triggered hats need to be processed before
+        // threads are stepped. See ScratchRuntime.as for original implementation
+        newThreads.forEach(thread => {
+            execute(this.sequencer, thread);
+            thread.goToNextBlock();
+        });
         return newThreads;
     }
 

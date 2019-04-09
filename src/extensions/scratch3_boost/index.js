@@ -948,8 +948,9 @@ class Boost {
             const motor = this.motor(portID);
             if (motor) {
                 motor._status = feedback;
-                if (feedback === (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.IDLE) &&
-                    motor.pendingPromiseFunction) {
+                // Makes sure that commands resolve both when they actually complete and when they fail
+                const commandCompleted = feedback & (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.DISCARDED);
+                if (commandCompleted && motor.pendingPromiseFunction) {
                     motor.pendingPromiseFunction();
                 }
             }

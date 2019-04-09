@@ -62,3 +62,21 @@ test('remote', t => {
         .then(() => runServiceTest('RemoteDispatchTest', t), e => t.fail(e))
         .then(() => dispatch._remoteCall(worker, 'dispatch', 'terminate'), e => t.fail(e));
 });
+
+test('local, sync', t => {
+    dispatch.setServiceSync('SyncDispatchTest', new DispatchTestService());
+
+    const a = dispatch.callSync('SyncDispatchTest', 'returnFortyTwo');
+    t.equal(a, 42);
+
+    const b = dispatch.callSync('SyncDispatchTest', 'doubleArgument', 9);
+    t.equal(b, 18);
+
+    const c = dispatch.callSync('SyncDispatchTest', 'doubleArgument', 123);
+    t.equal(c, 246);
+
+    t.throws(() => dispatch.callSync('SyncDispatchTest', 'throwException'),
+        new Error('This is a test exception thrown by DispatchTest'));
+
+    t.end();
+});

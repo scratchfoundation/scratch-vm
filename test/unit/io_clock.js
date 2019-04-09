@@ -23,12 +23,15 @@ test('cycle', t => {
     setTimeout(() => {
         c.resetProjectTimer();
         setTimeout(() => {
-            t.ok(c.projectTimer() > 0);
+            // The timer shouldn't advance until all threads have been stepped
+            t.ok(c.projectTimer() === 0);
             c.pause();
-            t.ok(c.projectTimer() > 0);
+            t.ok(c.projectTimer() === 0);
             c.resume();
-            t.ok(c.projectTimer() > 0);
+            t.ok(c.projectTimer() === 0);
             t.end();
         }, 100);
     }, 100);
+    rt._step();
+    t.ok(c.projectTimer() > 0);
 });
