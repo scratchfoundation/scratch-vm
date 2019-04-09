@@ -949,8 +949,9 @@ class Boost {
             if (motor) {
                 motor._status = feedback;
                 // Makes sure that commands resolve both when they actually complete and when they fail
+                const isBusy = feedback & BoostPortFeedback.IN_PROGRESS;
                 const commandCompleted = feedback & (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.DISCARDED);
-                if (commandCompleted && motor.pendingPromiseFunction) {
+                if (!isBusy && commandCompleted && motor.pendingPromiseFunction) {
                     motor.pendingPromiseFunction();
                 }
             }
@@ -1646,6 +1647,10 @@ class Scratch3BoostBlocks {
         const promises = motors.map(portID => {
             const motor = this._peripheral.motor(portID);
             if (motor) {
+                if (motor.pendingPromiseFunction) {
+                    // If there's already a promise for this motor it must be resolved to avoid hanging blocks.
+                    motor.pendingPromiseFunction();
+                }
                 return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
                     motor.pendingPromiseFunction = resolve;
