@@ -1794,8 +1794,8 @@ class Scratch3BoostBlocks {
             log.warn('Asked for a motor position that doesnt exist!');
             return false;
         }
-        if (portID && this.motor([portID])) {
-            return MathUtil.wrapClamp(this._peripheral._motors[portID].position, 0, 360);
+        if (portID && this.motor(portID)) {
+            return MathUtil.wrapClamp(this.motor(portID).position, 0, 360);
         }
         return 0;
     }
