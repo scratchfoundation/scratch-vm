@@ -372,9 +372,11 @@ class BoostMotor {
          * Scale the motor power to a range between 10 and 100,
          * to make sure the motors will run with something built onto them.
          */
-        const p = MathUtil.scale(value, 0, 100, 10, 100);
-        
-        this._power = p;
+        if (value === 0) {
+            this._power = 0;
+        } else {
+            this._power = MathUtil.scale(value, 1, 100, 10, 100);
+        }
     }
 
     /**
