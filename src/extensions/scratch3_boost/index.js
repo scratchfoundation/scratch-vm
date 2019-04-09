@@ -471,7 +471,7 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
-        if (this._power === 0) {
+        if (this.power === 0) {
             this.pendingPromiseFunction();
             return;
         }
