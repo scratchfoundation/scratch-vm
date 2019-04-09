@@ -372,9 +372,11 @@ class BoostMotor {
          * Scale the motor power to a range between 10 and 100,
          * to make sure the motors will run with something built onto them.
          */
-        const p = MathUtil.scale(value, 0, 100, 10, 100);
-        
-        this._power = p;
+        if (value === 0) {
+            this._power = 0;
+        } else {
+            this._power = MathUtil.scale(value, 1, 100, 10, 100);
+        }
     }
 
     /**
@@ -475,7 +477,11 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
-        if (this.power === 0) return;
+        if (this.power === 0) {
+            this.pendingPromiseFunction();
+            return;
+        }
+        
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -1654,8 +1660,8 @@ class Scratch3BoostBlocks {
                     motor.pendingPromiseFunction = null;
                 }
                 return new Promise(resolve => {
-                    motor.turnOnForDegrees(degrees, sign);
                     motor.pendingPromiseFunction = resolve;
+                    motor.turnOnForDegrees(degrees, sign);
                 });
             }
             return null;
