@@ -1925,7 +1925,7 @@ class Scratch3BoostBlocks {
      * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
      */
     whenColor (args) {
-        return this._isColor(args.COLOR);
+        return this._isColor(args);
     }
 
     /**
@@ -1944,7 +1944,7 @@ class Scratch3BoostBlocks {
      * @private
      */
     _isColor (args) {
-        switch (args) {
+        switch (args.COLOR) {
         case BoostColorLabel.ANY:
             if (Object.keys(BoostColor).find(key => BoostColor[key])
                 .toLowerCase() !== this.getColor()) {
@@ -1956,7 +1956,7 @@ class Scratch3BoostBlocks {
             }
             break;
         default:
-            return this.getColor() === color;
+            return this.getColor() === args.COLOR;
         }
     }
 
