@@ -953,6 +953,7 @@ class Boost {
                 const commandCompleted = feedback & (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.DISCARDED);
                 if (!isBusy && commandCompleted && motor.pendingPromiseFunction) {
                     motor.pendingPromiseFunction();
+                    motor.pendingPromiseFunction = null;
                 }
             }
             break;
@@ -1650,6 +1651,7 @@ class Scratch3BoostBlocks {
                 if (motor.pendingPromiseFunction) {
                     // If there's already a promise for this motor it must be resolved to avoid hanging blocks.
                     motor.pendingPromiseFunction();
+                    motor.pendingPromiseFunction = null;
                 }
                 return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
@@ -1724,7 +1726,7 @@ class Scratch3BoostBlocks {
                 if (motor.isOn) {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else if (motor.pendingPositionDestination) {
+                    } else if (motor.pendingPromiseFunction) {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
                         motor.turnOnForDegrees(p, Math.sign(p));
                     } else {
@@ -1765,7 +1767,7 @@ class Scratch3BoostBlocks {
                 if (motor.isOn) {
                     if (motor.pendingTimeoutDelay) {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else if (motor.pendingPositionDestination) {
+                    } else if (motor.pendingPromiseFunction) {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
                         motor.turnOnForDegrees(p, Math.sign(p));
                     } else {
