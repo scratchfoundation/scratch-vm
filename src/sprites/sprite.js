@@ -2,6 +2,7 @@ const RenderedTarget = require('./rendered-target');
 const Blocks = require('../engine/blocks');
 const {loadSoundFromAsset} = require('../import/load-sound');
 const {loadCostumeFromAsset} = require('../import/load-costume');
+const newBlockIds = require('../util/new-block-ids');
 const StringUtil = require('../util/string-util');
 const StageLayering = require('../engine/stage-layering');
 
@@ -136,8 +137,14 @@ class Sprite {
 
     duplicate () {
         const newSprite = new Sprite(null, this.runtime);
+        const blocksContainer = this.blocks._blocks;
+        const originalBlocks = Object.keys(blocksContainer).map(key => blocksContainer[key]);
+        const copiedBlocks = JSON.parse(JSON.stringify(originalBlocks));
+        newBlockIds(copiedBlocks);
+        copiedBlocks.forEach(block => {
+            newSprite.blocks.createBlock(block);
+        });
 
-        newSprite.blocks = this.blocks.duplicate();
 
         const allNames = this.runtime.targets.map(t => t.sprite.name);
         newSprite.name = StringUtil.unusedName(this.name, allNames);

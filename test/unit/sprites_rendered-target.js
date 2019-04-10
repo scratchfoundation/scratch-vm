@@ -27,6 +27,24 @@ test('setxy', t => {
     t.end();
 });
 
+test('blocks get new id on duplicate', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
+    const block = {
+        id: 'id1',
+        topLevel: true,
+        fields: {}
+    };
+
+    rt.blocks.createBlock(block);
+
+    return rt.duplicate().then(duplicate => {
+        t.notOk(duplicate.blocks._blocks.hasOwnProperty(block.id));
+        t.end();
+    });
+});
+
 test('direction', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
