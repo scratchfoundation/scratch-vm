@@ -719,6 +719,7 @@ class Boost {
                 // Send the motor off command without using the rate limiter.
                 // This allows the stop button to stop motors even if we are
                 // otherwise flooded with commands.
+                motor.status = BoostMotorState.OFF;
                 motor.turnOff(false);
             }
         });
