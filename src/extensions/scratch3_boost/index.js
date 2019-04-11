@@ -1813,7 +1813,6 @@ class Scratch3BoostBlocks {
                 }
                 // keep the motor on if it's running, and update the pending timeout if needed
                 if (motor) {
-                    motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                     switch (motor.status) {
                     case BoostMotorState.ON_FOREVER:
                         motor.turnOn();
