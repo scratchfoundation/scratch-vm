@@ -586,7 +586,7 @@ class BoostMotor {
 
     /**
      * Clear the motor states related to rotation-based commands, if any.
-     * Safe to call even when there is no pending timeout.
+     * Safe to call even when there is no pending promise function.
      * @private
      */
     _clearRotationState () {
