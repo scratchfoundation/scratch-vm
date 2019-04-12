@@ -415,20 +415,9 @@ class BoostMotor {
      * @param {BoostMotorState} value - set this motor's state.
      */
     set status (value) {
-        switch (value) {
-        case BoostMotorState.OFF:
-        case BoostMotorState.ON_FOREVER:
-            this._clearRotationState();
-            this._clearTimeout();
-            break;
-        case BoostMotorState.ON_FOR_TIME:
-            this._clearRotationState();
-            break;
-        case BoostMotorState.ON_FOR_ROTATION:
-            this._clearRotationState();
-            this._clearTimeout();
-            break;
-        }
+        // Clear any time- or rotation-related state from motor and set new status.
+        this._clearRotationState();
+        this._clearTimeout();
         this._status = value;
     }
 
@@ -472,7 +461,7 @@ class BoostMotor {
      * @private
      */
     _turnOn () {
-        if (this._power === 0) return;
+        if (this.power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
@@ -1672,9 +1661,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
-                if (motor) {
-                    motor.turnOnFor(durationMS);
-                }
+                if (motor) motor.turnOnFor(durationMS);
             });
 
             // Run for some time even when no motor is connected
@@ -1732,9 +1719,7 @@ class Scratch3BoostBlocks {
         // TODO: cast args.MOTOR_ID?
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOnForever();
-            }
+            if (motor) motor.turnOnForever();
         });
 
         return new Promise(resolve => {
@@ -1754,9 +1739,7 @@ class Scratch3BoostBlocks {
         // TODO: cast args.MOTOR_ID?
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOff();
-            }
+            if (motor) motor.turnOff();
         });
 
         return new Promise(resolve => {
