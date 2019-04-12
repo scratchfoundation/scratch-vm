@@ -1696,7 +1696,7 @@ class Scratch3BoostBlocks {
             const motor = this._peripheral.motor(portID);
             if (motor) {
                 // to avoid a hanging block if power is 0, return an immediately resolving promise.
-                if (motor.power === 0) return new Promise(resolve => resolve());
+                if (motor.power === 0) return Promise.resolve();
                 return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
                     motor.pendingPromiseFunction = resolve;
