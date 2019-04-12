@@ -1722,6 +1722,7 @@ class Scratch3BoostBlocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {int} POWER - the new power level for the motor(s).
+     * @return {Promise} - returns a promise to make sure the block yields.
      */
     setMotorPower (args) {
         // TODO: cast args.MOTOR_ID?
@@ -1741,6 +1742,7 @@ class Scratch3BoostBlocks {
                 }
             }
         });
+        return Promise.resolve();
     }
 
     /**
@@ -1749,6 +1751,7 @@ class Scratch3BoostBlocks {
      * @param {object} args - the block's arguments.
      * @property {MotorID} MOTOR_ID - the motor(s) to be affected.
      * @property {MotorDirection} MOTOR_DIRECTION - the new direction for the motor(s).
+     * @return {Promise} - returns a promise to make sure the block yields.
      */
     setMotorDirection (args) {
         // TODO: cast args.MOTOR_ID?
@@ -1782,6 +1785,7 @@ class Scratch3BoostBlocks {
                 }
             }
         });
+        return Promise.resolve();
     }
 
     /**
