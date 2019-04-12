@@ -1309,15 +1309,6 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
-                    opcode: 'getColor',
-                    text: formatMessage({
-                        id: 'boost.getColor',
-                        default: 'color',
-                        description: 'the color returned by the vision sensor'
-                    }),
-                    blockType: BlockType.REPORTER
-                },
-                {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'boost.whenTilted',
