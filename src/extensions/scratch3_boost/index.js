@@ -1943,10 +1943,11 @@ class Scratch3BoostBlocks {
     _isColor (colorId) {
         switch (colorId) {
         case COLOR_ID_ANY:
-            if (this._peripheral.color === this._peripheral.previousColor) {
-                return false;
+            if (this._peripheral.color !== COLOR_ID_NONE &&
+                this._peripheral.color !== this._peripheral.previousColor) {
+                return true;
             }
-            return true;
+            return false;
         default:
             return colorId === this._peripheral.color;
         }
