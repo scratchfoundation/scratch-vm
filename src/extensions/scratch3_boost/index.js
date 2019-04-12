@@ -101,18 +101,30 @@ const BoostPort = {
 };
 
 /**
- * Enum for indexed colors read by the Boost Vision Sensor
+ * Ids for each color sensed by the Boost Vision Sensor
+ */
+const COLOR_ID_ANY = 'any';
+const COLOR_ID_NONE = 'none';
+const COLOR_ID_RED = 'red';
+const COLOR_ID_BLUE = 'blue';
+const COLOR_ID_GREEN = 'green';
+const COLOR_ID_YELLOW = 'yellow';
+const COLOR_ID_WHITE = 'white';
+const COLOR_ID_BLACK = 'black';
+
+/**
+ * Object to look up a color ID by color index
  * @readonly
  * @enum {number}
  */
-const BoostColor = {
-    NONE: 255,
-    RED: 9,
-    BLUE: 3,
-    GREEN: 5,
-    YELLOW: 7,
-    WHITE: 10,
-    BLACK: 0
+const BoostColorIdByIndex = {
+    255: COLOR_ID_NONE,
+    9: COLOR_ID_RED,
+    3: COLOR_ID_BLUE,
+    5: COLOR_ID_GREEN,
+    7: COLOR_ID_YELLOW,
+    10: COLOR_ID_WHITE,
+    0: COLOR_ID_BLACK
 };
 
 /**
@@ -481,7 +493,7 @@ class BoostMotor {
             this.pendingPromiseFunction();
             return;
         }
-        
+
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -600,8 +612,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: BoostColor.NONE,
-            previousColor: BoostColor.NONE
+            color: COLOR_ID_NONE,
+            previousColor: COLOR_ID_NONE
         };
 
         /**
@@ -659,6 +671,13 @@ class Boost {
      */
     get color () {
         return this._sensors.color;
+    }
+
+    /**
+     * @return {number} - the previous color value received from the vision sensor.
+     */
+    get previousColor () {
+        return this._sensors.previousColor;
     }
 
     /**
@@ -770,8 +789,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: BoostColor.NONE,
-            previousColor: BoostColor.NONE
+            color: COLOR_ID_NONE,
+            previousColor: COLOR_ID_NONE
         };
 
         if (this._ble) {
@@ -903,7 +922,7 @@ class Boost {
         case BoostMessage.HUB_ATTACHED_IO: { // IO Attach/Detach events
             const event = data[4];
             const typeId = data[5];
-        
+
             switch (event) {
             case BoostIOEvent.ATTACHED:
                 this._registerSensorOrMotor(portID, typeId);
@@ -918,7 +937,7 @@ class Boost {
         }
         case BoostMessage.PORT_VALUE: {
             const type = this._ports[portID];
-            
+
             switch (type) {
             case BoostIO.TILT:
                 this._sensors.tiltX = data[4];
@@ -929,12 +948,16 @@ class Boost {
                 if (this._colorSamples.length > BoostColorSampleSize) {
                     this._colorSamples.pop();
                     if (this._colorSamples.every((v, i, arr) => v === arr[0])) {
-                        this._sensors.color = this._colorSamples[0];
+                        const firstSample = this._colorSamples[0];
+                        if (BoostColorIdByIndex[firstSample]) {
+                            this._sensors.previousColor = this._sensors.color;
+                            this._sensors.color = BoostColorIdByIndex[firstSample];
+                        }
                     } else {
-                        this._sensors.color = BoostColor.NONE;
+                        this._sensors.color = COLOR_ID_NONE;
                     }
                 } else {
-                    this._sensors.color = BoostColor.NONE;
+                    this._sensors.color = COLOR_ID_NONE;
                 }
                 break;
             case BoostIO.MOTOREXT:
@@ -1029,7 +1052,7 @@ class Boost {
         default:
             mode = BoostMode.UNKNOWN;
         }
-        
+
         const cmd = this.generateInputCommand(
             portID,
             mode,
@@ -1051,7 +1074,7 @@ class Boost {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
         if (type === BoostIO.COLOR) {
-            this._sensors.color = BoostColor.NONE;
+            this._sensors.color = COLOR_ID_NONE;
         }
         this._ports[portID] = 'none';
         this._motors[portID] = null;
@@ -1094,21 +1117,6 @@ const BoostTiltDirection = {
     LEFT: 'left',
     RIGHT: 'right',
     ANY: 'any'
-};
-
-/**
- * Enum for vision sensor colors.
- * @readonly
- * @enum {string}
- */
-const BoostColorLabel = {
-    ANY: 'any',
-    RED: 'red',
-    BLUE: 'blue',
-    GREEN: 'green',
-    YELLOW: 'yellow',
-    BLACK: 'black',
-    WHITE: 'white'
 };
 
 /**
@@ -1296,7 +1304,7 @@ class Scratch3BoostBlocks {
                         COLOR: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR',
-                            defaultValue: BoostColorLabel.ANY
+                            defaultValue: COLOR_ID_ANY
                         }
                     }
                 },
@@ -1545,61 +1553,60 @@ class Scratch3BoostBlocks {
                     {
                         text: formatMessage({
                             id: 'boost.color.red',
-                            default: BoostColorLabel.RED,
-                            description: BoostColorLabel.RED
+                            default: 'red',
+                            description: 'the color red'
                         }),
-                        value: BoostColorLabel.RED
+                        value: COLOR_ID_RED
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.blue',
-                            default: BoostColorLabel.BLUE,
-                            description: BoostColorLabel.BLUE
+                            default: 'blue',
+                            description: 'the color blue'
                         }),
-                        value: BoostColorLabel.BLUE
+                        value: COLOR_ID_BLUE
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.green',
-                            default: BoostColorLabel.GREEN,
-                            description: BoostColorLabel.GREEN
+                            default: 'green',
+                            description: 'the color green'
                         }),
-                        value: BoostColorLabel.GREEN
+                        value: COLOR_ID_GREEN
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.yellow',
-                            default: BoostColorLabel.YELLOW,
-                            description: BoostColorLabel.YELLOW
+                            default: 'yellow',
+                            description: 'the color yellow'
                         }),
-                        value: BoostColorLabel.YELLOW
+                        value: COLOR_ID_YELLOW
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.white',
-                            default: BoostColorLabel.WHITE,
-                            desription: BoostColorLabel.WHITE
+                            default: 'white',
+                            desription: 'the color white'
                         }),
-                        value: BoostColorLabel.WHITE
+                        value: COLOR_ID_WHITE
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.black',
-                            default: BoostColorLabel.BLACK,
-                            description: BoostColorLabel.BLACK
+                            default: 'black',
+                            description: 'the color black'
                         }),
-                        value: BoostColorLabel.BLACK
+                        value: COLOR_ID_BLACK
                     },
                     {
                         text: formatMessage({
                             id: 'boost.color.any',
-                            default: BoostColorLabel.ANY,
-                            description: BoostColorLabel.ANY
+                            default: 'any color',
+                            description: 'any color'
                         }),
-                        value: BoostColorLabel.ANY
+                        value: COLOR_ID_ANY
                     }
-                ],
-                OP: ['<', '>']
+                ]
             }
         };
     }
@@ -1791,7 +1798,7 @@ class Scratch3BoostBlocks {
     getMotorPosition (args) {
         let portID = null;
         switch (args.MOTOR_REPORTER_ID) {
-            
+
         case BoostMotorLabel.A:
             portID = BoostPort.A;
             break;
@@ -1919,44 +1926,29 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Test whether the tilt sensor is currently tilted.
+     * Test whether the vision sensor is detecting a certain color.
      * @param {object} args - the block's arguments.
-     * @property {Color} COLOR - the color to test.
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+     * @return {boolean} - true when the color sensor senses the specified color.
      */
     whenColor (args) {
-        return this._isColor(args);
-    }
-
-    /**
-     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
-     */
-    getColor () {
-        // To get a string representation, lookup the key of the BoostColor-enum value
-        return Object.keys(BoostColor).find(key => BoostColor[key] === this._peripheral.color)
-            .toLowerCase();
+        return this._isColor(args.COLOR);
     }
 
     /**
      * Test whether the vision sensor is detecting a certain color.
-     * @param {number} args - the color to test.
+     * @param {string} colorId - the id of the color to test.
      * @return {boolean} - true when the color sensor senses the specified color.
      * @private
      */
-    _isColor (args) {
-        switch (args.COLOR) {
-        case BoostColorLabel.ANY:
-            if (Object.keys(BoostColor).find(key => BoostColor[key])
-                .toLowerCase() !== this.getColor()) {
-                if (this.getColor() === this._peripheral._sensors.previousColor) {
-                    return false;
-                }
-                this._peripheral._sensors.previousColor = this.getColor();
-                return true;
+    _isColor (colorId) {
+        switch (colorId) {
+        case COLOR_ID_ANY:
+            if (this._peripheral.color === this._peripheral.previousColor) {
+                return false;
             }
-            break;
+            return true;
         default:
-            return this.getColor() === args.COLOR;
+            return colorId === this._peripheral.color;
         }
     }
 
