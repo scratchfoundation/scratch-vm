@@ -220,6 +220,17 @@ const BoostMode = {
 };
 
 /**
+ * Enum for Boost motor states.
+ * @param {number}
+ */
+const BoostMotorState = {
+    OFF: 0,
+    ON_FOREVER: 1,
+    ON_FOR_TIME: 2,
+    ON_FOR_ROTATION: 3
+};
+
+/**
  * Helper function for converting a JavaScript number to an INT32-number
  * @param {number} number - a number
  * @return {array} - a 4-byte array of Int8-values representing an INT32-number
@@ -297,7 +308,7 @@ class BoostMotor {
          * @type {boolean}
          * @private
          */
-        this._status = BoostPortFeedback.IDLE;
+        this._status = BoostMotorState.OFF;
 
         /**
          * If the motor has been turned on or is actively braking for a specific duration, this is the timeout ID for
@@ -394,13 +405,20 @@ class BoostMotor {
     }
 
     /**
-     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+     * @return {BoostMotorState} - the motor's current state.
      */
-    get isOn () {
-        if (this._status & (BoostPortFeedback.BUSY_OR_FULL ^ BoostPortFeedback.IN_PROGRESS)) {
-            return true;
-        }
-        return false;
+    get status () {
+        return this._status;
+    }
+
+    /**
+     * @param {BoostMotorState} value - set this motor's state.
+     */
+    set status (value) {
+        // Clear any time- or rotation-related state from motor and set new status.
+        this._clearRotationState();
+        this._clearTimeout();
+        this._status = value;
     }
 
     /**
@@ -439,10 +457,11 @@ class BoostMotor {
     }
 
     /**
-     * Turn this motor on indefinitely.
+     * Turn this motor on indefinitely
+     * @private
      */
-    turnOn () {
-        if (this._power === 0) return;
+    _turnOn () {
+        if (this.power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
@@ -452,22 +471,31 @@ class BoostMotor {
                 MathUtil.clamp(this.power + BoostMotorMaxPowerAdd, 0, 100),
                 BoostMotorProfile.DO_NOT_USE
             ]);
-        this._status = BoostPortFeedback.BUSY_OR_FULL;
 
         this._parent.send(BoostBLE.characteristic, cmd);
+    }
 
-        this._clearTimeout();
+    /**
+     * Turn this motor on indefinitely
+     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
+     */
+    turnOnForever (resetState = true){
+        if (this.power === 0) return;
+        if (resetState) this.status = BoostMotorState.ON_FOREVER;
+        this._turnOn();
     }
 
     /**
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
+     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnFor (milliseconds) {
+    turnOnFor (milliseconds, resetState = true) {
         if (this.power === 0) return;
 
         milliseconds = Math.max(0, milliseconds);
-        this.turnOn();
+        if (resetState) this.status = BoostMotorState.ON_FOR_TIME;
+        this._turnOn();
         this._setNewTimeout(this.turnOff, milliseconds);
     }
 
@@ -475,10 +503,11 @@ class BoostMotor {
      * Turn this motor on for a specific rotation in degrees.
      * @param {number} degrees - run the motor for this amount of degrees.
      * @param {number} direction - rotate in this direction
+     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnForDegrees (degrees, direction) {
+    turnOnForDegrees (degrees, direction, resetState = true) {
         if (this.power === 0) {
-            this.pendingPromiseFunction();
+            this._clearRotationState();
             return;
         }
         
@@ -496,8 +525,8 @@ class BoostMotor {
                 BoostMotorProfile.DO_NOT_USE
             ]
         );
-
-        this._pendingPositionOrigin = this.position;
+        
+        if (resetState) this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
     }
@@ -520,6 +549,7 @@ class BoostMotor {
             ]
         );
 
+        this.status = BoostMotorState.OFF;
         this._parent.send(BoostBLE.characteristic, cmd, useLimiter);
     }
 
@@ -555,6 +585,19 @@ class BoostMotor {
         this._pendingTimeoutId = timeoutID;
         this._pendingTimeoutStartTime = Date.now();
         this._pendingTimeoutDelay = delay;
+    }
+
+    /**
+     * Clear the motor states related to rotation-based commands, if any.
+     * Safe to call even when there is no pending promise function.
+     * @private
+     */
+    _clearRotationState () {
+        if (this._pendingPromiseFunction !== null) {
+            this._pendingPromiseFunction();
+            this._pendingPromiseFunction = null;
+        }
+        this._pendingPositionDestination = null;
     }
 }
 
@@ -953,13 +996,13 @@ class Boost {
             const feedback = data[4];
             const motor = this.motor(portID);
             if (motor) {
-                motor._status = feedback;
                 // Makes sure that commands resolve both when they actually complete and when they fail
                 const isBusy = feedback & BoostPortFeedback.IN_PROGRESS;
                 const commandCompleted = feedback & (BoostPortFeedback.COMPLETED ^ BoostPortFeedback.DISCARDED);
-                if (!isBusy && commandCompleted && motor.pendingPromiseFunction) {
-                    motor.pendingPromiseFunction();
-                    motor.pendingPromiseFunction = null;
+                if (!isBusy && commandCompleted) {
+                    if (motor.status === BoostMotorState.ON_FOR_ROTATION) {
+                        motor.status = BoostMotorState.OFF;
+                    }
                 }
             }
             break;
@@ -1618,9 +1661,7 @@ class Scratch3BoostBlocks {
         return new Promise(resolve => {
             this._forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
-                if (motor) {
-                    motor.turnOnFor(durationMS);
-                }
+                if (motor) motor.turnOnFor(durationMS);
             });
 
             // Run for some time even when no motor is connected
@@ -1654,14 +1695,11 @@ class Scratch3BoostBlocks {
         const promises = motors.map(portID => {
             const motor = this._peripheral.motor(portID);
             if (motor) {
-                if (motor.pendingPromiseFunction) {
-                    // If there's already a promise for this motor it must be resolved to avoid hanging blocks.
-                    motor.pendingPromiseFunction();
-                    motor.pendingPromiseFunction = null;
-                }
+                // to avoid a hanging block if power is 0, return an immediately resolving promise.
+                if (motor.power === 0) return Promise.resolve();
                 return new Promise(resolve => {
-                    motor.pendingPromiseFunction = resolve;
                     motor.turnOnForDegrees(degrees, sign);
+                    motor.pendingPromiseFunction = resolve;
                 });
             }
             return null;
@@ -1683,9 +1721,7 @@ class Scratch3BoostBlocks {
         // TODO: cast args.MOTOR_ID?
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOn();
-            }
+            if (motor) motor.turnOnForever();
         });
 
         return new Promise(resolve => {
@@ -1705,9 +1741,7 @@ class Scratch3BoostBlocks {
         // TODO: cast args.MOTOR_ID?
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOff();
-            }
+            if (motor) motor.turnOff();
         });
 
         return new Promise(resolve => {
@@ -1729,15 +1763,18 @@ class Scratch3BoostBlocks {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                if (motor.isOn) {
-                    if (motor.pendingTimeoutDelay) {
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else if (motor.pendingPromiseFunction) {
-                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p));
-                    } else {
-                        motor.turnOn();
-                    }
+                switch (motor.status) {
+                case BoostMotorState.ON_FOREVER:
+                    motor.turnOnForever(false);
+                    break;
+                case BoostMotorState.ON_FOR_TIME:
+                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                    break;
+                case BoostMotorState.ON_FOR_ROTATION: {
+                    const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
+                    motor.turnOnForDegrees(p, Math.sign(p));
+                    break;
+                }
                 }
             }
         });
@@ -1770,14 +1807,19 @@ class Scratch3BoostBlocks {
                     break;
                 }
                 // keep the motor on if it's running, and update the pending timeout if needed
-                if (motor.isOn) {
-                    if (motor.pendingTimeoutDelay) {
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
-                    } else if (motor.pendingPromiseFunction) {
+                if (motor) {
+                    switch (motor.status) {
+                    case BoostMotorState.ON_FOREVER:
+                        motor.turnOnForever(false);
+                        break;
+                    case BoostMotorState.ON_FOR_TIME:
+                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                        break;
+                    case BoostMotorState.ON_FOR_ROTATION: {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p));
-                    } else {
-                        motor.turnOn();
+                        motor.turnOnForDegrees(p, Math.sign(p), false);
+                        break;
+                    }
                     }
                 }
             }
