@@ -1296,7 +1296,7 @@ class Scratch3BoostBlocks {
                     opcode: 'whenColor',
                     text: formatMessage({
                         id: 'boost.whenColor',
-                        default: 'when [COLOR] color seen',
+                        default: 'when [COLOR] brick seen',
                         description: 'check for when color'
                     }),
                     blockType: BlockType.HAT,
