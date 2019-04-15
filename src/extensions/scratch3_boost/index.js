@@ -1933,45 +1933,36 @@ class Scratch3BoostBlocks {
     }
 
     /**
-     * Test whether the vision sensor is detecting a certain color.
+     * Edge-triggering hat function, for when the vision sensor is detecting
+     * a certain color.
      * @param {object} args - the block's arguments.
      * @return {boolean} - true when the color sensor senses the specified color.
      */
     whenColor (args) {
-        return this._isColor(args.COLOR);
+        if (args.COLOR === COLOR_ID_ANY) {
+            // For "any" color, return true if the color is not "none", and
+            // the color is different from the previous color detected. This
+            // allows the hat to trigger when the color changes from one color
+            // to another.
+            return this._peripheral.color !== COLOR_ID_NONE &&
+                this._peripheral.color !== this._peripheral.previousColor;
+        }
+
+        return args.COLOR === this._peripheral.color;
     }
 
     /**
-     * Test whether the vision sensor is detecting a certain color.
+     * A boolean reporter function, for whether the vision sensor is detecting
+     * a certain color.
      * @param {object} args - the block's arguments.
      * @return {boolean} - true when the color sensor senses the specified color.
      */
     seeingColor (args) {
-        switch (args.COLOR) {
-        case COLOR_ID_ANY:
+        if (args.COLOR === COLOR_ID_ANY) {
             return this._peripheral.color !== COLOR_ID_NONE;
-        default:
-            return args.COLOR === this._peripheral.color;
         }
-    }
 
-    /**
-     * Test whether the vision sensor is detecting a certain color.
-     * @param {string} colorId - the id of the color to test.
-     * @return {boolean} - true when the color sensor senses the specified color.
-     * @private
-     */
-    _isColor (colorId) {
-        switch (colorId) {
-        case COLOR_ID_ANY:
-            if (this._peripheral.color !== COLOR_ID_NONE &&
-                this._peripheral.color !== this._peripheral.previousColor) {
-                return true;
-            }
-            return false;
-        default:
-            return colorId === this._peripheral.color;
-        }
+        return args.COLOR === this._peripheral.color;
     }
 
     /**
