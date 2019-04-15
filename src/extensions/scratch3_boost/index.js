@@ -1309,6 +1309,22 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
+                    opcode: 'seeingColor',
+                    text: formatMessage({
+                        id: 'boost.seeingColor',
+                        default: 'seeing [COLOR] brick?',
+                        description: 'is the color sensor seeing a certain color?'
+                    }),
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        COLOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'COLOR',
+                            defaultValue: COLOR_ID_ANY
+                        }
+                    }
+                },
+                {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'boost.whenTilted',
@@ -1923,6 +1939,20 @@ class Scratch3BoostBlocks {
      */
     whenColor (args) {
         return this._isColor(args.COLOR);
+    }
+
+    /**
+     * Test whether the vision sensor is detecting a certain color.
+     * @param {object} args - the block's arguments.
+     * @return {boolean} - true when the color sensor senses the specified color.
+     */
+    seeingColor (args) {
+        switch (args.COLOR) {
+        case COLOR_ID_ANY:
+            return this._peripheral.color !== COLOR_ID_NONE;
+        default:
+            return args.COLOR === this._peripheral.color;
+        }
     }
 
     /**
