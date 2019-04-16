@@ -101,30 +101,34 @@ const BoostPort = {
 };
 
 /**
- * Ids for each color sensed by the Boost Vision Sensor
+ * Ids for each color sensor value used by the extension.
+ * @readonly
+ * @enum {string}
  */
-const COLOR_ID_ANY = 'any';
-const COLOR_ID_NONE = 'none';
-const COLOR_ID_RED = 'red';
-const COLOR_ID_BLUE = 'blue';
-const COLOR_ID_GREEN = 'green';
-const COLOR_ID_YELLOW = 'yellow';
-const COLOR_ID_WHITE = 'white';
-const COLOR_ID_BLACK = 'black';
+const BoostColor = {
+    ANY: 'any',
+    NONE: 'none',
+    RED: 'red',
+    BLUE: 'blue',
+    GREEN: 'green',
+    YELLOW: 'yellow',
+    WHITE: 'white',
+    BLACK: 'black'
+};
 
 /**
- * Object to look up a color ID by color index
+ * Enum for indices for each color sensed by the Boost vision sensor.
  * @readonly
  * @enum {number}
  */
-const BoostColorIdByIndex = {
-    255: COLOR_ID_NONE,
-    9: COLOR_ID_RED,
-    3: COLOR_ID_BLUE,
-    5: COLOR_ID_GREEN,
-    7: COLOR_ID_YELLOW,
-    10: COLOR_ID_WHITE,
-    0: COLOR_ID_BLACK
+const BoostColorIndex = {
+    [BoostColor.NONE]: 255,
+    [BoostColor.RED]: 9,
+    [BoostColor.BLUE]: 3,
+    [BoostColor.GREEN]: 5,
+    [BoostColor.YELLOW]: 7,
+    [BoostColor.WHITE]: 10,
+    [BoostColor.BLACK]: 0
 };
 
 /**
@@ -612,8 +616,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: COLOR_ID_NONE,
-            previousColor: COLOR_ID_NONE
+            color: BoostColor.NONE,
+            previousColor: BoostColor.NONE
         };
 
         /**
@@ -678,6 +682,16 @@ class Boost {
      */
     get previousColor () {
         return this._sensors.previousColor;
+    }
+
+    /**
+     * Look up the color id for an index received from the vision sensor.
+     * @param {number} index - the color index to look up.
+     * @return {BoostColor} the color id for this index.
+     */
+    boostColorForIndex (index) {
+        const colorForIndex = Object.keys(BoostColorIndex).find(key => BoostColorIndex[key] === index);
+        return colorForIndex || BoostColor.NONE;
     }
 
     /**
@@ -789,8 +803,8 @@ class Boost {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            color: COLOR_ID_NONE,
-            previousColor: COLOR_ID_NONE
+            color: BoostColor.NONE,
+            previousColor: BoostColor.NONE
         };
 
         if (this._ble) {
@@ -948,16 +962,13 @@ class Boost {
                 if (this._colorSamples.length > BoostColorSampleSize) {
                     this._colorSamples.pop();
                     if (this._colorSamples.every((v, i, arr) => v === arr[0])) {
-                        const firstSample = this._colorSamples[0];
-                        if (BoostColorIdByIndex[firstSample]) {
-                            this._sensors.previousColor = this._sensors.color;
-                            this._sensors.color = BoostColorIdByIndex[firstSample];
-                        }
+                        this._sensors.previousColor = this._sensors.color;
+                        this._sensors.color = this.boostColorForIndex(this._colorSamples[0]);
                     } else {
-                        this._sensors.color = COLOR_ID_NONE;
+                        this._sensors.color = BoostColor.NONE;
                     }
                 } else {
-                    this._sensors.color = COLOR_ID_NONE;
+                    this._sensors.color = BoostColor.NONE;
                 }
                 break;
             case BoostIO.MOTOREXT:
@@ -1074,7 +1085,7 @@ class Boost {
             this._sensors.tiltX = this._sensors.tiltY = 0;
         }
         if (type === BoostIO.COLOR) {
-            this._sensors.color = COLOR_ID_NONE;
+            this._sensors.color = BoostColor.NONE;
         }
         this._ports[portID] = 'none';
         this._motors[portID] = null;
@@ -1304,7 +1315,7 @@ class Scratch3BoostBlocks {
                         COLOR: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR',
-                            defaultValue: COLOR_ID_ANY
+                            defaultValue: BoostColor.ANY
                         }
                     }
                 },
@@ -1320,7 +1331,7 @@ class Scratch3BoostBlocks {
                         COLOR: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR',
-                            defaultValue: COLOR_ID_ANY
+                            defaultValue: BoostColor.ANY
                         }
                     }
                 },
@@ -1563,7 +1574,7 @@ class Scratch3BoostBlocks {
                             default: 'red',
                             description: 'the color red'
                         }),
-                        value: COLOR_ID_RED
+                        value: BoostColor.RED
                     },
                     {
                         text: formatMessage({
@@ -1571,7 +1582,7 @@ class Scratch3BoostBlocks {
                             default: 'blue',
                             description: 'the color blue'
                         }),
-                        value: COLOR_ID_BLUE
+                        value: BoostColor.BLUE
                     },
                     {
                         text: formatMessage({
@@ -1579,7 +1590,7 @@ class Scratch3BoostBlocks {
                             default: 'green',
                             description: 'the color green'
                         }),
-                        value: COLOR_ID_GREEN
+                        value: BoostColor.GREEN
                     },
                     {
                         text: formatMessage({
@@ -1587,7 +1598,7 @@ class Scratch3BoostBlocks {
                             default: 'yellow',
                             description: 'the color yellow'
                         }),
-                        value: COLOR_ID_YELLOW
+                        value: BoostColor.YELLOW
                     },
                     {
                         text: formatMessage({
@@ -1595,7 +1606,7 @@ class Scratch3BoostBlocks {
                             default: 'white',
                             desription: 'the color white'
                         }),
-                        value: COLOR_ID_WHITE
+                        value: BoostColor.WHITE
                     },
                     {
                         text: formatMessage({
@@ -1603,7 +1614,7 @@ class Scratch3BoostBlocks {
                             default: 'black',
                             description: 'the color black'
                         }),
-                        value: COLOR_ID_BLACK
+                        value: BoostColor.BLACK
                     },
                     {
                         text: formatMessage({
@@ -1611,7 +1622,7 @@ class Scratch3BoostBlocks {
                             default: 'any color',
                             description: 'any color'
                         }),
-                        value: COLOR_ID_ANY
+                        value: BoostColor.ANY
                     }
                 ]
             }
@@ -1939,12 +1950,12 @@ class Scratch3BoostBlocks {
      * @return {boolean} - true when the color sensor senses the specified color.
      */
     whenColor (args) {
-        if (args.COLOR === COLOR_ID_ANY) {
+        if (args.COLOR === BoostColor.ANY) {
             // For "any" color, return true if the color is not "none", and
             // the color is different from the previous color detected. This
             // allows the hat to trigger when the color changes from one color
             // to another.
-            return this._peripheral.color !== COLOR_ID_NONE &&
+            return this._peripheral.color !== BoostColor.NONE &&
                 this._peripheral.color !== this._peripheral.previousColor;
         }
 
@@ -1958,8 +1969,8 @@ class Scratch3BoostBlocks {
      * @return {boolean} - true when the color sensor senses the specified color.
      */
     seeingColor (args) {
-        if (args.COLOR === COLOR_ID_ANY) {
-            return this._peripheral.color !== COLOR_ID_NONE;
+        if (args.COLOR === BoostColor.ANY) {
+            return this._peripheral.color !== BoostColor.NONE;
         }
 
         return args.COLOR === this._peripheral.color;
