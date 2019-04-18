@@ -1,6 +1,5 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
-const escapeHtml = require('escape-html');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
@@ -15,6 +14,7 @@ const log = require('../util/log');
 const maybeFormatMessage = require('../util/maybe-format-message');
 const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
+const xmlEscape = require('../util/xml-escape');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -747,7 +747,7 @@ class Runtime extends EventEmitter {
      * @private
      */
     _makeExtensionMenuId (menuName, extensionId) {
-        return `${extensionId}_menu_${escapeHtml(menuName)}`;
+        return `${extensionId}_menu_${xmlEscape(menuName)}`;
     }
 
     /**
@@ -1207,7 +1207,7 @@ class Runtime extends EventEmitter {
 
         const defaultValue =
             typeof argInfo.defaultValue === 'undefined' ? '' :
-                escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+                xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
 
         if (argTypeInfo.check) {
             argJSON.check = argTypeInfo.check;
