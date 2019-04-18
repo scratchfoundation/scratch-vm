@@ -160,7 +160,8 @@ const testLoop = function (t, loop) {
 test('registerExtensionPrimitives', t => {
     const runtime = new Runtime();
 
-    runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
+    runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
+        const blocksInfo = categoryInfo.blocks;
         t.equal(blocksInfo.length, testExtensionInfo.blocks.length);
 
         blocksInfo.forEach(blockInfo => {

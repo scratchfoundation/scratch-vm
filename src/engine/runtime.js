@@ -787,11 +787,9 @@ class Runtime extends EventEmitter {
 
         this._fillExtensionCategory(categoryInfo, extensionInfo);
 
-        const fieldTypeDefinitionsForScratch = [];
         for (const fieldTypeName in categoryInfo.customFieldTypes) {
             if (extensionInfo.customFieldTypes.hasOwnProperty(fieldTypeName)) {
                 const fieldTypeInfo = categoryInfo.customFieldTypes[fieldTypeName];
-                fieldTypeDefinitionsForScratch.push(fieldTypeInfo.scratchBlocksDefinition);
 
                 // Emit events for custom field types from extension
                 this.emit(Runtime.EXTENSION_FIELD_ADDED, {
@@ -801,9 +799,7 @@ class Runtime extends EventEmitter {
             }
         }
 
-        const allBlocks = fieldTypeDefinitionsForScratch.concat(categoryInfo.blocks).concat(categoryInfo.menus);
-
-        this.emit(Runtime.EXTENSION_ADDED, allBlocks);
+        this.emit(Runtime.EXTENSION_ADDED, categoryInfo);
     }
 
     /**
@@ -812,18 +808,16 @@ class Runtime extends EventEmitter {
      * @private
      */
     _refreshExtensionPrimitives (extensionInfo) {
-        let extensionBlocks = [];
         for (const categoryInfo of this._blockInfo) {
             if (extensionInfo.id === categoryInfo.id) {
                 categoryInfo.name = maybeFormatMessage(extensionInfo.name);
                 categoryInfo.blocks = [];
                 categoryInfo.menus = [];
                 this._fillExtensionCategory(categoryInfo, extensionInfo);
-                extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
+
+                this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
             }
         }
-
-        this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
     }
 
     /**
