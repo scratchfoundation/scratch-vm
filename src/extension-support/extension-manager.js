@@ -390,25 +390,39 @@ class ExtensionManager {
                 log.warn(`Ignoring opcode "${blockInfo.opcode}" for button with text: ${blockInfo.text}`);
             }
             break;
-        default:
-            if (blockInfo.opcode) {
-                const funcName = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
-
-                // Avoid promise latency unless necessary
-                if (dispatch._isRemoteService(serviceName)) {
-                    blockInfo.func = (args, util) => dispatch.call(serviceName, funcName, args, util, blockInfo);
-                } else {
-                    const serviceObject = dispatch.services[serviceName];
-                    if (!serviceObject[funcName]) {
-                        // The function might show up later as a dynamic property of the service object
-                        log.warn(`Could not find extension block function called ${funcName}`);
-                    }
-                    blockInfo.func = (args, util) => serviceObject[funcName](args, util, blockInfo);
-                }
-            } else {
+        default: {
+            if (!blockInfo.opcode) {
                 throw new Error('Missing opcode for block');
             }
+
+            const funcName = blockInfo.func ? this._sanitizeID(blockInfo.func) : blockInfo.opcode;
+
+            const getBlockInfo = blockInfo.isDynamic ?
+                args => args && args.mutation && args.mutation.blockInfo :
+                () => blockInfo;
+            const callBlockFunc = (() => {
+                if (dispatch._isRemoteService(serviceName)) {
+                    return (args, util, realBlockInfo) =>
+                        dispatch.call(serviceName, funcName, args, util, realBlockInfo);
+                }
+
+                // avoid promise latency if we can call direct
+                const serviceObject = dispatch.services[serviceName];
+                if (!serviceObject[funcName]) {
+                    // The function might show up later as a dynamic property of the service object
+                    log.warn(`Could not find extension block function called ${funcName}`);
+                }
+                return (args, util, realBlockInfo) =>
+                    serviceObject[funcName](args, util, realBlockInfo);
+            })();
+
+            blockInfo.func = (args, util) => {
+                const realBlockInfo = getBlockInfo(args);
+                // TODO: filter args using the keys of realBlockInfo.arguments? maybe only if sandboxed?
+                return callBlockFunc(args, util, realBlockInfo);
+            };
             break;
+        }
         }
 
         return blockInfo;
