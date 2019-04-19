@@ -13,6 +13,10 @@ const mutatorTagToObject = function (dom) {
     for (const prop in dom.attribs) {
         if (prop === 'xmlns') continue;
         obj[prop] = decodeHtml(dom.attribs[prop]);
+        if (prop === 'blockinfo') {
+            obj.blockInfo = JSON.parse(obj.blockinfo);
+            delete obj.blockinfo;
+        }
     }
     for (let i = 0; i < dom.children.length; i++) {
         obj.children.push(
