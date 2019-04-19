@@ -14,7 +14,9 @@ dispatch.workerClass = Worker;
 
 class TestInternalExtension {
     constructor () {
-        this.status = {};
+        this.status = {
+            goLog: []
+        };
         this.status.constructorCalled = true;
     }
 
@@ -25,7 +27,14 @@ class TestInternalExtension {
             name: 'Test Internal Extension',
             blocks: [
                 {
-                    opcode: 'go'
+                    isDynamic: true,
+                    opcode: 'go',
+                    text: 'thing 1'
+                },
+                {
+                    isDynamic: true,
+                    opcode: 'go',
+                    text: 'thing 2'
                 }
             ],
             menus: {
@@ -36,8 +45,7 @@ class TestInternalExtension {
     }
 
     go (args, util, blockInfo) {
-        this.status.goCalled = true;
-        return blockInfo;
+        this.status.goLog.push(blockInfo.text);
     }
 
     _buildAMenu () {
@@ -61,25 +69,20 @@ test('internal extension', t => {
     vm.extensionManager._registerInternalExtension(extension);
     t.ok(extension.status.getInfoCalled);
 
+    t.deepEqual(extension.status.goLog, []);
+
     const func = vm.runtime.getOpcodeFunction('testInternalExtension_go');
     t.type(func, 'function');
+    t.throws(func); // should fail to get dynamic blockInfo
 
-    t.notOk(extension.status.goCalled);
-    const goBlockInfo = func();
-    t.ok(extension.status.goCalled);
+    t.deepEqual(extension.status.goLog, []);
 
-    // The 'go' block returns its own blockInfo. Make sure it matches the expected info.
-    // Note that the extension parser fills in missing fields so there are more fields here than in `getInfo`.
-    const expectedBlockInfo = {
-        arguments: {},
-        blockAllThreads: false,
-        blockType: BlockType.COMMAND,
-        func: goBlockInfo.func, // Cheat since we don't have a good way to ensure we generate the same function
-        opcode: 'go',
-        terminal: false,
-        text: 'go'
-    };
-    t.deepEqual(goBlockInfo, expectedBlockInfo);
+    // simulate `defineDynamicBlock`
+    const extensionInfo = extension.getInfo();
+    func({mutation: {blockInfo: extensionInfo.blocks[0]}});
+    func({mutation: {blockInfo: extensionInfo.blocks[1]}});
+
+    t.deepEqual(extension.status.goLog, ['thing 1', 'thing 2']);
 
     // There should be 2 menus - one is an array, one is the function to call.
     t.equal(vm.runtime._blockInfo[0].menus.length, 2);
