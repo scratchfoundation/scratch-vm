@@ -177,6 +177,12 @@ class Sequencer {
         if (!currentBlockId) {
             // A "null block" - empty branch.
             thread.popStack();
+
+            // Did the null follow a hat block?
+            if (thread.stack.length === 0) {
+                thread.status = Thread.STATUS_DONE;
+                return;
+            }
         }
         // Save the current block ID to notice if we did control flow.
         while ((currentBlockId = thread.peekStack())) {
