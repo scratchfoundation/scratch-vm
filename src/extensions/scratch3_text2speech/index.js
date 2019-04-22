@@ -78,6 +78,7 @@ const FEMALE_GIANT_RATE = 0.79; // -4 semitones
 /**
  * Language ids. The value for each language id is a valid Scratch locale.
  */
+const ARABIC_ID = 'ar';
 const CHINESE_ID = 'zh-cn';
 const DANISH_ID = 'da';
 const DUTCH_ID = 'nl';
@@ -211,6 +212,12 @@ class Scratch3Text2SpeechBlocks {
      */
     get LANGUAGE_INFO () {
         return {
+            [ARABIC_ID]: {
+                name: 'Arabic',
+                locales: ['ar'],
+                speechSynthLocale: 'arb',
+                singleGender: true
+            },
             [CHINESE_ID]: {
                 name: 'Chinese (Mandarin)',
                 locales: ['zh-cn', 'zh-tw'],
