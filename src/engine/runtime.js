@@ -1127,7 +1127,9 @@ class Runtime extends EventEmitter {
             ++outLineNum;
         }
 
-        const blockXML = `<block type="${extendedOpcode}">${context.inputList.join('')}</block>`;
+        const mutation = blockInfo.isDynamic ? `<mutation blockInfo="${xmlEscape(JSON.stringify(blockInfo))}"/>` : '';
+        const inputs = context.inputList.join('');
+        const blockXML = `<block type="${extendedOpcode}">${mutation}${inputs}</block>`;
 
         return {
             info: context.blockInfo,
