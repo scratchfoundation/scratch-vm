@@ -1243,11 +1243,12 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * @returns {string} scratch-blocks XML description for all dynamic blocks, wrapped in <category> elements.
+     * @returns {Array.<object>} scratch-blocks XML for each category of extension blocks, in category order.
+     * @property {string} id - the category / extension ID
+     * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
     getBlocksXML () {
-        const xmlParts = [];
-        for (const categoryInfo of this._blockInfo) {
+        return this._blockInfo.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
             const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
             const colorXML = `colour="${color1}" secondaryColour="${color2}"`;
@@ -1268,12 +1269,12 @@ class Runtime extends EventEmitter {
                 statusButtonXML = 'showStatusButton="true"';
             }
 
-            xmlParts.push(`<category name="${name}" id="${categoryInfo.id}"
-                ${statusButtonXML} ${colorXML} ${menuIconXML}>`);
-            xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
-            xmlParts.push('</category>');
-        }
-        return xmlParts.join('\n');
+            return {
+                id: categoryInfo.id,
+                xml: `<category name="${name}" id="${categoryInfo.id}" ${statusButtonXML} ${colorXML} ${menuIconXML}>${
+                    paletteBlocks.map(block => block.xml).join('')}</category>`
+            };
+        });
     }
 
     /**
