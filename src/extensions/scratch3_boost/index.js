@@ -1804,7 +1804,11 @@ class Scratch3BoostBlocks {
                 }
             }
         });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BoostBLE.sendInterval);
+        });
     }
 
     /**
@@ -1852,7 +1856,11 @@ class Scratch3BoostBlocks {
                 }
             }
         });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BoostBLE.sendInterval);
+        });
     }
 
     /**
