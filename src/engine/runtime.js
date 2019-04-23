@@ -1003,8 +1003,7 @@ class Runtime extends EventEmitter {
             category: categoryInfo.name,
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
-            colourTertiary: categoryInfo.color3,
-            extensions: ['scratch_extension']
+            colourTertiary: categoryInfo.color3
         };
         const context = {
             // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -1024,6 +1023,7 @@ class Runtime extends EventEmitter {
         const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
 
         if (iconURI) {
+            blockJSON.extensions = ['scratch_extension'];
             blockJSON.message0 = '%1 %2';
             const iconJSON = {
                 type: 'field_image',
