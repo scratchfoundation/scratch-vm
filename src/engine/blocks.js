@@ -1108,8 +1108,14 @@ class Blocks {
         let mutationString = `<${mutation.tagName}`;
         for (const prop in mutation) {
             if (prop === 'children' || prop === 'tagName') continue;
-            const mutationValue = (typeof mutation[prop] === 'string') ?
+            let mutationValue = (typeof mutation[prop] === 'string') ?
                 xmlEscape(mutation[prop]) : mutation[prop];
+
+            // Handle dynamic extension blocks
+            if (prop === 'blockInfo') {
+                mutationValue = xmlEscape(JSON.stringify(mutation[prop]));
+            }
+
             mutationString += ` ${prop}="${mutationValue}"`;
         }
         mutationString += '>';
