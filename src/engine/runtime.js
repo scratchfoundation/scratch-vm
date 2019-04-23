@@ -40,6 +40,8 @@ const defaultBlockPackages = {
     scratch3_procedures: require('../blocks/scratch3_procedures')
 };
 
+const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
+
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
  * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
@@ -775,13 +777,20 @@ class Runtime extends EventEmitter {
             showStatusButton: extensionInfo.showStatusButton,
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
-            color1: extensionInfo.colour || '#0FBD8C',
-            color2: extensionInfo.colourSecondary || '#0DA57A',
-            color3: extensionInfo.colourTertiary || '#0B8E69',
             customFieldTypes: {},
             blocks: [],
             menus: []
         };
+
+        if (extensionInfo.color1) {
+            categoryInfo.color1 = extensionInfo.color1;
+            categoryInfo.color2 = extensionInfo.color2;
+            categoryInfo.color3 = extensionInfo.color3;
+        } else {
+            categoryInfo.color1 = defaultExtensionColors[0];
+            categoryInfo.color2 = defaultExtensionColors[1];
+            categoryInfo.color3 = defaultExtensionColors[2];
+        }
 
         this._blockInfo.push(categoryInfo);
 
