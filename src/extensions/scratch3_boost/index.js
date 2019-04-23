@@ -496,7 +496,10 @@ class BoostMotor {
      * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
     turnOnForever (resetState = true){
-        if (this.power === 0) return;
+        if (this.power === 0) {
+            this.turnOff(false);
+        }
+        
         if (resetState) this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
     }
@@ -552,7 +555,7 @@ class BoostMotor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
-        if (this.power === 0) return;
+        // if (this.power === 0) return;
 
         const cmd = this._parent.generateOutputCommand(
             this._index,
