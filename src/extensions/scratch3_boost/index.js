@@ -1888,7 +1888,11 @@ class Scratch3BoostBlocks {
             return false;
         }
         if (portID && this._peripheral.motor(portID)) {
-            return MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
+            let val = MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
+            if (portID === BoostPort.A) {
+                val *= -1;
+            }
+            return val;
         }
         return 0;
     }
