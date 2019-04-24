@@ -1016,7 +1016,10 @@ class Boost {
                 break;
             case BoostIO.MOTOREXT:
             case BoostIO.MOTORINT:
-                this.motor(portID).position = int32ArrayToNumber(data.slice(4, 8));
+                // The motor position in port A is reversed by design, so we need
+                // to reverse it here so that all motors match
+                this.motor(portID).position = ((portID === BoostPort.A) ? -1 : 1) *
+                    int32ArrayToNumber(data.slice(4, 8));
                 break;
             case BoostIO.CURRENT:
             case BoostIO.VOLTAGE:
@@ -1888,13 +1891,8 @@ class Scratch3BoostBlocks {
             return false;
         }
         if (portID && this._peripheral.motor(portID)) {
-            let val = MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
-            if (portID === BoostPort.A) {
-                val *= -1;
-            }
-            return val;
+            return MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
         }
-        return 0;
     }
 
     /**
