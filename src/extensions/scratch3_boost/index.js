@@ -1893,6 +1893,7 @@ class Scratch3BoostBlocks {
         if (portID && this._peripheral.motor(portID)) {
             return MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
         }
+        return 0;
     }
 
     /**
