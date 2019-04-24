@@ -784,10 +784,7 @@ class Runtime extends EventEmitter {
             name: maybeFormatMessage(extensionInfo.name),
             showStatusButton: extensionInfo.showStatusButton,
             blockIconURI: extensionInfo.blockIconURI,
-            menuIconURI: extensionInfo.menuIconURI,
-            customFieldTypes: {},
-            blocks: [],
-            menus: []
+            menuIconURI: extensionInfo.menuIconURI
         };
 
         if (extensionInfo.color1) {
@@ -828,8 +825,6 @@ class Runtime extends EventEmitter {
         for (const categoryInfo of this._blockInfo) {
             if (extensionInfo.id === categoryInfo.id) {
                 categoryInfo.name = maybeFormatMessage(extensionInfo.name);
-                categoryInfo.blocks = [];
-                categoryInfo.menus = [];
                 this._fillExtensionCategory(categoryInfo, extensionInfo);
 
                 this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
@@ -838,18 +833,24 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     *  Read extension information, convert menus, blocks and custom field types
+     * Read extension information, convert menus, blocks and custom field types
      * and store the results in the provided category object.
      * @param {CategoryInfo} categoryInfo - the category to be filled
      * @param {ExtensionMetadata} extensionInfo - the extension metadata to read
      * @private
      */
     _fillExtensionCategory (categoryInfo, extensionInfo) {
+        categoryInfo.blocks = [];
+        categoryInfo.customFieldTypes = {};
+        categoryInfo.menus = [];
+        categoryInfo.menuInfo = {};
+
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
-                const menuItems = extensionInfo.menus[menuName];
-                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
+                const menuValue = extensionInfo.menus[menuName];
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuValue, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
+                categoryInfo.menuInfo[menuName] = menuValue;
             }
         }
         for (const fieldTypeName in extensionInfo.customFieldTypes) {
@@ -891,19 +892,21 @@ class Runtime extends EventEmitter {
     /**
      * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
      * @param {string} menuName - the name of the menu
-     * @param {array} menuItems - the list of items for this menu
+     * @param {object} menuInfo - a description of this menu and its items
+     * @property {*} items - an array of menu items or a function to retrieve such an array
+     * @property {boolean} [rejectReporters] - if true, prevent dropping reporters onto this menu
      * @param {CategoryInfo} categoryInfo - the category for this block
      * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
      * @private
      */
-    _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
+    _buildMenuForScratchBlocks (menuName, menuInfo, categoryInfo) {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-        let options = null;
-        if (typeof menuItems === 'function') {
-            options = menuItems;
+        let menuItems = null;
+        if (typeof menuInfo.items === 'function') {
+            menuItems = menuInfo.items;
         } else {
             const extensionMessageContext = this.makeMessageContextForTarget();
-            options = menuItems.map(item => {
+            menuItems = menuInfo.items.map(item => {
                 const formattedItem = maybeFormatMessage(item, extensionMessageContext);
                 switch (typeof formattedItem) {
                 case 'string':
@@ -924,12 +927,13 @@ class Runtime extends EventEmitter {
                 colour: categoryInfo.color1,
                 colourSecondary: categoryInfo.color2,
                 colourTertiary: categoryInfo.color3,
-                outputShape: ScratchBlocksConstants.OUTPUT_SHAPE_ROUND,
+                outputShape: menuInfo.rejectReporters ?
+                    ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE : ScratchBlocksConstants.OUTPUT_SHAPE_ROUND,
                 args0: [
                     {
                         type: 'field_dropdown',
                         name: menuName,
-                        options: options
+                        options: menuItems
                     }
                 ]
             }
@@ -1226,29 +1230,52 @@ class Runtime extends EventEmitter {
             argJSON.check = argTypeInfo.check;
         }
 
-        const shadowType = (argInfo.menu ?
-            this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id) :
-            argTypeInfo.shadowType);
-        const fieldType = argInfo.menu || argTypeInfo.fieldType;
+        let valueName;
+        let shadowType;
+        let fieldName;
+        if (argInfo.menu) {
+            const menuInfo = argInfo.menu && context.categoryInfo.menuInfo[argInfo.menu];
+            if (menuInfo.rejectReporters) {
+                argJSON.type = 'field_dropdown';
+                argJSON.options = menuInfo.items;
+                valueName = null;
+                shadowType = null;
+                fieldName = placeholder;
+            } else {
+                valueName = placeholder;
+                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                fieldName = argInfo.menu;
+            }
+        } else {
+            valueName = placeholder;
+            shadowType = argTypeInfo.shadowType;
+            fieldName = argTypeInfo.fieldType;
+        }
 
         // <value> is the ScratchBlocks name for a block input.
-        context.inputList.push(`<value name="${placeholder}">`);
+        if (valueName) {
+            context.inputList.push(`<value name="${placeholder}">`);
+        }
 
         // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
         // Boolean inputs don't need to specify a shadow in the XML.
         if (shadowType) {
             context.inputList.push(`<shadow type="${shadowType}">`);
+        }
 
-            // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
-            // text input and therefore don't need a field element.
-            if (fieldType) {
-                context.inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
-            }
+        // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+        // text input and therefore don't need a field element.
+        if (fieldName) {
+            context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
+        }
 
+        if (shadowType) {
             context.inputList.push('</shadow>');
         }
 
-        context.inputList.push('</value>');
+        if (valueName) {
+            context.inputList.push('</value>');
+        }
 
         const argsName = `args${context.outLineNum}`;
         const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);

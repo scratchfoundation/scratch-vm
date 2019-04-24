@@ -311,7 +311,16 @@ class SomeBlocks {
 
                 // Dynamic menu: returns an array as above.
                 // Called each time the menu is opened.
-                menuB: 'getItemsForMenuB'
+                menuB: 'getItemsForMenuB',
+
+                // The examples above are shorthand for setting only the `items` property in this full form:
+                menuC: {
+                    // This flag makes a "non-droppable" menu: the menu will not accept reporters.
+                    rejectReporters: true,
+
+                    // The `item` property may be an array or function name as in previous menu examples.
+                    items: [/*...*/] || 'getItemsForMenuC'
+                }
             },
 
             // Optional: translations (UNSTABLE - NOT YET SUPPORTED)
