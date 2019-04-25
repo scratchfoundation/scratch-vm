@@ -18,13 +18,7 @@ const defaultParams = Object.create(null);
  * @private
  */
 class _StackFrame {
-    constructor (warpMode, params) {
-        /**
-         * Whether this level of the stack is a loop.
-         * @type {boolean}
-         */
-        this.isLoop = false;
-
+    constructor (warpMode, params, endBlockId) {
         /**
          * Whether this level is in warp mode.  Is set by some legacy blocks and
          * "turbo mode"
@@ -45,6 +39,12 @@ class _StackFrame {
         this.executionContext = {};
 
         /**
+         * The block id the thread should step to if a block's next is null.
+         * @type {string}
+         */
+        this.endBlockId = endBlockId;
+
+        /**
          * Has this frame changed and need a reset?
          * @type {boolean}
          */
@@ -56,7 +56,6 @@ class _StackFrame {
      * @return {_StackFrame} this
      */
     reset () {
-        this.isLoop = false;
         this.executionContext = {};
         this.needReset = false;
 
@@ -67,7 +66,6 @@ class _StackFrame {
      * Reuse an active stack frame in the stack.
      */
     reuse () {
-        this.isLoop = false;
         this.executionContext = {};
         this.needReset = false;
     }
@@ -76,16 +74,19 @@ class _StackFrame {
      * Create or recycle a stack frame object.
      * @param {boolean} warpMode Enable warpMode on this frame.
      * @param {object} params Carry over parameters from the parent stack frame.
+     * @param {string} endBlockId Execute this block id when the stack would
+     *   otherwise be null.
      * @returns {_StackFrame} The clean stack frame with correct warpMode setting.
      */
-    static create (warpMode, params) {
+    static create (warpMode, params, endBlockId) {
         const stackFrame = _stackFrameFreeList.pop() || null;
         if (stackFrame !== null) {
             stackFrame.warpMode = warpMode;
             stackFrame.params = params;
+            stackFrame.endBlockId = endBlockId;
             return stackFrame;
         }
-        return new _StackFrame(warpMode, params);
+        return new _StackFrame(warpMode, params, endBlockId);
     }
 
     /**
@@ -252,8 +253,9 @@ class Thread {
     /**
      * Push stack and update stack frames appropriately.
      * @param {string} blockId Block ID to push to stack.
+     * @param {string} endBlockId BlocK ID to run after the last block.
      */
-    pushStack (blockId) {
+    pushStack (blockId, endBlockId) {
         this.stack.push(this.pointer);
         this.pointer = blockId;
 
@@ -261,7 +263,7 @@ class Thread {
         const warpMode = parent === null ? false : parent.warpMode;
         const params = parent === null ? defaultParams : parent.params;
         this.stackFrames.push(this.stackFrame);
-        this.stackFrame = _StackFrame.create(warpMode, params);
+        this.stackFrame = _StackFrame.create(warpMode, params, endBlockId || 'vm_end_of_thread');
     }
 
     /**

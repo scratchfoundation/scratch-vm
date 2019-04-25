@@ -104,43 +104,38 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
     }
 };
 
-const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, lastOperation) => {
+const handlePromise = (primitiveReportedValue, thread, blockCached) => {
     if (thread.status === Thread.STATUS_RUNNING) {
         // Primitive returned a promise; automatically yield thread.
         thread.status = Thread.STATUS_PROMISE_WAIT;
     }
+
     // Promise handlers
     primitiveReportedValue.then(resolvedValue => {
-        handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
-        // If it's a command block or a top level reporter in a stackClick.
-        if (lastOperation) {
-            let stackFrame;
-            let nextBlockId;
-            do {
-                // In the case that the promise is the last block in the current thread stack
-                // We need to pop out repeatedly until we find the next block.
-                const popped = thread.popStack();
-                if (popped === null) {
-                    return;
-                }
-                nextBlockId = thread.target.blocks.getNextBlock(popped);
-                if (nextBlockId !== null) {
-                    // A next block exists so break out this loop
-                    break;
-                }
-                // Investigate the next block and if not in a loop,
-                // then repeat and pop the next item off the stack frame
-                stackFrame = thread.peekStackFrame();
-            } while (stackFrame !== null && !stackFrame.isLoop);
-
-            thread.pushStack(nextBlockId);
-        }
+        thread.pushReportedValue(resolvedValue);
+        thread.status = Thread.STATUS_RUNNING;
+        thread.pushStack('vm_reenter_promise');
     }, rejectionReason => {
-        // Promise rejected: the primitive had some error.
-        // Log it and proceed.
+        // Promise rejected: the primitive had some error. Log it and proceed.
         log.warn('Primitive rejected promise: ', rejectionReason);
         thread.status = Thread.STATUS_RUNNING;
         thread.popStack();
+    });
+
+    // Store the already reported values. They will be thawed into the
+    // future versions of the same operations by block id. The reporting
+    // operation if it is promise waiting will set its parent value at
+    // that time.
+    thread.justReported = null;
+    const ops = blockCached._ops;
+    thread.reporting = blockCached.id;
+    thread.reported = ops.slice(0, ops.length - 1).map(reportedCached => {
+        const inputName = reportedCached._parentKey;
+        const reportedValues = reportedCached._parentValues;
+        return {
+            opCached: reportedCached.id,
+            inputValue: reportedValues[inputName]
+        };
     });
 };
 
@@ -384,7 +379,7 @@ const execute = function (sequencer, thread) {
     blockUtility.thread = thread;
 
     // Current block to execute is the one on the top of the stack.
-    const currentBlockId = thread.peekStack();
+    const currentBlockId = thread.peekStack() || thread.stackFrame.endBlockId;
 
     let blockContainer = thread.blockContainer;
     let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
@@ -509,33 +504,10 @@ const execute = function (sequencer, thread) {
         }
 
         // If it's a promise, wait until promise resolves.
-        if (isPromise(primitiveReportedValue)) {
-            handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
-
-            // Store the already reported values. They will be thawed into the
-            // future versions of the same operations by block id. The reporting
-            // operation if it is promise waiting will set its parent value at
-            // that time.
-            thread.justReported = null;
-            thread.reporting = ops[i].id;
-            thread.reported = ops.slice(0, i).map(reportedCached => {
-                const inputName = reportedCached._parentKey;
-                const reportedValues = reportedCached._parentValues;
-
-                if (inputName === 'BROADCAST_INPUT') {
-                    return {
-                        opCached: reportedCached.id,
-                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name
-                    };
-                }
-                return {
-                    opCached: reportedCached.id,
-                    inputValue: reportedValues[inputName]
-                };
-            });
-
-            // We are waiting for a promise. Stop running this set of operations
-            // and continue them later after thawing the reported values.
+        if (isPromise(reportedValue)) {
+            // We are waiting for a promise. Set the status to a non-running
+            // state and store the arg values for the executed operations.
+            handlePromise(reportedValue, thread, opCached);
             break;
         } else if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {

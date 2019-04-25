@@ -1,6 +1,7 @@
 const Timer = require('../util/timer');
 const Thread = require('./thread');
 const execute = require('./execute.js');
+const Blocks = require('./blocks.js');
 
 /**
  * Profiler frame name for stepping a single thread.
@@ -51,6 +52,78 @@ class Sequencer {
          * @type {!Runtime}
          */
         this.runtime = runtime;
+
+        this.blocks = new Blocks(runtime, true);
+
+        this.blocks.createBlock({
+            id: 'vm_end_of_thread',
+            opcode: 'vm_end_of_thread',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_end_of_procedure',
+            opcode: 'vm_end_of_procedure',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_end_of_loop_branch',
+            opcode: 'vm_end_of_loop_branch',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_end_of_branch',
+            opcode: 'vm_end_of_branch',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_reenter_promise',
+            opcode: 'vm_reenter_promise',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_report_stack_click',
+            opcode: 'vm_report_stack_click',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
+
+        this.blocks.createBlock({
+            id: 'vm_report_monitor',
+            opcode: 'vm_report_monitor',
+            fields: {},
+            inputs: {},
+            shadow: false,
+            parent: null,
+            next: null
+        });
     }
 
     /**
@@ -173,25 +246,30 @@ class Sequencer {
      * @param {!Thread} thread Thread object to step.
      */
     stepThread (thread) {
-        let currentBlockId = thread.peekStack();
-        if (!currentBlockId) {
-            // A "null block" - empty branch.
-            thread.popStack();
+        if (thread.target === null) {
+            this.retireThread(thread);
+            return;
         }
+
+        if (thread.peekStackFrame().warpMode && !thread.warpTimer) {
+            // Initialize warp-mode timer if it hasn't been already.
+            // This will start counting the thread toward `Sequencer.WARP_TIME`.
+            thread.warpTimer = new Timer();
+            thread.warpTimer.start();
+        }
+
         // Save the current block ID to notice if we did control flow.
-        while ((currentBlockId = thread.peekStack())) {
-            let isWarpMode = thread.peekStackFrame().warpMode;
-            if (isWarpMode && !thread.warpTimer) {
-                // Initialize warp-mode timer if it hasn't been already.
-                // This will start counting the thread toward `Sequencer.WARP_TIME`.
-                thread.warpTimer = new Timer();
-                thread.warpTimer.start();
-            }
+        while (thread.status === Thread.STATUS_RUNNING) {
+            const currentBlockId = thread.peekStack();
+
             // Execute the current block.
-            if (this.runtime.profiler !== null) {
+            if (this.runtime.profiler === null) {
+                execute(this, thread);
+            } else {
                 if (executeProfilerId === -1) {
                     executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
                 }
+
                 // The method commented below has its code inlined underneath to
                 // reduce the bias recorded for the profiler's calls in this
                 // time sensitive stepThread method.
@@ -199,77 +277,33 @@ class Sequencer {
                 // this.runtime.profiler.start(executeProfilerId, null);
                 this.runtime.profiler.records.push(
                     this.runtime.profiler.START, executeProfilerId, null, 0);
-            }
-            if (thread.target === null) {
-                this.retireThread(thread);
-            } else {
+
                 execute(this, thread);
-            }
-            if (this.runtime.profiler !== null) {
+
                 // this.runtime.profiler.stop();
                 this.runtime.profiler.records.push(this.runtime.profiler.STOP, 0);
             }
             thread.blockGlowInFrame = currentBlockId;
             // If the thread has yielded or is waiting, yield to other threads.
-            if (thread.status === Thread.STATUS_YIELD) {
+            if (
+                thread.status === Thread.STATUS_YIELD &&
+                thread.peekStackFrame().warpMode &&
+                thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME
+            ) {
                 // Mark as running for next iteration.
                 thread.status = Thread.STATUS_RUNNING;
-                // In warp mode, yielded blocks are re-executed immediately.
-                if (isWarpMode &&
-                    thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
-                    continue;
-                }
-                return;
-            } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
-                // A promise was returned by the primitive. Yield the thread
-                // until the promise resolves. Promise resolution should reset
-                // thread.status to Thread.STATUS_RUNNING.
-                return;
-            } else if (thread.status === Thread.STATUS_YIELD_TICK) {
-                // stepThreads will reset the thread to Thread.STATUS_RUNNING
-                return;
-            }
-            // If no control flow has happened, switch to next block.
-            if (thread.peekStack() === currentBlockId) {
+            } else if (
+                thread.status === Thread.STATUS_RUNNING &&
+                thread.peekStack() === currentBlockId
+            ) {
+                // If no control flow has happened, switch to next block.
                 thread.goToNextBlock();
             }
-            // If no next block has been found at this point, look on the stack.
-            while (!thread.peekStack()) {
-                thread.popStack();
+        }
 
-                if (thread.stack.length === 0) {
-                    // No more stack to run!
-                    thread.status = Thread.STATUS_DONE;
-                    return;
-                }
-
-                const stackFrame = thread.peekStackFrame();
-                isWarpMode = stackFrame.warpMode;
-
-                if (stackFrame.isLoop) {
-                    // The current level of the stack is marked as a loop.
-                    // Return to yield for the frame/tick in general.
-                    // Unless we're in warp mode - then only return if the
-                    // warp timer is up.
-                    if (!isWarpMode ||
-                        thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
-                        // Don't do anything to the stack, since loops need
-                        // to be re-executed.
-                        return;
-                    }
-                    // Don't go to the next block for this level of the stack,
-                    // since loops need to be re-executed.
-                    continue;
-
-                } else if (stackFrame.waitingReporter) {
-                    // This level of the stack was waiting for a value.
-                    // This means a reporter has just returned - so don't go
-                    // to the next block for this level of the stack.
-                    return;
-                }
-                // Get next block of existing block on the stack.
-                thread.goToNextBlock();
-            }
+        if (thread.status === Thread.STATUS_YIELD) {
+            // Mark as running for next iteration.
+            thread.status = Thread.STATUS_RUNNING;
         }
     }
 
@@ -288,13 +322,12 @@ class Sequencer {
             currentBlockId,
             branchNum
         );
-        thread.peekStackFrame().isLoop = isLoop;
-        if (branchId) {
-            // Push branch ID to the thread's stack.
-            thread.pushStack(branchId);
-        } else {
-            thread.pushStack(null);
-        }
+
+        // Push branch ID to the thread's stack.
+        thread.pushStack(
+            branchId,
+            isLoop ? 'vm_end_of_loop_branch' : 'vm_end_of_branch'
+        );
     }
 
     /**
@@ -315,7 +348,7 @@ class Sequencer {
         // and on to the main definition of the procedure.
         // When that set of blocks finishes executing, it will be popped
         // from the stack by the sequencer, returning control to the caller.
-        thread.pushStack(definition);
+        thread.pushStack(definition, 'vm_end_of_procedure');
         // In known warp-mode threads, only yield when time is up.
         if (thread.peekStackFrame().warpMode &&
             thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
@@ -337,6 +370,14 @@ class Sequencer {
             }
             if (doWarp) {
                 thread.peekStackFrame().warpMode = true;
+
+                if (!thread.warpTimer) {
+                    // Initialize warp-mode timer if it hasn't been already.
+                    // This will start counting the thread toward
+                    // `Sequencer.WARP_TIME`.
+                    thread.warpTimer = new Timer();
+                    thread.warpTimer.start();
+                }
             } else if (isRecursive) {
                 // In normal-mode threads, yield any time we have a recursive call.
                 thread.status = Thread.STATUS_YIELD;
