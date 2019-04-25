@@ -1888,7 +1888,13 @@ class Scratch3BoostBlocks {
             return false;
         }
         if (portID && this._peripheral.motor(portID)) {
-            return MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
+            let val = this._peripheral.motor(portID).position;
+            // Boost motor A position direction is reversed by design
+            // so we have to reverse the position here
+            if (portID === BoostPort.A) {
+                val *= -1;
+            }
+            return MathUtil.wrapClamp(val, 0, 360);
         }
         return 0;
     }
