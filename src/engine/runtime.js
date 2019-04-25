@@ -510,6 +510,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for report that a change was made to an extension in the toolbox.
+     * @const {string}
+     */
+    static get TOOLBOX_EXTENSIONS_NEED_UPDATE () {
+        return 'TOOLBOX_EXTENSIONS_NEED_UPDATE';
+    }
+
+    /**
      * Event name for targets update report.
      * @const {string}
      */
@@ -1963,10 +1971,15 @@ class Runtime extends EventEmitter {
      * @param {!Target} editingTarget New editing target.
      */
     setEditingTarget (editingTarget) {
+        const oldEditingTarget = this._editingTarget;
         this._editingTarget = editingTarget;
         // Script glows must be cleared.
         this._scriptGlowsPreviousFrame = [];
         this._updateGlows();
+
+        if (oldEditingTarget !== this._editingTarget) {
+            this.requestToolboxExtensionsUpdate();
+        }
     }
 
     /**
@@ -2384,10 +2397,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit an event that indicate that the blocks on the workspace need updating.
+     * Emit an event that indicates that the blocks on the workspace need updating.
      */
     requestBlocksUpdate () {
         this.emit(Runtime.BLOCKS_NEED_UPDATE);
+    }
+
+    /**
+     * Emit an event that indicates that the toolbox extension blocks need updating.
+     */
+    requestToolboxExtensionsUpdate () {
+        this.emit(Runtime.TOOLBOX_EXTENSIONS_NEED_UPDATE);
     }
 
     /**
