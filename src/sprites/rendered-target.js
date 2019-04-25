@@ -60,6 +60,13 @@ class RenderedTarget extends Target {
         };
 
         /**
+         * Stretch "effect" from Scratch 1.x.
+         * @type {Number}
+         */
+
+        this.stretch = 100;
+
+        /**
          * Whether this represents an "original" non-clone rendered-target for a sprite,
          * i.e., created by the editor and not clone blocks.
          * @type {boolean}
@@ -408,6 +415,34 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableProperties(this.drawableID, {
                 direction: renderedDirectionScale.direction,
                 scale: renderedDirectionScale.scale
+            });
+            if (this.visible) {
+                this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
+                this.runtime.requestRedraw();
+            }
+        }
+        this.runtime.requestTargetsUpdate(this);
+    }
+
+    /**
+     * Set stretch, as a percentage (e.g. 200% = twice as wide, 50% = half as wide)
+     * @param {!number} stretch Stretch amount
+     */
+    setStretch (stretch) {
+        if (this.isStage) {
+            return;
+        }
+        if (this.renderer) {
+            // Clamp to scales relative to costume and stage size.
+            const costumeSize = this.renderer.getCurrentSkinSize(this.drawableID);
+            const origW = costumeSize[0];
+            const minScale = 5 / origW;
+            const maxScale = (this.runtime.constructor.STAGE_WIDTH + 20) / origW;
+            this.stretch = MathUtil.clamp(stretch * 0.01, minScale, maxScale) * 100;
+            const renderedDirectionScale = this._getRenderedDirectionAndScale();
+            this.renderer.updateDrawableProperties(this.drawableID, {
+                direction: renderedDirectionScale.direction,
+                scale: [renderedDirectionScale.scale[0] * (this.stretch * 0.01), renderedDirectionScale.scale[1]]
             });
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
