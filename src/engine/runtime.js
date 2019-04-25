@@ -510,7 +510,7 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Event name for report that a change was made that can be saved
+     * Event name for report that a change was made to an extension in the toolbox.
      * @const {string}
      */
     static get TOOLBOX_EXTENSIONS_NEED_UPDATE () {
