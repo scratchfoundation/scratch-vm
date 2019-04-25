@@ -5,6 +5,12 @@
 const _stackFrameFreeList = [];
 
 /**
+ * Default params object to for stack frames not inside a procedure.
+ * @type {object}
+ */
+const defaultParams = Object.create(null);
+
+/**
  * A frame used for each level of the stack. A general purpose
  * place to store a bunch of execution context and parameters
  * @param {boolean} warpMode Whether this level of the stack is warping
@@ -12,7 +18,7 @@ const _stackFrameFreeList = [];
  * @private
  */
 class _StackFrame {
-    constructor (warpMode) {
+    constructor (warpMode, params) {
         /**
          * Whether this level of the stack is a loop.
          * @type {boolean}
@@ -27,83 +33,59 @@ class _StackFrame {
         this.warpMode = warpMode;
 
         /**
-         * Reported value from just executed block.
-         * @type {Any}
-         */
-        this.justReported = null;
-
-        /**
-         * The active block that is waiting on a promise.
-         * @type {string}
-         */
-        this.reporting = '';
-
-        /**
-         * Persists reported inputs during async block.
-         * @type {Object}
-         */
-        this.reported = null;
-
-        /**
-         * Name of waiting reporter.
-         * @type {string}
-         */
-        this.waitingReporter = null;
-
-        /**
          * Procedure parameters.
          * @type {Object}
          */
-        this.params = null;
+        this.params = params;
 
         /**
          * A context passed to block implementations.
          * @type {Object}
          */
-        this.executionContext = null;
+        this.executionContext = {};
+
+        /**
+         * Has this frame changed and need a reset?
+         * @type {boolean}
+         */
+        this.needReset = false;
     }
 
     /**
-     * Reset all properties of the frame to pristine null and false states.
-     * Used to recycle.
+     * Reset some properties of the frame to default values. Used to recycle.
      * @return {_StackFrame} this
      */
     reset () {
-
         this.isLoop = false;
-        this.warpMode = false;
-        this.justReported = null;
-        this.reported = null;
-        this.waitingReporter = null;
-        this.params = null;
-        this.executionContext = null;
+        this.executionContext = {};
+        this.needReset = false;
 
         return this;
     }
 
     /**
      * Reuse an active stack frame in the stack.
-     * @param {?boolean} warpMode defaults to current warpMode
-     * @returns {_StackFrame} this
      */
-    reuse (warpMode = this.warpMode) {
-        this.reset();
-        this.warpMode = Boolean(warpMode);
-        return this;
+    reuse () {
+        this.isLoop = false;
+        this.executionContext = {};
+        this.needReset = false;
     }
 
     /**
      * Create or recycle a stack frame object.
      * @param {boolean} warpMode Enable warpMode on this frame.
+     * @param {object} params Carry over parameters from the parent stack frame.
      * @returns {_StackFrame} The clean stack frame with correct warpMode setting.
      */
-    static create (warpMode) {
-        const stackFrame = _stackFrameFreeList.pop();
-        if (typeof stackFrame !== 'undefined') {
-            stackFrame.warpMode = Boolean(warpMode);
+    static create (warpMode, params) {
+        const stackFrame = _stackFrameFreeList.pop() || null;
+        if (stackFrame !== null) {
+            stackFrame.warpMode = warpMode;
+            stackFrame.params = params;
             return stackFrame;
         }
-        return new _StackFrame(warpMode);
+        return new _StackFrame(warpMode, params);
     }
 
     /**
@@ -111,8 +93,10 @@ class _StackFrame {
      * @param {_StackFrame} stackFrame The frame to reset and recycle.
      */
     static release (stackFrame) {
-        if (typeof stackFrame !== 'undefined') {
-            _stackFrameFreeList.push(stackFrame.reset());
+        if (stackFrame !== null) {
+            _stackFrameFreeList.push(
+                stackFrame.needReset ? stackFrame.reset() : stackFrame
+            );
         }
     }
 }
@@ -138,10 +122,23 @@ class Thread {
         this.stack = [];
 
         /**
+         * The "instruction" pointer the thread is currently at. This
+         * determines what block is executed.
+         * @type {string}
+         */
+        this.pointer = null;
+
+        /**
          * Stack frames for the thread. Store metadata for the executing blocks.
          * @type {Array.<_StackFrame>}
          */
         this.stackFrames = [];
+
+        /**
+         * The current stack frame that goes along with the pointer.
+         * @type {_StackFrame}
+         */
+        this.stackFrame = null;
 
         /**
          * Status of the thread, one of three states (below)
@@ -186,7 +183,25 @@ class Thread {
          */
         this.warpTimer = null;
 
+        /**
+         * The value just reported by a promise.
+         * @type {*}
+         */
         this.justReported = null;
+
+        /**
+         * The id of the block that we will report the promise resolved value
+         * for.
+         * @type {string}
+         */
+        this.reporting = null;
+
+        /**
+         * The already reported values in a sequence of blocks to restore when
+         * the awaited promise resolves.
+         * @type {Array.<*>}
+         */
+        this.reported = null;
     }
 
     /**
@@ -239,13 +254,14 @@ class Thread {
      * @param {string} blockId Block ID to push to stack.
      */
     pushStack (blockId) {
-        this.stack.push(blockId);
-        // Push an empty stack frame, if we need one.
-        // Might not, if we just popped the stack.
-        if (this.stack.length > this.stackFrames.length) {
-            const parent = this.stackFrames[this.stackFrames.length - 1];
-            this.stackFrames.push(_StackFrame.create(typeof parent !== 'undefined' && parent.warpMode));
-        }
+        this.stack.push(this.pointer);
+        this.pointer = blockId;
+
+        const parent = this.stackFrame;
+        const warpMode = parent === null ? false : parent.warpMode;
+        const params = parent === null ? defaultParams : parent.params;
+        this.stackFrames.push(this.stackFrame);
+        this.stackFrame = _StackFrame.create(warpMode, params);
     }
 
     /**
@@ -254,17 +270,23 @@ class Thread {
      * @param {string} blockId Block ID to push to stack.
      */
     reuseStackForNextBlock (blockId) {
-        this.stack[this.stack.length - 1] = blockId;
-        this.stackFrames[this.stackFrames.length - 1].reuse();
+        this.pointer = blockId;
+        if (this.stackFrame.needReset) this.stackFrame.reuse();
     }
 
     /**
      * Pop last block on the stack and its stack frame.
-     * @return {string} Block ID popped from the stack.
+     * @return {?string} Block ID popped from the stack.
      */
     popStack () {
-        _StackFrame.release(this.stackFrames.pop());
-        return this.stack.pop();
+        const popped = this.pointer;
+        this.pointer = this.stack.pop();
+        _StackFrame.release(this.stackFrame);
+        this.stackFrame = this.stackFrames.pop();
+        // Conform to existing unit tests. Return undefined if popped and
+        // pointer are falsy values.
+        if (!popped && !this.pointer) return;
+        return popped || null;
     }
 
     /**
@@ -293,7 +315,7 @@ class Thread {
      * @return {?string} Block ID on top of stack.
      */
     peekStack () {
-        return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+        return this.pointer;
     }
 
 
@@ -302,7 +324,7 @@ class Thread {
      * @return {?object} Last stack frame stored on this thread.
      */
     peekStackFrame () {
-        return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
+        return this.stackFrame;
     }
 
     /**
@@ -310,7 +332,7 @@ class Thread {
      * @return {?object} Second to last stack frame stored on this thread.
      */
     peekParentStackFrame () {
-        return this.stackFrames.length > 1 ? this.stackFrames[this.stackFrames.length - 2] : null;
+        return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
     }
 
     /**
@@ -322,13 +344,21 @@ class Thread {
     }
 
     /**
+     * Return a execution context for a block to use.
+     * @returns {object} the execution context
+     */
+    getExecutionContext () {
+        const frame = this.stackFrame;
+        frame.needReset = true;
+        return frame.executionContext;
+    }
+
+    /**
      * Initialize procedure parameters on this stack frame.
      */
     initParams () {
-        const stackFrame = this.peekStackFrame();
-        if (stackFrame.params === null) {
-            stackFrame.params = {};
-        }
+        const stackFrame = this.stackFrame;
+        stackFrame.params = Object.create(null);
     }
 
     /**
@@ -338,7 +368,7 @@ class Thread {
      * @param {*} value Value to set for parameter.
      */
     pushParam (paramName, value) {
-        const stackFrame = this.peekStackFrame();
+        const stackFrame = this.stackFrame;
         stackFrame.params[paramName] = value;
     }
 
@@ -348,15 +378,9 @@ class Thread {
      * @return {*} value Value for parameter.
      */
     getParam (paramName) {
-        for (let i = this.stackFrames.length - 1; i >= 0; i--) {
-            const frame = this.stackFrames[i];
-            if (frame.params === null) {
-                continue;
-            }
-            if (frame.params.hasOwnProperty(paramName)) {
-                return frame.params[paramName];
-            }
-            return null;
+        const stackFrame = this.stackFrame;
+        if (typeof stackFrame.params[paramName] !== 'undefined') {
+            return stackFrame.params[paramName];
         }
         return null;
     }
@@ -376,7 +400,7 @@ class Thread {
      * where execution proceeds from one block to the next.
      */
     goToNextBlock () {
-        const nextBlockId = this.target.blocks.getNextBlock(this.peekStack());
+        const nextBlockId = this.target.blocks.getNextBlock(this.pointer);
         this.reuseStackForNextBlock(nextBlockId);
     }
 
@@ -388,8 +412,8 @@ class Thread {
      */
     isRecursiveCall (procedureCode) {
         let callCount = 5; // Max number of enclosing procedure calls to examine.
-        const sp = this.stack.length - 1;
-        for (let i = sp - 1; i >= 0; i--) {
+        const sp = this.stack.length;
+        for (let i = sp - 1; i >= 1; i--) {
             const block = this.target.blocks.getBlock(this.stack[i]);
             if (block.opcode === 'procedures_call' &&
                 block.mutation.proccode === procedureCode) {
