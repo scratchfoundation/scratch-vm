@@ -279,7 +279,7 @@ class BlockCached {
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
-        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+        this._definedBlockFunction = typeof this._blockFunction === 'function';
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
