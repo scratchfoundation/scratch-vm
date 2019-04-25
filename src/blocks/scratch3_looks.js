@@ -272,7 +272,7 @@ class Scratch3LooksBlocks {
             looks_cleargraphiceffects: this.clearEffects,
             looks_changesizeby: this.changeSize,
             looks_setsizeto: this.setSize,
-            looks_changestretchby: this.changeStretch, // legacy no-op blocks
+            looks_changestretchby: this.changeStretch, // weird legacy blocks
             looks_setstretchto: this.setStretch,
             looks_gotofrontback: this.goToFrontBack,
             looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
