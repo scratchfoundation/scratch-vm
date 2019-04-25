@@ -308,6 +308,18 @@ class ExtensionManager {
      */
     _prepareMenuInfo (serviceName, menus) {
         const menuNames = Object.getOwnPropertyNames(menus);
+
+        // `makeGetItemsShim` is like `bind` except that it explicitly doesn't bind `this`
+        const makeGetItemsShim = (serviceObject, menuItemFunctionName) => {
+            const extensionManager = this;
+            return function () {
+                // scratch-blocks passes the menu as `this` when calling a menu's `items` function
+                const scratchBlocksMenuObject = this; // eslint-disable-line no-invalid-this
+                return extensionManager._getExtensionMenuItems(
+                    serviceObject, menuItemFunctionName, scratchBlocksMenuObject);
+            };
+        };
+
         for (let i = 0; i < menuNames.length; i++) {
             const menuName = menuNames[i];
             let menuInfo = menus[menuName];
@@ -325,8 +337,7 @@ class ExtensionManager {
             if (typeof menuInfo.items === 'string') {
                 const menuItemFunctionName = menuInfo.items;
                 const serviceObject = dispatch.services[serviceName];
-                // Bind the function here so we can pass a simple item generation function to Scratch Blocks later.
-                menuInfo.items = this._getExtensionMenuItems.bind(this, serviceObject, menuItemFunctionName);
+                menuInfo.items = makeGetItemsShim(serviceObject, menuItemFunctionName);
             }
         }
         return menus;
@@ -336,19 +347,25 @@ class ExtensionManager {
      * Fetch the items for a particular extension menu, providing the target ID for context.
      * @param {object} extensionObject - the extension object providing the menu.
      * @param {string} menuItemFunctionName - the name of the menu function to call.
+     * @param {object} scratchBlocksMenuObject - the scratch-blocks menu object, for access to its current state.
      * @returns {Array} menu items ready for scratch-blocks.
      * @private
      */
-    _getExtensionMenuItems (extensionObject, menuItemFunctionName) {
+    _getExtensionMenuItems (extensionObject, menuItemFunctionName, scratchBlocksMenuObject) {
         // Fetch the items appropriate for the target currently being edited. This assumes that menus only
         // collect items when opened by the user while editing a particular target.
         const editingTarget = this.runtime.getEditingTarget() || this.runtime.getTargetForStage();
         const editingTargetID = editingTarget ? editingTarget.id : null;
         const extensionMessageContext = this.runtime.makeMessageContextForTarget(editingTarget);
 
+        // trim the menu state down to structured-copy-compatible properties that extensions might need
+        const menuState = {
+            selectedValue: scratchBlocksMenuObject.getValue()
+        };
+
         // TODO: Fix this to use dispatch.call when extensions are running in workers.
         const menuFunc = extensionObject[menuItemFunctionName];
-        const menuItems = menuFunc.call(extensionObject, editingTargetID).map(
+        const menuItems = menuFunc.call(extensionObject, editingTargetID, menuState).map(
             item => {
                 item = maybeFormatMessage(item, extensionMessageContext);
                 switch (typeof item) {
