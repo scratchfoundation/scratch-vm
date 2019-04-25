@@ -137,7 +137,7 @@ test('retireThread', t => {
     const r = new Runtime();
     const s = new Sequencer(r);
     const th = generateThread(r);
-    t.strictEquals(th.stack.length, 12);
+    t.strictEquals(th.stack.length, 11);
     s.retireThread(th);
     t.strictEquals(th.stack.length, 0);
     t.strictEquals(th.status, Thread.STATUS_DONE);
