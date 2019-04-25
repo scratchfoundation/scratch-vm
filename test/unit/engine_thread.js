@@ -40,7 +40,7 @@ test('popStack', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
-    t.strictEquals(th.popStack(), undefined);
+    t.strictEquals(th.popStack(), null);
 
     t.end();
 });

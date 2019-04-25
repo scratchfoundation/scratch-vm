@@ -178,7 +178,13 @@ class Sequencer {
      */
     stepHat (thread) {
         execute(this, thread);
-        if (thread.status === Thread.STATUS_RUNNING) thread.goToNextBlock();
+        if (thread.status === Thread.STATUS_RUNNING) {
+            thread.goToNextBlock();
+            // TODO: is this necessary?
+            if (thread.stackFrame === null) {
+                this.sequencer.retireThread(thread);
+            }
+        }
     }
 
     /**
@@ -294,7 +300,11 @@ class Sequencer {
             currentBlockId,
             branchNum
         );
-        thread.peekStackFrame().isLoop = isLoop;
+        if (isLoop) {
+            const stackFrame = thread.peekStackFrame();
+            stackFrame.needsReset = true;
+            stackFrame.isLoop = true;
+        }
         if (branchId) {
             // Push branch ID to the thread's stack.
             thread.pushStack(branchId);
@@ -366,7 +376,9 @@ class Sequencer {
      */
     retireThread (thread) {
         thread.stack = [];
+        thread.pointer = null;
         thread.stackFrames = [];
+        thread.stackFrame = null;
         thread.requestScriptGlowInFrame = false;
         thread.status = Thread.STATUS_DONE;
     }
