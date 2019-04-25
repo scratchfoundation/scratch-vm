@@ -116,6 +116,13 @@ class Thread {
         this.topBlock = firstBlock;
 
         /**
+         * Signal to execute that it may execute blocks continuously until the
+         * thread status is in a non-running state.
+         * @type {boolean}
+         */
+        this.continuous = false;
+
+        /**
          * Stack for the thread. When the sequencer enters a control structure,
          * the block is pushed onto the stack so we know where to exit.
          * @type {Array.<string>}
@@ -203,6 +210,17 @@ class Thread {
          * @type {Array.<*>}
          */
         this.reported = null;
+    }
+
+    /**
+     * Thread status for interrupting executing thread.
+     * This is for breaking out of a block execution loop because an assumption
+     * was broken during execution. Breaking the assumption is ok but means
+     * that the assumptions need to be rebuilt to new values.
+     * @const
+     */
+    static get STATUS_INTERRUPT () {
+        return -1;
     }
 
     /**

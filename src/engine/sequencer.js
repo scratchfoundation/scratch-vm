@@ -264,7 +264,9 @@ class Sequencer {
 
             // Execute the current block.
             if (this.runtime.profiler === null) {
+                thread.continuous = true;
                 execute(this, thread);
+                thread.continuous = false;
             } else {
                 if (executeProfilerId === -1) {
                     executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
@@ -278,12 +280,14 @@ class Sequencer {
                 this.runtime.profiler.records.push(
                     this.runtime.profiler.START, executeProfilerId, null, 0);
 
+                thread.continuous = true;
                 execute(this, thread);
+                thread.continuous = false;
 
                 // this.runtime.profiler.stop();
                 this.runtime.profiler.records.push(this.runtime.profiler.STOP, 0);
             }
-            thread.blockGlowInFrame = currentBlockId;
+
             // If the thread has yielded or is waiting, yield to other threads.
             if (
                 thread.status === Thread.STATUS_YIELD &&
@@ -305,6 +309,8 @@ class Sequencer {
             // Mark as running for next iteration.
             thread.status = Thread.STATUS_RUNNING;
         }
+
+        thread.warpTimer = null;
     }
 
     /**
