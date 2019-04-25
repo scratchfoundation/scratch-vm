@@ -13,15 +13,14 @@ class Scratch3ProcedureBlocks {
      */
     getPrimitives () {
         return {
-            procedures_definition: this.definition,
+            // procedures_definition is the top block of a procedure but has no
+            // effect of its own.
+            procedures_definition: null,
+
             procedures_call: this.call,
             argument_reporter_string_number: this.argumentReporterStringNumber,
             argument_reporter_boolean: this.argumentReporterBoolean
         };
-    }
-
-    definition () {
-        // No-op: execute the blocks.
     }
 
     call (args, util) {
