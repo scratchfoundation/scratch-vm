@@ -764,7 +764,7 @@ class Runtime extends EventEmitter {
                 if (packageObject.getPrimitives) {
                     const packagePrimitives = packageObject.getPrimitives();
                     for (const op in packagePrimitives) {
-                        if (packagePrimitives.hasOwnProperty(op)) {
+                        if (typeof packagePrimitives[op] === 'function') {
                             this._primitives[op] =
                                 packagePrimitives[op].bind(packageObject);
                         }
