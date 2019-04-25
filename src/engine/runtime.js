@@ -1665,8 +1665,6 @@ class Runtime extends EventEmitter {
      * @param {!Thread} thread Thread object to remove from actives
      */
     _stopThread (thread) {
-        // Mark the thread for later removal
-        thread.isKilled = true;
         // Inform sequencer to stop executing that thread.
         this.sequencer.retireThread(thread);
     }
@@ -2091,9 +2089,6 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
-
-        // Clean up threads that were told to stop during or since the last step
-        this.threads = this.threads.filter(thread => !thread.isKilled);
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
