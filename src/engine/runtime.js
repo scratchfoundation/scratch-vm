@@ -894,7 +894,7 @@ class Runtime extends EventEmitter {
      * @param {string} menuName - the name of the menu
      * @param {object} menuInfo - a description of this menu and its items
      * @property {*} items - an array of menu items or a function to retrieve such an array
-     * @property {boolean} [rejectReporters] - if true, prevent dropping reporters onto this menu
+     * @property {boolean} [acceptReporters] - if true, allow dropping reporters onto this menu
      * @param {CategoryInfo} categoryInfo - the category for this block
      * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
      * @private
@@ -927,8 +927,8 @@ class Runtime extends EventEmitter {
                 colour: categoryInfo.color1,
                 colourSecondary: categoryInfo.color2,
                 colourTertiary: categoryInfo.color3,
-                outputShape: menuInfo.rejectReporters ?
-                    ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE : ScratchBlocksConstants.OUTPUT_SHAPE_ROUND,
+                outputShape: menuInfo.acceptReporters ?
+                    ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
                 args0: [
                     {
                         type: 'field_dropdown',
@@ -1235,16 +1235,16 @@ class Runtime extends EventEmitter {
         let fieldName;
         if (argInfo.menu) {
             const menuInfo = argInfo.menu && context.categoryInfo.menuInfo[argInfo.menu];
-            if (menuInfo.rejectReporters) {
+            if (menuInfo.acceptReporters) {
+                valueName = placeholder;
+                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                fieldName = argInfo.menu;
+            } else {
                 argJSON.type = 'field_dropdown';
                 argJSON.options = menuInfo.items;
                 valueName = null;
                 shadowType = null;
                 fieldName = placeholder;
-            } else {
-                valueName = placeholder;
-                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
-                fieldName = argInfo.menu;
             }
         } else {
             valueName = placeholder;
