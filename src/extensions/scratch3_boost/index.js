@@ -497,9 +497,7 @@ class BoostMotor {
      * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
     turnOnForever (resetState = true){
-        /* if (this.power === 0) {
-            this.turnOff(false);
-        } */
+        // if (this.power === 0) return;
         
         if (resetState) this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
@@ -511,9 +509,7 @@ class BoostMotor {
      * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
     turnOnFor (milliseconds, resetState = true) {
-        /* if (this.power === 0) {
-            this.turnOff(false);
-        } */
+        // if (this.power === 0) return;
 
         milliseconds = Math.max(0, milliseconds);
         if (resetState) this.status = BoostMotorState.ON_FOR_TIME;
