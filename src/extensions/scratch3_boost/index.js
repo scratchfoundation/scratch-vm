@@ -477,7 +477,7 @@ class BoostMotor {
      * @private
      */
     _turnOn () {
-        //if (this.power === 0) return;
+        // if (this.power === 0) return;
         
         const cmd = this._parent.generateOutputCommand(
             this._index,
