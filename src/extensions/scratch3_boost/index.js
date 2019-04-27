@@ -478,7 +478,6 @@ class BoostMotor {
      */
     _turnOn () {
         // if (this.power === 0) return;
-        
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
@@ -498,7 +497,6 @@ class BoostMotor {
      */
     turnOnForever (resetState = true){
         // if (this.power === 0) return;
-        
         if (resetState) this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
     }
