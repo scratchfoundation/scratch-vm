@@ -553,6 +553,7 @@ class BoostMotor {
      */
     turnOff (useLimiter = true) {
         // if (this.power === 0) return;
+        
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
