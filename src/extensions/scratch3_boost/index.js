@@ -499,6 +499,8 @@ class BoostMotor {
         // if (this.power === 0) return;
         if (resetState) this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
+
+        console.log('ON_FOREVER');
     }
 
     /**
@@ -513,6 +515,8 @@ class BoostMotor {
         if (resetState) this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
         this._setNewTimeout(this.turnOff, milliseconds);
+
+        console.log('ON_FOR_TIME');
     }
 
     /**
@@ -545,6 +549,8 @@ class BoostMotor {
         if (resetState) this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
+
+        console.log('ON_FOR_ROTATION');
     }
 
     /**
@@ -567,6 +573,8 @@ class BoostMotor {
 
         this.status = BoostMotorState.OFF;
         this._parent.send(BoostBLE.characteristic, cmd, useLimiter);
+
+        console.log('OFF');
     }
 
     /**
@@ -1797,8 +1805,8 @@ class Scratch3BoostBlocks {
                     motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
                     break;
                 case BoostMotorState.ON_FOR_ROTATION: {
-                    const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
-                    motor.turnOnForDegrees(p, Math.sign(p));
+                    const p = Math.abs(motor.pendingPositionDestination - motor.position);
+                    motor.turnOnForDegrees(p, Math.sign(p), false);
                     break;
                 }
                 }
