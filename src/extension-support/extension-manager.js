@@ -295,7 +295,7 @@ class ExtensionManager {
             }
             return results;
         }, []);
-        extensionInfo.menus = extensionInfo.menus || [];
+        extensionInfo.menus = extensionInfo.menus || {};
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
         return extensionInfo;
     }
