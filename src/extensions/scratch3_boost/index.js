@@ -431,14 +431,13 @@ class BoostMotor {
      * @param {BoostMotorState} value - set this motor's state.
      */
     set status (value) {
-        // Clear any time- or rotation-related state from motor and set new status.
         if (value !== BoostMotorState.ON_FOR_ROTATION) {
+            // clear rotation pending promise only if not already in rotation state
             this._clearRotationState();
-            console.log('clearing rotation state');
         }
         if (value !== BoostMotorState.ON_FOR_TIME) {
+            // clear duration pending promise only if not already in duration state
             this._clearTimeout();
-            console.log('clearing for_time state');
         }
         this._status = value;
     }
@@ -500,11 +499,8 @@ class BoostMotor {
      * Turn this motor on indefinitely
      */
     turnOnForever() {
-        console.log('turnOnForever');
         this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
-
-        console.log('this.status', this.status);
     }
 
     /**
@@ -512,13 +508,10 @@ class BoostMotor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor(milliseconds) {
-        console.log('turnOnFor');
         milliseconds = Math.max(0, milliseconds);
         this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
         this._setNewTimeout(this.turnOff, milliseconds);
-
-        console.log('this.status', this.status);
     }
 
     /**
@@ -527,7 +520,6 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
-        console.log('turnOnForDegrees');
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -546,8 +538,6 @@ class BoostMotor {
         this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
-
-        console.log('this.status', this.status);
     }
 
     /**
@@ -555,7 +545,6 @@ class BoostMotor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff(useLimiter = true) {
-        console.log('turnOff');
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
@@ -569,8 +558,6 @@ class BoostMotor {
 
         this.status = BoostMotorState.OFF;
         this._parent.send(BoostBLE.characteristic, cmd, useLimiter);
-
-        console.log('this.status', this.status);
     }
 
     /**
@@ -1737,9 +1724,7 @@ class Scratch3BoostBlocks {
          * Make sure all promises are resolved, i.e. all motor-commands have completed.
          * To prevent the block from returning a value, an empty function is added to the .then
          */
-        return Promise.all(promises).then(() => {
-            console.log('motorOnForRotation resolved');
-        });
+        return Promise.all(promises).then(() => {});
     }
 
     /**
