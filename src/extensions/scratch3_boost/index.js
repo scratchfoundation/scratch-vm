@@ -1204,7 +1204,7 @@ class Scratch3BoostBlocks {
     getInfo () {
         return {
             id: Scratch3BoostBlocks.EXTENSION_ID,
-            name: 'Boost',
+            name: 'BOOST',
             blockIconURI: iconURI,
             showStatusButton: true,
             blocks: [
