@@ -498,7 +498,7 @@ class BoostMotor {
     /**
      * Turn this motor on indefinitely
      */
-    turnOnForever() {
+    turnOnForever () {
         this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
     }
@@ -507,7 +507,7 @@ class BoostMotor {
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
      */
-    turnOnFor(milliseconds) {
+    turnOnFor (milliseconds) {
         milliseconds = Math.max(0, milliseconds);
         this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
@@ -544,7 +544,7 @@ class BoostMotor {
      * Turn this motor off.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    turnOff(useLimiter = true) {
+    turnOff (useLimiter = true) {
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
