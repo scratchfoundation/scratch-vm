@@ -432,7 +432,10 @@ class BoostMotor {
      */
     set status (value) {
         // Clear any time- or rotation-related state from motor and set new status.
-        this._clearRotationState();
+        if (value !== BoostMotorState.ON_FOR_ROTATION) {
+            this._clearRotationState();
+            console.log('clearing rotation state');
+        }
         this._clearTimeout();
         this._status = value;
     }
@@ -493,7 +496,8 @@ class BoostMotor {
     /**
      * Turn this motor on indefinitely
      */
-    turnOnForever (){
+    turnOnForever() {
+        console.log('turnOnForever');
         this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
 
@@ -504,7 +508,8 @@ class BoostMotor {
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
      */
-    turnOnFor (milliseconds) {
+    turnOnFor(milliseconds) {
+        console.log('turnOnFor');
         milliseconds = Math.max(0, milliseconds);
         this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
@@ -519,6 +524,7 @@ class BoostMotor {
      * @param {number} direction - rotate in this direction
      */
     turnOnForDegrees (degrees, direction) {
+        console.log('turnOnForDegrees');
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -545,7 +551,8 @@ class BoostMotor {
      * Turn this motor off.
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
-    turnOff (useLimiter = true) {
+    turnOff(useLimiter = true) {
+        console.log('turnOff');
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
@@ -1727,7 +1734,9 @@ class Scratch3BoostBlocks {
          * Make sure all promises are resolved, i.e. all motor-commands have completed.
          * To prevent the block from returning a value, an empty function is added to the .then
          */
-        return Promise.all(promises).then(() => {});
+        return Promise.all(promises).then(() => {
+            console.log('motorOnForRotation resolved');
+        });
     }
 
     /**
