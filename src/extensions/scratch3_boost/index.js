@@ -1788,23 +1788,14 @@ class Scratch3BoostBlocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
-                const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
-                // if motor power is already equal to the scaled input power, don't do anything
-                if (motor.power !== MathUtil.scale(power, 1, 100, 10, 100)) {
-                    motor.power = power;
-                    switch (motor.status) {
-                    case BoostMotorState.ON_FOREVER:
-                        motor.turnOnForever(false);
-                        break;
-                    case BoostMotorState.ON_FOR_TIME:
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
-                        break;
-                    case BoostMotorState.ON_FOR_ROTATION: {
-                        const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
-                        motor.turnOnForDegrees(p, Math.sign(p));
-                        break;
-                    }
-                    }
+                motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
+                switch (motor.status) {
+                case BoostMotorState.ON_FOREVER:
+                    motor.turnOnForever(false);
+                    break;
+                case BoostMotorState.ON_FOR_TIME:
+                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                    break;
                 }
             }
         });
@@ -1851,11 +1842,6 @@ class Scratch3BoostBlocks {
                     case BoostMotorState.ON_FOR_TIME:
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
                         break;
-                    case BoostMotorState.ON_FOR_ROTATION: {
-                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p), false);
-                        break;
-                    }
                     }
                 }
             }
