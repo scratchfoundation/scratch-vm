@@ -436,7 +436,10 @@ class BoostMotor {
             this._clearRotationState();
             console.log('clearing rotation state');
         }
-        this._clearTimeout();
+        if (value !== BoostMotorState.ON_FOR_TIME) {
+            this._clearTimeout();
+            console.log('clearing for_time state');
+        }
         this._status = value;
     }
 
