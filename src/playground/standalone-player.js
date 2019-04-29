@@ -4,14 +4,22 @@ const ScratchRender = require('scratch-render');
 const ScratchSVGRenderer = require('scratch-svg-renderer');
 const VirtualMachine = require('..');
 
+// This file is an example of how to create a standalone, full screen
+// minimal scratch player without the editor view.
+// This file does not presentally include monitors, which are drawn by the GUI.
+
 /**
- * This file is an example of how to create a standalone, full screen
- * minimal scratch player without the editor view.
- * This file does not presentally include monitors, which are drawn by the GUI.
+ * @param {Asset} projectAsset - calculate a URL for this asset.
+ * @returns {string} a URL to download a project file.
  */
 const projectGetConfig = function (projectAsset) {
     return `https://projects.scratch.mit.edu/${projectAsset.assetId}`;
 };
+
+/**
+ * @param {Asset} asset - calculate a URL for this asset.
+ * @returns {string} a URL to download a project asset (PNG, WAV, etc.)
+ */
 const assetGetConfig = function (asset) {
     return `https://assets.scratch.mit.edu/internalapi/asset/${asset.assetId}.${asset.dataFormat}/get/`;
 };
@@ -41,16 +49,14 @@ window.onload = function () {
     // which is the standard for the scratch player.
     vm.setCompatibilityMode(true);
 
-    if (!projectId) {
-        // If no project ID is supplied, load a local project
-        fetch('./playground.sb3').then(function(response) {
-            return response.arrayBuffer();
-        }).then(function(arrayBuffer) {
-            vm.loadProject(arrayBuffer);
-        });
-    }
-    else {
+    if (projectId) {
         vm.downloadProjectId(projectId);
+    } else {
+        // If no project ID is supplied, load a local project
+        fetch('./playground.sb3').then(response => response.arrayBuffer())
+            .then(arrayBuffer => {
+                vm.loadProject(arrayBuffer);
+            });
     }
 
     vm.on('workspaceUpdate', () => {
