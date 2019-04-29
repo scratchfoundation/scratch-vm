@@ -757,11 +757,26 @@ class Scratch3GdxForBlocks {
                 }
             ],
             menus: {
-                pushPullOptions: this.PUSH_PULL_MENU,
-                gestureOptions: this.GESTURE_MENU,
-                axisOptions: this.AXIS_MENU,
-                tiltOptions: this.TILT_MENU,
-                tiltAnyOptions: this.TILT_MENU_ANY
+                pushPullOptions: {
+                    acceptReporters: true,
+                    items: this.PUSH_PULL_MENU
+                },
+                gestureOptions: {
+                    acceptReporters: true,
+                    items: this.GESTURE_MENU
+                },
+                axisOptions: {
+                    acceptReporters: true,
+                    items: this.AXIS_MENU
+                },
+                tiltOptions: {
+                    acceptReporters: true,
+                    items: this.TILT_MENU
+                },
+                tiltAnyOptions: {
+                    acceptReporters: true,
+                    items: this.TILT_MENU_ANY
+                }
             }
         };
     }

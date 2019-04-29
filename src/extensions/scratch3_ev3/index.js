@@ -1112,8 +1112,14 @@ class Scratch3Ev3Blocks {
                 }
             ],
             menus: {
-                motorPorts: this._formatMenu(Ev3MotorMenu),
-                sensorPorts: this._formatMenu(Ev3SensorMenu)
+                motorPorts: {
+                    acceptReporters: true,
+                    items: this._formatMenu(Ev3MotorMenu)
+                },
+                sensorPorts: {
+                    acceptReporters: true,
+                    items: this._formatMenu(Ev3SensorMenu)
+                }
             }
         };
     }

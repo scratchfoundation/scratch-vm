@@ -541,7 +541,7 @@ class BoostMotor {
                 BoostMotorProfile.DO_NOT_USE
             ]
         );
-        
+
         if (resetState) this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
@@ -1428,246 +1428,267 @@ class Scratch3BoostBlocks {
                 }
             ],
             menus: {
-                MOTOR_ID: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.a',
-                            default: BoostMotorLabel.A,
-                            description: `label for motor A element in motor menu for LEGO Boost extension`
-                        }),
-                        value: BoostMotorLabel.A
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.b',
-                            default: BoostMotorLabel.B,
-                            description: `label for motor B element in motor menu for LEGO Boost extension`
-                        }),
-                        value: BoostMotorLabel.B
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.c',
-                            default: BoostMotorLabel.C,
-                            description: `label for motor C element in motor menu for LEGO Boost extension`
-                        }),
-                        value: BoostMotorLabel.C
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.d',
-                            default: BoostMotorLabel.D,
-                            description: `label for motor D element in motor menu for LEGO Boost extension`
-                        }),
-                        value: BoostMotorLabel.D
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.ab',
-                            default: BoostMotorLabel.AB,
-                            description: `label for motor A and B element in motor menu for LEGO Boost extension`
-                        }),
-                        value: BoostMotorLabel.AB
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorId.all',
-                            default: BoostMotorLabel.ALL,
-                            description: 'label for all motors element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.ALL
-                    }
-                ],
-                MOTOR_REPORTER_ID: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.a',
-                            default: BoostMotorLabel.A,
-                            description: 'label for motor A element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.A
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.b',
-                            default: BoostMotorLabel.B,
-                            description: 'label for motor B element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.B
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.c',
-                            default: BoostMotorLabel.C,
-                            description: 'label for motor C element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.C
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.d',
-                            default: BoostMotorLabel.D,
-                            description: 'label for motor D element in motor menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorLabel.D
-                    }
-                ],
-                MOTOR_DIRECTION: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorDirection.forward',
-                            default: 'this way',
-                            description: 'label for forward element in motor direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorDirection.FORWARD
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorDirection.backward',
-                            default: 'that way',
-                            description: 'label for backward element in motor direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorDirection.BACKWARD
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.motorDirection.reverse',
-                            default: 'reverse',
-                            description: 'label for reverse element in motor direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostMotorDirection.REVERSE
-                    }
-                ],
-                TILT_DIRECTION: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.up',
-                            default: 'up',
-                            description: 'label for up element in tilt direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostTiltDirection.UP
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.down',
-                            default: 'down',
-                            description: 'label for down element in tilt direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostTiltDirection.DOWN
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.left',
-                            default: 'left',
-                            description: 'label for left element in tilt direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostTiltDirection.LEFT
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.right',
-                            default: 'right',
-                            description: 'label for right element in tilt direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostTiltDirection.RIGHT
-                    }
-                ],
-                TILT_DIRECTION_ANY: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.up',
-                            default: 'up'
-                        }),
-                        value: BoostTiltDirection.UP
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.down',
-                            default: 'down'
-                        }),
-                        value: BoostTiltDirection.DOWN
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.left',
-                            default: 'left'
-                        }),
-                        value: BoostTiltDirection.LEFT
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.right',
-                            default: 'right'
-                        }),
-                        value: BoostTiltDirection.RIGHT
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.tiltDirection.any',
-                            default: 'any',
-                            description: 'label for any element in tilt direction menu for LEGO Boost extension'
-                        }),
-                        value: BoostTiltDirection.ANY
-                    }
-                ],
-                COLOR: [
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.red',
-                            default: 'red',
-                            description: 'the color red'
-                        }),
-                        value: BoostColor.RED
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.blue',
-                            default: 'blue',
-                            description: 'the color blue'
-                        }),
-                        value: BoostColor.BLUE
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.green',
-                            default: 'green',
-                            description: 'the color green'
-                        }),
-                        value: BoostColor.GREEN
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.yellow',
-                            default: 'yellow',
-                            description: 'the color yellow'
-                        }),
-                        value: BoostColor.YELLOW
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.white',
-                            default: 'white',
-                            desription: 'the color white'
-                        }),
-                        value: BoostColor.WHITE
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.black',
-                            default: 'black',
-                            description: 'the color black'
-                        }),
-                        value: BoostColor.BLACK
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'boost.color.any',
-                            default: 'any color',
-                            description: 'any color'
-                        }),
-                        value: BoostColor.ANY
-                    }
-                ]
+                MOTOR_ID: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.a',
+                                default: BoostMotorLabel.A,
+                                description: `label for motor A element in motor menu for LEGO Boost extension`
+                            }),
+                            value: BoostMotorLabel.A
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.b',
+                                default: BoostMotorLabel.B,
+                                description: `label for motor B element in motor menu for LEGO Boost extension`
+                            }),
+                            value: BoostMotorLabel.B
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.c',
+                                default: BoostMotorLabel.C,
+                                description: `label for motor C element in motor menu for LEGO Boost extension`
+                            }),
+                            value: BoostMotorLabel.C
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.d',
+                                default: BoostMotorLabel.D,
+                                description: `label for motor D element in motor menu for LEGO Boost extension`
+                            }),
+                            value: BoostMotorLabel.D
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.ab',
+                                default: BoostMotorLabel.AB,
+                                description: `label for motor A and B element in motor menu for LEGO Boost extension`
+                            }),
+                            value: BoostMotorLabel.AB
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorId.all',
+                                default: BoostMotorLabel.ALL,
+                                description: 'label for all motors element in motor menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorLabel.ALL
+                        }
+                    ]
+                },
+                MOTOR_REPORTER_ID: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorReporterId.a',
+                                default: BoostMotorLabel.A,
+                                description: 'label for motor A element in motor menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorLabel.A
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorReporterId.b',
+                                default: BoostMotorLabel.B,
+                                description: 'label for motor B element in motor menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorLabel.B
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorReporterId.c',
+                                default: BoostMotorLabel.C,
+                                description: 'label for motor C element in motor menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorLabel.C
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorReporterId.d',
+                                default: BoostMotorLabel.D,
+                                description: 'label for motor D element in motor menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorLabel.D
+                        }
+                    ]
+                },
+                MOTOR_DIRECTION: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorDirection.forward',
+                                default: 'this way',
+                                description:
+                                    'label for forward element in motor direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorDirection.FORWARD
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorDirection.backward',
+                                default: 'that way',
+                                description:
+                                    'label for backward element in motor direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorDirection.BACKWARD
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.motorDirection.reverse',
+                                default: 'reverse',
+                                description:
+                                    'label for reverse element in motor direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostMotorDirection.REVERSE
+                        }
+                    ]
+                },
+                TILT_DIRECTION: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.up',
+                                default: 'up',
+                                description: 'label for up element in tilt direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostTiltDirection.UP
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.down',
+                                default: 'down',
+                                description: 'label for down element in tilt direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostTiltDirection.DOWN
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.left',
+                                default: 'left',
+                                description: 'label for left element in tilt direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostTiltDirection.LEFT
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.right',
+                                default: 'right',
+                                description: 'label for right element in tilt direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostTiltDirection.RIGHT
+                        }
+                    ]
+                },
+                TILT_DIRECTION_ANY: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.up',
+                                default: 'up'
+                            }),
+                            value: BoostTiltDirection.UP
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.down',
+                                default: 'down'
+                            }),
+                            value: BoostTiltDirection.DOWN
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.left',
+                                default: 'left'
+                            }),
+                            value: BoostTiltDirection.LEFT
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.right',
+                                default: 'right'
+                            }),
+                            value: BoostTiltDirection.RIGHT
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.tiltDirection.any',
+                                default: 'any',
+                                description: 'label for any element in tilt direction menu for LEGO Boost extension'
+                            }),
+                            value: BoostTiltDirection.ANY
+                        }
+                    ]
+                },
+                COLOR: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.red',
+                                default: 'red',
+                                description: 'the color red'
+                            }),
+                            value: BoostColor.RED
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.blue',
+                                default: 'blue',
+                                description: 'the color blue'
+                            }),
+                            value: BoostColor.BLUE
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.green',
+                                default: 'green',
+                                description: 'the color green'
+                            }),
+                            value: BoostColor.GREEN
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.yellow',
+                                default: 'yellow',
+                                description: 'the color yellow'
+                            }),
+                            value: BoostColor.YELLOW
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.white',
+                                default: 'white',
+                                desription: 'the color white'
+                            }),
+                            value: BoostColor.WHITE
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.black',
+                                default: 'black',
+                                description: 'the color black'
+                            }),
+                            value: BoostColor.BLACK
+                        },
+                        {
+                            text: formatMessage({
+                                id: 'boost.color.any',
+                                default: 'any color',
+                                description: 'any color'
+                            }),
+                            value: BoostColor.ANY
+                        }
+                    ]
+                }
             }
         };
     }

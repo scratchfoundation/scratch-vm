@@ -462,8 +462,14 @@ class Scratch3Text2SpeechBlocks {
                 }
             ],
             menus: {
-                voices: this.getVoiceMenu(),
-                languages: this.getLanguageMenu()
+                voices: {
+                    acceptReporters: true,
+                    items: this.getVoiceMenu()
+                },
+                languages: {
+                    acceptReporters: true,
+                    items: this.getLanguageMenu()
+                }
             }
         };
     }
