@@ -1800,8 +1800,8 @@ class Scratch3BoostBlocks {
                         motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
                         break;
                     case BoostMotorState.ON_FOR_ROTATION: {
-                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p), false);
+                        const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
+                        motor.turnOnForDegrees(p, Math.sign(p));
                         break;
                     }
                     }
