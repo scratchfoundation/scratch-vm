@@ -431,9 +431,14 @@ class BoostMotor {
      * @param {BoostMotorState} value - set this motor's state.
      */
     set status (value) {
-        // Clear any time- or rotation-related state from motor and set new status.
-        this._clearRotationState();
-        this._clearTimeout();
+        if (value !== BoostMotorState.ON_FOR_ROTATION) {
+            // clear rotation pending promise only if not already in rotation state
+            this._clearRotationState();
+        }
+        if (value !== BoostMotorState.ON_FOR_TIME) {
+            // clear duration pending promise only if not already in duration state
+            this._clearTimeout();
+        }
         this._status = value;
     }
 
@@ -477,7 +482,6 @@ class BoostMotor {
      * @private
      */
     _turnOn () {
-        if (this.power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
@@ -493,24 +497,19 @@ class BoostMotor {
 
     /**
      * Turn this motor on indefinitely
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnForever (resetState = true){
-        if (this.power === 0) return;
-        if (resetState) this.status = BoostMotorState.ON_FOREVER;
+    turnOnForever () {
+        this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
     }
 
     /**
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnFor (milliseconds, resetState = true) {
-        if (this.power === 0) return;
-
+    turnOnFor (milliseconds) {
         milliseconds = Math.max(0, milliseconds);
-        if (resetState) this.status = BoostMotorState.ON_FOR_TIME;
+        this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
         this._setNewTimeout(this.turnOff, milliseconds);
     }
@@ -519,14 +518,8 @@ class BoostMotor {
      * Turn this motor on for a specific rotation in degrees.
      * @param {number} degrees - run the motor for this amount of degrees.
      * @param {number} direction - rotate in this direction
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnForDegrees (degrees, direction, resetState = true) {
-        if (this.power === 0) {
-            this._clearRotationState();
-            return;
-        }
-
+    turnOnForDegrees (degrees, direction) {
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -542,7 +535,7 @@ class BoostMotor {
             ]
         );
         
-        if (resetState) this.status = BoostMotorState.ON_FOR_ROTATION;
+        this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
     }
@@ -552,8 +545,6 @@ class BoostMotor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
-        if (this.power === 0) return;
-
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
@@ -1791,13 +1782,13 @@ class Scratch3BoostBlocks {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                 switch (motor.status) {
                 case BoostMotorState.ON_FOREVER:
-                    motor.turnOnForever(false);
+                    motor.turnOnForever();
                     break;
                 case BoostMotorState.ON_FOR_TIME:
-                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                     break;
                 case BoostMotorState.ON_FOR_ROTATION: {
-                    const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
+                    const p = Math.abs(motor.pendingPositionDestination - motor.position);
                     motor.turnOnForDegrees(p, Math.sign(p));
                     break;
                 }
@@ -1842,14 +1833,14 @@ class Scratch3BoostBlocks {
                 if (motor) {
                     switch (motor.status) {
                     case BoostMotorState.ON_FOREVER:
-                        motor.turnOnForever(false);
+                        motor.turnOnForever();
                         break;
                     case BoostMotorState.ON_FOR_TIME:
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
                         break;
                     case BoostMotorState.ON_FOR_ROTATION: {
                         const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p), false);
+                        motor.turnOnForDegrees(p, Math.sign(p));
                         break;
                     }
                     }
