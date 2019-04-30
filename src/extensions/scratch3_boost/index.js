@@ -431,14 +431,8 @@ class BoostMotor {
      * @param {BoostMotorState} value - set this motor's state.
      */
     set status (value) {
-        if (value !== BoostMotorState.ON_FOR_ROTATION) {
-            // clear rotation pending promise only if not already in rotation state
-            this._clearRotationState();
-        }
-        if (value !== BoostMotorState.ON_FOR_TIME) {
-            // clear duration pending promise only if not already in duration state
-            this._clearTimeout();
-        }
+        this._clearRotationState();
+        this._clearTimeout();
         this._status = value;
     }
 
@@ -534,7 +528,7 @@ class BoostMotor {
                 BoostMotorProfile.DO_NOT_USE
             ]
         );
-        
+
         this.status = BoostMotorState.ON_FOR_ROTATION;
         this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
