@@ -1,4 +1,5 @@
 const BlockType = require('../extension-support/block-type');
+const log = require('../util/log');
 
 /**
  * An example core block implemented using the extension spec.
@@ -31,6 +32,18 @@ class Scratch3CoreExample {
                     opcode: 'exampleOpcode',
                     blockType: BlockType.REPORTER,
                     text: 'example block'
+                },
+                {
+                    opcode: 'exampleDynamicOpcode',
+                    blockType: BlockType.COMMAND,
+                    text: 'example dynamic block',
+                    isDynamic: true,
+                    customContextMenu: [
+                        {
+                            name: 'Custom Context Menu Option',
+                            callback: 'contextMenuOption'
+                        }
+                    ]
                 }
             ]
         };
@@ -43,6 +56,20 @@ class Scratch3CoreExample {
     exampleOpcode () {
         const stage = this.runtime.getTargetForStage();
         return stage ? stage.getName() : 'no stage yet';
+    }
+
+    /**
+     * An example of a dynamic block.
+     */
+    exampleDynamicOpcode () {
+        log.info('Example dynamic block');
+    }
+
+    /**
+     * An example of a context menu callback.
+     */
+    contextMenuOption () {
+        log.info('Custom context menu example.');
     }
 
 }
