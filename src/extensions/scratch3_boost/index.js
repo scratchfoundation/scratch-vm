@@ -1415,85 +1415,45 @@ class Scratch3BoostBlocks {
             menus: {
                 MOTOR_ID: [
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.a',
-                            default: BoostMotorLabel.A,
-                            description: `label for motor A element in motor menu for LEGO Boost extension`
-                        }),
+                        text: 'A',
                         value: BoostMotorLabel.A
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.b',
-                            default: BoostMotorLabel.B,
-                            description: `label for motor B element in motor menu for LEGO Boost extension`
-                        }),
+                        text: 'B',
                         value: BoostMotorLabel.B
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.c',
-                            default: BoostMotorLabel.C,
-                            description: `label for motor C element in motor menu for LEGO Boost extension`
-                        }),
+                        text: 'C',
                         value: BoostMotorLabel.C
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.d',
-                            default: BoostMotorLabel.D,
-                            description: `label for motor D element in motor menu for LEGO Boost extension`
-                        }),
+                        text: 'D',
                         value: BoostMotorLabel.D
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.ab',
-                            default: BoostMotorLabel.AB,
-                            description: `label for motor A and B element in motor menu for LEGO Boost extension`
-                        }),
+                        text: 'AB',
                         value: BoostMotorLabel.AB
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorId.all',
-                            default: BoostMotorLabel.ALL,
-                            description: 'label for all motors element in motor menu for LEGO Boost extension'
-                        }),
+                        text: 'ABCD',
                         value: BoostMotorLabel.ALL
                     }
                 ],
                 MOTOR_REPORTER_ID: [
                     {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.a',
-                            default: BoostMotorLabel.A,
-                            description: 'label for motor A element in motor menu for LEGO Boost extension'
-                        }),
+                        text: 'A',
                         value: BoostMotorLabel.A
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.b',
-                            default: BoostMotorLabel.B,
-                            description: 'label for motor B element in motor menu for LEGO Boost extension'
-                        }),
+                        text: 'B',
                         value: BoostMotorLabel.B
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.c',
-                            default: BoostMotorLabel.C,
-                            description: 'label for motor C element in motor menu for LEGO Boost extension'
-                        }),
+                        text: 'C',
                         value: BoostMotorLabel.C
                     },
                     {
-                        text: formatMessage({
-                            id: 'boost.motorReporterId.d',
-                            default: BoostMotorLabel.D,
-                            description: 'label for motor D element in motor menu for LEGO Boost extension'
-                        }),
+                        text: 'D',
                         value: BoostMotorLabel.D
                     }
                 ],
