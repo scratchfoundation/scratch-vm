@@ -7,7 +7,6 @@ const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
 const ScratchBlocksConstants = require('./scratch-blocks-constants');
 const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
@@ -1667,10 +1666,7 @@ class Runtime extends EventEmitter {
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
-        newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
-        });
+        newThreads.forEach(thread => this.sequencer.stepHat(thread));
         return newThreads;
     }
 
