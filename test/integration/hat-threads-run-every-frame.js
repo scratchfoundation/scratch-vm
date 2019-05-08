@@ -65,6 +65,52 @@ test('edge activated hat thread runs once every frame', t => {
 });
 
 /**
+ * When a hat is added it should run in the next frame. Any block related
+ * caching should be reset.
+ */
+test('edge activated hat thread runs after being added to previously executed target', t => {
+    const vm = new VirtualMachine();
+    vm.attachStorage(makeTestStorage());
+
+    // Start VM, load project, and run
+    t.doesNotThrow(() => {
+        // Note: don't run vm.start(), we handle calling _step() manually in this test
+        vm.runtime.currentStepTime = Runtime.THREAD_STEP_INTERVAL;
+        vm.clear();
+        vm.setCompatibilityMode(false);
+        vm.setTurboMode(false);
+
+        vm.loadProject(project).then(() => {
+            t.equal(vm.runtime.threads.length, 0);
+
+            vm.runtime._step();
+            let threads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(threads.length, 1);
+            checkIsHatThread(t, vm, threads[0]);
+            t.assert(threads[0].status === Thread.STATUS_DONE);
+
+            // Add a second hat that should create a second thread
+            const hatBlock = threads[0].target.blocks.getBlock(threads[0].topBlock);
+            threads[0].target.blocks.createBlock(Object.assign(
+                {}, hatBlock, {id: 'hatblock2', next: null}
+            ));
+
+            // Check that the hat thread is added again when another step is taken
+            vm.runtime._step();
+            threads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(threads.length, 2);
+            checkIsHatThread(t, vm, threads[0]);
+            checkIsHatThread(t, vm, threads[1]);
+            t.assert(threads[0].status === Thread.STATUS_DONE);
+            t.assert(threads[1].status === Thread.STATUS_DONE);
+            t.end();
+        });
+    });
+});
+
+/**
  * If the hat doesn't finish evaluating within one frame, it shouldn't be added again
  * on the next frame. (We skip execution by setting the step time to 0)
  */
