@@ -356,8 +356,8 @@ class BoostMotor {
         this._pendingRotationDestination = null;
 
         /**
-         * If the motor has been turned on run for a specific duration,
-         * this is the function that will be called once Scratch VM gets a notification from the Move Hub.
+         * If the motor has been turned on run for a specific rotation, this is the function
+         * that will be called once Scratch VM gets a notification from the Move Hub.
          * @type {Object}
          * @private
          */
