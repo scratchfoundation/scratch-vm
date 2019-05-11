@@ -451,7 +451,7 @@ class BoostMotor {
     }
 
     /**
-     * @return {number} - delay, in milliseconds, of the pending duration timeout.
+     * @return {number} - rotation destination, in degrees, of the pending rotation.
      */
     get pendingRotationDestination () {
         return this._pendingRotationDestination;
