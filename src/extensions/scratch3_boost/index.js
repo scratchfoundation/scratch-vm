@@ -439,35 +439,35 @@ class BoostMotor {
     /**
      * @return {number} - time, in milliseconds, of when the pending duration timeout began.
      */
-    get pendingTimeoutStartTime () {
+    get pendingDurationTimeoutStartTime () {
         return this._pendingDurationTimeoutStartTime;
     }
 
     /**
      * @return {number} - delay, in milliseconds, of the pending duration timeout.
      */
-    get pendingTimeoutDelay () {
+    get pendingDurationTimeoutDelay () {
         return this._pendingDurationTimeoutDelay;
     }
 
     /**
      * @return {number} - delay, in milliseconds, of the pending duration timeout.
      */
-    get pendingPositionDestination () {
+    get pendingRotationDestination () {
         return this._pendingRotationDestination;
     }
 
     /**
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
-    get pendingPromiseFunction () {
+    get pendingRotationPromise () {
         return this._pendingRotationPromise;
     }
 
     /**
      * @param {function} func - function to resolve promise
      */
-    set pendingPromiseFunction (func) {
+    set pendingRotationPromise (func) {
         this._pendingRotationPromise = func;
     }
 
@@ -1669,7 +1669,7 @@ class Scratch3BoostBlocks {
                 if (motor.power === 0) return Promise.resolve();
                 return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
-                    motor.pendingPromiseFunction = resolve;
+                    motor.pendingRotationPromise = resolve;
                 });
             }
             return null;
@@ -1739,7 +1739,7 @@ class Scratch3BoostBlocks {
                     motor.turnOnForever();
                     break;
                 case BoostMotorState.ON_FOR_TIME:
-                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                    motor.turnOnFor(motor.pendingDurationTimeoutStartTime + motor.pendingDurationTimeoutDelay - Date.now());
                     break;
                 }
             }
@@ -1785,7 +1785,7 @@ class Scratch3BoostBlocks {
                         motor.turnOnForever();
                         break;
                     case BoostMotorState.ON_FOR_TIME:
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now());
+                        motor.turnOnFor(motor.pendingDurationTimeoutStartTime + motor.pendingDurationTimeoutDelay - Date.now());
                         break;
                     }
                 }
