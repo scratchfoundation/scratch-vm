@@ -437,21 +437,21 @@ class BoostMotor {
     }
 
     /**
-     * @return {number} - time, in milliseconds, of when the pending timeout began.
+     * @return {number} - time, in milliseconds, of when the pending duration timeout began.
      */
     get pendingTimeoutStartTime () {
         return this._pendingDurationTimeoutStartTime;
     }
 
     /**
-     * @return {number} - delay, in milliseconds, of the pending timeout.
+     * @return {number} - delay, in milliseconds, of the pending duration timeout.
      */
     get pendingTimeoutDelay () {
         return this._pendingDurationTimeoutDelay;
     }
 
     /**
-     * @return {number} - delay, in milliseconds, of the pending timeout.
+     * @return {number} - delay, in milliseconds, of the pending duration timeout.
      */
     get pendingPositionDestination () {
         return this._pendingRotationDestination;
