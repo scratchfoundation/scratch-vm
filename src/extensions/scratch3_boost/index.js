@@ -458,7 +458,7 @@ class BoostMotor {
     }
 
     /**
-     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+     * @return {Promise} - the Promise function for the pending rotation.
      */
     get pendingRotationPromise () {
         return this._pendingRotationPromise;
