@@ -465,7 +465,7 @@ class BoostMotor {
     }
 
     /**
-     * @param {function} func - function to resolve promise
+     * @param {function} func - function to resolve pending rotation Promise
      */
     set pendingRotationPromise (func) {
         this._pendingRotationPromise = func;
