@@ -332,28 +332,28 @@ class BoostMotor {
          * @type {Object}
          * @private
          */
-        this._pendingTimeoutId = null;
+        this._pendingDurationTimeoutId = null;
 
         /**
-         * The starting time for the pending timeout.
+         * The starting time for the pending duration timeout.
          * @type {number}
          * @private
          */
-        this._pendingTimeoutStartTime = null;
+        this._pendingDurationTimeoutStartTime = null;
 
         /**
-         * The delay/duration of the pending timeout.
+         * The delay/duration of the pending duration timeout.
          * @type {number}
          * @private
          */
-        this._pendingTimeoutDelay = null;
+        this._pendingDurationTimeoutDelay = null;
 
         /**
          * The target position of a turn-based command.
          * @type {number}
          * @private
          */
-        this._pendingPositionDestination = null;
+        this._pendingRotationDestination = null;
 
         /**
          * If the motor has been turned on run for a specific duration,
@@ -361,7 +361,7 @@ class BoostMotor {
          * @type {Object}
          * @private
          */
-        this._pendingPromiseFunction = null;
+        this._pendingRotationPromise = null;
 
         this.turnOff = this.turnOff.bind(this);
     }
@@ -440,35 +440,35 @@ class BoostMotor {
      * @return {number} - time, in milliseconds, of when the pending timeout began.
      */
     get pendingTimeoutStartTime () {
-        return this._pendingTimeoutStartTime;
+        return this._pendingDurationTimeoutStartTime;
     }
 
     /**
      * @return {number} - delay, in milliseconds, of the pending timeout.
      */
     get pendingTimeoutDelay () {
-        return this._pendingTimeoutDelay;
+        return this._pendingDurationTimeoutDelay;
     }
 
     /**
      * @return {number} - delay, in milliseconds, of the pending timeout.
      */
     get pendingPositionDestination () {
-        return this._pendingPositionDestination;
+        return this._pendingRotationDestination;
     }
 
     /**
      * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
      */
     get pendingPromiseFunction () {
-        return this._pendingPromiseFunction;
+        return this._pendingRotationPromise;
     }
 
     /**
      * @param {function} func - function to resolve promise
      */
     set pendingPromiseFunction (func) {
-        this._pendingPromiseFunction = func;
+        this._pendingRotationPromise = func;
     }
 
     /**
@@ -530,7 +530,7 @@ class BoostMotor {
         );
 
         this.status = BoostMotorState.ON_FOR_ROTATION;
-        this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
+        this._pendingRotationDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
     }
 
@@ -559,11 +559,11 @@ class BoostMotor {
      * @private
      */
     _clearTimeout () {
-        if (this._pendingTimeoutId !== null) {
-            clearTimeout(this._pendingTimeoutId);
-            this._pendingTimeoutId = null;
-            this._pendingTimeoutStartTime = null;
-            this._pendingTimeoutDelay = null;
+        if (this._pendingDurationTimeoutId !== null) {
+            clearTimeout(this._pendingDurationTimeoutId);
+            this._pendingDurationTimeoutId = null;
+            this._pendingDurationTimeoutStartTime = null;
+            this._pendingDurationTimeoutDelay = null;
         }
     }
 
@@ -576,16 +576,16 @@ class BoostMotor {
     _setNewTimeout (callback, delay) {
         this._clearTimeout();
         const timeoutID = setTimeout(() => {
-            if (this._pendingTimeoutId === timeoutID) {
-                this._pendingTimeoutId = null;
-                this._pendingTimeoutStartTime = null;
-                this._pendingTimeoutDelay = null;
+            if (this._pendingDurationTimeoutId === timeoutID) {
+                this._pendingDurationTimeoutId = null;
+                this._pendingDurationTimeoutStartTime = null;
+                this._pendingDurationTimeoutDelay = null;
             }
             callback();
         }, delay);
-        this._pendingTimeoutId = timeoutID;
-        this._pendingTimeoutStartTime = Date.now();
-        this._pendingTimeoutDelay = delay;
+        this._pendingDurationTimeoutId = timeoutID;
+        this._pendingDurationTimeoutStartTime = Date.now();
+        this._pendingDurationTimeoutDelay = delay;
     }
 
     /**
@@ -594,11 +594,11 @@ class BoostMotor {
      * @private
      */
     _clearRotationState () {
-        if (this._pendingPromiseFunction !== null) {
-            this._pendingPromiseFunction();
-            this._pendingPromiseFunction = null;
+        if (this._pendingRotationPromise !== null) {
+            this._pendingRotationPromise();
+            this._pendingRotationPromise = null;
         }
-        this._pendingPositionDestination = null;
+        this._pendingRotationDestination = null;
     }
 }
 
