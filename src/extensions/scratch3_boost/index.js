@@ -432,7 +432,7 @@ class BoostMotor {
      */
     set status (value) {
         this._clearRotationState();
-        this._clearTimeout();
+        this._clearDurationTimeout();
         this._status = value;
     }
 
@@ -505,7 +505,7 @@ class BoostMotor {
         milliseconds = Math.max(0, milliseconds);
         this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
-        this._setNewTimeout(this.turnOff, milliseconds);
+        this._setNewDurationTimeout(this.turnOff, milliseconds);
     }
 
     /**
@@ -558,7 +558,7 @@ class BoostMotor {
      * Clear the motor action timeout, if any. Safe to call even when there is no pending timeout.
      * @private
      */
-    _clearTimeout () {
+    _clearDurationTimeout () {
         if (this._pendingDurationTimeoutId !== null) {
             clearTimeout(this._pendingDurationTimeoutId);
             this._pendingDurationTimeoutId = null;
@@ -573,8 +573,8 @@ class BoostMotor {
      * @param {int} delay - wait this many milliseconds before calling the callback.
      * @private
      */
-    _setNewTimeout (callback, delay) {
-        this._clearTimeout();
+    _setNewDurationTimeout (callback, delay) {
+        this._clearDurationTimeout();
         const timeoutID = setTimeout(() => {
             if (this._pendingDurationTimeoutId === timeoutID) {
                 this._pendingDurationTimeoutId = null;
