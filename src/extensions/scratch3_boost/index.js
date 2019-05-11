@@ -451,7 +451,7 @@ class BoostMotor {
     }
 
     /**
-     * @return {number} - rotation destination, in degrees, of the pending rotation.
+     * @return {number} - target position, in degrees, of the pending rotation.
      */
     get pendingRotationDestination () {
         return this._pendingRotationDestination;
