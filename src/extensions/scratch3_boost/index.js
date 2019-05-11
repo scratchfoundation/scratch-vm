@@ -1739,7 +1739,8 @@ class Scratch3BoostBlocks {
                     motor.turnOnForever();
                     break;
                 case BoostMotorState.ON_FOR_TIME:
-                    motor.turnOnFor(motor.pendingDurationTimeoutStartTime + motor.pendingDurationTimeoutDelay - Date.now());
+                    motor.turnOnFor(motor.pendingDurationTimeoutStartTime +
+                        motor.pendingDurationTimeoutDelay - Date.now());
                     break;
                 }
             }
@@ -1785,7 +1786,8 @@ class Scratch3BoostBlocks {
                         motor.turnOnForever();
                         break;
                     case BoostMotorState.ON_FOR_TIME:
-                        motor.turnOnFor(motor.pendingDurationTimeoutStartTime + motor.pendingDurationTimeoutDelay - Date.now());
+                        motor.turnOnFor(motor.pendingDurationTimeoutStartTime +
+                            motor.pendingDurationTimeoutDelay - Date.now());
                         break;
                     }
                 }
