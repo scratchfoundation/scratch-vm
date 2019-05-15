@@ -1,5 +1,6 @@
 const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
 const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/ble';
+const ScratchLinkBridge = require('./scratch-link-bridge');
 // const log = require('../util/log');
 
 class BLE extends JSONRPCWebSocket {
@@ -14,7 +15,7 @@ class BLE extends JSONRPCWebSocket {
      * @param {object} disconnectCallback - a callback for disconnection.
      */
     constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null) {
-        const ws = new WebSocket(ScratchLinkWebSocket);
+        const ws = new ScratchLinkBridge('BLE');
         super(ws);
 
         this._ws = ws;
