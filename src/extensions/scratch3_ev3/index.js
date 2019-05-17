@@ -20,7 +20,7 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
  * A maximum number of BT message sends per second, to be enforced by the rate limiter.
  * @type {number}
  */
-const BTSendRateMax = 20;
+const BTSendRateMax = 40;
 
 /**
  * Enum for Ev3 direct command types.
