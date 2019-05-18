@@ -1,6 +1,8 @@
 const test = require('tap').test;
 const Worker = require('tiny-worker');
 
+const BlockType = require('../../src/extension-support/block-type');
+
 const dispatch = require('../../src/dispatch/central-dispatch');
 const VirtualMachine = require('../../src/virtual-machine');
 
@@ -12,7 +14,9 @@ dispatch.workerClass = Worker;
 
 class TestInternalExtension {
     constructor () {
-        this.status = {};
+        this.status = {
+            goLog: []
+        };
         this.status.constructorCalled = true;
     }
 
@@ -23,7 +27,14 @@ class TestInternalExtension {
             name: 'Test Internal Extension',
             blocks: [
                 {
-                    opcode: 'go'
+                    isDynamic: true,
+                    opcode: 'go',
+                    text: 'thing 1'
+                },
+                {
+                    isDynamic: true,
+                    opcode: 'go',
+                    text: 'thing 2'
                 }
             ],
             menus: {
@@ -33,8 +44,8 @@ class TestInternalExtension {
         };
     }
 
-    go () {
-        this.status.goCalled = true;
+    go (args, util, blockInfo) {
+        this.status.goLog.push(blockInfo.text);
     }
 
     _buildAMenu () {
@@ -58,12 +69,20 @@ test('internal extension', t => {
     vm.extensionManager._registerInternalExtension(extension);
     t.ok(extension.status.getInfoCalled);
 
+    t.deepEqual(extension.status.goLog, []);
+
     const func = vm.runtime.getOpcodeFunction('testInternalExtension_go');
     t.type(func, 'function');
+    t.throws(func); // should fail to get dynamic blockInfo
 
-    t.notOk(extension.status.goCalled);
-    func();
-    t.ok(extension.status.goCalled);
+    t.deepEqual(extension.status.goLog, []);
+
+    // simulate `defineDynamicBlock`
+    const extensionInfo = extension.getInfo();
+    func({mutation: {blockInfo: extensionInfo.blocks[0]}});
+    func({mutation: {blockInfo: extensionInfo.blocks[1]}});
+
+    t.deepEqual(extension.status.goLog, ['thing 1', 'thing 2']);
 
     // There should be 2 menus - one is an array, one is the function to call.
     t.equal(vm.runtime._blockInfo[0].menus.length, 2);
