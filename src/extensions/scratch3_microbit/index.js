@@ -436,7 +436,7 @@ class Scratch3MicroBitBlocks {
                     default: 'any',
                     description: 'label for "any" element in button picker for micro:bit extension'
                 }),
-                value: MicroBitButtons.ANY
+                value: 'Any'
             }
         ];
     }
