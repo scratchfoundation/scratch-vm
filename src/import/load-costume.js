@@ -268,7 +268,14 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
                 return loadVector_(costume, runtime);
             });
     }
-    return loadBitmap_(costume, runtime, rotationCenter, optVersion);
+    return loadBitmap_(costume, runtime, rotationCenter, optVersion)
+        .catch(() => {
+            // Use default asset if original fails to load
+            costume.assetId = runtime.storage.defaultAssetId.ImageBitmap;
+            costume.asset = runtime.storage.get(costume.assetId);
+            costume.md5 = `${costume.assetId}.${AssetType.ImageBitmap.runtimeFormat}`;
+            return loadBitmap_(costume, runtime);
+        });
 };
 
 /**
