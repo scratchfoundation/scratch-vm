@@ -298,6 +298,28 @@ class Scratch3LooksBlocks {
         };
     }
 
+    /**
+     * Create a text bubble and yield on this thread until it's done. Used for "say/think for () secs".
+     * @param {number} args Block arguments
+     * @param {BlockUtility} util Utility object provided by the runtime.
+     * @param {string} type The type of bubble (say/think)
+     * @private
+     */
+    _bubbleForSecs (args, util, type) {
+        if (util.stackTimerNeedsInit()) {
+            this.runtime.emit('SAY', util.target, type, args.MESSAGE);
+
+            const duration = Math.max(0, 1000 * Cast.toNumber(args.SECS));
+
+            util.startStackTimer(duration);
+            util.yield();
+        } else if (util.stackTimerFinished()) {
+            this._updateBubble(util.target, type, '');
+        } else {
+            util.yield();
+        }
+    }
+
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
         let message = args.MESSAGE;
@@ -309,19 +331,7 @@ class Scratch3LooksBlocks {
     }
 
     sayforsecs (args, util) {
-        this.say(args, util);
-        const target = util.target;
-        const usageId = this._getBubbleState(target).usageId;
-        return new Promise(resolve => {
-            this._bubbleTimeout = setTimeout(() => {
-                this._bubbleTimeout = null;
-                // Clear say bubble if it hasn't been changed and proceed.
-                if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'say', '');
-                }
-                resolve();
-            }, 1000 * args.SECS);
-        });
+        this._bubbleForSecs(args, util, 'say');
     }
 
     think (args, util) {
@@ -329,19 +339,7 @@ class Scratch3LooksBlocks {
     }
 
     thinkforsecs (args, util) {
-        this.think(args, util);
-        const target = util.target;
-        const usageId = this._getBubbleState(target).usageId;
-        return new Promise(resolve => {
-            this._bubbleTimeout = setTimeout(() => {
-                this._bubbleTimeout = null;
-                // Clear think bubble if it hasn't been changed and proceed.
-                if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'think', '');
-                }
-                resolve();
-            }, 1000 * args.SECS);
-        });
+        this._bubbleForSecs(args, util, 'think');
     }
 
     show (args, util) {
