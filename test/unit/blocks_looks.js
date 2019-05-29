@@ -15,7 +15,9 @@ const util = {
                 {name: 'second name'},
                 {name: 'third name'}
             ]
-        }
+        },
+        _customState: {},
+        getCustomState: () => util.target._customState
     }
 };
 
@@ -159,7 +161,7 @@ test('switch backdrop block runs correctly', t => {
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], -1), 3);
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], -4), 4);
     t.strictEqual(testBackdrop(['a', 'b', 'c', 'd'], 10), 2);
-    
+
     t.end();
 });
 
@@ -195,21 +197,38 @@ test('getBackdropNumberName can return costume name', t => {
     t.end();
 });
 
-test('numbers should be rounded to two decimals in say', t => {
+test('numbers should be rounded properly in say/think', t => {
     const rt = new Runtime();
     const looks = new Looks(rt);
 
-    const args = {MESSAGE: 3.14159};
-    const expectedSayString = '3.14';
+    let expectedSayString;
 
-    rt.removeAllListeners('SAY'); // Prevent say blocks from executing
-
-    rt.addListener('SAY', (target, type, sayString) => {
-        t.strictEqual(sayString, expectedSayString);
-        t.end();
+    rt.addListener('SAY', () => {
+        const bubbleState = util.target.getCustomState(Looks.STATE_KEY);
+        t.strictEqual(bubbleState.text, expectedSayString);
     });
 
-    looks.say(args, util);
+    expectedSayString = '3.14';
+    looks.say({MESSAGE: 3.14159}, util, 'say bubble should round to 2 decimal places');
+    looks.think({MESSAGE: 3.14159}, util, 'think bubble should round to 2 decimal places');
+
+    expectedSayString = '3';
+    looks.say({MESSAGE: 3}, util, 'say bubble should not add decimal places to integers');
+    looks.think({MESSAGE: 3}, util, 'think bubble should not add decimal places to integers');
+
+    expectedSayString = '3.10';
+    looks.say({MESSAGE: 3.1}, util, 'say bubble should round to 2 decimal places, even if only 1 is needed');
+    looks.think({MESSAGE: 3.1}, util, 'think bubble should round to 2 decimal places, even if only 1 is needed');
+
+    expectedSayString = '0.00125';
+    looks.say({MESSAGE: 0.00125}, util, 'say bubble should not round if it would display small numbers as 0');
+    looks.think({MESSAGE: 0.00125}, util, 'think bubble should not round if it would display small numbers as 0');
+
+    expectedSayString = '1.99999';
+    looks.say({MESSAGE: '1.99999'}, util, 'say bubble should not round strings');
+    looks.think({MESSAGE: '1.99999'}, util, 'think bubble should not round strings');
+
+    t.end();
 });
 
 test('clamp graphic effects', t => {

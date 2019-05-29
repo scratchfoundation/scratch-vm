@@ -234,6 +234,29 @@ class Scratch3LooksBlocks {
     }
 
     /**
+     * Properly format text for a text bubble.
+     * @param {string} text The text to be formatted
+     * @return {string} The formatted text
+     * @private
+     */
+    _formatBubbleText (text) {
+        if (text === '') return text;
+
+        // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that
+        // rounding would display them as 0.00. This matches 2.0's behavior:
+        // https://github.com/LLK/scratch-flash/blob/2e4a402ceb205a042887f54b26eebe1c2e6da6c0/src/scratch/ScratchSprite.as#L579-L585
+        if (typeof text === 'number' &&
+            Math.abs(text) >= 0.01 && text % 1 !== 0) {
+            text = text.toFixed(2);
+        }
+
+        // Limit the length of the string.
+        text = String(text).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
+
+        return text;
+    }
+
+    /**
      * The entry point for say/think blocks. Clears existing bubble if the text is empty.
      * Set the bubble custom state and then call _renderBubble.
      * @param {!Target} target Target that say/think blocks are being called on.
@@ -244,7 +267,7 @@ class Scratch3LooksBlocks {
     _updateBubble (target, type, text) {
         const bubbleState = this._getBubbleState(target);
         bubbleState.type = type;
-        bubbleState.text = text;
+        bubbleState.text = this._formatBubbleText(text);
         bubbleState.usageId = uid();
         this._renderBubble(target);
     }
@@ -300,12 +323,7 @@ class Scratch3LooksBlocks {
 
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
-        let message = args.MESSAGE;
-        if (typeof message === 'number') {
-            message = parseFloat(message.toFixed(2));
-        }
-        message = String(message).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
-        this.runtime.emit('SAY', util.target, 'say', message);
+        this.runtime.emit('SAY', util.target, 'say', args.MESSAGE);
     }
 
     sayforsecs (args, util) {
@@ -325,7 +343,7 @@ class Scratch3LooksBlocks {
     }
 
     think (args, util) {
-        this._updateBubble(util.target, 'think', String(args.MESSAGE).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT));
+        this.runtime.emit('SAY', util.target, 'think', args.MESSAGE);
     }
 
     thinkforsecs (args, util) {
@@ -418,7 +436,7 @@ class Scratch3LooksBlocks {
                     const lowerBound = 0;
                     const upperBound = numCostumes - 1;
                     const costumeToExclude = stage.currentCostume;
-                    
+
                     const nextCostume = MathUtil.inclusiveRandIntWithout(lowerBound, upperBound, costumeToExclude);
 
                     stage.setCostume(nextCostume);
