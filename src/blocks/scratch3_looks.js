@@ -331,25 +331,40 @@ class Scratch3LooksBlocks {
         };
     }
 
+    /**
+     * Create a text bubble and yield on this thread until it's done. Used for "say/think for () secs".
+     * @param {number} args Block arguments
+     * @param {BlockUtility} util Utility object provided by the runtime.
+     * @param {string} type The type of bubble (say/think)
+     * @private
+     */
+    _bubbleForSecs (args, util, type) {
+        if (util.stackTimerNeedsInit()) {
+            this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, type, args.MESSAGE);
+
+            const duration = Math.max(0, 1000 * Cast.toNumber(args.SECS));
+
+            util.stackFrame.bubbleId = this._getBubbleState(util.target).usageId;
+            util.startStackTimer(duration);
+            util.yield();
+        } else if (util.stackTimerFinished()) {
+            // Make sure the bubble we're removing is the same bubble we created.
+            // We don't want to cancel a bubble started from another script.
+            if (util.stackFrame.bubbleId === this._getBubbleState(util.target).usageId) {
+                this._updateBubble(util.target, type, '');
+            }
+        } else {
+            util.yield();
+        }
+    }
+
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
         this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'say', args.MESSAGE);
     }
 
     sayforsecs (args, util) {
-        this.say(args, util);
-        const target = util.target;
-        const usageId = this._getBubbleState(target).usageId;
-        return new Promise(resolve => {
-            this._bubbleTimeout = setTimeout(() => {
-                this._bubbleTimeout = null;
-                // Clear say bubble if it hasn't been changed and proceed.
-                if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'say', '');
-                }
-                resolve();
-            }, 1000 * args.SECS);
-        });
+        this._bubbleForSecs(args, util, 'say');
     }
 
     think (args, util) {
@@ -357,19 +372,7 @@ class Scratch3LooksBlocks {
     }
 
     thinkforsecs (args, util) {
-        this.think(args, util);
-        const target = util.target;
-        const usageId = this._getBubbleState(target).usageId;
-        return new Promise(resolve => {
-            this._bubbleTimeout = setTimeout(() => {
-                this._bubbleTimeout = null;
-                // Clear think bubble if it hasn't been changed and proceed.
-                if (this._getBubbleState(target).usageId === usageId) {
-                    this._updateBubble(target, 'think', '');
-                }
-                resolve();
-            }, 1000 * args.SECS);
-        });
+        this._bubbleForSecs(args, util, 'think');
     }
 
     show (args, util) {
