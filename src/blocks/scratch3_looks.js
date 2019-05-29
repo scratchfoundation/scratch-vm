@@ -307,14 +307,20 @@ class Scratch3LooksBlocks {
      */
     _bubbleForSecs (args, util, type) {
         if (util.stackTimerNeedsInit()) {
+            
             this.runtime.emit('SAY', util.target, type, args.MESSAGE);
 
             const duration = Math.max(0, 1000 * Cast.toNumber(args.SECS));
 
+            util.stackFrame.bubbleId = this._getBubbleState(util.target).usageId;
             util.startStackTimer(duration);
             util.yield();
         } else if (util.stackTimerFinished()) {
-            this._updateBubble(util.target, type, '');
+            // Make sure the bubble we're removing is the same bubble we created.
+            // We don't want to cancel a bubble started from another script.
+            if (util.stackFrame.bubbleId === this._getBubbleState(util.target).usageId) {
+                this._updateBubble(util.target, type, '');
+            }
         } else {
             util.yield();
         }
