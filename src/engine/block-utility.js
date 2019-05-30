@@ -72,11 +72,7 @@ class BlockUtility {
      * @return {boolean} - true if the stack timer has finished.
      */
     stackTimerFinished () {
-        const timeElapsed = this.stackFrame.timer.timeElapsed();
-        if (timeElapsed < this.stackFrame.duration) {
-            return false;
-        }
-        return true;
+        return this.stackFrame.timer.timeElapsed() >= this.stackFrame.duration;
     }
 
     /**
