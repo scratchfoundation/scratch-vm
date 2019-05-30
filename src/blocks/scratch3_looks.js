@@ -307,7 +307,6 @@ class Scratch3LooksBlocks {
      */
     _bubbleForSecs (args, util, type) {
         if (util.stackTimerNeedsInit()) {
-            
             this.runtime.emit('SAY', util.target, type, args.MESSAGE);
 
             const duration = Math.max(0, 1000 * Cast.toNumber(args.SECS));
