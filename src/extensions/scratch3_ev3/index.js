@@ -571,7 +571,7 @@ class EV3 {
      */
     connect (id) {
         if (this._bt) {
-            this._bt.connectPeripheral(id);
+            this._bt.connectPeripheral(id, '1234');
         }
     }
 
