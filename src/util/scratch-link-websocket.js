@@ -6,7 +6,7 @@
  * public methods in this class.
  * - open()
  * - close()
- * - set[Open|Close|Error]
+ * - setOn[Open|Close|Error]
  * - setHandleMessage
  * - isOpen()
  */
