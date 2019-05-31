@@ -33,12 +33,12 @@ class ScratchLinkWebSocket {
             throw new Error(`Unknown ScratchLink socket Type: ${this._type}`);
         }
 
-        if (this._onOpen && this._onClose && this._onError) {
+        if (this._onOpen && this._onClose && this._onError && this._handleMessage) {
             this._ws.onopen = this._onOpen;
             this._ws.onclose = this._onClose;
             this._ws.onerror = this._onError;
         } else {
-            throw new Error('Must set open, close and error handlers before calling open on the socket');
+            throw new Error('Must set open, close, message and error handlers before calling open on the socket');
         }
 
         this._ws.onmessage = this._onMessage.bind(this);
