@@ -72,12 +72,12 @@ class BLE extends JSONRPC {
      * Close the websocket.
      */
     disconnect () {
-        if (this._socket.isOpen()) {
-            this._socket.close();
-        }
-
         if (this._connected) {
             this._connected = false;
+        }
+
+        if (this._socket.isOpen()) {
+            this._socket.close();
         }
 
         if (this._discoverTimeoutID) {
