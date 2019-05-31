@@ -61,7 +61,11 @@ class BT extends JSONRPCWebSocket {
      * @param {string} pin - an optional pin for pairing
      */
     connectPeripheral (id, pin = null) {
-        this.sendRemoteRequest('connect', {peripheralId: id, pin: pin})
+        const params = {peripheralId: id};
+        if (pin) {
+            params.pin = pin;
+        }
+        this.sendRemoteRequest('connect', params)
             .then(() => {
                 this._connected = true;
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
