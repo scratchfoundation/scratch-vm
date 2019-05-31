@@ -8,6 +8,7 @@
  * - close()
  * - setOn[Open|Close|Error]
  * - setHandleMessage
+ * - sendMessage(msgObj)
  * - isOpen()
  */
 class ScratchLinkWebSocket {
