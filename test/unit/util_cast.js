@@ -167,32 +167,33 @@ test('toListIndex', t => {
     const empty = [];
 
     // Valid
-    t.strictEqual(cast.toListIndex(1, list.length), 1);
-    t.strictEqual(cast.toListIndex(6, list.length), 6);
+    t.strictEqual(cast.toListIndex(1, list.length, false), 1);
+    t.strictEqual(cast.toListIndex(6, list.length, false), 6);
 
     // Invalid
-    t.strictEqual(cast.toListIndex(-1, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(0.1, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(0, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(7, list.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(-1, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0.1, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(7, list.length, false), cast.LIST_INVALID);
 
     // "all"
-    t.strictEqual(cast.toListIndex('all', list.length), cast.LIST_ALL);
+    t.strictEqual(cast.toListIndex('all', list.length, true), cast.LIST_ALL);
+    t.strictEqual(cast.toListIndex('all', list.length, false), cast.LIST_INVALID);
 
     // "last"
-    t.strictEqual(cast.toListIndex('last', list.length), list.length);
-    t.strictEqual(cast.toListIndex('last', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('last', list.length, false), list.length);
+    t.strictEqual(cast.toListIndex('last', empty.length, false), cast.LIST_INVALID);
 
     // "random"
-    const random = cast.toListIndex('random', list.length);
+    const random = cast.toListIndex('random', list.length, false);
     t.ok(random <= list.length);
     t.ok(random > 0);
-    t.strictEqual(cast.toListIndex('random', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('random', empty.length, false), cast.LIST_INVALID);
 
     // "any" (alias for "random")
-    const any = cast.toListIndex('any', list.length);
+    const any = cast.toListIndex('any', list.length, false);
     t.ok(any <= list.length);
     t.ok(any > 0);
-    t.strictEqual(cast.toListIndex('any', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('any', empty.length, false), cast.LIST_INVALID);
     t.end();
 });
