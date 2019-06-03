@@ -380,6 +380,15 @@ const execute = function (sequencer, thread) {
         }
     }
 
+    // Blocks should glow when a script is starting, not after it has finished
+    // (see #1404). Only blocks in blockContainers that don't forceNoGlow should
+    // request a glow.
+    if (!blockContainer.forceNoGlow) {
+        thread.requestScriptGlowInFrame = true;
+        // Indicate the block that is executing.
+        thread.blockGlowInFrame = currentBlockId;
+    }
+
     const ops = blockCached._ops;
     const length = ops.length;
     let i = 0;
@@ -456,14 +465,6 @@ const execute = function (sequencer, thread) {
         const argValues = opCached._argValues;
 
         // Fields are set during opCached initialization.
-
-        // Blocks should glow when a script is starting,
-        // not after it has finished (see #1404).
-        // Only blocks in blockContainers that don't forceNoGlow
-        // should request a glow.
-        if (!blockContainer.forceNoGlow) {
-            thread.requestScriptGlowInFrame = true;
-        }
 
         // Inputs are set during previous steps in the loop.
 
