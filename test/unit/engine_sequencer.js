@@ -120,16 +120,40 @@ test('stepToBranch', t => {
     const r = new Runtime();
     const s = new Sequencer(r);
     const th = generateThread(r);
+
+    // Push substack 2 (null).
     s.stepToBranch(th, 2, false);
     t.strictEquals(th.peekStack(), null);
     th.popStack();
+    t.strictEquals(th.peekStackFrame().isLoop, false);
+    // Push substack 1 (null).
     s.stepToBranch(th, 1, false);
     t.strictEquals(th.peekStack(), null);
     th.popStack();
+    t.strictEquals(th.peekStackFrame().isLoop, false);
+    // Push loop substack (null).
+    s.stepToBranch(th, 1, true);
+    t.strictEquals(th.peekStack(), null);
     th.popStack();
+    t.strictEquals(th.peekStackFrame().isLoop, true);
+    // isLoop resets when thread goes to next block.
+    th.goToNextBlock();
+    t.strictEquals(th.peekStackFrame().isLoop, false);
+    th.popStack();
+    // Push substack 1 (not null).
     s.stepToBranch(th, 1, false);
     t.notEquals(th.peekStack(), null);
-    
+    th.popStack();
+    t.strictEquals(th.peekStackFrame().isLoop, false);
+    // Push loop substack (not null).
+    s.stepToBranch(th, 1, true);
+    t.notEquals(th.peekStack(), null);
+    th.popStack();
+    t.strictEquals(th.peekStackFrame().isLoop, true);
+    // isLoop resets when thread goes to next block.
+    th.goToNextBlock();
+    t.strictEquals(th.peekStackFrame().isLoop, false);
+
     t.end();
 });
 
