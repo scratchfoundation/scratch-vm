@@ -221,13 +221,10 @@ class Sequencer {
             thread.warpTimer = new Timer();
             thread.warpTimer.start();
         }
-        // Store the current block ID outside of the loop to later set it to
-        // thread.blockGlowInFrame.
-        let currentBlockId = thread.peekStack();
         // The thread entered a null block while outside of stepThreads during a
         // stepHat or promise resolution. We can't unwrap during stepHat or
         // promise resolution if we need to change the thread status.
-        if (currentBlockId === null) {
+        if (thread.peekStack() === null) {
             // Unwrap the stack until we find a loop block, a non-null
             // block, or the top of the stack.
             this.unwrapStack(thread);
@@ -238,7 +235,7 @@ class Sequencer {
         }
         while (thread.status === Thread.STATUS_RUNNING) {
             // Save the current block ID to notice if we did control flow.
-            currentBlockId = thread.peekStack();
+            const currentBlockId = thread.peekStack();
 
             if (this.runtime.profiler !== null) {
                 if (executeProfilerId === -1) {
@@ -272,8 +269,6 @@ class Sequencer {
                 thread.status = Thread.STATUS_RUNNING;
             }
         }
-        // Indicate the block that just executed.
-        thread.blockGlowInFrame = currentBlockId;
         // If we yielded out of the thread, set status to RUNNING so stepThreads
         // can count it as an activeThread and possibly step all threads an
         // extra time.
