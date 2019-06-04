@@ -16,6 +16,7 @@ const maybeFormatMessage = require('../util/maybe-format-message');
 const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
+const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -1287,6 +1288,34 @@ class Runtime extends EventEmitter {
     getBlocksJSON () {
         return this._blockInfo.reduce(
             (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
+    }
+
+    /**
+     * Get a scratch link socket.
+     * @param {string} type Either BLE or BT
+     * @returns {ScratchLinkSocket} The scratch link socket.
+     */
+    getScratchLinkSocket (type) {
+        const factory = this._linkSocketFactory || this._defaultScratchLinkSocketFactory;
+        return factory(type);
+    }
+
+    /**
+     * Configure how ScratchLink sockets are created. Factory must consume a "type" parameter
+     * either BT or BLE.
+     * @param {Function} factory The new factory for creating ScratchLink sockets.
+     */
+    configureScratchLinkSocketFactory (factory) {
+        this._linkSocketFactory = factory;
+    }
+
+    /**
+     * The default scratch link socket creator, using websockets to the installed device manager.
+     * @param {string} type Either BLE or BT
+     * @returns {ScratchLinkSocket} The new scratch link socket (a WebSocket object)
+     */
+    _defaultScratchLinkSocketFactory (type) {
+        return new ScratchLinkWebSocket(type);
     }
 
     /**
