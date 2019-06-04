@@ -57,9 +57,14 @@ class BT extends JSONRPC {
      * Try connecting to the input peripheral id, and then call the connect
      * callback if connection is successful.
      * @param {number} id - the id of the peripheral to connect to
+     * @param {string} pin - an optional pin for pairing
      */
-    connectPeripheral (id) {
-        this.sendRemoteRequest('connect', {peripheralId: id})
+    connectPeripheral (id, pin = null) {
+        const params = {peripheralId: id};
+        if (pin) {
+            params.pin = pin;
+        }
+        this.sendRemoteRequest('connect', params)
             .then(() => {
                 this._connected = true;
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
