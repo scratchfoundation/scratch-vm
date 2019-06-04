@@ -6,6 +6,7 @@ const uid = require('../../util/uid');
 const BT = require('../../io/bt');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
+const RateLimiter = require('../../util/rateLimiter.js');
 const log = require('../../util/log');
 
 /**
@@ -20,6 +21,12 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
  * @readonly
  */
 const Ev3PairingPin = '1234';
+
+/**
+ * A maximum number of BT message sends per second, to be enforced by the rate limiter.
+ * @type {number}
+ */
+const BTSendRateMax = 40;
 
 /**
  * Enum for Ev3 direct command types.
@@ -363,7 +370,7 @@ class EV3Motor {
             ]
         );
 
-        this._parent.send(cmd);
+        this._parent.send(cmd, false); // don't use rate limiter to ensure motor stops
     }
 
     /**
@@ -482,6 +489,14 @@ class EV3 {
         this._bt = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
+        /**
+         * A rate limiter utility, to help limit the rate at which we send BT messages
+         * over the socket to Scratch Link to a maximum number of sends per second.
+         * @type {RateLimiter}
+         * @private
+         */
+        this._rateLimiter = new RateLimiter(BTSendRateMax);
+
         this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
@@ -547,7 +562,7 @@ class EV3 {
             ]
         );
 
-        this.send(cmd);
+        this.send(cmd, false); // don't use rate limiter to ensure sound stops
     }
 
     stopAllMotors () {
@@ -609,11 +624,15 @@ class EV3 {
     /**
      * Send a message to the peripheral BT socket.
      * @param {Uint8Array} message - the message to send.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the send operation.
      */
-    send (message) {
-        // TODO: add rate limiting?
+    send (message, useLimiter = true) {
         if (!this.isConnected()) return Promise.resolve();
+
+        if (useLimiter) {
+            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        }
 
         return this._bt.sendMessage({
             message: Base64Util.uint8ArrayToBase64(message),
