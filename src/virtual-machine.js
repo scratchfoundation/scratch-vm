@@ -1525,6 +1525,14 @@ class VirtualMachine extends EventEmitter {
         }
         return null;
     }
+
+    /**
+     * Allow VM consumer to configure the ScratchLink socket creator.
+     * @param {Function} factory The custom ScratchLink socket factory.
+     */
+    configureScratchLinkSocketFactory (factory) {
+        this.runtime.configureScratchLinkSocketFactory(factory);
+    }
 }
 
 module.exports = VirtualMachine;
