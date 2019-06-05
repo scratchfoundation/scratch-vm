@@ -60,7 +60,7 @@
     "eslint": "^5.3.0",
     "eslint-config-scratch": "^5.0.0",
     "expose-loader": "0.7.5",
-    "file-loader": "^2.0.0",
+    "file-loader": "^4.0.0",
     "format-message-cli": "6.2.0",
     "gh-pages": "^1.2.0",
     "in-publish": "^2.0.0",
