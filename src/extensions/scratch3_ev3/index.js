@@ -599,7 +599,8 @@ class EV3 {
     /**
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
-    disconnect () {
+    disconnect() {
+        console.log('EV3 DISCONNECT CALLED');
         if (this._bt) {
             this._bt.disconnect();
         }
@@ -610,7 +611,8 @@ class EV3 {
     /**
      * Reset all the state and timeout/interval ids.
      */
-    reset () {
+    reset() {
+        console.log('EV3 RESET CALLED');
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {

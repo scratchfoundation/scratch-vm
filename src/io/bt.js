@@ -78,7 +78,9 @@ class BT extends JSONRPC {
     /**
      * Close the websocket.
      */
-    disconnect () {
+    disconnect() {
+        console.log('BT DISCONNECT CALLED');
+
         if (this._connected) {
             this._connected = false;
         }
@@ -149,6 +151,7 @@ class BT extends JSONRPC {
      */
     handleDisconnectError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
+        console.log('BT HANDLEDISCONNECTERROR CALLED');
 
         if (!this._connected) return;
 
