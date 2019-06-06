@@ -823,18 +823,22 @@ class Boost {
     }
 
     /**
-     * Disconnects from the current BLE socket.
+     * Disconnects from the current BLE socket and resets state.
      */
     disconnect () {
+        console.log('BOOST DISCONNECT CALLED');
         if (this._ble) {
             this._ble.disconnect();
         }
+
+        this.reset();
     }
 
     /**
      * Reset all the state and timeout/interval ids.
      */
     reset () {
+        console.log('BOOST RESET CALLED');
         this._ports = [];
         this._motors = [];
         this._sensors = {
