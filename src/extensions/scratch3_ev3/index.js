@@ -601,6 +601,7 @@ class EV3 {
      */
     disconnect() {
         console.log('EV3 DISCONNECT CALLED');
+
         if (this._bt) {
             this._bt.disconnect();
         }
@@ -613,6 +614,7 @@ class EV3 {
      */
     reset() {
         console.log('EV3 RESET CALLED');
+        
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {

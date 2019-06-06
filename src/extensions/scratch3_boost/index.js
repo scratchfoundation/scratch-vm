@@ -827,6 +827,7 @@ class Boost {
      */
     disconnect () {
         console.log('BOOST DISCONNECT CALLED');
+
         if (this._ble) {
             this._ble.disconnect();
         }
@@ -839,6 +840,7 @@ class Boost {
      */
     reset () {
         console.log('BOOST RESET CALLED');
+        
         this._ports = [];
         this._motors = [];
         this._sensors = {

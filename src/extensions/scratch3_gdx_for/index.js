@@ -172,7 +172,7 @@ class GdxFor {
          */
         this._timeoutID = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
     }
 
@@ -192,7 +192,7 @@ class GdxFor {
             optionalServices: [
                 BLEUUID.service
             ]
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -209,8 +209,22 @@ class GdxFor {
      * Called by the runtime when a user exits the connection popup.
      * Disconnect from the GDX FOR.
      */
-    disconnect () {
-        window.clearInterval(this._timeoutID);
+    disconnect() {
+        console.log('GDXFOR DISCONNECT CALLED');
+
+        if (this._scratchLinkSocket) {
+            this._scratchLinkSocket.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        console.log('GDXFOR RESET CALLED');
+        
         this._sensors = {
             force: 0,
             accelerationX: 0,
@@ -220,9 +234,8 @@ class GdxFor {
             spinSpeedY: 0,
             spinSpeedZ: 0
         };
-        if (this._scratchLinkSocket) {
-            this._scratchLinkSocket.disconnect();
-        }
+
+        window.clearInterval(this._timeoutID);
     }
 
     /**

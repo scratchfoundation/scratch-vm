@@ -435,7 +435,7 @@ class WeDo2 {
          */
         this._batteryLevelIntervalId = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._checkBatteryLevel = this._checkBatteryLevel.bind(this);
@@ -594,7 +594,7 @@ class WeDo2 {
                 services: [BLEService.DEVICE_SERVICE]
             }],
             optionalServices: [BLEService.IO_SERVICE]
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -610,7 +610,22 @@ class WeDo2 {
     /**
      * Disconnects from the current BLE socket.
      */
-    disconnect () {
+    disconnect() {
+        console.log('WEDO2 DISCONNECT CALLED');
+
+        if (this._ble) {
+            this._ble.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset() {
+        console.log('WEDO2 RESET CALLED');
+
         this._ports = ['none', 'none'];
         this._motors = [null, null];
         this._sensors = {
@@ -618,10 +633,6 @@ class WeDo2 {
             tiltY: 0,
             distance: 0
         };
-
-        if (this._ble) {
-            this._ble.disconnect();
-        }
 
         if (this._batteryLevelIntervalId) {
             window.clearInterval(this._batteryLevelIntervalId);

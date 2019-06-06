@@ -205,9 +205,9 @@ class BLE extends JSONRPC {
      */
     handleDisconnectError (/* e */) {
         // log.error(`BLE error: ${JSON.stringify(e)}`);
+        console.log('BLE HANDLEDISCONNECTERROR CALLED');
 
         if (!this._connected) return;
-        console.log('BLE HANDLEDISCONNECTERROR CALLED');
 
         this.disconnect();
 
