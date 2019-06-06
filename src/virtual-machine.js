@@ -795,6 +795,8 @@ class VirtualMachine extends EventEmitter {
             sound.assetId = sound.asset.assetId;
             sound.dataFormat = storage.DataFormat.WAV;
             sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
+            sound.sampleCount = newBuffer.length;
+            sound.rate = newBuffer.sampleRate;
         }
         // If soundEncoding is null, it's because gui had a problem
         // encoding the updated sound. We don't want to store anything in this
