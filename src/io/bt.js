@@ -147,7 +147,7 @@ class BT extends JSONRPC {
      * - being powered down
      *
      * Disconnect the socket, and if the extension using this socket has a
-     * disconnect callback, call it. Finally, emit an error to the runtime.
+     * reset callback, call it. Finally, emit an error to the runtime.
      */
     handleDisconnectError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
