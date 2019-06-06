@@ -9,9 +9,9 @@ class BLE extends JSONRPC {
      * @param {string} extensionId - the id of the extension using this socket.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
-     * @param {object} disconnectCallback - a callback for disconnection.
+     * @param {object} resetCallback - a callback for resetting extension state.
      */
-    constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null) {
+    constructor (runtime, extensionId, peripheralOptions, connectCallback, resetCallback = null) {
         super();
 
         this._socket = runtime.getScratchLinkSocket('BLE');
@@ -26,7 +26,7 @@ class BLE extends JSONRPC {
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
-        this._disconnectCallback = disconnectCallback;
+        this._resetCallback = resetCallback;
         this._discoverTimeoutID = null;
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
@@ -199,18 +199,17 @@ class BLE extends JSONRPC {
      * - being powered down
      *
      * Disconnect the socket, and if the extension using this socket has a
-     * disconnect callback, call it. Finally, emit an error to the runtime.
+     * reset callback, call it. Finally, emit an error to the runtime.
      */
     handleDisconnectError (/* e */) {
         // log.error(`BLE error: ${JSON.stringify(e)}`);
 
         if (!this._connected) return;
 
-        // TODO: Fix branching by splitting up cleanup/disconnect in extension
-        if (this._disconnectCallback) {
-            this._disconnectCallback(); // must call disconnect()
-        } else {
-            this.disconnect();
+        this.disconnect();
+
+        if (this._resetCallback) {
+            this._resetCallback();
         }
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {

@@ -678,7 +678,7 @@ class Boost {
          */
         this._pingDeviceId = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._pingDevice = this._pingDevice.bind(this);
@@ -809,7 +809,7 @@ class Boost {
                 } commented out until feature is enabled in scratch-link */
             }],
             optionalServices: []
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -826,6 +826,15 @@ class Boost {
      * Disconnects from the current BLE socket.
      */
     disconnect () {
+        if (this._ble) {
+            this._ble.disconnect();
+        }
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
         this._ports = [];
         this._motors = [];
         this._sensors = {
@@ -834,10 +843,6 @@ class Boost {
             color: BoostColor.NONE,
             previousColor: BoostColor.NONE
         };
-
-        if (this._ble) {
-            this._ble.disconnect();
-        }
 
         if (this._pingDeviceId) {
             window.clearInterval(this._pingDeviceId);
