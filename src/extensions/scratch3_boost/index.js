@@ -132,6 +132,16 @@ const BoostColorIndex = {
 };
 
 /**
+ * Enum for comparison-operator
+ * @type {{LESS: string, GREATER: string, EQUAL: string}}
+ */
+const BoostOperator = {
+    LESS: '<',
+    GREATER: '>',
+    EQUAL: '='
+};
+
+/**
  * Enum for Message Types
  * @readonly
  * @enum {number}
@@ -231,6 +241,7 @@ const BoostMode = {
     TILT: 0, // angle (pitch/yaw)
     LED: 1, // Set LED to accept RGB values
     COLOR: 0, // Read indexed colors from Vision Sensor
+    COLOR_DISTANCE: 8, // Read indexed colors from Vision Sensor and the distance
     MOTOR_SENSOR: 2, // Set motors to report their position
     UNKNOWN: 0 // Anything else will use the default mode (mode 0)
 };
@@ -645,7 +656,8 @@ class Boost {
             tiltX: 0,
             tiltY: 0,
             color: BoostColor.NONE,
-            previousColor: BoostColor.NONE
+            previousColor: BoostColor.NONE,
+            distance: null
         };
 
         /**
@@ -710,6 +722,15 @@ class Boost {
      */
     get previousColor () {
         return this._sensors.previousColor;
+    }
+
+    /**
+     *
+     * @returns {number} - the latest distance in float inches received from the vision sensor. Resolution is higher
+     * for closer distances.
+     */
+    get distance () {
+        return this._sensors.distance;
     }
 
     /**
@@ -832,7 +853,8 @@ class Boost {
             tiltX: 0,
             tiltY: 0,
             color: BoostColor.NONE,
-            previousColor: BoostColor.NONE
+            previousColor: BoostColor.NONE,
+            distance: null
         };
 
         if (this._ble) {
@@ -998,6 +1020,13 @@ class Boost {
                 } else {
                     this._sensors.color = BoostColor.NONE;
                 }
+                const distance = data[5];
+                const partialDistance = data[7];
+                let totalDistance = distance;
+                if (partialDistance > 0) {
+                    totalDistance = totalDistance + 1 / partialDistance;
+                }
+                this._sensors.distance = totalDistance;
                 break;
             case BoostIO.MOTOREXT:
             case BoostIO.MOTORINT:
@@ -1073,7 +1102,7 @@ class Boost {
             mode = BoostMode.MOTOR_SENSOR;
             break;
         case BoostIO.COLOR:
-            mode = BoostMode.COLOR;
+            mode = BoostMode.COLOR_DISTANCE;
             delta = 0;
             break;
         case BoostIO.LED:
@@ -1114,6 +1143,7 @@ class Boost {
         }
         if (type === BoostIO.COLOR) {
             this._sensors.color = BoostColor.NONE;
+            this._sensors.distance = null;
         }
         this._ports[portID] = 'none';
         this._motors[portID] = null;
@@ -1364,6 +1394,35 @@ class Scratch3BoostBlocks {
                     }
                 },
                 {
+                    opcode: 'whenDistance',
+                    text: formatMessage({
+                        id: 'boost.whenDistance',
+                        default: 'when distance [OPERATOR] [THRESHOLD]',
+                        description: 'when distance fulfils the given condition'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        OPERATOR: {
+                            type: ArgumentType.STRING,
+                            menu: 'OPERATOR',
+                            defaultValue: BoostOperator.LESS
+                        },
+                        THRESHOLD: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 5
+                        }
+                    }
+                },
+                {
+                    opcode: 'getDistance',
+                    text: formatMessage({
+                        id: 'boost.getDistance',
+                        default: 'distance',
+                        description: 'the distance returned by the vision sensor'
+                    }),
+                    blockType: BlockType.REPORTER,
+                },
+                {
                     opcode: 'whenTilted',
                     text: formatMessage({
                         id: 'boost.whenTilted',
@@ -1612,6 +1671,20 @@ class Scratch3BoostBlocks {
                         }),
                         value: BoostColor.ANY
                     }
+                ],
+                OPERATOR: [
+                    {
+                        text: BoostOperator.LESS,
+                        value: BoostOperator.LESS
+                    },
+                    {
+                        text: BoostOperator.GREATER,
+                        value: BoostOperator.GREATER
+                    },
+                    {
+                        text: BoostOperator.EQUAL,
+                        value: BoostOperator.EQUAL
+                    },
                 ]
             }
         };
@@ -1971,6 +2044,38 @@ class Scratch3BoostBlocks {
         }
 
         return args.COLOR === this._peripheral.color;
+    }
+
+    /**
+     * Edge-triggering hat function, for when the vision sensor is detecting a distance (in float inches)
+     * for the given condition.
+     * @param {object} args - the block's arguments
+     * @return {boolean} - true when the distance fulfils the condition, false otherwise.
+     */
+    whenDistance (args) {
+        const threshold = Cast.toNumber(args.THRESHOLD);
+
+        if (this._peripheral.distance === null) {
+            return false;
+        } else if (args.OPERATOR === BoostOperator.LESS) {
+            return this._peripheral.distance < threshold;
+        } else if (args.OPERATOR === BoostOperator.GREATER) {
+            return this._peripheral.distance > threshold;
+        } else if (args.OPERATOR === BoostOperator.EQUAL) {
+            return this._peripheral.distance === threshold;
+        } else {
+            // should never reach here
+            return false;
+        }
+    }
+
+
+    /**
+     *
+     * @returns {number} the distance (in float inches)
+     */
+    getDistance () {
+        return this._peripheral.distance;
     }
 
     /**
