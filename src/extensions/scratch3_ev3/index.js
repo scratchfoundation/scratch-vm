@@ -497,7 +497,7 @@ class EV3 {
          */
         this._rateLimiter = new RateLimiter(BTSendRateMax);
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._pollValues = this._pollValues.bind(this);
@@ -583,7 +583,7 @@ class EV3 {
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onConnect, this.disconnect, this._onMessage);
+        }, this._onConnect, this.reset, this._onMessage);
     }
 
     /**
@@ -600,13 +600,28 @@ class EV3 {
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
     disconnect () {
-        this._clearSensorsAndMotors();
-        window.clearInterval(this._pollingIntervalID);
-        this._pollingIntervalID = null;
-
         if (this._bt) {
             this._bt.disconnect();
         }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        this._sensorPorts = [];
+        this._motorPorts = [];
+        this._sensors = {
+            distance: 0,
+            brightness: 0,
+            buttons: [0, 0, 0, 0]
+        };
+        this._motors = [null, null, null, null];
+
+        window.clearInterval(this._pollingIntervalID);
+        this._pollingIntervalID = null;
     }
 
     /**
@@ -886,22 +901,6 @@ class EV3 {
             }
         }
     }
-
-    /**
-     * Clear all the senor port and motor names, and their values.
-     * @private
-     */
-    _clearSensorsAndMotors () {
-        this._sensorPorts = [];
-        this._motorPorts = [];
-        this._sensors = {
-            distance: 0,
-            brightness: 0,
-            buttons: [0, 0, 0, 0]
-        };
-        this._motors = [null, null, null, null];
-    }
-
 }
 
 /**
