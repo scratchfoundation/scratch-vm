@@ -614,7 +614,7 @@ class EV3 {
      */
     reset() {
         console.log('EV3 RESET CALLED');
-        
+
         this._sensorPorts = [];
         this._motorPorts = [];
         this._sensors = {
@@ -624,8 +624,10 @@ class EV3 {
         };
         this._motors = [null, null, null, null];
 
-        window.clearInterval(this._pollingIntervalID);
-        this._pollingIntervalID = null;
+        if (this._pollingIntervalID) {
+            window.clearInterval(this._pollingIntervalID);
+            this._pollingIntervalID = null;
+        }
     }
 
     /**

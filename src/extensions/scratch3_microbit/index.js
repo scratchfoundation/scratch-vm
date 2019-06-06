@@ -254,7 +254,10 @@ class MicroBit {
     reset() {
         console.log('MICROBIT RESET CALLED');
 
-        window.clearTimeout(this._timeoutID);
+        if (this._timeoutID) {
+            window.clearTimeout(this._timeoutID);
+            this._timeoutID = null;
+        }
     }
 
     /**

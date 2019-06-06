@@ -840,7 +840,7 @@ class Boost {
      */
     reset () {
         console.log('BOOST RESET CALLED');
-        
+
         this._ports = [];
         this._motors = [];
         this._sensors = {

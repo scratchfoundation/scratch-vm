@@ -224,7 +224,7 @@ class GdxFor {
      */
     reset () {
         console.log('GDXFOR RESET CALLED');
-        
+
         this._sensors = {
             force: 0,
             accelerationX: 0,
@@ -235,7 +235,10 @@ class GdxFor {
             spinSpeedZ: 0
         };
 
-        window.clearInterval(this._timeoutID);
+        if (this._timeoutID) {
+            window.clearInterval(this._timeoutID);
+            this._timeoutID = null;
+        }
     }
 
     /**
