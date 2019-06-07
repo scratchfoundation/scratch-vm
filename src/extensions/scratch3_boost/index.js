@@ -1095,7 +1095,7 @@ class Boost {
                 this._sensors.tiltX = data[4];
                 this._sensors.tiltY = data[5];
                 break;
-            case BoostIO.COLOR:
+            case BoostIO.COLOR: {
                 this._colorSamples.unshift(data[4]);
                 if (this._colorSamples.length > BoostColorSampleSize) {
                     this._colorSamples.pop();
@@ -1112,10 +1112,11 @@ class Boost {
                 const partialDistance = data[7];
                 let totalDistance = distance;
                 if (partialDistance > 0) {
-                    totalDistance = totalDistance + 1 / partialDistance;
+                    totalDistance = totalDistance + (1 / partialDistance);
                 }
                 this._sensors.distance = totalDistance;
                 break;
+            }
             case BoostIO.MOTOREXT:
             case BoostIO.MOTORINT:
                 this.motor(portID).position = int32ArrayToNumber(data.slice(4, 8));
@@ -1509,7 +1510,7 @@ class Scratch3BoostBlocks {
                         default: 'distance',
                         description: 'the distance returned by the vision sensor'
                     }),
-                    blockType: BlockType.REPORTER,
+                    blockType: BlockType.REPORTER
                 },
                 {
                     opcode: 'whenTilted',
@@ -1794,7 +1795,7 @@ class Scratch3BoostBlocks {
                     {
                         text: BoostOperator.EQUAL,
                         value: BoostOperator.EQUAL
-                    },
+                    }
                 ]
             }
         };
@@ -2173,9 +2174,6 @@ class Scratch3BoostBlocks {
             return this._peripheral.distance > threshold;
         } else if (args.OPERATOR === BoostOperator.EQUAL) {
             return this._peripheral.distance === threshold;
-        } else {
-            // should never reach here
-            return false;
         }
     }
 
