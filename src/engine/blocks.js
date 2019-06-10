@@ -379,6 +379,9 @@ class Blocks {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
                     this.emitProjectChanged();
+                    // TODO this should probably be batched
+                    // (esp. if we receive multiple new var_creates in a row).
+                    this.runtime.requestToolboxExtensionsUpdate();
                 }
             } else {
                 if (stage.lookupVariableById(e.varId)) {
@@ -394,6 +397,9 @@ class Blocks {
                 }
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
                 this.emitProjectChanged();
+                // TODO same as above, this should probably be batched
+                // (esp. if we receive multiple new var_creates in a row).
+                this.runtime.requestToolboxExtensionsUpdate();
             }
             break;
         case 'var_rename':
