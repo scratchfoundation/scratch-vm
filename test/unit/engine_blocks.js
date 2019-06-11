@@ -25,7 +25,7 @@ test('spec', t => {
     t.type(b.getNextBlock, 'function');
     t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
-
+    t.type(b.mutationToXML, 'function');
 
     t.end();
 });
@@ -236,6 +236,25 @@ test('getOpcode', t => {
     const undefinedBlock = b.getBlock('?');
     const undefinedOpcode = b.getOpcode(undefinedBlock);
     t.equals(undefinedOpcode, null);
+    t.end();
+});
+
+test('mutationToXML', t => {
+    const b = new Blocks(new Runtime());
+    const testStringRaw = '"arbitrary" & \'complicated\' test string';
+    const testStringEscaped = '\\&quot;arbitrary\\&quot; &amp; &apos;complicated&apos; test string';
+    const mutation = {
+        tagName: 'mutation',
+        children: [],
+        blockInfo: {
+            text: testStringRaw
+        }
+    };
+    const xml = b.mutationToXML(mutation);
+    t.equals(
+        xml,
+        `<mutation blockInfo="{&quot;text&quot;:&quot;${testStringEscaped}&quot;}"></mutation>`
+    );
     t.end();
 });
 
