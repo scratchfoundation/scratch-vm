@@ -692,7 +692,7 @@ class Scratch3MusicBlocks {
      * @type {{min: number, max: number}}
      */
     static get MIDI_NOTE_RANGE () {
-        return {min: 0, max: 130};
+        return {min: 0, max: 132};
     }
 
     /**
