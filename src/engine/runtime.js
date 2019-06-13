@@ -1037,10 +1037,7 @@ class Runtime extends EventEmitter {
         const blockJSON = {
             type: extendedOpcode,
             inputsInline: true,
-            category: categoryInfo.name,
-            colour: categoryInfo.color1,
-            colourSecondary: categoryInfo.color2,
-            colourTertiary: categoryInfo.color3
+            category: categoryInfo.name
         };
         const context = {
             // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -1053,6 +1050,16 @@ class Runtime extends EventEmitter {
             blockInfo,
             inputList: []
         };
+
+        if (blockInfo.color1 || blockInfo.color2 || blockInfo.color3) {
+            blockJSON.colour = blockInfo.color1;
+            blockJSON.colourSecondary = blockInfo.color2;
+            blockJSON.colourTertiary = blockInfo.color3;
+        } else {
+            blockJSON.colour = categoryInfo.color1;
+            blockJSON.colourSecondary = categoryInfo.color2;
+            blockJSON.colourTertiary = categoryInfo.color3;
+        }
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
         // We can overspecify an icon for each block, but if no icon exists on a block, fall back to
