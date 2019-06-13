@@ -334,7 +334,6 @@ class EV3Motor {
 
     /**
      * Set the motor to coast after a specified amount of time.
-     * TODO: rename this startBraking?
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
