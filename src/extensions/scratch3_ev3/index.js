@@ -118,7 +118,7 @@ const Ev3Mode = {
  * @readonly
  * @enum {string}
  */
-const Ev3Label = { // TODO: rename?
+const Ev3Label = {
     touch: 'button',
     color: 'brightness',
     ultrasonic: 'distance'
