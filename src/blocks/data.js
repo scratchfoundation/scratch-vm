@@ -131,6 +131,36 @@ class Scratch3DataBlocks {
         return listNames;
     }
 
+    getListsMenuItems (editingTargetID, menuState) {
+        const menuItems = [];
+        this.forEachVariable(v => {
+            if (v.type === Variable.LIST_TYPE) {
+                menuItems.push(v.name);
+            }
+        });
+        const selectedListText = menuState && menuState.selectedValue;
+        if (selectedListText) {
+            menuItems.push({
+                text: formatMessage({
+                    id: 'data.renameList',
+                    default: 'Rename list',
+                    description: 'Text for the "rename list" menu option'
+                }),
+                value: Scratch3DataBlocks.RENAME_VARIABLE_ID
+            }, {
+                text: formatMessage({
+                    id: 'data.deleteList',
+                    default: 'Delete the "{LIST}" list',
+                    description: 'Text for the "delete list" menu option'
+                }, {
+                    LIST: selectedListText
+                }),
+                value: Scratch3DataBlocks.DELETE_VARIABLE_ID
+            });
+        }
+        return menuItems;
+    }
+
     getListContents ({LIST}, util) {
         const list = this.getVariableObject(util, LIST, Variable.LIST_TYPE);
 
@@ -596,7 +626,7 @@ class Scratch3DataBlocks {
                 blockType: BlockType.BOOLEAN,
                 text: formatMessage({
                     id: 'data.listContainsItem',
-                    default: '[LIST] contains [ITEM]',
+                    default: '[LIST] contains [ITEM]?',
                     description: 'text for the "list contains item" block'
                 }),
                 arguments: {
