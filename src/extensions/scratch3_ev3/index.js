@@ -94,7 +94,7 @@ const Ev3Args = {
     LAYER: 0x00, // always 0, chained EV3s not supported
     COAST: 0x00,
     BRAKE: 0x01,
-    LONG_RAMP: 50,
+    RAMP: 50, // time in milliseconds
     DO_NOT_CHANGE_TYPE: 0
 };
 
@@ -301,7 +301,7 @@ class EV3Motor {
         const port = this._portMask(this._index);
         let n = milliseconds;
         let speed = this._power * this._direction;
-        const ramp = Ev3Args.LONG_RAMP;
+        const ramp = Ev3Args.RAMP;
 
         let byteCommand = [];
         byteCommand[0] = Ev3Opcode.OPOUTPUT_TIME_SPEED;
