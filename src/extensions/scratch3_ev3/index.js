@@ -65,7 +65,7 @@ const Ev3Opcode = {
 
 /**
  * Enum for Ev3 values used as arguments to various opcodes.
- * Found in the 'EV3 Firmware Developer Kit', section4, page 10, at
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 10-onwards, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
  * @enum {string}
@@ -710,7 +710,7 @@ class EV3 {
             return;
         }
 
-        const byteCommands = []; // a compound command
+        const cmds = []; // a compound command
         let allocation = 0;
 
         let sensorCount = 0;
@@ -721,12 +721,12 @@ class EV3 {
 
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: document
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: document
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
+            cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
+            cmds[1] = Ev3Value.NUM8; // 1 byte to follow
+            cmds[2] = 33; // 0x21 ARRAY // TODO: document
+            cmds[3] = 96; // 0x60 CHANGED // TODO: document
+            cmds[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
+            cmds[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
 
             // Command and payload lengths
             allocation = 33;
@@ -742,13 +742,13 @@ class EV3 {
             if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
                 for (let i = 0; i < 4; i++) {
                     if (this._sensorPorts[i] !== 'none') {
-                        byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
-                        byteCommands[index + 1] = Ev3Value.LAYER;
-                        byteCommands[index + 2] = i; // PORT
-                        byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
-                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
-                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: document
+                        cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
+                        cmds[index + 1] = Ev3Value.LAYER;
+                        cmds[index + 2] = i; // PORT
+                        cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
+                        cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                        cmds[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
+                        cmds[index + 6] = sensorCount * 4; // global index // TODO: document
                         index += 7;
                     }
                     sensorCount++;
@@ -759,11 +759,11 @@ class EV3 {
             // eslint-disable-next-line no-undefined
             if (!this._motorPorts.includes(undefined)) {
                 for (let i = 0; i < 4; i++) {
-                    byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
-                    byteCommands[index + 1] = Ev3Value.LAYER;
-                    byteCommands[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                    byteCommands[index + 3] = 225; // 0xE1 byte following TODO: document
-                    byteCommands[index + 4] = sensorCount * 4; // global index TODO: document
+                    cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
+                    cmds[index + 1] = Ev3Value.LAYER;
+                    cmds[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
+                    cmds[index + 3] = 225; // 0xE1 byte following TODO: document
+                    cmds[index + 4] = sensorCount * 4; // global index TODO: document
                     index += 5;
                     sensorCount++;
                 }
@@ -775,7 +775,7 @@ class EV3 {
 
         const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_REPLY,
-            byteCommands,
+            cmds,
             allocation
         );
 
