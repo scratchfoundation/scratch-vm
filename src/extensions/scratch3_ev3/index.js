@@ -712,13 +712,9 @@ class EV3 {
 
         const cmds = []; // a compound command
         let allocation = 0;
-
         let sensorCount = 0;
 
-        // For the command to send, either request device list or request sensor data
-        // based on the polling counter value.  (i.e., reset the list of devices every
-        // 20 counts).
-
+        // Reset the list of devices every 20 counts
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
