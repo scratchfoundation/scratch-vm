@@ -752,8 +752,7 @@ class EV3 {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
             for (let i = 0; i < 4; i++) {
-                // Must check that sensor val isn't null (which is sometimes returned by EV3)
-                if (this._sensorPorts[i] && this._sensorPorts[i] !== 'none') {
+                if (this._sensorPorts[i] !== 'none') {
                     cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
                     cmds[index + 1] = Ev3Value.LAYER;
                     cmds[index + 2] = i; // PORT
@@ -827,15 +826,18 @@ class EV3 {
             // *****************
             // PARSE DEVICE LIST
             // *****************
-            // TODO: put these in for loop?
-            this._sensorPorts[0] = Ev3Device[data[5]] ? Ev3Device[data[5]] : 'none';
-            this._sensorPorts[1] = Ev3Device[data[6]] ? Ev3Device[data[6]] : 'none';
-            this._sensorPorts[2] = Ev3Device[data[7]] ? Ev3Device[data[7]] : 'none';
-            this._sensorPorts[3] = Ev3Device[data[8]] ? Ev3Device[data[8]] : 'none';
-            this._motorPorts[0] = Ev3Device[data[21]] ? Ev3Device[data[21]] : 'none';
-            this._motorPorts[1] = Ev3Device[data[22]] ? Ev3Device[data[22]] : 'none';
-            this._motorPorts[2] = Ev3Device[data[23]] ? Ev3Device[data[23]] : 'none';
-            this._motorPorts[3] = Ev3Device[data[24]] ? Ev3Device[data[24]] : 'none';
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 5]];
+                // sometimes the device type returned is null, so treat that as 'none'
+                this._sensorPorts[i] = deviceType ? deviceType : 'none';
+            }
+
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 21]];
+                // sometimes the device type returned is null, so treat that as 'none'
+                this._motorPorts[i] = deviceType ? deviceType : 'none';
+            }
+
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
