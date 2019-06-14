@@ -745,9 +745,6 @@ class EV3 {
             allocation = 33;
 
             this._updateDevices = true;
-
-            // TODO: need to clar sensor data?
-
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
