@@ -1290,11 +1290,14 @@ class Scratch3Ev3Blocks {
 
     /**
      * Call a callback for each motor indexed by the provided motor ID.
+     *
+     * Note: This way of looping through motors is currently unnecessary, but could be
+     * useful if an 'all motors' option is added in the future (see WeDo2 extension).
+     *
      * @param {MotorID} motorID - the ID specifier.
      * @param {Function} callback - the function to call with the numeric motor index for each motor.
      * @private
      */
-    // TODO: unnecessary, but could be useful if 'all motors' is added (see WeDo2 extension)
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
