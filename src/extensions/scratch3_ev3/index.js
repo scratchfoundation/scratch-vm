@@ -770,7 +770,7 @@ class EV3 {
             for (let i = 0; i < 4; i++) {
                 cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                 cmds[index + 1] = Ev3Args.LAYER;
-                cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in docs)
+                cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
                 cmds[index + 3] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
                 cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
                 index += 5;
