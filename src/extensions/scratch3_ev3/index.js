@@ -41,11 +41,13 @@ const BTSendRateMax = 40;
  * @enum {number}
  */
 const Ev3ParamEncoding = {
-    ONE_BYTE: 0x81, // = 0b1000-001 = constant value, 1 byte to follow
-    TWO_BYTES: 0x82, // = 0b1000-010 = constant value, 2 bytes to follow
-    FOUR_BYTES: 0x83, // = 0b1000-011 = constant value, 4 bytes to follow
-    GLOBAL_ONE_BYTE: 0xE1, // = 0b1110-001 = size of global var, 1 byte to follow
-    GLOBAL_INDEX_0: 0x20 // = 0b00100000 = global var index "0"
+    GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000 = global constant value > index "0"
+    GLOBAL_CONSTANT_INDEX_1: 0x21, // = 0b00100001 = global constant value > index "1"
+    GLOBAL_VARIABLE_INDEX_0: 0x60, // = 0b00110000 = global variable value > index "0"
+    ONE_BYTE: 0x81, // = 0b1000-001 = constant value > 1 byte to follow
+    TWO_BYTES: 0x82, // = 0b1000-010 = constant value > 2 bytes to follow
+    FOUR_BYTES: 0x83, // = 0b1000-011 = constant value > 4 bytes to follow
+    GLOBAL_ONE_BYTE: 0xE1 // = 0b1110-001 = size of global var, 1 byte to follow
 };
 
 /**
@@ -95,6 +97,8 @@ const Ev3Args = {
     COAST: 0x00,
     BRAKE: 0x01,
     RAMP: 50, // time in milliseconds
+    ONE_BYTE: 4, // length value as a constant
+    FOUR_BYTES: 32, // length value as a constant
     DO_NOT_CHANGE_TYPE: 0
 };
 
@@ -735,11 +739,11 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3ParamEncoding.ONE_BYTE;
-            cmds[2] = 33; // 0x21 ARRAY // TODO: document
-            cmds[3] = 96; // 0x60 CHANGED // TODO: document
+            cmds[1] = Ev3ParamEncoding.ONE_BYTE; // TODO: Length?
+            cmds[2] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_1; // TODO: Array?
+            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0; // TODO: Changed?
             cmds[4] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
-            cmds[5] = Ev3ParamEncoding.GLOBAL_INDEX_0;
+            cmds[5] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_0;
 
             // Command and payload lengths
             allocation = 33;
