@@ -823,21 +823,18 @@ class EV3 {
         }
 
         if (this._updateDevices) {
-            // *****************
+
             // PARSE DEVICE LIST
-            // *****************
             for (let i = 0; i < 4; i++) {
                 const deviceType = Ev3Device[data[i + 5]];
-                // sometimes the device type returned is null, so treat that as 'none'
+                // if returned device type is null, use 'none'
                 this._sensorPorts[i] = deviceType ? deviceType : 'none';
             }
-
             for (let i = 0; i < 4; i++) {
                 const deviceType = Ev3Device[data[i + 21]];
-                // sometimes the device type returned is null, so treat that as 'none'
+                // if returned device type is null, use 'none'
                 this._motorPorts[i] = deviceType ? deviceType : 'none';
             }
-
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
@@ -850,11 +847,11 @@ class EV3 {
                 }
             }
             this._updateDevices = false;
-            // eslint-disable-next-line no-undefined
+
+        // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
-            // *******************
+
             // PARSE SENSOR VALUES
-            // *******************
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
                 // array 2 float
@@ -876,9 +873,8 @@ class EV3 {
                 }
                 offset += 4;
             }
-            // *****************************************************
+
             // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // *****************************************************
             for (let i = 0; i < 4; i++) {
                 const positionArray = [
                     data[offset],
@@ -891,6 +887,7 @@ class EV3 {
                 }
                 offset += 4;
             }
+
         }
     }
 
