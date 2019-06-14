@@ -759,7 +759,7 @@ class EV3 {
                     cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
                     cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
                     cmds[index + 5] = Ev3ByteValue.GLOBAL8;
-                    cmds[index + 6] = sensorCount * 4; // global index // TODO: document
+                    cmds[index + 6] = sensorCount * 4; // GLOBAL INDEX
                     index += 7;
                 }
                 sensorCount++;
@@ -770,8 +770,8 @@ class EV3 {
                 cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                 cmds[index + 1] = Ev3Value.LAYER;
                 cmds[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                cmds[index + 3] = 225; // 0xE1 byte following TODO: document
-                cmds[index + 4] = sensorCount * 4; // global index TODO: document
+                cmds[index + 3] = Ev3ByteValue.GLOBAL8;
+                cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
                 index += 5;
                 sensorCount++;
             }
