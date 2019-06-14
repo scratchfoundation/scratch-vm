@@ -76,10 +76,10 @@ const Ev3Opcode = {
  * @enum {number}
  */
 const Ev3ByteValue = {
-    NUM8: 0x81, // = 0b1000-001 = 1 byte to follow // TODO: rename
-    NUM16: 0x82, // = 0b1000-010 = 2 bytes to follow // TODO: rename
-    NUM32: 0x83, // = 0b1000-011 = 4 bytes to follow // TODO: rename
-    GLOBAL8: 0xE1, // = 0b1110-001 = size of global var - 1 byte to follow
+    ONE_BYTE: 0x81, // = 0b1000-001 = constant value, 1 byte to follow
+    TWO_BYTES: 0x82, // = 0b1000-010 = constant value, 2 bytes to follow
+    FOUR_BYTES: 0x83, // = 0b1000-011 = constant value, 4 bytes to follow
+    GLOBAL_ONE_BYTE: 0xE1, // = 0b1110-001 = size of global var, 1 byte to follow
     GLOBAL_INDEX_0: 0x20 // = 0b00100000 = global var index "0"
 };
 
@@ -329,12 +329,12 @@ class EV3Motor {
         byteCommand = byteCommand.concat([
             Ev3Value.LAYER,
             port,
-            Ev3ByteValue.NUM8,
+            Ev3ByteValue.ONE_BYTE,
             dir & 0xff,
-            Ev3ByteValue.NUM8,
+            Ev3ByteValue.ONE_BYTE,
             rampup
         ]).concat(runcmd.concat([
-            Ev3ByteValue.NUM8,
+            Ev3ByteValue.ONE_BYTE,
             rampdown,
             Ev3Value.BRAKE
         ]));
@@ -398,7 +398,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3ByteValue.NUM16,
+                Ev3ByteValue.TWO_BYTES,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -406,7 +406,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3ByteValue.NUM32,
+            Ev3ByteValue.FOUR_BYTES,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -550,12 +550,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3ByteValue.NUM8,
+                Ev3ByteValue.ONE_BYTE,
                 2,
-                Ev3ByteValue.NUM16,
+                Ev3ByteValue.TWO_BYTES,
                 freq,
                 freq >> 8,
-                Ev3ByteValue.NUM16,
+                Ev3ByteValue.TWO_BYTES,
                 time,
                 time >> 8
             ]
@@ -735,10 +735,10 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3ByteValue.NUM8;
+            cmds[1] = Ev3ByteValue.ONE_BYTE;
             cmds[2] = 33; // 0x21 ARRAY // TODO: document
             cmds[3] = 96; // 0x60 CHANGED // TODO: document
-            cmds[4] = Ev3ByteValue.GLOBAL8;
+            cmds[4] = Ev3ByteValue.GLOBAL_ONE_BYTE;
             cmds[5] = Ev3ByteValue.GLOBAL_INDEX_0;
 
             // Command and payload lengths
@@ -758,7 +758,7 @@ class EV3 {
                     cmds[index + 2] = i; // PORT
                     cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
                     cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                    cmds[index + 5] = Ev3ByteValue.GLOBAL8;
+                    cmds[index + 5] = Ev3ByteValue.GLOBAL_ONE_BYTE;
                     cmds[index + 6] = sensorCount * 4; // GLOBAL INDEX
                     index += 7;
                 }
@@ -770,7 +770,7 @@ class EV3 {
                 cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                 cmds[index + 1] = Ev3Value.LAYER;
                 cmds[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                cmds[index + 3] = Ev3ByteValue.GLOBAL8;
+                cmds[index + 3] = Ev3ByteValue.GLOBAL_ONE_BYTE;
                 cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
                 index += 5;
                 sensorCount++;
