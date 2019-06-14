@@ -64,17 +64,27 @@ const Ev3Opcode = {
 };
 
 /**
+ * Enum for Ev3 byte values used as arguments to various opcodes.
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 9, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ * @readonly
+ * @enum {number}
+ */
+const Ev3ByteValue = {
+    NUM8: 0x81, // = 0b10000001 = "1 byte to follow"
+    NUM16: 0x82, // = 0b10000010 = "2 bytes to follow"
+    NUM32: 0x83 // = 0b10000011 = "4 bytes to follow"
+};
+
+/**
  * Enum for Ev3 values used as arguments to various opcodes.
  * Found in the 'EV3 Firmware Developer Kit', section4, page 10-onwards, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
- * @enum {string}
+ * @enum {number}
  */
 const Ev3Value = {
     LAYER: 0x00, // always 0, chained EV3s not supported
-    NUM8: 0x81, // "1 byte to follow"
-    NUM16: 0x82, // "2 bytes to follow"
-    NUM32: 0x83, // "4 bytes to follow"
     COAST: 0x00,
     BRAKE: 0x01,
     LONG_RAMP: 50,
@@ -312,12 +322,12 @@ class EV3Motor {
         byteCommand = byteCommand.concat([
             Ev3Value.LAYER,
             port,
-            Ev3Value.NUM8,
+            Ev3ByteValue.NUM8,
             dir & 0xff,
-            Ev3Value.NUM8,
+            Ev3ByteValue.NUM8,
             rampup
         ]).concat(runcmd.concat([
-            Ev3Value.NUM8,
+            Ev3ByteValue.NUM8,
             rampdown,
             Ev3Value.BRAKE
         ]));
@@ -381,7 +391,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3Value.NUM16,
+                Ev3ByteValue.NUM16,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -389,7 +399,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3Value.NUM32,
+            Ev3ByteValue.NUM32,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -533,12 +543,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3Value.NUM8,
+                Ev3ByteValue.NUM8,
                 2,
-                Ev3Value.NUM16,
+                Ev3ByteValue.NUM16,
                 freq,
                 freq >> 8,
-                Ev3Value.NUM16,
+                Ev3ByteValue.NUM16,
                 time,
                 time >> 8
             ]
@@ -718,7 +728,7 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3Value.NUM8; // 1 byte to follow
+            cmds[1] = Ev3ByteValue.NUM8; // 1 byte to follow
             cmds[2] = 33; // 0x21 ARRAY // TODO: document
             cmds[3] = 96; // 0x60 CHANGED // TODO: document
             cmds[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
@@ -735,7 +745,7 @@ class EV3 {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
             for (let i = 0; i < 4; i++) {
-                // Must check that sensor value isn't undefined (which is sometimes returned by EV3)
+                // Must check that sensor val isn't null (which is sometimes returned by EV3)
                 if (this._sensorPorts[i] && this._sensorPorts[i] !== 'none') {
                     cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
                     cmds[index + 1] = Ev3Value.LAYER;
