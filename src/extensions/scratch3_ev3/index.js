@@ -67,14 +67,19 @@ const Ev3Opcode = {
  * Enum for Ev3 byte values used as arguments to various opcodes.
  * Found in the 'EV3 Firmware Developer Kit', section4, page 9, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ *
+ * The format for these values is:
+ * 0xxxxxxx for Short Format
+ * 1ttt-bbb for Long Format
+ *
  * @readonly
  * @enum {number}
  */
 const Ev3ByteValue = {
-    NUM8: 0x81, // = 0b10000001 = 1 byte to follow
-    NUM16: 0x82, // = 0b10000010 = 2 bytes to follow
-    NUM32: 0x83, // = 0b10000011 = 4 bytes to follow
-    GLOBAL8: 0xE1 // = 0b11100001 = size of global var - 1 byte to follow
+    NUM8: 0x81, // = 0b1000-001 = 1 byte to follow
+    NUM16: 0x82, // = 0b1000-010 = 2 bytes to follow
+    NUM32: 0x83, // = 0b1000-011 = 4 bytes to follow
+    GLOBAL8: 0xE1 // = 0b1110-001 = size of global var - 1 byte to follow
 };
 
 /**
