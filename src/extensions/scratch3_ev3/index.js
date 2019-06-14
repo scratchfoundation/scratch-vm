@@ -71,9 +71,10 @@ const Ev3Opcode = {
  * @enum {number}
  */
 const Ev3ByteValue = {
-    NUM8: 0x81, // = 0b10000001 = "1 byte to follow"
-    NUM16: 0x82, // = 0b10000010 = "2 bytes to follow"
-    NUM32: 0x83 // = 0b10000011 = "4 bytes to follow"
+    NUM8: 0x81, // = 0b10000001 = 1 byte to follow
+    NUM16: 0x82, // = 0b10000010 = 2 bytes to follow
+    NUM32: 0x83, // = 0b10000011 = 4 bytes to follow
+    GLOBAL8: 0xE1 // = 0b11100001 = size of global var - 1 byte to follow
 };
 
 /**
@@ -731,7 +732,7 @@ class EV3 {
             cmds[1] = Ev3ByteValue.NUM8; // 1 byte to follow
             cmds[2] = 33; // 0x21 ARRAY // TODO: document
             cmds[3] = 96; // 0x60 CHANGED // TODO: document
-            cmds[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
+            cmds[4] = Ev3ByteValue.GLOBAL8;
             cmds[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
 
             // Command and payload lengths
@@ -752,7 +753,7 @@ class EV3 {
                     cmds[index + 2] = i; // PORT
                     cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
                     cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                    cmds[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
+                    cmds[index + 5] = Ev3ByteValue.GLOBAL8;
                     cmds[index + 6] = sensorCount * 4; // global index // TODO: document
                     index += 7;
                 }
