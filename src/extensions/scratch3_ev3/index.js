@@ -710,7 +710,7 @@ class EV3 {
             return;
         }
 
-        const cmds = []; // a compound command
+        const cmds = []; // compound command
         let allocation = 0;
         let sensorCount = 0;
 
@@ -734,35 +734,30 @@ class EV3 {
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
-            // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
-                for (let i = 0; i < 4; i++) {
-                    if (this._sensorPorts[i] !== 'none') {
-                        cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
-                        cmds[index + 1] = Ev3Value.LAYER;
-                        cmds[index + 2] = i; // PORT
-                        cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
-                        cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        cmds[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
-                        cmds[index + 6] = sensorCount * 4; // global index // TODO: document
-                        index += 7;
-                    }
-                    sensorCount++;
+            for (let i = 0; i < 4; i++) {
+                // Must check that sensor value isn't undefined (which is sometimes returned by EV3)
+                if (this._sensorPorts[i] && this._sensorPorts[i] !== 'none') {
+                    cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
+                    cmds[index + 1] = Ev3Value.LAYER;
+                    cmds[index + 2] = i; // PORT
+                    cmds[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
+                    cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                    cmds[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
+                    cmds[index + 6] = sensorCount * 4; // global index // TODO: document
+                    index += 7;
                 }
+                sensorCount++;
             }
 
             // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // eslint-disable-next-line no-undefined
-            if (!this._motorPorts.includes(undefined)) {
-                for (let i = 0; i < 4; i++) {
-                    cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
-                    cmds[index + 1] = Ev3Value.LAYER;
-                    cmds[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                    cmds[index + 3] = 225; // 0xE1 byte following TODO: document
-                    cmds[index + 4] = sensorCount * 4; // global index TODO: document
-                    index += 5;
-                    sensorCount++;
-                }
+            for (let i = 0; i < 4; i++) {
+                cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
+                cmds[index + 1] = Ev3Value.LAYER;
+                cmds[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
+                cmds[index + 3] = 225; // 0xE1 byte following TODO: document
+                cmds[index + 4] = sensorCount * 4; // global index TODO: document
+                index += 5;
+                sensorCount++;
             }
 
             // Command and payload lengths
