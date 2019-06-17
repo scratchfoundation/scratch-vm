@@ -297,7 +297,6 @@ class WeDo2Motor {
 
     /**
      * Start active braking on this motor. After a short time, the motor will turn off.
-     * // TODO: rename this to coastAfter?
      */
     startBraking () {
         if (this._power === 0) return;
