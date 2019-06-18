@@ -13,6 +13,12 @@ const mutatorTagToObject = function (dom) {
     for (const prop in dom.attribs) {
         if (prop === 'xmlns') continue;
         obj[prop] = decodeHtml(dom.attribs[prop]);
+        // Note: the capitalization of block info in the following lines is important.
+        // The lowercase is read in from xml which normalizes case. The VM uses camel case everywhere else.
+        if (prop === 'blockinfo') {
+            obj.blockInfo = JSON.parse(obj.blockinfo);
+            delete obj.blockinfo;
+        }
     }
     for (let i = 0; i < dom.children.length; i++) {
         obj.children.push(

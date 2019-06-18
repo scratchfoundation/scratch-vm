@@ -152,6 +152,10 @@ class SomeBlocks {
             // Will be used as the extension's namespace.
             id: 'someBlocks',
 
+            // Core extensions only: override the default extension block colors.
+            color1: '#FF8C1A',
+            color2: '#DB6E00',
+
             // Optional: the human-readable name of this extension as string.
             // This and any other string to be displayed in the Scratch UI may either be
             // a string or a call to `formatMessage`; a plain string will not be
