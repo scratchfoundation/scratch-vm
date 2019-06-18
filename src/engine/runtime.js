@@ -825,15 +825,14 @@ class Runtime extends EventEmitter {
      * @private
      */
     _refreshExtensionPrimitives (extensionInfo) {
-        for (const categoryInfo of this._blockInfo) {
-            if (extensionInfo.id === categoryInfo.id) {
-                categoryInfo.name = maybeFormatMessage(extensionInfo.name);
-                categoryInfo.blocks = [];
-                categoryInfo.menus = [];
-                this._fillExtensionCategory(categoryInfo, extensionInfo);
+        const categoryInfo = this._blockInfo.find(info => info.id === extensionInfo.id);
+        if (categoryInfo) {
+            categoryInfo.name = maybeFormatMessage(extensionInfo.name);
+            categoryInfo.blocks = [];
+            categoryInfo.menus = [];
+            this._fillExtensionCategory(categoryInfo, extensionInfo);
 
-                this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
-            }
+            this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
         }
     }
 
