@@ -213,7 +213,8 @@ A few of these considerations include:
   * In particular, changing languages should never break a working project.
 * The average Scratch user should be able to figure out the valid values for this input without referring to extension
   documentation.
-  * One way to ensure this is to make an item's text match or include the item's value.
+  * One way to ensure this is to make an item's text match or include the item's value. For example, the official Music
+    extension contains menu items with names like "(1) Piano" with value 1, "(8) Cello" with value 8, and so on.
 * The block should accept any value as input, even "invalid" values.
   * Scratch has no concept of a runtime error!
   * For a command block, sometimes the best option is to do nothing.

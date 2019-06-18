@@ -847,10 +847,10 @@ class Runtime extends EventEmitter {
 
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
-                const menuValue = extensionInfo.menus[menuName];
-                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuValue, categoryInfo);
+                const menuInfo = extensionInfo.menus[menuName];
+                const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuInfo, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
-                categoryInfo.menuInfo[menuName] = menuValue;
+                categoryInfo.menuInfo[menuName] = menuInfo;
             }
         }
         for (const fieldTypeName in extensionInfo.customFieldTypes) {
@@ -1263,8 +1263,7 @@ class Runtime extends EventEmitter {
             context.inputList.push(`<shadow type="${shadowType}">`);
         }
 
-        // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
-        // text input and therefore don't need a field element.
+        // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
         if (fieldName) {
             context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
         }

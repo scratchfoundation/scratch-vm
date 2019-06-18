@@ -312,19 +312,21 @@ class ExtensionManager {
         for (let i = 0; i < menuNames.length; i++) {
             const menuName = menuNames[i];
             let menuInfo = menus[menuName];
+
+            // If the menu description is in short form (items only) then normalize it to general form: an object with
+            // its items listed in an `items` property.
             if (!menuInfo.items) {
                 menuInfo = {
                     items: menuInfo
                 };
                 menus[menuName] = menuInfo;
             }
-            // If the value is a string, it should be the name of a function in the
-            // extension object to call to populate the menu whenever it is opened.
-            // Set up the binding for the function object here so
-            // we can use it later when converting the menu for Scratch Blocks.
+            // If `items` is a string, it should be the name of a function in the extension object. Calling the
+            // function should return an array of items to populate the menu when it is opened.
             if (typeof menuInfo.items === 'string') {
                 const menuItemFunctionName = menuInfo.items;
                 const serviceObject = dispatch.services[serviceName];
+                // Bind the function here so we can pass a simple item generation function to Scratch Blocks later.
                 menuInfo.items = this._getExtensionMenuItems.bind(this, serviceObject, menuItemFunctionName);
             }
         }
