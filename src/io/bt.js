@@ -1,8 +1,6 @@
-const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
-const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/bt';
-// const log = require('../util/log');
+const JSONRPC = require('../util/jsonrpc');
 
-class BT extends JSONRPCWebSocket {
+class BT extends JSONRPC {
 
     /**
      * A BT peripheral socket object.  It handles connecting, over web sockets, to
@@ -15,13 +13,15 @@ class BT extends JSONRPCWebSocket {
      * @param {object} messageCallback - a callback for message sending.
      */
     constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null, messageCallback) {
-        const ws = new WebSocket(ScratchLinkWebSocket);
-        super(ws);
+        super();
 
-        this._ws = ws;
-        this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._handleRequestError.bind(this, 'ws onerror');
-        this._ws.onclose = this.handleDisconnectError.bind(this, 'ws onclose');
+        this._socket = runtime.getScratchLinkSocket('BT');
+        this._socket.setOnOpen(this.requestPeripheral.bind(this));
+        this._socket.setOnError(this._handleRequestError.bind(this));
+        this._socket.setOnClose(this.handleDisconnectError.bind(this));
+        this._socket.setHandleMessage(this._handleMessage.bind(this));
+
+        this._sendMessage = this._socket.sendMessage.bind(this._socket);
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
@@ -33,6 +33,8 @@ class BT extends JSONRPCWebSocket {
         this._peripheralOptions = peripheralOptions;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
+
+        this._socket.open();
     }
 
     /**
@@ -40,27 +42,29 @@ class BT extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral () {
-        if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-            this._availablePeripherals = {};
-            if (this._discoverTimeoutID) {
-                window.clearTimeout(this._discoverTimeoutID);
-            }
-            this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
-            this.sendRemoteRequest('discover', this._peripheralOptions)
-                .catch(
-                    e => this._handleRequestError(e)
-                );
+        this._availablePeripherals = {};
+        if (this._discoverTimeoutID) {
+            window.clearTimeout(this._discoverTimeoutID);
         }
-        // TODO: else?
+        this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
+        this.sendRemoteRequest('discover', this._peripheralOptions)
+            .catch(
+                e => this._handleRequestError(e)
+            );
     }
 
     /**
      * Try connecting to the input peripheral id, and then call the connect
      * callback if connection is successful.
      * @param {number} id - the id of the peripheral to connect to
+     * @param {string} pin - an optional pin for pairing
      */
-    connectPeripheral (id) {
-        this.sendRemoteRequest('connect', {peripheralId: id})
+    connectPeripheral (id, pin = null) {
+        const params = {peripheralId: id};
+        if (pin) {
+            params.pin = pin;
+        }
+        this.sendRemoteRequest('connect', params)
             .then(() => {
                 this._connected = true;
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
@@ -75,12 +79,12 @@ class BT extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
-        if (this._ws.readyState === this._ws.OPEN) {
-            this._ws.close();
-        }
-
         if (this._connected) {
             this._connected = false;
+        }
+
+        if (this._socket.isOpen()) {
+            this._socket.close();
         }
 
         if (this._discoverTimeoutID) {

@@ -3,6 +3,7 @@ const {OrderedMap} = require('immutable');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
+const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
@@ -15,6 +16,7 @@ const maybeFormatMessage = require('../util/maybe-format-message');
 const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
+const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -822,13 +824,12 @@ class Runtime extends EventEmitter {
      * @private
      */
     _refreshExtensionPrimitives (extensionInfo) {
-        for (const categoryInfo of this._blockInfo) {
-            if (extensionInfo.id === categoryInfo.id) {
-                categoryInfo.name = maybeFormatMessage(extensionInfo.name);
-                this._fillExtensionCategory(categoryInfo, extensionInfo);
+        const categoryInfo = this._blockInfo.find(info => info.id === extensionInfo.id);
+        if (categoryInfo) {
+            categoryInfo.name = maybeFormatMessage(extensionInfo.name);
+            this._fillExtensionCategory(categoryInfo, extensionInfo);
 
-                this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
-            }
+            this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
         }
     }
 
@@ -1329,6 +1330,34 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Get a scratch link socket.
+     * @param {string} type Either BLE or BT
+     * @returns {ScratchLinkSocket} The scratch link socket.
+     */
+    getScratchLinkSocket (type) {
+        const factory = this._linkSocketFactory || this._defaultScratchLinkSocketFactory;
+        return factory(type);
+    }
+
+    /**
+     * Configure how ScratchLink sockets are created. Factory must consume a "type" parameter
+     * either BT or BLE.
+     * @param {Function} factory The new factory for creating ScratchLink sockets.
+     */
+    configureScratchLinkSocketFactory (factory) {
+        this._linkSocketFactory = factory;
+    }
+
+    /**
+     * The default scratch link socket creator, using websockets to the installed device manager.
+     * @param {string} type Either BLE or BT
+     * @returns {ScratchLinkSocket} The new scratch link socket (a WebSocket object)
+     */
+    _defaultScratchLinkSocketFactory (type) {
+        return new ScratchLinkWebSocket(type);
+    }
+
+    /**
      * Register an extension that communications with a hardware peripheral by id,
      * to have access to it and its peripheral functions in the future.
      * @param {string} extensionId - the id of the extension.
@@ -1474,16 +1503,11 @@ class Runtime extends EventEmitter {
      * @return {!Thread} The newly created thread.
      */
     _pushThread (id, target, opts) {
-        opts = Object.assign({
-            stackClick: false,
-            updateMonitor: false
-        }, opts);
-
         const thread = new Thread(id);
         thread.target = target;
-        thread.stackClick = opts.stackClick;
-        thread.updateMonitor = opts.updateMonitor;
-        thread.blockContainer = opts.updateMonitor ?
+        thread.stackClick = Boolean(opts && opts.stackClick);
+        thread.updateMonitor = Boolean(opts && opts.updateMonitor);
+        thread.blockContainer = thread.updateMonitor ?
             this.monitorBlocks :
             target.blocks;
 
@@ -1626,6 +1650,20 @@ class Runtime extends EventEmitter {
         }
     }
 
+    allScriptsByOpcodeDo (opcode, f, optTarget) {
+        let targets = this.executableTargets;
+        if (optTarget) {
+            targets = [optTarget];
+        }
+        for (let t = targets.length - 1; t >= 0; t--) {
+            const target = targets[t];
+            const scripts = BlocksRuntimeCache.getScripts(target.blocks, opcode);
+            for (let j = 0; j < scripts.length; j++) {
+                f(scripts[j], target);
+            }
+        }
+    }
+
     /**
      * Start all relevant hats.
      * @param {!string} requestedHatOpcode Opcode of hats to start.
@@ -1650,71 +1688,52 @@ class Runtime extends EventEmitter {
         }
 
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-        this.allScriptsDo((topBlockId, target) => {
-            const blocks = target.blocks;
-            const block = blocks.getBlock(topBlockId);
-            const potentialHatOpcode = block.opcode;
-            if (potentialHatOpcode !== requestedHatOpcode) {
-                // Not the right hat.
-                return;
-            }
+        this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
+            const {
+                blockId: topBlockId,
+                fieldsOfInputs: hatFields
+            } = script;
 
             // Match any requested fields.
             // For example: ensures that broadcasts match.
             // This needs to happen before the block is evaluated
             // (i.e., before the predicate can be run) because "broadcast and wait"
             // needs to have a precise collection of started threads.
-            let hatFields = blocks.getFields(block);
-
-            // If no fields are present, check inputs (horizontal blocks)
-            if (Object.keys(hatFields).length === 0) {
-                hatFields = {}; // don't overwrite the block's actual fields list
-                const hatInputs = blocks.getInputs(block);
-                for (const input in hatInputs) {
-                    if (!hatInputs.hasOwnProperty(input)) continue;
-                    const id = hatInputs[input].block;
-                    const inpBlock = blocks.getBlock(id);
-                    const fields = blocks.getFields(inpBlock);
-                    Object.assign(hatFields, fields);
-                }
-            }
-
-            if (optMatchFields) {
-                for (const matchField in optMatchFields) {
-                    if (hatFields[matchField].value.toUpperCase() !==
-                        optMatchFields[matchField]) {
-                        // Field mismatch.
-                        return;
-                    }
+            for (const matchField in optMatchFields) {
+                if (hatFields[matchField].value !== optMatchFields[matchField]) {
+                    // Field mismatch.
+                    return;
                 }
             }
 
             if (hatMeta.restartExistingThreads) {
                 // If `restartExistingThreads` is true, we should stop
                 // any existing threads starting with the top block.
-                for (let i = 0; i < instance.threads.length; i++) {
-                    if (instance.threads[i].topBlock === topBlockId &&
-                        !instance.threads[i].stackClick && // stack click threads and hat threads can coexist
-                        instance.threads[i].target === target) {
-                        newThreads.push(instance._restartThread(instance.threads[i]));
+                for (let i = 0; i < this.threads.length; i++) {
+                    if (this.threads[i].target === target &&
+                        this.threads[i].topBlock === topBlockId &&
+                        // stack click threads and hat threads can coexist
+                        !this.threads[i].stackClick) {
+                        newThreads.push(this._restartThread(this.threads[i]));
                         return;
                     }
                 }
             } else {
                 // If `restartExistingThreads` is false, we should
                 // give up if any threads with the top block are running.
-                for (let j = 0; j < instance.threads.length; j++) {
-                    if (instance.threads[j].topBlock === topBlockId &&
-                        instance.threads[j].target === target &&
-                        !instance.threads[j].stackClick && // stack click threads and hat threads can coexist
-                        instance.threads[j].status !== Thread.STATUS_DONE) {
+                for (let j = 0; j < this.threads.length; j++) {
+                    if (this.threads[j].target === target &&
+                        this.threads[j].topBlock === topBlockId &&
+                        // stack click threads and hat threads can coexist
+                        !this.threads[j].stackClick &&
+                        this.threads[j].status !== Thread.STATUS_DONE) {
                         // Some thread is already running.
                         return;
                     }
                 }
             }
             // Start the thread with this top block.
-            newThreads.push(instance._pushThread(topBlockId, target));
+            newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
@@ -1893,8 +1912,12 @@ class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
-        // Dispose all threads.
-        this.threads.forEach(thread => this._stopThread(thread));
+        // Dispose of the active thread.
+        if (this.sequencer.activeThread !== null) {
+            this._stopThread(this.sequencer.activeThread);
+        }
+        // Remove all remaining threads from executing in the next tick.
+        this.threads = [];
     }
 
     /**

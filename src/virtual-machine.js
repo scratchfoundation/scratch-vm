@@ -798,6 +798,8 @@ class VirtualMachine extends EventEmitter {
             sound.assetId = sound.asset.assetId;
             sound.dataFormat = storage.DataFormat.WAV;
             sound.md5 = `${sound.assetId}.${sound.dataFormat}`;
+            sound.sampleCount = newBuffer.length;
+            sound.rate = newBuffer.sampleRate;
         }
         // If soundEncoding is null, it's because gui had a problem
         // encoding the updated sound. We don't want to store anything in this
@@ -1527,6 +1529,14 @@ class VirtualMachine extends EventEmitter {
             }
         }
         return null;
+    }
+
+    /**
+     * Allow VM consumer to configure the ScratchLink socket creator.
+     * @param {Function} factory The custom ScratchLink socket factory.
+     */
+    configureScratchLinkSocketFactory (factory) {
+        this.runtime.configureScratchLinkSocketFactory(factory);
     }
 }
 

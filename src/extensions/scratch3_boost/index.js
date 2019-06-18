@@ -332,36 +332,36 @@ class BoostMotor {
          * @type {Object}
          * @private
          */
-        this._pendingTimeoutId = null;
+        this._pendingDurationTimeoutId = null;
 
         /**
-         * The starting time for the pending timeout.
+         * The starting time for the pending duration timeout.
          * @type {number}
          * @private
          */
-        this._pendingTimeoutStartTime = null;
+        this._pendingDurationTimeoutStartTime = null;
 
         /**
-         * The delay/duration of the pending timeout.
+         * The delay/duration of the pending duration timeout.
          * @type {number}
          * @private
          */
-        this._pendingTimeoutDelay = null;
+        this._pendingDurationTimeoutDelay = null;
 
         /**
          * The target position of a turn-based command.
          * @type {number}
          * @private
          */
-        this._pendingPositionDestination = null;
+        this._pendingRotationDestination = null;
 
         /**
-         * If the motor has been turned on run for a specific duration,
-         * this is the function that will be called once Scratch VM gets a notification from the Move Hub.
+         * If the motor has been turned on run for a specific rotation, this is the function
+         * that will be called once Scratch VM gets a notification from the Move Hub.
          * @type {Object}
          * @private
          */
-        this._pendingPromiseFunction = null;
+        this._pendingRotationPromise = null;
 
         this.turnOff = this.turnOff.bind(this);
     }
@@ -431,45 +431,44 @@ class BoostMotor {
      * @param {BoostMotorState} value - set this motor's state.
      */
     set status (value) {
-        // Clear any time- or rotation-related state from motor and set new status.
         this._clearRotationState();
-        this._clearTimeout();
+        this._clearDurationTimeout();
         this._status = value;
     }
 
     /**
-     * @return {number} - time, in milliseconds, of when the pending timeout began.
+     * @return {number} - time, in milliseconds, of when the pending duration timeout began.
      */
-    get pendingTimeoutStartTime () {
-        return this._pendingTimeoutStartTime;
+    get pendingDurationTimeoutStartTime () {
+        return this._pendingDurationTimeoutStartTime;
     }
 
     /**
-     * @return {number} - delay, in milliseconds, of the pending timeout.
+     * @return {number} - delay, in milliseconds, of the pending duration timeout.
      */
-    get pendingTimeoutDelay () {
-        return this._pendingTimeoutDelay;
+    get pendingDurationTimeoutDelay () {
+        return this._pendingDurationTimeoutDelay;
     }
 
     /**
-     * @return {number} - delay, in milliseconds, of the pending timeout.
+     * @return {number} - target position, in degrees, of the pending rotation.
      */
-    get pendingPositionDestination () {
-        return this._pendingPositionDestination;
+    get pendingRotationDestination () {
+        return this._pendingRotationDestination;
     }
 
     /**
-     * @return {boolean} - true if this motor is currently moving, false if this motor is off or braking.
+     * @return {Promise} - the Promise function for the pending rotation.
      */
-    get pendingPromiseFunction () {
-        return this._pendingPromiseFunction;
+    get pendingRotationPromise () {
+        return this._pendingRotationPromise;
     }
 
     /**
-     * @param {function} func - function to resolve promise
+     * @param {function} func - function to resolve pending rotation Promise
      */
-    set pendingPromiseFunction (func) {
-        this._pendingPromiseFunction = func;
+    set pendingRotationPromise (func) {
+        this._pendingRotationPromise = func;
     }
 
     /**
@@ -477,7 +476,6 @@ class BoostMotor {
      * @private
      */
     _turnOn () {
-        if (this.power === 0) return;
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY,
@@ -493,40 +491,29 @@ class BoostMotor {
 
     /**
      * Turn this motor on indefinitely
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnForever (resetState = true){
-        if (this.power === 0) return;
-        if (resetState) this.status = BoostMotorState.ON_FOREVER;
+    turnOnForever () {
+        this.status = BoostMotorState.ON_FOREVER;
         this._turnOn();
     }
 
     /**
      * Turn this motor on for a specific duration.
      * @param {number} milliseconds - run the motor for this long.
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnFor (milliseconds, resetState = true) {
-        if (this.power === 0) return;
-
+    turnOnFor (milliseconds) {
         milliseconds = Math.max(0, milliseconds);
-        if (resetState) this.status = BoostMotorState.ON_FOR_TIME;
+        this.status = BoostMotorState.ON_FOR_TIME;
         this._turnOn();
-        this._setNewTimeout(this.turnOff, milliseconds);
+        this._setNewDurationTimeout(this.turnOff, milliseconds);
     }
 
     /**
      * Turn this motor on for a specific rotation in degrees.
      * @param {number} degrees - run the motor for this amount of degrees.
      * @param {number} direction - rotate in this direction
-     * @param {boolean} [resetState=true] - whether to reset the state of the motor when running this command.
      */
-    turnOnForDegrees (degrees, direction, resetState = true) {
-        if (this.power === 0) {
-            this._clearRotationState();
-            return;
-        }
-
+    turnOnForDegrees (degrees, direction) {
         degrees = Math.max(0, degrees);
 
         const cmd = this._parent.generateOutputCommand(
@@ -542,8 +529,8 @@ class BoostMotor {
             ]
         );
 
-        if (resetState) this.status = BoostMotorState.ON_FOR_ROTATION;
-        this._pendingPositionDestination = this.position + (degrees * this.direction * direction);
+        this.status = BoostMotorState.ON_FOR_ROTATION;
+        this._pendingRotationDestination = this.position + (degrees * this.direction * direction);
         this._parent.send(BoostBLE.characteristic, cmd);
     }
 
@@ -552,8 +539,6 @@ class BoostMotor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
-        if (this.power === 0) return;
-
         const cmd = this._parent.generateOutputCommand(
             this._index,
             BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
@@ -573,12 +558,12 @@ class BoostMotor {
      * Clear the motor action timeout, if any. Safe to call even when there is no pending timeout.
      * @private
      */
-    _clearTimeout () {
-        if (this._pendingTimeoutId !== null) {
-            clearTimeout(this._pendingTimeoutId);
-            this._pendingTimeoutId = null;
-            this._pendingTimeoutStartTime = null;
-            this._pendingTimeoutDelay = null;
+    _clearDurationTimeout () {
+        if (this._pendingDurationTimeoutId !== null) {
+            clearTimeout(this._pendingDurationTimeoutId);
+            this._pendingDurationTimeoutId = null;
+            this._pendingDurationTimeoutStartTime = null;
+            this._pendingDurationTimeoutDelay = null;
         }
     }
 
@@ -588,19 +573,19 @@ class BoostMotor {
      * @param {int} delay - wait this many milliseconds before calling the callback.
      * @private
      */
-    _setNewTimeout (callback, delay) {
-        this._clearTimeout();
+    _setNewDurationTimeout (callback, delay) {
+        this._clearDurationTimeout();
         const timeoutID = setTimeout(() => {
-            if (this._pendingTimeoutId === timeoutID) {
-                this._pendingTimeoutId = null;
-                this._pendingTimeoutStartTime = null;
-                this._pendingTimeoutDelay = null;
+            if (this._pendingDurationTimeoutId === timeoutID) {
+                this._pendingDurationTimeoutId = null;
+                this._pendingDurationTimeoutStartTime = null;
+                this._pendingDurationTimeoutDelay = null;
             }
             callback();
         }, delay);
-        this._pendingTimeoutId = timeoutID;
-        this._pendingTimeoutStartTime = Date.now();
-        this._pendingTimeoutDelay = delay;
+        this._pendingDurationTimeoutId = timeoutID;
+        this._pendingDurationTimeoutStartTime = Date.now();
+        this._pendingDurationTimeoutDelay = delay;
     }
 
     /**
@@ -609,11 +594,11 @@ class BoostMotor {
      * @private
      */
     _clearRotationState () {
-        if (this._pendingPromiseFunction !== null) {
-            this._pendingPromiseFunction();
-            this._pendingPromiseFunction = null;
+        if (this._pendingRotationPromise !== null) {
+            this._pendingRotationPromise();
+            this._pendingRotationPromise = null;
         }
-        this._pendingPositionDestination = null;
+        this._pendingRotationDestination = null;
     }
 }
 
@@ -1213,7 +1198,7 @@ class Scratch3BoostBlocks {
     getInfo () {
         return {
             id: Scratch3BoostBlocks.EXTENSION_ID,
-            name: 'Boost',
+            name: 'BOOST',
             blockIconURI: iconURI,
             showStatusButton: true,
             blocks: [
@@ -1432,51 +1417,27 @@ class Scratch3BoostBlocks {
                     acceptReporters: true,
                     items: [
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.a',
-                                default: BoostMotorLabel.A,
-                                description: `label for motor A element in motor menu for LEGO Boost extension`
-                            }),
+                            text: 'A',
                             value: BoostMotorLabel.A
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.b',
-                                default: BoostMotorLabel.B,
-                                description: `label for motor B element in motor menu for LEGO Boost extension`
-                            }),
+                            text: 'B',
                             value: BoostMotorLabel.B
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.c',
-                                default: BoostMotorLabel.C,
-                                description: `label for motor C element in motor menu for LEGO Boost extension`
-                            }),
+                            text: 'C',
                             value: BoostMotorLabel.C
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.d',
-                                default: BoostMotorLabel.D,
-                                description: `label for motor D element in motor menu for LEGO Boost extension`
-                            }),
+                            text: 'D',
                             value: BoostMotorLabel.D
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.ab',
-                                default: BoostMotorLabel.AB,
-                                description: `label for motor A and B element in motor menu for LEGO Boost extension`
-                            }),
+                            text: 'AB',
                             value: BoostMotorLabel.AB
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorId.all',
-                                default: BoostMotorLabel.ALL,
-                                description: 'label for all motors element in motor menu for LEGO Boost extension'
-                            }),
+                            text: 'ABCD',
                             value: BoostMotorLabel.ALL
                         }
                     ]
@@ -1485,35 +1446,19 @@ class Scratch3BoostBlocks {
                     acceptReporters: true,
                     items: [
                         {
-                            text: formatMessage({
-                                id: 'boost.motorReporterId.a',
-                                default: BoostMotorLabel.A,
-                                description: 'label for motor A element in motor menu for LEGO Boost extension'
-                            }),
+                            text: 'A',
                             value: BoostMotorLabel.A
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorReporterId.b',
-                                default: BoostMotorLabel.B,
-                                description: 'label for motor B element in motor menu for LEGO Boost extension'
-                            }),
+                            text: 'B',
                             value: BoostMotorLabel.B
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorReporterId.c',
-                                default: BoostMotorLabel.C,
-                                description: 'label for motor C element in motor menu for LEGO Boost extension'
-                            }),
+                            text: 'C',
                             value: BoostMotorLabel.C
                         },
                         {
-                            text: formatMessage({
-                                id: 'boost.motorReporterId.d',
-                                default: BoostMotorLabel.D,
-                                description: 'label for motor D element in motor menu for LEGO Boost extension'
-                            }),
+                            text: 'D',
                             value: BoostMotorLabel.D
                         }
                     ]
@@ -1745,7 +1690,7 @@ class Scratch3BoostBlocks {
                 if (motor.power === 0) return Promise.resolve();
                 return new Promise(resolve => {
                     motor.turnOnForDegrees(degrees, sign);
-                    motor.pendingPromiseFunction = resolve;
+                    motor.pendingRotationPromise = resolve;
                 });
             }
             return null;
@@ -1812,20 +1757,20 @@ class Scratch3BoostBlocks {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
                 switch (motor.status) {
                 case BoostMotorState.ON_FOREVER:
-                    motor.turnOnForever(false);
+                    motor.turnOnForever();
                     break;
                 case BoostMotorState.ON_FOR_TIME:
-                    motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                    motor.turnOnFor(motor.pendingDurationTimeoutStartTime +
+                        motor.pendingDurationTimeoutDelay - Date.now());
                     break;
-                case BoostMotorState.ON_FOR_ROTATION: {
-                    const p = Math.abs(motor.pendingPositionDestination - motor.position, false);
-                    motor.turnOnForDegrees(p, Math.sign(p));
-                    break;
-                }
                 }
             }
         });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BoostBLE.sendInterval);
+        });
     }
 
     /**
@@ -1859,21 +1804,21 @@ class Scratch3BoostBlocks {
                 if (motor) {
                     switch (motor.status) {
                     case BoostMotorState.ON_FOREVER:
-                        motor.turnOnForever(false);
+                        motor.turnOnForever();
                         break;
                     case BoostMotorState.ON_FOR_TIME:
-                        motor.turnOnFor(motor.pendingTimeoutStartTime + motor.pendingTimeoutDelay - Date.now(), false);
+                        motor.turnOnFor(motor.pendingDurationTimeoutStartTime +
+                            motor.pendingDurationTimeoutDelay - Date.now());
                         break;
-                    case BoostMotorState.ON_FOR_ROTATION: {
-                        const p = Math.abs(motor.pendingPositionDestination - motor.position);
-                        motor.turnOnForDegrees(p, Math.sign(p), false);
-                        break;
-                    }
                     }
                 }
             }
         });
-        return Promise.resolve();
+        return new Promise(resolve => {
+            window.setTimeout(() => {
+                resolve();
+            }, BoostBLE.sendInterval);
+        });
     }
 
     /**
@@ -1901,7 +1846,13 @@ class Scratch3BoostBlocks {
             return false;
         }
         if (portID && this._peripheral.motor(portID)) {
-            return MathUtil.wrapClamp(this._peripheral.motor(portID).position, 0, 360);
+            let val = this._peripheral.motor(portID).position;
+            // Boost motor A position direction is reversed by design
+            // so we have to reverse the position here
+            if (portID === BoostPort.A) {
+                val *= -1;
+            }
+            return MathUtil.wrapClamp(val, 0, 360);
         }
         return 0;
     }

@@ -1,8 +1,6 @@
-const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
-const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/ble';
-// const log = require('../util/log');
+const JSONRPC = require('../util/jsonrpc');
 
-class BLE extends JSONRPCWebSocket {
+class BLE extends JSONRPC {
 
     /**
      * A BLE peripheral socket object.  It handles connecting, over web sockets, to
@@ -14,13 +12,15 @@ class BLE extends JSONRPCWebSocket {
      * @param {object} disconnectCallback - a callback for disconnection.
      */
     constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null) {
-        const ws = new WebSocket(ScratchLinkWebSocket);
-        super(ws);
+        super();
 
-        this._ws = ws;
-        this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._handleRequestError.bind(this, 'ws onerror');
-        this._ws.onclose = this.handleDisconnectError.bind(this, 'ws onclose');
+        this._socket = runtime.getScratchLinkSocket('BLE');
+        this._socket.setOnOpen(this.requestPeripheral.bind(this));
+        this._socket.setOnClose(this.handleDisconnectError.bind(this));
+        this._socket.setOnError(this._handleRequestError.bind(this));
+        this._socket.setHandleMessage(this._handleMessage.bind(this));
+
+        this._sendMessage = this._socket.sendMessage.bind(this._socket);
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
@@ -31,6 +31,8 @@ class BLE extends JSONRPCWebSocket {
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
         this._runtime = runtime;
+
+        this._socket.open();
     }
 
     /**
@@ -38,18 +40,15 @@ class BLE extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral () {
-        if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-            this._availablePeripherals = {};
-            if (this._discoverTimeoutID) {
-                window.clearTimeout(this._discoverTimeoutID);
-            }
-            this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
-            this.sendRemoteRequest('discover', this._peripheralOptions)
-                .catch(e => {
-                    this._handleRequestError(e);
-                });
+        this._availablePeripherals = {};
+        if (this._discoverTimeoutID) {
+            window.clearTimeout(this._discoverTimeoutID);
         }
-        // TODO: else?
+        this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
+        this.sendRemoteRequest('discover', this._peripheralOptions)
+            .catch(e => {
+                this._handleRequestError(e);
+            });
     }
 
     /**
@@ -73,14 +72,14 @@ class BLE extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
-        if (this._ws.readyState === this._ws.OPEN) {
-            this._ws.close();
-        }
-
         if (this._connected) {
             this._connected = false;
         }
-        
+
+        if (this._socket.isOpen()) {
+            this._socket.close();
+        }
+
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
