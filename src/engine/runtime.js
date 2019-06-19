@@ -891,23 +891,16 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
-     * @param {string} menuName - the name of the menu
-     * @param {object} menuInfo - a description of this menu and its items
-     * @property {*} items - an array of menu items or a function to retrieve such an array
-     * @property {boolean} [acceptReporters] - if true, allow dropping reporters onto this menu
-     * @param {CategoryInfo} categoryInfo - the category for this block
-     * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
+     * Convert the given extension menu items into the scratch-blocks style of list of pairs.
+     * If the menu is dynamic (e.g. the passed in argument is a function), return the input unmodified.
+     * @param {object} menuItems - an array of menu items or a function to retrieve such an array
+     * @returns {object} - an array of 2 element arrays or the original input function
      * @private
      */
-    _buildMenuForScratchBlocks (menuName, menuInfo, categoryInfo) {
-        const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-        let menuItems = null;
-        if (typeof menuInfo.items === 'function') {
-            menuItems = menuInfo.items;
-        } else {
+    _convertMenuItems (menuItems) {
+        if (typeof menuItems !== 'function') {
             const extensionMessageContext = this.makeMessageContextForTarget();
-            menuItems = menuInfo.items.map(item => {
+            return menuItems.map(item => {
                 const formattedItem = maybeFormatMessage(item, extensionMessageContext);
                 switch (typeof formattedItem) {
                 case 'string':
@@ -919,6 +912,22 @@ class Runtime extends EventEmitter {
                 }
             });
         }
+        return menuItems;
+    }
+
+    /**
+     * Build the scratch-blocks JSON for a menu. Note that scratch-blocks treats menus as a special kind of block.
+     * @param {string} menuName - the name of the menu
+     * @param {object} menuInfo - a description of this menu and its items
+     * @property {*} items - an array of menu items or a function to retrieve such an array
+     * @property {boolean} [acceptReporters] - if true, allow dropping reporters onto this menu
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {object} - a JSON-esque object ready for scratch-blocks' consumption
+     * @private
+     */
+    _buildMenuForScratchBlocks (menuName, menuInfo, categoryInfo) {
+        const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
+        const menuItems = this._convertMenuItems(menuInfo.items);
         return {
             json: {
                 message0: '%1',
@@ -1242,7 +1251,7 @@ class Runtime extends EventEmitter {
                 fieldName = argInfo.menu;
             } else {
                 argJSON.type = 'field_dropdown';
-                argJSON.options = menuInfo.items;
+                argJSON.options = this._convertMenuItems(menuInfo.items);
                 valueName = null;
                 shadowType = null;
                 fieldName = placeholder;
