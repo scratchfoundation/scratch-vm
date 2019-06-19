@@ -761,12 +761,30 @@ class Scratch3MicroBitBlocks {
                 }
             ],
             menus: {
-                buttons: this.BUTTONS_MENU,
-                gestures: this.GESTURES_MENU,
-                pinState: this.PIN_STATE_MENU,
-                tiltDirection: this.TILT_DIRECTION_MENU,
-                tiltDirectionAny: this.TILT_DIRECTION_ANY_MENU,
-                touchPins: ['0', '1', '2']
+                buttons: {
+                    acceptReporters: true,
+                    items: this.BUTTONS_MENU
+                },
+                gestures: {
+                    acceptReporters: true,
+                    items: this.GESTURES_MENU
+                },
+                pinState: {
+                    acceptReporters: true,
+                    items: this.PIN_STATE_MENU
+                },
+                tiltDirection: {
+                    acceptReporters: true,
+                    items: this.TILT_DIRECTION_MENU
+                },
+                tiltDirectionAny: {
+                    acceptReporters: true,
+                    items: this.TILT_DIRECTION_ANY_MENU
+                },
+                touchPins: {
+                    acceptReporters: true,
+                    items: ['0', '1', '2']
+                }
             }
         };
     }

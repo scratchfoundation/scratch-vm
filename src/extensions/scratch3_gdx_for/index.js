@@ -134,7 +134,7 @@ class GdxFor {
          * @type {BLE}
          * @private
          */
-        this._scratchLinkSocket = null;
+        this._ble = null;
 
         /**
          * An @vernier/godirect Device
@@ -181,11 +181,11 @@ class GdxFor {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        if (this._scratchLinkSocket) {
-            this._scratchLinkSocket.disconnect();
+        if (this._ble) {
+            this._ble.disconnect();
         }
 
-        this._scratchLinkSocket = new BLE(this._runtime, this._extensionId, {
+        this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [
                 {namePrefix: 'GDX-FOR'}
             ],
@@ -200,8 +200,8 @@ class GdxFor {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        if (this._scratchLinkSocket) {
-            this._scratchLinkSocket.connectPeripheral(id);
+        if (this._ble) {
+            this._ble.connectPeripheral(id);
         }
     }
 
@@ -247,8 +247,8 @@ class GdxFor {
      */
     isConnected () {
         let connected = false;
-        if (this._scratchLinkSocket) {
-            connected = this._scratchLinkSocket.isConnected();
+        if (this._ble) {
+            connected = this._ble.isConnected();
         }
         return connected;
     }
@@ -258,7 +258,7 @@ class GdxFor {
      * @private
      */
     _onConnect () {
-        const adapter = new ScratchLinkDeviceAdapter(this._scratchLinkSocket, BLEUUID);
+        const adapter = new ScratchLinkDeviceAdapter(this._ble, BLEUUID);
         godirect.createDevice(adapter, {open: true, startMeasurements: false}).then(device => {
             // Setup device
             this._device = device;
@@ -278,7 +278,7 @@ class GdxFor {
                     });
                 });
                 this._timeoutID = window.setInterval(
-                    () => this._scratchLinkSocket.handleDisconnectError(BLEDataStoppedError),
+                    () => this._ble.handleDisconnectError(BLEDataStoppedError),
                     BLETimeout
                 );
             });
@@ -322,7 +322,7 @@ class GdxFor {
         // cancel disconnect timeout and start a new one
         window.clearInterval(this._timeoutID);
         this._timeoutID = window.setInterval(
-            () => this._scratchLinkSocket.handleDisconnectError(BLEDataStoppedError),
+            () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
     }
@@ -773,11 +773,26 @@ class Scratch3GdxForBlocks {
                 }
             ],
             menus: {
-                pushPullOptions: this.PUSH_PULL_MENU,
-                gestureOptions: this.GESTURE_MENU,
-                axisOptions: this.AXIS_MENU,
-                tiltOptions: this.TILT_MENU,
-                tiltAnyOptions: this.TILT_MENU_ANY
+                pushPullOptions: {
+                    acceptReporters: true,
+                    items: this.PUSH_PULL_MENU
+                },
+                gestureOptions: {
+                    acceptReporters: true,
+                    items: this.GESTURE_MENU
+                },
+                axisOptions: {
+                    acceptReporters: true,
+                    items: this.AXIS_MENU
+                },
+                tiltOptions: {
+                    acceptReporters: true,
+                    items: this.TILT_MENU
+                },
+                tiltAnyOptions: {
+                    acceptReporters: true,
+                    items: this.TILT_MENU_ANY
+                }
             }
         };
     }

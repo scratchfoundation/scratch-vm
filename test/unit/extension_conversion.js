@@ -11,6 +11,9 @@ const ScratchBlocksConstants = require('../../src/engine/scratch-blocks-constant
 const testExtensionInfo = {
     id: 'test',
     name: 'fake test extension',
+    color1: '#111111',
+    color2: '#222222',
+    color3: '#333333',
     blocks: [
         {
             func: 'MAKE_A_VARIABLE',
@@ -20,7 +23,8 @@ const testExtensionInfo = {
         {
             opcode: 'reporter',
             blockType: BlockType.REPORTER,
-            text: 'simple text'
+            text: 'simple text',
+            blockIconURI: 'invalid icon URI' // trigger the 'scratch_extension' path
         },
         '---', // separator between groups of blocks in an extension
         {
@@ -63,6 +67,14 @@ const testExtensionInfo = {
     ]
 };
 
+const testCategoryInfo = function (t, block) {
+    t.equal(block.json.category, 'fake test extension');
+    t.equal(block.json.colour, '#111111');
+    t.equal(block.json.colourSecondary, '#222222');
+    t.equal(block.json.colourTertiary, '#333333');
+    t.equal(block.json.inputsInline, true);
+};
+
 const testButton = function (t, button) {
     t.same(button.json, null); // should be null or undefined
     t.equal(button.xml, '<button text="this is a button" callbackKey="MAKE_A_VARIABLE"></button>');
@@ -70,13 +82,28 @@ const testButton = function (t, button) {
 
 const testReporter = function (t, reporter) {
     t.equal(reporter.json.type, 'test_reporter');
+    testCategoryInfo(t, reporter);
+    t.equal(reporter.json.checkboxInFlyout, true);
     t.equal(reporter.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_ROUND);
     t.equal(reporter.json.output, 'String');
     t.notOk(reporter.json.hasOwnProperty('previousStatement'));
     t.notOk(reporter.json.hasOwnProperty('nextStatement'));
-    t.equal(reporter.json.message0, 'simple text');
+    t.same(reporter.json.extensions, ['scratch_extension']);
+    t.equal(reporter.json.message0, '%1 %2simple text'); // "%1 %2" from the block icon
     t.notOk(reporter.json.hasOwnProperty('message1'));
-    t.notOk(reporter.json.hasOwnProperty('args0'));
+    t.same(reporter.json.args0, [
+        // %1 in message0: the block icon
+        {
+            type: 'field_image',
+            src: 'invalid icon URI',
+            width: 40,
+            height: 40
+        },
+        // %2 in message0: separator between icon and text (only added when there's also an icon)
+        {
+            type: 'field_vertical_separator'
+        }
+    ]);
     t.notOk(reporter.json.hasOwnProperty('args1'));
     t.equal(reporter.xml, '<block type="test_reporter"></block>');
 };
@@ -88,9 +115,11 @@ const testSeparator = function (t, separator) {
 
 const testCommand = function (t, command) {
     t.equal(command.json.type, 'test_command');
+    testCategoryInfo(t, command);
     t.equal(command.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.assert(command.json.hasOwnProperty('previousStatement'));
     t.assert(command.json.hasOwnProperty('nextStatement'));
+    t.notOk(command.json.extensions && command.json.extensions.length); // OK if it's absent or empty
     t.equal(command.json.message0, 'text with %1');
     t.notOk(command.json.hasOwnProperty('message1'));
     t.strictSame(command.json.args0[0], {
@@ -105,9 +134,11 @@ const testCommand = function (t, command) {
 
 const testConditional = function (t, conditional) {
     t.equal(conditional.json.type, 'test_ifElse');
+    testCategoryInfo(t, conditional);
     t.equal(conditional.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.ok(conditional.json.hasOwnProperty('previousStatement'));
     t.ok(conditional.json.hasOwnProperty('nextStatement'));
+    t.notOk(conditional.json.extensions && conditional.json.extensions.length); // OK if it's absent or empty
     t.equal(conditional.json.message0, 'test if %1 is spiffy and if so then');
     t.equal(conditional.json.message1, '%1'); // placeholder for substack #1
     t.equal(conditional.json.message2, 'or elsewise');
@@ -133,9 +164,11 @@ const testConditional = function (t, conditional) {
 
 const testLoop = function (t, loop) {
     t.equal(loop.json.type, 'test_loop');
+    testCategoryInfo(t, loop);
     t.equal(loop.json.outputShape, ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE);
     t.ok(loop.json.hasOwnProperty('previousStatement'));
     t.notOk(loop.json.hasOwnProperty('nextStatement')); // isTerminal is set on this block
+    t.notOk(loop.json.extensions && loop.json.extensions.length); // OK if it's absent or empty
     t.equal(loop.json.message0, 'loopty %1 loops');
     t.equal(loop.json.message1, '%1'); // placeholder for substack
     t.equal(loop.json.message2, '%1'); // placeholder for loop arrow
@@ -160,7 +193,8 @@ const testLoop = function (t, loop) {
 test('registerExtensionPrimitives', t => {
     const runtime = new Runtime();
 
-    runtime.on(Runtime.EXTENSION_ADDED, blocksInfo => {
+    runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
+        const blocksInfo = categoryInfo.blocks;
         t.equal(blocksInfo.length, testExtensionInfo.blocks.length);
 
         blocksInfo.forEach(blockInfo => {
