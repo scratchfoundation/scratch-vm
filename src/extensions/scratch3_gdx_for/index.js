@@ -212,8 +212,8 @@ class GdxFor {
     disconnect() {
         console.log('GDXFOR DISCONNECT CALLED');
 
-        if (this._scratchLinkSocket) {
-            this._scratchLinkSocket.disconnect();
+        if (this._ble) {
+            this._ble.disconnect();
         }
 
         this.reset();
