@@ -29,7 +29,7 @@ const Ev3PairingPin = '1234';
 const BTSendRateMax = 40;
 
 /**
- * Enum for Ev3 byte specs used as parameter encodings to various argument values.
+ * Enum for Ev3 parameter encodings of various argument and return values.
  * Found in the 'EV3 Firmware Developer Kit', section4, page 9, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  *
@@ -40,14 +40,13 @@ const BTSendRateMax = 40;
  * @readonly
  * @enum {number}
  */
-const Ev3ParamEncoding = {
-    GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000 = global constant value > index "0"
-    GLOBAL_CONSTANT_INDEX_1: 0x21, // = 0b00100001 = global constant value > index "1"
-    GLOBAL_VARIABLE_INDEX_0: 0x60, // = 0b00110000 = global variable value > index "0"
-    ONE_BYTE: 0x81, // = 0b1000-001 = constant value > 1 byte to follow
-    TWO_BYTES: 0x82, // = 0b1000-010 = constant value > 2 bytes to follow
-    FOUR_BYTES: 0x83, // = 0b1000-011 = constant value > 4 bytes to follow
-    GLOBAL_ONE_BYTE: 0xE1 // = 0b1110-001 = size of global var > 1 byte to follow
+const Ev3Encoding = {
+    LOCAL_CONSTANT_ONE_BYTE: 0x81, // = 0b1000-001
+    LOCAL_CONSTANT_TWO_BYTES: 0x82, // = 0b1000-010
+    LOCAL_CONSTANT_FOUR_BYTES: 0x83, // = 0b1000-011
+    GLOBAL_VARIABLE_ONE_BYTE: 0xE1, // = 0b1110-001
+    GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000
+    GLOBAL_VARIABLE_INDEX_0: 0x60 // = 0b00110000
 };
 
 /**
@@ -332,12 +331,12 @@ class EV3Motor {
         byteCommand = byteCommand.concat([
             Ev3Args.LAYER,
             port,
-            Ev3ParamEncoding.ONE_BYTE,
+            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
             dir & 0xff,
-            Ev3ParamEncoding.ONE_BYTE,
+            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
             rampup
         ]).concat(runcmd.concat([
-            Ev3ParamEncoding.ONE_BYTE,
+            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
             rampdown,
             Ev3Args.BRAKE
         ]));
@@ -401,7 +400,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3ParamEncoding.TWO_BYTES,
+                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -409,7 +408,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3ParamEncoding.FOUR_BYTES,
+            Ev3Encoding.LOCAL_CONSTANT_FOUR_BYTES,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -553,12 +552,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3ParamEncoding.ONE_BYTE,
+                Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
                 2,
-                Ev3ParamEncoding.TWO_BYTES,
+                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
                 freq,
                 freq >> 8,
-                Ev3ParamEncoding.TWO_BYTES,
+                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
                 time,
                 time >> 8
             ]
@@ -738,11 +737,11 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3ParamEncoding.ONE_BYTE;
+            cmds[1] = Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE;
             cmds[2] = Ev3Args.MAX_DEVICES;
-            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0;
-            cmds[4] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
-            cmds[5] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_0;
+            cmds[3] = Ev3Encoding.GLOBAL_VARIABLE_INDEX_0;
+            cmds[4] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+            cmds[5] = Ev3Encoding.GLOBAL_CONSTANT_INDEX_0;
 
             // Command and payload lengths
             allocation = 33;
@@ -758,7 +757,7 @@ class EV3 {
                     cmds[index + 2] = i; // PORT
                     cmds[index + 3] = Ev3Args.DO_NOT_CHANGE_TYPE;
                     cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                    cmds[index + 5] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
+                    cmds[index + 5] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
                     cmds[index + 6] = sensorCount * 4; // GLOBAL INDEX
                     index += 7;
                 }
@@ -770,7 +769,7 @@ class EV3 {
                 cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                 cmds[index + 1] = Ev3Args.LAYER;
                 cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
-                cmds[index + 3] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
+                cmds[index + 3] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
                 cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
                 index += 5;
                 sensorCount++;
