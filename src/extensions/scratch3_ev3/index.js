@@ -41,12 +41,12 @@ const BTSendRateMax = 40;
  * @enum {number}
  */
 const Ev3Encoding = {
-    LOCAL_CONSTANT_ONE_BYTE: 0x81, // = 0b1000-001, "1 byte to follow"
-    LOCAL_CONSTANT_TWO_BYTES: 0x82, // = 0b1000-010, "2 bytes to follow"
-    LOCAL_CONSTANT_FOUR_BYTES: 0x83, // = 0b1000-011, "4 bytes to follow"
+    ONE_BYTE: 0x81, // = 0b1000-001, "1 byte to follow"
+    TWO_BYTES: 0x82, // = 0b1000-010, "2 bytes to follow"
+    FOUR_BYTES: 0x83, // = 0b1000-011, "4 bytes to follow"
     GLOBAL_VARIABLE_ONE_BYTE: 0xE1, // = 0b1110-001, "1 byte to follow"
     GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000
-    GLOBAL_VARIABLE_INDEX_0: 0x60 // = 0b00110000
+    GLOBAL_VARIABLE_INDEX_0: 0x60 // = 0b01100000
 };
 
 /**
@@ -331,12 +331,12 @@ class EV3Motor {
         byteCommand = byteCommand.concat([
             Ev3Args.LAYER,
             port,
-            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
+            Ev3Encoding.ONE_BYTE,
             dir & 0xff,
-            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
+            Ev3Encoding.ONE_BYTE,
             rampup
         ]).concat(runcmd.concat([
-            Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
+            Ev3Encoding.ONE_BYTE,
             rampdown,
             Ev3Args.BRAKE
         ]));
@@ -400,7 +400,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
+                Ev3Encoding.TWO_BYTES,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -408,7 +408,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3Encoding.LOCAL_CONSTANT_FOUR_BYTES,
+            Ev3Encoding.FOUR_BYTES,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -552,12 +552,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE,
+                Ev3Encoding.ONE_BYTE,
                 2,
-                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
+                Ev3Encoding.TWO_BYTES,
                 freq,
                 freq >> 8,
-                Ev3Encoding.LOCAL_CONSTANT_TWO_BYTES,
+                Ev3Encoding.TWO_BYTES,
                 time,
                 time >> 8
             ]
@@ -737,7 +737,7 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3Encoding.LOCAL_CONSTANT_ONE_BYTE;
+            cmds[1] = Ev3Encoding.ONE_BYTE;
             cmds[2] = Ev3Args.MAX_DEVICES;
             cmds[3] = Ev3Encoding.GLOBAL_VARIABLE_INDEX_0;
             cmds[4] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
