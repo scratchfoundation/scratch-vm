@@ -47,7 +47,7 @@ const Ev3ParamEncoding = {
     ONE_BYTE: 0x81, // = 0b1000-001 = constant value > 1 byte to follow
     TWO_BYTES: 0x82, // = 0b1000-010 = constant value > 2 bytes to follow
     FOUR_BYTES: 0x83, // = 0b1000-011 = constant value > 4 bytes to follow
-    GLOBAL_ONE_BYTE: 0xE1 // = 0b1110-001 = size of global var, 1 byte to follow
+    GLOBAL_ONE_BYTE: 0xE1 // = 0b1110-001 = size of global var > 1 byte to follow
 };
 
 /**
@@ -740,8 +740,8 @@ class EV3 {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
             cmds[1] = Ev3ParamEncoding.ONE_BYTE; // TODO: Length?
-            cmds[2] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_1; // TODO: Array?
-            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0; // TODO: Changed?
+            cmds[2] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_1; // TODO: Array is 0x21?
+            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0; // TODO: Changed is 0x60?
             cmds[4] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
             cmds[5] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_0;
 
