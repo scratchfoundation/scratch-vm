@@ -97,7 +97,8 @@ const Ev3Args = {
     COAST: 0x00,
     BRAKE: 0x01,
     RAMP: 50, // time in milliseconds
-    DO_NOT_CHANGE_TYPE: 0
+    DO_NOT_CHANGE_TYPE: 0,
+    MAX_DEVICES: 32 // 'Normally 32' from pg. 46
 };
 
 /**
@@ -737,9 +738,9 @@ class EV3 {
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
             cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            cmds[1] = Ev3ParamEncoding.ONE_BYTE; // TODO: Length?
-            cmds[2] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_1; // TODO: Array is 0x21?
-            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0; // TODO: Changed is 0x60?
+            cmds[1] = Ev3ParamEncoding.ONE_BYTE;
+            cmds[2] = Ev3Args.MAX_DEVICES;
+            cmds[3] = Ev3ParamEncoding.GLOBAL_VARIABLE_INDEX_0;
             cmds[4] = Ev3ParamEncoding.GLOBAL_ONE_BYTE;
             cmds[5] = Ev3ParamEncoding.GLOBAL_CONSTANT_INDEX_0;
 
