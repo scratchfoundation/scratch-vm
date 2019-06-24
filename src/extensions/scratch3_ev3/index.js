@@ -97,8 +97,6 @@ const Ev3Args = {
     COAST: 0x00,
     BRAKE: 0x01,
     RAMP: 50, // time in milliseconds
-    ONE_BYTE: 4, // length value as a constant
-    FOUR_BYTES: 32, // length value as a constant
     DO_NOT_CHANGE_TYPE: 0
 };
 
