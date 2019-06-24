@@ -92,9 +92,9 @@ const Ev3Opcode = {
  * @enum {number}
  */
 const Ev3Args = {
-    LAYER: 0x00, // always 0, chained EV3s not supported
-    COAST: 0x00,
-    BRAKE: 0x01,
+    LAYER: 0, // always 0, chained EV3s not supported
+    COAST: 0,
+    BRAKE: 1,
     RAMP: 50, // time in milliseconds
     DO_NOT_CHANGE_TYPE: 0,
     MAX_DEVICES: 32 // 'Normally 32' from pg. 46
