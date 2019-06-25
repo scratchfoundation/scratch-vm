@@ -301,9 +301,17 @@ class Thread {
         while (blockID !== null) {
             const block = this.target.blocks.getBlock(blockID);
             if (typeof block !== 'undefined' && block.opcode === 'procedures_call') {
+                // If we do not push this null, Sequencer will not step to the
+                // next block and will erroneously call the procedure a second
+                // time.
+                //
+                // By pushing null, Sequencer will treat it as the end of a
+                // substack, pop the stack and step to the next block.
+                this.pushStack(null);
                 break;
             }
-            blockID = this.popStack();
+            this.popStack();
+            blockID = this.peekStack();
         }
 
         if (this.stackFrame === null) {
