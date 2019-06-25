@@ -2,6 +2,7 @@ const test = require('tap').test;
 const Worker = require('tiny-worker');
 
 const BlockType = require('../../src/extension-support/block-type');
+const ContextMenuContext = require('../../src/extension-support/context-menu-context');
 
 const dispatch = require('../../src/dispatch/central-dispatch');
 const VirtualMachine = require('../../src/virtual-machine');
@@ -81,16 +82,27 @@ test('internal extension', t => {
     };
     t.deepEqual(goBlockInfo, expectedBlockInfo);
 
-    // There should be 2 menus - one is an array, one is the function to call.
-    t.equal(vm.runtime._blockInfo[0].menus.length, 2);
-    // First menu has 3 items.
-    t.equal(
-        vm.runtime._blockInfo[0].menus[0].json.args0[0].options.length, 3);
-    // Second menu is a dynamic menu and therefore should be a function.
-    t.type(
-        vm.runtime._blockInfo[0].menus[1].json.args0[0].options, 'function');
+    // There should be at least one extension loaded, but there could be more
+    // loaded if we have core extensions defined in src/virtual-machine.
+    t.ok(vm.runtime._blockInfo.length > 0);
 
-    t.end();
+    for (const extensionInfo of vm.runtime._blockInfo) {
+        if (extensionInfo.id !== 'testInternalExtension') continue;
+
+        // The following should run only once, for the mock `testInternalExtension`
+        // defined above. Any other extensions (e.g. core extensions that are loaded)
+        // when a VM instance is constructed should be skipped above.
+
+        // There should be 2 menus - one is an array, one is the function to call.
+        t.equal(extensionInfo.menus.length, 2);
+        // First menu has 3 items.
+        t.equal(
+            extensionInfo.menus[0].json.args0[0].options.length, 3);
+        // Second menu is a dynamic menu and therefore should be a function.
+        t.type(
+            extensionInfo.menus[1].json.args0[0].options, 'function');
+        t.end();
+    }
 });
 
 test('load sync', t => {
@@ -111,6 +123,13 @@ test('load sync', t => {
     t.type(vm.runtime._blockInfo[0].blocks[2].info, 'object');
     t.equal(vm.runtime._blockInfo[0].blocks[2].info.opcode, 'exampleDynamicOpcode');
     t.equal(vm.runtime._blockInfo[0].blocks[2].info.blockType, 'command');
+    t.equal(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu.length, 3);
+    t.type(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[0].callback, 'function');
+    t.type(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[1].callback, 'function');
+    t.type(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[2].callback, 'function');
+    t.equal(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[0].context, undefined);
+    t.type(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[1].context, ContextMenuContext.TOOLBOX_ONLY);
+    t.type(vm.runtime._blockInfo[0].blocks[2].info.customContextMenu[2].context, ContextMenuContext.WORKSPACE_ONLY);
 
     // Test the opcode function
     t.equal(vm.runtime._blockInfo[0].blocks[1].info.func(), 'no stage yet');
