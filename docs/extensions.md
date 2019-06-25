@@ -575,7 +575,9 @@ should appear in.
 The options for the context menu item context are as follows:
 
 `ContextMenuContext.ALL` - The context menu item should always appear in the block's context menu. This is the default option.
+
 `ContextMenuContext.TOOLBOX_ONLY` - The context menu item should only appear in the block's context menu when the block is in the toolbox.
+
 `ContextMenuContext.WORKSPACE_ONLY` - The context menu item should only appear in the block's context menu when the block is on the main workspace.
 
 By default, a context menu item will appear on the block in both the toolbox as well as the
