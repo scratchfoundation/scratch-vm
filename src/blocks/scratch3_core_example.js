@@ -1,4 +1,5 @@
 const BlockType = require('../extension-support/block-type');
+const ContextMenuContext = require('../extension-support/context-menu-context');
 const log = require('../util/log');
 
 /**
@@ -40,8 +41,18 @@ class Scratch3CoreExample {
                     isDynamic: true,
                     customContextMenu: [
                         {
-                            name: 'Custom Context Menu Option',
+                            text: 'Custom Context Menu Option',
                             callback: 'contextMenuOption'
+                        },
+                        {
+                            text: 'Custom Context Menu Option - Toolbox Only',
+                            callback: 'contextMenuOption',
+                            context: ContextMenuContext.TOOLBOX_ONLY
+                        },
+                        {
+                            text: 'Custom Context Menu Option - Workspace Only',
+                            callback: 'contextMenuOption',
+                            context: ContextMenuContext.WORKSPACE_ONLY
                         }
                     ]
                 }
