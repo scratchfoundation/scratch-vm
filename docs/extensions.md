@@ -487,3 +487,113 @@ class SomeBlocks {
     };
 }
 ```
+
+## Experimental / In Development Features
+
+The following are experimental features that are under active development and subject to change during the process
+of converting the core Scratch blocks into using the extension spec.
+
+### Dynamic Blocks
+The content above describes defining static extension blocks (e.g. blocks that will always keep the same shape). While most
+blocks in the Scratch language fall into this category, there are others which may dynamically change their shape based
+state information. An example of this is the `control_stop` block which changes whether or not it can have a command block
+attached after it based on which menu item is selected. Blocks that may dynamically change their shape are referred to below as
+"dynamic blocks".
+
+In order to support Scratch blocks like variables or custom procedure call blocks, we have added the support for dynamic blocks.
+A block is specified to be dynamic by using the `isDynamic` flag in the block specification.
+
+```js
+class SomeBlocks {
+    // ...
+    getInfo () {
+        return {
+            // ...
+            blocks: [
+                {
+                    isDynamic: true
+                    opcode: 'dynamicReporter',
+                    blockType: BlockType.REPORTER,
+                    text: 'my dynamic reporter block',
+                }
+            ]
+        };
+    }
+    // ...
+}
+```
+
+#### Adding Custom Context Menu Options
+Dynamic blocks can have custom context menu options in addition to the default options for adding
+a block comment, deleting the block, and duplicating the block.
+
+In order to specify custom context menu options, you can provide a list of context menu item descriptors
+which contain the text label for the menu item as well as the name of the function in the extension that should be run when
+the block is selected.
+
+```js
+class SomeBlocks {
+    // ...
+    getInfo () {
+        return {
+            // ...
+            blocks: [
+                {
+                    isDynamic: true
+                    opcode: 'dynamicReporter',
+                    blockType: BlockType.REPORTER,
+                    text: 'my dynamic reporter block',
+                    customContextMenu: [
+                        {
+                            text: 'Context Menu Item 1',
+                            callback: 'myContextMenuFunction'
+                        },
+                        {
+                            text: 'Context Menu Item 2',
+                            callback: 'anotherContextMenuFunction'
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+
+    myContextMenuFunction () {
+        // ...
+    }
+
+    anotherContextMenuFunction () {
+        // ...
+    }
+    // ...
+}
+```
+
+For each context menu item, you can also optionally specify which situations that context menu item
+should appear in.
+
+The options for the context menu item context are as follows:
+
+`ContextMenuContext.ALL` - The context menu item should always appear in the block's context menu. This is the default option.
+
+`ContextMenuContext.TOOLBOX_ONLY` - The context menu item should only appear in the block's context menu when the block is in the toolbox.
+
+`ContextMenuContext.WORKSPACE_ONLY` - The context menu item should only appear in the block's context menu when the block is on the main workspace.
+
+By default, a context menu item will appear on the block in both the toolbox as well as the
+main workspace.
+
+```
+customContextMenu: [
+    {
+        text: 'Context Menu Item Hidden From Toolbox',
+        callback: 'myContextMenuFunction',
+        context: ContextMenuContext.WORKSPACE_ONLY
+    },
+    {
+        text: 'Context Menu Item Hidden From Workspace',
+        callback: 'anotherContextMenuFunction',
+        context: ContextMenuContext.TOOLBOX_ONLY
+    }
+]
+```
