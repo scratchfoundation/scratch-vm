@@ -209,9 +209,7 @@ class GdxFor {
      * Called by the runtime when a user exits the connection popup.
      * Disconnect from the GDX FOR.
      */
-    disconnect() {
-        console.log('GDXFOR DISCONNECT CALLED');
-
+    disconnect () {
         if (this._ble) {
             this._ble.disconnect();
         }
@@ -223,8 +221,6 @@ class GdxFor {
      * Reset all the state and timeout/interval ids.
      */
     reset () {
-        console.log('GDXFOR RESET CALLED');
-
         this._sensors = {
             force: 0,
             accelerationX: 0,

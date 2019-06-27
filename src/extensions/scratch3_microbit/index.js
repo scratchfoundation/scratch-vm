@@ -238,9 +238,7 @@ class MicroBit {
     /**
      * Disconnect from the micro:bit.
      */
-    disconnect() {
-        console.log('MICROBIT DISCONNECT CALLED');
-
+    disconnect () {
         if (this._ble) {
             this._ble.disconnect();
         }
@@ -251,9 +249,7 @@ class MicroBit {
     /**
      * Reset all the state and timeout/interval ids.
      */
-    reset() {
-        console.log('MICROBIT RESET CALLED');
-
+    reset () {
         if (this._timeoutID) {
             window.clearTimeout(this._timeoutID);
             this._timeoutID = null;

@@ -609,9 +609,7 @@ class WeDo2 {
     /**
      * Disconnects from the current BLE socket.
      */
-    disconnect() {
-        console.log('WEDO2 DISCONNECT CALLED');
-
+    disconnect () {
         if (this._ble) {
             this._ble.disconnect();
         }
@@ -622,9 +620,7 @@ class WeDo2 {
     /**
      * Reset all the state and timeout/interval ids.
      */
-    reset() {
-        console.log('WEDO2 RESET CALLED');
-
+    reset () {
         this._ports = ['none', 'none'];
         this._motors = [null, null];
         this._sensors = {

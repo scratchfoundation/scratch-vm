@@ -72,8 +72,6 @@ class BLE extends JSONRPC {
      * Close the websocket.
      */
     disconnect () {
-        console.log('BLE DISCONNECT CALLED');
-
         if (this._connected) {
             this._connected = false;
         }
@@ -203,10 +201,8 @@ class BLE extends JSONRPC {
      * Disconnect the socket, and if the extension using this socket has a
      * reset callback, call it. Finally, emit an error to the runtime.
      */
-    handleDisconnectError (e) {
-        console.error(`BLE error: ${JSON.stringify(e)}`);
-        console.error(e);
-        console.log('BLE HANDLEDISCONNECTERROR CALLED');
+    handleDisconnectError (/* e */) {
+        // log.error(`BLE error: ${JSON.stringify(e)}`);
 
         if (!this._connected) return;
 
