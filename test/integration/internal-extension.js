@@ -86,23 +86,18 @@ test('internal extension', t => {
     // loaded if we have core extensions defined in src/virtual-machine.
     t.ok(vm.runtime._blockInfo.length > 0);
 
-    for (const extensionInfo of vm.runtime._blockInfo) {
-        if (extensionInfo.id !== 'testInternalExtension') continue;
-
-        // The following should run only once, for the mock `testInternalExtension`
-        // defined above. Any other extensions (e.g. core extensions that are loaded)
-        // when a VM instance is constructed should be skipped above.
-
-        // There should be 2 menus - one is an array, one is the function to call.
-        t.equal(extensionInfo.menus.length, 2);
-        // First menu has 3 items.
-        t.equal(
-            extensionInfo.menus[0].json.args0[0].options.length, 3);
-        // Second menu is a dynamic menu and therefore should be a function.
-        t.type(
-            extensionInfo.menus[1].json.args0[0].options, 'function');
-        t.end();
-    }
+    // Find the extension info in the runtime.
+    const extensionInfo = vm.runtime._blockInfo.find(info => info.id === 'testInternalExtension');
+    t.ok(extensionInfo);
+    // There should be 2 menus - one is an array, one is the function to call.
+    t.equal(extensionInfo.menus.length, 2);
+    // First menu has 3 items.
+    t.equal(
+        extensionInfo.menus[0].json.args0[0].options.length, 3);
+    // Second menu is a dynamic menu and therefore should be a function.
+    t.type(
+        extensionInfo.menus[1].json.args0[0].options, 'function');
+    t.end();
 });
 
 test('load sync', t => {
