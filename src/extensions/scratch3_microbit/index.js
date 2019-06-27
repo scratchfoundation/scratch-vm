@@ -144,7 +144,7 @@ class MicroBit {
          */
         this._busyTimeoutID = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
     }
@@ -222,7 +222,7 @@ class MicroBit {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -239,9 +239,20 @@ class MicroBit {
      * Disconnect from the micro:bit.
      */
     disconnect () {
-        window.clearTimeout(this._timeoutID);
         if (this._ble) {
             this._ble.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        if (this._timeoutID) {
+            window.clearTimeout(this._timeoutID);
+            this._timeoutID = null;
         }
     }
 

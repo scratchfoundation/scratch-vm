@@ -172,7 +172,7 @@ class GdxFor {
          */
         this._timeoutID = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
     }
 
@@ -192,7 +192,7 @@ class GdxFor {
             optionalServices: [
                 BLEUUID.service
             ]
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -210,7 +210,17 @@ class GdxFor {
      * Disconnect from the GDX FOR.
      */
     disconnect () {
-        window.clearInterval(this._timeoutID);
+        if (this._ble) {
+            this._ble.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
         this._sensors = {
             force: 0,
             accelerationX: 0,
@@ -220,8 +230,10 @@ class GdxFor {
             spinSpeedY: 0,
             spinSpeedZ: 0
         };
-        if (this._ble) {
-            this._ble.disconnect();
+
+        if (this._timeoutID) {
+            window.clearInterval(this._timeoutID);
+            this._timeoutID = null;
         }
     }
 
