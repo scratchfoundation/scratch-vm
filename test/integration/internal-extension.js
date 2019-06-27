@@ -107,7 +107,7 @@ test('load sync', t => {
 
     t.equal(vm.runtime._blockInfo.length, 1);
 
-    // blocks should be an array of two items: a button pseudo-block, a reporter block, and a command block.
+    // blocks should be an array of [button pseudo-block, reporter block, command block].
     t.equal(vm.runtime._blockInfo[0].blocks.length, 3);
     t.type(vm.runtime._blockInfo[0].blocks[0].info, 'object');
     t.type(vm.runtime._blockInfo[0].blocks[0].info.func, 'MAKE_A_VARIABLE');
