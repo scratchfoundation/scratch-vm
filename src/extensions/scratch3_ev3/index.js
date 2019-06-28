@@ -29,6 +29,27 @@ const Ev3PairingPin = '1234';
 const BTSendRateMax = 40;
 
 /**
+ * Enum for Ev3 parameter encodings of various argument and return values.
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 9, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ *
+ * The format for these values is:
+ * 0xxxxxxx for Short Format
+ * 1ttt-bbb for Long Format
+ *
+ * @readonly
+ * @enum {number}
+ */
+const Ev3Encoding = {
+    ONE_BYTE: 0x81, // = 0b1000-001, "1 byte to follow"
+    TWO_BYTES: 0x82, // = 0b1000-010, "2 bytes to follow"
+    FOUR_BYTES: 0x83, // = 0b1000-011, "4 bytes to follow"
+    GLOBAL_VARIABLE_ONE_BYTE: 0xE1, // = 0b1110-001, "1 byte to follow"
+    GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000
+    GLOBAL_VARIABLE_INDEX_0: 0x60 // = 0b01100000
+};
+
+/**
  * Enum for Ev3 direct command types.
  * Found in the 'EV3 Communication Developer Kit', section 4, page 24, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
@@ -65,20 +86,18 @@ const Ev3Opcode = {
 
 /**
  * Enum for Ev3 values used as arguments to various opcodes.
- * Found in the 'EV3 Firmware Developer Kit', section4, page 10, at
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 10-onwards, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
- * @enum {string}
+ * @enum {number}
  */
-const Ev3Value = {
-    LAYER: 0x00, // always 0, chained EV3s not supported
-    NUM8: 0x81, // "1 byte to follow"
-    NUM16: 0x82, // "2 bytes to follow"
-    NUM32: 0x83, // "4 bytes to follow"
-    COAST: 0x00,
-    BRAKE: 0x01,
-    LONG_RAMP: 50,
-    DO_NOT_CHANGE_TYPE: 0
+const Ev3Args = {
+    LAYER: 0, // always 0, chained EV3s not supported
+    COAST: 0,
+    BRAKE: 1,
+    RAMP: 50, // time in milliseconds
+    DO_NOT_CHANGE_TYPE: 0,
+    MAX_DEVICES: 32 // 'Normally 32' from pg. 46
 };
 
 /**
@@ -118,7 +137,7 @@ const Ev3Mode = {
  * @readonly
  * @enum {string}
  */
-const Ev3Label = { // TODO: rename?
+const Ev3Label = {
     touch: 'button',
     color: 'brightness',
     ultrasonic: 'distance'
@@ -284,7 +303,7 @@ class EV3Motor {
         const port = this._portMask(this._index);
         let n = milliseconds;
         let speed = this._power * this._direction;
-        const ramp = Ev3Value.LONG_RAMP;
+        const ramp = Ev3Args.RAMP;
 
         let byteCommand = [];
         byteCommand[0] = Ev3Opcode.OPOUTPUT_TIME_SPEED;
@@ -310,16 +329,16 @@ class EV3Motor {
         // Generate motor command values
         const runcmd = this._runValues(run);
         byteCommand = byteCommand.concat([
-            Ev3Value.LAYER,
+            Ev3Args.LAYER,
             port,
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             dir & 0xff,
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             rampup
         ]).concat(runcmd.concat([
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             rampdown,
-            Ev3Value.BRAKE
+            Ev3Args.BRAKE
         ]));
 
         const cmd = this._parent.generateCommand(
@@ -334,7 +353,6 @@ class EV3Motor {
 
     /**
      * Set the motor to coast after a specified amount of time.
-     * TODO: rename this startBraking?
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
@@ -364,9 +382,9 @@ class EV3Motor {
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPOUTPUT_STOP,
-                Ev3Value.LAYER,
+                Ev3Args.LAYER,
                 this._portMask(this._index), // port output bit field
-                Ev3Value.COAST
+                Ev3Args.COAST
             ]
         );
 
@@ -382,7 +400,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -390,7 +408,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3Value.NUM32,
+            Ev3Encoding.FOUR_BYTES,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -534,12 +552,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3Value.NUM8,
+                Ev3Encoding.ONE_BYTE,
                 2,
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 freq,
                 freq >> 8,
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 time,
                 time >> 8
             ]
@@ -728,63 +746,50 @@ class EV3 {
             return;
         }
 
-        const byteCommands = []; // a compound command
+        const cmds = []; // compound command
         let allocation = 0;
-
         let sensorCount = 0;
 
-        // For the command to send, either request device list or request sensor data
-        // based on the polling counter value.  (i.e., reset the list of devices every
-        // 20 counts).
-
+        // Reset the list of devices every 20 counts
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: document
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: document
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
+            cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
+            cmds[1] = Ev3Encoding.ONE_BYTE;
+            cmds[2] = Ev3Args.MAX_DEVICES;
+            cmds[3] = Ev3Encoding.GLOBAL_VARIABLE_INDEX_0;
+            cmds[4] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+            cmds[5] = Ev3Encoding.GLOBAL_CONSTANT_INDEX_0;
 
             // Command and payload lengths
             allocation = 33;
 
             this._updateDevices = true;
-
-            // TODO: need to clar sensor data?
-
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
-            // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
-                for (let i = 0; i < 4; i++) {
-                    if (this._sensorPorts[i] !== 'none') {
-                        byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
-                        byteCommands[index + 1] = Ev3Value.LAYER;
-                        byteCommands[index + 2] = i; // PORT
-                        byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
-                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
-                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: document
-                        index += 7;
-                    }
-                    sensorCount++;
+            for (let i = 0; i < 4; i++) {
+                if (this._sensorPorts[i] !== 'none') {
+                    cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
+                    cmds[index + 1] = Ev3Args.LAYER;
+                    cmds[index + 2] = i; // PORT
+                    cmds[index + 3] = Ev3Args.DO_NOT_CHANGE_TYPE;
+                    cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                    cmds[index + 5] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+                    cmds[index + 6] = sensorCount * 4; // GLOBAL INDEX
+                    index += 7;
                 }
+                sensorCount++;
             }
 
             // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // eslint-disable-next-line no-undefined
-            if (!this._motorPorts.includes(undefined)) {
-                for (let i = 0; i < 4; i++) {
-                    byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
-                    byteCommands[index + 1] = Ev3Value.LAYER;
-                    byteCommands[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                    byteCommands[index + 3] = 225; // 0xE1 byte following TODO: document
-                    byteCommands[index + 4] = sensorCount * 4; // global index TODO: document
-                    index += 5;
-                    sensorCount++;
-                }
+            for (let i = 0; i < 4; i++) {
+                cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
+                cmds[index + 1] = Ev3Args.LAYER;
+                cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
+                cmds[index + 3] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+                cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
+                index += 5;
+                sensorCount++;
             }
 
             // Command and payload lengths
@@ -793,7 +798,7 @@ class EV3 {
 
         const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_REPLY,
-            byteCommands,
+            cmds,
             allocation
         );
 
@@ -828,26 +833,24 @@ class EV3 {
     _onMessage (params) {
         const message = params.message;
         const data = Base64Util.base64ToUint8Array(message);
-        // log.info(`received array: ${array}`);
 
-        // TODO: Is this the correct check?
         if (data[4] !== Ev3Command.DIRECT_REPLY) {
             return;
         }
 
         if (this._updateDevices) {
-            // *****************
+
             // PARSE DEVICE LIST
-            // *****************
-            // TODO: put these in for loop?
-            this._sensorPorts[0] = Ev3Device[data[5]] ? Ev3Device[data[5]] : 'none';
-            this._sensorPorts[1] = Ev3Device[data[6]] ? Ev3Device[data[6]] : 'none';
-            this._sensorPorts[2] = Ev3Device[data[7]] ? Ev3Device[data[7]] : 'none';
-            this._sensorPorts[3] = Ev3Device[data[8]] ? Ev3Device[data[8]] : 'none';
-            this._motorPorts[0] = Ev3Device[data[21]] ? Ev3Device[data[21]] : 'none';
-            this._motorPorts[1] = Ev3Device[data[22]] ? Ev3Device[data[22]] : 'none';
-            this._motorPorts[2] = Ev3Device[data[23]] ? Ev3Device[data[23]] : 'none';
-            this._motorPorts[3] = Ev3Device[data[24]] ? Ev3Device[data[24]] : 'none';
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 5]];
+                // if returned device type is null, use 'none'
+                this._sensorPorts[i] = deviceType ? deviceType : 'none';
+            }
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 21]];
+                // if returned device type is null, use 'none'
+                this._motorPorts[i] = deviceType ? deviceType : 'none';
+            }
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
@@ -860,11 +863,11 @@ class EV3 {
                 }
             }
             this._updateDevices = false;
-            // eslint-disable-next-line no-undefined
+
+        // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
-            // *******************
+
             // PARSE SENSOR VALUES
-            // *******************
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
                 // array 2 float
@@ -886,9 +889,8 @@ class EV3 {
                 }
                 offset += 4;
             }
-            // *****************************************************
+
             // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // *****************************************************
             for (let i = 0; i < 4; i++) {
                 const positionArray = [
                     data[offset],
@@ -901,6 +903,7 @@ class EV3 {
                 }
                 offset += 4;
             }
+
         }
     }
 }
@@ -1285,11 +1288,14 @@ class Scratch3Ev3Blocks {
 
     /**
      * Call a callback for each motor indexed by the provided motor ID.
+     *
+     * Note: This way of looping through motors is currently unnecessary, but could be
+     * useful if an 'all motors' option is added in the future (see WeDo2 extension).
+     *
      * @param {MotorID} motorID - the ID specifier.
      * @param {Function} callback - the function to call with the numeric motor index for each motor.
      * @private
      */
-    // TODO: unnecessary, but could be useful if 'all motors' is added (see WeDo2 extension)
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
