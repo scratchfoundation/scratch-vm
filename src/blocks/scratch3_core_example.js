@@ -79,8 +79,8 @@ class Scratch3CoreExample {
     /**
      * An example of a context menu callback.
      */
-    contextMenuOption () {
-        log.info('Custom context menu example.');
+    contextMenuOption ({blockInfo}) {
+        log.info('Custom context menu example. ', blockInfo);
     }
 
 }
