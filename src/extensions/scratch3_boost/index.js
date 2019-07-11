@@ -1012,6 +1012,7 @@ class Boost {
                 break;
             case BoostIO.CURRENT:
             case BoostIO.VOLTAGE:
+            case BoostIO.LED:
                 break;
             default:
                 log.warn(`Unknown sensor value! Type: ${type}`);
