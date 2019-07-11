@@ -94,10 +94,10 @@ const BoostPortFeedback = {
  * @enum {number}
  */
 const BoostPort = {
-    A: 55,
-    B: 56,
-    C: 1,
-    D: 2
+    A: 0,
+    B: 1,
+    C: 2,
+    D: 3
 };
 
 /**
