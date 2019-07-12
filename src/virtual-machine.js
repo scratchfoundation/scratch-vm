@@ -115,11 +115,18 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.EXTENSION_FIELD_ADDED, (fieldName, fieldImplementation) => {
             this.emit(Runtime.EXTENSION_FIELD_ADDED, fieldName, fieldImplementation);
         });
+        // TODO rename this event (and corresponding references to blocksInfo in the runtime)
+        // so that it is not confused with an extension block instance's `blockInfo` property.
         this.runtime.on(Runtime.BLOCKSINFO_UPDATE, categoryInfo => {
             this.emit(Runtime.BLOCKSINFO_UPDATE, categoryInfo);
         });
+        // TODO remove this when sensing_of block gets extension-ified
+        // it will be replaced with the event above
         this.runtime.on(Runtime.BLOCKS_NEED_UPDATE, () => {
             this.emitWorkspaceUpdate();
+        });
+        this.runtime.on(Runtime.BLOCK_UPDATE, (blockId, blockInfo) => {
+            this.emit(Runtime.BLOCK_UPDATE, blockId, blockInfo);
         });
         this.runtime.on(Runtime.TOOLBOX_EXTENSIONS_NEED_UPDATE, () => {
             this.extensionManager.refreshBlocks();

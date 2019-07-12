@@ -1056,3 +1056,25 @@ test('toJSON encodes Infinity/NaN as 0, not null', t => {
 
     t.end();
 });
+
+test('update block event', t => {
+    const vm = new VirtualMachine();
+    const runtime = vm.runtime;
+    let emitted = false;
+    let blockId = '';
+    let blockInfo = null;
+    const blockUpdater = (id, info) => {
+        emitted = true;
+        blockId = id;
+        blockInfo = info;
+    };
+
+    vm.on('BLOCK_UPDATE', blockUpdater);
+
+    runtime.updateBlockInfo('foo', {opcode: 'fooBlock'});
+
+    t.equal(emitted, true);
+    t.equal(blockId, 'foo');
+    t.deepEqual(blockInfo, {opcode: 'fooBlock'});
+    t.end();
+});
