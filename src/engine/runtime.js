@@ -654,12 +654,18 @@ class Runtime extends EventEmitter {
         return 'RUNTIME_DISPOSED';
     }
 
+    // TODO remove this (it will be replaced by BLOCK_UPDATE below)
+    // when sensing_of block gets extension-ified.
     /**
      * Event name for reporting that a block was updated and needs to be rerendered.
      * @const {string}
      */
     static get BLOCKS_NEED_UPDATE () {
         return 'BLOCKS_NEED_UPDATE';
+    }
+
+    static get BLOCK_UPDATE () {
+        return 'BLOCK_UPDATE';
     }
 
     /**
@@ -2454,11 +2460,22 @@ class Runtime extends EventEmitter {
         this._refreshTargets = true;
     }
 
+    // TODO replace this function with the one below,
+    // when the sensing_of block gets extension-ified.
     /**
      * Emit an event that indicates that the blocks on the workspace need updating.
      */
     requestBlocksUpdate () {
         this.emit(Runtime.BLOCKS_NEED_UPDATE);
+    }
+
+    /**
+     * Emit an event that indicates that the given block got updated.
+     * @param {string} blockId The id of the block
+     * @param {ExtensionBlockMetadata} blockInfo The new block info
+     */
+    updateBlockInfo (blockId, blockInfo) {
+        this.emit(Runtime.BLOCK_UPDATE, blockId, blockInfo);
     }
 
     /**
