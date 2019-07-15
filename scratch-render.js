@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 15);
+/******/ 	return __webpack_require__(__webpack_require__.s = 14);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -10414,7 +10414,7 @@ var EventEmitter = __webpack_require__(7);
 var twgl = __webpack_require__(0);
 
 var RenderConstants = __webpack_require__(3);
-var Silhouette = __webpack_require__(23);
+var Silhouette = __webpack_require__(21);
 
 /**
  * Truncate a number into what could be stored in a 32 bit floating point value.
@@ -10447,6 +10447,13 @@ var Skin = function (_EventEmitter) {
 
     /** @type {Vec3} */
     _this._rotationCenter = twgl.v3.create(0, 0);
+
+    /**
+     * The "native" size, in texels, of this skin.
+     * @member size
+     * @abstract
+     * @type {Array<number>}
+     */
 
     /**
      * The uniforms to be used by the vertex and pixel shaders.
@@ -10542,13 +10549,14 @@ var Skin = function (_EventEmitter) {
     /**
      * Get the bounds of the drawable for determining its fenced position.
      * @param {Array<number>} drawable - The Drawable instance this skin is using.
+     * @param {?Rectangle} result - Optional destination for bounds calculation.
      * @return {!Rectangle} The drawable's bounds.
      */
 
   }, {
     key: 'getFenceBounds',
-    value: function getFenceBounds(drawable) {
-      return drawable.getFastBounds();
+    value: function getFenceBounds(drawable, result) {
+      return drawable.getFastBounds(result);
     }
 
     /**
@@ -10607,6 +10615,16 @@ var Skin = function (_EventEmitter) {
     }
 
     /**
+     * @returns {boolean} true if alpha is premultiplied, false otherwise
+     */
+
+  }, {
+    key: 'hasPremultipliedAlpha',
+    get: function get() {
+      return false;
+    }
+
+    /**
      * @return {int} the unique ID for this Skin.
      */
 
@@ -10624,17 +10642,6 @@ var Skin = function (_EventEmitter) {
     key: 'rotationCenter',
     get: function get() {
       return this._rotationCenter;
-    }
-
-    /**
-     * @abstract
-     * @return {Array<number>} the "native" size, in texels, of this skin.
-     */
-
-  }, {
-    key: 'size',
-    get: function get() {
-      return [0, 0];
     }
   }]);
 
@@ -10782,8 +10789,8 @@ var ShaderManager = function () {
             var definesText = defines.join('\n') + '\n';
 
             /* eslint-disable global-require */
-            var vsFullText = definesText + __webpack_require__(25);
-            var fsFullText = definesText + __webpack_require__(26);
+            var vsFullText = definesText + __webpack_require__(24);
+            var fsFullText = definesText + __webpack_require__(25);
             /* eslint-enable global-require */
 
             return twgl.createProgramInfo(this._gl, [vsFullText, fsFullText]);
@@ -10990,6 +10997,34 @@ var Rectangle = function () {
                     this.bottom = y;
                 }
             }
+        }
+
+        /**
+         * Initialize a Rectangle to a 1 unit square centered at 0 x 0 transformed
+         * by a model matrix.
+         * @param {Array.<number>} m A 4x4 matrix to transform the rectangle by.
+         * @tutorial Rectangle-AABB-Matrix
+         */
+
+    }, {
+        key: "initFromModelMatrix",
+        value: function initFromModelMatrix(m) {
+            // In 2D space, we will soon use the 2x2 "top left" scale and rotation
+            // submatrix, while we store and the 1x2 "top right" that position
+            // vector.
+            var m30 = m[3 * 4 + 0];
+            var m31 = m[3 * 4 + 1];
+
+            // "Transform" a (0.5, 0.5) vector by the scale and rotation matrix but
+            // sum the absolute of each component instead of use the signed values.
+            var x = Math.abs(0.5 * m[0 * 4 + 0]) + Math.abs(0.5 * m[1 * 4 + 0]);
+            var y = Math.abs(0.5 * m[0 * 4 + 1]) + Math.abs(0.5 * m[1 * 4 + 1]);
+
+            // And adding them to the position components initializes our Rectangle.
+            this.left = -x + m30;
+            this.right = x + m30;
+            this.top = y + m31;
+            this.bottom = -y + m31;
         }
 
         /**
@@ -11964,28 +11999,6 @@ module.exports = EffectTransform;
 /* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const SVGRenderer = __webpack_require__(29);
-const BitmapAdapter = __webpack_require__(51);
-const inlineSvgFonts = __webpack_require__(10);
-const SvgElement = __webpack_require__(6);
-const convertFonts = __webpack_require__(11);
-// /**
-//  * Export for NPM & Node.js
-//  * @type {RenderWebGL}
-//  */
-module.exports = {
-    BitmapAdapter: BitmapAdapter,
-    convertFonts: convertFonts,
-    inlineSvgFonts: inlineSvgFonts,
-    SvgElement: SvgElement,
-    SVGRenderer: SVGRenderer
-};
-
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
 /**
  * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
  */
@@ -12006,6 +12019,12 @@ const {FONTS} = __webpack_require__(30);
  * @return {string} The svg with any needed fonts inlined
  */
 const inlineSvgFonts = function (svgString) {
+    // Make it clear that this function only operates on strings.
+    // If we don't explicitly throw this here, the function silently fails.
+    if (typeof svgString !== 'string') {
+        throw new Error('SVG to be inlined is not a string');
+    }
+
     // Collect fonts that need injection.
     const fontsNeeded = new Set();
     const fontRegex = /font-family="([^"]*)"/g;
@@ -12032,7 +12051,7 @@ module.exports = inlineSvgFonts;
 
 
 /***/ }),
-/* 11 */
+/* 10 */
 /***/ (function(module, exports) {
 
 /**
@@ -12076,7 +12095,7 @@ module.exports = convertFonts;
 
 
 /***/ }),
-/* 12 */
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var Minilog = __webpack_require__(42);
@@ -12124,7 +12143,7 @@ exports.backends = {
 
 
 /***/ }),
-/* 13 */
+/* 12 */
 /***/ (function(module, exports) {
 
 var hex = {
@@ -12150,13 +12169,13 @@ module.exports = color;
 
 
 /***/ }),
-/* 14 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.7.1
 var UnicodeTrie, inflate;
 
-inflate = __webpack_require__(57);
+inflate = __webpack_require__(56);
 
 UnicodeTrie = (function() {
   var DATA_BLOCK_LENGTH, DATA_GRANULARITY, DATA_MASK, INDEX_1_OFFSET, INDEX_2_BLOCK_LENGTH, INDEX_2_BMP_LENGTH, INDEX_2_MASK, INDEX_SHIFT, LSCP_INDEX_2_LENGTH, LSCP_INDEX_2_OFFSET, OMITTED_BMP_INDEX_1_LENGTH, SHIFT_1, SHIFT_1_2, SHIFT_2, UTF8_2B_INDEX_2_LENGTH, UTF8_2B_INDEX_2_OFFSET;
@@ -12247,13 +12266,13 @@ module.exports = UnicodeTrie;
 
 
 /***/ }),
-/* 15 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var RenderWebGL = __webpack_require__(16);
+var RenderWebGL = __webpack_require__(15);
 
 /**
  * Export for NPM & Node.js
@@ -12262,7 +12281,7 @@ var RenderWebGL = __webpack_require__(16);
 module.exports = RenderWebGL;
 
 /***/ }),
-/* 16 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12280,22 +12299,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var EventEmitter = __webpack_require__(7);
 
-var hull = __webpack_require__(17);
+var hull = __webpack_require__(16);
 var twgl = __webpack_require__(0);
 
+var Skin = __webpack_require__(2);
 var BitmapSkin = __webpack_require__(22);
-var Drawable = __webpack_require__(24);
+var Drawable = __webpack_require__(23);
 var Rectangle = __webpack_require__(5);
-var PenSkin = __webpack_require__(27);
+var PenSkin = __webpack_require__(26);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
-var SVGSkin = __webpack_require__(28);
-var SVGTextBubble = __webpack_require__(53);
+var SVGSkin = __webpack_require__(27);
+var TextBubbleSkin = __webpack_require__(53);
 var EffectTransform = __webpack_require__(8);
 var log = __webpack_require__(68);
 
 var __isTouchingDrawablesPoint = twgl.v3.create();
 var __candidatesBounds = new Rectangle();
+var __fenceBounds = new Rectangle();
 var __touchingColor = new Uint8ClampedArray(4);
 var __blendColor = new Uint8ClampedArray(4);
 
@@ -12473,8 +12494,6 @@ var RenderWebGL = function (_EventEmitter) {
         /** @type {Array.<snapshotCallback>} */
         _this._snapshotCallbacks = [];
 
-        _this._svgTextBubble = new SVGTextBubble();
-
         _this._createGeometry();
 
         _this.on(RenderConstants.Events.NativeSizeChanged, _this.onNativeSizeChanged);
@@ -12596,6 +12615,23 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
+         * Notify Drawables whose skin is the skin that changed.
+         * @param {Skin} skin - the skin that changed.
+         * @private
+         */
+
+    }, {
+        key: '_skinWasAltered',
+        value: function _skinWasAltered(skin) {
+            for (var i = 0; i < this._allDrawables.length; i++) {
+                var drawable = this._allDrawables[i];
+                if (drawable && drawable._skin === skin) {
+                    drawable._skinWasAltered();
+                }
+            }
+        }
+
+        /**
          * Create a new bitmap skin from a snapshot of the provided bitmap data.
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
          * @param {!int} [costumeResolution=1] - The resolution to use for this bitmap.
@@ -12610,6 +12646,7 @@ var RenderWebGL = function (_EventEmitter) {
             var skinId = this._nextSkinId++;
             var newSkin = new BitmapSkin(skinId, this);
             newSkin.setBitmap(bitmapData, costumeResolution, rotationCenter);
+            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12628,6 +12665,7 @@ var RenderWebGL = function (_EventEmitter) {
             var skinId = this._nextSkinId++;
             var newSkin = new SVGSkin(skinId, this);
             newSkin.setSVG(svgData, rotationCenter);
+            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12642,6 +12680,7 @@ var RenderWebGL = function (_EventEmitter) {
         value: function createPenSkin() {
             var skinId = this._nextSkinId++;
             var newSkin = new PenSkin(skinId, this);
+            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12658,8 +12697,12 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'createTextSkin',
         value: function createTextSkin(type, text, pointsLeft) {
-            var bubbleSvg = this._svgTextBubble.buildString(type, text, pointsLeft);
-            return this.createSVGSkin(bubbleSvg, [0, 0]);
+            var skinId = this._nextSkinId++;
+            var newSkin = new TextBubbleSkin(skinId, this);
+            newSkin.setTextBubble(type, text, pointsLeft);
+            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
+            this._allSkins[skinId] = newSkin;
+            return skinId;
         }
 
         /**
@@ -12754,8 +12797,14 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'updateTextSkin',
         value: function updateTextSkin(skinId, type, text, pointsLeft) {
-            var bubbleSvg = this._svgTextBubble.buildString(type, text, pointsLeft);
-            this.updateSVGSkin(skinId, bubbleSvg, [0, 0]);
+            if (this._allSkins[skinId] instanceof TextBubbleSkin) {
+                this._allSkins[skinId].setTextBubble(type, text, pointsLeft);
+                return;
+            }
+
+            var newSkin = new TextBubbleSkin(skinId, this);
+            newSkin.setTextBubble(type, text, pointsLeft);
+            this._reskin(skinId, newSkin);
         }
 
         /**
@@ -13763,7 +13812,7 @@ var RenderWebGL = function (_EventEmitter) {
 
             var dx = x - drawable._position[0];
             var dy = y - drawable._position[1];
-            var aabb = drawable._skin.getFenceBounds(drawable);
+            var aabb = drawable._skin.getFenceBounds(drawable, __fenceBounds);
             var inset = Math.floor(Math.min(aabb.width, aabb.height) / 2);
 
             var sx = this._xRight - Math.min(FENCE_WIDTH, inset);
@@ -14044,6 +14093,13 @@ var RenderWebGL = function (_EventEmitter) {
 
                 twgl.setUniforms(currentShader, uniforms);
 
+                /* adjust blend function for this skin */
+                if (drawable.skin.hasPremultipliedAlpha) {
+                    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                } else {
+                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+                }
+
                 twgl.drawBufferInfo(gl, this._bufferInfo, gl.TRIANGLES);
             }
 
@@ -14293,7 +14349,7 @@ RenderWebGL.UseGpuModes = {
 module.exports = RenderWebGL;
 
 /***/ }),
-/* 17 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14305,10 +14361,10 @@ module.exports = RenderWebGL;
 
 
 
-var intersect = __webpack_require__(18);
-var grid = __webpack_require__(19);
-var formatUtil = __webpack_require__(20);
-var convexHull = __webpack_require__(21);
+var intersect = __webpack_require__(17);
+var grid = __webpack_require__(18);
+var formatUtil = __webpack_require__(19);
+var convexHull = __webpack_require__(20);
 
 function _filterDuplicates(pointset) {
     return pointset.filter(function(el, idx, arr) {
@@ -14502,7 +14558,7 @@ var MAX_SEARCH_BBOX_SIZE_PERCENT = 0.6;
 module.exports = hull;
 
 /***/ }),
-/* 18 */
+/* 17 */
 /***/ (function(module, exports) {
 
 function ccw(x1, y1, x2, y2, x3, y3) {           
@@ -14522,7 +14578,7 @@ function intersect(seg1, seg2) {
 module.exports = intersect;
 
 /***/ }),
-/* 19 */
+/* 18 */
 /***/ (function(module, exports) {
 
 function Grid(points, cellSize) {
@@ -14602,7 +14658,7 @@ function grid(points, cellSize) {
 module.exports = grid;
 
 /***/ }),
-/* 20 */
+/* 19 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -14632,7 +14688,7 @@ module.exports = {
 }
 
 /***/ }),
-/* 21 */
+/* 20 */
 /***/ (function(module, exports) {
 
 function _cross(o, a, b) {
@@ -14678,182 +14734,7 @@ module.exports = convex;
 
 
 /***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var twgl = __webpack_require__(0);
-
-var Skin = __webpack_require__(2);
-
-var BitmapSkin = function (_Skin) {
-    _inherits(BitmapSkin, _Skin);
-
-    /**
-     * Create a new Bitmap Skin.
-     * @extends Skin
-     * @param {!int} id - The ID for this Skin.
-     * @param {!RenderWebGL} renderer - The renderer which will use this skin.
-     */
-    function BitmapSkin(id, renderer) {
-        _classCallCheck(this, BitmapSkin);
-
-        /** @type {!int} */
-        var _this = _possibleConstructorReturn(this, (BitmapSkin.__proto__ || Object.getPrototypeOf(BitmapSkin)).call(this, id));
-
-        _this._costumeResolution = 1;
-
-        /** @type {!RenderWebGL} */
-        _this._renderer = renderer;
-
-        /** @type {WebGLTexture} */
-        _this._texture = null;
-
-        /** @type {Array<int>} */
-        _this._textureSize = [0, 0];
-        return _this;
-    }
-
-    /**
-     * Dispose of this object. Do not use it after calling this method.
-     */
-
-
-    _createClass(BitmapSkin, [{
-        key: 'dispose',
-        value: function dispose() {
-            if (this._texture) {
-                this._renderer.gl.deleteTexture(this._texture);
-                this._texture = null;
-            }
-            _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'dispose', this).call(this);
-        }
-
-        /**
-         * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
-         */
-
-    }, {
-        key: 'getTexture',
-
-
-        /**
-         * @param {Array<number>} scale - The scaling factors to be used.
-         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
-         */
-        // eslint-disable-next-line no-unused-vars
-        value: function getTexture(scale) {
-            return this._texture;
-        }
-
-        /**
-         * Get the bounds of the drawable for determining its fenced position.
-         * @param {Array<number>} drawable - The Drawable instance this skin is using.
-         * @return {!Rectangle} The drawable's bounds. For compatibility with Scratch 2, we always use getAABB for bitmaps.
-         */
-
-    }, {
-        key: 'getFenceBounds',
-        value: function getFenceBounds(drawable) {
-            return drawable.getAABB();
-        }
-
-        /**
-         * Set the contents of this skin to a snapshot of the provided bitmap data.
-         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
-         * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
-         * @param {Array<number>} [rotationCenter] - Optional rotation center for the bitmap. If not supplied, it will be
-         * calculated from the bounding box
-         * @fires Skin.event:WasAltered
-         */
-
-    }, {
-        key: 'setBitmap',
-        value: function setBitmap(bitmapData, costumeResolution, rotationCenter) {
-            var gl = this._renderer.gl;
-
-            if (this._texture) {
-                gl.bindTexture(gl.TEXTURE_2D, this._texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bitmapData);
-                this._silhouette.update(bitmapData);
-            } else {
-                // TODO: mipmaps?
-                var textureOptions = {
-                    auto: true,
-                    wrap: gl.CLAMP_TO_EDGE,
-                    src: bitmapData
-                };
-
-                this._texture = twgl.createTexture(gl, textureOptions);
-                this._silhouette.update(bitmapData);
-            }
-
-            // Do these last in case any of the above throws an exception
-            this._costumeResolution = costumeResolution || 2;
-            this._textureSize = BitmapSkin._getBitmapSize(bitmapData);
-
-            if (typeof rotationCenter === 'undefined') rotationCenter = this.calculateRotationCenter();
-            this.setRotationCenter.apply(this, rotationCenter);
-
-            this.emit(Skin.Events.WasAltered);
-        }
-
-        /**
-         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - bitmap data to inspect.
-         * @returns {Array<int>} the width and height of the bitmap data, in pixels.
-         * @private
-         */
-
-    }, {
-        key: 'isRaster',
-        get: function get() {
-            return true;
-        }
-
-        /**
-         * @return {Array<number>} the "native" size, in texels, of this skin.
-         */
-
-    }, {
-        key: 'size',
-        get: function get() {
-            return [this._textureSize[0] / this._costumeResolution, this._textureSize[1] / this._costumeResolution];
-        }
-    }], [{
-        key: '_getBitmapSize',
-        value: function _getBitmapSize(bitmapData) {
-            if (bitmapData instanceof HTMLImageElement) {
-                return [bitmapData.naturalWidth || bitmapData.width, bitmapData.naturalHeight || bitmapData.height];
-            }
-
-            if (bitmapData instanceof HTMLVideoElement) {
-                return [bitmapData.videoWidth || bitmapData.width, bitmapData.videoHeight || bitmapData.height];
-            }
-
-            // ImageData or HTMLCanvasElement
-            return [bitmapData.width, bitmapData.height];
-        }
-    }]);
-
-    return BitmapSkin;
-}(Skin);
-
-module.exports = BitmapSkin;
-
-/***/ }),
-/* 23 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14963,17 +14844,27 @@ var Silhouette = function () {
     _createClass(Silhouette, [{
         key: 'update',
         value: function update(bitmapData) {
-            var canvas = Silhouette._updateCanvas();
-            var width = this._width = canvas.width = bitmapData.width;
-            var height = this._height = canvas.height = bitmapData.height;
-            var ctx = canvas.getContext('2d');
+            var imageData = void 0;
+            if (bitmapData instanceof ImageData) {
+                // If handed ImageData directly, use it directly.
+                imageData = bitmapData;
+                this._width = bitmapData.width;
+                this._height = bitmapData.height;
+            } else {
+                // Draw about anything else to our update canvas and poll image data
+                // from that.
+                var canvas = Silhouette._updateCanvas();
+                var width = this._width = canvas.width = bitmapData.width;
+                var height = this._height = canvas.height = bitmapData.height;
+                var ctx = canvas.getContext('2d');
 
-            if (!(width && height)) {
-                return;
+                if (!(width && height)) {
+                    return;
+                }
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(bitmapData, 0, 0, width, height);
+                imageData = ctx.getImageData(0, 0, width, height);
             }
-            ctx.clearRect(0, 0, width, height);
-            ctx.drawImage(bitmapData, 0, 0, width, height);
-            var imageData = ctx.getImageData(0, 0, width, height);
 
             this._colorData = imageData.data;
             // delete our custom overriden "uninitalized" color functions
@@ -15082,7 +14973,191 @@ var Silhouette = function () {
 module.exports = Silhouette;
 
 /***/ }),
-/* 24 */
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var twgl = __webpack_require__(0);
+
+var Skin = __webpack_require__(2);
+
+var BitmapSkin = function (_Skin) {
+    _inherits(BitmapSkin, _Skin);
+
+    /**
+     * Create a new Bitmap Skin.
+     * @extends Skin
+     * @param {!int} id - The ID for this Skin.
+     * @param {!RenderWebGL} renderer - The renderer which will use this skin.
+     */
+    function BitmapSkin(id, renderer) {
+        _classCallCheck(this, BitmapSkin);
+
+        /** @type {!int} */
+        var _this = _possibleConstructorReturn(this, (BitmapSkin.__proto__ || Object.getPrototypeOf(BitmapSkin)).call(this, id));
+
+        _this._costumeResolution = 1;
+
+        /** @type {!RenderWebGL} */
+        _this._renderer = renderer;
+
+        /** @type {WebGLTexture} */
+        _this._texture = null;
+
+        /** @type {Array<int>} */
+        _this._textureSize = [0, 0];
+
+        /**
+         * The "native" size, in texels, of this skin.
+         * @type {Array<number>}
+         */
+        _this.size = [0, 0];
+        return _this;
+    }
+
+    /**
+     * Dispose of this object. Do not use it after calling this method.
+     */
+
+
+    _createClass(BitmapSkin, [{
+        key: 'dispose',
+        value: function dispose() {
+            if (this._texture) {
+                this._renderer.gl.deleteTexture(this._texture);
+                this._texture = null;
+            }
+            _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'dispose', this).call(this);
+        }
+
+        /**
+         * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
+         */
+
+    }, {
+        key: 'getTexture',
+
+
+        /**
+         * @param {Array<number>} scale - The scaling factors to be used.
+         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
+         */
+        // eslint-disable-next-line no-unused-vars
+        value: function getTexture(scale) {
+            return this._texture;
+        }
+
+        /**
+         * Get the bounds of the drawable for determining its fenced position.
+         * @param {Array<number>} drawable - The Drawable instance this skin is using.
+         * @param {?Rectangle} result - Optional destination for bounds calculation.
+         * @return {!Rectangle} The drawable's bounds. For compatibility with Scratch 2, we always use getAABB for bitmaps.
+         */
+
+    }, {
+        key: 'getFenceBounds',
+        value: function getFenceBounds(drawable, result) {
+            return drawable.getAABB(result);
+        }
+
+        /**
+         * Set the contents of this skin to a snapshot of the provided bitmap data.
+         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
+         * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the bitmap. If not supplied, it will be
+         * calculated from the bounding box
+         * @fires Skin.event:WasAltered
+         */
+
+    }, {
+        key: 'setBitmap',
+        value: function setBitmap(bitmapData, costumeResolution, rotationCenter) {
+            var gl = this._renderer.gl;
+
+            // Preferably bitmapData is ImageData. ImageData speeds up updating
+            // Silhouette and is better handled by more browsers in regards to
+            // memory.
+            var textureData = bitmapData;
+            if (bitmapData instanceof HTMLCanvasElement) {
+                // Given a HTMLCanvasElement get the image data to pass to webgl and
+                // Silhouette.
+                var context = bitmapData.getContext('2d');
+                textureData = context.getImageData(0, 0, bitmapData.width, bitmapData.height);
+            }
+
+            if (this._texture) {
+                gl.bindTexture(gl.TEXTURE_2D, this._texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+                this._silhouette.update(textureData);
+            } else {
+                // TODO: mipmaps?
+                var textureOptions = {
+                    auto: true,
+                    wrap: gl.CLAMP_TO_EDGE,
+                    src: textureData
+                };
+
+                this._texture = twgl.createTexture(gl, textureOptions);
+                this._silhouette.update(textureData);
+            }
+
+            // Do these last in case any of the above throws an exception
+            this._costumeResolution = costumeResolution || 2;
+            this._textureSize = BitmapSkin._getBitmapSize(bitmapData);
+            this.size = [this._textureSize[0] / this._costumeResolution, this._textureSize[1] / this._costumeResolution];
+
+            if (typeof rotationCenter === 'undefined') rotationCenter = this.calculateRotationCenter();
+            this.setRotationCenter.apply(this, rotationCenter);
+
+            this.emit(Skin.Events.WasAltered);
+        }
+
+        /**
+         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - bitmap data to inspect.
+         * @returns {Array<int>} the width and height of the bitmap data, in pixels.
+         * @private
+         */
+
+    }, {
+        key: 'isRaster',
+        get: function get() {
+            return true;
+        }
+    }], [{
+        key: '_getBitmapSize',
+        value: function _getBitmapSize(bitmapData) {
+            if (bitmapData instanceof HTMLImageElement) {
+                return [bitmapData.naturalWidth || bitmapData.width, bitmapData.naturalHeight || bitmapData.height];
+            }
+
+            if (bitmapData instanceof HTMLVideoElement) {
+                return [bitmapData.videoWidth || bitmapData.width, bitmapData.videoHeight || bitmapData.height];
+            }
+
+            // ImageData or HTMLCanvasElement
+            return [bitmapData.width, bitmapData.height];
+        }
+    }]);
+
+    return BitmapSkin;
+}(Skin);
+
+module.exports = BitmapSkin;
+
+/***/ }),
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15097,7 +15172,6 @@ var twgl = __webpack_require__(0);
 var Rectangle = __webpack_require__(5);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
-var Skin = __webpack_require__(2);
 var EffectTransform = __webpack_require__(8);
 
 /**
@@ -15130,8 +15204,10 @@ var getLocalPosition = function getLocalPosition(drawable, vec) {
     // localPosition matches that transformation.
     localPosition[0] = 0.5 - (v0 * m[0] + v1 * m[4] + m[12]) / d;
     localPosition[1] = (v0 * m[1] + v1 * m[5] + m[13]) / d + 0.5;
-    // Apply texture effect transform.
-    EffectTransform.transformPoint(drawable, localPosition, localPosition);
+    // Apply texture effect transform if the localPosition is within the drawable's space.
+    if (localPosition[0] >= 0 && localPosition[0] < 1 && localPosition[1] >= 0 && localPosition[1] < 1) {
+        EffectTransform.transformPoint(drawable, localPosition, localPosition);
+    }
     return localPosition;
 };
 
@@ -15195,8 +15271,6 @@ var Drawable = function () {
         /** @todo move convex hull functionality, maybe bounds functionality overall, to Skin classes */
         this._convexHullPoints = null;
         this._convexHullDirty = true;
-
-        this._skinWasAltered = this._skinWasAltered.bind(this);
     }
 
     /**
@@ -15529,9 +15603,10 @@ var Drawable = function () {
          * This function applies the transform matrix to the known convex hull,
          * and then finds the minimum box along the axes.
          * Before calling this, ensure the renderer has updated convex hull points.
+         * @param {?Rectangle} result optional destination for bounds calculation
          * @return {!Rectangle} Bounds for a tight box around the Drawable.
          */
-        value: function getBounds() {
+        value: function getBounds(result) {
             if (this.needsConvexHullPoints()) {
                 throw new Error('Needs updated convex hull points before bounds calculation.');
             }
@@ -15540,21 +15615,22 @@ var Drawable = function () {
             }
             var transformedHullPoints = this._getTransformedHullPoints();
             // Search through transformed points to generate box on axes.
-            var bounds = new Rectangle();
-            bounds.initFromPointsAABB(transformedHullPoints);
-            return bounds;
+            result = result || new Rectangle();
+            result.initFromPointsAABB(transformedHullPoints);
+            return result;
         }
 
         /**
          * Get the precise bounds for the upper 8px slice of the Drawable.
          * Used for calculating where to position a text bubble.
          * Before calling this, ensure the renderer has updated convex hull points.
+         * @param {?Rectangle} result optional destination for bounds calculation
          * @return {!Rectangle} Bounds for a tight box around a slice of the Drawable.
          */
 
     }, {
         key: 'getBoundsForBubble',
-        value: function getBoundsForBubble() {
+        value: function getBoundsForBubble(result) {
             if (this.needsConvexHullPoints()) {
                 throw new Error('Needs updated convex hull points before bubble bounds calculation.');
             }
@@ -15570,9 +15646,9 @@ var Drawable = function () {
                 return p[1] > maxY - slice;
             });
             // Search through filtered points to generate box on axes.
-            var bounds = new Rectangle();
-            bounds.initFromPointsAABB(filteredHullPoints);
-            return bounds;
+            result = result || new Rectangle();
+            result.initFromPointsAABB(filteredHullPoints);
+            return result;
         }
 
         /**
@@ -15582,36 +15658,38 @@ var Drawable = function () {
          * which is tightly snapped to account for a Drawable's transparent regions.
          * `getAABB` returns a much less accurate bounding box, but will be much
          * faster to calculate so may be desired for quick checks/optimizations.
+         * @param {?Rectangle} result optional destination for bounds calculation
          * @return {!Rectangle} Rough axis-aligned bounding box for Drawable.
          */
 
     }, {
         key: 'getAABB',
-        value: function getAABB() {
+        value: function getAABB(result) {
             if (this._transformDirty) {
                 this._calculateTransform();
             }
             var tm = this._uniforms.u_modelMatrix;
-            var bounds = new Rectangle();
-            bounds.initFromPointsAABB([twgl.m4.transformPoint(tm, [-0.5, -0.5, 0]), twgl.m4.transformPoint(tm, [0.5, -0.5, 0]), twgl.m4.transformPoint(tm, [-0.5, 0.5, 0]), twgl.m4.transformPoint(tm, [0.5, 0.5, 0])]);
-            return bounds;
+            result = result || new Rectangle();
+            result.initFromModelMatrix(tm);
+            return result;
         }
 
         /**
          * Return the best Drawable bounds possible without performing graphics queries.
          * I.e., returns the tight bounding box when the convex hull points are already
          * known, but otherwise return the rough AABB of the Drawable.
+         * @param {?Rectangle} result optional destination for bounds calculation
          * @return {!Rectangle} Bounds for the Drawable.
          */
 
     }, {
         key: 'getFastBounds',
-        value: function getFastBounds() {
+        value: function getFastBounds(result) {
             this.updateMatrix();
             if (!this.needsConvexHullPoints()) {
-                return this.getBounds();
+                return this.getBounds(result);
             }
-            return this.getAABB();
+            return this.getAABB(result);
         }
 
         /**
@@ -15707,13 +15785,7 @@ var Drawable = function () {
         ,
         set: function set(newSkin) {
             if (this._skin !== newSkin) {
-                if (this._skin) {
-                    this._skin.removeListener(Skin.Events.WasAltered, this._skinWasAltered);
-                }
                 this._skin = newSkin;
-                if (this._skin) {
-                    this._skin.addListener(Skin.Events.WasAltered, this._skinWasAltered);
-                }
                 this._skinWasAltered();
             }
         }
@@ -15807,19 +15879,19 @@ var Drawable = function () {
 module.exports = Drawable;
 
 /***/ }),
-/* 25 */
+/* 24 */
 /***/ (function(module, exports) {
 
 module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\n\nattribute vec2 a_position;\nattribute vec2 a_texCoord;\n\nvarying vec2 v_texCoord;\n\n#ifdef DRAW_MODE_lineSample\nuniform float u_positionScalar;\n#endif\n\nvoid main() {\n    #ifdef DRAW_MODE_lineSample\n    vec2 position = a_position;\n    position.y = clamp(position.y * u_positionScalar, -0.5, 0.5);\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(position, 0, 1);\n    #else\n    gl_Position = u_projectionMatrix * u_modelMatrix * vec4(a_position, 0, 1);\n    #endif\n    v_texCoord = a_texCoord;\n}\n"
 
 /***/ }),
-/* 26 */
+/* 25 */
 /***/ (function(module, exports) {
 
-module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color)\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // defined(ENABLE_color)\n\n\t#if defined(ENABLE_brightness)\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\n\t// WebGL defaults to premultiplied alpha\n\t#ifndef DRAW_MODE_stamp\n\tgl_FragColor.rgb *= gl_FragColor.a;\n\t#endif // DRAW_MODE_stamp\n\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
+module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color)\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // defined(ENABLE_color)\n\n\t#if defined(ENABLE_brightness)\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
 
 /***/ }),
-/* 27 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15930,6 +16002,9 @@ var PenSkin = function (_Skin) {
         /** @type {HTMLCanvasElement} */
         _this._canvas = document.createElement('canvas');
 
+        /** @type {Array<number>} */
+        _this._canvasSize = twgl.v3.create();
+
         /** @type {WebGLTexture} */
         _this._texture = null;
 
@@ -16034,11 +16109,12 @@ var PenSkin = function (_Skin) {
             var gl = this._renderer.gl;
             twgl.bindFramebufferInfo(gl, this._framebuffer);
 
-            gl.clearColor(1, 1, 1, 0);
+            /* Reset framebuffer to transparent black */
+            gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             var ctx = this._canvas.getContext('2d');
-            ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            ctx.clearRect(0, 0, this._canvasSize[0], this._canvasSize[1]);
 
             this._silhouetteDirty = true;
         }
@@ -16260,8 +16336,8 @@ var PenSkin = function (_Skin) {
     }, {
         key: '_drawRectangle',
         value: function _drawRectangle(currentShader, texture, bounds) {
-            var x = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -this._canvas.width / 2;
-            var y = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this._canvas.height / 2;
+            var x = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -this._canvasSize[0] / 2;
+            var y = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this._canvasSize[1] / 2;
 
             var gl = this._renderer.gl;
 
@@ -16321,8 +16397,8 @@ var PenSkin = function (_Skin) {
         key: '_drawToBuffer',
         value: function _drawToBuffer() {
             var texture = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._texture;
-            var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -this._canvas.width / 2;
-            var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._canvas.height / 2;
+            var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -this._canvasSize[0] / 2;
+            var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._canvasSize[1] / 2;
 
             if (texture !== this._texture && this._canvasDirty) {
                 this._drawToBuffer();
@@ -16337,7 +16413,7 @@ var PenSkin = function (_Skin) {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._canvas);
 
                 var ctx = this._canvas.getContext('2d');
-                ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+                ctx.clearRect(0, 0, this._canvasSize[0], this._canvasSize[1]);
 
                 this._canvasDirty = false;
             }
@@ -16381,8 +16457,8 @@ var PenSkin = function (_Skin) {
             this._bounds = new Rectangle();
             this._bounds.initFromBounds(width / 2, width / -2, height / 2, height / -2);
 
-            this._canvas.width = width;
-            this._canvas.height = height;
+            this._canvas.width = this._canvasSize[0] = width;
+            this._canvas.height = this._canvasSize[1] = height;
             this._rotationCenter[0] = width / 2;
             this._rotationCenter[1] = height / 2;
 
@@ -16415,7 +16491,7 @@ var PenSkin = function (_Skin) {
                 this._silhouetteBuffer = twgl.createFramebufferInfo(gl, [{ format: gl.RGBA }], width, height);
             }
 
-            gl.clearColor(1, 1, 1, 0);
+            gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             this._silhouetteDirty = true;
@@ -16466,8 +16542,8 @@ var PenSkin = function (_Skin) {
                 this._renderer.enterDrawRegion(this._toBufferDrawRegionId);
 
                 // Sample the framebuffer's pixels into the silhouette instance
-                var skinPixels = new Uint8Array(Math.floor(this._canvas.width * this._canvas.height * 4));
-                gl.readPixels(0, 0, this._canvas.width, this._canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, skinPixels);
+                var skinPixels = new Uint8Array(Math.floor(this._canvasSize[0] * this._canvasSize[1] * 4));
+                gl.readPixels(0, 0, this._canvasSize[0], this._canvasSize[1], gl.RGBA, gl.UNSIGNED_BYTE, skinPixels);
 
                 var skinCanvas = this._canvas;
                 skinCanvas.width = bounds.width;
@@ -16490,13 +16566,23 @@ var PenSkin = function (_Skin) {
         }
 
         /**
+         * @returns {boolean} true if alpha is premultiplied, false otherwise
+         */
+
+    }, {
+        key: 'hasPremultipliedAlpha',
+        get: function get() {
+            return true;
+        }
+
+        /**
          * @return {Array<number>} the "native" size, in texels, of this skin. [width, height]
          */
 
     }, {
         key: 'size',
         get: function get() {
-            return [this._canvas.width, this._canvas.height];
+            return this._canvasSize;
         }
     }]);
 
@@ -16506,7 +16592,7 @@ var PenSkin = function (_Skin) {
 module.exports = PenSkin;
 
 /***/ }),
-/* 28 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16525,7 +16611,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var twgl = __webpack_require__(0);
 
 var Skin = __webpack_require__(2);
-var SvgRenderer = __webpack_require__(9).SVGRenderer;
+var SvgRenderer = __webpack_require__(28).SVGRenderer;
 
 var MAX_TEXTURE_DIMENSION = 2048;
 
@@ -16558,6 +16644,24 @@ var SVGSkin = function (_Skin) {
 
         /** @type {Number} */
         _this._maxTextureScale = 0;
+
+        /**
+         * The natural size, in Scratch units, of this skin.
+         * @type {Array<number>}
+         */
+        _this.size = [0, 0];
+
+        /**
+         * The viewbox offset of the svg.
+         * @type {Array<number>}
+         */
+        _this._viewOffset = [0, 0];
+
+        /**
+         * The rotation center before offset by _viewOffset.
+         * @type {Array<number>}
+         */
+        _this._rawRotationCenter = [NaN, NaN];
         return _this;
     }
 
@@ -16577,21 +16681,19 @@ var SVGSkin = function (_Skin) {
         }
 
         /**
-         * @return {Array<number>} the natural size, in Scratch units, of this skin.
-         */
-
-    }, {
-        key: 'setRotationCenter',
-
-
-        /**
          * Set the origin, in object space, about which this Skin should rotate.
          * @param {number} x - The x coordinate of the new rotation center.
          * @param {number} y - The y coordinate of the new rotation center.
          */
+
+    }, {
+        key: 'setRotationCenter',
         value: function setRotationCenter(x, y) {
-            var viewOffset = this._svgRenderer.viewOffset;
-            _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setRotationCenter', this).call(this, x - viewOffset[0], y - viewOffset[1]);
+            if (x !== this._rawRotationCenter[0] || y !== this._rawRotationCenter[1]) {
+                this._rawRotationCenter[0] = x;
+                this._rawRotationCenter[1] = y;
+                _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setRotationCenter', this).call(this, x - this._viewOffset[0], y - this._viewOffset[1]);
+            }
         }
 
         /**
@@ -16616,10 +16718,14 @@ var SVGSkin = function (_Skin) {
                 this._textureScale = newScale;
                 this._svgRenderer._draw(this._textureScale, function () {
                     if (_this2._textureScale === newScale) {
+                        var canvas = _this2._svgRenderer.canvas;
+                        var context = canvas.getContext('2d');
+                        var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
+
                         var gl = _this2._renderer.gl;
                         gl.bindTexture(gl.TEXTURE_2D, _this2._texture);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, _this2._svgRenderer.canvas);
-                        _this2._silhouette.update(_this2._svgRenderer.canvas);
+                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+                        _this2._silhouette.update(textureData);
                     }
                 });
             }
@@ -16643,20 +16749,28 @@ var SVGSkin = function (_Skin) {
             this._svgRenderer.fromString(svgData, 1, function () {
                 var gl = _this3._renderer.gl;
                 _this3._textureScale = _this3._maxTextureScale = 1;
+
+                // Pull out the ImageData from the canvas. ImageData speeds up
+                // updating Silhouette and is better handled by more browsers in
+                // regards to memory.
+                var canvas = _this3._svgRenderer.canvas;
+                var context = canvas.getContext('2d');
+                var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
+
                 if (_this3._texture) {
                     gl.bindTexture(gl.TEXTURE_2D, _this3._texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, _this3._svgRenderer.canvas);
-                    _this3._silhouette.update(_this3._svgRenderer.canvas);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+                    _this3._silhouette.update(textureData);
                 } else {
                     // TODO: mipmaps?
                     var textureOptions = {
                         auto: true,
                         wrap: gl.CLAMP_TO_EDGE,
-                        src: _this3._svgRenderer.canvas
+                        src: textureData
                     };
 
                     _this3._texture = twgl.createTexture(gl, textureOptions);
-                    _this3._silhouette.update(_this3._svgRenderer.canvas);
+                    _this3._silhouette.update(textureData);
                 }
 
                 var maxDimension = Math.max(_this3._svgRenderer.canvas.width, _this3._svgRenderer.canvas.height);
@@ -16666,14 +16780,13 @@ var SVGSkin = function (_Skin) {
                 }
 
                 if (typeof rotationCenter === 'undefined') rotationCenter = _this3.calculateRotationCenter();
-                _this3.setRotationCenter.apply(_this3, rotationCenter);
+                _this3.size = _this3._svgRenderer.size;
+                _this3._viewOffset = _this3._svgRenderer.viewOffset;
+                // Reset rawRotationCenter when we update viewOffset.
+                _this3._rawRotationCenter = [NaN, NaN];
+                _this3.setRotationCenter(rotationCenter[0], rotationCenter[1]);
                 _this3.emit(Skin.Events.WasAltered);
             });
-        }
-    }, {
-        key: 'size',
-        get: function get() {
-            return this._svgRenderer.size;
         }
     }]);
 
@@ -16683,12 +16796,34 @@ var SVGSkin = function (_Skin) {
 module.exports = SVGSkin;
 
 /***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+const SVGRenderer = __webpack_require__(29);
+const BitmapAdapter = __webpack_require__(51);
+const inlineSvgFonts = __webpack_require__(9);
+const SvgElement = __webpack_require__(6);
+const convertFonts = __webpack_require__(10);
+// /**
+//  * Export for NPM & Node.js
+//  * @type {RenderWebGL}
+//  */
+module.exports = {
+    BitmapAdapter: BitmapAdapter,
+    convertFonts: convertFonts,
+    inlineSvgFonts: inlineSvgFonts,
+    SvgElement: SvgElement,
+    SVGRenderer: SVGRenderer
+};
+
+
+/***/ }),
 /* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const inlineSvgFonts = __webpack_require__(10);
+const inlineSvgFonts = __webpack_require__(9);
 const SvgElement = __webpack_require__(6);
-const convertFonts = __webpack_require__(11);
+const convertFonts = __webpack_require__(10);
 const fixupSvgString = __webpack_require__(38);
 const transformStrokeWidths = __webpack_require__(39);
 
@@ -17225,10 +17360,24 @@ module.exports = function (svgString) {
             svgAttrs[0].replace(/&ns_[^;]+;/g, 'http://ns.adobe.com/Extensibility/1.0/'));
     }
 
+    // Some SVGs exported from Photoshop have been found to have an invalid mime type
+    // Chrome and Safari won't render these SVGs, so we correct it here
+    if (svgString.includes('data:img/png')) {
+        svgString = svgString.replace(
+            // capture entire image tag with xlink:href=and the quote - dont capture data: bit
+            /(<image[^>]+?xlink:href=["'])data:img\/png/g,
+            // use the captured <image ..... xlink:href=" then append the right data uri mime type
+            ($0, $1) => `${$1}data:image/png`
+        );
+    }
+
     // The <metadata> element is not needed for rendering and sometimes contains
     // unparseable garbage from Illustrator :(
     // Note: [\s\S] matches everything including newlines, which .* does not
     svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '');
+
+    // Strip script tags and javascript executing
+    svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '');
 
     return svgString;
 };
@@ -17855,7 +18004,7 @@ module.exports = transformStrokeWidths;
 /* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const minilog = __webpack_require__(12);
+const minilog = __webpack_require__(11);
 minilog.enable();
 
 module.exports = minilog('scratch-svg-render');
@@ -18073,7 +18222,7 @@ module.exports = logger;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(1),
-    color = __webpack_require__(13);
+    color = __webpack_require__(12);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -18097,7 +18246,7 @@ module.exports = logger;
 /***/ (function(module, exports, __webpack_require__) {
 
 var Transform = __webpack_require__(1),
-    color = __webpack_require__(13),
+    color = __webpack_require__(12),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -18525,342 +18674,166 @@ function fromByteArray (uint8) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var SVGTextWrapper = __webpack_require__(54);
-var SvgRenderer = __webpack_require__(9).SVGRenderer;
-
-var MAX_LINE_LENGTH = 170;
-var MIN_WIDTH = 50;
-var STROKE_WIDTH = 4;
-
-var SVGTextBubble = function () {
-    function SVGTextBubble() {
-        _classCallCheck(this, SVGTextBubble);
-
-        this.svgRenderer = new SvgRenderer();
-        this.svgTextWrapper = new SVGTextWrapper(this.makeSvgTextElement);
-        this._textSizeCache = {};
-    }
-
-    /**
-     * @return {SVGElement} an SVG text node with the properties that we want for speech bubbles.
-     */
-
-
-    _createClass(SVGTextBubble, [{
-        key: 'makeSvgTextElement',
-        value: function makeSvgTextElement() {
-            var svgText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            svgText.setAttribute('alignment-baseline', 'text-before-edge');
-            svgText.setAttribute('font-size', '14');
-            svgText.setAttribute('fill', '#575E75');
-            // TODO Do we want to use the new default sans font instead of Helvetica?
-            svgText.setAttribute('font-family', 'Helvetica');
-            return svgText;
-        }
-    }, {
-        key: '_speechBubble',
-        value: function _speechBubble(w, h, radius, pointsLeft) {
-            var pathString = '\n            M 0 ' + radius + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + radius + ' 0\n            L ' + (w - radius) + ' 0\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + w + ' ' + radius + '\n            L ' + w + ' ' + (h - radius) + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + (w - radius) + ' ' + h;
-
-            if (pointsLeft) {
-                pathString += '\n                L 32 ' + h + '\n                c -5 8 -15 12 -18 12\n                a 2 2 0 0 1 -2 -2\n                c 0 -2 4 -6 4 -10';
-            } else {
-                pathString += '\n                L ' + (w - 16) + ' ' + h + '\n                c 0 4 4 8 4 10\n                a 2 2 0 0 1 -2 2\n                c -3 0 -13 -4 -18 -12';
-            }
-
-            pathString += '\n            L ' + radius + ' ' + h + '\n            A ' + radius + ' ' + radius + ' 0 0 1 0 ' + (h - radius) + '\n            Z';
-
-            return '\n            <g>\n                <path\n                  d="' + pathString + '"\n                  stroke="rgba(0, 0, 0, 0.15)"\n                  stroke-width="' + STROKE_WIDTH + '"\n                  fill="rgba(0, 0, 0, 0.15)"\n                  stroke-line-join="round"\n              />\n              <path\n                d="' + pathString + '"\n                stroke="none"\n                fill="white" />\n            </g>';
-        }
-    }, {
-        key: '_thinkBubble',
-        value: function _thinkBubble(w, h, radius, pointsLeft) {
-            var e1rx = 2.25;
-            var e1ry = 2.25;
-            var e2rx = 1.5;
-            var e2ry = 1.5;
-            var e1x = 16 + 7 + e1rx;
-            var e1y = 5 + h + e1ry;
-            var e2x = 16 + e2rx;
-            var e2y = 8 + h + e2ry;
-            var insetR = 4;
-            var pInset1 = 12 + radius;
-            var pInset2 = pInset1 + 2 * insetR;
-
-            var pathString = '\n            M 0 ' + radius + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + radius + ' 0\n            L ' + (w - radius) + ' 0\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + w + ' ' + radius + '\n            L ' + w + ' ' + (h - radius) + '\n            A ' + radius + ' ' + radius + ' 0 0 1 ' + (w - radius) + ' ' + h;
-
-            if (pointsLeft) {
-                pathString += '\n                L ' + pInset2 + ' ' + h + '\n                A ' + insetR + ' ' + insetR + ' 0 0 1 ' + (pInset2 - insetR) + ' ' + (h + insetR) + '\n                A ' + insetR + ' ' + insetR + ' 0 0 1 ' + pInset1 + ' ' + h;
-            } else {
-                pathString += '\n                L ' + (w - pInset1) + ' ' + h + '\n                A ' + insetR + ' ' + insetR + ' 0 0 1 ' + (w - pInset1 - insetR) + ' ' + (h + insetR) + '\n                A ' + insetR + ' ' + insetR + ' 0 0 1 ' + (w - pInset2) + ' ' + h;
-            }
-
-            pathString += '\n            L ' + radius + ' ' + h + '\n            A ' + radius + ' ' + radius + ' 0 0 1 0 ' + (h - radius) + '\n            Z';
-
-            var ellipseSvg = function ellipseSvg(cx, cy, rx, ry) {
-                return '\n            <g>\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="rgba(0, 0, 0, 0.15)"\n                    stroke="rgba(0, 0, 0, 0.15)"\n                    stroke-width="' + STROKE_WIDTH + '"\n                />\n                <ellipse\n                    cx="' + cx + '" cy="' + cy + '"\n                    rx="' + rx + '" ry="' + ry + '"\n                    fill="white"\n                    stroke="none"\n                />\n            </g>';
-            };
-            var ellipses = [];
-            if (pointsLeft) {
-                ellipses = [ellipseSvg(e1x, e1y, e1rx, e1ry), ellipseSvg(e2x, e2y, e2rx, e2ry)];
-            } else {
-                ellipses = [ellipseSvg(w - e1x, e1y, e1rx, e1ry), ellipseSvg(w - e2x, e2y, e2rx, e2ry)];
-            }
-
-            return '\n             <g>\n                <path d="' + pathString + '" stroke="rgba(0, 0, 0, 0.15)" stroke-width="' + STROKE_WIDTH + '"\n                    fill="rgba(0, 0, 0, 0.15)" />\n                <path d="' + pathString + '" stroke="none" fill="white" />\n                ' + ellipses.join('\n') + '\n            </g>';
-        }
-    }, {
-        key: '_getTextSize',
-        value: function _getTextSize(textFragment) {
-            var svgString = this._wrapSvgFragment(textFragment);
-            if (!this._textSizeCache[svgString]) {
-                this._textSizeCache[svgString] = this.svgRenderer.measure(svgString);
-                if (this._textSizeCache[svgString].height === 0) {
-                    // The speech bubble is empty, so use the height of a single line with content (or else it renders
-                    // weirdly, see issue #302).
-                    var dummyFragment = this._buildTextFragment('X');
-                    this._textSizeCache[svgString] = this._getTextSize(dummyFragment);
-                }
-            }
-            return this._textSizeCache[svgString];
-        }
-    }, {
-        key: '_wrapSvgFragment',
-        value: function _wrapSvgFragment(fragment, width, height) {
-            var svgString = '<svg xmlns="http://www.w3.org/2000/svg" version="1.1"';
-            if (width && height) {
-                var fullWidth = width + STROKE_WIDTH;
-                var fullHeight = height + STROKE_WIDTH + 12;
-                svgString = svgString + ' viewBox="\n                ' + -STROKE_WIDTH / 2 + ' ' + -STROKE_WIDTH / 2 + ' ' + fullWidth + ' ' + fullHeight + '"\n                width="' + fullWidth + '" height="' + fullHeight + '">';
-            } else {
-                svgString = svgString + '>';
-            }
-            svgString = svgString + ' ' + fragment + ' </svg>';
-            return svgString;
-        }
-    }, {
-        key: '_buildTextFragment',
-        value: function _buildTextFragment(text) {
-            var textNode = this.svgTextWrapper.wrapText(MAX_LINE_LENGTH, text);
-            var serializer = new XMLSerializer();
-            return serializer.serializeToString(textNode);
-        }
-    }, {
-        key: 'buildString',
-        value: function buildString(type, text, pointsLeft) {
-            this.type = type;
-            this.pointsLeft = pointsLeft;
-            this._textFragment = this._buildTextFragment(text);
-
-            var fragment = '';
-
-            var radius = 16;
-
-            var _getTextSize2 = this._getTextSize(this._textFragment),
-                x = _getTextSize2.x,
-                y = _getTextSize2.y,
-                width = _getTextSize2.width,
-                height = _getTextSize2.height;
-
-            var padding = 10;
-            var fullWidth = Math.max(MIN_WIDTH, width) + 2 * padding;
-            var fullHeight = height + 2 * padding;
-            if (this.type === 'say') {
-                fragment += this._speechBubble(fullWidth, fullHeight, radius, this.pointsLeft);
-            } else {
-                fragment += this._thinkBubble(fullWidth, fullHeight, radius, this.pointsLeft);
-            }
-            fragment += '<g transform="translate(' + (padding - x) + ', ' + (padding - y) + ')">' + this._textFragment + '</g>';
-            return this._wrapSvgFragment(fragment, fullWidth, fullHeight);
-        }
-    }]);
-
-    return SVGTextBubble;
-}();
-
-module.exports = SVGTextBubble;
-
-/***/ }),
-/* 54 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+var twgl = __webpack_require__(0);
 
-var TextWrapper = __webpack_require__(55);
+var TextWrapper = __webpack_require__(54);
+var CanvasMeasurementProvider = __webpack_require__(67);
+var Skin = __webpack_require__(2);
 
-/**
- * Measure text by using a hidden SVG attached to the DOM.
- * For use with TextWrapper.
- */
+var BubbleStyle = {
+    MAX_LINE_WIDTH: 170, // Maximum width, in Scratch pixels, of a single line of text
 
-var SVGMeasurementProvider = function () {
-    /**
-     * @param {function} makeTextElement - provides a text node of an SVGElement
-     *     with the style of the text to be wrapped.
-     */
-    function SVGMeasurementProvider(makeTextElement) {
-        _classCallCheck(this, SVGMeasurementProvider);
+    MIN_WIDTH: 50, // Minimum width, in Scratch pixels, of a text bubble
+    STROKE_WIDTH: 4, // Thickness of the stroke around the bubble. Only half's visible because it's drawn under the fill
+    PADDING: 10, // Padding around the text area
+    CORNER_RADIUS: 16, // Radius of the rounded corners
+    TAIL_HEIGHT: 12, // Height of the speech bubble's "tail". Probably should be a constant.
 
-        this._svgRoot = null;
-        this._cache = {};
-        this.makeTextElement = makeTextElement;
+    FONT: 'Helvetica', // Font to render the text with
+    FONT_SIZE: 14, // Font size, in Scratch pixels
+    FONT_HEIGHT_RATIO: 0.9, // Height, in Scratch pixels, of the text, as a proportion of the font's size
+    LINE_HEIGHT: 16, // Spacing between each line of text
+
+    COLORS: {
+        BUBBLE_FILL: 'white',
+        BUBBLE_STROKE: 'rgba(0, 0, 0, 0.15)',
+        TEXT_FILL: '#575E75'
     }
+};
+
+var TextBubbleSkin = function (_Skin) {
+    _inherits(TextBubbleSkin, _Skin);
 
     /**
-     * Detach the hidden SVG element from the DOM and forget all references to it and its children.
+     * Create a new text bubble skin.
+     * @param {!int} id - The ID for this Skin.
+     * @param {!RenderWebGL} renderer - The renderer which will use this skin.
+     * @constructor
+     * @extends Skin
      */
+    function TextBubbleSkin(id, renderer) {
+        _classCallCheck(this, TextBubbleSkin);
 
+        /** @type {RenderWebGL} */
+        var _this = _possibleConstructorReturn(this, (TextBubbleSkin.__proto__ || Object.getPrototypeOf(TextBubbleSkin)).call(this, id));
 
-    _createClass(SVGMeasurementProvider, [{
-        key: 'dispose',
-        value: function dispose() {
-            if (this._svgRoot) {
-                this._svgRoot.parentElement.removeChild(this._svgRoot);
-                this._svgRoot = null;
-                this._svgText = null;
-            }
-        }
+        _this._renderer = renderer;
 
-        /**
-         * Called by the TextWrapper before a batch of zero or more calls to measureText().
-         */
+        /** @type {HTMLCanvasElement} */
+        _this._canvas = document.createElement('canvas');
 
-    }, {
-        key: 'beginMeasurementSession',
-        value: function beginMeasurementSession() {
-            if (!this._svgRoot) {
-                this._init();
-            }
-        }
+        /** @type {WebGLTexture} */
+        _this._texture = null;
 
-        /**
-         * Called by the TextWrapper after a batch of zero or more calls to measureText().
-         */
+        /** @type {Array<number>} */
+        _this._size = [0, 0];
 
-    }, {
-        key: 'endMeasurementSession',
-        value: function endMeasurementSession() {
-            this._svgText.textContent = '';
-            this.dispose();
-        }
+        /** @type {number} */
+        _this._renderedScale = 0;
 
-        /**
-         * Measure a whole string as one unit.
-         * @param {string} text - the text to measure.
-         * @returns {number} - the length of the string.
-         */
+        /** @type {Array<string>} */
+        _this._lines = [];
 
-    }, {
-        key: 'measureText',
-        value: function measureText(text) {
-            if (!this._cache[text]) {
-                this._svgText.textContent = text;
-                this._cache[text] = this._svgText.getComputedTextLength();
-            }
-            return this._cache[text];
-        }
+        _this._textSize = { width: 0, height: 0 };
+        _this._textAreaSize = { width: 0, height: 0 };
 
-        /**
-         * Create a simple SVG containing a text node, hide it, and attach it to the DOM. The text node will be used to
-         * collect text measurements. The SVG must be attached to the DOM: otherwise measurements will generally be zero.
-         * @private
-         */
+        /** @type {string} */
+        _this._bubbleType = '';
 
-    }, {
-        key: '_init',
-        value: function _init() {
-            var svgNamespace = 'http://www.w3.org/2000/svg';
+        /** @type {boolean} */
+        _this._pointsLeft = false;
 
-            var svgRoot = document.createElementNS(svgNamespace, 'svg');
-            var svgGroup = document.createElementNS(svgNamespace, 'g');
-            var svgText = this.makeTextElement();
+        /** @type {boolean} */
+        _this._textDirty = true;
 
-            // hide from the user, including screen readers
-            svgRoot.setAttribute('style', 'position:absolute;visibility:hidden');
+        /** @type {boolean} */
+        _this._textureDirty = true;
 
-            document.body.appendChild(svgRoot);
-            svgRoot.appendChild(svgGroup);
-            svgGroup.appendChild(svgText);
+        _this.measurementProvider = new CanvasMeasurementProvider(_this._canvas.getContext('2d'));
+        _this.textWrapper = new TextWrapper(_this.measurementProvider);
 
-            /**
-             * The root SVG element.
-             * @type {SVGSVGElement}
-             * @private
-             */
-            this._svgRoot = svgRoot;
-
-            /**
-             * The leaf SVG element used for text measurement.
-             * @type {SVGTextElement}
-             * @private
-             */
-            this._svgText = svgText;
-        }
-    }]);
-
-    return SVGMeasurementProvider;
-}();
-
-/**
- * TextWrapper specialized for SVG text.
- */
-
-
-var SVGTextWrapper = function (_TextWrapper) {
-    _inherits(SVGTextWrapper, _TextWrapper);
-
-    /**
-     * @param {function} makeTextElement - provides a text node of an SVGElement
-     *     with the style of the text to be wrapped.
-     */
-    function SVGTextWrapper(makeTextElement) {
-        _classCallCheck(this, SVGTextWrapper);
-
-        var _this = _possibleConstructorReturn(this, (SVGTextWrapper.__proto__ || Object.getPrototypeOf(SVGTextWrapper)).call(this, new SVGMeasurementProvider(makeTextElement)));
-
-        _this.makeTextElement = makeTextElement;
+        _this._restyleCanvas();
         return _this;
     }
 
     /**
-     * Wrap the provided text into lines restricted to a maximum width. See Unicode Standard Annex (UAX) #14.
-     * @param {number} maxWidth - the maximum allowed width of a line.
-     * @param {string} text - the text to be wrapped. Will be split on whitespace.
-     * @returns {SVGElement} wrapped text node
+     * Dispose of this object. Do not use it after calling this method.
      */
 
 
-    _createClass(SVGTextWrapper, [{
-        key: 'wrapText',
-        value: function wrapText(maxWidth, text) {
-            var lines = _get(SVGTextWrapper.prototype.__proto__ || Object.getPrototypeOf(SVGTextWrapper.prototype), 'wrapText', this).call(this, maxWidth, text);
-            var textElement = this.makeTextElement();
+    _createClass(TextBubbleSkin, [{
+        key: 'dispose',
+        value: function dispose() {
+            if (this._texture) {
+                this._renderer.gl.deleteTexture(this._texture);
+                this._texture = null;
+            }
+            this._canvas = null;
+            _get(TextBubbleSkin.prototype.__proto__ || Object.getPrototypeOf(TextBubbleSkin.prototype), 'dispose', this).call(this);
+        }
+
+        /**
+         * @return {Array<number>} the dimensions, in Scratch units, of this skin.
+         */
+
+    }, {
+        key: 'setTextBubble',
+
+
+        /**
+         * Set parameters for this text bubble.
+         * @param {!string} type - either "say" or "think".
+         * @param {!string} text - the text for the bubble.
+         * @param {!boolean} pointsLeft - which side the bubble is pointing.
+         */
+        value: function setTextBubble(type, text, pointsLeft) {
+            this._text = text;
+            this._bubbleType = type;
+            this._pointsLeft = pointsLeft;
+
+            this._textDirty = true;
+            this._textureDirty = true;
+            this.emit(Skin.Events.WasAltered);
+        }
+
+        /**
+         * Re-style the canvas after resizing it. This is necessary to ensure proper text measurement.
+         */
+
+    }, {
+        key: '_restyleCanvas',
+        value: function _restyleCanvas() {
+            this._canvas.getContext('2d').font = BubbleStyle.FONT_SIZE + 'px ' + BubbleStyle.FONT + ', sans-serif';
+        }
+
+        /**
+         * Update the array of wrapped lines and the text dimensions.
+         */
+
+    }, {
+        key: '_reflowLines',
+        value: function _reflowLines() {
+            this._lines = this.textWrapper.wrapText(BubbleStyle.MAX_LINE_WIDTH, this._text);
+
+            // Measure width of longest line to avoid extra-wide bubbles
+            var longestLine = 0;
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;
 
             try {
-                for (var _iterator = lines[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                for (var _iterator = this._lines[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                     var line = _step.value;
 
-                    var tspanNode = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-                    tspanNode.setAttribute('x', '0');
-                    tspanNode.setAttribute('dy', '1.2em');
-                    tspanNode.textContent = line;
-                    textElement.appendChild(tspanNode);
+                    longestLine = Math.max(longestLine, this.measurementProvider.measureText(line));
                 }
             } catch (err) {
                 _didIteratorError = true;
@@ -18877,17 +18850,173 @@ var SVGTextWrapper = function (_TextWrapper) {
                 }
             }
 
-            return textElement;
+            this._textSize.width = longestLine;
+            this._textSize.height = BubbleStyle.LINE_HEIGHT * this._lines.length;
+
+            // Calculate the canvas-space sizes of the padded text area and full text bubble
+            var paddedWidth = Math.max(this._textSize.width, BubbleStyle.MIN_WIDTH) + BubbleStyle.PADDING * 2;
+            var paddedHeight = this._textSize.height + BubbleStyle.PADDING * 2;
+
+            this._textAreaSize.width = paddedWidth;
+            this._textAreaSize.height = paddedHeight;
+
+            this._size[0] = paddedWidth + BubbleStyle.STROKE_WIDTH;
+            this._size[1] = paddedHeight + BubbleStyle.STROKE_WIDTH + BubbleStyle.TAIL_HEIGHT;
+
+            this._textDirty = false;
+        }
+
+        /**
+         * Render this text bubble at a certain scale, using the current parameters, to the canvas.
+         * @param {number} scale The scale to render the bubble at
+         */
+
+    }, {
+        key: '_renderTextBubble',
+        value: function _renderTextBubble(scale) {
+            var ctx = this._canvas.getContext('2d');
+
+            if (this._textDirty) {
+                this._reflowLines();
+            }
+
+            // Calculate the canvas-space sizes of the padded text area and full text bubble
+            var paddedWidth = this._textAreaSize.width;
+            var paddedHeight = this._textAreaSize.height;
+
+            // Resize the canvas to the correct screen-space size
+            this._canvas.width = Math.ceil(this._size[0] * scale);
+            this._canvas.height = Math.ceil(this._size[1] * scale);
+            this._restyleCanvas();
+
+            // Reset the transform before clearing to ensure 100% clearage
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+
+            ctx.scale(scale, scale);
+            ctx.translate(BubbleStyle.STROKE_WIDTH * 0.5, BubbleStyle.STROKE_WIDTH * 0.5);
+
+            // If the text bubble points leftward, flip the canvas
+            ctx.save();
+            if (this._pointsLeft) {
+                ctx.scale(-1, 1);
+                ctx.translate(-paddedWidth, 0);
+            }
+
+            // Draw the bubble's rounded borders
+            ctx.moveTo(BubbleStyle.CORNER_RADIUS, paddedHeight);
+            ctx.arcTo(0, paddedHeight, 0, paddedHeight - BubbleStyle.CORNER_RADIUS, BubbleStyle.CORNER_RADIUS);
+            ctx.arcTo(0, 0, paddedWidth, 0, BubbleStyle.CORNER_RADIUS);
+            ctx.arcTo(paddedWidth, 0, paddedWidth, paddedHeight, BubbleStyle.CORNER_RADIUS);
+            ctx.arcTo(paddedWidth, paddedHeight, paddedWidth - BubbleStyle.CORNER_RADIUS, paddedHeight, BubbleStyle.CORNER_RADIUS);
+
+            // Translate the canvas so we don't have to do a bunch of width/height arithmetic
+            ctx.save();
+            ctx.translate(paddedWidth - BubbleStyle.CORNER_RADIUS, paddedHeight);
+
+            // Draw the bubble's "tail"
+            if (this._bubbleType === 'say') {
+                // For a speech bubble, draw one swoopy thing
+                ctx.bezierCurveTo(0, 4, 4, 8, 4, 10);
+                ctx.arcTo(4, 12, 2, 12, 2);
+                ctx.bezierCurveTo(-1, 12, -11, 8, -16, 0);
+
+                ctx.closePath();
+            } else {
+                // For a thinking bubble, draw a partial circle attached to the bubble...
+                ctx.arc(-16, 0, 4, 0, Math.PI);
+
+                ctx.closePath();
+
+                // and two circles detached from it
+                ctx.moveTo(-7, 7.25);
+                ctx.arc(-9.25, 7.25, 2.25, 0, Math.PI * 2);
+
+                ctx.moveTo(0, 9.5);
+                ctx.arc(-1.5, 9.5, 1.5, 0, Math.PI * 2);
+            }
+
+            // Un-translate the canvas and fill + stroke the text bubble
+            ctx.restore();
+
+            ctx.fillStyle = BubbleStyle.COLORS.BUBBLE_FILL;
+            ctx.strokeStyle = BubbleStyle.COLORS.BUBBLE_STROKE;
+            ctx.lineWidth = BubbleStyle.STROKE_WIDTH;
+
+            ctx.stroke();
+            ctx.fill();
+
+            // Un-flip the canvas if it was flipped
+            ctx.restore();
+
+            // Draw each line of text
+            ctx.fillStyle = BubbleStyle.COLORS.TEXT_FILL;
+            ctx.font = BubbleStyle.FONT_SIZE + 'px ' + BubbleStyle.FONT + ', sans-serif';
+            var lines = this._lines;
+            for (var lineNumber = 0; lineNumber < lines.length; lineNumber++) {
+                var line = lines[lineNumber];
+                ctx.fillText(line, BubbleStyle.PADDING, BubbleStyle.PADDING + BubbleStyle.LINE_HEIGHT * lineNumber + BubbleStyle.FONT_HEIGHT_RATIO * BubbleStyle.FONT_SIZE);
+            }
+
+            this._renderedScale = scale;
+        }
+
+        /**
+         * @param {Array<number>} scale - The scaling factors to be used, each in the [0,100] range.
+         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
+         */
+
+    }, {
+        key: 'getTexture',
+        value: function getTexture(scale) {
+            // The texture only ever gets uniform scale. Take the larger of the two axes.
+            var scaleMax = scale ? Math.max(Math.abs(scale[0]), Math.abs(scale[1])) : 100;
+            var requestedScale = scaleMax / 100;
+
+            // If we already rendered the text bubble at this scale, we can skip re-rendering it.
+            if (this._textureDirty || this._renderedScale !== requestedScale) {
+                this._renderTextBubble(requestedScale);
+                this._textureDirty = false;
+
+                var context = this._canvas.getContext('2d');
+                var textureData = context.getImageData(0, 0, this._canvas.width, this._canvas.height);
+
+                var gl = this._renderer.gl;
+
+                if (this._texture === null) {
+                    var textureOptions = {
+                        auto: true,
+                        wrap: gl.CLAMP_TO_EDGE,
+                        src: textureData
+                    };
+
+                    this._texture = twgl.createTexture(gl, textureOptions);
+                }
+
+                gl.bindTexture(gl.TEXTURE_2D, this._texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+                this._silhouette.update(textureData);
+            }
+
+            return this._texture;
+        }
+    }, {
+        key: 'size',
+        get: function get() {
+            if (this._textDirty) {
+                this._reflowLines();
+            }
+            return this._size;
         }
     }]);
 
-    return SVGTextWrapper;
-}(TextWrapper);
+    return TextBubbleSkin;
+}(Skin);
 
-module.exports = SVGTextWrapper;
+module.exports = TextBubbleSkin;
 
 /***/ }),
-/* 55 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18897,8 +19026,8 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var LineBreaker = __webpack_require__(56);
-var GraphemeBreaker = __webpack_require__(61);
+var LineBreaker = __webpack_require__(55);
+var GraphemeBreaker = __webpack_require__(60);
 
 /**
  * Tell this text wrapper to use a specific measurement provider.
@@ -18915,7 +19044,7 @@ var GraphemeBreaker = __webpack_require__(61);
  * break opportunities.
  * Reference material:
  * - Unicode Standard Annex #14: http://unicode.org/reports/tr14/
- * - Unicode Standard Annex #39: http://unicode.org/reports/tr29/
+ * - Unicode Standard Annex #29: http://unicode.org/reports/tr29/
  * - "JavaScript has a Unicode problem" by Mathias Bynens: https://mathiasbynens.be/notes/javascript-unicode
  */
 
@@ -19021,22 +19150,22 @@ var TextWrapper = function () {
 module.exports = TextWrapper;
 
 /***/ }),
-/* 56 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.7.1
 (function() {
   var AI, AL, BA, BK, CB, CI_BRK, CJ, CP_BRK, CR, DI_BRK, ID, IN_BRK, LF, LineBreaker, NL, NS, PR_BRK, SA, SG, SP, UnicodeTrie, WJ, XX, base64, characterClasses, classTrie, data, fs, pairTable, _ref, _ref1;
 
-  UnicodeTrie = __webpack_require__(14);
+  UnicodeTrie = __webpack_require__(13);
 
   
 
-  base64 = __webpack_require__(58);
+  base64 = __webpack_require__(57);
 
-  _ref = __webpack_require__(59), BK = _ref.BK, CR = _ref.CR, LF = _ref.LF, NL = _ref.NL, CB = _ref.CB, BA = _ref.BA, SP = _ref.SP, WJ = _ref.WJ, SP = _ref.SP, BK = _ref.BK, LF = _ref.LF, NL = _ref.NL, AI = _ref.AI, AL = _ref.AL, SA = _ref.SA, SG = _ref.SG, XX = _ref.XX, CJ = _ref.CJ, ID = _ref.ID, NS = _ref.NS, characterClasses = _ref.characterClasses;
+  _ref = __webpack_require__(58), BK = _ref.BK, CR = _ref.CR, LF = _ref.LF, NL = _ref.NL, CB = _ref.CB, BA = _ref.BA, SP = _ref.SP, WJ = _ref.WJ, SP = _ref.SP, BK = _ref.BK, LF = _ref.LF, NL = _ref.NL, AI = _ref.AI, AL = _ref.AL, SA = _ref.SA, SG = _ref.SG, XX = _ref.XX, CJ = _ref.CJ, ID = _ref.ID, NS = _ref.NS, characterClasses = _ref.characterClasses;
 
-  _ref1 = __webpack_require__(60), DI_BRK = _ref1.DI_BRK, IN_BRK = _ref1.IN_BRK, CI_BRK = _ref1.CI_BRK, CP_BRK = _ref1.CP_BRK, PR_BRK = _ref1.PR_BRK, pairTable = _ref1.pairTable;
+  _ref1 = __webpack_require__(59), DI_BRK = _ref1.DI_BRK, IN_BRK = _ref1.IN_BRK, CI_BRK = _ref1.CI_BRK, CP_BRK = _ref1.CP_BRK, PR_BRK = _ref1.PR_BRK, pairTable = _ref1.pairTable;
 
   data = base64.toByteArray("AA4IAAAAAAAAAhqg5VV7NJtZvz7fTC8zU5deplUlMrQoWqmqahD5So0aipYWrUhVFSVBQ10iSTtUtW6nKDVF6k7d75eQfEUbFcQ9KiFS90tQEolcP23nrLPmO+esr/+f39rr/a293t/e7/P8nmfvlz0O6RvrBJADtbBNaD88IOKTOmOrCqhu9zE770vc1pBV/xL5dxj2V7Zj4FGSomFKStCWNlV7hG1VabZfZ1LaHbFrRwzzLjzPoi1UHDnlV/lWbhgIIJvLBp/pu7AHEdRnIY+ROdXxg4fNpMdTxVnnm08OjozejAVsBqwqz8kddGRlRxsd8c55dNZoPuex6a7Dt6L0NNb03sqgTlR2/OT7eTt0Y0WnpUXxLsp5SMANc4DsmX4zJUBQvznwexm9tsMH+C9uRYMPOd96ZHB29NZjCIM2nfO7tsmQveX3l2r7ft0N4/SRJ7kO6Y8ZCaeuUQ4gMTZ67cp7TgxvlNDsPgOBdZi2YTam5Q7m3+00l+XG7PrDe6YoPmHgK+yLih7fAR16ZFCeD9WvOVt+gfNW/KT5/M6rb/9KERt+N1lad5RneVjzxXHsLofuU+TvrEsr3+26sVz5WJh6L/svoPK3qepFH9bysDljWtD1F7KrxzW1i9r+e/NLxV/acts7zuo304J9+t3Pd6Y6u8f3EAqxNRgv5DZjaI3unyvkvHPya/v3mWVYOC38qBq11+yHZ2bAyP1HbkV92vdno7r2lxz9UwCdCJVfd14NLcpO2CadHS/XPJ9doXgz5vLv/1OBVS3gX0D9n6LiNIDfpilO9RsLgZ2W/wIy8W/Rh93jfoz4qmRV2xElv6p2lRXQdO6/Cv8f5nGn3u0wLXjhnvClabL1o+7yvIpvLfT/xsKG30y/sTvq30ia9Czxp9dr9v/e7Yn/O0QJXxxBOJmceP/DBFa1q1v6oudn/e6qc/37dUoNvnYL4plQ9OoneYOh/r8fOFm7yl7FETHY9dXd5K2n/qEc53dOEe1TTJcvCfp1dpTC334l0vyaFL6mttNEbFjzO+ZV2mLk0qc3BrxJ4d9gweMmjRorxb7vic0rSq6D4wzAyFWas1TqPE0sLI8XLAryC8tPChaN3ALEZSWmtB34SyZcxXYn/E4Tg0LeMIPhgPKD9zyHGMxxhxnDDih7eI86xECTM8zodUCdgffUmRh4rQ8zyA6ow/Aei+01a8OMfziQQ+GAEkhwN/cqUFYAVzA9ex4n6jgtsiMvXf5BtXxEU4hSphvx3v8+9au8eEekEEpkrkne/zB1M+HAPuXIz3paxKlfe8aDMfGWAX6Md6PuuAdKHFVH++Ed5LEji94Z5zeiJIxbmWeN7rr1/ZcaBl5/nimdHsHgIH/ssyLUXZ4fDQ46HnBb+hQqG8yNiKRrXL/b1IPYDUsu3dFKtRMcjqlRvONd4xBvOufx2cUHuk8pmG1D7PyOQmUmluisVFS9OWS8fPIe8LiCtjwJKnEC9hrS9uKmISI3Wa5+vdXUG9dtyfr7g/oJv2wbzeZU838G6mEvntUb3SVV/fBZ6H/sL+lElzeRrHy2Xbe7UWX1q5sgOQ81rv+2baej4fP4m5Mf/GkoxfDtT3++KP7do9Jn26aa6xAhCf5L9RZVfkWKCcjI1eYbm2plvTEqkDxKC402bGzXCYaGnuALHabBT1dFLuOSB7RorOPEhZah1NjZIgR/UFGfK3p1ElYnevOMBDLURdpIjrI+qZk4sffGbRFiXuEmdFjiAODlQCJvIaB1rW61Ljg3y4eS4LAcSgDxxZQs0DYa15wA032Z+lGUfpoyOrFo3mg1sRQtN/fHHCx3TrM8eTrldMbYisDLXbUDoXMLejSq0fUNuO1muX0gEa8vgyegkqiqqbC3W0S4cC9Kmt8MuS/hFO7Xei3f8rSvIjeveMM7kxjUixOrl6gJshe4JU7PhOHpfrRYvu7yoAZKa3Buyk2J+K5W+nNTz1nhJDhRUfDJLiUXxjxXCJeeaOe/r7HlBP/uURc/5efaZEPxr55Qj39rfTLkugUGyMrwo7HAglfEjDriehF1jXtwJkPoiYkYQ5aoXSA7qbCBGKq5hwtu2VkpI9xVDop/1xrC52eiIvCoPWx4lLl40jm9upvycVPfpaH9/o2D4xKXpeNjE2HPQRS+3RFaYTc4Txw7Dvq5X6JBRwzs9mvoB49BK6b+XgsZVJYiInTlSXZ+62FT18mkFVcPKCJsoF5ahb19WheZLUYsSwdrrVM3aQ2XE6SzU2xHDS6iWkodk5AF6F8WUNmmushi8aVpMPwiIfEiQWo3CApONDRjrhDiVnkaFsaP5rjIJkmsN6V26li5LNM3JxGSyKgomknTyyrhcnwv9Qcqaq5utAh44W30SWo8Q0XHKR0glPF4fWst1FUCnk2woFq3iy9fAbzcjJ8fvSjgKVOfn14RDqyQuIgaGJZuswTywdCFSa89SakMf6fe+9KaQMYQlKxiJBczuPSho4wmBjdA+ag6QUOr2GdpcbSl51Ay6khhBt5UXdrnxc7ZGMxCvz96A4oLocxh2+px+1zkyLacCGrxnPzTRSgrLKpStFpH5ppKWm7PgMKZtwgytKLOjbGCOQLTm+KOowqa1sdut9raj1CZFkZD0jbaKNLpJUarSH5Qknx1YiOxdA5L6d5sfI/unmkSF65Ic/AvtXt98Pnrdwl5vgppQ3dYzWFwknZsy6xh2llmLxpegF8ayLwniknlXRHiF4hzzrgB8jQ4wdIqcaHCEAxyJwCeGkXPBZYSrrGa4vMwZvNN9aK0F4JBOK9mQ8g8EjEbIQVwvfS2D8GuCYsdqwqSWbQrfWdTRUJMqmpnWPax4Z7E137I6brHbvjpPlfNZpF1d7PP7HB/MPHcHVKTMhLO4f3CZcaccZEOiS2DpKiQB5KXDJ+Ospcz4qTRCRxgrKEQIgUkKLTKKwskdx2DWo3bg3PEoB5h2nA24olwfKSR+QR6TAvEDi/0czhUT59RZmO1MGeKGeEfuOSPWfL+XKmhqpZmOVR9mJVNDPKOS49Lq+Um10YsBybzDMtemlPCOJEtE8zaXhsaqEs9bngSJGhlOTTMlCXly9Qv5cRN3PVLK7zoMptutf7ihutrQ/Xj7VqeCdUwleTTKklOI8Wep9h7fCY0kVtDtIWKnubWAvbNZtsRRqOYl802vebPEkZRSZc6wXOfPtpPtN5HI63EUFfsy7U/TLr8NkIzaY3vx4A28x765XZMzRZTpMk81YIMuwJ5+/zoCuZj1wGnaHObxa5rpKZj4WhT670maRw04w0e3cZW74Z0aZe2n05hjZaxm6urenz8Ef5O6Yu1J2aqYAlqsCXs5ZB5o1JJ5l3xkTVr8rJQ09NLsBqRRDT2IIjOPmcJa6xQ1R5yGP9jAsj23xYDTezdyqG8YWZ7vJBIWK56K+iDgcHimiQOTIasNSua1fOBxsKMMEKd15jxTl+3CyvGCR+UyRwuSI2XuwRIPoNNclPihfJhaq2mKkNijwYLY6feqohktukmI3KDvOpN7ItCqHHhNuKlxMfBAEO5LjW2RKh6lE5Hd1dtAOopac/Z4FdsNsjMhXz/ug8JGmbVJTA+VOBJXdrYyJcIn5+OEeoK8kWEWF+wdG8ZtZHKSquWDtDVyhFPkRVqguKFkLkKCz46hcU1SUY9oJ2Sk+dmq0kglqk4kqKT1CV9JDELPjK1WsWGkEXF87g9P98e5ff0mIupm/w6vc3kCeq04X5bgJQlcMFRjlFWmSk+kssXCAVikfeAlMuzpUvCSdXiG+dc6KrIiLxxhbEVuKf7vW7KmDQI95bZe3H9mN3/77F6fZ2Yx/F9yClllj8gXpLWLpd5+v90iOaFa9sd7Pvx0lNa1o1+bkiZ69wCiC2x9UIb6/boBCuNMB/HYR0RC6+FD9Oe5qrgQl6JbXtkaYn0wkdNhROLqyhv6cKvyMj1Fvs2o3OOKoMYTubGENLfY5F6H9d8wX1cnINsvz+wZFQu3zhWVlwJvwBEp69Dqu/ZnkBf3nIfbx4TK7zOVJH5sGJX+IMwkn1vVBn38GbpTg9bJnMcTOb5F6Ci5gOn9Fcy6Qzcu+FL6mYJJ+f2ZZJGda1VqruZ0JRXItp8X0aTjIcJgzdaXlha7q7kV4ebrMsunfsRyRa9qYuryBHA0hc1KVsKdE+oI0ljLmSAyMze8lWmc5/lQ18slyTVC/vADTc+SNM5++gztTBLz4m0aVUKcfgOEExuKVomJ7XQDZuziMDjG6JP9tgR7JXZTeo9RGetW/Xm9/TgPJpTgHACPOGvmy2mDm9fl09WeMm9sQUAXP3Su2uApeCwJVT5iWCXDgmcuTsFgU9Nm6/PusJzSbDQIMfl6INY/OAEvZRN54BSSXUClM51im6Wn9VhVamKJmzOaFJErgJcs0etFZ40LIF3EPkjFTjGmAhsd174NnOwJW8TdJ1Dja+E6Wa6FVS22Haj1DDA474EesoMP5nbspAPJLWJ8rYcP1DwCslhnn+gTFm+sS9wY+U6SogAa9tiwpoxuaFeqm2OK+uozR6SfiLCOPz36LiDlzXr6UWd7BpY6mlrNANkTOeme5EgnnAkQRTGo9T6iYxbUKfGJcI9B+ub2PcyUOgpwXbOf3bHFWtygD7FYbRhb+vkzi87dB0JeXl/vBpBUz93VtqZi7AL7C1VowTF+tGmyurw7DBcktc+UMY0E10Jw4URojf8NdaNpN6E1q4+Oz+4YePtMLy8FPRP");
 
@@ -19188,7 +19317,7 @@ module.exports = TextWrapper;
 
 
 /***/ }),
-/* 57 */
+/* 56 */
 /***/ (function(module, exports) {
 
 var TINF_OK = 0;
@@ -19569,7 +19698,7 @@ module.exports = tinf_uncompress;
 
 
 /***/ }),
-/* 58 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -19699,7 +19828,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 
 /***/ }),
-/* 59 */
+/* 58 */
 /***/ (function(module, exports) {
 
 // Generated by CoffeeScript 1.7.1
@@ -19790,7 +19919,7 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 
 /***/ }),
-/* 60 */
+/* 59 */
 /***/ (function(module, exports) {
 
 // Generated by CoffeeScript 1.7.1
@@ -19813,16 +19942,16 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 
 /***/ }),
-/* 61 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(Buffer) {// Generated by CoffeeScript 1.8.0
 (function() {
   var CR, Control, Extend, L, LF, LV, LVT, Regional_Indicator, SpacingMark, T, UnicodeTrie, V, classTrie, codePointAt, fs, shouldBreak, _ref;
 
-  _ref = __webpack_require__(67), CR = _ref.CR, LF = _ref.LF, Control = _ref.Control, Extend = _ref.Extend, Regional_Indicator = _ref.Regional_Indicator, SpacingMark = _ref.SpacingMark, L = _ref.L, V = _ref.V, T = _ref.T, LV = _ref.LV, LVT = _ref.LVT;
+  _ref = __webpack_require__(66), CR = _ref.CR, LF = _ref.LF, Control = _ref.Control, Extend = _ref.Extend, Regional_Indicator = _ref.Regional_Indicator, SpacingMark = _ref.SpacingMark, L = _ref.L, V = _ref.V, T = _ref.T, LV = _ref.LV, LVT = _ref.LVT;
 
-  UnicodeTrie = __webpack_require__(14);
+  UnicodeTrie = __webpack_require__(13);
 
   
 
@@ -19955,10 +20084,10 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 }).call(this);
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(62).Buffer))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(61).Buffer))
 
 /***/ }),
-/* 62 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19972,9 +20101,9 @@ var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 
 
 
-var base64 = __webpack_require__(64)
-var ieee754 = __webpack_require__(65)
-var isArray = __webpack_require__(66)
+var base64 = __webpack_require__(63)
+var ieee754 = __webpack_require__(64)
+var isArray = __webpack_require__(65)
 
 exports.Buffer = Buffer
 exports.SlowBuffer = SlowBuffer
@@ -21752,10 +21881,10 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(63)))
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(62)))
 
 /***/ }),
-/* 63 */
+/* 62 */
 /***/ (function(module, exports) {
 
 var g;
@@ -21781,7 +21910,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 64 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -21939,7 +22068,7 @@ function fromByteArray (uint8) {
 
 
 /***/ }),
-/* 65 */
+/* 64 */
 /***/ (function(module, exports) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -22029,7 +22158,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 
 /***/ }),
-/* 66 */
+/* 65 */
 /***/ (function(module, exports) {
 
 var toString = {}.toString;
@@ -22040,10 +22169,73 @@ module.exports = Array.isArray || function (arr) {
 
 
 /***/ }),
-/* 67 */
+/* 66 */
 /***/ (function(module) {
 
 module.exports = {"Other":0,"CR":1,"LF":2,"Control":3,"Extend":4,"Regional_Indicator":5,"SpacingMark":6,"L":7,"V":8,"T":9,"LV":10,"LVT":11};
+
+/***/ }),
+/* 67 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var CanvasMeasurementProvider = function () {
+    /**
+     * @param {CanvasRenderingContext2D} ctx - provides a canvas rendering context
+     * with 'font' set to the text style of the text to be wrapped.
+     */
+    function CanvasMeasurementProvider(ctx) {
+        _classCallCheck(this, CanvasMeasurementProvider);
+
+        this._ctx = ctx;
+        this._cache = {};
+    }
+
+    // We don't need to set up or tear down anything here. Should these be removed altogether?
+
+    /**
+     * Called by the TextWrapper before a batch of zero or more calls to measureText().
+     */
+
+
+    _createClass(CanvasMeasurementProvider, [{
+        key: "beginMeasurementSession",
+        value: function beginMeasurementSession() {}
+
+        /**
+         * Called by the TextWrapper after a batch of zero or more calls to measureText().
+         */
+
+    }, {
+        key: "endMeasurementSession",
+        value: function endMeasurementSession() {}
+
+        /**
+         * Measure a whole string as one unit.
+         * @param {string} text - the text to measure.
+         * @returns {number} - the length of the string.
+         */
+
+    }, {
+        key: "measureText",
+        value: function measureText(text) {
+            if (!this._cache[text]) {
+                this._cache[text] = this._ctx.measureText(text).width;
+            }
+            return this._cache[text];
+        }
+    }]);
+
+    return CanvasMeasurementProvider;
+}();
+
+module.exports = CanvasMeasurementProvider;
 
 /***/ }),
 /* 68 */
@@ -22052,7 +22244,7 @@ module.exports = {"Other":0,"CR":1,"LF":2,"Control":3,"Extend":4,"Regional_Indic
 "use strict";
 
 
-var minilog = __webpack_require__(12);
+var minilog = __webpack_require__(11);
 minilog.enable();
 
 module.exports = minilog('scratch-render');
