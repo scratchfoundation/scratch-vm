@@ -160,6 +160,7 @@ const BoostMessage = {
  * @enum {number}
  */
 const BoostOutputSubCommand = {
+    START_POWER: 0x01,
     START_POWER_PAIR: 0x02,
     SET_ACC_TIME: 0x05,
     SET_DEC_TIME: 0x06,
@@ -541,12 +542,10 @@ class BoostMotor {
     turnOff (useLimiter = true) {
         const cmd = this._parent.generateOutputCommand(
             this._index,
-            BoostOutputExecution.EXECUTE_IMMEDIATELY ^ BoostOutputExecution.COMMAND_FEEDBACK,
-            BoostOutputSubCommand.START_SPEED,
+            BoostOutputExecution.EXECUTE_IMMEDIATELY,
+            BoostOutputSubCommand.START_POWER,
             [
-                BoostMotorEndState.FLOAT,
-                BoostMotorEndState.FLOAT,
-                BoostMotorProfile.DO_NOT_USE
+                BoostMotorEndState.FLOAT
             ]
         );
 
