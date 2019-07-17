@@ -103,7 +103,7 @@ class Sequencer {
             for (let i = 0; i < threads.length; i++) {
                 const activeThread = this.activeThread = threads[i];
                 // Check if the thread is done so it is not executed.
-                if (activeThread.stack.length === 0 ||
+                if (activeThread.stackFrame === null ||
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
                     stoppedThread = true;
@@ -137,7 +137,7 @@ class Sequencer {
                 }
                 // Check if the thread completed while it just stepped to make
                 // sure we remove it before the next iteration of all threads.
-                if (activeThread.stack.length === 0 ||
+                if (activeThread.stackFrame === null ||
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
                     stoppedThread = true;
@@ -156,7 +156,7 @@ class Sequencer {
                 let nextActiveThread = 0;
                 for (let i = 0; i < this.runtime.threads.length; i++) {
                     const thread = this.runtime.threads[i];
-                    if (thread.stack.length !== 0 &&
+                    if (thread.stackFrame !== null &&
                         thread.status !== Thread.STATUS_DONE) {
                         this.runtime.threads[nextActiveThread] = thread;
                         nextActiveThread++;
@@ -184,7 +184,7 @@ class Sequencer {
             thread.popStack();
 
             // Did the null follow a hat block?
-            if (thread.stack.length === 0) {
+            if (thread.peekStackFrame() === null) {
                 thread.status = Thread.STATUS_DONE;
                 return;
             }
@@ -248,7 +248,7 @@ class Sequencer {
             while (!thread.peekStack()) {
                 thread.popStack();
 
-                if (thread.stack.length === 0) {
+                if (thread.stackFrame === null) {
                     // No more stack to run!
                     thread.status = Thread.STATUS_DONE;
                     return;
@@ -299,7 +299,11 @@ class Sequencer {
             currentBlockId,
             branchNum
         );
-        thread.peekStackFrame().isLoop = isLoop;
+        if (isLoop) {
+            const stackFrame = thread.peekStackFrame();
+            stackFrame.needsReset = true;
+            stackFrame.isLoop = true;
+        }
         if (branchId) {
             // Push branch ID to the thread's stack.
             thread.pushStack(branchId);
@@ -361,7 +365,9 @@ class Sequencer {
      */
     retireThread (thread) {
         thread.stack = [];
-        thread.stackFrame = [];
+        thread.pointer = null;
+        thread.stackFrames = [];
+        thread.stackFrame = null;
         thread.requestScriptGlowInFrame = false;
         thread.status = Thread.STATUS_DONE;
     }
