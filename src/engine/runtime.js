@@ -851,6 +851,7 @@ class Runtime extends EventEmitter {
         categoryInfo.customFieldTypes = {};
         categoryInfo.menus = [];
         categoryInfo.menuInfo = {};
+        categoryInfo.convertedMenuInfo = {};
 
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
@@ -858,6 +859,13 @@ class Runtime extends EventEmitter {
                 const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuInfo, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
                 categoryInfo.menuInfo[menuName] = menuInfo;
+                // Use the convertedMenu and `menuInfo` to consolidate
+                // the information needed to layout the menu correctly
+                // on a dynamic extension block.
+                categoryInfo.convertedMenuInfo[menuName] = {
+                    items: Array.isArray(menuInfo.items) ? convertedMenu.json.args0[0].options : menuInfo.items,
+                    acceptReporters: menuInfo.acceptReporters || false
+                };
             }
         }
         for (const fieldTypeName in extensionInfo.customFieldTypes) {
