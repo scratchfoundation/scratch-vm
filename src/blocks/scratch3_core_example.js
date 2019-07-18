@@ -1,4 +1,5 @@
 const BlockType = require('../extension-support/block-type');
+const ArgumentType = require('../extension-support/argument-type');
 const ContextMenuContext = require('../extension-support/context-menu-context');
 const log = require('../util/log');
 
@@ -23,6 +24,9 @@ class Scratch3CoreExample {
         return {
             id: 'coreExample',
             name: 'CoreEx', // This string does not need to be translated as this extension is only used as an example.
+            menus: {
+                myMenu: ['a', 'b', 'c']
+            },
             blocks: [
                 {
                     func: 'MAKE_A_VARIABLE',
@@ -55,6 +59,26 @@ class Scratch3CoreExample {
                             context: ContextMenuContext.WORKSPACE_ONLY
                         }
                     ]
+                },
+                {
+                    opcode: 'blockWithMenu',
+                    blockType: BlockType.COMMAND,
+                    text: 'a block with a menu [MY_MENU]',
+                    isDynamic: true,
+                    arguments: {
+                        MY_MENU: {
+                            type: ArgumentType.STRING,
+                            menu: 'myMenu',
+                            defaultValue: 'a'
+                        }
+                    },
+                    customContextMenu: [
+                        {
+                            text: 'Change menu value',
+                            callback: 'changeMenu'
+                        }
+                    ]
+
                 }
             ]
         };
@@ -83,6 +107,14 @@ class Scratch3CoreExample {
         log.info('Custom context menu example. ', blockInfo);
     }
 
+    /**
+     * An example of changing a dynamic block
+     * (specifically changing the selected value of a menu in a dynamic block).
+     */
+    changeMenu ({blockInfo}) {
+        blockInfo.arguments.MY_MENU.selectedValue = 'b';
+        this.runtime.updateBlockInfo(blockInfo.id, blockInfo);
+    }
 }
 
 module.exports = Scratch3CoreExample;

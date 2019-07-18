@@ -599,3 +599,51 @@ customContextMenu: [
     }
 ]
 ```
+
+#### Specifying/Changing the selected value of a dropdown menu
+Specifying a dynamic block allows dynamically properties that
+define what the block looks like (block text, how many arguments it has, etc.).
+One new block property that can be set or changed in a dynamic block is
+the currently `selectedValue` of a menu. E.g. you may have a custom context menu item that changes the selected value of a drop down menu on a block:
+
+```js
+class SomeBlocks {
+    // ...
+    getInfo () {
+        return {
+            // ...
+            menus: {
+                myMenu: ['value 1', 'value 2'];
+            }
+            blocks: [
+                {
+                    isDynamic: true
+                    opcode: 'dynamicReporter',
+                    blockType: BlockType.REPORTER,
+                    text: 'my dynamic reporter block [MENU]',
+                    arguments: {
+                        MENU: {
+                            type: ArgumentType.STRING,
+                            menu: 'myMenu',
+                            defaultValue: 'value 1'
+                        }
+                    }
+                    customContextMenu: [
+                        {
+                            text: 'Change Dropdown Menu',
+                            callback: 'changeDropdown'
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+
+    changeDropdown ({blockInfo}) {
+        blockInfo.arguments.MENU.selectedValue = 'value 2';
+        // Tell the runtime to update the block with the new info.
+        this.runtime.updateBlock(blockInfo.id, blockInfo);
+    }
+    // ...
+}
+```
