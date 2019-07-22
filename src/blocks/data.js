@@ -1,6 +1,7 @@
 const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const Cast = require('../util/cast');
+const log = require('../util/log');
 const Variable = require('../engine/variable');
 const formatMessage = require('format-message');
 
@@ -378,11 +379,23 @@ class Scratch3DataBlocks {
             opcode: 'variable',
             func: 'getVariableValue',
             blockType: BlockType.REPORTER,
-            text: v.name
+            text: v.name,
+            customContextMenu: [
+                {
+                    text: formatMessage({
+                        id: 'data.renameVariableContextMenuItem',
+                        default: 'Rename Variable',
+                        description: 'Context menu item on a variable reporter block for renaming the variable'
+                    }),
+                    builtInCallback: 'RENAME_A_VARIABLE',
+                    callback: 'renameCallback'
+                }
+            ]
         }));
         blocks.push(
             '---',
             {
+                isDynamic: true,
                 opcode: 'setvariableto',
                 func: 'setVariable',
                 blockType: BlockType.COMMAND,
@@ -400,6 +413,7 @@ class Scratch3DataBlocks {
                 }
             },
             {
+                isDynamic: true,
                 opcode: 'changevariableby',
                 func: 'changeVariableBy',
                 blockType: BlockType.COMMAND,
@@ -417,6 +431,7 @@ class Scratch3DataBlocks {
                 }
             },
             {
+                isDynamic: true,
                 opcode: 'showvariable',
                 func: 'showVariable',
                 blockType: BlockType.COMMAND,
@@ -430,6 +445,7 @@ class Scratch3DataBlocks {
                 }
             },
             {
+                isDynamic: true,
                 opcode: 'hidevariable',
                 func: 'hideVariable',
                 blockType: BlockType.COMMAND,
@@ -487,11 +503,23 @@ class Scratch3DataBlocks {
             opcode: `listcontents`,
             func: 'getListContents',
             blockType: BlockType.REPORTER,
-            text: list.name
+            text: list.name,
+            customContextMenu: [
+                {
+                    text: formatMessage({
+                        id: 'data.renameListContextMenuItem',
+                        default: 'Rename List',
+                        description: 'Context menu item on a list reporter block for renaming the list'
+                    }),
+                    builtInCallback: 'RENAME_A_VARIABLE',
+                    callback: 'renameCallback'
+                }
+            ]
         }, listColors)));
         blocks.push(
             '---',
             Object.assign({
+                isDynamic: true,
                 opcode: 'addtolist',
                 func: 'addToList',
                 blockType: BlockType.COMMAND,
@@ -507,6 +535,7 @@ class Scratch3DataBlocks {
             }, listColors),
             '---',
             Object.assign({
+                isDynamic: true,
                 opcode: 'deleteoflist',
                 func: 'deleteOfList',
                 blockType: BlockType.COMMAND,
@@ -521,6 +550,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'deletealloflist',
                 func: 'deleteAllOfList',
                 blockType: BlockType.COMMAND,
@@ -534,6 +564,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'insertatlist',
                 func: 'insertAtList',
                 blockType: BlockType.COMMAND,
@@ -549,6 +580,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'replaceitemoflist',
                 func: 'replaceItemOfList',
                 blockType: BlockType.COMMAND,
@@ -565,6 +597,7 @@ class Scratch3DataBlocks {
             }, listColors),
             '---',
             Object.assign({
+                isDynamic: true,
                 opcode: 'itemoflist',
                 func: 'itemOfList',
                 blockType: BlockType.REPORTER,
@@ -579,6 +612,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'itemnumoflist',
                 func: 'itemNumOfList',
                 blockType: BlockType.REPORTER,
@@ -593,6 +627,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'lengthoflist',
                 func: 'lengthOfList',
                 blockType: BlockType.REPORTER,
@@ -606,6 +641,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'listcontainsitem',
                 func: 'listContainsItem',
                 blockType: BlockType.BOOLEAN,
@@ -621,6 +657,7 @@ class Scratch3DataBlocks {
             }, listColors),
             '---',
             Object.assign({
+                isDynamic: true,
                 opcode: 'showlist',
                 func: 'showList',
                 blockType: BlockType.COMMAND,
@@ -634,6 +671,7 @@ class Scratch3DataBlocks {
                 }
             }, listColors),
             Object.assign({
+                isDynamic: true,
                 opcode: 'hidelist',
                 func: 'hideList',
                 blockType: BlockType.COMMAND,
@@ -647,6 +685,67 @@ class Scratch3DataBlocks {
                 }
             }, listColors)
         );
+    }
+
+    renameCallback ({blockInfo, newName, varType}) {
+        const editingTarget = this.runtime.getEditingTarget();
+        const stage = this.runtime.getTargetForStage();
+        if (!editingTarget || !stage) return;
+
+        if (varType !== Variable.SCALAR_TYPE && varType !== Variable.LIST_TYPE) {
+            log.error(`Error processing invalid variable type: ${varType}`);
+            return;
+        }
+
+        const oldName = blockInfo.text;
+        const variable = editingTarget.lookupVariableByNameAndType(oldName, varType);
+
+        const fieldName = varType === Variable.SCALAR_TYPE ? 'VARIABLE' : 'LIST';
+
+        // Accumulate blocks that pertain to this extension
+        let allRelevantBlocks;
+        const visibleBlocks = editingTarget.blocks.getAllReferencesForVariable(variable);
+
+        if (stage.variables.hasOwnProperty(variable.id)) {
+            // If it's a global variable get all the blocks
+            // from all the targets into a single array
+            allRelevantBlocks = [].concat.apply([],
+                this.runtime.targets.map(t => t.blocks.getAllReferencesForVariable(variable)));
+            stage.renameVariable(variable.id, newName);
+        } else {
+            // Otherwise, for local variables, the relevant blocks should be the same
+            // as the visible blocks
+            allRelevantBlocks = visibleBlocks;
+            editingTarget.renameVariable(variable.id, newName);
+        }
+
+        const visibleBlockIds = visibleBlocks.map(b => b.id);
+
+        // Rename all the relevant blocks
+        allRelevantBlocks.forEach(block => {
+            const currBlockInfo = block.mutation && block.mutation.blockInfo;
+            if (!currBlockInfo) {
+                log.error(`The block with id: ${block.id} and opcode: ${
+                    block.opcode} doesn't have blockInfo associated with it. Skipping this block.`);
+                return;
+            }
+            if (currBlockInfo.blockType === BlockType.REPORTER) {
+                // This is a variable reporter block, change the text on the block
+                currBlockInfo.text = newName;
+            } else {
+                // These are blocks that have a variable/list field
+                // update the selected value on the block
+                currBlockInfo.arguments[fieldName].selectedValue = newName;
+            }
+
+            // If this block is currently visible,
+            // update it on the workspace
+            if (visibleBlockIds.indexOf(block.id) > -1) {
+                this.runtime.updateBlockInfo(block.id, currBlockInfo);
+            }
+        });
+
+        this.runtime.requestToolboxExtensionsUpdate();
     }
 }
 

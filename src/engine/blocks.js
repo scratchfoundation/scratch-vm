@@ -584,8 +584,10 @@ class Blocks {
 
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE' || args.name === 'LIST' ||
-                args.name === 'BROADCAST_OPTION') {
+            if ((args.name === 'VARIABLE' || args.name === 'LIST' ||
+                // Can get rid of the checks above and the && clause
+                // after extensionification of variables is complete
+                args.name === 'BROADCAST_OPTION') && block.fields[args.name].id) {
                 // Get variable name using the id in args.value.
                 const variable = this.runtime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {
@@ -605,6 +607,8 @@ class Blocks {
                     } else {
                         this._blocks[block.parent].fields.PROPERTY.value = 'x position';
                     }
+                    // TODO replace this with the new runtime.updateBlockInfo function
+                    // after the sensing_of block gets extension-ified
                     this.runtime.requestBlocksUpdate();
                 }
 
@@ -835,6 +839,41 @@ class Blocks {
 
         this.resetCache();
         this.emitProjectChanged();
+    }
+
+    getAllReferencesForVariable (variable) {
+        let fieldName;
+        let truncatedOpcode;
+        if (variable.type === Variable.SCALAR_TYPE) {
+            fieldName = 'VARIABLE';
+            truncatedOpcode = 'variable';
+        } else if (variable.type === Variable.LIST_TYPE) {
+            fieldName = 'LIST';
+            truncatedOpcode = 'listcontents';
+        } else {
+            // TODO handle broadcast messages later
+            return [];
+        }
+
+        const variableBlocks = [];
+        for (const blockId in this._blocks) {
+            if (!this._blocks.hasOwnProperty(blockId)) continue;
+            const block = this._blocks[blockId];
+            // Check for blocks with fields referencing variable/list, otherwise variable/list reporters
+            if (block.fields[fieldName] &&
+                block.fields[fieldName].value === variable.name) {
+                // It's a block containing a variable field whose currently selected value
+                // matches the given variable name
+                variableBlocks.push(block);
+            } else if (block.mutation &&
+                block.mutation.blockInfo &&
+                block.mutation.blockInfo.opcode === truncatedOpcode &&
+                block.mutation.blockInfo.text === variable.name) {
+                // It's a variable reporter whose name matches the given variable
+                variableBlocks.push(block);
+            }
+        }
+        return variableBlocks;
     }
 
     /**
