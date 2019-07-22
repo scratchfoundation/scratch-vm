@@ -40,7 +40,7 @@ test('popStack', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
-    t.strictEquals(th.popStack(), null);
+    t.strictEquals(th.popStack(), undefined);
 
     t.end();
 });
@@ -209,54 +209,21 @@ test('stopThisScript', t => {
         x: 0,
         y: 0
     };
-    const block3 = {fields: Object,
-        id: 'thirdString',
-        inputs: Object,
-        STEPS: Object,
-        block: 'fakeBlock',
-        name: 'STEPS',
-        next: null,
-        opcode: 'procedures_definition',
-        mutation: {proccode: 'fakeCode'},
-        parent: null,
-        shadow: false,
-        topLevel: true,
-        x: 0,
-        y: 0
-    };
 
     rt.blocks.createBlock(block1);
     rt.blocks.createBlock(block2);
-    rt.blocks.createBlock(block3);
     th.target = rt;
 
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
-    t.strictEquals(th.peekStackFrame(), null);
-
     th.pushStack('arbitraryString');
     t.strictEquals(th.peekStack(), 'arbitraryString');
-    t.notEqual(th.peekStackFrame(), null);
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
-    t.strictEquals(th.peekStackFrame(), null);
-
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
     th.stopThisScript();
-    t.strictEquals(th.peekStack(), null);
-    t.same(th.stack, ['arbitraryString', 'secondString']);
-    t.notEqual(th.peekStackFrame(), null);
-
-    while (th.peekStackFrame()) th.popStack();
-
-    th.pushStack('arbitraryString');
-    th.pushStack('secondString');
-    th.pushStack('thirdString');
-    th.stopThisScript();
-    t.strictEquals(th.peekStack(), null);
-    t.same(th.stack, ['arbitraryString', 'secondString']);
-    t.notEqual(th.peekStackFrame(), null);
+    t.strictEquals(th.peekStack(), 'secondString');
 
     t.end();
 });

@@ -60,7 +60,11 @@ class BlockUtility {
      * @type {object}
      */
     get stackFrame () {
-        return this.thread.getExecutionContext();
+        const frame = this.thread.peekStackFrame();
+        if (frame.executionContext === null) {
+            frame.executionContext = {};
+        }
+        return frame.executionContext;
     }
 
     /**
