@@ -597,6 +597,9 @@ class Blocks {
             } else {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
+                if (block.mutation && block.mutation.blockInfo) {
+                    block.mutation.blockInfo.arguments[args.name].selectedValue = args.value;
+                }
 
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.
@@ -1125,25 +1128,33 @@ class Blocks {
                 xmlString += '</value>';
             }
         }
-        // Add any fields on this block.
-        for (const field in block.fields) {
-            if (!block.fields.hasOwnProperty(field)) continue;
-            const blockField = block.fields[field];
-            xmlString += `<field name="${blockField.name}"`;
-            const fieldId = blockField.id;
-            if (fieldId) {
-                xmlString += ` id="${fieldId}"`;
+
+        // Add fields to the block, but only if the block itself
+        // doesn't have a mutation with a blockinfo.
+        // This is a dynamic extension block which will be laid out using
+        // it's blockInfo mutation
+        if (!(block.mutation && block.mutation.blockInfo)) {
+            // Add any fields on this block.
+            for (const field in block.fields) {
+                if (!block.fields.hasOwnProperty(field)) continue;
+                const blockField = block.fields[field];
+                xmlString += `<field name="${blockField.name}"`;
+                const fieldId = blockField.id;
+                if (fieldId) {
+                    xmlString += ` id="${fieldId}"`;
+                }
+                const varType = blockField.variableType;
+                if (typeof varType === 'string') {
+                    xmlString += ` variabletype="${varType}"`;
+                }
+                let value = blockField.value;
+                if (typeof value === 'string') {
+                    value = xmlEscape(blockField.value);
+                }
+                xmlString += `>${value}</field>`;
             }
-            const varType = blockField.variableType;
-            if (typeof varType === 'string') {
-                xmlString += ` variabletype="${varType}"`;
-            }
-            let value = blockField.value;
-            if (typeof value === 'string') {
-                value = xmlEscape(blockField.value);
-            }
-            xmlString += `>${value}</field>`;
         }
+
         // Add blocks connected to the next connection.
         if (block.next) {
             xmlString += `<next>${this.blockToXML(block.next, comments)}</next>`;
