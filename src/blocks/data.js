@@ -58,14 +58,14 @@ class Scratch3DataBlocks {
                 text: formatMessage({
                     id: 'data.renameVariable',
                     default: 'Rename variable',
-                    description: 'Text for the "rename variable" menu option'
+                    description: 'Text for the drop down menu option for renaming a variable'
                 }),
                 value: Scratch3DataBlocks.RENAME_VARIABLE_ID
             }, {
                 text: formatMessage({
                     id: 'data.deleteVariable',
                     default: 'Delete the "{VARIABLE}" variable',
-                    description: 'Text for the "delete variable" menu option'
+                    description: 'Text for the drop down menu option for deleting a variable'
                 }, {
                     VARIABLE: selectedVariableText
                 }),
@@ -131,26 +131,22 @@ class Scratch3DataBlocks {
     }
 
     getListsMenuItems (editingTargetID, menuState) {
-        const menuItems = [];
-        this.forEachVariable(v => {
-            if (v.type === Variable.LIST_TYPE) {
-                menuItems.push(v.name);
-            }
-        });
+        const menuItems = this.getListNames();
+
         const selectedListText = menuState && menuState.selectedValue;
         if (selectedListText) {
             menuItems.push({
                 text: formatMessage({
-                    id: 'data.renameList',
+                    id: 'data.renameVariable',
                     default: 'Rename list',
-                    description: 'Text for the "rename list" menu option'
+                    description: 'Text for the drop down menu option for renaming a list'
                 }),
                 value: Scratch3DataBlocks.RENAME_VARIABLE_ID
             }, {
                 text: formatMessage({
                     id: 'data.deleteList',
                     default: 'Delete the "{LIST}" list',
-                    description: 'Text for the "delete list" menu option'
+                    description: 'Text for the drop down menu option deleting a list'
                 }, {
                     LIST: selectedListText
                 }),
@@ -351,14 +347,8 @@ class Scratch3DataBlocks {
             }),
             blocks,
             menus: {
-                variables: {
-                    items: 'getVariablesMenuItems',
-                    rejectReporters: true
-                },
-                lists: {
-                    items: 'getListsMenuItems',
-                    rejectReporters: true
-                }
+                variables: 'getVariablesMenuItems',
+                lists: 'getListsMenuItems'
             }
         };
     }
@@ -376,6 +366,13 @@ class Scratch3DataBlocks {
         if (variables.length < 1) {
             return;
         }
+
+        const variableMenu = {
+            type: ArgumentType.STRING,
+            menu: 'variables',
+            defaultValue: variables[0].name
+        };
+
         variables.forEach(v => blocks.push({
             isDynamic: true, // use the new "dynamic" block definition code path
             opcode: 'variable',
@@ -395,11 +392,7 @@ class Scratch3DataBlocks {
                     description: 'text for the "set variable to" block'
                 }),
                 arguments: {
-                    VARIABLE: {
-                        type: ArgumentType.STRING,
-                        menu: 'variables',
-                        defaultValue: variables[0].name
-                    },
+                    VARIABLE: variableMenu,
                     VALUE: {
                         type: ArgumentType.STRING,
                         defaultValue: 0
@@ -416,11 +409,7 @@ class Scratch3DataBlocks {
                     description: 'text for the "change variable by" block'
                 }),
                 arguments: {
-                    VARIABLE: {
-                        type: ArgumentType.STRING,
-                        menu: 'variables',
-                        defaultValue: variables[0].name
-                    },
+                    VARIABLE: variableMenu,
                     VALUE: {
                         type: ArgumentType.STRING,
                         defaultValue: 1
@@ -437,11 +426,7 @@ class Scratch3DataBlocks {
                     description: 'text for the "show variable" block'
                 }),
                 arguments: {
-                    VARIABLE: {
-                        type: ArgumentType.STRING,
-                        menu: 'variables',
-                        defaultValue: variables[0].name
-                    }
+                    VARIABLE: variableMenu
                 }
             },
             {
@@ -454,11 +439,7 @@ class Scratch3DataBlocks {
                     description: 'text for the "hide variable" block'
                 }),
                 arguments: {
-                    VARIABLE: {
-                        type: ArgumentType.STRING,
-                        menu: 'variables',
-                        defaultValue: variables[0].name
-                    }
+                    VARIABLE: variableMenu
                 }
             }
         );
