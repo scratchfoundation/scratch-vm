@@ -601,6 +601,7 @@ class Scratch3DataBlocks {
                 opcode: 'itemoflist',
                 func: 'itemOfList',
                 blockType: BlockType.REPORTER,
+                disableMonitor: true,
                 text: formatMessage({
                     id: 'data.itemOfList',
                     default: 'item [INDEX] of [LIST]',
@@ -616,6 +617,7 @@ class Scratch3DataBlocks {
                 opcode: 'itemnumoflist',
                 func: 'itemNumOfList',
                 blockType: BlockType.REPORTER,
+                disableMonitor: true,
                 text: formatMessage({
                     id: 'data.itemNumOfList',
                     default: 'item # of [ITEM] in [LIST]',
@@ -631,6 +633,7 @@ class Scratch3DataBlocks {
                 opcode: 'lengthoflist',
                 func: 'lengthOfList',
                 blockType: BlockType.REPORTER,
+                disableMonitor: true,
                 text: formatMessage({
                     id: 'data.lengthOfList',
                     default: 'length of [LIST]',
@@ -700,7 +703,16 @@ class Scratch3DataBlocks {
         const oldName = blockInfo.text;
         const variable = editingTarget.lookupVariableByNameAndType(oldName, varType);
 
-        const fieldName = varType === Variable.SCALAR_TYPE ? 'VARIABLE' : 'LIST';
+
+        let fieldName;
+        let reporterBlockOpcode;
+        if (varType === Variable.SCALAR_TYPE) {
+            fieldName = 'VARIABLE';
+            reporterBlockOpcode = 'variable';
+        } else {
+            fieldName = 'LIST';
+            reporterBlockOpcode = 'listcontents';
+        }
 
         // Accumulate blocks that pertain to this extension
         let allRelevantBlocks;
@@ -729,8 +741,8 @@ class Scratch3DataBlocks {
                     block.opcode} doesn't have blockInfo associated with it. Skipping this block.`);
                 return;
             }
-            if (currBlockInfo.blockType === BlockType.REPORTER) {
-                // This is a variable reporter block, change the text on the block
+            if (currBlockInfo.opcode === reporterBlockOpcode) {
+                // This is a variable/list reporter block, change the text on the block
                 currBlockInfo.text = newName;
             } else {
                 // These are blocks that have a variable/list field
