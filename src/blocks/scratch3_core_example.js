@@ -111,9 +111,9 @@ class Scratch3CoreExample {
      * An example of changing a dynamic block
      * (specifically changing the selected value of a menu in a dynamic block).
      */
-    changeMenu ({blockInfo}) {
+    changeMenu ({blockInfo, blockId}) {
         blockInfo.arguments.MY_MENU.selectedValue = 'b';
-        this.runtime.updateBlockInfo(blockInfo.id, blockInfo);
+        this.runtime.updateBlockInfo(blockId, blockInfo);
     }
 }
 

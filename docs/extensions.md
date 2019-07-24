@@ -531,7 +531,10 @@ In order to specify custom context menu options, you can provide a list of conte
 which contain the text label for the menu item as well as the name of the function in the extension that should be run when
 the block is selected.
 
-The context menu callback function will have access to an object with the `blockInfo` for the block instance whose context menu was triggered.
+The context menu callback function will have access to an object with at least two properties:
+
+* `blockInfo` - The extension block descriptor for the block instance whose context menu was triggered.
+* `blockId` - An identifier for the specific block instance whose context menu was triggered.
 
 ```js
 class SomeBlocks {
@@ -560,11 +563,11 @@ class SomeBlocks {
         };
     }
 
-    myContextMenuFunction ({blockInfo}) {
+    myContextMenuFunction ({blockInfo, blockId}) {
         // ...
     }
 
-    anotherContextMenuFunction ({blockInfo}) {
+    anotherContextMenuFunction ({blockInfo, blockId}) {
         // ...
     }
     // ...
@@ -639,10 +642,10 @@ class SomeBlocks {
         };
     }
 
-    changeDropdown ({blockInfo}) {
+    changeDropdown ({blockInfo, blockId}) {
         blockInfo.arguments.MENU.selectedValue = 'value 2';
         // Tell the runtime to update the block with the new info.
-        this.runtime.updateBlock(blockInfo.id, blockInfo);
+        this.runtime.updateBlock(blockId, blockInfo);
     }
     // ...
 }
