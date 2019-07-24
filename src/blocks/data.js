@@ -4,7 +4,6 @@ const Cast = require('../util/cast');
 const Variable = require('../engine/variable');
 const formatMessage = require('format-message');
 
-const cloudSymbol = '\u2601';
 const LIST_ITEM_LIMIT = 200000;
 
 /**
@@ -502,21 +501,19 @@ class Scratch3DataBlocks {
                 defaultValue: lists[0].name
             }
         };
-        lists.forEach(list => blocks.push({
+        lists.forEach(list => blocks.push(Object.assign({
             isDynamic: true, // use the new "dynamic" block definition code path
             opcode: `listcontents`,
             func: 'getListContents',
             blockType: BlockType.REPORTER,
-            ...listColors,
             text: list.name
-        }));
+        }, listColors)));
         blocks.push(
             '---',
-            {
+            Object.assign({
                 opcode: 'addtolist',
                 func: 'addToList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.addToList',
                     default: 'add [ITEM] to [LIST]',
@@ -526,13 +523,12 @@ class Scratch3DataBlocks {
                     ITEM: commonArgs.ITEM,
                     LIST: commonArgs.LIST
                 }
-            },
+            }, listColors),
             '---',
-            {
+            Object.assign({
                 opcode: 'deleteoflist',
                 func: 'deleteOfList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.deleteOfList',
                     default: 'delete [INDEX] of [LIST]',
@@ -542,12 +538,11 @@ class Scratch3DataBlocks {
                     INDEX: commonArgs.INDEX,
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'deletealloflist',
                 func: 'deleteAllOfList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.deleteAllOfList',
                     default: 'delete all of [LIST]',
@@ -556,12 +551,11 @@ class Scratch3DataBlocks {
                 arguments: {
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'insertatlist',
                 func: 'insertAtList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.insertAtList',
                     default: 'insert [ITEM] at [INDEX] of [LIST]',
@@ -572,12 +566,11 @@ class Scratch3DataBlocks {
                     INDEX: commonArgs.INDEX,
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'replaceitemoflist',
                 func: 'replaceItemOfList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.replaceItemOfList',
                     default: 'replace item [INDEX] of [LIST] with [ITEM]',
@@ -588,13 +581,12 @@ class Scratch3DataBlocks {
                     LIST: commonArgs.LIST,
                     ITEM: commonArgs.ITEM
                 }
-            },
+            }, listColors),
             '---',
-            {
+            Object.assign({
                 opcode: 'itemoflist',
                 func: 'itemOfList',
                 blockType: BlockType.REPORTER,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.itemOfList',
                     default: 'item [INDEX] of [LIST]',
@@ -604,12 +596,11 @@ class Scratch3DataBlocks {
                     INDEX: commonArgs.INDEX,
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'itemnumoflist',
                 func: 'itemNumOfList',
                 blockType: BlockType.REPORTER,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.itemNumOfList',
                     default: 'item # of [ITEM] in [LIST]',
@@ -619,12 +610,11 @@ class Scratch3DataBlocks {
                     ITEM: commonArgs.ITEM,
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'lengthoflist',
                 func: 'lengthOfList',
                 blockType: BlockType.REPORTER,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.lengthOfList',
                     default: 'length of [LIST]',
@@ -633,12 +623,11 @@ class Scratch3DataBlocks {
                 arguments: {
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'listcontainsitem',
                 func: 'listContainsItem',
                 blockType: BlockType.BOOLEAN,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.listContainsItem',
                     default: '[LIST] contains [ITEM]?',
@@ -648,13 +637,12 @@ class Scratch3DataBlocks {
                     LIST: commonArgs.LIST,
                     ITEM: commonArgs.ITEM
                 }
-            },
+            }, listColors),
             '---',
-            {
+            Object.assign({
                 opcode: 'showlist',
                 func: 'showList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.showList',
                     default: 'show list [LIST]',
@@ -663,12 +651,11 @@ class Scratch3DataBlocks {
                 arguments: {
                     LIST: commonArgs.LIST
                 }
-            },
-            {
+            }, listColors),
+            Object.assign({
                 opcode: 'hidelist',
                 func: 'hideList',
                 blockType: BlockType.COMMAND,
-                ...listColors,
                 text: formatMessage({
                     id: 'data.hideList',
                     default: 'hide list [LIST]',
@@ -677,7 +664,7 @@ class Scratch3DataBlocks {
                 arguments: {
                     LIST: commonArgs.LIST
                 }
-            }
+            }, listColors)
         );
     }
 }
