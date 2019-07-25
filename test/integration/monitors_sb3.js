@@ -235,7 +235,7 @@ test('importing sb3 project with monitors', t => {
         t.equal(monitorRecord.visible, true);
         t.equal(monitorRecord.spriteName, null);
         t.equal(monitorRecord.targetId, null);
-        t.equal(vm.extensionManager.isExtensionLoaded('music'), true);
+        t.equal(vm.runtime.extensionManager.isExtensionLoaded('music'), true);
 
         monitorId = 'ev3_getDistance';
         monitorRecord = vm.runtime._monitorState.get(monitorId);
@@ -245,7 +245,7 @@ test('importing sb3 project with monitors', t => {
         t.equal(monitorRecord.visible, true);
         t.equal(monitorRecord.spriteName, null);
         t.equal(monitorRecord.targetId, null);
-        t.equal(vm.extensionManager.isExtensionLoaded('ev3'), true);
+        t.equal(vm.runtime.extensionManager.isExtensionLoaded('ev3'), true);
 
         t.end();
         process.nextTick(process.exit);
