@@ -10,7 +10,6 @@ const JSZip = require('jszip');
 
 const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
-const ExtensionManager = require('./extension-support/extension-manager');
 const log = require('./util/log');
 const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
@@ -129,7 +128,7 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.BLOCK_UPDATE, blockId, blockInfo);
         });
         this.runtime.on(Runtime.TOOLBOX_EXTENSIONS_NEED_UPDATE, () => {
-            this.extensionManager.refreshBlocks();
+            this.runtime.extensionManager.refreshBlocks();
         });
         this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
             this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
@@ -159,11 +158,9 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
 
-        this.extensionManager = new ExtensionManager(this.runtime);
-
         // Load core extensions
         for (const id of CORE_EXTENSIONS) {
-            this.extensionManager.loadExtensionIdSync(id);
+            this.runtime.extensionManager.loadExtensionIdSync(id);
         }
 
         this.blockListener = this.blockListener.bind(this);
@@ -509,9 +506,9 @@ class VirtualMachine extends EventEmitter {
         const extensionPromises = [];
 
         extensions.extensionIDs.forEach(extensionID => {
-            if (!this.extensionManager.isExtensionLoaded(extensionID)) {
+            if (!this.runtime.extensionManager.isExtensionLoaded(extensionID)) {
                 const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
-                extensionPromises.push(this.extensionManager.loadExtensionURL(extensionURL));
+                extensionPromises.push(this.runtime.extensionManager.loadExtensionURL(extensionURL));
             }
         });
 
@@ -1128,7 +1125,7 @@ class VirtualMachine extends EventEmitter {
         if (locale !== formatMessage.setup().locale) {
             formatMessage.setup({locale: locale, translations: {[locale]: messages}});
         }
-        return this.extensionManager.refreshBlocks();
+        return this.runtime.extensionManager.refreshBlocks();
     }
 
     /**
@@ -1231,12 +1228,12 @@ class VirtualMachine extends EventEmitter {
         const extensionIDs = new Set(copiedBlocks
             .map(b => sb3.getExtensionIdForOpcode(b.opcode))
             .filter(id => !!id) // Remove ids that do not exist
-            .filter(id => !this.extensionManager.isExtensionLoaded(id)) // and remove loaded extensions
+            .filter(id => !this.runtime.extensionManager.isExtensionLoaded(id)) // and remove loaded extensions
         );
 
         // Create an array promises for extensions to load
         const extensionPromises = Array.from(extensionIDs,
-            id => this.extensionManager.loadExtensionURL(id)
+            id => this.runtime.extensionManager.loadExtensionURL(id)
         );
 
         return Promise.all(extensionPromises).then(() => {
