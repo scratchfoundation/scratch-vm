@@ -166,6 +166,45 @@ const BoostMessage = {
 };
 
 /**
+ * Enum for Hub Property Types
+ * @readonly
+ * @enum {number}
+ */
+
+const BoostHubProperty = {
+    ADVERTISEMENT_NAME: 0x01,
+    BUTTON: 0x02,
+    FW_VERSION: 0x03,
+    HW_VERSION: 0x04,
+    RSSI: 0x05,
+    BATTERY_VOLTAGE: 0x06,
+    BATTERY_TYPE: 0x07,
+    MANUFACTURER_NAME: 0x08,
+    RADIO_FW_VERSION: 0x09,
+    LEGO_WP_VERSION: 0x0A,
+    SYSTEM_TYPE_ID: 0x0B,
+    HW_NETWORK_ID: 0x0C,
+    PRIMARY_MAC: 0x0D,
+    SECONDARY_MAC: 0x0E,
+    HW_NETWORK_FAMILY: 0x0F
+};
+
+/**
+ * Enum for Hub Property Operations
+ * @readonly
+ * @enum {number}
+ */
+
+const BoostHubPropertyOperation = {
+    SET: 0x01,
+    ENABLE_UPDATES: 0x02,
+    DISABLE_UPDATES: 0x03,
+    RESET: 0x04,
+    REQUEST_UPDATE: 0x05,
+    UPDATE: 0x06
+};
+
+/**
  * Enum for Motor Subcommands (for 0x81)
  * @readonly
  * @enum {number}
@@ -956,6 +995,19 @@ class Boost {
             this._onMessage
         );
         this._pingDeviceId = window.setInterval(this._pingDevice, BoostPingInterval);
+
+        // Send a request for firmware version.
+        setTimeout(() => {
+            const command = [
+                0x00, // Hub ID
+                BoostMessage.HUB_PROPERTIES,
+                BoostHubProperty.FW_VERSION,
+                BoostHubPropertyOperation.REQUEST_UPDATE
+            ];
+            command.unshift(command.length + 1);
+            this.send(BoostBLE.characteristic, command, false);
+        }, 500);
+
     }
 
     /**
@@ -979,6 +1031,25 @@ class Boost {
         const portID = data[3];
 
         switch (messageType) {
+        
+        case BoostMessage.HUB_PROPERTIES: {
+            const property = data[3];
+            switch (property) {
+            case BoostHubProperty.FW_VERSION: {
+                // Establish firmware version 1.0.00.0224 as a 32-bit signed integer (little endian)
+                const fwVersion10000224 = int32ArrayToNumber([0x24, 0x02, 0x00, 0x10]);
+                const fwHub = int32ArrayToNumber(data.slice(5, data.length));
+                if (fwHub < fwVersion10000224) {
+                    BoostPort = BoostPort20000016OrOlder;
+                    log.info('Move Hub firmware older than version 1.0.00.0224 detected. Using old port mapping.');
+                } else {
+                    BoostPort = BoostPort20000017OrNewer;
+                }
+                break;
+            }
+            }
+            break;
+        }
         case BoostMessage.HUB_ATTACHED_IO: { // IO Attach/Detach events
             const event = data[4];
             const typeId = data[5];
