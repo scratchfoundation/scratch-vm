@@ -28,6 +28,7 @@ require('canvas-toBlob');
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 const CORE_EXTENSIONS = [
+    'data'
     // 'motion',
     // 'looks',
     // 'sound',

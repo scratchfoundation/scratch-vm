@@ -379,6 +379,9 @@ class Blocks {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
                     this.emitProjectChanged();
+                    // TODO this should probably be batched
+                    // (esp. if we receive multiple new var_creates in a row).
+                    this.runtime.requestToolboxExtensionsUpdate();
                 }
             } else {
                 if (stage.lookupVariableById(e.varId)) {
@@ -394,6 +397,9 @@ class Blocks {
                 }
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
                 this.emitProjectChanged();
+                // TODO same as above, this should probably be batched
+                // (esp. if we receive multiple new var_creates in a row).
+                this.runtime.requestToolboxExtensionsUpdate();
             }
             break;
         case 'var_rename':
@@ -578,8 +584,10 @@ class Blocks {
 
             // Update block value
             if (!block.fields[args.name]) return;
-            if (args.name === 'VARIABLE' || args.name === 'LIST' ||
-                args.name === 'BROADCAST_OPTION') {
+            if ((args.name === 'VARIABLE' || args.name === 'LIST' ||
+                // Can get rid of the checks above and the && clause
+                // after extensionification of variables is complete
+                args.name === 'BROADCAST_OPTION') && block.fields[args.name].id) {
                 // Get variable name using the id in args.value.
                 const variable = this.runtime.getEditingTarget().lookupVariableById(args.value);
                 if (variable) {
@@ -589,6 +597,9 @@ class Blocks {
             } else {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
+                if (block.mutation && block.mutation.blockInfo) {
+                    block.mutation.blockInfo.arguments[args.name].selectedValue = args.value;
+                }
 
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.
@@ -599,6 +610,8 @@ class Blocks {
                     } else {
                         this._blocks[block.parent].fields.PROPERTY.value = 'x position';
                     }
+                    // TODO replace this with the new runtime.updateBlockInfo function
+                    // after the sensing_of block gets extension-ified
                     this.runtime.requestBlocksUpdate();
                 }
 
@@ -829,6 +842,41 @@ class Blocks {
 
         this.resetCache();
         this.emitProjectChanged();
+    }
+
+    getAllReferencesForVariable (variable) {
+        let fieldName;
+        let truncatedOpcode;
+        if (variable.type === Variable.SCALAR_TYPE) {
+            fieldName = 'VARIABLE';
+            truncatedOpcode = 'variable';
+        } else if (variable.type === Variable.LIST_TYPE) {
+            fieldName = 'LIST';
+            truncatedOpcode = 'listcontents';
+        } else {
+            // TODO handle broadcast messages later
+            return [];
+        }
+
+        const variableBlocks = [];
+        for (const blockId in this._blocks) {
+            if (!this._blocks.hasOwnProperty(blockId)) continue;
+            const block = this._blocks[blockId];
+            // Check for blocks with fields referencing variable/list, otherwise variable/list reporters
+            if (block.fields[fieldName] &&
+                block.fields[fieldName].value === variable.name) {
+                // It's a block containing a variable field whose currently selected value
+                // matches the given variable name
+                variableBlocks.push(block);
+            } else if (block.mutation &&
+                block.mutation.blockInfo &&
+                block.mutation.blockInfo.opcode === truncatedOpcode &&
+                block.mutation.blockInfo.text === variable.name) {
+                // It's a variable reporter whose name matches the given variable
+                variableBlocks.push(block);
+            }
+        }
+        return variableBlocks;
     }
 
     /**
@@ -1080,25 +1128,33 @@ class Blocks {
                 xmlString += '</value>';
             }
         }
-        // Add any fields on this block.
-        for (const field in block.fields) {
-            if (!block.fields.hasOwnProperty(field)) continue;
-            const blockField = block.fields[field];
-            xmlString += `<field name="${blockField.name}"`;
-            const fieldId = blockField.id;
-            if (fieldId) {
-                xmlString += ` id="${fieldId}"`;
+
+        // Add fields to the block, but only if the block itself
+        // doesn't have a mutation with a blockinfo.
+        // This is a dynamic extension block which will be laid out using
+        // its blockInfo mutation
+        if (!(block.mutation && block.mutation.blockInfo)) {
+            // Add any fields on this block.
+            for (const field in block.fields) {
+                if (!block.fields.hasOwnProperty(field)) continue;
+                const blockField = block.fields[field];
+                xmlString += `<field name="${blockField.name}"`;
+                const fieldId = blockField.id;
+                if (fieldId) {
+                    xmlString += ` id="${fieldId}"`;
+                }
+                const varType = blockField.variableType;
+                if (typeof varType === 'string') {
+                    xmlString += ` variabletype="${varType}"`;
+                }
+                let value = blockField.value;
+                if (typeof value === 'string') {
+                    value = xmlEscape(blockField.value);
+                }
+                xmlString += `>${value}</field>`;
             }
-            const varType = blockField.variableType;
-            if (typeof varType === 'string') {
-                xmlString += ` variabletype="${varType}"`;
-            }
-            let value = blockField.value;
-            if (typeof value === 'string') {
-                value = xmlEscape(blockField.value);
-            }
-            xmlString += `>${value}</field>`;
         }
+
         // Add blocks connected to the next connection.
         if (block.next) {
             xmlString += `<next>${this.blockToXML(block.next, comments)}</next>`;

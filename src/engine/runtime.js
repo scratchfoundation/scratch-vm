@@ -851,6 +851,7 @@ class Runtime extends EventEmitter {
         categoryInfo.customFieldTypes = {};
         categoryInfo.menus = [];
         categoryInfo.menuInfo = {};
+        categoryInfo.convertedMenuInfo = {};
 
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
@@ -858,6 +859,13 @@ class Runtime extends EventEmitter {
                 const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuInfo, categoryInfo);
                 categoryInfo.menus.push(convertedMenu);
                 categoryInfo.menuInfo[menuName] = menuInfo;
+                // Use the convertedMenu and `menuInfo` to consolidate
+                // the information needed to layout the menu correctly
+                // on a dynamic extension block.
+                categoryInfo.convertedMenuInfo[menuName] = {
+                    items: Array.isArray(menuInfo.items) ? convertedMenu.json.args0[0].options : menuInfo.items,
+                    acceptReporters: menuInfo.acceptReporters || false
+                };
             }
         }
         for (const fieldTypeName in extensionInfo.customFieldTypes) {
@@ -1037,10 +1045,7 @@ class Runtime extends EventEmitter {
         const blockJSON = {
             type: extendedOpcode,
             inputsInline: true,
-            category: categoryInfo.name,
-            colour: categoryInfo.color1,
-            colourSecondary: categoryInfo.color2,
-            colourTertiary: categoryInfo.color3
+            category: categoryInfo.name
         };
         const context = {
             // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -1053,6 +1058,16 @@ class Runtime extends EventEmitter {
             blockInfo,
             inputList: []
         };
+
+        if (blockInfo.color1 || blockInfo.color2 || blockInfo.color3) {
+            blockJSON.colour = blockInfo.color1;
+            blockJSON.colourSecondary = blockInfo.color2;
+            blockJSON.colourTertiary = blockInfo.color3;
+        } else {
+            blockJSON.colour = categoryInfo.color1;
+            blockJSON.colourSecondary = categoryInfo.color2;
+            blockJSON.colourTertiary = categoryInfo.color3;
+        }
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
         // We can overspecify an icon for each block, but if no icon exists on a block, fall back to

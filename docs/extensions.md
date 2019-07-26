@@ -531,7 +531,10 @@ In order to specify custom context menu options, you can provide a list of conte
 which contain the text label for the menu item as well as the name of the function in the extension that should be run when
 the block is selected.
 
-The context menu callback function will have access to an object with the `blockInfo` for the block instance whose context menu was triggered.
+The context menu callback function will have access to an object with at least two properties:
+
+* `blockInfo` - The extension block descriptor for the block instance whose context menu was triggered.
+* `blockId` - An identifier for the specific block instance whose context menu was triggered.
 
 ```js
 class SomeBlocks {
@@ -560,11 +563,11 @@ class SomeBlocks {
         };
     }
 
-    myContextMenuFunction ({blockInfo}) {
+    myContextMenuFunction ({blockInfo, blockId}) {
         // ...
     }
 
-    anotherContextMenuFunction ({blockInfo}) {
+    anotherContextMenuFunction ({blockInfo, blockId}) {
         // ...
     }
     // ...
@@ -598,4 +601,52 @@ customContextMenu: [
         context: ContextMenuContext.TOOLBOX_ONLY
     }
 ]
+```
+
+#### Specifying/Changing the selected value of a dropdown menu
+Specifying a dynamic block allows dynamically properties that
+define what the block looks like (block text, how many arguments it has, etc.).
+One new block property that can be set or changed in a dynamic block is
+the currently `selectedValue` of a menu. E.g. you may have a custom context menu item that changes the selected value of a drop down menu on a block:
+
+```js
+class SomeBlocks {
+    // ...
+    getInfo () {
+        return {
+            // ...
+            menus: {
+                myMenu: ['value 1', 'value 2'];
+            }
+            blocks: [
+                {
+                    isDynamic: true
+                    opcode: 'dynamicReporter',
+                    blockType: BlockType.REPORTER,
+                    text: 'my dynamic reporter block [MENU]',
+                    arguments: {
+                        MENU: {
+                            type: ArgumentType.STRING,
+                            menu: 'myMenu',
+                            defaultValue: 'value 1'
+                        }
+                    }
+                    customContextMenu: [
+                        {
+                            text: 'Change Dropdown Menu',
+                            callback: 'changeDropdown'
+                        }
+                    ]
+                }
+            ]
+        };
+    }
+
+    changeDropdown ({blockInfo, blockId}) {
+        blockInfo.arguments.MENU.selectedValue = 'value 2';
+        // Tell the runtime to update the block with the new info.
+        this.runtime.updateBlock(blockId, blockInfo);
+    }
+    // ...
+}
 ```
