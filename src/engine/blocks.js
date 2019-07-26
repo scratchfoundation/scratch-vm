@@ -1132,7 +1132,7 @@ class Blocks {
         // Add fields to the block, but only if the block itself
         // doesn't have a mutation with a blockinfo.
         // This is a dynamic extension block which will be laid out using
-        // it's blockInfo mutation
+        // its blockInfo mutation
         if (!(block.mutation && block.mutation.blockInfo)) {
             // Add any fields on this block.
             for (const field in block.fields) {
