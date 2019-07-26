@@ -94,14 +94,14 @@ const BoostPortFeedback = {
  * @enum {number}
  */
 
-const BoostPort20000016OrOlder = {
+const BoostPort10000223OrOlder = {
     A: 55,
     B: 56,
     C: 0,
     D: 1
 };
 
-const BoostPort20000017OrNewer = {
+const BoostPort10000224OrNewer = {
     A: 0,
     B: 1,
     C: 2,
@@ -109,7 +109,7 @@ const BoostPort20000017OrNewer = {
 };
 
 // Set default port mapping to support the newer firmware
-let BoostPort = BoostPort20000017OrNewer;
+let BoostPort = BoostPort10000224OrNewer;
 
 /**
  * Ids for each color sensor value used by the extension.
@@ -1040,10 +1040,10 @@ class Boost {
                 const fwVersion10000224 = int32ArrayToNumber([0x24, 0x02, 0x00, 0x10]);
                 const fwHub = int32ArrayToNumber(data.slice(5, data.length));
                 if (fwHub < fwVersion10000224) {
-                    BoostPort = BoostPort20000016OrOlder;
+                    BoostPort = BoostPort10000223OrOlder;
                     log.info('Move Hub firmware older than version 1.0.00.0224 detected. Using old port mapping.');
                 } else {
-                    BoostPort = BoostPort20000017OrNewer;
+                    BoostPort = BoostPort10000224OrNewer;
                 }
                 break;
             }
