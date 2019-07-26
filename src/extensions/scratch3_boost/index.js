@@ -93,12 +93,23 @@ const BoostPortFeedback = {
  * @readonly
  * @enum {number}
  */
-const BoostPort = {
+
+const BoostPort20000016OrOlder = {
+    A: 55,
+    B: 56,
+    C: 0,
+    D: 1
+};
+
+const BoostPort20000017OrNewer = {
     A: 0,
     B: 1,
     C: 2,
     D: 3
 };
+
+// Set default port mapping to support the newer firmware
+let BoostPort = BoostPort20000017OrNewer;
 
 /**
  * Ids for each color sensor value used by the extension.
