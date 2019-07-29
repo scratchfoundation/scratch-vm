@@ -97,8 +97,8 @@ const BoostPortFeedback = {
 const BoostPort10000223OrOlder = {
     A: 55,
     B: 56,
-    C: 0,
-    D: 1
+    C: 1,
+    D: 2
 };
 
 const BoostPort10000224OrNewer = {
