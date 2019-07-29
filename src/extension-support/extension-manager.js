@@ -83,8 +83,8 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
-         * @type {Set.<string>}
+         * Map of loaded extension URLs/IDs to sanitized extension info.
+         * @type {Map.<string, ExtensionInfo>}
          * @private
          */
         this._loadedExtensions = new Map();
@@ -113,6 +113,16 @@ class ExtensionManager {
     }
 
     /**
+     * Fetch the cached information about an extension. Does not call `getInfo` on the extension
+     * @see {@link isExtensionLoaded} for details about registration timing.
+     * @param {string} extensionID - the ID of the extension.
+     * @return {ExtensionInfo} - cached information about the extension, or `undefined` if the extension is not loaded.
+     */
+    getExtensionInfo (extensionID) {
+        return this._loadedExtensions.get(extensionID);
+    }
+
+    /**
      * Synchronously load an internal extension (core or non-core) by ID. This call will
      * fail if the provided id is not does not match an internal extension.
      * @param {string} extensionId - the ID of an internal extension
@@ -123,7 +133,6 @@ class ExtensionManager {
             return;
         }
 
-        /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
         if (this.isExtensionLoaded(extensionId)) {
             const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
             log.warn(message);
@@ -132,8 +141,7 @@ class ExtensionManager {
 
         const extension = builtinExtensions[extensionId]();
         const extensionInstance = new extension(this.runtime);
-        const serviceName = this._registerInternalExtension(extensionInstance);
-        this._loadedExtensions.set(extensionId, serviceName);
+        this._registerInternalExtension(extensionInstance);
     }
 
     /**
@@ -143,20 +151,12 @@ class ExtensionManager {
      */
     loadExtensionURL (extensionURL) {
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
-            /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-            if (this.isExtensionLoaded(extensionURL)) {
-                const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
-                log.warn(message);
-                return Promise.resolve();
-            }
-
-            const extension = builtinExtensions[extensionURL]();
-            const extensionInstance = new extension(this.runtime);
-            const serviceName = this._registerInternalExtension(extensionInstance);
-            this._loadedExtensions.set(extensionURL, serviceName);
+            this.loadExtensionIdSync(extensionURL);
             return Promise.resolve();
         }
 
+        log.error('Worker extensions are a work in progress and do not work yet');
+        /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
@@ -171,16 +171,24 @@ class ExtensionManager {
      * @returns {Promise} resolved once all the extensions have been reinitialized
      */
     refreshBlocks () {
-        const allPromises = Array.from(this._loadedExtensions.values()).map(serviceName =>
-            dispatch.call(serviceName, 'getInfo')
+        const allPromises = [];
+        this._loadedExtensions.forEach((extensionInfo, oldId) => {
+            const serviceName = extensionInfo.serviceName;
+            allPromises.push(dispatch.call(serviceName, 'getInfo')
                 .then(info => {
                     info = this._prepareExtensionInfo(serviceName, info);
+                    this._loadedExtensions.set(info.id, info);
+                    if (oldId !== info.id) {
+                        log.warn(`Extension changed ID from ${oldId} to ${info.id}!`);
+                        this._loadedExtensions.delete(oldId);
+                    }
                     dispatch.call('runtime', '_refreshExtensionPrimitives', info);
                 })
                 .catch(e => {
                     log.error(`Failed to refresh built-in extension primitives: ${JSON.stringify(e)}`);
                 })
-        );
+            );
+        });
         return Promise.all(allPromises);
     }
 
@@ -228,15 +236,15 @@ class ExtensionManager {
     /**
      * Register an internal (non-Worker) extension object
      * @param {object} extensionObject - the extension object to register
-     * @returns {string} The name of the registered extension service
      */
     _registerInternalExtension (extensionObject) {
-        const extensionInfo = extensionObject.getInfo();
+        const rawExtensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
-        const serviceName = `extension_${fakeWorkerId}_${extensionInfo.id}`;
+        const serviceName = `extension_${fakeWorkerId}_${rawExtensionInfo.id}`;
         dispatch.setServiceSync(serviceName, extensionObject);
-        dispatch.callSync('extensions', 'registerExtensionServiceSync', serviceName);
-        return serviceName;
+        this.registerExtensionServiceSync(serviceName);
+        const extensionInfo = this._prepareExtensionInfo(serviceName, rawExtensionInfo);
+        this._loadedExtensions.set(extensionInfo.id, extensionInfo);
     }
 
     /**
@@ -271,11 +279,12 @@ class ExtensionManager {
      * @private
      */
     _prepareExtensionInfo (serviceName, extensionInfo) {
-        extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
             throw new Error('Invalid extension id');
         }
+        extensionInfo = Object.assign({}, extensionInfo);
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
+        extensionInfo.serviceName = serviceName;
         extensionInfo.blocks = extensionInfo.blocks || [];
         extensionInfo.targetTypes = extensionInfo.targetTypes || [];
         extensionInfo.blocks = extensionInfo.blocks.reduce((results, blockInfo) => {

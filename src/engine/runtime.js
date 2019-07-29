@@ -1047,6 +1047,7 @@ class Runtime extends EventEmitter {
      */
     _convertBlockForScratchBlocks (blockInfo, categoryInfo) {
         const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
+        blockInfo.categoryId = categoryInfo.id;
 
         const blockJSON = {
             type: extendedOpcode,
