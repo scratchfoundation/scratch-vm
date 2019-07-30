@@ -170,6 +170,14 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * @returns {ExtensionManager} the extension manager, now owned by the runtime.
+     * @deprecated Please access the extension manager through the runtime instead.
+     */
+    get extensionManager () {
+        return this.runtime.extensionManager;
+    }
+
+    /**
      * Start running the VM - do this before anything else.
      */
     start () {
