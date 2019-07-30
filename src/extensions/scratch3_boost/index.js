@@ -1935,7 +1935,7 @@ class Scratch3BoostBlocks {
             log.warn('Asked for a motor position that doesnt exist!');
             return false;
         }
-        if (portID && this._peripheral.motor(portID)) {
+        if (portID !== null && this._peripheral.motor(portID)) {
             let val = this._peripheral.motor(portID).position;
             // Boost motor A position direction is reversed by design
             // so we have to reverse the position here
