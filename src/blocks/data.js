@@ -1,6 +1,7 @@
 const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const Cast = require('../util/cast');
+const StringUtil = require('../util/string-util');
 const log = require('../util/log');
 const Variable = require('../engine/variable');
 const formatMessage = require('format-message');
@@ -27,32 +28,12 @@ class Scratch3DataBlocks {
         return 'DELETE_VARIABLE_ID';
     }
 
-    forEachVariable (callback) {
-        const stageTarget = this.runtime.getTargetForStage();
-        if (stageTarget) {
-            for (const key in stageTarget.variables) {
-                if (stageTarget.variables.hasOwnProperty(key)) {
-                    callback(stageTarget.variables[key]);
-                }
-            }
-        }
-        const editingTarget = this.runtime.getEditingTarget();
-        if (editingTarget && (editingTarget !== stageTarget)) {
-            for (const key in editingTarget.variables) {
-                if (editingTarget.variables.hasOwnProperty(key)) {
-                    callback(editingTarget.variables[key]);
-                }
-            }
-        }
-    }
-
     getVariablesMenuItems (editingTargetID, menuState) {
-        const menuItems = [];
-        this.forEachVariable(v => {
-            if (v.type === Variable.SCALAR_TYPE) {
-                menuItems.push(v.name);
-            }
-        });
+        const editingTarget = this.runtime.getEditingTarget();
+        if (!editingTarget) return [];
+        const menuItems = editingTarget.getAllVariableNamesInScopeByType(Variable.SCALAR_TYPE)
+            .sort(StringUtil.compareStrings);
+
         const selectedVariableText = menuState && menuState.selectedValue;
         if (selectedVariableText) {
             menuItems.push({
@@ -122,7 +103,10 @@ class Scratch3DataBlocks {
     }
 
     getListNames () {
-        const listNames = [];
+        const editingTarget = this.runtime.getEditingTarget();
+        if (!editingTarget) return [];
+
+        const listNames = this.runtime.getAllVariableNamesInScopeByType(Variable.LIST_TYPE);
         this.forEachVariable(v => {
             if (v.type === Variable.LIST_TYPE) {
                 listNames.push(v.name);
@@ -132,7 +116,7 @@ class Scratch3DataBlocks {
     }
 
     getListsMenuItems (editingTargetID, menuState) {
-        const menuItems = this.getListNames();
+        const menuItems = this.getListNames().sort(StringUtil.compareStrings);
 
         const selectedListText = menuState && menuState.selectedValue;
         if (selectedListText) {
@@ -318,25 +302,22 @@ class Scratch3DataBlocks {
      * @returns {object} metadata for this extension and its blocks.
      */
     getInfo () {
-        const variables = [];
-        const lists = [];
-        this.forEachVariable(x => {
-            switch (x.type) {
-            case Variable.SCALAR_TYPE:
-                variables.push(x);
-                break;
-            case Variable.LIST_TYPE:
-                lists.push(x);
-                break;
-            default:
-                // ignore other types such as broadcast messages
-                break;
-            }
-        });
+        const editingTarget = this.runtime.getEditingTarget();
+
+        let variableNames = [];
+        let listNames = [];
+
+        if (editingTarget) {
+            variableNames = editingTarget.getAllVariableNamesInScopeByType(Variable.SCALAR_TYPE);
+            listNames = editingTarget.getAllVariableNamesInScopeByType(Variable.LIST_TYPE);
+        }
+
+        variableNames.sort(StringUtil.compareStrings);
+        listNames.sort(StringUtil.compareStrings);
 
         const blocks = [];
-        this.addBlocksForVariables(blocks, variables);
-        this.addBlocksForLists(blocks, lists);
+        this.addBlocksForVariables(blocks, variableNames);
+        this.addBlocksForLists(blocks, listNames);
         return {
             id: 'data2',
             color1: '#FF8C1A',
@@ -354,7 +335,7 @@ class Scratch3DataBlocks {
         };
     }
 
-    addBlocksForVariables (blocks, variables) {
+    addBlocksForVariables (blocks, variableNames) {
         blocks.push({
             func: 'MAKE_A_VARIABLE',
             blockType: BlockType.BUTTON,
@@ -364,22 +345,22 @@ class Scratch3DataBlocks {
                 description: 'Label for the button which opens the "New Variable" dialog'
             })
         });
-        if (variables.length < 1) {
+        if (variableNames.length < 1) {
             return;
         }
 
         const variableMenu = {
             type: ArgumentType.STRING,
             menu: 'variables',
-            defaultValue: variables[0].name
+            defaultValue: variableNames[0]
         };
 
-        variables.forEach(v => blocks.push({
+        variableNames.forEach(name => blocks.push({
             isDynamic: true, // use the new "dynamic" block definition code path
             opcode: 'variable',
             func: 'getVariableValue',
             blockType: BlockType.REPORTER,
-            text: v.name,
+            text: name,
             customContextMenu: [
                 {
                     text: formatMessage({
@@ -461,7 +442,7 @@ class Scratch3DataBlocks {
         );
     }
 
-    addBlocksForLists (blocks, lists) {
+    addBlocksForLists (blocks, listNames) {
         blocks.push({
             func: 'MAKE_A_LIST',
             blockType: BlockType.BUTTON,
@@ -471,7 +452,7 @@ class Scratch3DataBlocks {
                 description: 'Label for the button which opens the "New List" dialog'
             })
         });
-        if (lists.length < 1) {
+        if (listNames.length < 1) {
             return;
         }
         const listColors = {
@@ -495,15 +476,15 @@ class Scratch3DataBlocks {
             LIST: {
                 type: ArgumentType.STRING,
                 menu: 'lists',
-                defaultValue: lists[0].name
+                defaultValue: listNames[0]
             }
         };
-        lists.forEach(list => blocks.push(Object.assign({
+        listNames.forEach(name => blocks.push(Object.assign({
             isDynamic: true, // use the new "dynamic" block definition code path
             opcode: `listcontents`,
             func: 'getListContents',
             blockType: BlockType.REPORTER,
-            text: list.name,
+            text: name,
             customContextMenu: [
                 {
                     text: formatMessage({

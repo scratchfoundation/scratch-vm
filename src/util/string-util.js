@@ -89,6 +89,21 @@ class StringUtil {
             }
         });
     }
+
+    // Port over the string comparison utiliy from scratch-blocks
+    // Blockly.scratchBlocksUtils.compareStrings
+    /**
+     * Compare strings with natural number sorting.
+     * @param {string} str1 First input.
+     * @param {string} str2 Second input.
+     * @return {number} -1, 0, or 1 to signify greater than, equality, or less than.
+     */
+    static compareStrings (str1, str2) {
+        return str1.localeCompare(str2, [], {
+            sensitivity: 'base',
+            numeric: true
+        });
+    }
 }
 
 module.exports = StringUtil;
