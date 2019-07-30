@@ -16,6 +16,7 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
+const dispatch = require('../dispatch/central-dispatch');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -102,9 +103,23 @@ const primitiveOpcodeInfoMap = {
  * or null if the given block is not one of the primitives described above.
  */
 const serializePrimitiveBlock = function (block) {
-    // Returns an array represeting a primitive block or null if not one of
+    // Returns an array representing a primitive block or null if not one of
     // the primitive types above
-    if (hasOwnProperty.call(primitiveOpcodeInfoMap, block.opcode)) {
+    const extensionInfo = block.extensionInfo;
+    if (extensionInfo) {
+        try {
+            return dispatch.callSync(extensionInfo.serviceName, 'serializeBlock', block);
+        } catch (e) {
+            // if the extension doesn't implement `serializeBlock` that's OK
+            // if anything else went wrong, rethrow the exception
+            // TODO: implement a better way to recognize the extension service not implementing `serializeBlock`
+            if (e.message.indexOf('Method serializeBlock not found on service') !== 0) {
+                throw e;
+            }
+            // fall through to default handling
+        }
+    }
+    if (primitiveOpcodeInfoMap.hasOwnProperty(block.opcode)) {
         const primitiveInfo = primitiveOpcodeInfoMap[block.opcode];
         const primitiveConstant = primitiveInfo[0];
         const fieldName = primitiveInfo[1];
