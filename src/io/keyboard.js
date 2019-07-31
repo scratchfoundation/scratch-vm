@@ -9,7 +9,8 @@ const KEY_NAME = {
     LEFT: 'left arrow',
     UP: 'up arrow',
     RIGHT: 'right arrow',
-    DOWN: 'down arrow'
+    DOWN: 'down arrow',
+    ENTER: 'enter'
 };
 
 /**
@@ -56,6 +57,7 @@ class Keyboard {
         case 'ArrowRight': return KEY_NAME.RIGHT;
         case 'Down':
         case 'ArrowDown': return KEY_NAME.DOWN;
+        case 'Enter': return KEY_NAME.ENTER;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
