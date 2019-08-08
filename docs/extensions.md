@@ -238,6 +238,54 @@ menus: {
 }
 ```
 
+### Custom serialization
+
+Sometimes Scratch needs to serialize some or all of the blocks in a project, such as when saving the project or
+copying blocks into the backpack. In some cases the default method of serialization may not be appropriate for a block
+defined by an extension; in these cases the extension may choose to override the default behavior.
+
+Specify a function name in a block's `serialize` property to override serialization behavior for that block.
+Similarly, specify a function name in a block's `deserialize` property to override deserialization behavior for that
+block. If multiple blocks need custom serialization they may share functions but are not required to do so.
+
+The `serialize` function should take a block as a parameter and return an array -- see `serializePrimitiveBlock` from
+the `scratch-vm` source code as an example. The `deserialize` function should reverse the operation.
+
+**WARNING**: the serialization format may change without warning to extension authors. Please use custom serialization
+only when absolutely necessary, and only within "core" extensions.
+
+For example:
+
+```js
+class SomeBlocks {
+    // ...
+    serializeSpecialBlock (block) {
+        return [/* ... */];
+    }
+    deserializeSpecialBlock (serializedBlock) {
+        return {
+            opcode: 'specialBlock',
+            // ...
+        };
+    }
+    getInfo () {
+        return {
+            // ...
+            blocks: [
+                {
+                    opcode: 'mySpecialBlock',
+                    serialize: 'serializeSpecialBlock',
+                    deserialize: 'deserializeSpecialBlock',
+                    arguments: {/* ... */}
+                },
+                // ...
+            ],
+            // ...
+        };
+    }
+}
+```
+
 ## Annotated Example
 
 ```js
