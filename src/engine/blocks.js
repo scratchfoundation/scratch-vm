@@ -597,9 +597,6 @@ class Blocks {
             } else {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
-                if (block.mutation && block.mutation.blockInfo) {
-                    block.mutation.blockInfo.arguments[args.name].selectedValue = args.value;
-                }
 
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.

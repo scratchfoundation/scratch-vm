@@ -2,6 +2,7 @@ const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const Cast = require('../util/cast');
 const log = require('../util/log');
+const StringUtil = require('../util/string-util');
 const Variable = require('../engine/variable');
 const formatMessage = require('format-message');
 
@@ -53,6 +54,8 @@ class Scratch3DataBlocks {
                 menuItems.push(v.name);
             }
         });
+        menuItems.sort(StringUtil.compareStrings);
+
         const selectedVariableText = menuState && menuState.selectedValue;
         if (selectedVariableText) {
             menuItems.push({
@@ -128,7 +131,7 @@ class Scratch3DataBlocks {
                 listNames.push(v.name);
             }
         });
-        return listNames;
+        return listNames.sort(StringUtil.stringCompare);
     }
 
     getListsMenuItems (editingTargetID, menuState) {
@@ -157,8 +160,8 @@ class Scratch3DataBlocks {
         return menuItems;
     }
 
-    getListContents ({LIST}, util) {
-        const list = this.getVariableObject(util, LIST, Variable.LIST_TYPE);
+    getListContents (args, util, blockInfo) {
+        const list = util.target.lookupOrCreateVariableByNameAndType(blockInfo.text, Variable.LIST_TYPE);
 
         // If block is running for monitors, return copy of list as an array if changed.
         if (util.thread.updateMonitor) {
@@ -333,6 +336,10 @@ class Scratch3DataBlocks {
                 break;
             }
         });
+
+        // Sort the variables and lists alphabetically
+        variables.sort((a, b) => StringUtil.compareStrings(a.name, b.name));
+        lists.sort((a, b) => StringUtil.compareStrings(a.name, b.name));
 
         const blocks = [];
         this.addBlocksForVariables(blocks, variables);
