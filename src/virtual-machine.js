@@ -339,6 +339,10 @@ class VirtualMachine extends EventEmitter {
             });
 
         return validationPromise
+            .then((validatedInput) => {
+                this.emit("projectInputValidated",validatedInput);
+                return validatedInput
+            })
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
             .then(() => this.runtime.emitProjectLoaded())
             .catch(error => {
