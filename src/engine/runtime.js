@@ -1219,10 +1219,24 @@ class Runtime extends EventEmitter {
         // Sanitize the placeholder to ensure valid XML
         placeholder = placeholder.replace(/[<"&]/, '_');
 
-        const argJSON = {
-            type: 'input_value',
-            name: placeholder
-        };
+        const iconURI = context.blockInfo.arguments[placeholder].iconURI;
+        let argJSON;
+
+        if (iconURI) {
+            argJSON = {
+                type: 'field_image',
+                name: placeholder,
+                src: iconURI,
+                width: 28,
+                height: 28,
+                alt: context.blockInfo.arguments[placeholder].defaultValue
+            };
+        } else {
+            argJSON = {
+                type: 'input_value',
+                name: placeholder
+            };
+        }
 
         const argInfo = context.blockInfo.arguments[placeholder] || {};
         let argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
