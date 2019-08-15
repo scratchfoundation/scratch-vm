@@ -657,6 +657,19 @@ class Blocks {
                 isSpriteLocalVariable = !(this.runtime.getTargetForStage().variables[block.fields.VARIABLE.id]);
             } else if (block.opcode === 'data_listcontents') {
                 isSpriteLocalVariable = !(this.runtime.getTargetForStage().variables[block.fields.LIST.id]);
+            } else if (block.opcode === 'data2_variable') {
+                // TODO replace above cases with this one and the one below when we switch
+                // over to using the variables extension
+                const varName = block.mutation.blockInfo.text;
+                isSpriteLocalVariable = !(this.runtime.getTargetForStage().lookupVariableByNameAndType(
+                    varName, Variable.SCALAR_TYPE
+                ));
+            } else if (block.opcode === 'data2_listcontents') {
+                const listName = block.mutation.blockInfo.text;
+                isSpriteLocalVariable =
+                    !(this.runtime.getTargetForStage().lookupVariableByNameAndType(
+                        listName, Variable.LIST_TYPE
+                    ));
             }
 
             const isSpriteSpecific = isSpriteLocalVariable ||
@@ -684,7 +697,8 @@ class Blocks {
                         params: this._getBlockParams(block),
                         // @todo(vm#565) for numerical values with decimals, some countries use comma
                         value: '',
-                        mode: block.opcode === 'data_listcontents' ? 'list' : 'default'
+                        mode: (block.opcode === 'data_listcontents') || (block.opcode === 'data2_listcontents') ?
+                            'list' : 'default'
                     }));
                 }
             }
