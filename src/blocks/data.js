@@ -387,6 +387,7 @@ class Scratch3DataBlocks {
             func: 'getVariableValue',
             blockType: BlockType.REPORTER,
             text: v.name,
+            paletteKey: v.id,
             customContextMenu: [
                 {
                     text: formatMessage({
@@ -511,6 +512,7 @@ class Scratch3DataBlocks {
             func: 'getListContents',
             blockType: BlockType.REPORTER,
             text: list.name,
+            paletteKey: list.id,
             customContextMenu: [
                 {
                     text: formatMessage({
