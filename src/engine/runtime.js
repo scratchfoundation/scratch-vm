@@ -268,6 +268,12 @@ class Runtime extends EventEmitter {
         this._prevMonitorState = OrderedMap({});
 
         /**
+         * Track any monitors to be added that don't have corresponding monitor blocks
+         * created yet.
+         */
+        this._pendingMonitors = {};
+
+        /**
          * Whether the project is in "turbo mode."
          * @type {Boolean}
          */
@@ -512,7 +518,6 @@ class Runtime extends EventEmitter {
     static get PROJECT_CHANGED () {
         return 'PROJECT_CHANGED';
     }
-
     /**
      * Event name for report that a change was made to an extension in the toolbox.
      * @const {string}
@@ -1791,6 +1796,7 @@ class Runtime extends EventEmitter {
 
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
+        this._pendingMonitors = {};
         this.emit(Runtime.RUNTIME_DISPOSED);
         // @todo clear out extensions? turboMode? etc.
 
@@ -2479,6 +2485,34 @@ class Runtime extends EventEmitter {
             color: categoryInfo.color1, // TODO This assumes that all extensions have the same monitor color.
             label: `${categoryInfo.name}: ${extensionBlockInfo.text}`
         };
+    }
+
+    /**
+     * Keep track of the fact that a monitor has been requested
+     * for the given blockId, even though the block with the given id
+     * does not exist in the flyout yet.
+     * @param {string} blockId The id of the block with a pending monitor
+     */
+    addPendingMonitor (blockId) {
+        this._pendingMonitors[blockId] = true;
+    }
+
+    /**
+     * Removes a block id from the pending monitors list (e.g. if it has
+     * been turned into an actual monitor).
+     * @param {string} blockId The id of the block with a pending monitor
+     */
+    removePendingMonitor (blockId) {
+        delete this._pendingMonitors[blockId];
+    }
+
+    /**
+     * Checks whether the given block id has a pending monitor.
+     * @param {string} blockId The id of the block with a pending monitor
+     * @return {boolean} True if the block has a pending monitor, false otherwise.
+     */
+    getPendingMonitor (blockId) {
+        return this._pendingMonitors[blockId] || false;
     }
 
     /**

@@ -378,10 +378,13 @@ class Blocks {
             if (e.isLocal && editingTarget && !editingTarget.isStage && !e.isCloud) {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
-                    this.emitProjectChanged();
+
+                    this.runtime.addPendingMonitor(e.varId);
+
                     // TODO this should probably be batched
                     // (esp. if we receive multiple new var_creates in a row).
                     this.runtime.requestToolboxExtensionsUpdate();
+                    this.emitProjectChanged();
                 }
             } else {
                 if (stage.lookupVariableById(e.varId)) {
@@ -396,10 +399,14 @@ class Blocks {
                     }
                 }
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
-                this.emitProjectChanged();
+
+                this.runtime.addPendingMonitor(e.varId);
+
                 // TODO same as above, this should probably be batched
                 // (esp. if we receive multiple new var_creates in a row).
                 this.runtime.requestToolboxExtensionsUpdate();
+                this.emitProjectChanged();
+
             }
             break;
         case 'var_rename':
@@ -552,6 +559,20 @@ class Blocks {
         // (if they were top-level XML in the event).
         if (block.topLevel) {
             this._addScript(block.id);
+        }
+
+        // A block was just created, see if it had an associated pending monitor,
+        // if so, keep track of the monitor state change by mimicing the checkbox
+        // event from the flyout. Clear record of this block from
+        // the pending monitors list.
+        if (this === this.runtime.monitorBlocks &&
+            this.runtime.getPendingMonitor(block.id)) {
+            this.changeBlock({
+                id: block.id, // Monitor blocks for variables are the variable ID.
+                element: 'checkbox', // Mimic checkbox event from flyout.
+                value: true
+            }, this.runtime);
+            this.runtime.removePendingMonitor(block.id);
         }
 
         this.resetCache();
