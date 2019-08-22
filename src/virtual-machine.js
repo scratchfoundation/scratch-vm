@@ -1081,6 +1081,13 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Turn on the debug mode
+     */
+    setDebugMode () {
+        this.runtime.setDebugMode();
+    }
+
+    /**
      * @returns {RenderWebGL} The renderer attached to the vm
      */
     get renderer () {

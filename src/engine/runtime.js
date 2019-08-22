@@ -367,6 +367,11 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
+
+        /**
+         * True if not running in prod environment. Crash on errors.
+         */
+        this._debugMode = false;
     }
 
     /**
@@ -1472,6 +1477,17 @@ class Runtime extends EventEmitter {
     attachRenderer (renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
+    }
+
+    /**
+     * Set the debug mode
+     */
+    setDebugMode () {
+        this._debugMode = true;
+    }
+
+    isDebugMode() {
+        return this._debugMode;
     }
 
     /**

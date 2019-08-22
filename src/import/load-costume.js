@@ -1,7 +1,12 @@
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
+const assert = require('assert');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
+    debugger;
+    if (runtime.isDebugMode()) {
+        assert(costume.md5);
+    }
     return new Promise(resolve => {
         let svgString = costume.asset.decodeText();
         // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
@@ -179,6 +184,9 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
 };
 
 const loadBitmap_ = function (costume, runtime, _rotationCenter) {
+    if (runtime.isDebugMode()) {
+        assert(costume.md5);
+    }
     return fetchBitmapCanvas_(costume, runtime, _rotationCenter)
         .then(fetched => {
             const updateCostumeAsset = function (dataURI) {
@@ -244,6 +252,9 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostumeFromAsset = function (costume, runtime, optVersion) {
+    if (runtime.isDebugMode()) {
+        assert(costume.asset);
+    }
     costume.assetId = costume.asset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
@@ -286,6 +297,9 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
 const loadCostume = function (md5ext, costume, runtime, optVersion) {
+    if (runtime.isDebugMode()) {
+        assert(costume.md5);
+    }
     const idParts = StringUtil.splitFirst(md5ext, '.');
     const md5 = idParts[0];
     const ext = idParts[1].toLowerCase();
