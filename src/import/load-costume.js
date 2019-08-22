@@ -219,6 +219,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
                 // Use default asset if original fails to load
                 costume.assetId = runtime.storage.defaultAssetId.ImageVector;
                 costume.asset = runtime.storage.get(costume.assetId);
+                costume.md5 = `${costume.assetId}.${AssetType.ImageVector.runtimeFormat}`;
                 return loadVector_(costume, runtime);
             });
     }
