@@ -3,7 +3,6 @@ const log = require('../util/log');
 const assert = require('assert');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
-    debugger;
     if (runtime.isDebugMode()) {
         assert(costume.md5);
     }
