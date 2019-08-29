@@ -279,7 +279,7 @@ class BlockCached {
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
-        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+        this._definedBlockFunction = typeof this._blockFunction === 'function';
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
@@ -385,7 +385,6 @@ const execute = function (sequencer, thread) {
 
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
-    const currentStackFrame = thread.peekStackFrame();
 
     let blockContainer = thread.blockContainer;
     let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
@@ -404,8 +403,8 @@ const execute = function (sequencer, thread) {
     const length = ops.length;
     let i = 0;
 
-    if (currentStackFrame.reported !== null) {
-        const reported = currentStackFrame.reported;
+    if (thread.reported !== null) {
+        const reported = thread.reported;
         // Reinstate all the previous values.
         for (; i < reported.length; i++) {
             const {opCached: oldOpCached, inputValue} = reported[i];
@@ -441,7 +440,7 @@ const execute = function (sequencer, thread) {
         }
 
         // The reporting block must exist and must be the next one in the sequence of operations.
-        if (thread.justReported !== null && ops[i] && ops[i].id === currentStackFrame.reporting) {
+        if (thread.justReported !== null && ops[i] && ops[i].id === thread.reportingBlockId) {
             const opCached = ops[i];
             const inputValue = thread.justReported;
 
@@ -462,8 +461,8 @@ const execute = function (sequencer, thread) {
             i += 1;
         }
 
-        currentStackFrame.reporting = null;
-        currentStackFrame.reported = null;
+        thread.reportingBlockId = null;
+        thread.reported = null;
     }
 
     for (; i < length; i++) {
@@ -518,8 +517,8 @@ const execute = function (sequencer, thread) {
             // operation if it is promise waiting will set its parent value at
             // that time.
             thread.justReported = null;
-            currentStackFrame.reporting = ops[i].id;
-            currentStackFrame.reported = ops.slice(0, i).map(reportedCached => {
+            thread.reportingBlockId = ops[i].id;
+            thread.reported = ops.slice(0, i).map(reportedCached => {
                 const inputName = reportedCached._parentKey;
                 const reportedValues = reportedCached._parentValues;
 

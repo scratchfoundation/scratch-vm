@@ -724,7 +724,7 @@ class Runtime extends EventEmitter {
                 if (packageObject.getPrimitives) {
                     const packagePrimitives = packageObject.getPrimitives();
                     for (const op in packagePrimitives) {
-                        if (packagePrimitives.hasOwnProperty(op)) {
+                        if (typeof packagePrimitives[op] === 'function') {
                             this._primitives[op] =
                                 packagePrimitives[op].bind(packageObject);
                         }
@@ -1567,7 +1567,7 @@ class Runtime extends EventEmitter {
     isActiveThread (thread) {
         return (
             (
-                thread.stack.length > 0 &&
+                thread.stackFrame !== null &&
                 thread.status !== Thread.STATUS_DONE) &&
             this.threads.indexOf(thread) > -1);
     }
@@ -1744,11 +1744,20 @@ class Runtime extends EventEmitter {
             // Start the thread with this top block.
             newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
-        // For compatibility with Scratch 2, edge triggered hats need to be processed before
-        // threads are stepped. See ScratchRuntime.as for original implementation
+        // For compatibility with Scratch 2, edge triggered hats need to be
+        // processed before threads are stepped. See ScratchRuntime.as for
+        // original implementation.
+        //
+        // TODO: Move the execute call to sequencer. Maybe in a method call
+        // stepHat or stepOne.
         newThreads.forEach(thread => {
             execute(this.sequencer, thread);
-            thread.goToNextBlock();
+            if (thread.status !== Thread.STATUS_DONE) {
+                thread.goToNextBlock();
+                if (thread.stackFrame === null) {
+                    this.sequencer.retireThread(thread);
+                }
+            }
         });
         return newThreads;
     }
