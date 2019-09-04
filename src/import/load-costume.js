@@ -172,7 +172,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
             };
         })
         .catch(error => {
-            log.warn(`${e.name}: ${e.message}`);
+            log.warn(`${error.name}: ${error.message}`);
             // Clean up the text layer properties if it fails to load
             delete costume.textLayerMD5;
             delete costume.textLayerAsset;
