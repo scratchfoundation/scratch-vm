@@ -7,6 +7,10 @@ const formatMessage = require('format-message');
 
 const LIST_ITEM_LIMIT = 200000;
 
+// serialization primitives
+const VAR_PRIMITIVE = 12;
+const LIST_PRIMITIVE = 13;
+
 /**
  * This Scratch 3.0 extension implements Scratch "data" blocks for variables and lists, including cloud variables.
  */
@@ -350,6 +354,12 @@ class Scratch3DataBlocks {
             menus: {
                 variables: 'getVariablesMenuItems',
                 lists: 'getListsMenuItems'
+            },
+            serialization: {
+                variable: {
+                    serialize: 'serializeVariable',
+                    deserialize: 'deserializeVariable'
+                }
             }
         };
     }
@@ -758,6 +768,40 @@ class Scratch3DataBlocks {
         });
 
         this.runtime.requestToolboxExtensionsUpdate();
+    }
+
+    serializeVariable (block, target) {
+        target = this.runtime.getTargetById(target.id);
+        const variableName = block.mutation.blockInfo.text;
+        const variable = target.lookupVariableByNameAndType(variableName, Variable.SCALAR_TYPE);
+        const result = [VAR_PRIMITIVE, variableName, variable.id];
+        if (block.topLevel) {
+            result.push(block.x ? Math.round(block.x) : 0);
+            result.push(block.y ? Math.round(block.y) : 0);
+        }
+        return result;
+    }
+
+    deserializeVariable (primitiveArray) {
+        if (primitiveArray[0] !== VAR_PRIMITIVE) {
+            throw new Error('bad primitive ID on variable!');
+        }
+        const result = {};
+        result.opcode = 'data_variable';
+        result.fields = {
+            VARIABLE: {
+                name: 'VARIABLE',
+                value: primitiveArray[1],
+                id: primitiveArray[2],
+                variableType: Variable.SCALAR_TYPE
+            }
+        };
+        if (primitiveArray.length > 3) {
+            result.topLevel = true;
+            result.x = primitiveArray[3];
+            result.y = primitiveArray[4];
+        }
+        return result;
     }
 }
 

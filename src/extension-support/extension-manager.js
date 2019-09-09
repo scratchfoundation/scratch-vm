@@ -307,6 +307,8 @@ class ExtensionManager {
         }, []);
         extensionInfo.menus = extensionInfo.menus || {};
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
+        extensionInfo.serialization =
+            this._prepareSerializationInfo(extensionInfo.id, serviceName, extensionInfo.serialization);
         return extensionInfo;
     }
 
@@ -396,6 +398,34 @@ class ExtensionManager {
             throw new Error(`Extension menu returned no items: ${menuItemFunctionName}`);
         }
         return menuItems;
+    }
+
+    /**
+     * Ready the custom serialization and deserialization information in an extension's metadata.
+     * Before: map of short opcode (like `variable`) to `serialize` & `deserialize` function names.
+     * After: map of extended opcode (like `data_variable`) to synchronous callables for `serialize` and `deserialize`.
+     * @param {string} extensionId - the ID of the extension, like 'data'.
+     * @param {string} serviceName - the name of the service registered for this extension.
+     * @param {object.<object.<string>>} rawSerializationInfo - map of block opcode to `serialize` & `deserialize` info.
+     * @return {object.<object.<function>>} - prepared serialization info as described above.
+     */
+    _prepareSerializationInfo (extensionId, serviceName, rawSerializationInfo) {
+        rawSerializationInfo = rawSerializationInfo || {};
+        const cookedSerializationInfo = {};
+        for (const opcode in rawSerializationInfo) {
+            if (!rawSerializationInfo.hasOwnProperty(opcode)) continue;
+            const functionNames = rawSerializationInfo[opcode];
+            const extendedOpcode = `${extensionId}_${opcode}`;
+            const boundFunctions = {};
+            if (functionNames.serialize) {
+                boundFunctions.serialize = dispatch.callSync.bind(dispatch, serviceName, functionNames.serialize);
+            }
+            if (functionNames.deserialize) {
+                boundFunctions.deserialize = dispatch.callSync.bind(dispatch, serviceName, functionNames.deserialize);
+            }
+            cookedSerializationInfo[extendedOpcode] = boundFunctions;
+        }
+        return cookedSerializationInfo;
     }
 
     /**

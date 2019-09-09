@@ -16,7 +16,6 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
-const dispatch = require('../dispatch/central-dispatch');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -96,28 +95,40 @@ const primitiveOpcodeInfoMap = {
     data_listcontents: [LIST_PRIMITIVE, 'LIST']
 };
 
+const primitiveIdMap = (() => {
+    const map = {};
+    for (const opcode in primitiveOpcodeInfoMap) {
+        const info = primitiveOpcodeInfoMap[opcode];
+        map[info[0]] = opcode;
+    }
+    return map;
+})();
+
+/**
+ * Retrieve the custom serialization information about a particular opcode/block in a particular extension.
+ * @param {ExtensionMetadata} extensionInfo - extension metadata which may or may not include `serialization`.
+ * @param {string} opcode - the extended opcode for the block in the extension, like `data_variable`.
+ * @returns {object} always returns an object; it may or may not have `serialize` and/or `deserialize` properties.
+ */
+const getSerializationInfo = function (extensionInfo, opcode) {
+    return (
+        extensionInfo &&
+        extensionInfo.serialization &&
+        extensionInfo.serialization[opcode]
+    ) || {};
+};
+
 /**
  * Serializes primitives described above into a more compact format
  * @param {object} block the block to serialize
+ * @param {object} target The target which contains the block
  * @return {array} An array representing the information in the block,
  * or null if the given block is not one of the primitives described above.
  */
-const serializePrimitiveBlock = function (block) {
-    // Returns an array representing a primitive block or null if not one of
-    // the primitive types above
-    const extensionInfo = block.extensionInfo;
-    if (extensionInfo) {
-        try {
-            return dispatch.callSync(extensionInfo.serviceName, 'serializeBlock', block);
-        } catch (e) {
-            // if the extension doesn't implement `serializeBlock` that's OK
-            // if anything else went wrong, rethrow the exception
-            // TODO: implement a better way to recognize the extension service not implementing `serializeBlock`
-            if (e.message.indexOf('Method serializeBlock not found on service') !== 0) {
-                throw e;
-            }
-            // fall through to default handling
-        }
+const serializePrimitiveBlock = function (block, target) {
+    const customSerialize = getSerializationInfo(block.extensionInfo, block.opcode).serialize;
+    if (customSerialize) {
+        return customSerialize(block, target);
     }
     if (primitiveOpcodeInfoMap.hasOwnProperty(block.opcode)) {
         const primitiveInfo = primitiveOpcodeInfoMap[block.opcode];
@@ -199,12 +210,13 @@ const serializeFields = function (fields) {
  * Serialize the given block in the SB3 format with some compression of inputs,
  * fields, and primitives.
  * @param {object} block The block to serialize
+ * @param {object} target The target which contains the block
  * @return {object | array} A serialized representation of the block. This is an
  * array if the block is one of the primitive types described above or an object,
  * if not.
  */
-const serializeBlock = function (block) {
-    const serializedPrimitive = serializePrimitiveBlock(block);
+const serializeBlock = function (block, target) {
+    const serializedPrimitive = serializePrimitiveBlock(block, target);
     if (serializedPrimitive) return serializedPrimitive;
     // If serializedPrimitive is null, proceed with serializing a non-primitive block
     const obj = Object.create(null);
@@ -303,17 +315,18 @@ const getExtensionIdForOpcode = function (opcode) {
 /**
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
- * @param {object} blocks The blocks to be serialized
+ * @param {object} target The target containing the blocks to be serialized.
  * @return {Array} An array of the serialized blocks with compressed inputs and
  * compressed primitives and the list of all extension IDs present
  * in the serialized blocks.
  */
-const serializeBlocks = function (blocks) {
+const serializeBlocks = function (target) {
+    const blocks = target.blocks;
     const obj = Object.create(null);
     const extensionIDs = new Set();
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
-        obj[blockID] = serializeBlock(blocks[blockID], blocks);
+        obj[blockID] = serializeBlock(blocks[blockID], target);
         const extensionID = getExtensionIdForOpcode(blocks[blockID].opcode);
         if (extensionID) {
             extensionIDs.add(extensionID);
@@ -462,7 +475,7 @@ const serializeTarget = function (target, extensions) {
     obj.variables = vars.variables;
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
-    [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
+    [obj.blocks, targetExtensions] = serializeBlocks(target);
     obj.comments = serializeComments(target.comments);
 
     // TODO remove this check/patch when (#1901) is fixed
@@ -806,30 +819,58 @@ const deserializeFields = function (fields) {
     return obj;
 };
 
+const decodeBlock = function (block) {
+    const extendedOpcode = Array.isArray(block) ? primitiveIdMap[block[0]] : block.opcode;
+    const firstSplit = extendedOpcode.indexOf('_');
+    if (firstSplit < 0) {
+        return {
+            extendedOpcode: extendedOpcode,
+            extensionId: '',
+            opcode: extendedOpcode
+        };
+    }
+    return {
+        extendedOpcode: extendedOpcode,
+        extensionId: extendedOpcode.slice(0, firstSplit),
+        opcode: extendedOpcode.slice(firstSplit + 1)
+    };
+};
+
 /**
- * Covnert serialized INPUT and FIELD primitives back to hydrated block templates.
+ * Convert serialized INPUT and FIELD primitives back to hydrated block templates.
  * Should be able to deserialize a format that has already been deserialized.  The only
  * "east" path to adding new targets/code requires going through deserialize, so it should
  * work with pre-parsed deserialized blocks.
  *
+ * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {object} blocks Serialized SB3 "blocks" property of a target. Will be mutated.
  * @return {object} input is modified and returned
  */
-const deserializeBlocks = function (blocks) {
+const deserializeBlocks = function (runtime, blocks) {
     for (const blockId in blocks) {
-        if (!Object.prototype.hasOwnProperty.call(blocks, blockId)) {
+        if (!blocks.hasOwnProperty(blockId)) {
             continue;
         }
         const block = blocks[blockId];
+        const {extensionId, extendedOpcode} = decodeBlock(block);
+        const extensionInfo = runtime.extensionManager.getExtensionInfo(extensionId);
+        const customDeserialize = getSerializationInfo(extensionInfo, extendedOpcode).deserialize;
+        if (customDeserialize) {
+            const newBlock = customDeserialize(block);
+            newBlock.id = uid();
+            delete blocks[blockId];
+            blocks[newBlock.id] = newBlock;
+            // fall through to input/field handling
+        }
         if (Array.isArray(block)) {
-            // this is one of the primitives
-            // delete the old entry in object.blocks and replace it w/the
-            // deserialized object
+            // this is a compressed primitive expressed as an array instead of as an object
+            // delete the old entry in object.blocks and replace it w/the deserialized object
             delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
             continue;
+        } else {
+            block.id = blockId; // add id back to block since it wasn't serialized
         }
-        block.id = blockId; // add id back to block since it wasn't serialized
         block.inputs = deserializeInputs(block.inputs, blockId, blocks);
         block.fields = deserializeFields(block.fields);
     }
@@ -950,7 +991,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
         sprite.name = object.name;
     }
     if (object.hasOwnProperty('blocks')) {
-        deserializeBlocks(object.blocks);
+        deserializeBlocks(runtime, object.blocks);
         // Take a second pass to create objects and add extensions
         for (const blockId in object.blocks) {
             if (!object.blocks.hasOwnProperty(blockId)) continue;

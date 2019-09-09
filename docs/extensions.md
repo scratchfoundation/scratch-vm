@@ -244,12 +244,15 @@ Sometimes Scratch needs to serialize some or all of the blocks in a project, suc
 copying blocks into the backpack. In some cases the default method of serialization may not be appropriate for a block
 defined by an extension; in these cases the extension may choose to override the default behavior.
 
-Specify a function name in a block's `serialize` property to override serialization behavior for that block.
-Similarly, specify a function name in a block's `deserialize` property to override deserialization behavior for that
-block. If multiple blocks need custom serialization they may share functions but are not required to do so.
+For custom serialization, an extension may add a `serialization` property to the object returned by `getInfo()`. The
+`serialization` property should contain a property for each block opcode which requires custom serialization, and the
+value of the property should be an object which specifies a function name for `serialize` and `deserialize` functions.
+If multiple blocks need custom serialization or deserialization they may share functions but are not required to do so.
 
-The `serialize` function should take a block as a parameter and return an array -- see `serializePrimitiveBlock` from
-the `scratch-vm` source code as an example. The `deserialize` function should reverse the operation.
+The `serialize` function should take a block as a parameter and return JSON -- see `serializePrimitiveBlock` from the
+`scratch-vm` source code as an example. The `deserialize` function should reverse the operation. Note that the
+default deserialization code must be able to recognize the extension ID and block opcode from the output of the
+`serialize` function in order to call the extension's custom `deserialize` function.
 
 **WARNING**: the serialization format may change without warning to extension authors. Please use custom serialization
 only when absolutely necessary, and only within "core" extensions.
@@ -274,12 +277,16 @@ class SomeBlocks {
             blocks: [
                 {
                     opcode: 'mySpecialBlock',
-                    serialize: 'serializeSpecialBlock',
-                    deserialize: 'deserializeSpecialBlock',
                     arguments: {/* ... */}
                 },
                 // ...
             ],
+            serialization: {
+                mySpecialBlock: {
+                    serialize:'serializeSpecialBlock',
+                    deserialize:'deserializeSpecialBlock'
+                },
+            }
             // ...
         };
     }
