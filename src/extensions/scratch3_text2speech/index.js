@@ -1,5 +1,6 @@
 const formatMessage = require('format-message');
 const nets = require('nets');
+const languageNames = require('scratch-translate-extension-languages');
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -588,10 +589,61 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        return Object.keys(this.LANGUAGE_INFO).map(key => ({
-            text: this.LANGUAGE_INFO[key].name,
-            value: key
-        }));
+        // Mock data to use until we update the scratch-translate-extension-languages
+        // module.
+        languageNames.spokenLanguages = {
+            en: [
+                {
+                    code: 'zh-cn',
+                    name: 'Chinese (Mandarin)'
+                }
+            ],
+            es: [
+                {
+                    code: 'zh-cn',
+                    name: 'Chino (Mandarín)'
+                },
+                {
+                    code: 'hi',
+                    name: 'Hindi'
+                },
+                {
+                    code: 'pt-br',
+                    name: 'Portugués (Brasileiro)'
+                },
+                {
+                    code: 'es-419',
+                    name: 'Español (Latinoamericano)'
+                }
+            ]
+        };
+
+        // Get the array of localized language names
+        let nameArray = languageNames.menuMap[this.getEditorLanguage()];
+        // Also, get any localized names of spoken languages
+        const spokenNameArray = languageNames.spokenLanguages[this.getEditorLanguage()];
+        if (spokenNameArray) {
+            nameArray = nameArray.concat(spokenNameArray);
+        }
+        // Create a map of language code to localized name
+        const localizedNameMap = {};
+        nameArray.forEach(lang => {
+            localizedNameMap[lang.code] = lang.name;
+        });
+
+        return Object.keys(this.LANGUAGE_INFO).map(key => {
+            let name = this.LANGUAGE_INFO[key].name;
+            const localizedName = localizedNameMap[key];
+            if (localizedName) {
+                name = localizedName;
+            }
+            // Uppercase the first character of the name
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            return {
+                text: name,
+                value: key
+            };
+        });
     }
 
     /**
