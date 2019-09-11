@@ -519,6 +519,15 @@ class Scratch3Text2SpeechBlocks {
             stage.textToSpeechLanguage = this._getExtensionLocaleForSupportedLocale(locale);
         }
 
+        // Support language names dropped onto the menu via reporter block
+        // such as a variable containing a language name (in any language),
+        // or the translate extension's language reporter.
+        const localeForDroppedName = languageNames.nameMap[locale.toLowerCase()];
+        if (localeForDroppedName && this.isSupportedLanguage(localeForDroppedName)) {
+            stage.textToSpeechLanguage =
+                this._getExtensionLocaleForSupportedLocale(localeForDroppedName);
+        }
+
         // If the language is null, set it to the default language.
         // This can occur e.g. if the extension was loaded with the editor
         // set to a language that is not in the list.
