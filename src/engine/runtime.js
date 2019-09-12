@@ -271,7 +271,7 @@ class Runtime extends EventEmitter {
          * Track any monitors to be added that don't have corresponding monitor blocks
          * created yet.
          */
-        this._pendingMonitors = {};
+        this._pendingMonitors = new Set();
 
         /**
          * Whether the project is in "turbo mode."
@@ -1796,7 +1796,7 @@ class Runtime extends EventEmitter {
 
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
-        this._pendingMonitors = {};
+        this._pendingMonitors.clear();
         this.emit(Runtime.RUNTIME_DISPOSED);
         // @todo clear out extensions? turboMode? etc.
 
@@ -2482,7 +2482,7 @@ class Runtime extends EventEmitter {
 
         // TODO: we may want to format the label in a locale-specific way.
         return {
-            color: categoryInfo.color1, // TODO This assumes that all extensions have the same monitor color.
+            color: categoryInfo.color1,
             label: `${categoryInfo.name}: ${extensionBlockInfo.text}`
         };
     }
@@ -2494,7 +2494,7 @@ class Runtime extends EventEmitter {
      * @param {string} blockId The id of the block with a pending monitor
      */
     addPendingMonitor (blockId) {
-        this._pendingMonitors[blockId] = true;
+        this._pendingMonitors.add(blockId);
     }
 
     /**
@@ -2503,7 +2503,7 @@ class Runtime extends EventEmitter {
      * @param {string} blockId The id of the block with a pending monitor
      */
     removePendingMonitor (blockId) {
-        delete this._pendingMonitors[blockId];
+        this._pendingMonitors.delete(blockId);
     }
 
     /**
@@ -2512,7 +2512,7 @@ class Runtime extends EventEmitter {
      * @return {boolean} True if the block has a pending monitor, false otherwise.
      */
     getPendingMonitor (blockId) {
-        return this._pendingMonitors[blockId] || false;
+        return this._pendingMonitors.has(blockId);
     }
 
     /**

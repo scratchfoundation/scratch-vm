@@ -90,7 +90,7 @@ class StringUtil {
         });
     }
 
-    // Port over the string comparison utiliy from scratch-blocks
+    // Port over the string comparison utility from scratch-blocks
     // Blockly.scratchBlocksUtils.compareStrings
     /**
      * Compare strings with natural number sorting.
