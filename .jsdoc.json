@@ -1,0 +1,20 @@
+{
+    "plugins": ["plugins/markdown"],
+    "templates": {
+        "default": {
+            "includeDate": false,
+            "outputSourceFiles": false
+        }
+    },
+    "source": {
+        "include": ["src"]
+    },
+    "opts": {
+        "destination": "playground/docs",
+        "pedantic": true,
+        "private": true,
+        "readme": "README.md",
+        "recurse": true,
+        "template": "node_modules/docdash"
+    }
+}
