@@ -628,17 +628,19 @@ class Scratch3Text2SpeechBlocks {
         };
 
         // Get the array of localized language names
-        let nameArray = languageNames.menuMap[this.getEditorLanguage()];
-        // Also, get any localized names of spoken languages
-        const spokenNameArray = languageNames.spokenLanguages[this.getEditorLanguage()];
-        if (spokenNameArray) {
-            nameArray = nameArray.concat(spokenNameArray);
-        }
-        // Create a map of language code to localized name
         const localizedNameMap = {};
-        nameArray.forEach(lang => {
-            localizedNameMap[lang.code] = lang.name;
-        });
+        let nameArray = languageNames.menuMap[this.getEditorLanguage()];
+        if (nameArray) {
+            // Also get any localized names of spoken languages
+            const spokenNameArray = languageNames.spokenLanguages[this.getEditorLanguage()];
+            if (spokenNameArray) {
+                nameArray = nameArray.concat(spokenNameArray);
+            }
+            // Create a map of language code to localized name
+            nameArray.forEach(lang => {
+                localizedNameMap[lang.code] = lang.name;
+            });
+        }
 
         return Object.keys(this.LANGUAGE_INFO).map(key => {
             let name = this.LANGUAGE_INFO[key].name;
