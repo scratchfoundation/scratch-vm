@@ -853,7 +853,7 @@ const deserializeBlocks = function (runtime, blocks) {
         }
         const block = blocks[blockId];
         const {extensionId, extendedOpcode} = decodeBlock(block);
-        const extensionInfo = runtime.extensionManager.getExtensionInfo(extensionId);
+        const extensionInfo = runtime.getExtensionInfo(extensionId);
         const customDeserialize = getSerializationInfo(extensionInfo, extendedOpcode).deserialize;
         if (customDeserialize) {
             const newBlock = customDeserialize(block);

@@ -551,7 +551,7 @@ class Blocks {
         const categoryId = block.categoryId ||
             (block.mutation && block.mutation.blockInfo && block.mutation.blockInfo.categoryId);
         if (categoryId) {
-            block.extensionInfo = this.runtime.extensionManager.getExtensionInfo(categoryId);
+            block.extensionInfo = this.runtime.getExtensionInfo(categoryId);
         }
 
         // Push block id to scripts array.

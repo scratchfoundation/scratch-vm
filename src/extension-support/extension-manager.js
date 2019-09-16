@@ -83,13 +83,6 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Map of loaded extension URLs/IDs to sanitized extension info.
-         * @type {Map.<string, ExtensionInfo>}
-         * @private
-         */
-        this._loadedExtensions = new Map();
-
-        /**
          * Keep a reference to the runtime so we can construct internal extension objects.
          * TODO: remove this in favor of extensions accessing the runtime as a service.
          * @type {Runtime}
@@ -107,19 +100,10 @@ class ExtensionManager {
      * `loadExtensionURL` if you need to wait until the extension is truly ready.
      * @param {string} extensionID - the ID of the extension.
      * @returns {boolean} - true if loaded, false otherwise.
+     * @deprecated Please use `isExtensionLoaded` on the Runtime instead.
      */
     isExtensionLoaded (extensionID) {
-        return this._loadedExtensions.has(extensionID);
-    }
-
-    /**
-     * Fetch the cached information about an extension. Does not call `getInfo` on the extension
-     * @see {@link isExtensionLoaded} for details about registration timing.
-     * @param {string} extensionID - the ID of the extension.
-     * @return {ExtensionInfo} - cached information about the extension, or `undefined` if the extension is not loaded.
-     */
-    getExtensionInfo (extensionID) {
-        return this._loadedExtensions.get(extensionID);
+        return this.runtime.isExtensionLoaded(extensionID);
     }
 
     /**
@@ -133,7 +117,7 @@ class ExtensionManager {
             return;
         }
 
-        if (this.isExtensionLoaded(extensionId)) {
+        if (this.runtime.isExtensionLoaded(extensionId)) {
             const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
             log.warn(message);
             return;
@@ -171,16 +155,17 @@ class ExtensionManager {
      * @returns {Promise} resolved once all the extensions have been reinitialized
      */
     refreshBlocks () {
+        const loadedExtensions = this.runtime.getLoadedExtensions();
         const allPromises = [];
-        this._loadedExtensions.forEach((extensionInfo, oldId) => {
+        loadedExtensions.forEach((extensionInfo, oldId) => {
             const serviceName = extensionInfo.serviceName;
             allPromises.push(dispatch.call(serviceName, 'getInfo')
                 .then(info => {
                     info = this._prepareExtensionInfo(serviceName, info);
-                    this._loadedExtensions.set(info.id, info);
+                    loadedExtensions.set(info.id, info);
                     if (oldId !== info.id) {
                         log.warn(`Extension changed ID from ${oldId} to ${info.id}!`);
-                        this._loadedExtensions.delete(oldId);
+                        loadedExtensions.delete(oldId);
                     }
                     dispatch.call('runtime', '_refreshExtensionPrimitives', info);
                 })
@@ -244,7 +229,7 @@ class ExtensionManager {
         dispatch.setServiceSync(serviceName, extensionObject);
         this.registerExtensionServiceSync(serviceName);
         const extensionInfo = this._prepareExtensionInfo(serviceName, rawExtensionInfo);
-        this._loadedExtensions.set(extensionInfo.id, extensionInfo);
+        this.runtime.getLoadedExtensions().set(extensionInfo.id, extensionInfo);
     }
 
     /**
