@@ -598,35 +598,6 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        // Mock data to use until we update the scratch-translate-extension-languages
-        // module.
-        languageNames.spokenLanguages = {
-            en: [
-                {
-                    code: 'zh-cn',
-                    name: 'Chinese (Mandarin)'
-                }
-            ],
-            es: [
-                {
-                    code: 'zh-cn',
-                    name: 'Chino (Mandarín)'
-                },
-                {
-                    code: 'hi',
-                    name: 'Hindi'
-                },
-                {
-                    code: 'pt-br',
-                    name: 'Portugués (Brasileiro)'
-                },
-                {
-                    code: 'es-419',
-                    name: 'Español (Latinoamericano)'
-                }
-            ]
-        };
-
         // Get the array of localized language names
         const localizedNameMap = {};
         let nameArray = languageNames.menuMap[this.getEditorLanguage()];
