@@ -5,7 +5,6 @@ const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
 const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
-const ExtensionManager = require('../extension-support/extension-manager');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
 const execute = require('./execute.js');
@@ -368,11 +367,6 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
-
-        /**
-         * The Extension Manager handles loading and registering extensions, their services, and their blocks.
-         */
-        this.extensionManager = new ExtensionManager(this);
     }
 
     /**

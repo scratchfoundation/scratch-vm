@@ -964,7 +964,7 @@ test('shareBlocksToTarget loads extensions that have not yet been loaded', t => 
 
     // Stub the extension manager
     const loadedIds = [];
-    vm.runtime.extensionManager = {
+    vm.extensionManager = {
         isExtensionLoaded: id => id === 'loaded',
         loadExtensionURL: id => new Promise(resolve => {
             loadedIds.push(id);
