@@ -1,14 +1,6 @@
 const Color = require('../util/color');
 
 /**
- * Store and possibly polyfill Number.isNaN. Number.isNaN can save time over
- * self.isNaN by not coercing its input. We need to polyfill it to support
- * Internet Explorer.
- * @const
- */
-const _NumberIsNaN = Number.isNaN || isNaN;
-
-/**
  * @fileoverview
  * Utilities for casting and comparing Scratch data-types.
  * Scratch behaves slightly differently from JavaScript in many respects,
@@ -33,13 +25,13 @@ class Cast {
         if (typeof value === 'number') {
             // Scratch treats NaN as 0, when needed as a number.
             // E.g., 0 + NaN -> 0.
-            if (_NumberIsNaN(value)) {
+            if (Number.isNaN(value)) {
                 return 0;
             }
             return value;
         }
         const n = Number(value);
-        if (_NumberIsNaN(n)) {
+        if (Number.isNaN(n)) {
             // Scratch treats NaN as 0, when needed as a number.
             // E.g., 0 + NaN -> 0.
             return 0;
