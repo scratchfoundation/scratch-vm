@@ -523,6 +523,10 @@ class SomeBlocks {
 }
 ```
 
+#### Specifying a palette key for a block instance
+With the addition of dynamic blocks, an extension can specify multiple blocks with the same opcode. The extension developer can optionally specify a `paletteKey` to differentiate the blocks in the toolbox (in particular this will
+be necessary if there are multiple reporter blocks with the same opcode, and they don't disable monitors).
+
 #### Adding Custom Context Menu Options
 Dynamic blocks can have custom context menu options in addition to the default options for adding
 a block comment, deleting the block, and duplicating the block.
