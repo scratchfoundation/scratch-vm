@@ -184,12 +184,13 @@ class Cast {
      * LIST_INVALID: if the index was invalid in any way.
      * @param {*} index Scratch arg, including 1-based numbers or special cases.
      * @param {number} length Length of the list.
+     * @param {boolean} acceptAll Whether it should accept "all" or not.
      * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
      */
-    static toListIndex (index, length) {
+    static toListIndex (index, length, acceptAll) {
         if (typeof index !== 'number') {
             if (index === 'all') {
-                return Cast.LIST_ALL;
+                return acceptAll ? Cast.LIST_ALL : Cast.LIST_INVALID;
             }
             if (index === 'last') {
                 if (length > 0) {
