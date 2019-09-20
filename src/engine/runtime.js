@@ -1244,10 +1244,13 @@ class Runtime extends EventEmitter {
         // check if this is not one of those cases. E.g. an inline image on a block.
         if (argTypeInfo.type && !argTypeInfo.shadowType && !argTypeInfo.fieldType) {
             if (argTypeInfo.type === 'IMAGE') {
+                if (!argInfo.dataURI) {
+                    log.warn('Missing data URI in extension block with argument type IMAGE');
+                }
                 argJSON = {
                     type: 'field_image',
-                    alt: argInfo.alt,
-                    src: argInfo.dataURI,
+                    alt: argInfo.alt || '',
+                    src: argInfo.dataURI || '',
                     // TODO these probably shouldn't be hardcoded...?
                     width: 24,
                     height: 24,
