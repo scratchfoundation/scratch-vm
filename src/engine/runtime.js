@@ -76,6 +76,14 @@ const ArgumentTypeMap = (() => {
         shadowType: 'note',
         fieldType: 'NOTE'
     };
+    map[ArgumentType.IMAGE] = {
+        // TODO was going to use fieldType here, but I didn't want to
+        // confuse it with how fieldType is being used in all these
+        // other argument type cases
+        // Inline images are weird because they're not actually "arguments".
+        // They are more analagous to the label on a block.
+        type: 'IMAGE'
+    };
     return map;
 })();
 
@@ -1219,11 +1227,7 @@ class Runtime extends EventEmitter {
         // Sanitize the placeholder to ensure valid XML
         placeholder = placeholder.replace(/[<"&]/, '_');
 
-        const argJSON = {
-            type: 'input_value',
-            name: placeholder
-        };
-
+        // Determine whether the argument type is one of the known standard field types
         const argInfo = context.blockInfo.arguments[placeholder] || {};
         let argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
 
@@ -1232,63 +1236,91 @@ class Runtime extends EventEmitter {
             argTypeInfo = context.categoryInfo.customFieldTypes[argInfo.type].argumentTypeInfo;
         }
 
-        const defaultValue =
-            typeof argInfo.defaultValue === 'undefined' ? '' :
-                xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+        // Start to construct the scratch-blocks style JSON defining how the block should be
+        // laid out
+        let argJSON;
 
-        if (argTypeInfo.check) {
-            argJSON.check = argTypeInfo.check;
-        }
-
-        let valueName;
-        let shadowType;
-        let fieldName;
-        if (argInfo.menu) {
-            const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
-            if (menuInfo.acceptReporters) {
-                valueName = placeholder;
-                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
-                fieldName = argInfo.menu;
-            } else {
-                argJSON.type = 'field_dropdown';
-                argJSON.options = this._convertMenuItems(menuInfo.items);
-                valueName = null;
-                shadowType = null;
-                fieldName = placeholder;
+        // Most field types are inputs (slots on the block that can have other blocks plugged into them)
+        // check if this is not one of those cases. E.g. an inline image on a block.
+        if (argTypeInfo.type && !argTypeInfo.shadowType && !argTypeInfo.fieldType) {
+            if (argTypeInfo.type === 'IMAGE') {
+                argJSON = {
+                    type: 'field_image',
+                    alt: argInfo.alt,
+                    src: argInfo.dataURI,
+                    // TODO these probably shouldn't be hardcoded...?
+                    width: 24,
+                    height: 24
+                };
             }
         } else {
-            valueName = placeholder;
-            shadowType = argTypeInfo.shadowType;
-            fieldName = argTypeInfo.fieldType;
-        }
+            // Layout a block argument (e.g. an input slot on the block)
+            argJSON = {
+                type: 'input_value',
+                name: placeholder
+            };
 
-        // <value> is the ScratchBlocks name for a block input.
-        if (valueName) {
-            context.inputList.push(`<value name="${placeholder}">`);
-        }
+            const defaultValue =
+                typeof argInfo.defaultValue === 'undefined' ? '' :
+                    xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
 
-        // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-        // Boolean inputs don't need to specify a shadow in the XML.
-        if (shadowType) {
-            context.inputList.push(`<shadow type="${shadowType}">`);
-        }
+            if (argTypeInfo.check) {
+                // Right now the only type of 'check' we have specifies that the
+                // input slot on the block accepts Boolean reporters, so it should be
+                // shaped like a hexagon
+                argJSON.check = argTypeInfo.check;
+            }
 
-        // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
-        if (fieldName) {
-            context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
-        }
+            let valueName;
+            let shadowType;
+            let fieldName;
+            if (argInfo.menu) {
+                const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
+                if (menuInfo.acceptReporters) {
+                    valueName = placeholder;
+                    shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                    fieldName = argInfo.menu;
+                } else {
+                    argJSON.type = 'field_dropdown';
+                    argJSON.options = this._convertMenuItems(menuInfo.items);
+                    valueName = null;
+                    shadowType = null;
+                    fieldName = placeholder;
+                }
+            } else {
+                valueName = placeholder;
+                shadowType = argTypeInfo.shadowType;
+                fieldName = argTypeInfo.fieldType;
+            }
 
-        if (shadowType) {
-            context.inputList.push('</shadow>');
-        }
+            // <value> is the ScratchBlocks name for a block input.
+            if (valueName) {
+                context.inputList.push(`<value name="${placeholder}">`);
+            }
 
-        if (valueName) {
-            context.inputList.push('</value>');
+            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+            // Boolean inputs don't need to specify a shadow in the XML.
+            if (shadowType) {
+                context.inputList.push(`<shadow type="${shadowType}">`);
+            }
+
+            // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
+            if (fieldName) {
+                context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
+            }
+
+            if (shadowType) {
+                context.inputList.push('</shadow>');
+            }
+
+            if (valueName) {
+                context.inputList.push('</value>');
+            }
         }
 
         const argsName = `args${context.outLineNum}`;
         const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);
-        blockArgs.push(argJSON);
+        if (argJSON) blockArgs.push(argJSON);
         const argNum = blockArgs.length;
         context.argsMap[placeholder] = argNum;
 
