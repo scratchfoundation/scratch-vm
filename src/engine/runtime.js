@@ -51,38 +51,58 @@ const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
 const ArgumentTypeMap = (() => {
     const map = {};
     map[ArgumentType.ANGLE] = {
-        shadowType: 'math_angle',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_angle',
+            // We specify fieldNames here so that we can pick
+            // create and populate a field with the defaultValue
+            // specified in the extension.
+            // When the `fieldName` property is not specified,
+            // the <field></field> will be left out of the XML and
+            // the scratch-blocks defaults for that field will be
+            // used instead (e.g. default of 0 for number fields)
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.COLOR] = {
-        shadowType: 'colour_picker'
+        shadow: {
+            type: 'colour_picker',
+            fieldName: 'COLOUR'
+        }
     };
     map[ArgumentType.NUMBER] = {
-        shadowType: 'math_number',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_number',
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.STRING] = {
-        shadowType: 'text',
-        fieldType: 'TEXT'
+        shadow: {
+            type: 'text',
+            fieldName: 'TEXT'
+        }
     };
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
     map[ArgumentType.MATRIX] = {
-        shadowType: 'matrix',
-        fieldType: 'MATRIX'
+        shadow: {
+            type: 'matrix',
+            fieldName: 'MATRIX'
+        }
     };
     map[ArgumentType.NOTE] = {
-        shadowType: 'note',
-        fieldType: 'NOTE'
+        shadow: {
+            type: 'note',
+            fieldName: 'NOTE'
+        }
     };
     map[ArgumentType.IMAGE] = {
-        // TODO was going to use fieldType here, but I didn't want to
-        // confuse it with how fieldType is being used in all these
+        // TODO was going to use shadowFieldName here, but I didn't want to
+        // confuse it with how shadowFieldName is being used in all these
         // other argument type cases
         // Inline images are weird because they're not actually "arguments".
         // They are more analagous to the label on a block.
-        type: 'IMAGE'
+        fieldType: 'field_image'
     };
     return map;
 })();
@@ -1242,26 +1262,29 @@ class Runtime extends EventEmitter {
 
         // Most field types are inputs (slots on the block that can have other blocks plugged into them)
         // check if this is not one of those cases. E.g. an inline image on a block.
-        if (argTypeInfo.type && !argTypeInfo.shadowType && !argTypeInfo.fieldType) {
-            if (argTypeInfo.type === 'IMAGE') {
-                if (!argInfo.dataURI) {
-                    log.warn('Missing data URI in extension block with argument type IMAGE');
-                }
-                argJSON = {
-                    type: 'field_image',
-                    alt: argInfo.alt || '',
-                    src: argInfo.dataURI || '',
-                    // TODO these probably shouldn't be hardcoded...?
-                    width: 24,
-                    height: 24,
-                    // Whether or not the inline image should be flipped horizontally
-                    // in RTL languages. Defaults to false, indicating that the
-                    // image will not be flipped.
-                    // TODO is false a good default here?
-                    flip_rtl: argInfo.flipRTL || false
-                };
+        switch (argTypeInfo.fieldType) {
+        case 'field_image': {
+            if (!argInfo.dataURI) {
+                log.warn('Missing data URI in extension block with argument type IMAGE');
             }
-        } else {
+            argJSON = {
+                type: 'field_image',
+                alt: argInfo.alt || '',
+                src: argInfo.dataURI || '',
+                // TODO these probably shouldn't be hardcoded...?
+                width: 24,
+                height: 24,
+                // Whether or not the inline image should be flipped horizontally
+                // in RTL languages. Defaults to false, indicating that the
+                // image will not be flipped.
+                // TODO is false a good default here?
+                flip_rtl: argInfo.flipRTL || false
+            };
+            break;
+        }
+        default: {
+            // Construct input value
+
             // Layout a block argument (e.g. an input slot on the block)
             argJSON = {
                 type: 'input_value',
@@ -1297,8 +1320,8 @@ class Runtime extends EventEmitter {
                 }
             } else {
                 valueName = placeholder;
-                shadowType = argTypeInfo.shadowType;
-                fieldName = argTypeInfo.fieldType;
+                shadowType = argTypeInfo.shadow.type || null;
+                fieldName = argTypeInfo.shadow.fieldName || null;
             }
 
             // <value> is the ScratchBlocks name for a block input.
@@ -1313,7 +1336,8 @@ class Runtime extends EventEmitter {
             }
 
             // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
-            if (fieldName) {
+            // Leave out the field if defaultValue or fieldName are not specified
+            if (defaultValue && fieldName) {
                 context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
             }
 
@@ -1324,6 +1348,7 @@ class Runtime extends EventEmitter {
             if (valueName) {
                 context.inputList.push('</value>');
             }
+        }
         }
 
         const argsName = `args${context.outLineNum}`;

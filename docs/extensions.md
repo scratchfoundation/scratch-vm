@@ -129,7 +129,7 @@ The possible types of block arguments are as follows:
 - Angle - an input similar to the number input, but it has an additional UI to be able to pick an angle from a
 circular dial
 - Boolean - an input for a boolean (hexagonal shaped) reporter block. This field is not type-able.
-- Color - an input which displays a color swatch. This field has additional UI to pick a color by choosing values for the color's hue, saturation and brightness.
+- Color - an input which displays a color swatch. This field has additional UI to pick a color by choosing values for the color's hue, saturation and brightness. Optionally, the defaultValue for the color picker can also be chosen if the extension developer wishes to display the same color every time the extension is added. If the defaultValue is left out, the default behavior of picking a random color when the block is created will be used.
 - Matrix - an input which displays a 5 x 5 matrix of cells, where each cell can be filled in or clear.
 - Note - a numeric input which can select a musical note. This field has additional UI to select a note from a
 visual keyboard.
