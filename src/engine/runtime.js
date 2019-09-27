@@ -1276,7 +1276,6 @@ class Runtime extends EventEmitter {
                 // Whether or not the inline image should be flipped horizontally
                 // in RTL languages. Defaults to false, indicating that the
                 // image will not be flipped.
-                // TODO is false a good default here?
                 flip_rtl: argInfo.flipRTL || false
             };
             break;
