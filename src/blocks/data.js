@@ -9,7 +9,6 @@ const LIST_ITEM_LIMIT = 200000;
 
 // serialization primitives
 const VAR_PRIMITIVE = 12;
-const LIST_PRIMITIVE = 13;
 
 /**
  * This Scratch 3.0 extension implements Scratch "data" blocks for variables and lists, including cloud variables.
@@ -787,7 +786,7 @@ class Scratch3DataBlocks {
             throw new Error('bad primitive ID on variable!');
         }
         const result = {};
-        result.opcode = 'data_variable';
+        result.opcode = 'variable';
         result.fields = {
             VARIABLE: {
                 name: 'VARIABLE',

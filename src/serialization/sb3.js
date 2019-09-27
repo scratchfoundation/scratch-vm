@@ -300,6 +300,28 @@ const compressInputTree = function (block, blocks) {
 };
 
 /**
+ * Interpret a serialized block to retrieve extension & opcode information. We can't deserialize a block without
+ * knowing whether its extension offers custom deserialization for the block, but we can't know that without knowing
+ * the block's opcode. In the case of a primitive that means we need to at least partially deserialize the block. This
+ * function provides a sort of "minimal deserialization" in order to break that dependency loop. For convenience it
+ * also handles non-primitive serialized blocks.
+ * @param {object|array} block - a serialized block in either object or primitive (array) form.
+ * @returns {object} an object containing the opcode info necessary to deserialize the block
+ * @property {string} extendedOpcode - the full opcode for this block, like 'myExtension_this_that'
+ * @property {string} extensionId - the extension/category for this block, like 'myExtension'. May be an empty string.
+ */
+const getExtensionAndOpcode = function (block) {
+    const extendedOpcode = Array.isArray(block) ? primitiveIdMap[block[0]] : block.opcode;
+    const firstSplit = extendedOpcode.indexOf('_');
+
+    // note: if we ever need the simple / non-extended opcode, it's just extendedOpcode.substring(firstSplit + 1)
+    return {
+        extendedOpcode,
+        extensionId: extendedOpcode.substring(0, firstSplit)
+    };
+};
+
+/**
  * Get non-core extension ID for a given sb3 opcode.
  * @param {!string} opcode The opcode to examine for extension.
  * @return {?string} The extension ID, if it exists and is not a core extension.
@@ -819,23 +841,6 @@ const deserializeFields = function (fields) {
     return obj;
 };
 
-const decodeBlock = function (block) {
-    const extendedOpcode = Array.isArray(block) ? primitiveIdMap[block[0]] : block.opcode;
-    const firstSplit = extendedOpcode.indexOf('_');
-    if (firstSplit < 0) {
-        return {
-            extendedOpcode: extendedOpcode,
-            extensionId: '',
-            opcode: extendedOpcode
-        };
-    }
-    return {
-        extendedOpcode: extendedOpcode,
-        extensionId: extendedOpcode.slice(0, firstSplit),
-        opcode: extendedOpcode.slice(firstSplit + 1)
-    };
-};
-
 /**
  * Convert serialized INPUT and FIELD primitives back to hydrated block templates.
  * Should be able to deserialize a format that has already been deserialized.  The only
@@ -852,7 +857,7 @@ const deserializeBlocks = function (runtime, blocks) {
             continue;
         }
         const block = blocks[blockId];
-        const {extensionId, extendedOpcode} = decodeBlock(block);
+        const {extensionId, extendedOpcode} = getExtensionAndOpcode(block);
         const extensionInfo = runtime.getExtensionInfo(extensionId);
         const customDeserialize = getSerializationInfo(extensionInfo, extendedOpcode).deserialize;
         if (customDeserialize) {

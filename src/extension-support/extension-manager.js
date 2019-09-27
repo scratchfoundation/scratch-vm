@@ -162,11 +162,19 @@ class ExtensionManager {
             allPromises.push(dispatch.call(serviceName, 'getInfo')
                 .then(info => {
                     info = this._prepareExtensionInfo(serviceName, info);
-                    loadedExtensions.set(info.id, info);
-                    if (oldId !== info.id) {
-                        log.warn(`Extension changed ID from ${oldId} to ${info.id}!`);
-                        loadedExtensions.delete(oldId);
+                    if (info.id !== oldId) {
+                        // This should never happen: it implies that this call to the extension's `getInfo` method has
+                        // returned a different ID compared to a previous call to the same `getInfo` method. Keeping
+                        // the old ID is slightly safer with respect to any blocks which might already exist in the
+                        // project but hopefully this is just a sign that an extension author is iterating on their
+                        // extension's ID and they'll follow up with a proper reload...
+                        log.warn(
+                            `Extension ID mismatch: extension loaded as ${oldId} reports ID ${info.id}!\n` +
+                            `The mismatch will be ignored and the extension will be available as ${oldId}.`
+                        );
+                        info.id = oldId;
                     }
+                    loadedExtensions.set(info.id, info);
                     dispatch.call('runtime', '_refreshExtensionPrimitives', info);
                 })
                 .catch(e => {
