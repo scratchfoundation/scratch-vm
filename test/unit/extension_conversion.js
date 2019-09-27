@@ -139,7 +139,6 @@ const testInlineImage = function (t, inlineImage) {
         {
             type: 'field_image',
             src: 'invalid image URI',
-            alt: '', // Empty because not specified
             width: 24,
             height: 24,
             flip_rtl: false // False by default
