@@ -43,8 +43,7 @@ class Scratch3CoreExample {
                     arguments: {
                         CLOCKWISE: {
                             type: ArgumentType.IMAGE,
-                            dataURI: blockIconURI,
-                            alt: 'sample-image'
+                            dataURI: blockIconURI
                         }
                     }
                 }

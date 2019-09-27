@@ -1180,7 +1180,7 @@ class Runtime extends EventEmitter {
                 src: './static/blocks-media/repeat.svg', // TODO: use a constant or make this configurable?
                 width: 24,
                 height: 24,
-                alt: '*',
+                alt: '*', // TODO remove this since we don't use collapsed blocks in scratch
                 flip_rtl: true
             }];
             ++outLineNum;
@@ -1269,7 +1269,6 @@ class Runtime extends EventEmitter {
             }
             argJSON = {
                 type: 'field_image',
-                alt: argInfo.alt || '',
                 src: argInfo.dataURI || '',
                 // TODO these probably shouldn't be hardcoded...?
                 width: 24,
