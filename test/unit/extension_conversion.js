@@ -41,10 +41,14 @@ const testExtensionInfo = {
         {
             opcode: 'command',
             blockType: BlockType.COMMAND,
-            text: 'text with [ARG]',
+            text: 'text with [ARG] [ARG_WITH_DEFAULT]',
             arguments: {
                 ARG: {
                     type: ArgumentType.STRING
+                },
+                ARG_WITH_DEFAULT: {
+                    type: ArgumentType.STRING,
+                    defaultValue: 'default text'
                 }
             }
         },
@@ -157,7 +161,7 @@ const testCommand = function (t, command) {
     t.assert(command.json.hasOwnProperty('previousStatement'));
     t.assert(command.json.hasOwnProperty('nextStatement'));
     t.notOk(command.json.extensions && command.json.extensions.length); // OK if it's absent or empty
-    t.equal(command.json.message0, 'text with %1');
+    t.equal(command.json.message0, 'text with %1 %2');
     t.notOk(command.json.hasOwnProperty('message1'));
     t.strictSame(command.json.args0[0], {
         type: 'input_value',
@@ -165,8 +169,9 @@ const testCommand = function (t, command) {
     });
     t.notOk(command.json.hasOwnProperty('args1'));
     t.equal(command.xml,
-        '<block type="test_command"><value name="ARG"><shadow type="text"><field name="TEXT">' +
-        '</field></shadow></value></block>');
+        '<block type="test_command"><value name="ARG"><shadow type="text"></shadow></value>' +
+        '<value name="ARG_WITH_DEFAULT"><shadow type="text"><field name="TEXT">' +
+        'default text</field></shadow></value></block>');
 };
 
 const testConditional = function (t, conditional) {
@@ -223,8 +228,7 @@ const testLoop = function (t, loop) {
     t.equal(loop.json.args2[0].flip_rtl, true);
     t.notOk(loop.json.hasOwnProperty('args3'));
     t.equal(loop.xml,
-        '<block type="test_loop"><value name="MANY"><shadow type="math_number"><field name="NUM">' +
-        '</field></shadow></value></block>');
+        '<block type="test_loop"><value name="MANY"><shadow type="math_number"></shadow></value></block>');
 };
 
 test('registerExtensionPrimitives', t => {

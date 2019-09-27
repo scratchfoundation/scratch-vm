@@ -1320,8 +1320,8 @@ class Runtime extends EventEmitter {
                 }
             } else {
                 valueName = placeholder;
-                shadowType = argTypeInfo.shadow.type || null;
-                fieldName = argTypeInfo.shadow.fieldName || null;
+                shadowType = (argTypeInfo.shadow && argTypeInfo.shadow.type) || null;
+                fieldName = (argTypeInfo.shadow && argTypeInfo.shadow.fieldName) || null;
             }
 
             // <value> is the ScratchBlocks name for a block input.
