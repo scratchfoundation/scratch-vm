@@ -25,20 +25,10 @@ const {loadSound} = require('./import/load-sound.js');
 const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
 require('canvas-toBlob');
 
+const CORE_EXTENSIONS = require('./CORE_BLOCKS.js');
+
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
-const CORE_EXTENSIONS = [
-    'data'
-    // 'motion',
-    // 'looks',
-    // 'sound',
-    // 'events',
-    // 'control',
-    // 'sensing',
-    // 'operators',
-    // 'variables',
-    // 'myBlocks'
-];
 
 /**
  * Handles connections between blocks, stage, and extensions.

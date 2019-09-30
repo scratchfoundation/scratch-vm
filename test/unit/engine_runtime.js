@@ -82,7 +82,7 @@ test('monitorStateDoesNotEqual', t => {
     t.end();
 });
 
-test('getLabelForOpcode', t => {
+test('getMonitorLabelForBlock', t => {
     const r = new Runtime();
 
     const fakeExtension = {
@@ -108,15 +108,23 @@ test('getLabelForOpcode', t => {
         ]
     };
 
-    r._blockInfo.push(fakeExtension);
+    // Mock convertForScratchBlocks so extension info can get populated using
+    // registerExtensionPrimitives and default extension color can get filled in
+    // for extension category color
+    r._convertForScratchBlocks = blockInfo => blockInfo;
+    r._registerExtensionPrimitives(fakeExtension);
 
-    const result1 = r.getLabelForOpcode('fakeExtension_foo');
-    t.type(result1.category, 'string');
+    r.flyoutBlocks.createBlock({id: 'fooBlock', opcode: 'fakeExtension_foo'});
+    r.flyoutBlocks.createBlock({id: 'foo2Block', opcode: 'fakeExtension_foo_2'});
+
+
+    const result1 = r.getMonitorLabelForBlock('fooBlock');
+    t.type(result1.color, 'string');
     t.type(result1.label, 'string');
     t.equals(result1.label, 'Fake Extension: Foo');
 
-    const result2 = r.getLabelForOpcode('fakeExtension_foo_2');
-    t.type(result2.category, 'string');
+    const result2 = r.getMonitorLabelForBlock('foo2Block');
+    t.type(result2.color, 'string');
     t.type(result2.label, 'string');
     t.equals(result2.label, 'Fake Extension: Foo 2');
 
