@@ -378,10 +378,13 @@ class Blocks {
             if (e.isLocal && editingTarget && !editingTarget.isStage && !e.isCloud) {
                 if (!editingTarget.lookupVariableById(e.varId)) {
                     editingTarget.createVariable(e.varId, e.varName, e.varType);
-                    this.emitProjectChanged();
+
+                    this.runtime.addPendingMonitor(e.varId);
+
                     // TODO this should probably be batched
                     // (esp. if we receive multiple new var_creates in a row).
                     this.runtime.requestToolboxExtensionsUpdate();
+                    this.emitProjectChanged();
                 }
             } else {
                 if (stage.lookupVariableById(e.varId)) {
@@ -396,10 +399,14 @@ class Blocks {
                     }
                 }
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
-                this.emitProjectChanged();
+
+                this.runtime.addPendingMonitor(e.varId);
+
                 // TODO same as above, this should probably be batched
                 // (esp. if we receive multiple new var_creates in a row).
                 this.runtime.requestToolboxExtensionsUpdate();
+                this.emitProjectChanged();
+
             }
             break;
         case 'var_rename':
@@ -561,6 +568,20 @@ class Blocks {
             this._addScript(block.id);
         }
 
+        // A block was just created, see if it had an associated pending monitor,
+        // if so, keep track of the monitor state change by mimicing the checkbox
+        // event from the flyout. Clear record of this block from
+        // the pending monitors list.
+        if (this === this.runtime.monitorBlocks &&
+            this.runtime.getPendingMonitor(block.id)) {
+            this.changeBlock({
+                id: block.id, // Monitor blocks for variables are the variable ID.
+                element: 'checkbox', // Mimic checkbox event from flyout.
+                value: true
+            }, this.runtime);
+            this.runtime.removePendingMonitor(block.id);
+        }
+
         this.resetCache();
 
         // A new block was actually added to the block container,
@@ -604,9 +625,6 @@ class Blocks {
             } else {
                 // Changing the value in a dropdown
                 block.fields[args.name].value = args.value;
-                if (block.mutation && block.mutation.blockInfo) {
-                    block.mutation.blockInfo.arguments[args.name].selectedValue = args.value;
-                }
 
                 // The selected item in the sensing of block menu needs to change based on the
                 // selected target.  Set it to the first item in the menu list.
@@ -667,6 +685,19 @@ class Blocks {
                 isSpriteLocalVariable = !(this.runtime.getTargetForStage().variables[block.fields.VARIABLE.id]);
             } else if (block.opcode === 'data_listcontents') {
                 isSpriteLocalVariable = !(this.runtime.getTargetForStage().variables[block.fields.LIST.id]);
+            } else if (block.opcode === 'data2_variable') {
+                // TODO replace above cases with this one and the one below when we switch
+                // over to using the variables extension
+                const varName = block.mutation.blockInfo.text;
+                isSpriteLocalVariable = !(this.runtime.getTargetForStage().lookupVariableByNameAndType(
+                    varName, Variable.SCALAR_TYPE
+                ));
+            } else if (block.opcode === 'data2_listcontents') {
+                const listName = block.mutation.blockInfo.text;
+                isSpriteLocalVariable =
+                    !(this.runtime.getTargetForStage().lookupVariableByNameAndType(
+                        listName, Variable.LIST_TYPE
+                    ));
             }
 
             const isSpriteSpecific = isSpriteLocalVariable ||
@@ -694,7 +725,8 @@ class Blocks {
                         params: this._getBlockParams(block),
                         // @todo(vm#565) for numerical values with decimals, some countries use comma
                         value: '',
-                        mode: block.opcode === 'data_listcontents' ? 'list' : 'default'
+                        mode: (block.opcode === 'data_listcontents') || (block.opcode === 'data2_listcontents') ?
+                            'list' : 'default'
                     }));
                 }
             }

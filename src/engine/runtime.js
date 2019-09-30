@@ -19,6 +19,8 @@ const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
 const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
 
+const CORE_BLOCKS = require('../CORE_BLOCKS');
+
 // Virtual I/O devices.
 const Clock = require('../io/clock');
 const Cloud = require('../io/cloud');
@@ -265,6 +267,12 @@ class Runtime extends EventEmitter {
          * Monitor state from last tick
          */
         this._prevMonitorState = OrderedMap({});
+
+        /**
+         * Track any monitors to be added that don't have corresponding monitor blocks
+         * created yet.
+         */
+        this._pendingMonitors = new Set();
 
         /**
          * Whether the project is in "turbo mode."
@@ -516,7 +524,6 @@ class Runtime extends EventEmitter {
     static get PROJECT_CHANGED () {
         return 'PROJECT_CHANGED';
     }
-
     /**
      * Event name for report that a change was made to an extension in the toolbox.
      * @const {string}
@@ -1188,7 +1195,9 @@ class Runtime extends EventEmitter {
 
         const mutation = blockInfo.isDynamic ? `<mutation blockInfo="${xmlEscape(JSON.stringify(blockInfo))}"/>` : '';
         const inputs = context.inputList.join('');
-        const blockXML = `<block type="${extendedOpcode}">${mutation}${inputs}</block>`;
+        const toolboxIdXml = blockInfo.isDynamic && blockInfo.paletteKey ?
+            ` id="${xmlEscape(blockInfo.paletteKey)}"` : '';
+        const blockXML = `<block type="${extendedOpcode}"${toolboxIdXml}>${mutation}${inputs}</block>`;
 
         return {
             info: context.blockInfo,
@@ -1794,6 +1803,7 @@ class Runtime extends EventEmitter {
 
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
+        this._pendingMonitors.clear();
         this.emit(Runtime.RUNTIME_DISPOSED);
         // @todo clear out extensions? turboMode? etc.
 
@@ -2421,28 +2431,95 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Get the label or label function for an opcode
-     * @param {string} extendedOpcode - the opcode you want a label for
-     * @return {object} - object with label and category
-     * @property {string} category - the category for this opcode
-     * @property {Function} [labelFn] - function to generate the label for this opcode
-     * @property {string} [label] - the label for this opcode if `labelFn` is absent
+     * Check that the given category id is a core extension.
+     * @param {string} categoryId The ID of the category to be checked
+     * @returns {boolean} True if the given categoryId matches that of a core extension,
+     * otherwise false.
      */
-    getLabelForOpcode (extendedOpcode) {
+    isCoreExtension (categoryId) {
+        return CORE_BLOCKS.indexOf(categoryId) > -1;
+    }
+
+    /**
+     * Get the monitor label and color for a given toolbox block id.
+     * @param {string} id - the block id for a block with a monitor being requested
+     * @return {object} - object with label and color
+     * @property {string} color - the color for the monitor for the given block id
+     * @property {string} label - the label for the monitor for the given block id
+     */
+    getMonitorLabelForBlock (id) {
+        // Having dynamic extension blocks makes it so that a single extension category can have
+        // multiple toolbox blocks with the same opcode. This previously wasn't possible.
+        // This means that we can no longer use just the opcode to look up the block and
+        // should instead look up the block using its unique id.
+        const block = this.flyoutBlocks.getBlock(id);
+        // If the block doesn't actually exist in the flyout, we should not
+        // be creating a label for it.
+        if (!block) return;
+
+        // Look up category info from the block
+        const extendedOpcode = block.opcode;
         const [category, opcode] = StringUtil.splitFirst(extendedOpcode, '_');
         if (!(category && opcode)) return;
 
         const categoryInfo = this._blockInfo.find(ci => ci.id === category);
         if (!categoryInfo) return;
 
-        const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
-        if (!block) return;
+        const isDynamicExtensionBlock =
+            block.mutation &&
+            block.mutation.blockInfo &&
+            block.mutation.blockInfo.isDynamic;
+        let extensionBlockInfo;
+        if (isDynamicExtensionBlock) {
+            extensionBlockInfo = block.mutation.blockInfo;
+        } else {
+            const extensionBlockDesc = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+            extensionBlockInfo = (extensionBlockDesc && extensionBlockDesc.info) || null;
+        }
+        if (!extensionBlockInfo) return;
+
+        // TODO get rid of this when we update the core extension name
+        const temporaryCategory = category === 'data2' ? 'data' : category;
+        if (this.isCoreExtension(temporaryCategory)) {
+            return {
+                color: extensionBlockInfo.color1 || categoryInfo.color1,
+                label: extensionBlockInfo.text
+            };
+        }
 
         // TODO: we may want to format the label in a locale-specific way.
         return {
-            category: 'extension', // This assumes that all extensions have the same monitor color.
-            label: `${categoryInfo.name}: ${block.info.text}`
+            color: categoryInfo.color1,
+            label: `${categoryInfo.name}: ${extensionBlockInfo.text}`
         };
+    }
+
+    /**
+     * Keep track of the fact that a monitor has been requested
+     * for the given blockId, even though the block with the given id
+     * does not exist in the flyout yet.
+     * @param {string} blockId The id of the block with a pending monitor
+     */
+    addPendingMonitor (blockId) {
+        this._pendingMonitors.add(blockId);
+    }
+
+    /**
+     * Removes a block id from the pending monitors list (e.g. if it has
+     * been turned into an actual monitor).
+     * @param {string} blockId The id of the block with a pending monitor
+     */
+    removePendingMonitor (blockId) {
+        this._pendingMonitors.delete(blockId);
+    }
+
+    /**
+     * Checks whether the given block id has a pending monitor.
+     * @param {string} blockId The id of the block with a pending monitor
+     * @return {boolean} True if the block has a pending monitor, false otherwise.
+     */
+    getPendingMonitor (blockId) {
+        return this._pendingMonitors.has(blockId);
     }
 
     /**
