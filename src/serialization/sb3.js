@@ -121,7 +121,7 @@ const getSerializationInfo = function (extensionInfo, opcode) {
 /**
  * Serializes primitives described above into a more compact format
  * @param {object} block the block to serialize
- * @param {object} target The target which contains the block
+ * @param {RenderedTarget} target The target which contains the block
  * @return {array} An array representing the information in the block,
  * or null if the given block is not one of the primitives described above.
  */
@@ -210,7 +210,7 @@ const serializeFields = function (fields) {
  * Serialize the given block in the SB3 format with some compression of inputs,
  * fields, and primitives.
  * @param {object} block The block to serialize
- * @param {object} target The target which contains the block
+ * @param {RenderedTarget} target The target which contains the block
  * @return {object | array} A serialized representation of the block. This is an
  * array if the block is one of the primitive types described above or an object,
  * if not.
@@ -270,7 +270,7 @@ const serializeBlock = function (block, target) {
  * }
  * Note: this function modifies the given blocks object in place
  * @param {object} block The block with inputs to compress
- * @param {objec} blocks The object containing all the blocks currently getting serialized
+ * @param {object} blocks The object containing all the blocks currently getting serialized
  * @return {object} The serialized block with compressed inputs
  */
 const compressInputTree = function (block, blocks) {
@@ -337,13 +337,13 @@ const getExtensionIdForOpcode = function (opcode) {
 /**
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
- * @param {object} target The target containing the blocks to be serialized.
+ * @param {RenderedTarget} target The target containing the blocks to be serialized.
  * @return {Array} An array of the serialized blocks with compressed inputs and
  * compressed primitives and the list of all extension IDs present
  * in the serialized blocks.
  */
 const serializeBlocks = function (target) {
-    const blocks = target.blocks;
+    const blocks = target.getBlocks();
     const obj = Object.create(null);
     const extensionIDs = new Set();
     for (const blockID in blocks) {
@@ -484,7 +484,7 @@ const serializeComments = function (comments) {
 /**
  * Serialize the given target. Only serialize properties that are necessary
  * for saving and loading this target.
- * @param {object} target The target to be serialized.
+ * @param {RenderedTarget} target The target to be serialized.
  * @param {Set} extensions A set of extensions to add extension IDs to
  * @return {object} A serialized representation of the given target.
  */
@@ -492,7 +492,7 @@ const serializeTarget = function (target, extensions) {
     const obj = Object.create(null);
     let targetExtensions = [];
     obj.isStage = target.isStage;
-    obj.name = obj.isStage ? 'Stage' : target.name;
+    obj.name = obj.isStage ? 'Stage' : target.getName();
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
@@ -500,17 +500,17 @@ const serializeTarget = function (target, extensions) {
     [obj.blocks, targetExtensions] = serializeBlocks(target);
     obj.comments = serializeComments(target.comments);
 
+    obj.currentCostume = target.currentCostume;
+    obj.costumes = target.getCostumes().map(serializeCostume);
+
     // TODO remove this check/patch when (#1901) is fixed
-    if (target.currentCostume < 0 || target.currentCostume >= target.costumes.length) {
-        log.warn(`currentCostume property for target ${target.name} is out of range`);
-        target.currentCostume = MathUtil.clamp(target.currentCostume, 0, target.costumes.length - 1);
+    if (obj.currentCostume < 0 || obj.currentCostume >= obj.costumes.length) {
+        log.warn(`currentCostume property for target ${obj.name} is out of range`);
+        obj.currentCostume = MathUtil.clamp(obj.currentCostume, 0, obj.costumes.length - 1);
     }
 
-    obj.currentCostume = target.currentCostume;
-    obj.costumes = target.costumes.map(serializeCostume);
-    obj.sounds = target.sounds.map(serializeSound);
+    obj.sounds = target.getSounds().map(serializeSound);
     if (target.hasOwnProperty('volume')) obj.volume = target.volume;
-    if (target.hasOwnProperty('layerOrder')) obj.layerOrder = target.layerOrder;
     if (obj.isStage) { // Only the stage should have these properties
         if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
         if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
@@ -569,8 +569,6 @@ const serializeMonitors = function (monitors) {
  * @return {object} Serialized runtime instance.
  */
 const serialize = function (runtime, targetId) {
-    // Fetch targets
-    const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
     const extensions = new Set();
 
@@ -578,23 +576,23 @@ const serialize = function (runtime, targetId) {
         [runtime.getTargetById(targetId)] :
         runtime.targets.filter(target => target.isOriginal);
 
-    const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
+    const serializedTargets = originalTargetsToSerialize.map(t => serializeTarget(t, extensions));
 
-    const flattenedOriginalTargets = originalTargetsToSerialize.map(t => t.toJSON());
+    // If we're serializing only one sprite, we're done.
+    if (targetId) {
+        return serializedTargets[0];
+    }
 
     // If the renderer is attached, and we're serializing a whole project (not a sprite)
-    // add a temporary layerOrder property to each target.
-    if (runtime.renderer && !targetId) {
-        flattenedOriginalTargets.forEach((t, index) => {
+    // add a layerOrder property to each serialized target.
+    if (runtime.renderer) {
+        const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
+        serializedTargets.forEach((t, index) => {
             t.layerOrder = layerOrdering[index];
         });
     }
 
-    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
-
-    if (targetId) {
-        return serializedTargets[0];
-    }
+    const obj = Object.create(null);
 
     obj.targets = serializedTargets;
 

@@ -779,7 +779,6 @@ class Scratch3DataBlocks {
     }
 
     serializeVariable (block, target) {
-        target = this.runtime.getTargetById(target.id);
         const variableName = block.mutation.blockInfo.text;
         const variable = target.lookupVariableByNameAndType(variableName, Variable.SCALAR_TYPE);
         const result = [VAR_PRIMITIVE, variableName, variable.id];

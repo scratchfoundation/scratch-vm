@@ -1108,6 +1108,13 @@ class RenderedTarget extends Target {
         this.dragging = false;
     }
 
+    /**
+     * Get the blocks on the blocks workspace associated with this target.
+     * @returns {object} an object containing blocks by ID.
+     */
+    getBlocks () {
+        return this.blocks._blocks;
+    }
 
     /**
      * Serialize sprite info, used when emitting events about the sprite
@@ -1130,7 +1137,7 @@ class RenderedTarget extends Target {
             visible: this.visible,
             rotationStyle: this.rotationStyle,
             comments: this.comments,
-            blocks: this.blocks._blocks,
+            blocks: this.getBlocks(),
             variables: this.variables,
             costumes: costumes,
             sounds: this.getSounds(),
