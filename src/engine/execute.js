@@ -111,30 +111,10 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
     }
     // Promise handlers
     primitiveReportedValue.then(resolvedValue => {
+        if (thread.status === Thread.STATUS_DONE) return;
         handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
         // If it's a command block or a top level reporter in a stackClick.
-        if (lastOperation) {
-            let stackFrame;
-            let nextBlockId;
-            do {
-                // In the case that the promise is the last block in the current thread stack
-                // We need to pop out repeatedly until we find the next block.
-                const popped = thread.popStack();
-                if (popped === null) {
-                    return;
-                }
-                nextBlockId = thread.target.blocks.getNextBlock(popped);
-                if (nextBlockId !== null) {
-                    // A next block exists so break out this loop
-                    break;
-                }
-                // Investigate the next block and if not in a loop,
-                // then repeat and pop the next item off the stack frame
-                stackFrame = thread.peekStackFrame();
-            } while (stackFrame !== null && !stackFrame.isLoop);
-
-            thread.pushStack(nextBlockId);
-        }
+        if (lastOperation) thread.goToNextBlock();
     }, rejectionReason => {
         // Promise rejected: the primitive had some error.
         // Log it and proceed.
@@ -400,6 +380,15 @@ const execute = function (sequencer, thread) {
         }
     }
 
+    // Blocks should glow when a script is starting, not after it has finished
+    // (see #1404). Only blocks in blockContainers that don't forceNoGlow should
+    // request a glow.
+    if (!blockContainer.forceNoGlow) {
+        thread.requestScriptGlowInFrame = true;
+        // Indicate the block that is executing.
+        thread.blockGlowInFrame = currentBlockId;
+    }
+
     const ops = blockCached._ops;
     const length = ops.length;
     let i = 0;
@@ -476,14 +465,6 @@ const execute = function (sequencer, thread) {
         const argValues = opCached._argValues;
 
         // Fields are set during opCached initialization.
-
-        // Blocks should glow when a script is starting,
-        // not after it has finished (see #1404).
-        // Only blocks in blockContainers that don't forceNoGlow
-        // should request a glow.
-        if (!blockContainer.forceNoGlow) {
-            thread.requestScriptGlowInFrame = true;
-        }
 
         // Inputs are set during previous steps in the loop.
 

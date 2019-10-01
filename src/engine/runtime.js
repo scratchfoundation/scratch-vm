@@ -7,7 +7,6 @@ const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
 const ScratchBlocksConstants = require('./scratch-blocks-constants');
 const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
@@ -1530,8 +1529,6 @@ class Runtime extends EventEmitter {
      * @param {!Thread} thread Thread object to remove from actives
      */
     _stopThread (thread) {
-        // Mark the thread for later removal
-        thread.isKilled = true;
         // Inform sequencer to stop executing that thread.
         this.sequencer.retireThread(thread);
     }
@@ -1746,10 +1743,7 @@ class Runtime extends EventEmitter {
         }, optTarget);
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
-        newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
-        });
+        newThreads.forEach(thread => this.sequencer.stepHat(thread));
         return newThreads;
     }
 
@@ -1940,9 +1934,6 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
-
-        // Clean up threads that were told to stop during or since the last step
-        this.threads = this.threads.filter(thread => !thread.isKilled);
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
