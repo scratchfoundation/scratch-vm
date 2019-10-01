@@ -554,13 +554,6 @@ class Blocks {
         }
         // Create new block.
         this._blocks[block.id] = block;
-
-        const categoryId = block.categoryId ||
-            (block.mutation && block.mutation.blockInfo && block.mutation.blockInfo.categoryId);
-        if (categoryId) {
-            block.extensionInfo = this.runtime.getExtensionInfo(categoryId);
-        }
-
         // Push block id to scripts array.
         // Blocks are added as a top-level stack if they are marked as a top-block
         // (if they were top-level XML in the event).
