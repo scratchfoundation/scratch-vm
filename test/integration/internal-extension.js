@@ -59,7 +59,7 @@ test('internal extension', t => {
     t.ok(extension.status.constructorCalled);
 
     t.notOk(extension.status.getInfoCalled);
-    vm.extensionManager._registerInternalExtension(extension);
+    vm.runtime.extensionManager._registerInternalExtension(extension);
     t.ok(extension.status.getInfoCalled);
 
     const func = vm.runtime.getOpcodeFunction('testInternalExtension_go');
@@ -102,8 +102,8 @@ test('internal extension', t => {
 
 test('load sync', t => {
     const vm = new VirtualMachine();
-    vm.extensionManager.loadExtensionIdSync('coreExample');
-    t.ok(vm.extensionManager.isExtensionLoaded('coreExample'));
+    vm.runtime.extensionManager.loadExtensionIdSync('coreExample');
+    t.ok(vm.runtime.extensionManager.isExtensionLoaded('coreExample'));
 
     // There should be at least one extension loaded, but there could be more
     // loaded if we have core extensions defined in src/virtual-machine.
