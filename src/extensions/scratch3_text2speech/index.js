@@ -594,7 +594,11 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Get the menu of languages for the "set language" block.
+     * Get the localized menu of languages for the "set language" block.
+     * For each language:
+     *   if there is a custom translated spoken language name, use that;
+     *   otherwise use the translation in the languageNames menuMap;
+     *   otherwise fall back to the untranslated name in LANGUAGE_INFO.
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
