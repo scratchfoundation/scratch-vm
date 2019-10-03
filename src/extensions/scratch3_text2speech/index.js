@@ -268,7 +268,7 @@ class Scratch3Text2SpeechBlocks {
             },
             [JAPANESE_ID]: {
                 name: 'Japanese',
-                locales: ['ja', 'ja-Hira'],
+                locales: ['ja', 'ja-hira'],
                 speechSynthLocale: 'ja-JP'
             },
             [KOREAN_ID]: {
@@ -488,8 +488,9 @@ class Scratch3Text2SpeechBlocks {
      * @return {string} a Scratch locale code.
      */
     getEditorLanguage () {
-        return formatMessage.setup().locale ||
+        const locale = formatMessage.setup().locale ||
             navigator.language || navigator.userLanguage || this.DEFAULT_LANGUAGE;
+        return locale.toLowerCase();
     }
 
     /**
@@ -602,7 +603,7 @@ class Scratch3Text2SpeechBlocks {
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        const editorLanguage = this.getEditorLanguage().toLowerCase();
+        const editorLanguage = this.getEditorLanguage();
         // Get the array of localized language names
         const localizedNameMap = {};
         let nameArray = languageNames.menuMap[editorLanguage];
