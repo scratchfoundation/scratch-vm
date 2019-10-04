@@ -24,7 +24,7 @@ test('if an unsupported language is dropped onto the set language block, use def
 });
 
 test('get the extension locale for a supported locale that differs', t => {
-    ext.setLanguage({LANGUAGE: 'ja-Hira'});
+    ext.setLanguage({LANGUAGE: 'ja-hira'});
     t.strictEqual(ext.getCurrentLanguage(), 'ja');
     t.end();
 });
