@@ -790,17 +790,40 @@ class Scratch3DataBlocks {
     }
 
     deserializeVariable (primitiveArray) {
-        if (primitiveArray[0] !== VAR_PRIMITIVE) {
+        const [primitiveTag, variableName, variableId] = primitiveArray;
+        if (primitiveTag !== VAR_PRIMITIVE) {
             throw new Error('bad primitive ID on variable!');
         }
-        const result = {};
-        result.opcode = 'variable';
-        result.fields = {
-            VARIABLE: {
-                name: 'VARIABLE',
-                value: primitiveArray[1],
-                id: primitiveArray[2],
-                variableType: Variable.SCALAR_TYPE
+        // @todo reduce duplication here.
+        // This effectively duplicates some of the content in `getInfo()` as well as some of the logic in
+        // `defineDynamicBlock`. Maybe it should return only the mutation blockInfo, or maybe it should return
+        // something that looks like the block's entry in `getInfo()`. If we do either of those things we'll need to
+        // decide how we want to handle the block's (x,y) position and `topLevel` flag.
+        const result = {
+            opcode: 'variable',
+            fields: {
+                VARIABLE: {
+                    name: 'VARIABLE',
+                    id: variableId,
+                    variableType: Variable.SCALAR_TYPE
+                }
+            },
+            inputs: {},
+            next: null,
+            parent: null,
+            shadow: false,
+            mutation: {
+                blockInfo: {
+                    blockType: BlockType.REPORTER,
+                    isDynamic: true,
+                    opcode: 'variable',
+                    text: variableName,
+                    paletteKey: variableId,
+                    customContextMenu: [{
+                        text: 'Rename Variable',
+                        builtInCallback: 'RENAME_A_VARIABLE'
+                    }]
+                }
             }
         };
         if (primitiveArray.length > 3) {

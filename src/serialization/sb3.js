@@ -16,6 +16,8 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
+const mutationAdapter = require('../engine/mutation-adapter');
+const xmlEscape = require('../util/xml-escape');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -853,6 +855,16 @@ const deserializeFields = function (fields) {
 };
 
 /**
+ * Convert dynamic blockInfo JSON from a custom deserialization function into an XML element ready for runtime use.
+ * @param {object} dynamicBlockInfo - a BlockInfo-like object with properties like `opcode` and `isDynamic`.
+ * @returns {Element} - an XML Element with tag name 'mutation' and an attribute called 'blockInfo'
+ */
+const makeMutation = function (dynamicBlockInfo) {
+    const xmlString = `<mutation blockInfo="${xmlEscape(JSON.stringify(dynamicBlockInfo))}"/>`;
+    return mutationAdapter(xmlString);
+};
+
+/**
  * Convert serialized INPUT and FIELD primitives back to hydrated block templates.
  * Should be able to deserialize a format that has already been deserialized.  The only
  * "east" path to adding new targets/code requires going through deserialize, so it should
@@ -867,26 +879,34 @@ const deserializeBlocks = function (runtime, blocks) {
         if (!blocks.hasOwnProperty(blockId)) {
             continue;
         }
-        const block = blocks[blockId];
+        let block = blocks[blockId];
         const {extensionId, extendedOpcode} = getExtensionAndOpcode(block);
         const extensionInfo = runtime.getExtensionInfo(extensionId);
         const customDeserialize = getSerializationInfo(extensionInfo, extendedOpcode).deserialize;
         if (customDeserialize) {
-            const newBlock = customDeserialize(block);
-            newBlock.id = uid();
-            delete blocks[blockId];
-            blocks[newBlock.id] = newBlock;
-            // fall through to input/field handling
-        }
-        if (Array.isArray(block)) {
+            block = customDeserialize(block);
+            blocks[blockId] = block; // customDeserialize might have made a new object; make sure to keep it!
+            // the deserialize function should return opcode 'foo' and we'll fix it to 'ext_foo'
+            const newBlockOpcode = `${extensionId}_${block.opcode}`;
+            if (newBlockOpcode !== extendedOpcode) {
+                log.warn(`Block deserialization changed opcode from ${extendedOpcode} to ${block.opcode}`);
+            }
+            block.opcode = newBlockOpcode;
+            if (block.mutation && block.mutation.blockInfo) {
+                block.mutation = makeMutation(block.mutation.blockInfo);
+            }
+            // fall through to input & field handling below
+        } else if (Array.isArray(block)) {
             // this is a compressed primitive expressed as an array instead of as an object
             // delete the old entry in object.blocks and replace it w/the deserialized object
             delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
+            // deserializeInputDesc did any id/input/field handling needed, so just skip to the next block
             continue;
-        } else {
-            block.id = blockId; // add id back to block since it wasn't serialized
         }
+        // we want this stuff to run for custom-deserialized blocks as well as for default-deserialized blocks
+        // except for primitives, which are handled specially inside `deserializeInputDesc` above.
+        block.id = blockId; // add id back to block since it wasn't serialized
         block.inputs = deserializeInputs(block.inputs, blockId, blocks);
         block.fields = deserializeFields(block.fields);
     }
