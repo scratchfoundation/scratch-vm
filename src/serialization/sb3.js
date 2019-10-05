@@ -876,7 +876,7 @@ const makeMutation = function (dynamicBlockInfo) {
  */
 const deserializeBlocks = function (runtime, blocks) {
     for (const blockId in blocks) {
-        if (!blocks.hasOwnProperty(blockId)) {
+        if (blocks.hasOwnProperty && !blocks.hasOwnProperty(blockId)) {
             continue;
         }
         let block = blocks[blockId];
