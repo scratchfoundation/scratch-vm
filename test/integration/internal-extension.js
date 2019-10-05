@@ -75,6 +75,7 @@ test('internal extension', t => {
         arguments: {},
         blockAllThreads: false,
         blockType: BlockType.COMMAND,
+        categoryId: 'testInternalExtension',
         func: goBlockInfo.func, // Cheat since we don't have a good way to ensure we generate the same function
         opcode: 'go',
         terminal: false,
