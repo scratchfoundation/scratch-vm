@@ -152,13 +152,53 @@ class Video {
         const {renderer} = this.runtime;
         if (!renderer) return;
 
+        /**
+         * Use a PenSkin for drawing the video, and a Drawable with the ghost effect for transparency.
+         * This requires several hacks, however.
+         *
+         * 1. Need to access private renderer APIs to get the Skin directly and to call drawStamp,
+         *    since the public renderer API only allow stamping other drawables onto the skin.
+         * 2. Override the hasPremultipliedAlpha getter on the skin to return false. Without this,
+         *    the ghost effect does not work correctly because the shader modifies the alpha channel
+         *    assuming straight alpha compositing will be used.
+         *
+         * We considered using a BitmapSkin instead, updating with the public renderer#updateBitmapSkin,
+         * but the PenSkin#drawStamp is faster because of lazy silhouette updating. Future work that
+         * makes all skins update silhouette lazily would allow us to use a BitmapSkin here.
+         *
+         * To try to make future work here easier, I've added asserts around the private APIs we are using
+         * so that internal renderer changes impacting video are more easily caught.
+         */
+
         if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
             this._skinId = renderer.createPenSkin();
-            this._skin = renderer._allSkins[this._skinId];
             this._drawable = renderer.createDrawable(StageLayering.VIDEO_LAYER);
             renderer.updateDrawableProperties(this._drawable, {
                 skinId: this._skinId
             });
+
+            try {
+                this._skin = renderer._allSkins[this._skinId];
+
+                // Make sure the private APIs relied on are still valid to help surface changes faster.
+                if (!this._skin) throw new Error('Could not get skin from _allSkins');
+                if (!this._skin.clear) throw new Error('PenSkin#clear method does not exist');
+                if (!this._skin.drawStamp) throw new Error('PenSkin#drawStamp method does not exist');
+
+                if (this._skin.hasPremultipliedAlpha) {
+                    throw new Error('Expected PenSkin.hasPremultipliedAlpha to be true');
+                } else {
+                    // Overwrite hasPremultipliedAlpha to false, per above mega-comment.
+                    Object.defineProperty(this._skin, 'hasPremultipliedAlpha', {
+                        get: () => false
+                    });
+                }
+            } catch (e) {
+                /* eslint-disable no-alert, no-console */
+                alert('Private renderer API change detected (see console log). VM Video IO must be updated.');
+                console.error(e);
+                /* eslint-enable no-alert, no-console */
+            }
         }
 
         // if we haven't already created and started a preview frame render loop, do so
