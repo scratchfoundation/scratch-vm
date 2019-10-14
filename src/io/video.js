@@ -135,7 +135,7 @@ class Video {
     }
 
     _disablePreview () {
-        if (this._skinId) {
+        if (this._skinId !== -1) {
             this.runtime.renderer.updateBitmapSkin(this._skinId, new ImageData(...Video.DIMENSIONS), 1);
             this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
         }
