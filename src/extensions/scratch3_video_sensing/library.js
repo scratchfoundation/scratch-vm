@@ -290,7 +290,7 @@ class VideoMotion {
             } = this;
 
             // The public APIs for Renderer#isTouching manage keeping the matrix and
-            // silhouette up-to-date, which is needed for drawable#isTouching to work
+            // silhouette up-to-date, which is needed for drawable#isTouching to work (used below)
             drawable.updateMatrix();
             if (drawable.skin) drawable.skin.updateSilhouette();
 
