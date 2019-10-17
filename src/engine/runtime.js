@@ -97,9 +97,6 @@ const ArgumentTypeMap = (() => {
         }
     };
     map[ArgumentType.IMAGE] = {
-        // TODO was going to use shadowFieldName here, but I didn't want to
-        // confuse it with how shadowFieldName is being used in all these
-        // other argument type cases
         // Inline images are weird because they're not actually "arguments".
         // They are more analagous to the label on a block.
         fieldType: 'field_image'
@@ -1235,6 +1232,29 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Helper for _convertPlaceholdes which handles inline images which are a specialized case of block "arguments".
+     * @param {object} argInfo Metadata about the inline image as specified by the extension
+     * @return {object} JSON blob for a scratch-blocks image field.
+     * @private
+     */
+    _constructInlineImageJson (argInfo) {
+        if (!argInfo.dataURI) {
+            log.warn('Missing data URI in extension block with argument type IMAGE');
+        }
+        return {
+            type: 'field_image',
+            src: argInfo.dataURI || '',
+            // TODO these probably shouldn't be hardcoded...?
+            width: 24,
+            height: 24,
+            // Whether or not the inline image should be flipped horizontally
+            // in RTL languages. Defaults to false, indicating that the
+            // image will not be flipped.
+            flip_rtl: argInfo.flipRTL || false
+        };
+    }
+
+    /**
      * Helper for _convertForScratchBlocks which handles linearization of argument placeholders. Called as a callback
      * from string#replace. In addition to the return value the JSON and XML items in the context will be filled.
      * @param {object} context - information shared with _convertForScratchBlocks about the block, etc.
@@ -1262,25 +1282,9 @@ class Runtime extends EventEmitter {
 
         // Most field types are inputs (slots on the block that can have other blocks plugged into them)
         // check if this is not one of those cases. E.g. an inline image on a block.
-        switch (argTypeInfo.fieldType) {
-        case 'field_image': {
-            if (!argInfo.dataURI) {
-                log.warn('Missing data URI in extension block with argument type IMAGE');
-            }
-            argJSON = {
-                type: 'field_image',
-                src: argInfo.dataURI || '',
-                // TODO these probably shouldn't be hardcoded...?
-                width: 24,
-                height: 24,
-                // Whether or not the inline image should be flipped horizontally
-                // in RTL languages. Defaults to false, indicating that the
-                // image will not be flipped.
-                flip_rtl: argInfo.flipRTL || false
-            };
-            break;
-        }
-        default: {
+        if (argTypeInfo.fieldType === 'field_image') {
+            argJSON = this._constructInlineImageJson(argInfo);
+        } else {
             // Construct input value
 
             // Layout a block argument (e.g. an input slot on the block)
@@ -1346,7 +1350,6 @@ class Runtime extends EventEmitter {
             if (valueName) {
                 context.inputList.push('</value>');
             }
-        }
         }
 
         const argsName = `args${context.outLineNum}`;
