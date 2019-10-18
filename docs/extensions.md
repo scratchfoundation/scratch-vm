@@ -119,8 +119,50 @@ class SomeBlocks {
     // ...
 }
 ```
+### Block Arguments
+In addition to displaying text, blocks can have arguments in the form of slots to take other blocks getting plugged in, or dropdown menus to select an argument value from a list of possible values.
 
-### Defining a Menu
+The possible types of block arguments are as follows:
+
+- String - a string input, this is a type-able field which also accepts other reporter blocks to be plugged in
+- Number - an input similar to the string input, but the type-able values are constrained to numbers.
+- Angle - an input similar to the number input, but it has an additional UI to be able to pick an angle from a
+circular dial
+- Boolean - an input for a boolean (hexagonal shaped) reporter block. This field is not type-able.
+- Color - an input which displays a color swatch. This field has additional UI to pick a color by choosing values for the color's hue, saturation and brightness. Optionally, the defaultValue for the color picker can also be chosen if the extension developer wishes to display the same color every time the extension is added. If the defaultValue is left out, the default behavior of picking a random color when the extension is loaded will be used.
+- Matrix - an input which displays a 5 x 5 matrix of cells, where each cell can be filled in or clear.
+- Note - a numeric input which can select a musical note. This field has additional UI to select a note from a
+visual keyboard.
+- Image - an inline image displayed on a block. This is a special argument type in that it does not represent a value and does not accept other blocks to be plugged-in in place of this block field. See the section below about "Adding an Inline Image".
+
+#### Adding an Inline Image
+In addition to specifying block arguments (an example of string arguments shown in the code snippet above),
+you can also specify an inline image for the block. You must include a dataURI for the image. If left unspecified, blank space will be allocated for the image and a warning will be logged in the console.
+You can optionally also specify `flipRTL`, a property indicating whether the image should be flipped horizontally when the editor has a right to left language selected as its locale. By default, the image is not flipped.
+
+```js
+return {
+    // ...
+    blocks: [
+        {
+            //...
+            arguments {
+                MY_IMAGE: {
+                    type: ArgumentType.IMAGE,
+                    dataURI: 'myImageData',
+                    alt: 'This is an image',
+                    flipRTL: true
+                }
+            }
+        }
+    ]
+}
+```
+
+
+
+
+#### Defining a Menu
 
 To display a drop-down menu for a block argument, specify the `menu` property of that argument and a matching item in
 the `menus` section of your extension's definition:
@@ -201,7 +243,7 @@ menus: {
 }
 ```
 
-#### Accepting reporters ("droppable" menus)
+##### Accepting reporters ("droppable" menus)
 
 By default it is not possible to specify the value of a dropdown menu by inserting a reporter block. While we
 encourage extension authors to make their menus accept reporters when possible, doing so requires careful
