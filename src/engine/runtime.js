@@ -205,6 +205,13 @@ class Runtime extends EventEmitter {
         this._primitives = {};
 
         /**
+         * Map of loaded extension URLs/IDs to sanitized extension info.
+         * @type {Map.<string, ExtensionInfo>}
+         * @private
+         */
+        this._loadedExtensions = new Map();
+
+        /**
          * Map to look up all block information by extended opcode.
          * @type {Array.<CategoryInfo>}
          * @private
@@ -832,6 +839,36 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Check whether an extension is registered or is in the process of loading. This is intended to control loading or
+     * adding extensions so it may return `true` before the extension is ready to be used. Use the promise returned by
+     * `loadExtensionURL` if you need to wait until the extension is truly ready.
+     * @param {string} extensionID - the ID of the extension.
+     * @returns {boolean} - true if loaded, false otherwise.
+     */
+    isExtensionLoaded (extensionID) {
+        return this._loadedExtensions.has(extensionID);
+    }
+
+    /**
+     * Fetch the cached information about an extension. Does not call `getInfo` on the extension
+     * @see {@link isExtensionLoaded} for details about registration timing.
+     * @param {string} extensionID - the ID of the extension.
+     * @returns {ExtensionInfo} - cached information about the extension, or `undefined` if the extension is not loaded.
+     */
+    getExtensionInfo (extensionID) {
+        return this._loadedExtensions.get(extensionID);
+    }
+
+    /**
+     * Retrieve the whole map of extension ID to extension information.
+     * Callers other than the extension manager should probably not use this.
+     * @returns {Map.<string, ExtensionInfo>} - a map of extension ID to `ExtensionInfo` for each loaded extension.
+     */
+    getLoadedExtensions () {
+        return this._loadedExtensions;
+    }
+
+    /**
      * Reregister the primitives for an extension
      * @param  {ExtensionMetadata} extensionInfo - new info (results of running getInfo) for an extension
      * @private
@@ -1048,6 +1085,7 @@ class Runtime extends EventEmitter {
      */
     _convertBlockForScratchBlocks (blockInfo, categoryInfo) {
         const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
+        blockInfo.categoryId = categoryInfo.id;
 
         const blockJSON = {
             type: extendedOpcode,

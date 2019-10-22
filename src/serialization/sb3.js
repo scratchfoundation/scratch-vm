@@ -16,6 +16,8 @@ const uid = require('../util/uid');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const VariableUtil = require('../util/variable-util');
+const mutationAdapter = require('../engine/mutation-adapter');
+const xmlEscape = require('../util/xml-escape');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
@@ -95,16 +97,62 @@ const primitiveOpcodeInfoMap = {
     data_listcontents: [LIST_PRIMITIVE, 'LIST']
 };
 
+// Map primitive ID to block opcode to help interpret serialized primitives
+// This is calculated from primitiveOpcodeInfoMap to maintain consistency
+const primitiveIdMap = (() => {
+    const map = {};
+    for (const opcode in primitiveOpcodeInfoMap) {
+        const info = primitiveOpcodeInfoMap[opcode];
+        map[info[0]] = opcode;
+    }
+    return map;
+})();
+
+/**
+ * Retrieve information about the extension providing a particular block.
+ * @param {object} block - a runtime block object, possibly with dynamic blockInfo in a mutation.
+ * @param {Runtime} runtime - the VM runtime.
+ * @returns {ExtensionInfo} - metadata for the extension providing the block, or `undefined` if absent / not loaded.
+ */
+const getExtensionInfoForBlock = function (block, runtime) {
+    const categoryId = block.categoryId ||
+        (block.mutation && block.mutation.blockInfo && block.mutation.blockInfo.categoryId);
+    if (categoryId) {
+        return runtime.getExtensionInfo(categoryId);
+    }
+    // intentionally return undefined if the ID isn't found
+    // this can happen legitimately for blocks which haven't been extensionified yet
+};
+
+/**
+ * Retrieve the custom serialization information about a particular opcode/block in a particular extension.
+ * @param {ExtensionMetadata} extensionInfo - extension metadata which may or may not include `serialization`.
+ * @param {string} opcode - the extended opcode for the block in the extension, like `data_variable`.
+ * @returns {object} always returns an object; it may or may not have `serialize` and/or `deserialize` properties.
+ */
+const getSerializationInfo = function (extensionInfo, opcode) {
+    return (
+        extensionInfo &&
+        extensionInfo.serialization &&
+        extensionInfo.serialization[opcode]
+    ) || {};
+};
+
 /**
  * Serializes primitives described above into a more compact format
  * @param {object} block the block to serialize
+ * @param {RenderedTarget} target The target which contains the block
+ * @param {Runtime} runtime The VM runtime
  * @return {array} An array representing the information in the block,
  * or null if the given block is not one of the primitives described above.
  */
-const serializePrimitiveBlock = function (block) {
-    // Returns an array represeting a primitive block or null if not one of
-    // the primitive types above
-    if (hasOwnProperty.call(primitiveOpcodeInfoMap, block.opcode)) {
+const serializePrimitiveBlock = function (block, target, runtime) {
+    const extensionInfo = getExtensionInfoForBlock(block, runtime);
+    const customSerialize = getSerializationInfo(extensionInfo, block.opcode).serialize;
+    if (customSerialize) {
+        return customSerialize(block, target);
+    }
+    if (primitiveOpcodeInfoMap.hasOwnProperty(block.opcode)) {
         const primitiveInfo = primitiveOpcodeInfoMap[block.opcode];
         const primitiveConstant = primitiveInfo[0];
         const fieldName = primitiveInfo[1];
@@ -184,12 +232,14 @@ const serializeFields = function (fields) {
  * Serialize the given block in the SB3 format with some compression of inputs,
  * fields, and primitives.
  * @param {object} block The block to serialize
+ * @param {RenderedTarget} target The target which contains the block
+ * @param {Runtime} runtime The VM runtime
  * @return {object | array} A serialized representation of the block. This is an
  * array if the block is one of the primitive types described above or an object,
  * if not.
  */
-const serializeBlock = function (block) {
-    const serializedPrimitive = serializePrimitiveBlock(block);
+const serializeBlock = function (block, target, runtime) {
+    const serializedPrimitive = serializePrimitiveBlock(block, target, runtime);
     if (serializedPrimitive) return serializedPrimitive;
     // If serializedPrimitive is null, proceed with serializing a non-primitive block
     const obj = Object.create(null);
@@ -243,7 +293,7 @@ const serializeBlock = function (block) {
  * }
  * Note: this function modifies the given blocks object in place
  * @param {object} block The block with inputs to compress
- * @param {objec} blocks The object containing all the blocks currently getting serialized
+ * @param {object} blocks The object containing all the blocks currently getting serialized
  * @return {object} The serialized block with compressed inputs
  */
 const compressInputTree = function (block, blocks) {
@@ -273,6 +323,26 @@ const compressInputTree = function (block, blocks) {
 };
 
 /**
+ * Interpret a serialized block to retrieve extension & opcode information. We can't deserialize a block without
+ * knowing whether its extension offers custom deserialization for the block, but we can't know that without knowing
+ * the block's opcode. In the case of a primitive that means we need to at least partially deserialize the block. This
+ * function provides a sort of "minimal deserialization" in order to break that dependency loop. For convenience it
+ * also handles non-primitive serialized blocks.
+ * @param {object|array} blockJSON - a serialized block in either object or primitive (array) form.
+ * @returns {object} an object containing the opcode info necessary to deserialize the block
+ * @property {string} extendedOpcode - the full opcode for this block, like 'myExtension_this_that'
+ * @property {string} extensionId - the extension/category for this block, like 'myExtension'. May be an empty string.
+ */
+const getExtensionAndOpcode = function (blockJSON) {
+    const extendedOpcode = Array.isArray(blockJSON) ? primitiveIdMap[blockJSON[0]] : blockJSON.opcode;
+
+    return {
+        extendedOpcode,
+        extensionId: StringUtil.splitFirst(extendedOpcode, '_')[0]
+    };
+};
+
+/**
  * Get non-core extension ID for a given sb3 opcode.
  * @param {!string} opcode The opcode to examine for extension.
  * @return {?string} The extension ID, if it exists and is not a core extension.
@@ -288,20 +358,20 @@ const getExtensionIdForOpcode = function (opcode) {
 /**
  * Serialize the given blocks object (representing all the blocks for the target
  * currently being serialized.)
- * @param {object} blocks The blocks to be serialized
- * @return {Array} An array of the serialized blocks with compressed inputs and
- * compressed primitives and the list of all extension IDs present
- * in the serialized blocks.
+ * @param {RenderedTarget} target The target containing the blocks to be serialized.
+ * @param {Runtime} runtime The VM runtime
+ * @param {Set} extensions If serialization encounters extension blocks, the extension ID(s) will be added here.
+ * @return {object} the serialized blocks with compressed inputs and compressed primitives
  */
-const serializeBlocks = function (blocks) {
+const serializeBlocks = function (target, runtime, extensions) {
+    const blocks = target.getBlocks();
     const obj = Object.create(null);
-    const extensionIDs = new Set();
     for (const blockID in blocks) {
         if (!blocks.hasOwnProperty(blockID)) continue;
-        obj[blockID] = serializeBlock(blocks[blockID], blocks);
+        obj[blockID] = serializeBlock(blocks[blockID], target, runtime);
         const extensionID = getExtensionIdForOpcode(blocks[blockID].opcode);
         if (extensionID) {
-            extensionIDs.add(extensionID);
+            extensions.add(extensionID);
         }
     }
     // once we have completed a first pass, do a second pass on block inputs
@@ -331,7 +401,7 @@ const serializeBlocks = function (blocks) {
             delete obj[blockID];
         }
     }
-    return [obj, Array.from(extensionIDs)];
+    return obj;
 };
 
 /**
@@ -434,33 +504,33 @@ const serializeComments = function (comments) {
 /**
  * Serialize the given target. Only serialize properties that are necessary
  * for saving and loading this target.
- * @param {object} target The target to be serialized.
- * @param {Set} extensions A set of extensions to add extension IDs to
+ * @param {RenderedTarget} target The target to be serialized.
+ * @param {Runtime} runtime The VM runtime
+ * @param {Set} extensions If serialization encounters extension blocks, the extension ID(s) will be added here.
  * @return {object} A serialized representation of the given target.
  */
-const serializeTarget = function (target, extensions) {
+const serializeTarget = function (target, runtime, extensions) {
     const obj = Object.create(null);
-    let targetExtensions = [];
     obj.isStage = target.isStage;
-    obj.name = obj.isStage ? 'Stage' : target.name;
+    obj.name = obj.isStage ? 'Stage' : target.getName();
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
     obj.broadcasts = vars.broadcasts;
-    [obj.blocks, targetExtensions] = serializeBlocks(target.blocks);
+    obj.blocks = serializeBlocks(target, runtime, extensions);
     obj.comments = serializeComments(target.comments);
 
+    obj.currentCostume = target.currentCostume;
+    obj.costumes = target.getCostumes().map(serializeCostume);
+
     // TODO remove this check/patch when (#1901) is fixed
-    if (target.currentCostume < 0 || target.currentCostume >= target.costumes.length) {
-        log.warn(`currentCostume property for target ${target.name} is out of range`);
-        target.currentCostume = MathUtil.clamp(target.currentCostume, 0, target.costumes.length - 1);
+    if (obj.currentCostume < 0 || obj.currentCostume >= obj.costumes.length) {
+        log.warn(`currentCostume property for target ${obj.name} is out of range`);
+        obj.currentCostume = MathUtil.clamp(obj.currentCostume, 0, obj.costumes.length - 1);
     }
 
-    obj.currentCostume = target.currentCostume;
-    obj.costumes = target.costumes.map(serializeCostume);
-    obj.sounds = target.sounds.map(serializeSound);
+    obj.sounds = target.getSounds().map(serializeSound);
     if (target.hasOwnProperty('volume')) obj.volume = target.volume;
-    if (target.hasOwnProperty('layerOrder')) obj.layerOrder = target.layerOrder;
     if (obj.isStage) { // Only the stage should have these properties
         if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
         if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
@@ -476,10 +546,6 @@ const serializeTarget = function (target, extensions) {
         obj.rotationStyle = target.rotationStyle;
     }
 
-    // Add found extensions to the extensions object
-    targetExtensions.forEach(extensionId => {
-        extensions.add(extensionId);
-    });
     return obj;
 };
 
@@ -519,8 +585,6 @@ const serializeMonitors = function (monitors) {
  * @return {object} Serialized runtime instance.
  */
 const serialize = function (runtime, targetId) {
-    // Fetch targets
-    const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
     const extensions = new Set();
 
@@ -528,23 +592,23 @@ const serialize = function (runtime, targetId) {
         [runtime.getTargetById(targetId)] :
         runtime.targets.filter(target => target.isOriginal);
 
-    const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
+    const serializedTargets = originalTargetsToSerialize.map(t => serializeTarget(t, runtime, extensions));
 
-    const flattenedOriginalTargets = originalTargetsToSerialize.map(t => t.toJSON());
+    // If we're serializing only one sprite, we're done.
+    if (targetId) {
+        return serializedTargets[0];
+    }
 
     // If the renderer is attached, and we're serializing a whole project (not a sprite)
-    // add a temporary layerOrder property to each target.
-    if (runtime.renderer && !targetId) {
-        flattenedOriginalTargets.forEach((t, index) => {
+    // add a layerOrder property to each serialized target.
+    if (runtime.renderer) {
+        const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
+        serializedTargets.forEach((t, index) => {
             t.layerOrder = layerOrdering[index];
         });
     }
 
-    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
-
-    if (targetId) {
-        return serializedTargets[0];
-    }
+    const obj = Object.create(null);
 
     obj.targets = serializedTargets;
 
@@ -792,28 +856,57 @@ const deserializeFields = function (fields) {
 };
 
 /**
- * Covnert serialized INPUT and FIELD primitives back to hydrated block templates.
+ * Convert dynamic blockInfo JSON from a custom deserialization function into an XML element ready for runtime use.
+ * @param {object} dynamicBlockInfo - a BlockInfo-like object with properties like `opcode` and `isDynamic`.
+ * @returns {object} - a JSON-like object representing a mutation containing the provided blockInfo
+ */
+const makeMutation = function (dynamicBlockInfo) {
+    const xmlString = `<mutation blockInfo="${xmlEscape(JSON.stringify(dynamicBlockInfo))}"/>`;
+    return mutationAdapter(xmlString);
+};
+
+/**
+ * Convert serialized INPUT and FIELD primitives back to hydrated block templates.
  * Should be able to deserialize a format that has already been deserialized.  The only
  * "east" path to adding new targets/code requires going through deserialize, so it should
  * work with pre-parsed deserialized blocks.
  *
+ * @param {!Runtime} runtime Runtime object to load all structures into.
  * @param {object} blocks Serialized SB3 "blocks" property of a target. Will be mutated.
  * @return {object} input is modified and returned
  */
-const deserializeBlocks = function (blocks) {
+const deserializeBlocks = function (runtime, blocks) {
     for (const blockId in blocks) {
-        if (!Object.prototype.hasOwnProperty.call(blocks, blockId)) {
+        if (blocks.hasOwnProperty && !blocks.hasOwnProperty(blockId)) {
             continue;
         }
-        const block = blocks[blockId];
-        if (Array.isArray(block)) {
-            // this is one of the primitives
-            // delete the old entry in object.blocks and replace it w/the
-            // deserialized object
+        let block = blocks[blockId];
+        const {extensionId, extendedOpcode} = getExtensionAndOpcode(block);
+        const extensionInfo = runtime.getExtensionInfo(extensionId);
+        const customDeserialize = getSerializationInfo(extensionInfo, extendedOpcode).deserialize;
+        if (customDeserialize) {
+            block = customDeserialize(block);
+            blocks[blockId] = block; // customDeserialize might have made a new object; make sure to keep it!
+            // the deserialize function should return opcode 'foo' and we'll fix it to 'ext_foo'
+            const newBlockOpcode = `${extensionId}_${block.opcode}`;
+            if (newBlockOpcode !== extendedOpcode) {
+                log.warn(`Block deserialization changed opcode from ${extendedOpcode} to ${block.opcode}`);
+            }
+            block.opcode = newBlockOpcode;
+            if (block.mutation && block.mutation.blockInfo) {
+                block.mutation = makeMutation(block.mutation.blockInfo);
+            }
+            // fall through to input & field handling below
+        } else if (Array.isArray(block)) {
+            // this is a compressed primitive expressed as an array instead of as an object
+            // delete the old entry in object.blocks and replace it w/the deserialized object
             delete blocks[blockId];
             deserializeInputDesc(block, null, false, blocks);
+            // deserializeInputDesc did any id/input/field handling needed, so just skip to the next block
             continue;
         }
+        // we want this stuff to run for custom-deserialized blocks as well as for default-deserialized blocks
+        // except for primitives, which are handled specially inside `deserializeInputDesc` above.
         block.id = blockId; // add id back to block since it wasn't serialized
         block.inputs = deserializeInputs(block.inputs, blockId, blocks);
         block.fields = deserializeFields(block.fields);
@@ -935,7 +1028,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
         sprite.name = object.name;
     }
     if (object.hasOwnProperty('blocks')) {
-        deserializeBlocks(object.blocks);
+        deserializeBlocks(runtime, object.blocks);
         // Take a second pass to create objects and add extensions
         for (const blockId in object.blocks) {
             if (!object.blocks.hasOwnProperty(blockId)) continue;

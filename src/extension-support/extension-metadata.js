@@ -2,6 +2,7 @@
  * @typedef {object} ExtensionMetadata
  * All the metadata needed to register an extension.
  * @property {string} id - a unique alphanumeric identifier for this extension. No special characters allowed.
+ * @property {string} [serviceName] - the service name for extension. Valid once the extension is loaded & registered.
  * @property {string} [name] - the human-readable name of this extension.
  * @property {string} [blockIconURI] - URI for an image to be placed on each block in this extension. Data URI ok.
  * @property {string} [menuIconURI] - URI for an image to be placed on this extension's category menu item. Data URI ok.
@@ -14,6 +15,8 @@
  * @typedef {object} ExtensionBlockMetadata
  * All the metadata needed to register an extension block.
  * @property {string} opcode - a unique alphanumeric identifier for this block. No special characters allowed.
+ * @property {string} categoryId - the ID of the category/extension responsible for this block.
+ * @property {ExtensionMetadata} [extensionInfo] - the metadata for the extension responsible for this block, if any.
  * @property {string} [func] - the name of the function implementing this block. Can be shared by other blocks/opcodes.
  * @property {BlockType} blockType - the type of block (command, reporter, etc.) being described.
  * @property {string} text - the text on the block, with [PLACEHOLDERS] for arguments.

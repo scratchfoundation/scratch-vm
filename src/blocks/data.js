@@ -8,6 +8,9 @@ const formatMessage = require('format-message');
 
 const LIST_ITEM_LIMIT = 200000;
 
+// serialization primitives
+const VAR_PRIMITIVE = 12;
+
 /**
  * This Scratch 3.0 extension implements Scratch "data" blocks for variables and lists, including cloud variables.
  */
@@ -357,6 +360,12 @@ class Scratch3DataBlocks {
             menus: {
                 variables: 'getVariablesMenuItems',
                 lists: 'getListsMenuItems'
+            },
+            serialization: {
+                variable: {
+                    serialize: 'serializeVariable',
+                    deserialize: 'deserializeVariable'
+                }
             }
         };
     }
@@ -767,6 +776,62 @@ class Scratch3DataBlocks {
         });
 
         this.runtime.requestToolboxExtensionsUpdate();
+    }
+
+    serializeVariable (block, target) {
+        const variableName = block.mutation.blockInfo.text;
+        const variable = target.lookupVariableByNameAndType(variableName, Variable.SCALAR_TYPE);
+        const result = [VAR_PRIMITIVE, variableName, variable.id];
+        if (block.topLevel) {
+            result.push(block.x ? Math.round(block.x) : 0);
+            result.push(block.y ? Math.round(block.y) : 0);
+        }
+        return result;
+    }
+
+    deserializeVariable (primitiveArray) {
+        const [primitiveTag, variableName, variableId] = primitiveArray;
+        if (primitiveTag !== VAR_PRIMITIVE) {
+            throw new Error('bad primitive ID on variable!');
+        }
+        // @todo reduce duplication here.
+        // This effectively duplicates some of the content in `getInfo()` as well as some of the logic in
+        // `defineDynamicBlock`. Maybe it should return only the mutation blockInfo, or maybe it should return
+        // something that looks like the block's entry in `getInfo()`. If we do either of those things we'll need to
+        // decide how we want to handle the block's (x,y) position and `topLevel` flag.
+        const result = {
+            opcode: 'variable',
+            fields: {
+                VARIABLE: {
+                    name: 'VARIABLE',
+                    id: variableId,
+                    variableType: Variable.SCALAR_TYPE
+                }
+            },
+            inputs: {},
+            next: null,
+            parent: null,
+            shadow: false,
+            mutation: {
+                blockInfo: {
+                    blockType: BlockType.REPORTER,
+                    isDynamic: true,
+                    opcode: 'variable',
+                    text: variableName,
+                    paletteKey: variableId,
+                    customContextMenu: [{
+                        text: 'Rename Variable',
+                        builtInCallback: 'RENAME_A_VARIABLE'
+                    }]
+                }
+            }
+        };
+        if (primitiveArray.length > 3) {
+            result.topLevel = true;
+            result.x = primitiveArray[3];
+            result.y = primitiveArray[4];
+        }
+        return result;
     }
 }
 

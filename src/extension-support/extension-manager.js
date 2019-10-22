@@ -83,13 +83,6 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
-         * @type {Set.<string>}
-         * @private
-         */
-        this._loadedExtensions = new Map();
-
-        /**
          * Keep a reference to the runtime so we can construct internal extension objects.
          * TODO: remove this in favor of extensions accessing the runtime as a service.
          * @type {Runtime}
@@ -107,9 +100,10 @@ class ExtensionManager {
      * `loadExtensionURL` if you need to wait until the extension is truly ready.
      * @param {string} extensionID - the ID of the extension.
      * @returns {boolean} - true if loaded, false otherwise.
+     * @deprecated Please use `isExtensionLoaded` on the Runtime instead.
      */
     isExtensionLoaded (extensionID) {
-        return this._loadedExtensions.has(extensionID);
+        return this.runtime.isExtensionLoaded(extensionID);
     }
 
     /**
@@ -123,8 +117,7 @@ class ExtensionManager {
             return;
         }
 
-        /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-        if (this.isExtensionLoaded(extensionId)) {
+        if (this.runtime.isExtensionLoaded(extensionId)) {
             const message = `Rejecting attempt to load a second extension with ID ${extensionId}`;
             log.warn(message);
             return;
@@ -132,8 +125,7 @@ class ExtensionManager {
 
         const extension = builtinExtensions[extensionId]();
         const extensionInstance = new extension(this.runtime);
-        const serviceName = this._registerInternalExtension(extensionInstance);
-        this._loadedExtensions.set(extensionId, serviceName);
+        this._registerInternalExtension(extensionInstance);
     }
 
     /**
@@ -143,20 +135,12 @@ class ExtensionManager {
      */
     loadExtensionURL (extensionURL) {
         if (builtinExtensions.hasOwnProperty(extensionURL)) {
-            /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
-            if (this.isExtensionLoaded(extensionURL)) {
-                const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
-                log.warn(message);
-                return Promise.resolve();
-            }
-
-            const extension = builtinExtensions[extensionURL]();
-            const extensionInstance = new extension(this.runtime);
-            const serviceName = this._registerInternalExtension(extensionInstance);
-            this._loadedExtensions.set(extensionURL, serviceName);
+            this.loadExtensionIdSync(extensionURL);
             return Promise.resolve();
         }
 
+        log.error('Worker extensions are a work in progress and do not work yet');
+        /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
             const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
@@ -171,16 +155,34 @@ class ExtensionManager {
      * @returns {Promise} resolved once all the extensions have been reinitialized
      */
     refreshBlocks () {
-        const allPromises = Array.from(this._loadedExtensions.values()).map(serviceName =>
-            dispatch.call(serviceName, 'getInfo')
+        const loadedExtensions = this.runtime.getLoadedExtensions();
+        const allPromises = [];
+        loadedExtensions.forEach((extensionInfo, oldId) => {
+            const serviceName = extensionInfo.serviceName;
+            allPromises.push(dispatch
+                .call(serviceName, 'getInfo')
                 .then(info => {
                     info = this._prepareExtensionInfo(serviceName, info);
+                    if (info.id !== oldId) {
+                        // This should never happen: it implies that this call to the extension's `getInfo` method has
+                        // returned a different ID compared to a previous call to the same `getInfo` method. Keeping
+                        // the old ID is slightly safer with respect to any blocks which might already exist in the
+                        // project but hopefully this is just a sign that an extension author is iterating on their
+                        // extension's ID and they'll follow up with a proper reload...
+                        log.warn(
+                            `Extension ID mismatch: extension loaded as ${oldId} reports ID ${info.id}!\n` +
+                            `The mismatch will be ignored and the extension will be available as ${oldId}.`
+                        );
+                        info.id = oldId;
+                    }
+                    loadedExtensions.set(info.id, info);
                     dispatch.call('runtime', '_refreshExtensionPrimitives', info);
                 })
                 .catch(e => {
                     log.error(`Failed to refresh built-in extension primitives: ${JSON.stringify(e)}`);
                 })
-        );
+            );
+        });
         return Promise.all(allPromises);
     }
 
@@ -228,15 +230,15 @@ class ExtensionManager {
     /**
      * Register an internal (non-Worker) extension object
      * @param {object} extensionObject - the extension object to register
-     * @returns {string} The name of the registered extension service
      */
     _registerInternalExtension (extensionObject) {
-        const extensionInfo = extensionObject.getInfo();
+        const rawExtensionInfo = extensionObject.getInfo();
         const fakeWorkerId = this.nextExtensionWorker++;
-        const serviceName = `extension_${fakeWorkerId}_${extensionInfo.id}`;
+        const serviceName = `extension_${fakeWorkerId}_${rawExtensionInfo.id}`;
         dispatch.setServiceSync(serviceName, extensionObject);
-        dispatch.callSync('extensions', 'registerExtensionServiceSync', serviceName);
-        return serviceName;
+        this.registerExtensionServiceSync(serviceName);
+        const extensionInfo = this._prepareExtensionInfo(serviceName, rawExtensionInfo);
+        this.runtime.getLoadedExtensions().set(extensionInfo.id, extensionInfo);
     }
 
     /**
@@ -271,11 +273,12 @@ class ExtensionManager {
      * @private
      */
     _prepareExtensionInfo (serviceName, extensionInfo) {
-        extensionInfo = Object.assign({}, extensionInfo);
         if (!/^[a-z0-9]+$/i.test(extensionInfo.id)) {
             throw new Error('Invalid extension id');
         }
+        extensionInfo = Object.assign({}, extensionInfo);
         extensionInfo.name = extensionInfo.name || extensionInfo.id;
+        extensionInfo.serviceName = serviceName;
         extensionInfo.blocks = extensionInfo.blocks || [];
         extensionInfo.targetTypes = extensionInfo.targetTypes || [];
         extensionInfo.blocks = extensionInfo.blocks.reduce((results, blockInfo) => {
@@ -298,6 +301,8 @@ class ExtensionManager {
         }, []);
         extensionInfo.menus = extensionInfo.menus || {};
         extensionInfo.menus = this._prepareMenuInfo(serviceName, extensionInfo.menus);
+        extensionInfo.serialization =
+            this._prepareSerializationInfo(extensionInfo.id, serviceName, extensionInfo.serialization);
         return extensionInfo;
     }
 
@@ -387,6 +392,38 @@ class ExtensionManager {
             throw new Error(`Extension menu returned no items: ${menuItemFunctionName}`);
         }
         return menuItems;
+    }
+
+    /**
+     * Ready the custom serialization and deserialization information in an extension's metadata.
+     * Before: map of short opcode (like `variable`) to `serialize` & `deserialize` function names.
+     * After: map of extended opcode (like `data_variable`) to synchronous callables for `serialize` and `deserialize`.
+     * @param {string} extensionId - the ID of the extension, like 'data'.
+     * @param {string} serviceName - the name of the service registered for this extension.
+     * @param {object.<object.<string>>} rawSerializationInfo - map of block opcode to `serialize` & `deserialize` info.
+     * @return {object.<object.<function>>} - prepared serialization info as described above.
+     */
+    _prepareSerializationInfo (extensionId, serviceName, rawSerializationInfo) {
+        rawSerializationInfo = rawSerializationInfo || {};
+        const cookedSerializationInfo = {};
+        for (const opcode in rawSerializationInfo) {
+            if (!rawSerializationInfo.hasOwnProperty(opcode)) continue;
+            const functionNames = rawSerializationInfo[opcode];
+            const extendedOpcode = `${extensionId}_${opcode}`;
+            if (!functionNames.serialize && !functionNames.deserialize) {
+                log.warn(`serialization info for ${extendedOpcode} contains neither 'serialize' nor 'deserialize'`);
+                continue;
+            }
+            const boundFunctions = {};
+            if (functionNames.serialize) {
+                boundFunctions.serialize = dispatch.callSync.bind(dispatch, serviceName, functionNames.serialize);
+            }
+            if (functionNames.deserialize) {
+                boundFunctions.deserialize = dispatch.callSync.bind(dispatch, serviceName, functionNames.deserialize);
+            }
+            cookedSerializationInfo[extendedOpcode] = boundFunctions;
+        }
+        return cookedSerializationInfo;
     }
 
     /**
