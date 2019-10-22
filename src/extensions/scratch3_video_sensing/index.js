@@ -25,6 +25,8 @@ const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNv
 
 /**
  * Sensor attribute video sensor block should report.
+ * 
+ 
  * @readonly
  * @enum {string}
  */
