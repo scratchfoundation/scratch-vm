@@ -159,7 +159,8 @@ class ExtensionManager {
         const allPromises = [];
         loadedExtensions.forEach((extensionInfo, oldId) => {
             const serviceName = extensionInfo.serviceName;
-            allPromises.push(dispatch.call(serviceName, 'getInfo')
+            allPromises.push(dispatch
+                .call(serviceName, 'getInfo')
                 .then(info => {
                     info = this._prepareExtensionInfo(serviceName, info);
                     if (info.id !== oldId) {
@@ -409,6 +410,10 @@ class ExtensionManager {
             if (!rawSerializationInfo.hasOwnProperty(opcode)) continue;
             const functionNames = rawSerializationInfo[opcode];
             const extendedOpcode = `${extensionId}_${opcode}`;
+            if (!functionNames.serialize && !functionNames.deserialize) {
+                log.warn(`serialization info for ${extendedOpcode} contains neither 'serialize' nor 'deserialize'`);
+                continue;
+            }
             const boundFunctions = {};
             if (functionNames.serialize) {
                 boundFunctions.serialize = dispatch.callSync.bind(dispatch, serviceName, functionNames.serialize);

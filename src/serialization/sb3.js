@@ -97,6 +97,8 @@ const primitiveOpcodeInfoMap = {
     data_listcontents: [LIST_PRIMITIVE, 'LIST']
 };
 
+// Map primitive ID to block opcode to help interpret serialized primitives
+// This is calculated from primitiveOpcodeInfoMap to maintain consistency
 const primitiveIdMap = (() => {
     const map = {};
     for (const opcode in primitiveOpcodeInfoMap) {
@@ -118,7 +120,8 @@ const getExtensionInfoForBlock = function (block, runtime) {
     if (categoryId) {
         return runtime.getExtensionInfo(categoryId);
     }
-    // undefined
+    // intentionally return undefined if the ID isn't found
+    // this can happen legitimately for blocks which haven't been extensionified yet
 };
 
 /**
@@ -332,12 +335,10 @@ const compressInputTree = function (block, blocks) {
  */
 const getExtensionAndOpcode = function (blockJSON) {
     const extendedOpcode = Array.isArray(blockJSON) ? primitiveIdMap[blockJSON[0]] : blockJSON.opcode;
-    const firstSplit = extendedOpcode.indexOf('_');
 
-    // note: if we ever need the simple / non-extended opcode, it's just extendedOpcode.substring(firstSplit + 1)
     return {
         extendedOpcode,
-        extensionId: extendedOpcode.substring(0, firstSplit)
+        extensionId: StringUtil.splitFirst(extendedOpcode, '_')[0]
     };
 };
 
@@ -359,7 +360,7 @@ const getExtensionIdForOpcode = function (opcode) {
  * currently being serialized.)
  * @param {RenderedTarget} target The target containing the blocks to be serialized.
  * @param {Runtime} runtime The VM runtime
- * @param {Set} extensions A set of extensions to add extension IDs to
+ * @param {Set} extensions If serialization encounters extension blocks, the extension ID(s) will be added here.
  * @return {object} the serialized blocks with compressed inputs and compressed primitives
  */
 const serializeBlocks = function (target, runtime, extensions) {
@@ -505,7 +506,7 @@ const serializeComments = function (comments) {
  * for saving and loading this target.
  * @param {RenderedTarget} target The target to be serialized.
  * @param {Runtime} runtime The VM runtime
- * @param {Set} extensions A set of extensions to add extension IDs to
+ * @param {Set} extensions If serialization encounters extension blocks, the extension ID(s) will be added here.
  * @return {object} A serialized representation of the given target.
  */
 const serializeTarget = function (target, runtime, extensions) {
@@ -857,7 +858,7 @@ const deserializeFields = function (fields) {
 /**
  * Convert dynamic blockInfo JSON from a custom deserialization function into an XML element ready for runtime use.
  * @param {object} dynamicBlockInfo - a BlockInfo-like object with properties like `opcode` and `isDynamic`.
- * @returns {Element} - an XML Element with tag name 'mutation' and an attribute called 'blockInfo'
+ * @returns {object} - a JSON-like object representing a mutation containing the provided blockInfo
  */
 const makeMutation = function (dynamicBlockInfo) {
     const xmlString = `<mutation blockInfo="${xmlEscape(JSON.stringify(dynamicBlockInfo))}"/>`;
