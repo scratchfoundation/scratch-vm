@@ -1,0 +1,111 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Scratch VM Benchmark</title>
+    <link rel="stylesheet" href="./benchmark.css" type="text/css" media="screen">
+    <script>
+        // Track loading time with timestamps and if possible the performance
+        // api.
+
+        // Start tracking loading of Scratch before the body dom is evaluated.
+        window.ScratchVMLoadStart = Date.now();
+        if (window.performance) {
+            // Mark for browser performance inspectors and if we want to use
+            // other performance apis.
+            performance.mark('Scratch.LoadStart');
+        }
+    </script>
+</head>
+<body>
+  <h2>Scratch VM Benchmark</h2>
+  <p class="description">
+    Welcome to the scratch-vm benchmark. This tool helps you profile a scratch
+    project. When you load the page, it:
+    <ol class="description">
+      <li>loads the default project and enables turbo mode
+      <li>runs the project for 4 seconds to warm up
+      <li>profiles for 6 seconds
+      <li>stops and reports
+    </ol>
+  </p>
+  <div class="run-form">
+      <input type="text" value="119615668">
+      <button class="run">run</button>
+  </div>
+  <p class="run-push">
+    <i>Try a different project, like `130041250`</i>
+  </p>
+
+  <canvas id="scratch-stage"></canvas><br />
+
+  <div class="layer">
+    <div class="loading">
+      <label>Loading Data:</label>
+      <span class="loading-complete">0</span> / <span class="loading-total">0</span> <span class="loading-time">(--ms)</span>
+    </div>
+    <div class="loading">
+      <label>Loading Content:</label>
+      <span class="loading-content-complete">0</span> / <span class="loading-content-total">0</span> <span class="loading-content-time">(--ms)</span>
+    </div>
+    <div class="loading">
+      <label>Hydrating:</label>
+      <span class="loading-hydrate-complete">0</span> / <span class="loading-hydrate-total">0</span> <span class="loading-hydrate-time">(--ms)</span>
+     </div>
+    <div class="loading">
+      <label>Memory:</label>
+      <span class="loading-memory-current">--</span> / <span class="loading-memory-peak">--</span>
+     </div>
+    <div class="profile-count-group">
+      <div class="profile-count">
+        <label>Percent of time worked:</label>
+        <span class="profile-count-value profile-count-amount-recorded">...</span>
+      </div>
+      <div class="profile-count">
+        <label>Steps looped:</label>
+        <span class="profile-count-value profile-count-steps-looped">...</span>
+      </div>
+      <div class="profile-count">
+        <label>Blocks executed:</label>
+        <span class="profile-count-value profile-count-blocks-executed">...</span>
+      </div>
+      <a class="share"><div class="profile-count">
+        <label>Share this report</label>
+      </div></a>
+      <a class="share" target="_parent">
+          <div class="profile-count">
+              <label>Run the full suite</label>
+          </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="profile-tables">
+  <table class="profile-count-frame-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-frame-head"><th>Frame</th><th>Self Time</th><th>Total Time</th><th>Executions</th></tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+
+  <table class="profile-count-opcode-table" cellspacing="0">
+    <thead>
+    <tr class="profile-count-opcode-head">
+      <th>opcode</th><th>Self Time</th><th>Total Time</th><th>Executions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr class="profiler-count-running"><td colspan="4"></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div id="blocks"></div>
+
+  <!-- Playground -->
+  <script src="./benchmark.js"></script>
+</body>
+</html>

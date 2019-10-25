@@ -8,3 +8,15 @@ npm-*
 # Testing
 /.nyc_output
 /coverage
+
+# Editor
+/.idea
+/.vscode
+
+# Build
+/dist
+/playground
+/benchmark
+
+# Localization
+/translations

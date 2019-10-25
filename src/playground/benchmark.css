@@ -1,0 +1,83 @@
+body {
+    font-family: monospace;
+}
+p {
+    max-width: 400px;
+}
+@media (min-width: 960px) {
+    .profile-tables {
+        top: 0px;
+        position: absolute;
+        left: 450px;
+    }
+}
+.share {
+    display: none;
+}
+.share label {
+    cursor: pointer;
+}
+.share[href] {
+    display: inline;
+}
+
+.render .profile-tables {
+    position: static;
+    left: 0;
+}
+.render .description {
+    display: none;
+}
+.render .run-push {
+    display: none;
+}
+#scratch-stage {
+    border: 5px solid black;
+    display: block;
+    width: 400px;
+    height: 300px;
+}
+.render #scratch-stage {
+    display: none;
+}
+.loading label, .profile-count label{
+    width: 15em;
+    display: inline-block;
+}
+.render .loading {
+    display: none;
+}
+.profile-tables table {
+    margin: 30px 0 30px 0px;
+}
+.profile-tables th {
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+.profile-tables th:first-child {
+    width: 215px;
+}
+.profile-tables th, .profile-tables td {
+    min-width: 85px;
+    border-bottom: 1px solid #ccc;
+    border-spacing: 0;
+    border-collapse: collapse;
+    padding: 5px;
+}
+.profile-tables td:not(:first-child) {
+    text-align: center;
+}
+.profile-tables img{
+    margin: 0 auto;
+    display: block;
+    clear: both;
+    width: 20%;
+}
+
+.slow {
+    background-color: #ffa1a1;
+}
+.profiler-count-running {
+    height: 4em;
+    background-color: #dddddd;
+}

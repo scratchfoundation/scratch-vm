@@ -1,241 +1,370 @@
-var Timer = require('../util/timer');
-var Thread = require('./thread');
-var YieldTimers = require('../util/yieldtimers.js');
-
-function Sequencer (runtime) {
-    /**
-     * A utility timer for timing thread sequencing.
-     * @type {!Timer}
-     */
-    this.timer = new Timer();
-
-    /**
-     * Reference to the runtime owning this sequencer.
-     * @type {!Runtime}
-     */
-    this.runtime = runtime;
-}
+const Timer = require('../util/timer');
+const Thread = require('./thread');
+const execute = require('./execute.js');
 
 /**
- * The sequencer does as much work as it can within WORK_TIME milliseconds,
- * then yields. This is essentially a rate-limiter for blocks.
- * In Scratch 2.0, this is set to 75% of the target stage frame-rate (30fps).
- * @const {!number}
+ * Profiler frame name for stepping a single thread.
+ * @const {string}
  */
-Sequencer.WORK_TIME = 10;
+const stepThreadProfilerFrame = 'Sequencer.stepThread';
 
 /**
- * Step through all threads in `this.threads`, running them in order.
- * @return {Array.<Thread>} All threads which have finished in this iteration.
+ * Profiler frame name for the inner loop of stepThreads.
+ * @const {string}
  */
-Sequencer.prototype.stepThreads = function (threads) {
-    // Start counting toward WORK_TIME
-    this.timer.start();
-    // List of threads which have been killed by this step.
-    var inactiveThreads = [];
-    // If all of the threads are yielding, we should yield.
-    var numYieldingThreads = 0;
-    // While there are still threads to run and we are within WORK_TIME,
-    // continue executing threads.
-    while (threads.length > 0 &&
-           threads.length > numYieldingThreads &&
-           this.timer.timeElapsed() < Sequencer.WORK_TIME) {
-        // New threads at the end of the iteration.
-        var newThreads = [];
-        // Attempt to run each thread one time
-        for (var i = 0; i < threads.length; i++) {
-            var activeThread = threads[i];
-            if (activeThread.status === Thread.STATUS_RUNNING) {
-                // Normal-mode thread: step.
-                this.stepThread(activeThread);
-            } else if (activeThread.status === Thread.STATUS_YIELD) {
-                // Yield-mode thread: check if the time has passed.
-                YieldTimers.resolve(activeThread.yieldTimerId);
-                numYieldingThreads++;
-            } else if (activeThread.status === Thread.STATUS_DONE) {
-                // Moved to a done state - finish up
-                activeThread.status = Thread.STATUS_RUNNING;
-                // @todo Deal with the return value
-            }
-            // First attempt to pop from the stack
-            if (activeThread.stack.length > 0 &&
-                activeThread.nextBlock === null &&
-                activeThread.status === Thread.STATUS_DONE) {
-                activeThread.nextBlock = activeThread.stack.pop();
-                // Don't pop stack frame - we need the data.
-                // A new one won't be created when we execute.
-                if (activeThread.nextBlock !== null) {
-                    activeThread.status === Thread.STATUS_RUNNING;
+const stepThreadsInnerProfilerFrame = 'Sequencer.stepThreads#inner';
+
+/**
+ * Profiler frame name for execute.
+ * @const {string}
+ */
+const executeProfilerFrame = 'execute';
+
+/**
+ * Profiler frame ID for stepThreadProfilerFrame.
+ * @type {number}
+ */
+let stepThreadProfilerId = -1;
+
+/**
+ * Profiler frame ID for stepThreadsInnerProfilerFrame.
+ * @type {number}
+ */
+let stepThreadsInnerProfilerId = -1;
+
+/**
+ * Profiler frame ID for executeProfilerFrame.
+ * @type {number}
+ */
+let executeProfilerId = -1;
+
+class Sequencer {
+    constructor (runtime) {
+        /**
+         * A utility timer for timing thread sequencing.
+         * @type {!Timer}
+         */
+        this.timer = new Timer();
+
+        /**
+         * Reference to the runtime owning this sequencer.
+         * @type {!Runtime}
+         */
+        this.runtime = runtime;
+
+        this.activeThread = null;
+    }
+
+    /**
+     * Time to run a warp-mode thread, in ms.
+     * @type {number}
+     */
+    static get WARP_TIME () {
+        return 500;
+    }
+
+    /**
+     * Step through all threads in `this.runtime.threads`, running them in order.
+     * @return {Array.<!Thread>} List of inactive threads after stepping.
+     */
+    stepThreads () {
+        // Work time is 75% of the thread stepping interval.
+        const WORK_TIME = 0.75 * this.runtime.currentStepTime;
+        // For compatibility with Scatch 2, update the millisecond clock
+        // on the Runtime once per step (see Interpreter.as in Scratch 2
+        // for original use of `currentMSecs`)
+        this.runtime.updateCurrentMSecs();
+        // Start counting toward WORK_TIME.
+        this.timer.start();
+        // Count of active threads.
+        let numActiveThreads = Infinity;
+        // Whether `stepThreads` has run through a full single tick.
+        let ranFirstTick = false;
+        const doneThreads = [];
+        // Conditions for continuing to stepping threads:
+        // 1. We must have threads in the list, and some must be active.
+        // 2. Time elapsed must be less than WORK_TIME.
+        // 3. Either turbo mode, or no redraw has been requested by a primitive.
+        while (this.runtime.threads.length > 0 &&
+               numActiveThreads > 0 &&
+               this.timer.timeElapsed() < WORK_TIME &&
+               (this.runtime.turboMode || !this.runtime.redrawRequested)) {
+            if (this.runtime.profiler !== null) {
+                if (stepThreadsInnerProfilerId === -1) {
+                    stepThreadsInnerProfilerId = this.runtime.profiler.idByName(stepThreadsInnerProfilerFrame);
                 }
+                this.runtime.profiler.start(stepThreadsInnerProfilerId);
             }
-            if (activeThread.nextBlock === null &&
-                activeThread.status === Thread.STATUS_DONE) {
-                // Finished with this thread - tell runtime to clean it up.
-                inactiveThreads.push(activeThread);
-            } else {
-                // Keep this thead in the loop.
-                newThreads.push(activeThread);
-            }
-        }
-        // Effectively filters out threads that have stopped.
-        threads = newThreads;
-    }
-    return inactiveThreads;
-};
 
-/**
- * Step the requested thread
- * @param {!Thread} thread Thread object to step
- */
-Sequencer.prototype.stepThread = function (thread) {
-    // Save the yield timer ID, in case a primitive makes a new one
-    // @todo hack - perhaps patch this to allow more than one timer per
-    // primitive, for example...
-    var oldYieldTimerId = YieldTimers.timerId;
-
-    // Save the current block and set the nextBlock.
-    // If the primitive would like to do control flow,
-    // it can overwrite nextBlock.
-    var currentBlock = thread.nextBlock;
-    if (!currentBlock || !this.runtime.blocks[currentBlock]) {
-        thread.status = Thread.STATUS_DONE;
-        return;
-    }
-    thread.nextBlock = this.runtime._getNextBlock(currentBlock);
-
-    var opcode = this.runtime._getOpcode(currentBlock);
-
-    // Push the current block to the stack
-    thread.stack.push(currentBlock);
-    // Push an empty stack frame, if we need one.
-    // Might not, if we just popped the stack.
-    if (thread.stack.length > thread.stackFrames.length) {
-        thread.stackFrames.push({});
-    }
-    var currentStackFrame = thread.stackFrames[thread.stackFrames.length - 1];
-
-    /**
-     * A callback for the primitive to indicate its thread should yield.
-     * @type {Function}
-     */
-    var threadYieldCallback = function () {
-        thread.status = Thread.STATUS_YIELD;
-    };
-
-    /**
-     * A callback for the primitive to indicate its thread is finished
-     * @type {Function}
-     */
-    var instance = this;
-    var threadDoneCallback = function () {
-        thread.status = Thread.STATUS_DONE;
-        // Refresh nextBlock in case it has changed during a yield.
-        thread.nextBlock = instance.runtime._getNextBlock(currentBlock);
-        // Pop the stack and stack frame
-        thread.stack.pop();
-        thread.stackFrames.pop();
-    };
-
-    /**
-     * A callback for the primitive to start hats.
-     * @todo very hacked...
-     */
-    var startHats = function(callback) {
-        for (var i = 0; i < instance.runtime.stacks.length; i++) {
-            var stack = instance.runtime.stacks[i];
-            var stackBlock = instance.runtime.blocks[stack];
-            var result = callback(stackBlock);
-            if (result) {
-                // Check if the stack is already running
-                var stackRunning = false;
-
-                for (var j = 0; j < instance.runtime.threads.length; j++) {
-                    if (instance.runtime.threads[j].topBlock == stack) {
-                        stackRunning = true;
-                        break;
+            numActiveThreads = 0;
+            let stoppedThread = false;
+            // Attempt to run each thread one time.
+            const threads = this.runtime.threads;
+            for (let i = 0; i < threads.length; i++) {
+                const activeThread = this.activeThread = threads[i];
+                // Check if the thread is done so it is not executed.
+                if (activeThread.stack.length === 0 ||
+                    activeThread.status === Thread.STATUS_DONE) {
+                    // Finished with this thread.
+                    stoppedThread = true;
+                    continue;
+                }
+                if (activeThread.status === Thread.STATUS_YIELD_TICK &&
+                    !ranFirstTick) {
+                    // Clear single-tick yield from the last call of `stepThreads`.
+                    activeThread.status = Thread.STATUS_RUNNING;
+                }
+                if (activeThread.status === Thread.STATUS_RUNNING ||
+                    activeThread.status === Thread.STATUS_YIELD) {
+                    // Normal-mode thread: step.
+                    if (this.runtime.profiler !== null) {
+                        if (stepThreadProfilerId === -1) {
+                            stepThreadProfilerId = this.runtime.profiler.idByName(stepThreadProfilerFrame);
+                        }
+                        this.runtime.profiler.start(stepThreadProfilerId);
+                    }
+                    this.stepThread(activeThread);
+                    if (this.runtime.profiler !== null) {
+                        this.runtime.profiler.stop();
+                    }
+                    activeThread.warpTimer = null;
+                    if (activeThread.isKilled) {
+                        i--; // if the thread is removed from the list (killed), do not increase index
                     }
                 }
-                if (!stackRunning) {
-                    instance.runtime._pushThread(stack);
+                if (activeThread.status === Thread.STATUS_RUNNING) {
+                    numActiveThreads++;
+                }
+                // Check if the thread completed while it just stepped to make
+                // sure we remove it before the next iteration of all threads.
+                if (activeThread.stack.length === 0 ||
+                    activeThread.status === Thread.STATUS_DONE) {
+                    // Finished with this thread.
+                    stoppedThread = true;
                 }
             }
+            // We successfully ticked once. Prevents running STATUS_YIELD_TICK
+            // threads on the next tick.
+            ranFirstTick = true;
+
+            if (this.runtime.profiler !== null) {
+                this.runtime.profiler.stop();
+            }
+
+            // Filter inactive threads from `this.runtime.threads`.
+            if (stoppedThread) {
+                let nextActiveThread = 0;
+                for (let i = 0; i < this.runtime.threads.length; i++) {
+                    const thread = this.runtime.threads[i];
+                    if (thread.stack.length !== 0 &&
+                        thread.status !== Thread.STATUS_DONE) {
+                        this.runtime.threads[nextActiveThread] = thread;
+                        nextActiveThread++;
+                    } else {
+                        doneThreads.push(thread);
+                    }
+                }
+                this.runtime.threads.length = nextActiveThread;
+            }
         }
-    };
+
+        this.activeThread = null;
+
+        return doneThreads;
+    }
 
     /**
-     * Record whether we have switched stack,
-     * to avoid proceeding the thread automatically.
-     * @type {boolean}
+     * Step the requested thread for as long as necessary.
+     * @param {!Thread} thread Thread object to step.
      */
-    var switchedStack = false;
+    stepThread (thread) {
+        let currentBlockId = thread.peekStack();
+        if (!currentBlockId) {
+            // A "null block" - empty branch.
+            thread.popStack();
+
+            // Did the null follow a hat block?
+            if (thread.stack.length === 0) {
+                thread.status = Thread.STATUS_DONE;
+                return;
+            }
+        }
+        // Save the current block ID to notice if we did control flow.
+        while ((currentBlockId = thread.peekStack())) {
+            let isWarpMode = thread.peekStackFrame().warpMode;
+            if (isWarpMode && !thread.warpTimer) {
+                // Initialize warp-mode timer if it hasn't been already.
+                // This will start counting the thread toward `Sequencer.WARP_TIME`.
+                thread.warpTimer = new Timer();
+                thread.warpTimer.start();
+            }
+            // Execute the current block.
+            if (this.runtime.profiler !== null) {
+                if (executeProfilerId === -1) {
+                    executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
+                }
+                // The method commented below has its code inlined underneath to
+                // reduce the bias recorded for the profiler's calls in this
+                // time sensitive stepThread method.
+                //
+                // this.runtime.profiler.start(executeProfilerId, null);
+                this.runtime.profiler.records.push(
+                    this.runtime.profiler.START, executeProfilerId, null, 0);
+            }
+            if (thread.target === null) {
+                this.retireThread(thread);
+            } else {
+                execute(this, thread);
+            }
+            if (this.runtime.profiler !== null) {
+                // this.runtime.profiler.stop();
+                this.runtime.profiler.records.push(this.runtime.profiler.STOP, 0);
+            }
+            thread.blockGlowInFrame = currentBlockId;
+            // If the thread has yielded or is waiting, yield to other threads.
+            if (thread.status === Thread.STATUS_YIELD) {
+                // Mark as running for next iteration.
+                thread.status = Thread.STATUS_RUNNING;
+                // In warp mode, yielded blocks are re-executed immediately.
+                if (isWarpMode &&
+                    thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
+                    continue;
+                }
+                return;
+            } else if (thread.status === Thread.STATUS_PROMISE_WAIT) {
+                // A promise was returned by the primitive. Yield the thread
+                // until the promise resolves. Promise resolution should reset
+                // thread.status to Thread.STATUS_RUNNING.
+                return;
+            } else if (thread.status === Thread.STATUS_YIELD_TICK) {
+                // stepThreads will reset the thread to Thread.STATUS_RUNNING
+                return;
+            }
+            // If no control flow has happened, switch to next block.
+            if (thread.peekStack() === currentBlockId) {
+                thread.goToNextBlock();
+            }
+            // If no next block has been found at this point, look on the stack.
+            while (!thread.peekStack()) {
+                thread.popStack();
+
+                if (thread.stack.length === 0) {
+                    // No more stack to run!
+                    thread.status = Thread.STATUS_DONE;
+                    return;
+                }
+
+                const stackFrame = thread.peekStackFrame();
+                isWarpMode = stackFrame.warpMode;
+
+                if (stackFrame.isLoop) {
+                    // The current level of the stack is marked as a loop.
+                    // Return to yield for the frame/tick in general.
+                    // Unless we're in warp mode - then only return if the
+                    // warp timer is up.
+                    if (!isWarpMode ||
+                        thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+                        // Don't do anything to the stack, since loops need
+                        // to be re-executed.
+                        return;
+                    }
+                    // Don't go to the next block for this level of the stack,
+                    // since loops need to be re-executed.
+                    continue;
+
+                } else if (stackFrame.waitingReporter) {
+                    // This level of the stack was waiting for a value.
+                    // This means a reporter has just returned - so don't go
+                    // to the next block for this level of the stack.
+                    return;
+                }
+                // Get next block of existing block on the stack.
+                thread.goToNextBlock();
+            }
+        }
+    }
+
     /**
-     * A callback for a primitive to start a substack.
-     * @type {Function}
+     * Step a thread into a block's branch.
+     * @param {!Thread} thread Thread object to step to branch.
+     * @param {number} branchNum Which branch to step to (i.e., 1, 2).
+     * @param {boolean} isLoop Whether this block is a loop.
      */
-    var threadStartSubstack = function () {
-        // Set nextBlock to the start of the substack
-        var substack = instance.runtime._getSubstack(currentBlock);
-        if (substack && substack.value) {
-            thread.nextBlock = substack.value;
+    stepToBranch (thread, branchNum, isLoop) {
+        if (!branchNum) {
+            branchNum = 1;
+        }
+        const currentBlockId = thread.peekStack();
+        const branchId = thread.target.blocks.getBranch(
+            currentBlockId,
+            branchNum
+        );
+        thread.peekStackFrame().isLoop = isLoop;
+        if (branchId) {
+            // Push branch ID to the thread's stack.
+            thread.pushStack(branchId);
         } else {
-            thread.nextBlock = null;
-        }
-        switchedStack = true;
-    };
-
-    // @todo extreme hack to get the single argument value for prototype
-    var argValues = [];
-    var blockInputs = this.runtime.blocks[currentBlock].fields;
-    for (var bi in blockInputs) {
-        var outer = blockInputs[bi];
-        for (var b in outer.blocks) {
-            var block = outer.blocks[b];
-            var fields = block.fields;
-            for (var f in fields) {
-                var field = fields[f];
-                argValues.push(field.value);
-            }
+            thread.pushStack(null);
         }
     }
 
-    if (!opcode) {
-        console.warn('Could not get opcode for block: ' + currentBlock);
-    }
-    else {
-        var blockFunction = this.runtime.getOpcodeFunction(opcode);
-        if (!blockFunction) {
-            console.warn('Could not get implementation for opcode: ' + opcode);
+    /**
+     * Step a procedure.
+     * @param {!Thread} thread Thread object to step to procedure.
+     * @param {!string} procedureCode Procedure code of procedure to step to.
+     */
+    stepToProcedure (thread, procedureCode) {
+        const definition = thread.target.blocks.getProcedureDefinition(procedureCode);
+        if (!definition) {
+            return;
         }
-        else {
-            try {
-                // @todo deal with the return value
-                blockFunction(argValues, {
-                    yield: threadYieldCallback,
-                    done: threadDoneCallback,
-                    timeout: YieldTimers.timeout,
-                    stackFrame: currentStackFrame,
-                    startSubstack: threadStartSubstack,
-                    startHats: startHats
-                });
-            }
-            catch(e) {
-                console.error(
-                    'Exception calling block function for opcode: ' +
-                    opcode + '\n' + e);
-            } finally {
-                // Update if the thread has set a yield timer ID
-                // @todo hack
-                if (YieldTimers.timerId > oldYieldTimerId) {
-                    thread.yieldTimerId = YieldTimers.timerId;
-                }
-                if (thread.status === Thread.STATUS_RUNNING && !switchedStack) {
-                    // Thread executed without yielding - move to done
-                    threadDoneCallback();
+        // Check if the call is recursive.
+        // If so, set the thread to yield after pushing.
+        const isRecursive = thread.isRecursiveCall(procedureCode);
+        // To step to a procedure, we put its definition on the stack.
+        // Execution for the thread will proceed through the definition hat
+        // and on to the main definition of the procedure.
+        // When that set of blocks finishes executing, it will be popped
+        // from the stack by the sequencer, returning control to the caller.
+        thread.pushStack(definition);
+        // In known warp-mode threads, only yield when time is up.
+        if (thread.peekStackFrame().warpMode &&
+            thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+            thread.status = Thread.STATUS_YIELD;
+        } else {
+            // Look for warp-mode flag on definition, and set the thread
+            // to warp-mode if needed.
+            const definitionBlock = thread.target.blocks.getBlock(definition);
+            const innerBlock = thread.target.blocks.getBlock(
+                definitionBlock.inputs.custom_block.block);
+            let doWarp = false;
+            if (innerBlock && innerBlock.mutation) {
+                const warp = innerBlock.mutation.warp;
+                if (typeof warp === 'boolean') {
+                    doWarp = warp;
+                } else if (typeof warp === 'string') {
+                    doWarp = JSON.parse(warp);
                 }
             }
+            if (doWarp) {
+                thread.peekStackFrame().warpMode = true;
+            } else if (isRecursive) {
+                // In normal-mode threads, yield any time we have a recursive call.
+                thread.status = Thread.STATUS_YIELD;
+            }
         }
     }
 
-};
+    /**
+     * Retire a thread in the middle, without considering further blocks.
+     * @param {!Thread} thread Thread object to retire.
+     */
+    retireThread (thread) {
+        thread.stack = [];
+        thread.stackFrame = [];
+        thread.requestScriptGlowInFrame = false;
+        thread.status = Thread.STATUS_DONE;
+    }
+}
 
 module.exports = Sequencer;
