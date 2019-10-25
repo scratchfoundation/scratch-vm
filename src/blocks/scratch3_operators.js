@@ -56,7 +56,7 @@ class Scratch3OperatorsBlocks {
 
     power (args) {
         return Math.pow(Cast.toNumber(args.NUM1), Cast.toNumber(args.NUM2));
-	}
+    }
 
     lt (args) {
         return Cast.compare(args.OPERAND1, args.OPERAND2) < 0;
