@@ -1229,21 +1229,6 @@ const specMap = {
             }
         ]
     },
-    '^': {
-        opcode: 'operator_power',
-        argMap: [
-            {
-                type: 'input',
-                inputOp: 'math_number',
-                inputName: 'NUM1'
-            },
-            {
-                type: 'input',
-                inputOp: 'math_number',
-                inputName: 'NUM2'
-            }
-        ]
-    },
     'randomFrom:to:': {
         opcode: 'operator_random',
         argMap: [
