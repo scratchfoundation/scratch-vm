@@ -609,8 +609,9 @@ class Scratch3Text2SpeechBlocks {
         let nameArray = languageNames.menuMap[editorLanguage];
         if (nameArray) {
             // Also get any localized names of spoken languages
-            const spokenNameArray = languageNames.spokenLanguages[editorLanguage];
-            if (spokenNameArray) {
+            let spokenNameArray = [];
+            if (languageNames.spokenLanguages) {
+                spokenNameArray = languageNames.spokenLanguages[editorLanguage];
                 nameArray = nameArray.concat(spokenNameArray);
             }
             // Create a map of language code to localized name
