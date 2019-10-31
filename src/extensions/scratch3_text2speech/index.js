@@ -615,6 +615,11 @@ class Scratch3Text2SpeechBlocks {
                 nameArray = nameArray.concat(spokenNameArray);
             }
             // Create a map of language code to localized name
+            // The localized spoken language names have been concatenated onto
+            // the end of the name array, so the result of the forEach below is
+            // when there is both a written language name (e.g. 'Chinese
+            // (simplified)') and a spoken language name (e.g. 'Chinese
+            // (Mandarin)', we always use the spoken version.
             nameArray.forEach(lang => {
                 localizedNameMap[lang.code] = lang.name;
             });
