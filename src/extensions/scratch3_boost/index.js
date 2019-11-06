@@ -1783,20 +1783,23 @@ class Scratch3BoostBlocks {
                         }
                     ]
                 },
-                OPERATOR: [
-                    {
-                        text: BoostOperator.LESS,
-                        value: BoostOperator.LESS
-                    },
-                    {
-                        text: BoostOperator.GREATER,
-                        value: BoostOperator.GREATER
-                    },
-                    {
-                        text: BoostOperator.EQUAL,
-                        value: BoostOperator.EQUAL
-                    }
-                ]
+                OPERATOR: {
+                    acceptReporters: true,
+                    items: [
+                        {
+                            text: BoostOperator.LESS,
+                            value: BoostOperator.LESS
+                        },
+                        {
+                            text: BoostOperator.GREATER,
+                            value: BoostOperator.GREATER
+                        },
+                        {
+                            text: BoostOperator.EQUAL,
+                            value: BoostOperator.EQUAL
+                        }
+                    ]
+                },
             }
         };
     }
