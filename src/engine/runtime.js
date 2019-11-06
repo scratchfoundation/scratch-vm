@@ -2512,6 +2512,24 @@ class Runtime extends EventEmitter {
     updateCurrentMSecs () {
         this.currentMSecs = Date.now();
     }
+
+    /**
+     * Add a data file to the data tools extension
+     * @param {string} name The file name
+     * @param {Array} data The file data
+     */
+    addDataFile(name, data) {
+        this.peripheralExtensions["datatools"].addDataFile(name, data);
+    }
+
+    /**
+     * Remove the specified file from the data tools extension
+     * @param {string} name The name of the file
+     * @returns {Boolean} Whether or not the file was removed correctly
+     */
+    removeDataFile(name) {
+        return this.peripheralExtensions["datatools"].removeDataFile(name);
+    }
 }
 
 /**
