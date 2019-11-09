@@ -505,6 +505,7 @@ class Scratch3PenBlocks {
         const penSkinId = this._getPenLayerID();
         if (penSkinId >= 0) {
             const target = util.target;
+            if (target.isStage) return; // stages can't stamp
             this.runtime.renderer.penStamp(penSkinId, target.drawableID);
             this.runtime.requestRedraw();
         }
