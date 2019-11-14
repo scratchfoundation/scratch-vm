@@ -82,6 +82,51 @@ const testExtensionInfo = {
     ]
 };
 
+const extensionInfoWithCustomFieldTypes = {
+    id: 'test_custom_fieldType',
+    name: 'fake test extension with customFieldTypes',
+    color1: '#111111',
+    color2: '#222222',
+    color3: '#333333',
+    blocks: [
+        { // Block that uses custom field types
+            opcode: 'motorTurnFor',
+            blockType: BlockType.COMMAND,
+            text: '[PORT] run [DIRECTION] for [VALUE] [UNIT]',
+            arguments: {
+                PORT: {
+                    defaultValue: 'A',
+                    type:'single-port-selector'
+                },
+                DIRECTION: {
+                    defaultValue: 'clockwise',
+                    type: 'custom-direction',
+                }
+            },
+        }
+    ],
+    customFieldTypes: {
+        'single-port-selector': {
+            output: 'string',
+            outputShape: 2,
+            implementation: {
+                fromJson: options => {
+                    return null;
+                }
+            },
+        },
+        'custom-direction' : {
+            output: 'string',
+            outputShape: 3,
+            implementation: {
+                fromJson: options => {
+                    return null;
+                }
+            }
+        }
+    }
+}
+
 const testCategoryInfo = function (t, block) {
     t.equal(block.json.category, 'fake test extension');
     t.equal(block.json.colour, '#111111');
@@ -257,4 +302,30 @@ test('registerExtensionPrimitives', t => {
     });
 
     runtime._registerExtensionPrimitives(testExtensionInfo);
+});
+
+test('custom field types should be added to block and EXTENSION_FIELD_ADDED callback triggered' , t => {
+    const runtime = new Runtime();
+
+    runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
+        const blockInfo = categoryInfo.blocks[0];
+
+        // We expect that for each argument there's a corresponding <field>-tag in the block XML
+        Object.values(blockInfo.info.arguments).forEach(argument => {
+            const regex = new RegExp('<field name="field_' + categoryInfo.id +"_" + argument.type +'">');
+            t.true(regex.test(blockInfo.xml));
+        });
+
+    });
+
+    var fieldAddedCallbacks = 0;
+    runtime.on(Runtime.EXTENSION_FIELD_ADDED, fieldInfo => {
+        fieldAddedCallbacks++;
+    });
+
+    runtime._registerExtensionPrimitives(extensionInfoWithCustomFieldTypes);
+
+    // Extension includes two custom field types
+    t.equal(fieldAddedCallbacks, 2);
+    t.end();
 });
