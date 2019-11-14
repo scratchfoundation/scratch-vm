@@ -1799,7 +1799,7 @@ class Scratch3BoostBlocks {
                             value: BoostOperator.EQUAL
                         }
                     ]
-                },
+                }
             }
         };
     }
