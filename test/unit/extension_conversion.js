@@ -308,7 +308,7 @@ test('custom field types should be added to block and EXTENSION_FIELD_ADDED call
 
         // We expect that for each argument there's a corresponding <field>-tag in the block XML
         Object.values(blockInfo.info.arguments).forEach(argument => {
-            const regex = new RegExp(`<field name="field_ ${categoryInfo.id}_${argument.type}">`);
+            const regex = new RegExp(`<field name="field_${categoryInfo.id}_${argument.type}">`);
             t.true(regex.test(blockInfo.xml));
         });
 
