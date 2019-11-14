@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const log = require('../../util/log');
-const nets = require('nets');
+const fetchWithTimeout = require('../../util/fetch-with-timeout');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
 
@@ -261,28 +261,21 @@ class Scratch3TranslateBlocks {
         urlBase += encodeURIComponent(args.WORDS);
 
         const tempThis = this;
-        const translatePromise = new Promise(resolve => {
-            nets({
-                url: urlBase,
-                timeout: serverTimeoutMs
-            }, (err, res, body) => {
-                if (err) {
-                    log.warn(`error fetching translate result! ${res}`);
-                    resolve('');
-                    return '';
-                }
-                const translated = JSON.parse(body).result;
+        const translatePromise = fetchWithTimeout(urlBase, {}, serverTimeoutMs)
+            .then(response => response.text())
+            .then(responseText => {
+                const translated = JSON.parse(responseText).result;
                 tempThis._translateResult = translated;
                 // Cache what we just translated so we don't keep making the
                 // same call over and over.
                 tempThis._lastTextTranslated = args.WORDS;
                 tempThis._lastLangTranslated = args.LANGUAGE;
-                resolve(translated);
                 return translated;
+            })
+            .catch(err => {
+                log.warn(`error fetching translate result! ${err}`);
+                return '';
             });
-
-        });
-        translatePromise.then(translatedText => translatedText);
         return translatePromise;
     }
 }
