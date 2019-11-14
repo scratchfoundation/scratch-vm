@@ -96,13 +96,13 @@ const extensionInfoWithCustomFieldTypes = {
             arguments: {
                 PORT: {
                     defaultValue: 'A',
-                    type:'single-port-selector'
+                    type: 'single-port-selector'
                 },
                 DIRECTION: {
                     defaultValue: 'clockwise',
-                    type: 'custom-direction',
+                    type: 'custom-direction'
                 }
-            },
+            }
         }
     ],
     customFieldTypes: {
@@ -110,22 +110,18 @@ const extensionInfoWithCustomFieldTypes = {
             output: 'string',
             outputShape: 2,
             implementation: {
-                fromJson: options => {
-                    return null;
-                }
-            },
+                fromJson: () => null
+            }
         },
-        'custom-direction' : {
+        'custom-direction': {
             output: 'string',
             outputShape: 3,
             implementation: {
-                fromJson: options => {
-                    return null;
-                }
+                fromJson: () => null
             }
         }
     }
-}
+};
 
 const testCategoryInfo = function (t, block) {
     t.equal(block.json.category, 'fake test extension');
@@ -304,7 +300,7 @@ test('registerExtensionPrimitives', t => {
     runtime._registerExtensionPrimitives(testExtensionInfo);
 });
 
-test('custom field types should be added to block and EXTENSION_FIELD_ADDED callback triggered' , t => {
+test('custom field types should be added to block and EXTENSION_FIELD_ADDED callback triggered', t => {
     const runtime = new Runtime();
 
     runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
@@ -312,14 +308,14 @@ test('custom field types should be added to block and EXTENSION_FIELD_ADDED call
 
         // We expect that for each argument there's a corresponding <field>-tag in the block XML
         Object.values(blockInfo.info.arguments).forEach(argument => {
-            const regex = new RegExp('<field name="field_' + categoryInfo.id +"_" + argument.type +'">');
+            const regex = new RegExp(`<field name="field_ ${categoryInfo.id}_${argument.type}">`);
             t.true(regex.test(blockInfo.xml));
         });
 
     });
 
-    var fieldAddedCallbacks = 0;
-    runtime.on(Runtime.EXTENSION_FIELD_ADDED, fieldInfo => {
+    let fieldAddedCallbacks = 0;
+    runtime.on(Runtime.EXTENSION_FIELD_ADDED, () => {
         fieldAddedCallbacks++;
     });
 
