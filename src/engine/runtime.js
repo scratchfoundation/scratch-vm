@@ -76,6 +76,10 @@ const ArgumentTypeMap = (() => {
         shadowType: 'note',
         fieldType: 'NOTE'
     };
+    map[ArgumentType.DATA_FILE] = {
+        shadowType: 'datafile',
+        fieldType: 'DATAFILE'
+    };
     return map;
 })();
 
@@ -1244,19 +1248,29 @@ class Runtime extends EventEmitter {
         let shadowType;
         let fieldName;
         if (argInfo.menu) {
-            const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
-            if (menuInfo.acceptReporters) {
-                valueName = placeholder;
-                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
-                fieldName = argInfo.menu;
-            } else {
-                argJSON.type = 'field_dropdown';
-                argJSON.options = this._convertMenuItems(menuInfo.items);
-                valueName = null;
-                shadowType = null;
+            //Data files need a custom menu displayed
+            if(argInfo.type === ArgumentType.DATA_FILE) {
+                const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
+                argJSON.type = 'field_datafile';
+                argJSON.options = menuInfo.items;
                 fieldName = placeholder;
             }
-        } else {
+            else {
+                const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
+                if (menuInfo.acceptReporters) {
+                    valueName = placeholder;
+                    shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                    fieldName = argInfo.menu;
+                } else {
+                    argJSON.type = 'field_dropdown';
+                    argJSON.options = this._convertMenuItems(menuInfo.items);
+                    valueName = null;
+                    shadowType = null;
+                    fieldName = placeholder;
+                }
+            }
+        }
+        else {
             valueName = placeholder;
             shadowType = argTypeInfo.shadowType;
             fieldName = argTypeInfo.fieldType;

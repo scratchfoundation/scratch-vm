@@ -36,7 +36,12 @@ const ArgumentType = {
     /**
      * MIDI note number with note picker (piano) field
      */
-    NOTE: 'note'
+    NOTE: 'note',
+
+    /**
+     * Data file column value with column picker field
+     */
+    DATA_FILE: 'datafile'
 };
 
 module.exports = ArgumentType;

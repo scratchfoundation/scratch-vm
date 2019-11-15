@@ -349,26 +349,33 @@ class ExtensionManager {
 
         // TODO: Fix this to use dispatch.call when extensions are running in workers.
         const menuFunc = extensionObject[menuItemFunctionName];
-        const menuItems = menuFunc.call(extensionObject, editingTargetID).map(
-            item => {
-                item = maybeFormatMessage(item, extensionMessageContext);
-                switch (typeof item) {
-                case 'object':
-                    return [
-                        maybeFormatMessage(item.text, extensionMessageContext),
-                        item.value
-                    ];
-                case 'string':
-                    return [item, item];
-                default:
-                    return item;
-                }
-            });
 
-        if (!menuItems || menuItems.length < 1) {
-            throw new Error(`Extension menu returned no items: ${menuItemFunctionName}`);
+        let items = menuFunc.call(extensionObject, editingTargetID); 
+        if(!Array.isArray(items)) {
+            return items;   
+        }    
+        else {
+            const menuItems = items.map(
+                item => {
+                    item = maybeFormatMessage(item, extensionMessageContext);
+                    switch (typeof item) {
+                    case 'object':
+                        return [
+                            maybeFormatMessage(item.text, extensionMessageContext),
+                            item.value
+                        ];
+                    case 'string':
+                        return [item, item];
+                    default:
+                        return item;
+                    }
+                });
+
+                if (!menuItems || menuItems.length < 1) {
+                    throw new Error(`Extension menu returned no items: ${menuItemFunctionName}`);
+                }
+                return menuItems;
         }
-        return menuItems;
     }
 
     /**

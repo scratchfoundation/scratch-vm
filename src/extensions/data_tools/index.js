@@ -1,7 +1,6 @@
 // Core, Team, and Official extensions can `require` VM code:
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
-const TargetType = require('../../extension-support/target-type');
 
 // ...or VM dependencies:
 const formatMessage = require('format-message');
@@ -12,8 +11,6 @@ const blockIconURI ='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iN
 const files = {};
 
 var fileBlocks = [];
-
-var availableColumns = [];
 
 const NO_FILES = "NO FILES UPLOADED";
 
@@ -33,7 +30,7 @@ class DataTools {
     }
 
     getInfo(){
-        return{
+        return {
             id: 'datatools',
             name: formatMessage({
                 id: 'datatools.categoryName',
@@ -44,6 +41,7 @@ class DataTools {
             showStatusButton: true,
             blocks: [
                 ...fileBlocks,
+                '---',
                 //Add other blocks below
                 {
                     opcode: 'getRowCount',
@@ -64,28 +62,26 @@ class DataTools {
                     opcode: 'getColumnAtRow',
                     text: formatMessage({
                         id: 'datatools.getColumnAtRow',
-                        default: '[COLUMN] at row [ROW] from [FILENAME]',
+                        default: 'get [COLUMN] at row [ROW]',
                         description: 'get the value at a row and column'
                     }),
                     blockType: BlockType.REPORTER,
                     arguments: {
                         COLUMN: {
-                            type: ArgumentType.STRING,
-                            menu: 'columnMenu'
+                            type: ArgumentType.DATA_FILE,
+                            menu: 'columnMenu',
+                            default: '[FILE] COLUMN'
                         },
                         ROW: {
                             type: ArgumentType.NUMBER,
-                        },
-                        FILENAME: {
-                            type: ArgumentType.STRING,
-                            menu: 'fileMenu',
+                            value: 1
                         }
                     }
                 },
             ],
             menus: {
                 columnMenu: {
-                    items: 'getAvailableColumns'
+                    items: 'generateColumnData'
                 },
                 fileMenu: {
                     acceptReporters: true,
@@ -93,6 +89,23 @@ class DataTools {
                 }
             }
         }
+    }
+
+    generateColumnData() {
+        let fileNames = Object.keys(files);
+        if(fileNames.length === 0) {
+            return {
+                "NO FILES UPLOADED": ["NO COLUMN DATA"]
+            };
+        }
+        let data = {};
+        
+        fileNames.forEach(name =>{
+            let columns = Object.keys(files[name][0]);
+            data[name] = columns;
+        });
+
+        return data;
     }
 
     isConnected() {
@@ -126,30 +139,22 @@ class DataTools {
     }
 
     /**
-     * Gets the list of available columns
-     * @returns {Array} The available columns, or "NO FILES UPLOADED"
-     */
-    getAvailableColumns() {
-        if(availableColumns.length === 0) return [NO_FILES];
-        else return availableColumns;
-    }
-
-    /**
      * Gets the value at a row and column in a given file
      * @param {*} args Object containing arguments, including COLUMN, ROW, and FILENAME
      * @returns {*} The value at the specified row and column in the specified file 
      */
     getColumnAtRow(args) {
-        let { COLUMN, ROW, FILENAME } = args;
+        let { COLUMN, ROW } = args;
 
         let colArr = COLUMN.split(']');
+        let fileName = colArr[0].substring(1);
         let col = colArr.slice(1, colArr.length).join(']').substring(1);
 
-        if(!files[FILENAME] || ROW < 1 || ROW > files[FILENAME].length || !files[FILENAME][ROW - 1][col]) {
+        if(!files[fileName] || ROW < 1 || ROW > files[fileName].length || !files[fileName][ROW - 1][col]) {
             return "";
         }
 
-        return files[FILENAME][ROW - 1][col];
+        return files[fileName][ROW - 1][col];
     }
 
     /**
@@ -201,10 +206,6 @@ class DataTools {
             blockType: BlockType.REPORTER
         });
 
-        let keys = Object.keys(fileData[0]).map(val => "[" + name + "] " + val);
-
-        availableColumns = [...availableColumns, ...keys];
-
         //Update the workspace to add the new file
         this._runtime.requestToolboxExtensionsUpdate();
     }
@@ -221,8 +222,6 @@ class DataTools {
 
         delete files[name];
         fileBlocks = fileBlocks.filter(block => block.text !== name);
-
-        availableColumns = availableColumns.filter(column => column.split(']')[0].substring(1) !== name);
 
         this._runtime.requestToolboxExtensionsUpdate();
         return true;
