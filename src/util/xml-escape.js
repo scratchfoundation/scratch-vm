@@ -19,13 +19,19 @@ const xmlEscape = function (unsafe) {
             return unsafe;
         }
     }
-    return unsafe.replace(/[<>&'"]/g, c => {
+
+    // eslint-disable-next-line no-control-regex
+    return unsafe.replace(/[<>&'"\u0008]/g, c => {
         switch (c) {
         case '<': return '&lt;';
         case '>': return '&gt;';
         case '&': return '&amp;';
         case '\'': return '&apos;';
         case '"': return '&quot;';
+        // This is the ASCII backspace character, producable by the macOS Japanese IME, which XML parsers choke on.
+        // Replace it with U+FFFD 'REPLACEMENT CHARACTER', which means "this replaced an unrepresentable character".
+        // Note that if this string is then edited in Blockly (e.g. in a text field), the U+FFFD will become permanent.
+        case '\u0008': return '&#xFFFD;';
         }
     });
 };

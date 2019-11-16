@@ -79,13 +79,17 @@ class StringUtil {
                 return unsafe;
             }
         }
-        return unsafe.replace(/[<>&'"]/g, c => {
+
+        // eslint-disable-next-line no-control-regex
+        return unsafe.replace(/[<>&'"\u0008]/g, c => {
             switch (c) {
             case '<': return 'lt';
             case '>': return 'gt';
             case '&': return 'amp';
             case '\'': return 'apos';
             case '"': return 'quot';
+            // This is the ASCII backspace control character. XML parsers don't like it very much.
+            case '\u0008': return '';
             }
         });
     }
