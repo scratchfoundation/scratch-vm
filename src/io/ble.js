@@ -153,7 +153,7 @@ class BLE extends JSONRPC {
         if (encoding) {
             params.encoding = encoding;
         }
-        if (withResponse) {
+        if (withResponse !== null) {
             params.withResponse = withResponse;
         }
         return this.sendRemoteRequest('write', params)
