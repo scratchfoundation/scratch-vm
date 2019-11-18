@@ -10414,7 +10414,7 @@ var EventEmitter = __webpack_require__(7);
 var twgl = __webpack_require__(0);
 
 var RenderConstants = __webpack_require__(3);
-var Silhouette = __webpack_require__(21);
+var Silhouette = __webpack_require__(22);
 
 /**
  * Truncate a number into what could be stored in a 32 bit floating point value.
@@ -10422,230 +10422,269 @@ var Silhouette = __webpack_require__(21);
  * @return {number} Truncated value.
  */
 var toFloat32 = function () {
-  var memory = new Float32Array(1);
-  return function (num) {
-    memory[0] = num;
-    return memory[0];
-  };
+    var memory = new Float32Array(1);
+    return function (num) {
+        memory[0] = num;
+        return memory[0];
+    };
 }();
 
 var Skin = function (_EventEmitter) {
-  _inherits(Skin, _EventEmitter);
-
-  /**
-   * Create a Skin, which stores and/or generates textures for use in rendering.
-   * @param {int} id - The unique ID for this Skin.
-   * @constructor
-   */
-  function Skin(id) {
-    _classCallCheck(this, Skin);
-
-    /** @type {int} */
-    var _this = _possibleConstructorReturn(this, (Skin.__proto__ || Object.getPrototypeOf(Skin)).call(this));
-
-    _this._id = id;
-
-    /** @type {Vec3} */
-    _this._rotationCenter = twgl.v3.create(0, 0);
+    _inherits(Skin, _EventEmitter);
 
     /**
-     * The "native" size, in texels, of this skin.
-     * @member size
-     * @abstract
-     * @type {Array<number>}
+     * Create a Skin, which stores and/or generates textures for use in rendering.
+     * @param {int} id - The unique ID for this Skin.
+     * @constructor
      */
+    function Skin(id) {
+        _classCallCheck(this, Skin);
 
-    /**
-     * The uniforms to be used by the vertex and pixel shaders.
-     * Some of these are used by other parts of the renderer as well.
-     * @type {Object.<string,*>}
-     * @private
-     */
-    _this._uniforms = {
-      /**
-       * The nominal (not necessarily current) size of the current skin.
-       * @type {Array<number>}
-       */
-      u_skinSize: [0, 0],
+        /** @type {int} */
+        var _this = _possibleConstructorReturn(this, (Skin.__proto__ || Object.getPrototypeOf(Skin)).call(this));
 
-      /**
-       * The actual WebGL texture object for the skin.
-       * @type {WebGLTexture}
-       */
-      u_skin: null
-    };
+        _this._id = id;
 
-    /**
-     * A silhouette to store touching data, skins are responsible for keeping it up to date.
-     * @private
-     */
-    _this._silhouette = new Silhouette();
+        /** @type {Vec3} */
+        _this._rotationCenter = twgl.v3.create(0, 0);
 
-    _this.setMaxListeners(RenderConstants.SKIN_SHARE_SOFT_LIMIT);
-    return _this;
-  }
+        /**
+         * The uniforms to be used by the vertex and pixel shaders.
+         * Some of these are used by other parts of the renderer as well.
+         * @type {Object.<string,*>}
+         * @private
+         */
+        _this._uniforms = {
+            /**
+             * The nominal (not necessarily current) size of the current skin.
+             * @type {Array<number>}
+             */
+            u_skinSize: [0, 0],
 
-  /**
-   * Dispose of this object. Do not use it after calling this method.
-   */
+            /**
+             * The actual WebGL texture object for the skin.
+             * @type {WebGLTexture}
+             */
+            u_skin: null
+        };
 
+        /**
+         * A silhouette to store touching data, skins are responsible for keeping it up to date.
+         * @private
+         */
+        _this._silhouette = new Silhouette();
 
-  _createClass(Skin, [{
-    key: 'dispose',
-    value: function dispose() {
-      this._id = RenderConstants.ID_NONE;
+        _this.setMaxListeners(RenderConstants.SKIN_SHARE_SOFT_LIMIT);
+        return _this;
     }
 
     /**
-     * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
+     * Dispose of this object. Do not use it after calling this method.
      */
 
-  }, {
-    key: 'setRotationCenter',
+
+    _createClass(Skin, [{
+        key: 'dispose',
+        value: function dispose() {
+            this._id = RenderConstants.ID_NONE;
+        }
+
+        /**
+         * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
+         */
+
+    }, {
+        key: 'setRotationCenter',
 
 
-    /**
-     * Set the origin, in object space, about which this Skin should rotate.
-     * @param {number} x - The x coordinate of the new rotation center.
-     * @param {number} y - The y coordinate of the new rotation center.
-     * @fires Skin.event:WasAltered
-     */
-    value: function setRotationCenter(x, y) {
-      var emptySkin = this.size[0] === 0 && this.size[1] === 0;
-      // Compare a 32 bit x and y value against the stored 32 bit center
-      // values.
-      var changed = toFloat32(x) !== this._rotationCenter[0] || toFloat32(y) !== this._rotationCenter[1];
-      if (!emptySkin && changed) {
-        this._rotationCenter[0] = x;
-        this._rotationCenter[1] = y;
-        this.emit(Skin.Events.WasAltered);
-      }
-    }
+        /**
+         * Set the origin, in object space, about which this Skin should rotate.
+         * @param {number} x - The x coordinate of the new rotation center.
+         * @param {number} y - The y coordinate of the new rotation center.
+         * @fires Skin.event:WasAltered
+         */
+        value: function setRotationCenter(x, y) {
+            var emptySkin = this.size[0] === 0 && this.size[1] === 0;
+            // Compare a 32 bit x and y value against the stored 32 bit center
+            // values.
+            var changed = toFloat32(x) !== this._rotationCenter[0] || toFloat32(y) !== this._rotationCenter[1];
+            if (!emptySkin && changed) {
+                this._rotationCenter[0] = x;
+                this._rotationCenter[1] = y;
+                this.emit(Skin.Events.WasAltered);
+            }
+        }
 
-    /**
-     * Get the center of the current bounding box
-     * @return {Array<number>} the center of the current bounding box
-     */
+        /**
+         * Get the center of the current bounding box
+         * @return {Array<number>} the center of the current bounding box
+         */
 
-  }, {
-    key: 'calculateRotationCenter',
-    value: function calculateRotationCenter() {
-      return [this.size[0] / 2, this.size[1] / 2];
-    }
+    }, {
+        key: 'calculateRotationCenter',
+        value: function calculateRotationCenter() {
+            return [this.size[0] / 2, this.size[1] / 2];
+        }
 
-    /**
-     * @abstract
-     * @param {Array<number>} scale - The scaling factors to be used.
-     * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given size.
-     */
-    // eslint-disable-next-line no-unused-vars
+        /**
+         * @abstract
+         * @param {Array<number>} scale - The scaling factors to be used.
+         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given size.
+         */
+        // eslint-disable-next-line no-unused-vars
 
-  }, {
-    key: 'getTexture',
-    value: function getTexture(scale) {
-      return null;
-    }
+    }, {
+        key: 'getTexture',
+        value: function getTexture(scale) {
+            return this._emptyImageTexture;
+        }
 
-    /**
-     * Get the bounds of the drawable for determining its fenced position.
-     * @param {Array<number>} drawable - The Drawable instance this skin is using.
-     * @param {?Rectangle} result - Optional destination for bounds calculation.
-     * @return {!Rectangle} The drawable's bounds.
-     */
+        /**
+         * Get the bounds of the drawable for determining its fenced position.
+         * @param {Array<number>} drawable - The Drawable instance this skin is using.
+         * @param {?Rectangle} result - Optional destination for bounds calculation.
+         * @return {!Rectangle} The drawable's bounds.
+         */
 
-  }, {
-    key: 'getFenceBounds',
-    value: function getFenceBounds(drawable, result) {
-      return drawable.getFastBounds(result);
-    }
+    }, {
+        key: 'getFenceBounds',
+        value: function getFenceBounds(drawable, result) {
+            return drawable.getFastBounds(result);
+        }
 
-    /**
-     * Update and returns the uniforms for this skin.
-     * @param {Array<number>} scale - The scaling factors to be used.
-     * @returns {object.<string, *>} the shader uniforms to be used when rendering with this Skin.
-     */
+        /**
+         * Update and returns the uniforms for this skin.
+         * @param {Array<number>} scale - The scaling factors to be used.
+         * @returns {object.<string, *>} the shader uniforms to be used when rendering with this Skin.
+         */
 
-  }, {
-    key: 'getUniforms',
-    value: function getUniforms(scale) {
-      this._uniforms.u_skin = this.getTexture(scale);
-      this._uniforms.u_skinSize = this.size;
-      return this._uniforms;
-    }
+    }, {
+        key: 'getUniforms',
+        value: function getUniforms(scale) {
+            this._uniforms.u_skin = this.getTexture(scale);
+            this._uniforms.u_skinSize = this.size;
+            return this._uniforms;
+        }
 
-    /**
-     * If the skin defers silhouette operations until the last possible minute,
-     * this will be called before isTouching uses the silhouette.
-     * @abstract
-     */
+        /**
+         * If the skin defers silhouette operations until the last possible minute,
+         * this will be called before isTouching uses the silhouette.
+         * @abstract
+         */
 
-  }, {
-    key: 'updateSilhouette',
-    value: function updateSilhouette() {}
+    }, {
+        key: 'updateSilhouette',
+        value: function updateSilhouette() {}
 
-    /**
-     * Does this point touch an opaque or translucent point on this skin?
-     * Nearest Neighbor version
-     * @param {twgl.v3} vec A texture coordinate.
-     * @return {boolean} Did it touch?
-     */
+        /**
+         * Set the contents of this skin to an empty skin.
+         * @fires Skin.event:WasAltered
+         */
 
-  }, {
-    key: 'isTouchingNearest',
-    value: function isTouchingNearest(vec) {
-      return this._silhouette.isTouchingNearest(vec);
-    }
+    }, {
+        key: 'setEmptyImageData',
+        value: function setEmptyImageData() {
+            // Free up the current reference to the _texture
+            this._texture = null;
 
-    /**
-     * Does this point touch an opaque or translucent point on this skin?
-     * Linear Interpolation version
-     * @param {twgl.v3} vec A texture coordinate.
-     * @return {boolean} Did it touch?
-     */
+            if (!this._emptyImageData) {
+                // Create a transparent pixel
+                this._emptyImageData = new ImageData(1, 1);
 
-  }, {
-    key: 'isTouchingLinear',
-    value: function isTouchingLinear(vec) {
-      return this._silhouette.isTouchingLinear(vec);
-    }
-  }, {
-    key: 'isRaster',
-    get: function get() {
-      return false;
-    }
+                // Create a new texture and update the silhouette
+                var gl = this._renderer.gl;
 
-    /**
-     * @returns {boolean} true if alpha is premultiplied, false otherwise
-     */
+                var textureOptions = {
+                    auto: true,
+                    wrap: gl.CLAMP_TO_EDGE,
+                    src: this._emptyImageData
+                };
 
-  }, {
-    key: 'hasPremultipliedAlpha',
-    get: function get() {
-      return false;
-    }
+                // Note: we're using _emptyImageTexture here instead of _texture
+                // so that we can cache this empty texture for later use as needed.
+                // this._texture can get modified by other skins (e.g. BitmapSkin
+                // and SVGSkin, so we can't use that same field for caching)
+                this._emptyImageTexture = twgl.createTexture(gl, textureOptions);
+            }
 
-    /**
-     * @return {int} the unique ID for this Skin.
-     */
+            this._silhouette.update(this._emptyImageData);
+            this.emit(Skin.Events.WasAltered);
+        }
 
-  }, {
-    key: 'id',
-    get: function get() {
-      return this._id;
-    }
+        /**
+         * Does this point touch an opaque or translucent point on this skin?
+         * Nearest Neighbor version
+         * @param {twgl.v3} vec A texture coordinate.
+         * @return {boolean} Did it touch?
+         */
 
-    /**
-     * @returns {Vec3} the origin, in object space, about which this Skin should rotate.
-     */
+    }, {
+        key: 'isTouchingNearest',
+        value: function isTouchingNearest(vec) {
+            return this._silhouette.isTouchingNearest(vec);
+        }
 
-  }, {
-    key: 'rotationCenter',
-    get: function get() {
-      return this._rotationCenter;
-    }
-  }]);
+        /**
+         * Does this point touch an opaque or translucent point on this skin?
+         * Linear Interpolation version
+         * @param {twgl.v3} vec A texture coordinate.
+         * @return {boolean} Did it touch?
+         */
 
-  return Skin;
+    }, {
+        key: 'isTouchingLinear',
+        value: function isTouchingLinear(vec) {
+            return this._silhouette.isTouchingLinear(vec);
+        }
+    }, {
+        key: 'isRaster',
+        get: function get() {
+            return false;
+        }
+
+        /**
+         * @returns {boolean} true if alpha is premultiplied, false otherwise
+         */
+
+    }, {
+        key: 'hasPremultipliedAlpha',
+        get: function get() {
+            return false;
+        }
+
+        /**
+         * @return {int} the unique ID for this Skin.
+         */
+
+    }, {
+        key: 'id',
+        get: function get() {
+            return this._id;
+        }
+
+        /**
+         * @returns {Vec3} the origin, in object space, about which this Skin should rotate.
+         */
+
+    }, {
+        key: 'rotationCenter',
+        get: function get() {
+            return this._rotationCenter;
+        }
+
+        /**
+         * @abstract
+         * @return {Array<number>} the "native" size, in texels, of this skin.
+         */
+
+    }, {
+        key: 'size',
+        get: function get() {
+            return [0, 0];
+        }
+    }]);
+
+    return Skin;
 }(EventEmitter);
 
 /**
@@ -10655,11 +10694,11 @@ var Skin = function (_EventEmitter) {
 
 
 Skin.Events = {
-  /**
-   * Emitted when anything about the Skin has been altered, such as the appearance or rotation center.
-   * @event Skin.event:WasAltered
-   */
-  WasAltered: 'WasAltered'
+    /**
+     * Emitted when anything about the Skin has been altered, such as the appearance or rotation center.
+     * @event Skin.event:WasAltered
+     */
+    WasAltered: 'WasAltered'
 };
 
 module.exports = Skin;
@@ -11070,11 +11109,11 @@ var Rectangle = function () {
             this.right = Math.min(this.right, right);
             this.bottom = Math.max(this.bottom, bottom);
             this.top = Math.min(this.top, top);
-            // Ensure rectangle coordinates in order.
-            this.left = Math.min(this.left, this.right);
-            this.right = Math.max(this.right, this.left);
-            this.bottom = Math.min(this.bottom, this.top);
-            this.top = Math.max(this.top, this.bottom);
+
+            this.left = Math.min(this.left, right);
+            this.right = Math.max(this.right, left);
+            this.bottom = Math.min(this.bottom, top);
+            this.top = Math.max(this.top, bottom);
         }
 
         /**
@@ -12302,8 +12341,7 @@ var EventEmitter = __webpack_require__(7);
 var hull = __webpack_require__(16);
 var twgl = __webpack_require__(0);
 
-var Skin = __webpack_require__(2);
-var BitmapSkin = __webpack_require__(22);
+var BitmapSkin = __webpack_require__(21);
 var Drawable = __webpack_require__(23);
 var Rectangle = __webpack_require__(5);
 var PenSkin = __webpack_require__(26);
@@ -12409,7 +12447,7 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: '_getContext',
         value: function _getContext(canvas) {
-            return twgl.getWebGLContext(canvas, { alpha: false, stencil: true });
+            return twgl.getWebGLContext(canvas, { alpha: false, stencil: true, antialias: false });
         }
 
         /**
@@ -12615,23 +12653,6 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * Notify Drawables whose skin is the skin that changed.
-         * @param {Skin} skin - the skin that changed.
-         * @private
-         */
-
-    }, {
-        key: '_skinWasAltered',
-        value: function _skinWasAltered(skin) {
-            for (var i = 0; i < this._allDrawables.length; i++) {
-                var drawable = this._allDrawables[i];
-                if (drawable && drawable._skin === skin) {
-                    drawable._skinWasAltered();
-                }
-            }
-        }
-
-        /**
          * Create a new bitmap skin from a snapshot of the provided bitmap data.
          * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
          * @param {!int} [costumeResolution=1] - The resolution to use for this bitmap.
@@ -12646,7 +12667,6 @@ var RenderWebGL = function (_EventEmitter) {
             var skinId = this._nextSkinId++;
             var newSkin = new BitmapSkin(skinId, this);
             newSkin.setBitmap(bitmapData, costumeResolution, rotationCenter);
-            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12665,7 +12685,6 @@ var RenderWebGL = function (_EventEmitter) {
             var skinId = this._nextSkinId++;
             var newSkin = new SVGSkin(skinId, this);
             newSkin.setSVG(svgData, rotationCenter);
-            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12680,7 +12699,6 @@ var RenderWebGL = function (_EventEmitter) {
         value: function createPenSkin() {
             var skinId = this._nextSkinId++;
             var newSkin = new PenSkin(skinId, this);
-            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12700,7 +12718,6 @@ var RenderWebGL = function (_EventEmitter) {
             var skinId = this._nextSkinId++;
             var newSkin = new TextBubbleSkin(skinId, this);
             newSkin.setTextBubble(type, text, pointsLeft);
-            newSkin.addListener(Skin.Events.WasAltered, this._skinWasAltered.bind(this, newSkin));
             this._allSkins[skinId] = newSkin;
             return skinId;
         }
@@ -12764,8 +12781,6 @@ var RenderWebGL = function (_EventEmitter) {
 
                     if (drawable && drawable.skin === oldSkin) {
                         drawable.skin = newSkin;
-                        drawable.setConvexHullDirty();
-                        drawable.setTransformDirty();
                     }
                 }
             } catch (err) {
@@ -13764,7 +13779,148 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
+         * Update a drawable's skin.
+         * @param {number} drawableID The drawable's id.
+         * @param {number} skinId The skin to update to.
+         */
+
+    }, {
+        key: 'updateDrawableSkinId',
+        value: function updateDrawableSkinId(drawableID, skinId) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.skin = this._allSkins[skinId];
+        }
+
+        /**
+         * Update a drawable's skin rotation center.
+         * @param {number} drawableID The drawable's id.
+         * @param {Array.<number>} rotationCenter The rotation center for the skin.
+         */
+
+    }, {
+        key: 'updateDrawableRotationCenter',
+        value: function updateDrawableRotationCenter(drawableID, rotationCenter) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.skin.setRotationCenter(rotationCenter[0], rotationCenter[1]);
+        }
+
+        /**
+         * Update a drawable's skin and rotation center together.
+         * @param {number} drawableID The drawable's id.
+         * @param {number} skinId The skin to update to.
+         * @param {Array.<number>} rotationCenter The rotation center for the skin.
+         */
+
+    }, {
+        key: 'updateDrawableSkinIdRotationCenter',
+        value: function updateDrawableSkinIdRotationCenter(drawableID, skinId, rotationCenter) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.skin = this._allSkins[skinId];
+            drawable.skin.setRotationCenter(rotationCenter[0], rotationCenter[1]);
+        }
+
+        /**
+         * Update a drawable's position.
+         * @param {number} drawableID The drawable's id.
+         * @param {Array.<number>} position The new position.
+         */
+
+    }, {
+        key: 'updateDrawablePosition',
+        value: function updateDrawablePosition(drawableID, position) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updatePosition(position);
+        }
+
+        /**
+         * Update a drawable's direction.
+         * @param {number} drawableID The drawable's id.
+         * @param {number} direction A new direction.
+         */
+
+    }, {
+        key: 'updateDrawableDirection',
+        value: function updateDrawableDirection(drawableID, direction) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updateDirection(direction);
+        }
+
+        /**
+         * Update a drawable's scale.
+         * @param {number} drawableID The drawable's id.
+         * @param {Array.<number>} scale A new scale.
+         */
+
+    }, {
+        key: 'updateDrawableScale',
+        value: function updateDrawableScale(drawableID, scale) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updateScale(scale);
+        }
+
+        /**
+         * Update a drawable's direction and scale together.
+         * @param {number} drawableID The drawable's id.
+         * @param {number} direction A new direction.
+         * @param {Array.<number>} scale A new scale.
+         */
+
+    }, {
+        key: 'updateDrawableDirectionScale',
+        value: function updateDrawableDirectionScale(drawableID, direction, scale) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updateDirection(direction);
+            drawable.updateScale(scale);
+        }
+
+        /**
+         * Update a drawable's visibility.
+         * @param {number} drawableID The drawable's id.
+         * @param {boolean} visible Will the drawable be visible?
+         */
+
+    }, {
+        key: 'updateDrawableVisible',
+        value: function updateDrawableVisible(drawableID, visible) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updateVisible(visible);
+        }
+
+        /**
+         * Update a drawable's visual effect.
+         * @param {number} drawableID The drawable's id.
+         * @param {string} effectName The effect to change.
+         * @param {number} value A new effect value.
+         */
+
+    }, {
+        key: 'updateDrawableEffect',
+        value: function updateDrawableEffect(drawableID, effectName, value) {
+            var drawable = this._allDrawables[drawableID];
+            // TODO: https://github.com/LLK/scratch-vm/issues/2288
+            if (!drawable) return;
+            drawable.updateEffect(effectName, value);
+        }
+
+        /**
          * Update the position, direction, scale, or effect properties of this Drawable.
+         * @deprecated Use specific updateDrawable* methods instead.
          * @param {int} drawableID The ID of the Drawable to update.
          * @param {object.<string,*>} properties The new property values to set.
          */
@@ -13775,17 +13931,16 @@ var RenderWebGL = function (_EventEmitter) {
             var drawable = this._allDrawables[drawableID];
             if (!drawable) {
                 /**
-                 * @todo fix whatever's wrong in the VM which causes this, then add a warning or throw here.
+                 * @todo(https://github.com/LLK/scratch-vm/issues/2288) fix whatever's wrong in the VM which causes this, then add a warning or throw here.
                  * Right now this happens so much on some projects that a warning or exception here can hang the browser.
                  */
                 return;
             }
             if ('skinId' in properties) {
-                drawable.skin = this._allSkins[properties.skinId];
+                this.updateDrawableSkinId(drawableID, properties.skinId);
             }
             if ('rotationCenter' in properties) {
-                var newRotationCenter = properties.rotationCenter;
-                drawable.skin.setRotationCenter(newRotationCenter[0], newRotationCenter[1]);
+                this.updateDrawableRotationCenter(drawableID, properties.rotationCenter);
             }
             drawable.updateProperties(properties);
         }
@@ -13805,7 +13960,7 @@ var RenderWebGL = function (_EventEmitter) {
 
             var drawable = this._allDrawables[drawableID];
             if (!drawable) {
-                // TODO: fix whatever's wrong in the VM which causes this, then add a warning or throw here.
+                // @todo(https://github.com/LLK/scratch-vm/issues/2288) fix whatever's wrong in the VM which causes this, then add a warning or throw here.
                 // Right now this happens so much on some projects that a warning or exception here can hang the browser.
                 return [x, y];
             }
@@ -13883,8 +14038,6 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: 'penStamp',
         value: function penStamp(penSkinID, stampID) {
-            this._doExitDrawRegion();
-
             var stampDrawable = this._allDrawables[stampID];
             if (!stampDrawable) {
                 return;
@@ -13894,6 +14047,8 @@ var RenderWebGL = function (_EventEmitter) {
             if (!bounds) {
                 return;
             }
+
+            this._doExitDrawRegion();
 
             var skin = /** @type {PenSkin} */this._allSkins[penSkinID];
 
@@ -14015,6 +14170,7 @@ var RenderWebGL = function (_EventEmitter) {
                 this._exitRegion();
             }
             this._exitRegion = null;
+            this._regionId = null;
         }
 
         /**
@@ -14075,8 +14231,7 @@ var RenderWebGL = function (_EventEmitter) {
                     gl.useProgram(currentShader.program);
                     twgl.setBuffersAndAttributes(gl, currentShader, this._bufferInfo);
                     Object.assign(uniforms, {
-                        u_projectionMatrix: projection,
-                        u_fudge: window.fudge || 0
+                        u_projectionMatrix: projection
                     });
                 }
 
@@ -14088,7 +14243,7 @@ var RenderWebGL = function (_EventEmitter) {
                 }
 
                 if (uniforms.u_skin) {
-                    twgl.setTextureParameters(gl, uniforms.u_skin, { minMag: drawable.useNearest ? gl.NEAREST : gl.LINEAR });
+                    twgl.setTextureParameters(gl, uniforms.u_skin, { minMag: drawable.useNearest(drawableScale) ? gl.NEAREST : gl.LINEAR });
                 }
 
                 twgl.setUniforms(currentShader, uniforms);
@@ -14742,6 +14897,197 @@ module.exports = convex;
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var twgl = __webpack_require__(0);
+
+var Skin = __webpack_require__(2);
+
+var BitmapSkin = function (_Skin) {
+    _inherits(BitmapSkin, _Skin);
+
+    /**
+     * Create a new Bitmap Skin.
+     * @extends Skin
+     * @param {!int} id - The ID for this Skin.
+     * @param {!RenderWebGL} renderer - The renderer which will use this skin.
+     */
+    function BitmapSkin(id, renderer) {
+        _classCallCheck(this, BitmapSkin);
+
+        /** @type {!int} */
+        var _this = _possibleConstructorReturn(this, (BitmapSkin.__proto__ || Object.getPrototypeOf(BitmapSkin)).call(this, id));
+
+        _this._costumeResolution = 1;
+
+        /** @type {!RenderWebGL} */
+        _this._renderer = renderer;
+
+        /** @type {WebGLTexture} */
+        _this._texture = null;
+
+        /** @type {Array<int>} */
+        _this._textureSize = [0, 0];
+        return _this;
+    }
+
+    /**
+     * Dispose of this object. Do not use it after calling this method.
+     */
+
+
+    _createClass(BitmapSkin, [{
+        key: 'dispose',
+        value: function dispose() {
+            if (this._texture) {
+                this._renderer.gl.deleteTexture(this._texture);
+                this._texture = null;
+            }
+            _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'dispose', this).call(this);
+        }
+
+        /**
+         * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
+         */
+
+    }, {
+        key: 'getTexture',
+
+
+        /**
+         * @param {Array<number>} scale - The scaling factors to be used.
+         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
+         */
+        // eslint-disable-next-line no-unused-vars
+        value: function getTexture(scale) {
+            return this._texture || _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'getTexture', this).call(this);
+        }
+
+        /**
+         * Get the bounds of the drawable for determining its fenced position.
+         * @param {Array<number>} drawable - The Drawable instance this skin is using.
+         * @param {?Rectangle} result - Optional destination for bounds calculation.
+         * @return {!Rectangle} The drawable's bounds. For compatibility with Scratch 2, we always use getAABB for bitmaps.
+         */
+
+    }, {
+        key: 'getFenceBounds',
+        value: function getFenceBounds(drawable, result) {
+            return drawable.getAABB(result);
+        }
+
+        /**
+         * Set the contents of this skin to a snapshot of the provided bitmap data.
+         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
+         * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the bitmap. If not supplied, it will be
+         * calculated from the bounding box
+         * @fires Skin.event:WasAltered
+         */
+
+    }, {
+        key: 'setBitmap',
+        value: function setBitmap(bitmapData, costumeResolution, rotationCenter) {
+            if (!bitmapData.width || !bitmapData.height) {
+                _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'setEmptyImageData', this).call(this);
+                return;
+            }
+            var gl = this._renderer.gl;
+
+            // Preferably bitmapData is ImageData. ImageData speeds up updating
+            // Silhouette and is better handled by more browsers in regards to
+            // memory.
+            var textureData = bitmapData;
+            if (bitmapData instanceof HTMLCanvasElement) {
+                // Given a HTMLCanvasElement get the image data to pass to webgl and
+                // Silhouette.
+                var context = bitmapData.getContext('2d');
+                textureData = context.getImageData(0, 0, bitmapData.width, bitmapData.height);
+            }
+
+            if (this._texture) {
+                gl.bindTexture(gl.TEXTURE_2D, this._texture);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+                this._silhouette.update(textureData);
+            } else {
+                // TODO: mipmaps?
+                var textureOptions = {
+                    auto: true,
+                    wrap: gl.CLAMP_TO_EDGE,
+                    src: textureData
+                };
+
+                this._texture = twgl.createTexture(gl, textureOptions);
+                this._silhouette.update(textureData);
+            }
+
+            // Do these last in case any of the above throws an exception
+            this._costumeResolution = costumeResolution || 2;
+            this._textureSize = BitmapSkin._getBitmapSize(bitmapData);
+
+            if (typeof rotationCenter === 'undefined') rotationCenter = this.calculateRotationCenter();
+            this.setRotationCenter.apply(this, rotationCenter);
+
+            this.emit(Skin.Events.WasAltered);
+        }
+
+        /**
+         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - bitmap data to inspect.
+         * @returns {Array<int>} the width and height of the bitmap data, in pixels.
+         * @private
+         */
+
+    }, {
+        key: 'isRaster',
+        get: function get() {
+            return true;
+        }
+
+        /**
+         * @return {Array<number>} the "native" size, in texels, of this skin.
+         */
+
+    }, {
+        key: 'size',
+        get: function get() {
+            return [this._textureSize[0] / this._costumeResolution, this._textureSize[1] / this._costumeResolution];
+        }
+    }], [{
+        key: '_getBitmapSize',
+        value: function _getBitmapSize(bitmapData) {
+            if (bitmapData instanceof HTMLImageElement) {
+                return [bitmapData.naturalWidth || bitmapData.width, bitmapData.naturalHeight || bitmapData.height];
+            }
+
+            if (bitmapData instanceof HTMLVideoElement) {
+                return [bitmapData.videoWidth || bitmapData.width, bitmapData.videoHeight || bitmapData.height];
+            }
+
+            // ImageData or HTMLCanvasElement
+            return [bitmapData.width, bitmapData.height];
+        }
+    }]);
+
+    return BitmapSkin;
+}(Skin);
+
+module.exports = BitmapSkin;
+
+/***/ }),
+/* 22 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
@@ -14973,190 +15319,6 @@ var Silhouette = function () {
 module.exports = Silhouette;
 
 /***/ }),
-/* 22 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var twgl = __webpack_require__(0);
-
-var Skin = __webpack_require__(2);
-
-var BitmapSkin = function (_Skin) {
-    _inherits(BitmapSkin, _Skin);
-
-    /**
-     * Create a new Bitmap Skin.
-     * @extends Skin
-     * @param {!int} id - The ID for this Skin.
-     * @param {!RenderWebGL} renderer - The renderer which will use this skin.
-     */
-    function BitmapSkin(id, renderer) {
-        _classCallCheck(this, BitmapSkin);
-
-        /** @type {!int} */
-        var _this = _possibleConstructorReturn(this, (BitmapSkin.__proto__ || Object.getPrototypeOf(BitmapSkin)).call(this, id));
-
-        _this._costumeResolution = 1;
-
-        /** @type {!RenderWebGL} */
-        _this._renderer = renderer;
-
-        /** @type {WebGLTexture} */
-        _this._texture = null;
-
-        /** @type {Array<int>} */
-        _this._textureSize = [0, 0];
-
-        /**
-         * The "native" size, in texels, of this skin.
-         * @type {Array<number>}
-         */
-        _this.size = [0, 0];
-        return _this;
-    }
-
-    /**
-     * Dispose of this object. Do not use it after calling this method.
-     */
-
-
-    _createClass(BitmapSkin, [{
-        key: 'dispose',
-        value: function dispose() {
-            if (this._texture) {
-                this._renderer.gl.deleteTexture(this._texture);
-                this._texture = null;
-            }
-            _get(BitmapSkin.prototype.__proto__ || Object.getPrototypeOf(BitmapSkin.prototype), 'dispose', this).call(this);
-        }
-
-        /**
-         * @returns {boolean} true for a raster-style skin (like a BitmapSkin), false for vector-style (like SVGSkin).
-         */
-
-    }, {
-        key: 'getTexture',
-
-
-        /**
-         * @param {Array<number>} scale - The scaling factors to be used.
-         * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
-         */
-        // eslint-disable-next-line no-unused-vars
-        value: function getTexture(scale) {
-            return this._texture;
-        }
-
-        /**
-         * Get the bounds of the drawable for determining its fenced position.
-         * @param {Array<number>} drawable - The Drawable instance this skin is using.
-         * @param {?Rectangle} result - Optional destination for bounds calculation.
-         * @return {!Rectangle} The drawable's bounds. For compatibility with Scratch 2, we always use getAABB for bitmaps.
-         */
-
-    }, {
-        key: 'getFenceBounds',
-        value: function getFenceBounds(drawable, result) {
-            return drawable.getAABB(result);
-        }
-
-        /**
-         * Set the contents of this skin to a snapshot of the provided bitmap data.
-         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - new contents for this skin.
-         * @param {int} [costumeResolution=1] - The resolution to use for this bitmap.
-         * @param {Array<number>} [rotationCenter] - Optional rotation center for the bitmap. If not supplied, it will be
-         * calculated from the bounding box
-         * @fires Skin.event:WasAltered
-         */
-
-    }, {
-        key: 'setBitmap',
-        value: function setBitmap(bitmapData, costumeResolution, rotationCenter) {
-            var gl = this._renderer.gl;
-
-            // Preferably bitmapData is ImageData. ImageData speeds up updating
-            // Silhouette and is better handled by more browsers in regards to
-            // memory.
-            var textureData = bitmapData;
-            if (bitmapData instanceof HTMLCanvasElement) {
-                // Given a HTMLCanvasElement get the image data to pass to webgl and
-                // Silhouette.
-                var context = bitmapData.getContext('2d');
-                textureData = context.getImageData(0, 0, bitmapData.width, bitmapData.height);
-            }
-
-            if (this._texture) {
-                gl.bindTexture(gl.TEXTURE_2D, this._texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-                this._silhouette.update(textureData);
-            } else {
-                // TODO: mipmaps?
-                var textureOptions = {
-                    auto: true,
-                    wrap: gl.CLAMP_TO_EDGE,
-                    src: textureData
-                };
-
-                this._texture = twgl.createTexture(gl, textureOptions);
-                this._silhouette.update(textureData);
-            }
-
-            // Do these last in case any of the above throws an exception
-            this._costumeResolution = costumeResolution || 2;
-            this._textureSize = BitmapSkin._getBitmapSize(bitmapData);
-            this.size = [this._textureSize[0] / this._costumeResolution, this._textureSize[1] / this._costumeResolution];
-
-            if (typeof rotationCenter === 'undefined') rotationCenter = this.calculateRotationCenter();
-            this.setRotationCenter.apply(this, rotationCenter);
-
-            this.emit(Skin.Events.WasAltered);
-        }
-
-        /**
-         * @param {ImageData|HTMLImageElement|HTMLCanvasElement|HTMLVideoElement} bitmapData - bitmap data to inspect.
-         * @returns {Array<int>} the width and height of the bitmap data, in pixels.
-         * @private
-         */
-
-    }, {
-        key: 'isRaster',
-        get: function get() {
-            return true;
-        }
-    }], [{
-        key: '_getBitmapSize',
-        value: function _getBitmapSize(bitmapData) {
-            if (bitmapData instanceof HTMLImageElement) {
-                return [bitmapData.naturalWidth || bitmapData.width, bitmapData.naturalHeight || bitmapData.height];
-            }
-
-            if (bitmapData instanceof HTMLVideoElement) {
-                return [bitmapData.videoWidth || bitmapData.width, bitmapData.videoHeight || bitmapData.height];
-            }
-
-            // ImageData or HTMLCanvasElement
-            return [bitmapData.width, bitmapData.height];
-        }
-    }]);
-
-    return BitmapSkin;
-}(Skin);
-
-module.exports = BitmapSkin;
-
-/***/ }),
 /* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -15172,6 +15334,7 @@ var twgl = __webpack_require__(0);
 var Rectangle = __webpack_require__(5);
 var RenderConstants = __webpack_require__(3);
 var ShaderManager = __webpack_require__(4);
+var Skin = __webpack_require__(2);
 var EffectTransform = __webpack_require__(8);
 
 /**
@@ -15271,6 +15434,8 @@ var Drawable = function () {
         /** @todo move convex hull functionality, maybe bounds functionality overall, to Skin classes */
         this._convexHullPoints = null;
         this._convexHullDirty = true;
+
+        this._skinWasAltered = this._skinWasAltered.bind(this);
     }
 
     /**
@@ -15336,54 +15501,114 @@ var Drawable = function () {
         }
 
         /**
+         * Update the position if it is different. Marks the transform as dirty.
+         * @param {Array.<number>} position A new position.
+         */
+
+    }, {
+        key: 'updatePosition',
+        value: function updatePosition(position) {
+            if (this._position[0] !== position[0] || this._position[1] !== position[1]) {
+                this._position[0] = Math.round(position[0]);
+                this._position[1] = Math.round(position[1]);
+                this.setTransformDirty();
+            }
+        }
+
+        /**
+         * Update the direction if it is different. Marks the transform as dirty.
+         * @param {number} direction A new direction.
+         */
+
+    }, {
+        key: 'updateDirection',
+        value: function updateDirection(direction) {
+            if (this._direction !== direction) {
+                this._direction = direction;
+                this._rotationTransformDirty = true;
+                this.setTransformDirty();
+            }
+        }
+
+        /**
+         * Update the scale if it is different. Marks the transform as dirty.
+         * @param {Array.<number>} scale A new scale.
+         */
+
+    }, {
+        key: 'updateScale',
+        value: function updateScale(scale) {
+            if (this._scale[0] !== scale[0] || this._scale[1] !== scale[1]) {
+                this._scale[0] = scale[0];
+                this._scale[1] = scale[1];
+                this._rotationCenterDirty = true;
+                this._skinScaleDirty = true;
+                this.setTransformDirty();
+            }
+        }
+
+        /**
+         * Update visibility if it is different. Marks the convex hull as dirty.
+         * @param {boolean} visible A new visibility state.
+         */
+
+    }, {
+        key: 'updateVisible',
+        value: function updateVisible(visible) {
+            if (this._visible !== visible) {
+                this._visible = visible;
+                this.setConvexHullDirty();
+            }
+        }
+
+        /**
+         * Update an effect. Marks the convex hull as dirty if the effect changes shape.
+         * @param {string} effectName The name of the effect.
+         * @param {number} rawValue A new effect value.
+         */
+
+    }, {
+        key: 'updateEffect',
+        value: function updateEffect(effectName, rawValue) {
+            var effectInfo = ShaderManager.EFFECT_INFO[effectName];
+            if (rawValue) {
+                this._effectBits |= effectInfo.mask;
+            } else {
+                this._effectBits &= ~effectInfo.mask;
+            }
+            var converter = effectInfo.converter;
+            this._uniforms[effectInfo.uniformName] = converter(rawValue);
+            if (effectInfo.shapeChanges) {
+                this.setConvexHullDirty();
+            }
+        }
+
+        /**
          * Update the position, direction, scale, or effect properties of this Drawable.
+         * @deprecated Use specific update* methods instead.
          * @param {object.<string,*>} properties The new property values to set.
          */
 
     }, {
         key: 'updateProperties',
         value: function updateProperties(properties) {
-            var dirty = false;
-            if ('position' in properties && (this._position[0] !== properties.position[0] || this._position[1] !== properties.position[1])) {
-                this._position[0] = Math.round(properties.position[0]);
-                this._position[1] = Math.round(properties.position[1]);
-                dirty = true;
+            if ('position' in properties) {
+                this.updatePosition(properties.position);
             }
-            if ('direction' in properties && this._direction !== properties.direction) {
-                this._direction = properties.direction;
-                this._rotationTransformDirty = true;
-                dirty = true;
+            if ('direction' in properties) {
+                this.updateDirection(properties.direction);
             }
-            if ('scale' in properties && (this._scale[0] !== properties.scale[0] || this._scale[1] !== properties.scale[1])) {
-                this._scale[0] = properties.scale[0];
-                this._scale[1] = properties.scale[1];
-                this._rotationCenterDirty = true;
-                this._skinScaleDirty = true;
-                dirty = true;
+            if ('scale' in properties) {
+                this.updateScale(properties.scale);
             }
             if ('visible' in properties) {
-                this._visible = properties.visible;
-                this.setConvexHullDirty();
-            }
-            if (dirty) {
-                this.setTransformDirty();
+                this.updateVisible(properties.visible);
             }
             var numEffects = ShaderManager.EFFECTS.length;
             for (var index = 0; index < numEffects; ++index) {
                 var effectName = ShaderManager.EFFECTS[index];
                 if (effectName in properties) {
-                    var rawValue = properties[effectName];
-                    var effectInfo = ShaderManager.EFFECT_INFO[effectName];
-                    if (rawValue) {
-                        this._effectBits |= effectInfo.mask;
-                    } else {
-                        this._effectBits &= ~effectInfo.mask;
-                    }
-                    var converter = effectInfo.converter;
-                    this._uniforms[effectInfo.uniformName] = converter(rawValue);
-                    if (effectInfo.shapeChanges) {
-                        this.setConvexHullDirty();
-                    }
+                    this.updateEffect(effectName, properties[effectName]);
                 }
             }
         }
@@ -15584,7 +15809,9 @@ var Drawable = function () {
 
             var localPosition = getLocalPosition(this, vec);
 
-            if (this.useNearest) {
+            // We're not passing in a scale to useNearest, but that's okay because "touching" queries
+            // happen at the "native" size anyway.
+            if (this.useNearest()) {
                 return this.skin.isTouchingNearest(localPosition);
             }
             return this.skin.isTouchingLinear(localPosition);
@@ -15592,11 +15819,36 @@ var Drawable = function () {
 
         /**
          * Should the drawable use NEAREST NEIGHBOR or LINEAR INTERPOLATION mode
+         * @param {?Array<Number>} scale Optionally, the screen-space scale of the drawable.
+         * @return {boolean} True if the drawable should use nearest-neighbor interpolation.
          */
 
     }, {
-        key: 'getBounds',
+        key: 'useNearest',
+        value: function useNearest() {
+            var scale = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.scale;
 
+            // Raster skins (bitmaps) should always prefer nearest neighbor
+            if (this.skin.isRaster) {
+                return true;
+            }
+
+            // If the effect bits for mosaic, pixelate, whirl, or fisheye are set, use linear
+            if ((this._effectBits & (ShaderManager.EFFECT_INFO.fisheye.mask | ShaderManager.EFFECT_INFO.whirl.mask | ShaderManager.EFFECT_INFO.pixelate.mask | ShaderManager.EFFECT_INFO.mosaic.mask)) !== 0) {
+                return false;
+            }
+
+            // We can't use nearest neighbor unless we are a multiple of 90 rotation
+            if (this._direction % 90 !== 0) {
+                return false;
+            }
+
+            // If the scale of the skin is very close to 100 (0.99999 variance is okay I guess)
+            if (Math.abs(scale[0]) > 99 && Math.abs(scale[0]) < 101 && Math.abs(scale[1]) > 99 && Math.abs(scale[1]) < 101) {
+                return true;
+            }
+            return false;
+        }
 
         /**
          * Get the precise bounds for a Drawable.
@@ -15606,6 +15858,9 @@ var Drawable = function () {
          * @param {?Rectangle} result optional destination for bounds calculation
          * @return {!Rectangle} Bounds for a tight box around the Drawable.
          */
+
+    }, {
+        key: 'getBounds',
         value: function getBounds(result) {
             if (this.needsConvexHullPoints()) {
                 throw new Error('Needs updated convex hull points before bounds calculation.');
@@ -15685,7 +15940,6 @@ var Drawable = function () {
     }, {
         key: 'getFastBounds',
         value: function getFastBounds(result) {
-            this.updateMatrix();
             if (!this.needsConvexHullPoints()) {
                 return this.getBounds(result);
             }
@@ -15785,7 +16039,13 @@ var Drawable = function () {
         ,
         set: function set(newSkin) {
             if (this._skin !== newSkin) {
+                if (this._skin) {
+                    this._skin.removeListener(Skin.Events.WasAltered, this._skinWasAltered);
+                }
                 this._skin = newSkin;
+                if (this._skin) {
+                    this._skin.addListener(Skin.Events.WasAltered, this._skinWasAltered);
+                }
                 this._skinWasAltered();
             }
         }
@@ -15798,25 +16058,6 @@ var Drawable = function () {
         key: 'scale',
         get: function get() {
             return [this._scale[0], this._scale[1]];
-        }
-    }, {
-        key: 'useNearest',
-        get: function get() {
-            // Raster skins (bitmaps) should always prefer nearest neighbor
-            if (this.skin.isRaster) {
-                return true;
-            }
-
-            // We can't use nearest neighbor unless we are a multiple of 90 rotation
-            if (this._direction % 90 !== 0) {
-                return false;
-            }
-
-            // If the scale of the skin is very close to 100 (0.99999 variance is okay I guess)
-            if (Math.abs(this.scale[0]) > 99 && Math.abs(this.scale[0]) < 101 && Math.abs(this.scale[1]) > 99 && Math.abs(this.scale[1]) < 101) {
-                return true;
-            }
-            return false;
         }
     }], [{
         key: 'color4fFromID',
@@ -15866,7 +16107,7 @@ var Drawable = function () {
             }
             var textColor =
             // commenting out to only use nearest for now
-            // drawable.useNearest ?
+            // drawable.useNearest() ?
             drawable.skin._silhouette.colorAtNearest(localPosition, dst);
             // : drawable.skin._silhouette.colorAtLinear(localPosition, dst);
             return EffectTransform.transformColor(drawable, textColor, textColor);
@@ -15888,7 +16129,7 @@ module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\
 /* 25 */
 /***/ (function(module, exports) {
 
-module.exports = "precision mediump float;\n\nuniform float u_fudge;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color)\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // defined(ENABLE_color)\n\n\t#if defined(ENABLE_brightness)\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
+module.exports = "precision mediump float;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color)\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // defined(ENABLE_color)\n\n\t#if defined(ENABLE_brightness)\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
 
 /***/ }),
 /* 26 */
@@ -16002,9 +16243,6 @@ var PenSkin = function (_Skin) {
         /** @type {HTMLCanvasElement} */
         _this._canvas = document.createElement('canvas');
 
-        /** @type {Array<number>} */
-        _this._canvasSize = twgl.v3.create();
-
         /** @type {WebGLTexture} */
         _this._texture = null;
 
@@ -16114,7 +16352,7 @@ var PenSkin = function (_Skin) {
             gl.clear(gl.COLOR_BUFFER_BIT);
 
             var ctx = this._canvas.getContext('2d');
-            ctx.clearRect(0, 0, this._canvasSize[0], this._canvasSize[1]);
+            ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
             this._silhouetteDirty = true;
         }
@@ -16209,8 +16447,7 @@ var PenSkin = function (_Skin) {
 
             var uniforms = {
                 u_skin: this._texture,
-                u_projectionMatrix: projection,
-                u_fudge: 0
+                u_projectionMatrix: projection
             };
 
             twgl.setUniforms(currentShader, uniforms);
@@ -16336,8 +16573,8 @@ var PenSkin = function (_Skin) {
     }, {
         key: '_drawRectangle',
         value: function _drawRectangle(currentShader, texture, bounds) {
-            var x = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -this._canvasSize[0] / 2;
-            var y = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this._canvasSize[1] / 2;
+            var x = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : -this._canvas.width / 2;
+            var y = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : this._canvas.height / 2;
 
             var gl = this._renderer.gl;
 
@@ -16346,8 +16583,7 @@ var PenSkin = function (_Skin) {
             var uniforms = {
                 u_skin: texture,
                 u_projectionMatrix: projection,
-                u_modelMatrix: twgl.m4.multiply(twgl.m4.translation(twgl.v3.create(-x - bounds.width / 2, -y + bounds.height / 2, 0), __modelTranslationMatrix), twgl.m4.scaling(twgl.v3.create(bounds.width, bounds.height, 0), __modelScalingMatrix), __modelMatrix),
-                u_fudge: 0
+                u_modelMatrix: twgl.m4.multiply(twgl.m4.translation(twgl.v3.create(-x - bounds.width / 2, -y + bounds.height / 2, 0), __modelTranslationMatrix), twgl.m4.scaling(twgl.v3.create(bounds.width, bounds.height, 0), __modelScalingMatrix), __modelMatrix)
             };
 
             twgl.setTextureParameters(gl, texture, { minMag: gl.NEAREST });
@@ -16397,8 +16633,8 @@ var PenSkin = function (_Skin) {
         key: '_drawToBuffer',
         value: function _drawToBuffer() {
             var texture = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._texture;
-            var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -this._canvasSize[0] / 2;
-            var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._canvasSize[1] / 2;
+            var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : -this._canvas.width / 2;
+            var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this._canvas.height / 2;
 
             if (texture !== this._texture && this._canvasDirty) {
                 this._drawToBuffer();
@@ -16413,7 +16649,7 @@ var PenSkin = function (_Skin) {
                 gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this._canvas);
 
                 var ctx = this._canvas.getContext('2d');
-                ctx.clearRect(0, 0, this._canvasSize[0], this._canvasSize[1]);
+                ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
 
                 this._canvasDirty = false;
             }
@@ -16457,8 +16693,8 @@ var PenSkin = function (_Skin) {
             this._bounds = new Rectangle();
             this._bounds.initFromBounds(width / 2, width / -2, height / 2, height / -2);
 
-            this._canvas.width = this._canvasSize[0] = width;
-            this._canvas.height = this._canvasSize[1] = height;
+            this._canvas.width = width;
+            this._canvas.height = height;
             this._rotationCenter[0] = width / 2;
             this._rotationCenter[1] = height / 2;
 
@@ -16542,8 +16778,8 @@ var PenSkin = function (_Skin) {
                 this._renderer.enterDrawRegion(this._toBufferDrawRegionId);
 
                 // Sample the framebuffer's pixels into the silhouette instance
-                var skinPixels = new Uint8Array(Math.floor(this._canvasSize[0] * this._canvasSize[1] * 4));
-                gl.readPixels(0, 0, this._canvasSize[0], this._canvasSize[1], gl.RGBA, gl.UNSIGNED_BYTE, skinPixels);
+                var skinPixels = new Uint8Array(Math.floor(this._canvas.width * this._canvas.height * 4));
+                gl.readPixels(0, 0, this._canvas.width, this._canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, skinPixels);
 
                 var skinCanvas = this._canvas;
                 skinCanvas.width = bounds.width;
@@ -16582,7 +16818,7 @@ var PenSkin = function (_Skin) {
     }, {
         key: 'size',
         get: function get() {
-            return this._canvasSize;
+            return [this._canvas.width, this._canvas.height];
         }
     }]);
 
@@ -16644,24 +16880,6 @@ var SVGSkin = function (_Skin) {
 
         /** @type {Number} */
         _this._maxTextureScale = 0;
-
-        /**
-         * The natural size, in Scratch units, of this skin.
-         * @type {Array<number>}
-         */
-        _this.size = [0, 0];
-
-        /**
-         * The viewbox offset of the svg.
-         * @type {Array<number>}
-         */
-        _this._viewOffset = [0, 0];
-
-        /**
-         * The rotation center before offset by _viewOffset.
-         * @type {Array<number>}
-         */
-        _this._rawRotationCenter = [NaN, NaN];
         return _this;
     }
 
@@ -16681,19 +16899,21 @@ var SVGSkin = function (_Skin) {
         }
 
         /**
-         * Set the origin, in object space, about which this Skin should rotate.
-         * @param {number} x - The x coordinate of the new rotation center.
-         * @param {number} y - The y coordinate of the new rotation center.
+         * @return {Array<number>} the natural size, in Scratch units, of this skin.
          */
 
     }, {
         key: 'setRotationCenter',
+
+
+        /**
+         * Set the origin, in object space, about which this Skin should rotate.
+         * @param {number} x - The x coordinate of the new rotation center.
+         * @param {number} y - The y coordinate of the new rotation center.
+         */
         value: function setRotationCenter(x, y) {
-            if (x !== this._rawRotationCenter[0] || y !== this._rawRotationCenter[1]) {
-                this._rawRotationCenter[0] = x;
-                this._rawRotationCenter[1] = y;
-                _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setRotationCenter', this).call(this, x - this._viewOffset[0], y - this._viewOffset[1]);
-            }
+            var viewOffset = this._svgRenderer.viewOffset;
+            _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setRotationCenter', this).call(this, x - viewOffset[0], y - viewOffset[1]);
         }
 
         /**
@@ -16706,6 +16926,10 @@ var SVGSkin = function (_Skin) {
         key: 'getTexture',
         value: function getTexture(scale) {
             var _this2 = this;
+
+            if (!this._svgRenderer.canvas.width || !this._svgRenderer.canvas.height) {
+                return _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
+            }
 
             // The texture only ever gets uniform scale. Take the larger of the two axes.
             var scaleMax = scale ? Math.max(Math.abs(scale[0]), Math.abs(scale[1])) : 100;
@@ -16754,6 +16978,12 @@ var SVGSkin = function (_Skin) {
                 // updating Silhouette and is better handled by more browsers in
                 // regards to memory.
                 var canvas = _this3._svgRenderer.canvas;
+
+                if (!canvas.width || !canvas.height) {
+                    _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setEmptyImageData', _this3).call(_this3);
+                    return;
+                }
+
                 var context = canvas.getContext('2d');
                 var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
 
@@ -16780,13 +17010,14 @@ var SVGSkin = function (_Skin) {
                 }
 
                 if (typeof rotationCenter === 'undefined') rotationCenter = _this3.calculateRotationCenter();
-                _this3.size = _this3._svgRenderer.size;
-                _this3._viewOffset = _this3._svgRenderer.viewOffset;
-                // Reset rawRotationCenter when we update viewOffset.
-                _this3._rawRotationCenter = [NaN, NaN];
-                _this3.setRotationCenter(rotationCenter[0], rotationCenter[1]);
+                _this3.setRotationCenter.apply(_this3, rotationCenter);
                 _this3.emit(Skin.Events.WasAltered);
             });
+        }
+    }, {
+        key: 'size',
+        get: function get() {
+            return this._svgRenderer.size;
         }
     }]);
 
@@ -16856,7 +17087,7 @@ class SvgRenderer {
      * This will be parsed and transformed, and finally drawn.
      * When drawing is finished, the `onFinish` callback is called.
      * @param {string} svgString String of SVG data to draw in quirks-mode.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+     * @param {number} [scale] - Optionally, also scale the image by this factor.
      * @param {Function} [onFinish] Optional callback for when drawing finished.
      */
     fromString (svgString, scale, onFinish) {
@@ -17006,7 +17237,7 @@ class SvgRenderer {
                 ty = -4 * fontSize / 22;
             }
 
-            if (textElement.transform.baseVal.length === 0) {
+            if (textElement.transform.baseVal.numberOfItems === 0) {
                 const transform = this._svgTag.createSVGTransform();
                 textElement.transform.baseVal.appendItem(transform);
             }
@@ -17189,22 +17420,8 @@ class SvgRenderer {
     }
 
     /**
-     * Get the drawing ratio, adjusted for HiDPI screens.
-     * @return {number} Scale ratio to draw to canvases with.
-     */
-    getDrawRatio () {
-        const devicePixelRatio = window.devicePixelRatio || 1;
-        const backingStoreRatio = this._context.webkitBackingStorePixelRatio ||
-            this._context.mozBackingStorePixelRatio ||
-            this._context.msBackingStorePixelRatio ||
-            this._context.oBackingStorePixelRatio ||
-            this._context.backingStorePixelRatio || 1;
-        return devicePixelRatio / backingStoreRatio;
-    }
-
-    /**
-     * Draw the SVG to a canvas. The canvas will automatically be scaled by the value returned by `getDrawRatio`.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+     * Draw the SVG to a canvas.
+     * @param {number} [scale] - Optionally, also scale the image by this factor.
      * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
      */
     _draw (scale, onFinish) {
@@ -17224,13 +17441,13 @@ class SvgRenderer {
 
     /**
      * Draw to the canvas from a loaded image element.
-     * @param {number} [scale] - Optionally, also scale the image by this factor (multiplied by `getDrawRatio()`).
+     * @param {number} [scale] - Optionally, also scale the image by this factor.
      * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
      **/
     _drawFromImage (scale, onFinish) {
         if (!this._cachedImage) return;
 
-        const ratio = this.getDrawRatio() * (Number.isFinite(scale) ? scale : 1);
+        const ratio = Number.isFinite(scale) ? scale : 1;
         const bbox = this._measurements;
         this._canvas.width = bbox.width * ratio;
         this._canvas.height = bbox.height * ratio;
@@ -17368,6 +17585,19 @@ module.exports = function (svgString) {
             /(<image[^>]+?xlink:href=["'])data:img\/png/g,
             // use the captured <image ..... xlink:href=" then append the right data uri mime type
             ($0, $1) => `${$1}data:image/png`
+        );
+    }
+
+    // Some SVGs from Inkscape attempt to bind a prefix to a reserved namespace name.
+    // This will cause SVG parsing to fail, so replace these with a dummy namespace name.
+    // This namespace name is only valid for "xml", and if we bind "xmlns:xml" to the dummy namespace,
+    // parsing will fail yet again, so exclude "xmlns:xml" declarations.
+    if (svgString.match(/xmlns:(?!xml=)[^ ]+="http:\/\/www.w3.org\/XML\/1998\/namespace"/) !== null) {
+        svgString = svgString.replace(
+            // capture the entire attribute
+            /(xmlns:(?!xml=)[^ ]+)="http:\/\/www.w3.org\/XML\/1998\/namespace"/g,
+            // use the captured attribute name; replace only the URL
+            ($0, $1) => `${$1}="http://dummy.namespace"`
         );
     }
 
@@ -17928,7 +18158,7 @@ const transformStrokeWidths = function (svgTag, windowRef, bboxForTesting) {
             if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
                 element.removeAttribute('transform');
                 element.setAttribute('stroke-width', strokeWidth);
-                element.setAttribute('fill', fill);
+                if (fill) element.setAttribute('fill', fill);
                 return;
             }
 
@@ -17968,7 +18198,7 @@ const transformStrokeWidths = function (svgTag, windowRef, bboxForTesting) {
             // Transform stroke width
             const matrixScale = _getScaleFactor(matrix);
             element.setAttribute('stroke-width', _quadraticMean(matrixScale.x, matrixScale.y) * strokeWidth);
-            element.setAttribute('fill', fill);
+            if (fill) element.setAttribute('fill', fill);
         } else if (_isGraphicsElement(element)) {
             // Push stroke width and fill down to leaves
             if (strokeWidth && !element.attributes['stroke-width']) {
@@ -18742,7 +18972,7 @@ var TextBubbleSkin = function (_Skin) {
         /** @type {Array<string>} */
         _this._lines = [];
 
-        _this._textSize = { width: 0, height: 0 };
+        /** @type {object} */
         _this._textAreaSize = { width: 0, height: 0 };
 
         /** @type {string} */
@@ -18824,7 +19054,7 @@ var TextBubbleSkin = function (_Skin) {
             this._lines = this.textWrapper.wrapText(BubbleStyle.MAX_LINE_WIDTH, this._text);
 
             // Measure width of longest line to avoid extra-wide bubbles
-            var longestLine = 0;
+            var longestLineWidth = 0;
             var _iteratorNormalCompletion = true;
             var _didIteratorError = false;
             var _iteratorError = undefined;
@@ -18833,8 +19063,10 @@ var TextBubbleSkin = function (_Skin) {
                 for (var _iterator = this._lines[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
                     var line = _step.value;
 
-                    longestLine = Math.max(longestLine, this.measurementProvider.measureText(line));
+                    longestLineWidth = Math.max(longestLineWidth, this.measurementProvider.measureText(line));
                 }
+
+                // Calculate the canvas-space sizes of the padded text area and full text bubble
             } catch (err) {
                 _didIteratorError = true;
                 _iteratorError = err;
@@ -18850,12 +19082,8 @@ var TextBubbleSkin = function (_Skin) {
                 }
             }
 
-            this._textSize.width = longestLine;
-            this._textSize.height = BubbleStyle.LINE_HEIGHT * this._lines.length;
-
-            // Calculate the canvas-space sizes of the padded text area and full text bubble
-            var paddedWidth = Math.max(this._textSize.width, BubbleStyle.MIN_WIDTH) + BubbleStyle.PADDING * 2;
-            var paddedHeight = this._textSize.height + BubbleStyle.PADDING * 2;
+            var paddedWidth = Math.max(longestLineWidth, BubbleStyle.MIN_WIDTH) + BubbleStyle.PADDING * 2;
+            var paddedHeight = BubbleStyle.LINE_HEIGHT * this._lines.length + BubbleStyle.PADDING * 2;
 
             this._textAreaSize.width = paddedWidth;
             this._textAreaSize.height = paddedHeight;
@@ -18904,6 +19132,7 @@ var TextBubbleSkin = function (_Skin) {
             }
 
             // Draw the bubble's rounded borders
+            ctx.beginPath();
             ctx.moveTo(BubbleStyle.CORNER_RADIUS, paddedHeight);
             ctx.arcTo(0, paddedHeight, 0, paddedHeight - BubbleStyle.CORNER_RADIUS, BubbleStyle.CORNER_RADIUS);
             ctx.arcTo(0, 0, paddedWidth, 0, BubbleStyle.CORNER_RADIUS);
@@ -18985,9 +19214,8 @@ var TextBubbleSkin = function (_Skin) {
 
                 if (this._texture === null) {
                     var textureOptions = {
-                        auto: true,
-                        wrap: gl.CLAMP_TO_EDGE,
-                        src: textureData
+                        auto: false,
+                        wrap: gl.CLAMP_TO_EDGE
                     };
 
                     this._texture = twgl.createTexture(gl, textureOptions);
@@ -21981,7 +22209,8 @@ function toByteArray (b64) {
     ? validLen - 4
     : validLen
 
-  for (var i = 0; i < len; i += 4) {
+  var i
+  for (i = 0; i < len; i += 4) {
     tmp =
       (revLookup[b64.charCodeAt(i)] << 18) |
       (revLookup[b64.charCodeAt(i + 1)] << 12) |
@@ -22172,7 +22401,7 @@ module.exports = Array.isArray || function (arr) {
 /* 66 */
 /***/ (function(module) {
 
-module.exports = {"Other":0,"CR":1,"LF":2,"Control":3,"Extend":4,"Regional_Indicator":5,"SpacingMark":6,"L":7,"V":8,"T":9,"LV":10,"LVT":11};
+module.exports = JSON.parse("{\"Other\":0,\"CR\":1,\"LF\":2,\"Control\":3,\"Extend\":4,\"Regional_Indicator\":5,\"SpacingMark\":6,\"L\":7,\"V\":8,\"T\":9,\"LV\":10,\"LVT\":11}");
 
 /***/ }),
 /* 67 */

@@ -1790,7 +1790,11 @@ browser locale.</p>
 
 
 <div class="description">
-    <p>Get the menu of languages for the &quot;set language&quot; block.</p>
+    <p>Get the localized menu of languages for the &quot;set language&quot; block.
+For each language:
+  if there is a custom translated spoken language name, use that;
+  otherwise use the translation in the languageNames menuMap;
+  otherwise fall back to the untranslated name in LANGUAGE_INFO.</p>
 </div>
 
 
