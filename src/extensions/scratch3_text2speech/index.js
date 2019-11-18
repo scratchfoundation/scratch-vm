@@ -1,5 +1,6 @@
 const formatMessage = require('format-message');
 const nets = require('nets');
+const languageNames = require('scratch-translate-extension-languages');
 
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -267,7 +268,7 @@ class Scratch3Text2SpeechBlocks {
             },
             [JAPANESE_ID]: {
                 name: 'Japanese',
-                locales: ['ja', 'ja-Hira'],
+                locales: ['ja', 'ja-hira'],
                 speechSynthLocale: 'ja-JP'
             },
             [KOREAN_ID]: {
@@ -487,8 +488,9 @@ class Scratch3Text2SpeechBlocks {
      * @return {string} a Scratch locale code.
      */
     getEditorLanguage () {
-        return formatMessage.setup().locale ||
+        const locale = formatMessage.setup().locale ||
             navigator.language || navigator.userLanguage || this.DEFAULT_LANGUAGE;
+        return locale.toLowerCase();
     }
 
     /**
@@ -516,6 +518,15 @@ class Scratch3Text2SpeechBlocks {
 
         if (this.isSupportedLanguage(locale)) {
             stage.textToSpeechLanguage = this._getExtensionLocaleForSupportedLocale(locale);
+        }
+
+        // Support language names dropped onto the menu via reporter block
+        // such as a variable containing a language name (in any language),
+        // or the translate extension's language reporter.
+        const localeForDroppedName = languageNames.nameMap[locale.toLowerCase()];
+        if (localeForDroppedName && this.isSupportedLanguage(localeForDroppedName)) {
+            stage.textToSpeechLanguage =
+                this._getExtensionLocaleForSupportedLocale(localeForDroppedName);
         }
 
         // If the language is null, set it to the default language.
@@ -584,14 +595,49 @@ class Scratch3Text2SpeechBlocks {
     }
 
     /**
-     * Get the menu of languages for the "set language" block.
+     * Get the localized menu of languages for the "set language" block.
+     * For each language:
+     *   if there is a custom translated spoken language name, use that;
+     *   otherwise use the translation in the languageNames menuMap;
+     *   otherwise fall back to the untranslated name in LANGUAGE_INFO.
      * @return {array} the text and value for each menu item.
      */
     getLanguageMenu () {
-        return Object.keys(this.LANGUAGE_INFO).map(key => ({
-            text: this.LANGUAGE_INFO[key].name,
-            value: key
-        }));
+        const editorLanguage = this.getEditorLanguage();
+        // Get the array of localized language names
+        const localizedNameMap = {};
+        let nameArray = languageNames.menuMap[editorLanguage];
+        if (nameArray) {
+            // Also get any localized names of spoken languages
+            let spokenNameArray = [];
+            if (languageNames.spokenLanguages) {
+                spokenNameArray = languageNames.spokenLanguages[editorLanguage];
+                nameArray = nameArray.concat(spokenNameArray);
+            }
+            // Create a map of language code to localized name
+            // The localized spoken language names have been concatenated onto
+            // the end of the name array, so the result of the forEach below is
+            // when there is both a written language name (e.g. 'Chinese
+            // (simplified)') and a spoken language name (e.g. 'Chinese
+            // (Mandarin)', we always use the spoken version.
+            nameArray.forEach(lang => {
+                localizedNameMap[lang.code] = lang.name;
+            });
+        }
+
+        return Object.keys(this.LANGUAGE_INFO).map(key => {
+            let name = this.LANGUAGE_INFO[key].name;
+            const localizedName = localizedNameMap[key];
+            if (localizedName) {
+                name = localizedName;
+            }
+            // Uppercase the first character of the name
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+            return {
+                text: name,
+                value: key
+            };
+        });
     }
 
     /**
