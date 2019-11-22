@@ -240,6 +240,22 @@ class DataTools {
         }
         return original + " (" + num + ")";
     }
+
+    getDataFileNames() {
+        let names = [];
+        this.getFileNames().map(name => {
+            names.push({tag: name, intlLabel: {
+                id: 'datatools.library.' + name,
+                defaultMessage: name,
+                description: 'Label for file name tag to revert to all items after filtering by tag.'
+            }})
+        });
+        return names;
+    }
+
+    getDataFileContents(name) {
+        return files[name];
+    }
 }
 
 module.exports = DataTools;

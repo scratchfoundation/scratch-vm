@@ -2544,6 +2544,14 @@ class Runtime extends EventEmitter {
     removeDataFile(name) {
         return this.peripheralExtensions["datatools"].removeDataFile(name);
     }
+
+    getDataFileNames() {
+        return this.peripheralExtensions["datatools"].getDataFileNames();
+    }
+
+    getDataFileContents(name) {
+        return this.peripheralExtensions["datatools"].getDataFileContents(name);
+    }
 }
 
 /**
