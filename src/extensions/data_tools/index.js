@@ -78,6 +78,30 @@ class DataTools {
                         }
                     }
                 },
+                {
+                    opcode: 'setColumnAtRow',
+                    text: formatMessage({
+                        id: 'datatools.setColumnAtRow',
+                        default: 'set [COLUMN] at row [ROW] to [VALUE]',
+                        description: 'set the value at a row and column'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: { 
+                        COLUMN: {
+                            type: ArgumentType.DATA_FILE,
+                            menu: 'columnMenu',
+                            default: '[FILE] COLUMN'
+                        },
+                        ROW: {
+                            type: ArgumentType.NUMBER,
+                            value: 1
+                        },
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            value: ""
+                        }
+                    }
+                },
             ],
             menus: {
                 columnMenu: {
@@ -108,20 +132,21 @@ class DataTools {
         return data;
     }
 
+    //needed for status button to work
     isConnected() {
         return fileBlocks.length > 0;
     }
 
     scan() {
-        
+    //needed for status button to work       
     }
 
     connect() {
-
+    //needed for status button to work
     }
 
     disconnect() {
-        
+    //needed for status button to work
     }
 
     /**
@@ -155,6 +180,48 @@ class DataTools {
         }
 
         return files[fileName][ROW - 1][col];
+    }
+
+    /**
+    * Found at https://stackoverflow.com/questions/11665884/how-can-i-parse-a-string-with-a-comma-thousand-separator-to-a-number
+    * Parses a number from a localized string 
+    * @param {string} value The initial string value (e.g. '453,323')
+    * @param {string} locale The locale used to parse the string, defaults to the navigator's locale
+    * @return {int} The float value of the string (e.g. 453323)
+    */
+    parseNumber(value, locale = navigator.language) {
+        const example = Intl.NumberFormat(locale).format('1.1');
+        const cleanPattern = new RegExp(`[^-+0-9${ example.charAt( 1 ) }]`, 'g');
+        const cleaned = value.replace(cleanPattern, '');
+        const normalized = cleaned.replace(example.charAt(1), '.');
+  
+        return parseFloat(normalized);
+    }
+
+    /**
+     * Sets the value at a row and column in a given file
+     * @param {*} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
+     */
+    setColumnAtRow(args) {
+        let { COLUMN, ROW, VALUE} = args;
+
+        let colArr = COLUMN.split(']');
+        let fileName = colArr[0].substring(1);
+        let col = colArr.slice(1, colArr.length).join(']').substring(1);
+
+        if(!files[fileName] || ROW < 1 || ROW > files[fileName].length || !files[fileName][ROW - 1][col]) {
+            return "";
+        }
+        console.log(files[fileName][ROW - 1][col]); 
+        if(typeof(files[fileName][ROW - 1][col]) === "number") {
+            files[fileName][ROW - 1][col] = this.parseNumber(VALUE);
+        }
+        else{
+            files[fileName][ROW - 1][col] = VALUE;
+        }
+        
+        
+        console.log(files[fileName][ROW - 1][col]);       
     }
 
     /**
