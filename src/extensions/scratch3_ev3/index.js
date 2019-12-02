@@ -111,6 +111,7 @@ const Ev3Device = {
     29: 'color',
     30: 'ultrasonic',
     32: 'gyro',
+    33: 'ir',
     16: 'touch',
     8: 'mediumMotor',
     7: 'largeMotor',
@@ -129,6 +130,7 @@ const Ev3Mode = {
     touch: 0, // touch
     color: 1, // ambient
     ultrasonic: 1, // inch
+    ir: 0, // proximity
     none: 0
 };
 
@@ -140,7 +142,8 @@ const Ev3Mode = {
 const Ev3Label = {
     touch: 'button',
     color: 'brightness',
-    ultrasonic: 'distance'
+    ultrasonic: 'distance',
+    ir: 'distance'
 };
 
 /**
