@@ -102,6 +102,25 @@ class DataTools {
                         }
                     }
                 },
+                {
+                    opcode: 'duplicateDataset',
+                    text: formatMessage({
+                        id: 'datatools.duplicateDataset',
+                        default: 'duplicate [ORIGINAL] as [NEW]',
+                        description: 'duplicate an existing dataset and give it a new name'
+                    }),
+                    blocktype: BlockType.COMMAND,
+                    arguments: {
+                        ORIGINAL: {
+                          type: ArgumentType.STRING,
+                          menu: 'fileMenu'  
+                        },
+                        NEW: {
+                            type: ArgumentType.STRING,
+                            value: ""
+                        }
+                    }
+                },
             ],
             menus: {
                 columnMenu: {
@@ -130,6 +149,18 @@ class DataTools {
         });
 
         return data;
+    }
+
+    /**
+     * duplicates an existing dataset either as the name given by the user or as the original name plus an incremented number
+     * args - holds ORIGINAl and NEW, ORIGINAl being the original data set to be duplicated, NEW being the name of the newly duplicated dataset
+     */
+    duplicateDataset(args) {
+        let {ORIGINAL, NEW} = args;
+        if(NEW === ""){
+            NEW = ORIGINAL;
+        }
+        this.addDataFile(NEW, files[ORIGINAL]);
     }
 
     //needed for status button to work
