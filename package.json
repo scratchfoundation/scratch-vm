@@ -55,7 +55,7 @@
     "adm-zip": "0.4.11",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.4",
-    "copy-webpack-plugin": "^4.5.4",
+    "copy-webpack-plugin": "^5.1.1",
     "docdash": "^1.0.0",
     "eslint": "^5.3.0",
     "eslint-config-scratch": "^5.0.0",
