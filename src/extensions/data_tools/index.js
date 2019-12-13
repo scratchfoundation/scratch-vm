@@ -175,7 +175,8 @@ class DataTools {
         if(NEW === ""){
             NEW = ORIGINAL;
         }
-        this.addDataFile(NEW, files[ORIGINAL]);
+        let data = JSON.parse(JSON.stringify(files[ORIGINAL]));
+        this.addDataFile(NEW, data);
     }
 
     //needed for status button to work
@@ -258,16 +259,15 @@ class DataTools {
         if(!files[fileName] || ROW < 1 || ROW > files[fileName].length || files[fileName][ROW - 1][col]  === 'undefined') {
             return "";
         }
-        console.log(files[fileName][ROW - 1][col]); 
         if(typeof(files[fileName][ROW - 1][col]) === "number") {
-            files[fileName][ROW - 1][col] = this.parseNumber(VALUE);
+            if(!isNaN(VALUE)){
+                files[fileName][ROW - 1][col] = this.parseNumber(VALUE);
+            }
         }
         else{
             files[fileName][ROW - 1][col] = VALUE;
         }
         
-        
-        console.log(files[fileName][ROW - 1][col]);       
     }
 
     addDataFileRow(args) {
@@ -337,7 +337,7 @@ class DataTools {
             text: name,
             blockType: BlockType.REPORTER
         });
-
+        console.log(files);
         //Update the workspace to add the new file
         this._runtime.requestToolboxExtensionsUpdate();
     }
