@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.7.7",
-    "@babel/preset-env": "^7.1.0",
+    "@babel/preset-env": "^7.7.7",
     "adm-zip": "0.4.11",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.4",
