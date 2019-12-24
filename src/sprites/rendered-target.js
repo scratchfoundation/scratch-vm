@@ -777,6 +777,7 @@ class RenderedTarget extends Target {
     isTouchingObject (requestedObject) {
         if (requestedObject === '_mouse_') {
             if (!this.runtime.ioDevices.mouse) return false;
+            if (this.runtime.ioDevices.mouse.getIsOutside()) return false;
             const mouseX = this.runtime.ioDevices.mouse.getClientX();
             const mouseY = this.runtime.ioDevices.mouse.getClientY();
             return this.isTouchingPoint(mouseX, mouseY);

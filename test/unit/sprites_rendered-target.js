@@ -280,6 +280,22 @@ test('isTouchingPoint', t => {
     t.end();
 });
 
+test('isTouchingObjectOutsideStage', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const renderer = new FakeRenderer();
+    r.attachRenderer(renderer);
+    const a = new RenderedTarget(s, r);
+    a.renderer = renderer;
+    r.ioDevices.mouse.postData({
+        x: 1000,
+        y: -300
+    });
+    t.equals(a.isTouchingObject('__mouse__'), false);
+    t.end();
+});
+
+
 test('isTouchingEdge', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
