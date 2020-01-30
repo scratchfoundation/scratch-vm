@@ -29,6 +29,10 @@ class DataTools {
         //Maybe not, actually. It might be better to hijack that functionality with the modal.
     }
 
+    /**
+     * Define the DataTools extension.
+     * @return {object} Extension description.
+     */
     getInfo(){
         return {
             id: 'datatools',
@@ -149,6 +153,36 @@ class DataTools {
         }
     }
 
+    /**
+     * Performs a specified action
+     * @param {string} action The action
+     * @param {object} args The arguments for the function
+     */
+    performAction(action, args) {
+        switch(action) {
+            case 'addDataFile':
+                this.addDataFile(args.name, args.fileData);
+                break;
+            case 'removeDataFile':
+                return this.removeDataFile(args.name);
+            case 'getDataFileNames':
+                return this.getDataFileNames();
+            case 'getDataFileContents':
+                return this.getDataFileContents(args.name);
+            case 'updateDataFile':
+                return this.updateDataFileFromTable(args.fileName, args.row, args.colName, args.value);
+            case 'addDataFileRow':
+                return this.addDataFileRow({FILENAME: args.fileName})
+            default:
+                alert("DATATOOLS: Invalid action received");
+                break;
+        }
+    }
+
+    /**
+     * Generates column data for dropdown display
+     * @returns {object} An object containing arrays with the columns of each file
+     */
     generateColumnData() {
         let fileNames = Object.keys(files);
         if(fileNames.length === 0) {
@@ -167,8 +201,8 @@ class DataTools {
     }
 
     /**
-     * duplicates an existing dataset either as the name given by the user or as the original name plus an incremented number
-     * args - holds ORIGINAl and NEW, ORIGINAl being the original data set to be duplicated, NEW being the name of the newly duplicated dataset
+     * Duplicates an existing dataset either as the name given by the user or as the original name plus an incremented number
+     * @param {Object} args Contains the original and new file names
      */
     duplicateDataset(args) {
         let {ORIGINAL, NEW} = args;
@@ -179,22 +213,27 @@ class DataTools {
         this.addDataFile(NEW, data);
     }
 
-    //needed for status button to work
+    /**
+     * Dummy method to ensure the status button works
+     */
     isConnected() {
         return fileBlocks.length > 0;
     }
 
-    scan() {
-    //needed for status button to work       
-    }
+    /**
+     * Dummy method to ensure the status button works
+     */
+    scan() { }
 
-    connect() {
-    //needed for status button to work
-    }
+    /**
+     * Dummy method to ensure the status button works
+     */
+    connect() { }
 
-    disconnect() {
-    //needed for status button to work
-    }
+    /**
+     * Dummy method to ensure the status button works
+     */
+    disconnect() { }
 
     /**
      * Gets a list of filenames that will be displayed in the dropdown
@@ -212,7 +251,7 @@ class DataTools {
 
     /**
      * Gets the value at a row and column in a given file
-     * @param {*} args Object containing arguments, including COLUMN, ROW, and FILENAME
+     * @param {object} args Object containing arguments, including COLUMN, ROW, and FILENAME
      * @returns {*} The value at the specified row and column in the specified file 
      */
     getColumnAtRow(args) {
@@ -247,7 +286,7 @@ class DataTools {
 
     /**
      * Sets the value at a row and column in a given file
-     * @param {*} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
+     * @param {object} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
      */
     setColumnAtRow(args) {
         let { COLUMN, ROW, VALUE} = args;
@@ -270,6 +309,10 @@ class DataTools {
         
     }
 
+    /**
+     * Adds an empty row to a dataset
+     * @param {object} args Object containing the file name
+     */
     addDataFileRow(args) {
         let { FILENAME } = args;
         if(!FILENAME || FILENAME === ''){
@@ -291,7 +334,7 @@ class DataTools {
 
     /**
      * Gets the row count of a given file
-     * @param {*} args Object containing arguments, including FILENAME
+     * @param {object} args Object containing arguments, including FILENAME
      * @returns {Number} The row count of the given file
      */
     getRowCount(args){
@@ -306,7 +349,7 @@ class DataTools {
 
     /**
      * Gets the filename of a given reporter block
-     * @param {*} args Unused, holds arguments from the block
+     * @param {object} args Unused, holds arguments from the block
      * @param {*} util Unused, holds utility functions for the block
      * @param {*} block The block that originally called this function, used to extract the file name
      * @returns {String} The name of the file
@@ -360,8 +403,7 @@ class DataTools {
     }
 
     /**
-     * Generates a displayable file name that will handle duplicates by
-     * appending "(DUPLICATE_NUM)" if necessary
+     * Generates a displayable file name that will handle duplicates by appending "(DUPLICATE_NUM)" if necessary
      * @param {string} name The original name of the file
      * @returns {string} The file name that will be displayed
      */
@@ -373,6 +415,10 @@ class DataTools {
         return original + " (" + num + ")";
     }
 
+    /**
+     * Creates an array of tags to be displayed with the table
+     * @returns {Array} An array of each file name
+     */
     getDataFileNames() {
         let names = [];
         this.getFileNames().map(name => {
@@ -385,10 +431,23 @@ class DataTools {
         return names;
     }
 
+    /**
+     * Gets the content of the file
+     * @param {string} name The file's name
+     * @returns {Array} An array representing the file's contents
+     */
     getDataFileContents(name) {
         return [...files[name]];
     }
 
+    /**
+     * Updates a data file given a table update
+     * @param {string} fileName The file's name
+     * @param {number} row The specified row
+     * @param {string} colName The specified column
+     * @param {*} value The new value
+     * @returns {Array} An array representing the updated data
+     */
     updateDataFileFromTable(fileName, row, colName, value) {
         files[fileName][row][colName] = value;
 

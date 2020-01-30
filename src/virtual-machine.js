@@ -164,7 +164,7 @@ class VirtualMachine extends EventEmitter {
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
 
-        this.addDataFile = this.addDataFile.bind(this);
+        this.performExtensionAction = this.performExtensionAction.bind(this);
     }
 
     /**
@@ -1544,38 +1544,13 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Allow VM to receive data files uploaded to the GUI
-     * @param {string} name The name of the file
-     * @param {Array} data The parsed file data
+     * Performs an action within the given extension
+     * @param {string} extension The extension
+     * @param {string} action The action
+     * @param {object} args The function arguments
      */
-    addDataFile(name, data) {
-        this.runtime.addDataFile(name, data);
-    }
-
-    
-    /**
-     * Remove the specified file from the data tools extension
-     * @param {string} name The name of the file
-     * @returns {Boolean} Whether or not the file was removed correctly
-     */
-    removeDataFile(name) {
-        return this.runtime.removeDataFile(name);
-    }
-
-    getDataFileNames() {
-        return this.runtime.getDataFileNames();
-    }
-
-    getDataFileContents(name) {
-        return this.runtime.getDataFileContents(name);
-    }
-
-    updateDataFile(fileName, row, colName, value) {
-        return this.runtime.updateDataFile(fileName, row, colName, value);
-    }
-
-    addDataFileRow(fileName) {
-        return this.runtime.addDataFileRow({FILENAME: fileName});
+    performExtensionAction(extension, action, args) {
+        return this.runtime.performExtensionAction(extension, action, args);
     }
 }
 
