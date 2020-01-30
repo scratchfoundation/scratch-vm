@@ -458,19 +458,7 @@ class RenderedTarget extends Target {
         );
         if (this.renderer) {
             const costume = this.getCostumes()[this.currentCostume];
-            if (
-                typeof costume.rotationCenterX !== 'undefined' &&
-                typeof costume.rotationCenterY !== 'undefined'
-            ) {
-                const scale = costume.bitmapResolution || 2;
-                const rotationCenter = [
-                    costume.rotationCenterX / scale,
-                    costume.rotationCenterY / scale
-                ];
-                this.renderer.updateDrawableSkinIdRotationCenter(this.drawableID, costume.skinId, rotationCenter);
-            } else {
-                this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
-            }
+            this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
@@ -709,11 +697,7 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableVisible(this.drawableID, this.visible);
 
             const costume = this.getCostumes()[this.currentCostume];
-            const bitmapResolution = costume.bitmapResolution || 2;
-            this.renderer.updateDrawableSkinIdRotationCenter(this.drawableID, costume.skinId, [
-                costume.rotationCenterX / bitmapResolution,
-                costume.rotationCenterY / bitmapResolution
-            ]);
+            this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             for (const effectName in this.effects) {
                 if (!this.effects.hasOwnProperty(effectName)) continue;

@@ -212,8 +212,17 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
             return fetched;
         })
         .then(({canvas, mergeCanvas, rotationCenter}) => {
-            // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
-            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
+            // createBitmapSkin does the right thing if costume.bitmapResolution is undefined...
+            // TODO: is rotationCenter ever undefined?
+            let center;
+            if (rotationCenter) {
+                center = [
+                    rotationCenter[0] / 2,
+                    rotationCenter[1] / 2
+                ];
+            }
+
+            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, center);
             canvasPool.release(mergeCanvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
             costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
