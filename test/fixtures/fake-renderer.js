@@ -14,12 +14,28 @@ FakeRenderer.prototype.getFencedPositionOfDrawable = function (d, p) { // eslint
     return [p[0], p[1]];
 };
 
+FakeRenderer.prototype.updateDrawableSkinId = function (d, skinId) { // eslint-disable-line no-unused-vars
+};
+
+FakeRenderer.prototype.updateDrawableSkinIdRotationCenter =
+    function (d, skinId, rotationCenter) {}; // eslint-disable-line no-unused-vars
+
+FakeRenderer.prototype.updateDrawablePosition = function (d, position) { // eslint-disable-line no-unused-vars
+    this.x = position[0];
+    this.y = position[1];
+};
+
+FakeRenderer.prototype.updateDrawableDirectionScale =
+    function (d, direction, scale) {}; // eslint-disable-line no-unused-vars
+
+FakeRenderer.prototype.updateDrawableVisible = function (d, visible) { // eslint-disable-line no-unused-vars
+};
+
+FakeRenderer.prototype.updateDrawableEffect = function (d, effectName, value) { // eslint-disable-line no-unused-vars
+};
+
 FakeRenderer.prototype.updateDrawableProperties = function (d, p) { // eslint-disable-line no-unused-vars
-    if (p.position) {
-        this.x = p.position[0];
-        this.y = p.position[1];
-    }
-    return true;
+    throw new Error('updateDrawableProperties is deprecated');
 };
 
 FakeRenderer.prototype.getCurrentSkinSize = function (d) { // eslint-disable-line no-unused-vars

@@ -22,12 +22,6 @@ class Video {
         this._skinId = -1;
 
         /**
-         * The Scratch Renderer Skin object.
-         * @type {Skin}
-         */
-        this._skin = null;
-
-        /**
          * Id for a drawable using the video's skin that will render as a video
          * preview.
          * @type {Drawable}
@@ -141,8 +135,8 @@ class Video {
     }
 
     _disablePreview () {
-        if (this._skin) {
-            this._skin.clear();
+        if (this._skinId !== -1) {
+            this.runtime.renderer.updateBitmapSkin(this._skinId, new ImageData(...Video.DIMENSIONS), 1);
             this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
         }
         this._renderPreviewFrame = null;
@@ -152,9 +146,8 @@ class Video {
         const {renderer} = this.runtime;
         if (!renderer) return;
 
-        if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
-            this._skinId = renderer.createPenSkin();
-            this._skin = renderer._allSkins[this._skinId];
+        if (this._skinId === -1 && this._drawable === -1) {
+            this._skinId = renderer.createBitmapSkin(new ImageData(...Video.DIMENSIONS), 1);
             this._drawable = renderer.createDrawable(StageLayering.VIDEO_LAYER);
             renderer.updateDrawableProperties(this._drawable, {
                 skinId: this._skinId
@@ -176,16 +169,17 @@ class Video {
 
                 this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
 
-                const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
+                const imageData = this.getFrame({
+                    format: Video.FORMAT_IMAGE_DATA,
+                    cacheTimeout: this.runtime.currentStepTime
+                });
 
-                if (!canvas) {
-                    this._skin.clear();
+                if (!imageData) {
+                    renderer.updateBitmapSkin(this._skinId, new ImageData(...Video.DIMENSIONS), 1);
                     return;
                 }
 
-                const xOffset = Video.DIMENSIONS[0] / -2;
-                const yOffset = Video.DIMENSIONS[1] / 2;
-                this._skin.drawStamp(canvas, xOffset, yOffset);
+                renderer.updateBitmapSkin(this._skinId, imageData, 1);
                 this.runtime.requestRedraw();
             };
 

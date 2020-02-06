@@ -849,13 +849,13 @@ class Boost {
         }
         this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
-                services: [BoostBLE.service]/* ,
+                services: [BoostBLE.service],
                 manufacturerData: {
-                    0: {
-                        dataPrefix: [0x97, 0x03, 0x00, 0x40],
-                        mask: [0xFF, 0xFF, 0, 0xFF]
+                    0x0397: {
+                        dataPrefix: [0x00, 0x40],
+                        mask: [0x00, 0xFF]
                     }
-                } commented out until feature is enabled in scratch-link */
+                }
             }],
             optionalServices: []
         }, this._onConnect, this.reset);

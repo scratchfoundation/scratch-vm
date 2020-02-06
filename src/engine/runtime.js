@@ -51,30 +51,55 @@ const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
 const ArgumentTypeMap = (() => {
     const map = {};
     map[ArgumentType.ANGLE] = {
-        shadowType: 'math_angle',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_angle',
+            // We specify fieldNames here so that we can pick
+            // create and populate a field with the defaultValue
+            // specified in the extension.
+            // When the `fieldName` property is not specified,
+            // the <field></field> will be left out of the XML and
+            // the scratch-blocks defaults for that field will be
+            // used instead (e.g. default of 0 for number fields)
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.COLOR] = {
-        shadowType: 'colour_picker'
+        shadow: {
+            type: 'colour_picker',
+            fieldName: 'COLOUR'
+        }
     };
     map[ArgumentType.NUMBER] = {
-        shadowType: 'math_number',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_number',
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.STRING] = {
-        shadowType: 'text',
-        fieldType: 'TEXT'
+        shadow: {
+            type: 'text',
+            fieldName: 'TEXT'
+        }
     };
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
     map[ArgumentType.MATRIX] = {
-        shadowType: 'matrix',
-        fieldType: 'MATRIX'
+        shadow: {
+            type: 'matrix',
+            fieldName: 'MATRIX'
+        }
     };
     map[ArgumentType.NOTE] = {
-        shadowType: 'note',
-        fieldType: 'NOTE'
+        shadow: {
+            type: 'note',
+            fieldName: 'NOTE'
+        }
+    };
+    map[ArgumentType.IMAGE] = {
+        // Inline images are weird because they're not actually "arguments".
+        // They are more analagous to the label on a block.
+        fieldType: 'field_image'
     };
     map[ArgumentType.DATA_FILE] = {
         shadowType: 'datafile',
@@ -960,8 +985,10 @@ class Runtime extends EventEmitter {
             fieldName: fieldName,
             extendedName: extendedName,
             argumentTypeInfo: {
-                shadowType: extendedName,
-                fieldType: `field_${extendedName}`
+                shadow: {
+                    type: extendedName,
+                    fieldName: `field_${extendedName}`
+                }
             },
             scratchBlocksDefinition: this._buildCustomFieldTypeForScratchBlocks(
                 extendedName,
@@ -1156,7 +1183,7 @@ class Runtime extends EventEmitter {
                 src: './static/blocks-media/repeat.svg', // TODO: use a constant or make this configurable?
                 width: 24,
                 height: 24,
-                alt: '*',
+                alt: '*', // TODO remove this since we don't use collapsed blocks in scratch
                 flip_rtl: true
             }];
             ++outLineNum;
@@ -1211,6 +1238,29 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Helper for _convertPlaceholdes which handles inline images which are a specialized case of block "arguments".
+     * @param {object} argInfo Metadata about the inline image as specified by the extension
+     * @return {object} JSON blob for a scratch-blocks image field.
+     * @private
+     */
+    _constructInlineImageJson (argInfo) {
+        if (!argInfo.dataURI) {
+            log.warn('Missing data URI in extension block with argument type IMAGE');
+        }
+        return {
+            type: 'field_image',
+            src: argInfo.dataURI || '',
+            // TODO these probably shouldn't be hardcoded...?
+            width: 24,
+            height: 24,
+            // Whether or not the inline image should be flipped horizontally
+            // in RTL languages. Defaults to false, indicating that the
+            // image will not be flipped.
+            flip_rtl: argInfo.flipRTL || false
+        };
+    }
+
+    /**
      * Helper for _convertForScratchBlocks which handles linearization of argument placeholders. Called as a callback
      * from string#replace. In addition to the return value the JSON and XML items in the context will be filled.
      * @param {object} context - information shared with _convertForScratchBlocks about the block, etc.
@@ -1223,11 +1273,7 @@ class Runtime extends EventEmitter {
         // Sanitize the placeholder to ensure valid XML
         placeholder = placeholder.replace(/[<"&]/, '_');
 
-        const argJSON = {
-            type: 'input_value',
-            name: placeholder
-        };
-
+        // Determine whether the argument type is one of the known standard field types
         const argInfo = context.blockInfo.arguments[placeholder] || {};
         let argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
 
@@ -1236,14 +1282,32 @@ class Runtime extends EventEmitter {
             argTypeInfo = context.categoryInfo.customFieldTypes[argInfo.type].argumentTypeInfo;
         }
 
-        const defaultValue =
-            typeof argInfo.defaultValue === 'undefined' ? '' :
-                xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+        // Start to construct the scratch-blocks style JSON defining how the block should be
+        // laid out
+        let argJSON;
 
-        if (argTypeInfo.check) {
-            argJSON.check = argTypeInfo.check;
-        }
-
+        // Most field types are inputs (slots on the block that can have other blocks plugged into them)
+        // check if this is not one of those cases. E.g. an inline image on a block.
+        if (argTypeInfo.fieldType === 'field_image') {
+            argJSON = this._constructInlineImageJson(argInfo);
+        } else {
+            // Construct input value
+                    // Layout a block argument (e.g. an input slot on the block)
+                    argJSON = {
+                        type: 'input_value',
+                        name: placeholder
+                    };
+                    const defaultValue =
+                        typeof argInfo.defaultValue === 'undefined' ? '' :
+                            xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+        
+                    if (argTypeInfo.check) {
+                        // Right now the only type of 'check' we have specifies that the
+                        // input slot on the block accepts Boolean reporters, so it should be
+                        // shaped like a hexagon
+                        argJSON.check = argTypeInfo.check;
+                    }
+                
         let valueName;
         let shadowType;
         let fieldName;
@@ -1272,37 +1336,39 @@ class Runtime extends EventEmitter {
         }
         else {
             valueName = placeholder;
-            shadowType = argTypeInfo.shadowType;
-            fieldName = argTypeInfo.fieldType;
+            shadowType = (argTypeInfo.shadow && argTypeInfo.shadow.type) || null;
+            fieldName = (argTypeInfo.shadow && argTypeInfo.shadow.fieldName) || null;
         }
 
-        // <value> is the ScratchBlocks name for a block input.
-        if (valueName) {
-            context.inputList.push(`<value name="${placeholder}">`);
-        }
+            // <value> is the ScratchBlocks name for a block input.
+            if (valueName) {
+                context.inputList.push(`<value name="${placeholder}">`);
+            }
 
-        // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-        // Boolean inputs don't need to specify a shadow in the XML.
-        if (shadowType) {
-            context.inputList.push(`<shadow type="${shadowType}">`);
-        }
+            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+            // Boolean inputs don't need to specify a shadow in the XML.
+            if (shadowType) {
+                context.inputList.push(`<shadow type="${shadowType}">`);
+            }
 
-        // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
-        if (fieldName) {
-            context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
-        }
+            // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
+            // Leave out the field if defaultValue or fieldName are not specified
+            if (defaultValue && fieldName) {
+                context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
+            }
 
-        if (shadowType) {
-            context.inputList.push('</shadow>');
-        }
+            if (shadowType) {
+                context.inputList.push('</shadow>');
+            }
 
-        if (valueName) {
-            context.inputList.push('</value>');
+            if (valueName) {
+                context.inputList.push('</value>');
+            }
         }
 
         const argsName = `args${context.outLineNum}`;
         const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);
-        blockArgs.push(argJSON);
+        if (argJSON) blockArgs.push(argJSON);
         const argNum = blockArgs.length;
         context.argsMap[placeholder] = argNum;
 
