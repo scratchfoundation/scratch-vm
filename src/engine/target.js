@@ -331,9 +331,13 @@ class Target extends EventEmitter {
                     }, this.runtime);
                     const monitorBlock = blocks.getBlock(variable.id);
                     if (monitorBlock) {
+                        const params = blocks._getBlockParams(monitorBlock);
+                        // _getBlockParams will return old name when the variable type is list.
+                        // Patch it so that the new name is passed.
+                        if (params.hasOwnProperty('LIST') && params.LIST !== newName) params.LIST = newName;
                         this.runtime.requestUpdateMonitor(Map({
                             id: id,
-                            params: blocks._getBlockParams(monitorBlock)
+                            params
                         }));
                     }
                 }
