@@ -70,7 +70,7 @@
     "pngjs": "^3.3.2",
     "scratch-audio": "latest",
     "scratch-blocks": "latest",
-    "scratch-l10n": "^3.1.20181129221712",
+    "scratch-l10n": "^3.7.20200212141356",
     "scratch-render": "latest",
     "scratch-storage": "^1.1.0",
     "scratch-svg-renderer": "latest",
