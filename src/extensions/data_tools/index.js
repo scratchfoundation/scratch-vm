@@ -35,12 +35,12 @@ class DataTools {
         /**
          * stores the column value to be used in the mapping function
          */
-        this._columnValue = "";
+        this._columnValues = {};
 
         /**
          * holds the result of the mapping function
          */
-        this._mapResult = "";
+        this._mapResults = {};
     }
 
     /**
@@ -515,16 +515,19 @@ class DataTools {
      * Used for the mapping function.
      * @returns {string | number} The column value at the loop's current position
      */
-    mapInput() {
-        return this._columnValue;
+    mapInput(args, util) {
+        return this._columnValues[util.thread.topBlock];
     }
 
     /**
      * Used for the mapping function.
      * @param {*} args Contains the value to be set
      */
-    setMapResult(args) {
-        this._mapResult = args.VALUE;
+    setMapResult(args, util) {
+        if(typeof this._mapResults[util.thread.topBlock] === 'undefined') {
+            this._mapResults[util.thread.topBlock] = [];
+        }
+        this._mapResults[util.thread.topBlock].push(args.VALUE);
     }
 
     /**
@@ -538,17 +541,24 @@ class DataTools {
         let fileName = colArr[0].substring(1);
         let rowCount = this.getRowCount({FILENAME: fileName})
 
-        if (typeof util.stackFrame.loopCounter === 'undefined') {
+        let id = util.thread.topBlock;
 
-            util.stackFrame.loopCounter = 0; //number of rows in the file
+        if (typeof util.stackFrame.loopCounter === 'undefined') {
+            util.stackFrame.loopCounter = {};
+            if(typeof util.stackFrame.loopCounter[id] === 'undefined'){
+                util.stackFrame.loopCounter[id] = 0; //number of rows in the file
+                if(typeof this._mapResults[id] !== 'undefined') {
+                    this._mapResults[id] = undefined;
+                }
+            }
         }
         // Only execute once per frame.
         // When the branch finishes, `repeat` will be executed again and
         // the second branch will be taken, yielding for the rest of the frame.
         // Decrease counter
-        util.stackFrame.loopCounter++;
+        util.stackFrame.loopCounter[id]++;
 
-        if(util.stackFrame.loopCounter > 1 && this._mapResult === "") {
+        if(util.stackFrame.loopCounter[id] > 1 && this._mapResults[id] === "") {
 
             alert("Map Function: Map result not set.");
             return;
@@ -560,17 +570,13 @@ class DataTools {
         }
 
         // If we still have some left, start the branch.
-        if (util.stackFrame.loopCounter <= rowCount) {
-            this._columnValue = this.getColumnAtRow({COLUMN: args.COLUMN, ROW: util.stackFrame.loopCounter})
-            if(util.stackFrame.loopCounter > 1) {
-                alert("Finished Row " + (util.stackFrame.loopCounter - 1) + ": " + this._mapResult); //USE MAP RESULT
-            }
+        if (util.stackFrame.loopCounter[id] <= rowCount) {
+            this._columnValues[id] = this.getColumnAtRow({COLUMN: args.COLUMN, ROW: util.stackFrame.loopCounter[id]})
             util.startBranch(1, true);
         }
         else {
-            alert("Finished Row " + (util.stackFrame.loopCounter - 1) + ": " + this._mapResult); //USE MAP RESULT
-            this._columnValue = "";
-            this._mapResult = "";
+            this._columnValues[id] = "";
+            console.log(this._mapResults[id]);
         }
     }
 }
