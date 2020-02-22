@@ -125,6 +125,16 @@ class BlockUtility {
     }
 
     /**
+     * Start a branch in the current block.
+     * Specifically designed for a nested function
+     * @param {string} blockID The ID of the block to step to
+     * @returns {string} The ID of the function block
+     */
+    startFunctionBranch(blockID) {
+        this.sequencer.stepToFunctionBranch(this.thread, blockID);
+    }
+
+    /**
      * Stop all threads.
      */
     stopAll () {

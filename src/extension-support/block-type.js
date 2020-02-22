@@ -41,6 +41,8 @@ const BlockType = {
      */
     LOOP: 'loop',
 
+    FUNCTION: 'function',
+
     /**
      * General reporter with numeric or string value
      */

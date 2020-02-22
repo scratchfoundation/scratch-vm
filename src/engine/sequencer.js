@@ -300,6 +300,25 @@ class Sequencer {
     }
 
     /**
+     * Step a thread into a block's branch.
+     * Specifically designed for a nested function, as this function block doesn't reside in the stack
+     * @param {!Thread} thread Thread object to step to branch
+     * @param {string} opcode The opcode used to lookup the function block's ID
+     * @param {string} blockID The ID of the block to step to, will be looked up if undefined
+     * @returns {string} The ID of the function block
+     */
+    stepToFunctionBranch(thread, blockID) {
+        const branchId = thread.target.blocks.getBranch(blockID, 1);
+        thread.peekStackFrame().isLoop = true;
+        if (branchId) {
+            // Push branch ID to the thread's stack.
+            thread.pushStack(branchId);
+        } else {
+            thread.pushStack(null);
+        }
+    }
+
+    /**
      * Step a procedure.
      * @param {!Thread} thread Thread object to step to procedure.
      * @param {!string} procedureCode Procedure code of procedure to step to.
