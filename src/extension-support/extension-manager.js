@@ -14,6 +14,7 @@ const builtinExtensions = {
     coreExample: () => require('../blocks/scratch3_core_example'),
     // These are the non-core built-in extensions.
     pen: () => require('../extensions/scratch3_pen'),
+    dssama: () => require('../extensions/scratch3_dssama'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
     microbit: () => require('../extensions/scratch3_microbit'),
