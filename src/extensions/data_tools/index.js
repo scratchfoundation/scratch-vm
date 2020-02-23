@@ -322,7 +322,7 @@ class DataTools {
     /**
      * Gets the value at a row and column in a given file
      * @param {object} args Object containing arguments, including COLUMN, ROW, and FILENAME
-     * @returns {*} The value at the specified row and column in the specified file 
+     * @returns {string | number} The value at the specified row and column in the specified file 
      */
     getColumnAtRow(args) {
         let { COLUMN, ROW } = args;
@@ -420,8 +420,8 @@ class DataTools {
     /**
      * Gets the filename of a given reporter block
      * @param {object} args Unused, holds arguments from the block
-     * @param {*} util Unused, holds utility functions for the block
-     * @param {*} block The block that originally called this function, used to extract the file name
+     * @param {object} util Unused, holds utility functions for the block
+     * @param {object} block The block that originally called this function, used to extract the file name
      * @returns {String} The name of the file
      */
     getFilename(args, util, block) {
@@ -516,7 +516,7 @@ class DataTools {
      * @param {string} fileName The file's name
      * @param {number} row The specified row
      * @param {string} colName The specified column
-     * @param {*} value The new value
+     * @param {string | number} value The new value
      * @returns {Array} An array representing the updated data
      */
     updateDataFileFromTable(fileName, row, colName, value) {
@@ -526,7 +526,10 @@ class DataTools {
     }
 
     /**
-     * Used for the mapping function.
+     * Gets a value for the map input
+     * See 'getMapInput' in 'map-helper.js' for more.     
+     * @param {object} args The block's arguments, unused
+     * @param {object} util Block utility provided by the runtime
      * @returns {string | number} The column value at the loop's current position
      */
     mapInput(args, util) {
@@ -534,8 +537,10 @@ class DataTools {
     }
 
     /**
-     * Used for the mapping function.
-     * @param {*} args Contains the value to be set
+     * Sets the result of a mapping function to a given value.
+     * See 'setMapResult' in 'map-helper.js' for more.
+     * @param {object} args The block's arguments
+     * @param {object} util Block utility provided by the runtime
      */
     setMapResult(args, util) {
         if(args.VALUE) {
@@ -545,11 +550,12 @@ class DataTools {
 
 
     /**
-     * Defines the mapping function loop to iterate through a given file
-     * Requires 'setMapResult' to be called each iteration
-     * @param {*} args Contains the filename and column
-     * @param {*} util Utility object, used to control the stack frame.
-     * @returns {string} The name of the result data set
+     * Defines the mapping function loop to iterate through a given data set.
+     * Each iteration executes a branch on the given data set and requires 'setMapResult' 
+     * to be called on each iteration. 
+     * @param {object} args The block's arguments
+     * @param {object} util Block utility object, used to control the stack frame.
+     * @returns {string} The name of the resulting data set
      */
     mapFunctionToColumn(args, util) {
         //Initialization
@@ -599,7 +605,7 @@ class DataTools {
 
     /**
      * Reduces a mapped data set
-     * @param {*} args The block arguments
+     * @param {object} args The block arguments
      */
     reduceMappedDataSet(args) {
         if(typeof this._files[args.NAME] === 'undefined') {
