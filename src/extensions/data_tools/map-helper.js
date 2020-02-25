@@ -1,5 +1,13 @@
+//Created by: Alex Burroughs, Zachary Fernbaugh, Phillip Carroll, and Nathanael Hood with the KSU Scratch Data Tools group
+//See LICENSE for more information.
+
 /**
- * 
+ * This class is used to assist the Data Tools extension in mapping data sets. 
+ * Given the limitations of building an extension in Scratch, this class is necessary
+ * to assist mainly in finding the ID of the currently executing block and storing values
+ * as map functions run. It is designed for concurrency, and will work if multiple threads
+ * are running simultaneously. By keeping track of different state variables accessible by 
+ * block ID, the MapHelper fully manages all possible configurations of map functions.
  */
 class MapHelper {
     constructor() {
