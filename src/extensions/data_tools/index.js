@@ -559,7 +559,7 @@ class DataTools {
      */
     mapFunctionToColumn(args, util) {
         //Initialization
-        if(!args.COLUMN) return;
+        if(typeof args.COLUMN === 'undefined') return;
 
         let colArr = args.COLUMN.split(']');
         if(colArr.length < 1) {

@@ -77,10 +77,7 @@ class MapHelper {
      * @returns {string | number} The current value of the running function block
      */
     getMapInput(util) {
-        if(!this._depthMaps[util.thread.topBlock]) {
-            this._generateFunctionBlockDepthMap(util);
-        }
-        let id = this._depthMaps[util.thread.topBlock][this._depths[util.thread.topBlock]];
+        let id = this._findContainingLoopBlock(util);
         return this._columnValues[id];
     }
 
@@ -93,17 +90,7 @@ class MapHelper {
      */
     setMapResult(value, util) {
         //This should always find the parent map function block
-        let current = util.thread.peekStack(); 
-        let blocks = util.target.blocks._blocks;
-
-        while(current !== null && blocks[current].opcode !== 'datatools_mapFunctionToColumn') {
-            current = blocks[current].parent;
-        }
-
-        if(!current) {
-            alert("Can't set map result outside of map function.");
-            return;
-        }
+        let current = this._findContainingLoopBlock(util);
 
         if(typeof this._mapResults[current] === 'undefined') {
             this._mapResults[current] = [];
@@ -145,7 +132,7 @@ class MapHelper {
      * @returns {boolean} Whether or not the map results for this ID are empty
      */
     checkMapResult(id) {
-        return this._mapResults[id] === "";
+        return !this._mapResults[id];
     }
 
     /**
@@ -189,15 +176,44 @@ class MapHelper {
             
             if(this._depths[topBlock] <= 0) {
                 delete this._generatedMaps[topBlock];
+                delete this._depthMaps[topBlock];
+                delete this._depths[topBlock];
             }
             else {
                 this._depths[topBlock]--;
             }
+
+            delete this._columnValues[id];
+            delete this._mapResults[id];
+
             return `[${name}] VALUE`;
         }
     }
 
 //#region PRIVATE methods
+
+    /**
+     * Finds the containing loop block of the currently running block.
+     * Can be used to correctly identify which values to return while 
+     * running nested loop blocks.
+     * @param {object} util Block utility object provided by the runtime
+     * @returns {string} The ID of the containing loop block
+     */
+    _findContainingLoopBlock(util) {
+        let current = util.thread.peekStack(); 
+        let blocks = util.target.blocks._blocks;
+
+        while(current !== null && blocks[current].opcode !== 'datatools_mapFunctionToColumn') {
+            current = blocks[current].parent;
+        }
+
+        if(!current) {
+            alert("Can't find containing loop block.");
+            return;
+        }
+
+        return current;
+    }
 
     /**
      * Gets the outermost function block in a series of nested function blocks.
