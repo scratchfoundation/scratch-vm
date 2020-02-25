@@ -1,0 +1,104 @@
+﻿Scratch Data Tools Extension Specifications
+Alex Burroughs, Phillip Carroll, Zach Fernbaugh, Nathanael Hood
+ 
+Section 1. The Problem We’re Solving
+The Scratch Data Tools Extension is intended to extend the functionality of scratch by adding common “Big Data” concepts. Scratch has very basic tools that work well for teaching coding concepts, but there are some common coding practices that require more complex functionality and support. Specifically regarding handling data visualization and manipulation requires more robust support, such as being able to iterate through a list (eg: map / reduce functions), filtering data, importing and viewing 2-dimensional arrays on the fly, and creating custom functions that can call specific data in the set.
+Scratch’s design philosophy includes keeping things as simple as possible, so while we’re implementing new features, one goal is to maintain this principle and not bloat the application with unnecessary extra blocks; only the basic building blocks of what it takes to work with large data files.
+
+
+Section 2. The Chosen Technology
+Since we are extending a pre-existing project that is also actively being updated, the technology was already decided. We’re writing the extension in javascript within the limitations of Scratch’s extension framework. Scratch works with React and Redux, so we do too. The Scratch language, the blocks, is actually interpreted by a VM written entirely in JS. 
+
+
+Section 3. Architectural Discussion
+The architecture for the project is a little confusing. We have to work within the confines of the existing framework setup by Scratch. For the most part, this means putting everything we want into one big file (index.js) in an “extensions” folder. However, to get the functionality we want, we’ve had to find a few places in the code to plop various other small things, for example to help render menus or pass the right information along to the VM or GUI.
+
+
+Below is a description of the index.js file, including the single class that handles the extension. Each method is described below as well.
+
+
+constructor
+Constructor for the extension class
+param {Runtime} runtime: runtime instantiating this block package.
+getInfo
+Define the DataTools extension.
+returns {object} Extension description
+performAction
+Performs a specified action
+param {string} action: The action
+param {object} args: The arguments for the function
+  
+
+generateColumnData
+Generates column data for dropdown display
+returns {object} An object containing arrays with the columns of each file
+duplicateDataset
+Duplicates an existing dataset either as the name given by the user or as the original name plus an incremented number
+param {Object} args: Contains the original and new file names
+getFileNames
+Gets a list of filenames that will be displayed in the dropdown
+returns {Array} The list of filenames
+getColumnAtRow
+Gets the value at a row and column in a given file
+param {object} args: Object containing arguments, including COLUMN, ROW, and FILENAME
+returns {*} The value at the specified row and column in the specified file
+parseNumber
+Found at https://stackoverflow.com/questions/11665884/how-can-i-parse-a-string-with-a-comma-thousand-separator-to-a-number
+Parses a number from a localized string
+param {string} value: The initial string value (e.g. '453,323')
+param {string} locale: The locale used to parse the string, defaults to the navigator's locale
+returns {int} The float value of the string (e.g. 453323)
+setColumnAtRow
+Sets the value at a row and column in a given file
+param {object} args: Object containing arguments, including COlUMN, ROW, and VALUE to set to
+addDataFileRow
+Adds an empty row to a dataset
+param {object} args: Object containing the file name
+getRowCount
+Gets the row count of a given file
+param {object} args: Object containing arguments, including FILENAME
+returns {Number} The row count of the given file
+getFileName
+Gets the filename of a given reporter block
+param {object} args Unused, holds arguments from the block
+param {*} util Unused, holds utility functions for the block
+param {*} block The block that originally called this function, used to extract the file name
+returns {String} The name of the file
+addDataFile
+Adds a data file to the extension's array of files using the file name as a key.
+param {string} name: The original name of the file
+param {Array} fileData: The parsed file data stored as an array of JSON objects
+removeDataFileNames
+Removes a data file with a given name
+param {string} name: The name of the file to be removed
+returns {Boolean} Whether or not the file was successfully removed
+generateFileDisplayName
+Generates a displayable file name that will handle duplicates by appending "(DUPLICATE_NUM)" if necessary
+param {string} original: The original name of the file
+returns {string} The file name that will be displayed
+getDataFileNames
+Creates an array of tags to be displayed with the table
+returns {Array} An array of each file name
+getDataFileContents
+Gets the content of the file
+param {string} name: The file's name
+returns {Array} An array representing the file's contents
+updateDataFileFromTable
+Updates a data file given a table update
+param {string} fileName: The file's name
+param {number} row: The specified row
+param {string} colName: The specified column
+param {*} value: The new value
+returns {Array} An array representing the updated data
+isConnected
+Dummy method to ensure the status button works
+Scan
+Dummy method to ensure the status button works
+Connect
+Dummy method to ensure the status button works
+Disconnect
+Dummy method to ensure the status button works
+
+
+Section 4. Anticipated Goals
+During the Spring 2020 semester, the plan is primarily to finish creating custom map and reduce functions within the extension. Additionally, we plan to further flesh out the dataset editor, potentially allowing the creation of empty datasets, the ability to add columns to a dataset, and the exporting datasets that have been edited within scratch. The remainder of the semester is blocked off to plan for the future use of the extension. By this we mean looking into setting up a local instance of the scratch-www website on KSU infrastructure, the possibility of adding a dataset library to said instance, and creating a sample project using the extension to demonstrate use cases. Finally, we will also investigate other ideas or tools that would be beneficial to add to the extension by asking some professors for ideas and how they feel about the current work being done.
