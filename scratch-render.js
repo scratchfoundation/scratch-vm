@@ -10448,6 +10448,9 @@ var Skin = function (_EventEmitter) {
         /** @type {Vec3} */
         _this._rotationCenter = twgl.v3.create(0, 0);
 
+        /** @type {WebGLTexture} */
+        _this._texture = null;
+
         /**
          * The uniforms to be used by the vertex and pixel shaders.
          * Some of these are used by other parts of the renderer as well.
@@ -10577,6 +10580,26 @@ var Skin = function (_EventEmitter) {
         value: function updateSilhouette() {}
 
         /**
+         * Set this skin's texture to the given image.
+         * @param {ImageData|HTMLCanvasElement} textureData - The canvas or image data to set the texture to.
+         */
+
+    }, {
+        key: '_setTexture',
+        value: function _setTexture(textureData) {
+            var gl = this._renderer.gl;
+
+            gl.bindTexture(gl.TEXTURE_2D, this._texture);
+            // Premultiplied alpha is necessary for proper blending.
+            // See http://www.realtimerendering.com/blog/gpus-prefer-premultiplication/
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
+            gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+
+            this._silhouette.update(textureData);
+        }
+
+        /**
          * Set the contents of this skin to an empty skin.
          * @fires Skin.event:WasAltered
          */
@@ -10638,16 +10661,6 @@ var Skin = function (_EventEmitter) {
         }
     }, {
         key: 'isRaster',
-        get: function get() {
-            return false;
-        }
-
-        /**
-         * @returns {boolean} true if alpha is premultiplied, false otherwise
-         */
-
-    }, {
-        key: 'hasPremultipliedAlpha',
         get: function get() {
             return false;
         }
@@ -10952,12 +10965,7 @@ ShaderManager.DRAW_MODE = {
     /**
      * Sample a "texture" to draw a line with caps.
      */
-    lineSample: 'lineSample',
-
-    /**
-     * Draw normally except for pre-multiplied alpha
-     */
-    stamp: 'stamp'
+    lineSample: 'lineSample'
 };
 
 module.exports = ShaderManager;
@@ -11882,36 +11890,39 @@ var EffectTransform = function () {
 
 
         /**
-         * Transform a color given the drawables effect uniforms.  Will apply
+         * Transform a color in-place given the drawable's effect uniforms.  Will apply
          * Ghost and Color and Brightness effects.
          * @param {Drawable} drawable The drawable to get uniforms from.
-         * @param {Uint8ClampedArray} color4b The initial color.
-         * @param {Uint8ClampedArary} [dst] Working space to save the color in (is returned)
-         * @param {number} [effectMask] A bitmask for which effects to use. Optional.
+         * @param {Uint8ClampedArray} inOutColor The color to transform.
          * @returns {Uint8ClampedArray} dst filled with the transformed color
          */
-        value: function transformColor(drawable, color4b, dst, effectMask) {
-            dst = dst || new Uint8ClampedArray(4);
-            effectMask = effectMask || 0xffffffff;
-            dst.set(color4b);
-            if (dst[3] === 0) {
-                return dst;
+        value: function transformColor(drawable, inOutColor) {
+
+            // If the color is fully transparent, don't bother attempting any transformations.
+            if (inOutColor[3] === 0) {
+                return inOutColor;
             }
 
+            var effects = drawable.enabledEffects;
             var uniforms = drawable.getUniforms();
-            var effects = drawable.getEnabledEffects() & effectMask;
-
-            if ((effects & ShaderManager.EFFECT_INFO.ghost.mask) !== 0) {
-                // gl_FragColor.a *= u_ghost
-                dst[3] *= uniforms.u_ghost;
-            }
 
             var enableColor = (effects & ShaderManager.EFFECT_INFO.color.mask) !== 0;
             var enableBrightness = (effects & ShaderManager.EFFECT_INFO.brightness.mask) !== 0;
 
             if (enableColor || enableBrightness) {
+                // gl_FragColor.rgb /= gl_FragColor.a + epsilon;
+                // Here, we're dividing by the (previously pre-multiplied) alpha to ensure HSV is properly calculated
+                // for partially transparent pixels.
+                // epsilon is present in the shader because dividing by 0 (fully transparent pixels) messes up calculations.
+                // We're doing this with a Uint8ClampedArray here, so dividing by 0 just gives 255. We're later multiplying
+                // by 0 again, so it won't affect results.
+                var alpha = inOutColor[3] / 255;
+                inOutColor[0] /= alpha;
+                inOutColor[1] /= alpha;
+                inOutColor[2] /= alpha;
+
                 // vec3 hsl = convertRGB2HSL(gl_FragColor.xyz);
-                var hsl = rgbToHsl(dst);
+                var hsl = rgbToHsl(inOutColor);
 
                 if (enableColor) {
                     // this code forces grayscale values to be slightly saturated
@@ -11941,30 +11952,41 @@ var EffectTransform = function () {
                     hsl[2] = Math.min(1, hsl[2] + uniforms.u_brightness);
                 }
                 // gl_FragColor.rgb = convertHSL2RGB(hsl);
-                dst.set(hslToRgb(hsl));
+                inOutColor.set(hslToRgb(hsl));
+
+                // gl_FragColor.rgb *= gl_FragColor.a + epsilon;
+                // Now we're doing the reverse, premultiplying by the alpha once again.
+                inOutColor[0] *= alpha;
+                inOutColor[1] *= alpha;
+                inOutColor[2] *= alpha;
             }
 
-            return dst;
+            if ((effects & ShaderManager.EFFECT_INFO.ghost.mask) !== 0) {
+                // gl_FragColor *= u_ghost
+                inOutColor[0] *= uniforms.u_ghost;
+                inOutColor[1] *= uniforms.u_ghost;
+                inOutColor[2] *= uniforms.u_ghost;
+                inOutColor[3] *= uniforms.u_ghost;
+            }
+
+            return inOutColor;
         }
 
         /**
          * Transform a texture coordinate to one that would be select after applying shader effects.
          * @param {Drawable} drawable The drawable whose effects to emulate.
          * @param {twgl.v3} vec The texture coordinate to transform.
-         * @param {?twgl.v3} dst A place to store the output coordinate.
+         * @param {twgl.v3} dst A place to store the output coordinate.
          * @return {twgl.v3} dst - The coordinate after being transform by effects.
          */
 
     }, {
         key: 'transformPoint',
-        value: function transformPoint(drawable, vec) {
-            var dst = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : twgl.v3.create();
-
+        value: function transformPoint(drawable, vec, dst) {
             twgl.v3.copy(vec, dst);
 
+            var effects = drawable.enabledEffects;
             var uniforms = drawable.getUniforms();
-            var effects = drawable.getEnabledEffects();
-
             if ((effects & ShaderManager.EFFECT_INFO.mosaic.mask) !== 0) {
                 // texcoord0 = fract(u_mosaic * texcoord0);
                 dst[0] = uniforms.u_mosaic * dst[0] % 1;
@@ -12543,7 +12565,7 @@ var RenderWebGL = function (_EventEmitter) {
         gl.disable(gl.DEPTH_TEST);
         /** @todo disable when no partial transparency? */
         gl.enable(gl.BLEND);
-        gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
         return _this;
     }
 
@@ -13267,7 +13289,8 @@ var RenderWebGL = function (_EventEmitter) {
                 gl.colorMask(false, false, false, false);
                 this._drawThese([drawableID], mask3b ? ShaderManager.DRAW_MODE.colorMask : ShaderManager.DRAW_MODE.silhouette, projection, {
                     extraUniforms: extraUniforms,
-                    ignoreVisibility: true // Touching color ignores sprite visibility
+                    ignoreVisibility: true, // Touching color ignores sprite visibility,
+                    effectMask: ~ShaderManager.EFFECT_INFO.ghost.mask
                 });
 
                 gl.stencilFunc(gl.EQUAL, 1, 1);
@@ -13423,7 +13446,7 @@ var RenderWebGL = function (_EventEmitter) {
 
             drawable.updateMatrix();
             if (drawable.skin) {
-                drawable.skin.updateSilhouette();
+                drawable.skin.updateSilhouette(this._getDrawableScreenSpaceScale(drawable));
             } else {
                 log.warn('Could not find skin for drawable with id: ' + drawableID);
             }
@@ -13464,7 +13487,7 @@ var RenderWebGL = function (_EventEmitter) {
                 if (drawable.getVisible() && drawable.getUniforms().u_ghost !== 0) {
                     drawable.updateMatrix();
                     if (drawable.skin) {
-                        drawable.skin.updateSilhouette();
+                        drawable.skin.updateSilhouette(_this3._getDrawableScreenSpaceScale(drawable));
                     } else {
                         log.warn('Could not find skin for drawable with id: ' + id);
                     }
@@ -13701,7 +13724,7 @@ var RenderWebGL = function (_EventEmitter) {
             if (!drawable.skin || !drawable.skin.getTexture([100, 100])) return null;
 
             drawable.updateMatrix();
-            drawable.skin.updateSilhouette();
+            drawable.skin.updateSilhouette(this._getDrawableScreenSpaceScale(drawable));
             var bounds = drawable.getFastBounds();
 
             // Limit queries to the stage size.
@@ -13742,7 +13765,7 @@ var RenderWebGL = function (_EventEmitter) {
                     if (drawable.skin && drawable._visible) {
                         // Update the CPU position data
                         drawable.updateMatrix();
-                        drawable.skin.updateSilhouette();
+                        drawable.skin.updateSilhouette(this._getDrawableScreenSpaceScale(drawable));
                         var candidateBounds = drawable.getFastBounds();
                         if (bounds.intersects(candidateBounds)) {
                             result.push({
@@ -14053,23 +14076,15 @@ var RenderWebGL = function (_EventEmitter) {
             var skin = /** @type {PenSkin} */this._allSkins[penSkinID];
 
             var gl = this._gl;
-            twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
+            twgl.bindFramebufferInfo(gl, skin._framebuffer);
 
             // Limit size of viewport to the bounds around the stamp Drawable and create the projection matrix for the draw.
-            gl.viewport(0, 0, bounds.width, bounds.height);
+            gl.viewport(this._nativeSize[0] * 0.5 + bounds.left, this._nativeSize[1] * 0.5 - bounds.top, bounds.width, bounds.height);
             var projection = twgl.m4.ortho(bounds.left, bounds.right, bounds.top, bounds.bottom, -1, 1);
 
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-
-            try {
-                gl.disable(gl.BLEND);
-                this._drawThese([stampID], ShaderManager.DRAW_MODE.stamp, projection, { ignoreVisibility: true });
-            } finally {
-                gl.enable(gl.BLEND);
-            }
-
-            skin._drawToBuffer(this._queryBufferInfo.attachments[0], bounds.left, bounds.top);
+            // Draw the stamped sprite onto the PenSkin's framebuffer.
+            this._drawThese([stampID], ShaderManager.DRAW_MODE.default, projection, { ignoreVisibility: true });
+            skin._silhouetteDirty = true;
         }
 
         /* ******
@@ -14174,6 +14189,18 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
+         * Get the screen-space scale of a drawable, as percentages of the drawable's "normal" size.
+         * @param {Drawable} drawable The drawable whose screen-space scale we're fetching.
+         * @returns {Array<number>} The screen-space X and Y dimensions of the drawable's scale, as percentages.
+         */
+
+    }, {
+        key: '_getDrawableScreenSpaceScale',
+        value: function _getDrawableScreenSpaceScale(drawable) {
+            return [drawable.scale[0] * this._gl.canvas.width / this._nativeSize[0], drawable.scale[1] * this._gl.canvas.height / this._nativeSize[1]];
+        }
+
+        /**
          * Draw a set of Drawables, by drawable ID
          * @param {Array<int>} drawables The Drawable IDs to draw, possibly this._drawList.
          * @param {ShaderManager.DRAW_MODE} drawMode Draw normally, silhouette, etc.
@@ -14210,14 +14237,14 @@ var RenderWebGL = function (_EventEmitter) {
                 if (!drawable.getVisible() && !opts.ignoreVisibility) continue;
 
                 // Combine drawable scale with the native vs. backing pixel ratio
-                var drawableScale = [drawable.scale[0] * this._gl.canvas.width / this._nativeSize[0], drawable.scale[1] * this._gl.canvas.height / this._nativeSize[1]];
+                var drawableScale = this._getDrawableScreenSpaceScale(drawable);
 
                 // If the skin or texture isn't ready yet, skip it.
                 if (!drawable.skin || !drawable.skin.getTexture(drawableScale)) continue;
 
                 var uniforms = {};
 
-                var effectBits = drawable.getEnabledEffects();
+                var effectBits = drawable.enabledEffects;
                 effectBits &= opts.hasOwnProperty('effectMask') ? opts.effectMask : effectBits;
                 var newShader = this._shaderManager.getShader(drawMode, effectBits);
 
@@ -14247,14 +14274,6 @@ var RenderWebGL = function (_EventEmitter) {
                 }
 
                 twgl.setUniforms(currentShader, uniforms);
-
-                /* adjust blend function for this skin */
-                if (drawable.skin.hasPremultipliedAlpha) {
-                    gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                } else {
-                    gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-                }
-
                 twgl.drawBufferInfo(gl, this._bufferInfo, gl.TRIANGLES);
             }
 
@@ -14455,13 +14474,11 @@ var RenderWebGL = function (_EventEmitter) {
                 }
                 */
                 Drawable.sampleColor4b(vec, drawables[index].drawable, __blendColor);
-                // if we are fully transparent, go to the next one "down"
-                var sampleAlpha = __blendColor[3] / 255;
-                // premultiply alpha
-                dst[0] += __blendColor[0] * blendAlpha * sampleAlpha;
-                dst[1] += __blendColor[1] * blendAlpha * sampleAlpha;
-                dst[2] += __blendColor[2] * blendAlpha * sampleAlpha;
-                blendAlpha *= 1 - sampleAlpha;
+                // Equivalent to gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA)
+                dst[0] += __blendColor[0] * blendAlpha;
+                dst[1] += __blendColor[1] * blendAlpha;
+                dst[2] += __blendColor[2] * blendAlpha;
+                blendAlpha *= 1 - __blendColor[3] / 255;
             }
             // Backdrop could be transparent, so we need to go to the "clear color" of the
             // draw scene (white) as a fallback if everything was alpha
@@ -14929,9 +14946,6 @@ var BitmapSkin = function (_Skin) {
         /** @type {!RenderWebGL} */
         _this._renderer = renderer;
 
-        /** @type {WebGLTexture} */
-        _this._texture = null;
-
         /** @type {Array<int>} */
         _this._textureSize = [0, 0];
         return _this;
@@ -15011,21 +15025,16 @@ var BitmapSkin = function (_Skin) {
                 textureData = context.getImageData(0, 0, bitmapData.width, bitmapData.height);
             }
 
-            if (this._texture) {
-                gl.bindTexture(gl.TEXTURE_2D, this._texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-                this._silhouette.update(textureData);
-            } else {
-                // TODO: mipmaps?
+            if (this._texture === null) {
                 var textureOptions = {
-                    auto: true,
-                    wrap: gl.CLAMP_TO_EDGE,
-                    src: textureData
+                    auto: false,
+                    wrap: gl.CLAMP_TO_EDGE
                 };
 
                 this._texture = twgl.createTexture(gl, textureOptions);
-                this._silhouette.update(textureData);
             }
+
+            this._setTexture(textureData);
 
             // Do these last in case any of the above throws an exception
             this._costumeResolution = costumeResolution || 2;
@@ -15116,7 +15125,7 @@ var getPoint = function getPoint(_ref, x, y) {
         height = _ref._height,
         data = _ref._colorData;
 
-    // 0 if outside bouds, otherwise read from data.
+    // 0 if outside bounds, otherwise read from data.
     if (x >= width || y >= height || x < 0 || y < 0) {
         return 0;
     }
@@ -15130,6 +15139,7 @@ var __cornerWork = [new Uint8ClampedArray(4), new Uint8ClampedArray(4), new Uint
 
 /**
  * Get the color from a given silhouette at an x/y local texture position.
+ * Multiply color values by alpha for proper blending.
  * @param {Silhouette} The silhouette to sample.
  * @param {number} x X position of texture (0-1).
  * @param {number} y Y position of texture (0-1).
@@ -15141,7 +15151,35 @@ var getColor4b = function getColor4b(_ref2, x, y, dst) {
         height = _ref2._height,
         data = _ref2._colorData;
 
-    // 0 if outside bouds, otherwise read from data.
+    // 0 if outside bounds, otherwise read from data.
+    if (x >= width || y >= height || x < 0 || y < 0) {
+        return dst.fill(0);
+    }
+    var offset = (y * width + x) * 4;
+    // premultiply alpha
+    var alpha = data[offset + 3] / 255;
+    dst[0] = data[offset] * alpha;
+    dst[1] = data[offset + 1] * alpha;
+    dst[2] = data[offset + 2] * alpha;
+    dst[3] = data[offset + 3];
+    return dst;
+};
+
+/**
+ * Get the color from a given silhouette at an x/y local texture position.
+ * Do not multiply color values by alpha, as it has already been done.
+ * @param {Silhouette} The silhouette to sample.
+ * @param {number} x X position of texture (0-1).
+ * @param {number} y Y position of texture (0-1).
+ * @param {Uint8ClampedArray} dst A color 4b space.
+ * @return {Uint8ClampedArray} The dst vector.
+ */
+var getPremultipliedColor4b = function getPremultipliedColor4b(_ref3, x, y, dst) {
+    var width = _ref3._width,
+        height = _ref3._height,
+        data = _ref3._colorData;
+
+    // 0 if outside bounds, otherwise read from data.
     if (x >= width || y >= height || x < 0 || y < 0) {
         return dst.fill(0);
     }
@@ -15175,6 +15213,11 @@ var Silhouette = function () {
          */
         this._colorData = null;
 
+        // By default, silhouettes are assumed not to contain premultiplied image data,
+        // so when we get a color, we want to multiply it by its alpha channel.
+        // Point `_getColor` to the version of the function that multiplies.
+        this._getColor = getColor4b;
+
         this.colorAtNearest = this.colorAtLinear = function (_, dst) {
             return dst.fill(0);
         };
@@ -15182,7 +15225,8 @@ var Silhouette = function () {
 
     /**
      * Update this silhouette with the bitmapData for a skin.
-     * @param {*} bitmapData An image, canvas or other element that the skin
+     * @param {ImageData|HTMLCanvasElement|HTMLImageElement} bitmapData An image, canvas or other element that the skin
+     * @param {boolean} isPremultiplied True if the source bitmap data comes premultiplied (e.g. from readPixels).
      * rendering can be queried from.
      */
 
@@ -15190,6 +15234,8 @@ var Silhouette = function () {
     _createClass(Silhouette, [{
         key: 'update',
         value: function update(bitmapData) {
+            var isPremultiplied = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
             var imageData = void 0;
             if (bitmapData instanceof ImageData) {
                 // If handed ImageData directly, use it directly.
@@ -15212,6 +15258,12 @@ var Silhouette = function () {
                 imageData = ctx.getImageData(0, 0, width, height);
             }
 
+            if (isPremultiplied) {
+                this._getColor = getPremultipliedColor4b;
+            } else {
+                this._getColor = getColor4b;
+            }
+
             this._colorData = imageData.data;
             // delete our custom overriden "uninitalized" color functions
             // let the prototype work for itself
@@ -15230,7 +15282,7 @@ var Silhouette = function () {
     }, {
         key: 'colorAtNearest',
         value: function colorAtNearest(vec, dst) {
-            return getColor4b(this, Math.floor(vec[0] * (this._width - 1)), Math.floor(vec[1] * (this._height - 1)), dst);
+            return this._getColor(this, Math.floor(vec[0] * (this._width - 1)), Math.floor(vec[1] * (this._height - 1)), dst);
         }
 
         /**
@@ -15255,10 +15307,10 @@ var Silhouette = function () {
             var xFloor = Math.floor(x);
             var yFloor = Math.floor(y);
 
-            var x0y0 = getColor4b(this, xFloor, yFloor, __cornerWork[0]);
-            var x1y0 = getColor4b(this, xFloor + 1, yFloor, __cornerWork[1]);
-            var x0y1 = getColor4b(this, xFloor, yFloor + 1, __cornerWork[2]);
-            var x1y1 = getColor4b(this, xFloor + 1, yFloor + 1, __cornerWork[3]);
+            var x0y0 = this._getColor(this, xFloor, yFloor, __cornerWork[0]);
+            var x1y0 = this._getColor(this, xFloor + 1, yFloor, __cornerWork[1]);
+            var x0y1 = this._getColor(this, xFloor, yFloor + 1, __cornerWork[2]);
+            var x1y1 = this._getColor(this, xFloor + 1, yFloor + 1, __cornerWork[3]);
 
             dst[0] = x0y0[0] * x0D * y0D + x0y1[0] * x0D * y1D + x1y0[0] * x1D * y0D + x1y1[0] * x1D * y1D;
             dst[1] = x0y0[1] * x0D * y0D + x0y1[1] * x0D * y1D + x1y0[1] * x1D * y0D + x1y1[1] * x1D * y1D;
@@ -15367,8 +15419,10 @@ var getLocalPosition = function getLocalPosition(drawable, vec) {
     // localPosition matches that transformation.
     localPosition[0] = 0.5 - (v0 * m[0] + v1 * m[4] + m[12]) / d;
     localPosition[1] = (v0 * m[1] + v1 * m[5] + m[13]) / d + 0.5;
-    // Apply texture effect transform if the localPosition is within the drawable's space.
-    if (localPosition[0] >= 0 && localPosition[0] < 1 && localPosition[1] >= 0 && localPosition[1] < 1) {
+    // Apply texture effect transform if the localPosition is within the drawable's space,
+    // and any effects are currently active.
+    if (drawable.enabledEffects !== 0 && localPosition[0] >= 0 && localPosition[0] < 1 && localPosition[1] >= 0 && localPosition[1] < 1) {
+
         EffectTransform.transformPoint(drawable, localPosition, localPosition);
     }
     return localPosition;
@@ -15429,7 +15483,11 @@ var Drawable = function () {
         this._inverseMatrix = twgl.m4.identity();
         this._inverseTransformDirty = true;
         this._visible = true;
-        this._effectBits = 0;
+
+        /** A bitmask identifying which effects are currently in use.
+         * @readonly
+         * @type {int} */
+        this.enabledEffects = 0;
 
         /** @todo move convex hull functionality, maybe bounds functionality overall, to Skin classes */
         this._convexHullPoints = null;
@@ -15467,22 +15525,12 @@ var Drawable = function () {
          */
 
     }, {
-        key: 'getEnabledEffects',
+        key: 'getUniforms',
 
-
-        /**
-         * @returns {int} A bitmask identifying which effects are currently in use.
-         */
-        value: function getEnabledEffects() {
-            return this._effectBits;
-        }
 
         /**
          * @returns {object.<string, *>} the shader uniforms to be used when rendering this Drawable.
          */
-
-    }, {
-        key: 'getUniforms',
         value: function getUniforms() {
             if (this._transformDirty) {
                 this._calculateTransform();
@@ -15572,9 +15620,9 @@ var Drawable = function () {
         value: function updateEffect(effectName, rawValue) {
             var effectInfo = ShaderManager.EFFECT_INFO[effectName];
             if (rawValue) {
-                this._effectBits |= effectInfo.mask;
+                this.enabledEffects |= effectInfo.mask;
             } else {
-                this._effectBits &= ~effectInfo.mask;
+                this.enabledEffects &= ~effectInfo.mask;
             }
             var converter = effectInfo.converter;
             this._uniforms[effectInfo.uniformName] = converter(rawValue);
@@ -15834,7 +15882,7 @@ var Drawable = function () {
             }
 
             // If the effect bits for mosaic, pixelate, whirl, or fisheye are set, use linear
-            if ((this._effectBits & (ShaderManager.EFFECT_INFO.fisheye.mask | ShaderManager.EFFECT_INFO.whirl.mask | ShaderManager.EFFECT_INFO.pixelate.mask | ShaderManager.EFFECT_INFO.mosaic.mask)) !== 0) {
+            if ((this.enabledEffects & (ShaderManager.EFFECT_INFO.fisheye.mask | ShaderManager.EFFECT_INFO.whirl.mask | ShaderManager.EFFECT_INFO.pixelate.mask | ShaderManager.EFFECT_INFO.mosaic.mask)) !== 0) {
                 return false;
             }
 
@@ -16102,6 +16150,9 @@ var Drawable = function () {
         value: function sampleColor4b(vec, drawable, dst) {
             var localPosition = getLocalPosition(drawable, vec);
             if (localPosition[0] < 0 || localPosition[1] < 0 || localPosition[0] > 1 || localPosition[1] > 1) {
+                dst[0] = 0;
+                dst[1] = 0;
+                dst[2] = 0;
                 dst[3] = 0;
                 return dst;
             }
@@ -16110,7 +16161,9 @@ var Drawable = function () {
             // drawable.useNearest() ?
             drawable.skin._silhouette.colorAtNearest(localPosition, dst);
             // : drawable.skin._silhouette.colorAtLinear(localPosition, dst);
-            return EffectTransform.transformColor(drawable, textColor, textColor);
+
+            if (drawable.enabledEffects === 0) return textColor;
+            return EffectTransform.transformColor(drawable, textColor);
         }
     }]);
 
@@ -16129,7 +16182,7 @@ module.exports = "uniform mat4 u_projectionMatrix;\nuniform mat4 u_modelMatrix;\
 /* 25 */
 /***/ (function(module, exports) {
 
-module.exports = "precision mediump float;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n// Smaller values can cause problems on some mobile devices\nconst float epsilon = 1e-3;\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n    #ifdef ENABLE_ghost\n    gl_FragColor.a *= u_ghost;\n    #endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#if defined(ENABLE_color)\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // defined(ENABLE_color)\n\n\t#if defined(ENABLE_brightness)\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // defined(ENABLE_brightness)\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor;\n\tgl_FragColor.a *= clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
+module.exports = "precision mediump float;\n\n#ifdef DRAW_MODE_silhouette\nuniform vec4 u_silhouetteColor;\n#else // DRAW_MODE_silhouette\n# ifdef ENABLE_color\nuniform float u_color;\n# endif // ENABLE_color\n# ifdef ENABLE_brightness\nuniform float u_brightness;\n# endif // ENABLE_brightness\n#endif // DRAW_MODE_silhouette\n\n#ifdef DRAW_MODE_colorMask\nuniform vec3 u_colorMask;\nuniform float u_colorMaskTolerance;\n#endif // DRAW_MODE_colorMask\n\n#ifdef ENABLE_fisheye\nuniform float u_fisheye;\n#endif // ENABLE_fisheye\n#ifdef ENABLE_whirl\nuniform float u_whirl;\n#endif // ENABLE_whirl\n#ifdef ENABLE_pixelate\nuniform float u_pixelate;\nuniform vec2 u_skinSize;\n#endif // ENABLE_pixelate\n#ifdef ENABLE_mosaic\nuniform float u_mosaic;\n#endif // ENABLE_mosaic\n#ifdef ENABLE_ghost\nuniform float u_ghost;\n#endif // ENABLE_ghost\n\n#ifdef DRAW_MODE_lineSample\nuniform vec4 u_lineColor;\nuniform float u_capScale;\nuniform float u_aliasAmount;\n#endif // DRAW_MODE_lineSample\n\nuniform sampler2D u_skin;\n\nvarying vec2 v_texCoord;\n\n// Add this to divisors to prevent division by 0, which results in NaNs propagating through calculations.\n// Smaller values can cause problems on some mobile devices.\nconst float epsilon = 1e-3;\n\n#if !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n// Branchless color conversions based on code from:\n// http://www.chilliant.com/rgb2hsv.html by Ian Taylor\n// Based in part on work by Sam Hocevar and Emil Persson\n// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Formal_derivation\n\n\n// Convert an RGB color to Hue, Saturation, and Value.\n// All components of input and output are expected to be in the [0,1] range.\nvec3 convertRGB2HSV(vec3 rgb)\n{\n\t// Hue calculation has 3 cases, depending on which RGB component is largest, and one of those cases involves a \"mod\"\n\t// operation. In order to avoid that \"mod\" we split the M==R case in two: one for G<B and one for B>G. The B>G case\n\t// will be calculated in the negative and fed through abs() in the hue calculation at the end.\n\t// See also: https://en.wikipedia.org/wiki/HSL_and_HSV#Hue_and_chroma\n\tconst vec4 hueOffsets = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);\n\n\t// temp1.xy = sort B & G (largest first)\n\t// temp1.z = the hue offset we'll use if it turns out that R is the largest component (M==R)\n\t// temp1.w = the hue offset we'll use if it turns out that R is not the largest component (M==G or M==B)\n\tvec4 temp1 = rgb.b > rgb.g ? vec4(rgb.bg, hueOffsets.wz) : vec4(rgb.gb, hueOffsets.xy);\n\n\t// temp2.x = the largest component of RGB (\"M\" / \"Max\")\n\t// temp2.yw = the smaller components of RGB, ordered for the hue calculation (not necessarily sorted by magnitude!)\n\t// temp2.z = the hue offset we'll use in the hue calculation\n\tvec4 temp2 = rgb.r > temp1.x ? vec4(rgb.r, temp1.yzx) : vec4(temp1.xyw, rgb.r);\n\n\t// m = the smallest component of RGB (\"min\")\n\tfloat m = min(temp2.y, temp2.w);\n\n\t// Chroma = M - m\n\tfloat C = temp2.x - m;\n\n\t// Value = M\n\tfloat V = temp2.x;\n\n\treturn vec3(\n\t\tabs(temp2.z + (temp2.w - temp2.y) / (6.0 * C + epsilon)), // Hue\n\t\tC / (temp2.x + epsilon), // Saturation\n\t\tV); // Value\n}\n\nvec3 convertHue2RGB(float hue)\n{\n\tfloat r = abs(hue * 6.0 - 3.0) - 1.0;\n\tfloat g = 2.0 - abs(hue * 6.0 - 2.0);\n\tfloat b = 2.0 - abs(hue * 6.0 - 4.0);\n\treturn clamp(vec3(r, g, b), 0.0, 1.0);\n}\n\nvec3 convertHSV2RGB(vec3 hsv)\n{\n\tvec3 rgb = convertHue2RGB(hsv.x);\n\tfloat c = hsv.z * hsv.y;\n\treturn rgb * c + hsv.z - c;\n}\n#endif // !defined(DRAW_MODE_silhouette) && (defined(ENABLE_color))\n\nconst vec2 kCenter = vec2(0.5, 0.5);\n\nvoid main()\n{\n\t#ifndef DRAW_MODE_lineSample\n\tvec2 texcoord0 = v_texCoord;\n\n\t#ifdef ENABLE_mosaic\n\ttexcoord0 = fract(u_mosaic * texcoord0);\n\t#endif // ENABLE_mosaic\n\n\t#ifdef ENABLE_pixelate\n\t{\n\t\t// TODO: clean up \"pixel\" edges\n\t\tvec2 pixelTexelSize = u_skinSize / u_pixelate;\n\t\ttexcoord0 = (floor(texcoord0 * pixelTexelSize) + kCenter) / pixelTexelSize;\n\t}\n\t#endif // ENABLE_pixelate\n\n\t#ifdef ENABLE_whirl\n\t{\n\t\tconst float kRadius = 0.5;\n\t\tvec2 offset = texcoord0 - kCenter;\n\t\tfloat offsetMagnitude = length(offset);\n\t\tfloat whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);\n\t\tfloat whirlActual = u_whirl * whirlFactor * whirlFactor;\n\t\tfloat sinWhirl = sin(whirlActual);\n\t\tfloat cosWhirl = cos(whirlActual);\n\t\tmat2 rotationMatrix = mat2(\n\t\t\tcosWhirl, -sinWhirl,\n\t\t\tsinWhirl, cosWhirl\n\t\t);\n\n\t\ttexcoord0 = rotationMatrix * offset + kCenter;\n\t}\n\t#endif // ENABLE_whirl\n\n\t#ifdef ENABLE_fisheye\n\t{\n\t\tvec2 vec = (texcoord0 - kCenter) / kCenter;\n\t\tfloat vecLength = length(vec);\n\t\tfloat r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);\n\t\tvec2 unit = vec / vecLength;\n\n\t\ttexcoord0 = kCenter + r * unit * kCenter;\n\t}\n\t#endif // ENABLE_fisheye\n\n\tgl_FragColor = texture2D(u_skin, texcoord0);\n\n\t#if defined(ENABLE_color) || defined(ENABLE_brightness)\n\t// Divide premultiplied alpha values for proper color processing\n\t// Add epsilon to avoid dividing by 0 for fully transparent pixels\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb / (gl_FragColor.a + epsilon), 0.0, 1.0);\n\n\t#ifdef ENABLE_color\n\t{\n\t\tvec3 hsv = convertRGB2HSV(gl_FragColor.xyz);\n\n\t\t// this code forces grayscale values to be slightly saturated\n\t\t// so that some slight change of hue will be visible\n\t\tconst float minLightness = 0.11 / 2.0;\n\t\tconst float minSaturation = 0.09;\n\t\tif (hsv.z < minLightness) hsv = vec3(0.0, 1.0, minLightness);\n\t\telse if (hsv.y < minSaturation) hsv = vec3(0.0, minSaturation, hsv.z);\n\n\t\thsv.x = mod(hsv.x + u_color, 1.0);\n\t\tif (hsv.x < 0.0) hsv.x += 1.0;\n\n\t\tgl_FragColor.rgb = convertHSV2RGB(hsv);\n\t}\n\t#endif // ENABLE_color\n\n\t#ifdef ENABLE_brightness\n\tgl_FragColor.rgb = clamp(gl_FragColor.rgb + vec3(u_brightness), vec3(0), vec3(1));\n\t#endif // ENABLE_brightness\n\n\t// Re-multiply color values\n\tgl_FragColor.rgb *= gl_FragColor.a + epsilon;\n\n\t#endif // defined(ENABLE_color) || defined(ENABLE_brightness)\n\n\t#ifdef ENABLE_ghost\n\tgl_FragColor *= u_ghost;\n\t#endif // ENABLE_ghost\n\n\t#ifdef DRAW_MODE_silhouette\n\t// Discard fully transparent pixels for stencil test\n\tif (gl_FragColor.a == 0.0) {\n\t\tdiscard;\n\t}\n\t// switch to u_silhouetteColor only AFTER the alpha test\n\tgl_FragColor = u_silhouetteColor;\n\t#else // DRAW_MODE_silhouette\n\n\t#ifdef DRAW_MODE_colorMask\n\tvec3 maskDistance = abs(gl_FragColor.rgb - u_colorMask);\n\tvec3 colorMaskTolerance = vec3(u_colorMaskTolerance, u_colorMaskTolerance, u_colorMaskTolerance);\n\tif (any(greaterThan(maskDistance, colorMaskTolerance)))\n\t{\n\t\tdiscard;\n\t}\n\t#endif // DRAW_MODE_colorMask\n\t#endif // DRAW_MODE_silhouette\n\n\t#else // DRAW_MODE_lineSample\n\tgl_FragColor = u_lineColor * clamp(\n\t\t// Scale the capScale a little to have an aliased region.\n\t\t(u_capScale + u_aliasAmount -\n\t\t\tu_capScale * 2.0 * distance(v_texCoord, vec2(0.5, 0.5))\n\t\t) / (u_aliasAmount + 1.0),\n\t\t0.0,\n\t\t1.0\n\t);\n\t#endif // DRAW_MODE_lineSample\n}\n"
 
 /***/ }),
 /* 26 */
@@ -16176,6 +16229,12 @@ var DefaultPenAttributes = {
     color4f: [0, 0, 1, 1],
     diameter: 1
 };
+
+/**
+ * Reused memory location for storing a premultiplied pen color.
+ * @type {FloatArray}
+ */
+var __premultipliedColor = [0, 0, 0, 0];
 
 /**
  * Reused memory location for projection matrices.
@@ -16244,9 +16303,6 @@ var PenSkin = function (_Skin) {
         _this._canvas = document.createElement('canvas');
 
         /** @type {WebGLTexture} */
-        _this._texture = null;
-
-        /** @type {WebGLTexture} */
         _this._exportTexture = null;
 
         /** @type {WebGLFramebuffer} */
@@ -16286,7 +16342,7 @@ var PenSkin = function (_Skin) {
 
         var NO_EFFECTS = 0;
         /** @type {twgl.ProgramInfo} */
-        _this._stampShader = _this._renderer._shaderManager.getShader(ShaderManager.DRAW_MODE.stamp, NO_EFFECTS);
+        _this._stampShader = _this._renderer._shaderManager.getShader(ShaderManager.DRAW_MODE.default, NO_EFFECTS);
 
         /** @type {twgl.ProgramInfo} */
         _this._lineShader = _this._renderer._shaderManager.getShader(ShaderManager.DRAW_MODE.lineSample, NO_EFFECTS);
@@ -16435,10 +16491,6 @@ var PenSkin = function (_Skin) {
 
             twgl.bindFramebufferInfo(gl, this._framebuffer);
 
-            // Needs a blend function that blends a destination that starts with
-            // no alpha.
-            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
             gl.viewport(0, 0, bounds.width, bounds.height);
 
             gl.useProgram(currentShader.program);
@@ -16461,8 +16513,6 @@ var PenSkin = function (_Skin) {
         key: '_exitDrawLineOnBuffer',
         value: function _exitDrawLineOnBuffer() {
             var gl = this._renderer.gl;
-
-            gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
 
             twgl.bindFramebufferInfo(gl, null);
         }
@@ -16505,12 +16555,19 @@ var PenSkin = function (_Skin) {
             var radius = diameter / 2;
             var yScalar = 0.50001 - radius / (length + diameter);
 
+            // Premultiply pen color by pen transparency
+            var penColor = penAttributes.color4f || DefaultPenAttributes.color4f;
+            __premultipliedColor[0] = penColor[0] * penColor[3];
+            __premultipliedColor[1] = penColor[1] * penColor[3];
+            __premultipliedColor[2] = penColor[2] * penColor[3];
+            __premultipliedColor[3] = penColor[3];
+
             var uniforms = {
                 u_positionScalar: yScalar,
                 u_capScale: diameter,
                 u_aliasAmount: alias,
                 u_modelMatrix: twgl.m4.multiply(twgl.m4.multiply(twgl.m4.translation(translationVector, __modelTranslationMatrix), twgl.m4.rotationZ(theta - Math.PI / 2, __modelRotationMatrix), __modelMatrix), twgl.m4.scaling(scalingVector, __modelScalingMatrix), __modelMatrix),
-                u_lineColor: penAttributes.color4f || DefaultPenAttributes.color4f
+                u_lineColor: __premultipliedColor
             };
 
             twgl.setUniforms(currentShader, uniforms);
@@ -16603,8 +16660,6 @@ var PenSkin = function (_Skin) {
 
             twgl.bindFramebufferInfo(gl, this._framebuffer);
 
-            gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-
             this._drawRectangleRegionEnter(this._stampShader, this._bounds);
         }
 
@@ -16616,8 +16671,6 @@ var PenSkin = function (_Skin) {
         key: '_exitDrawToBuffer',
         value: function _exitDrawToBuffer() {
             var gl = this._renderer.gl;
-
-            gl.blendFuncSeparate(gl.ONE, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
 
             twgl.bindFramebufferInfo(gl, null);
         }
@@ -16790,23 +16843,13 @@ var PenSkin = function (_Skin) {
                 skinImageData.data.set(skinPixels);
                 skinContext.putImageData(skinImageData, 0, 0);
 
-                this._silhouette.update(this._canvas);
+                this._silhouette.update(this._canvas, true /* isPremultiplied */);
 
                 this._silhouetteDirty = false;
             }
         }
     }, {
         key: 'isRaster',
-        get: function get() {
-            return true;
-        }
-
-        /**
-         * @returns {boolean} true if alpha is premultiplied, false otherwise
-         */
-
-    }, {
-        key: 'hasPremultipliedAlpha',
         get: function get() {
             return true;
         }
@@ -16850,6 +16893,14 @@ var Skin = __webpack_require__(2);
 var SvgRenderer = __webpack_require__(28).SVGRenderer;
 
 var MAX_TEXTURE_DIMENSION = 2048;
+var MIN_TEXTURE_SCALE = 1 / 256;
+/**
+ * All scaled renderings of the SVG are stored in an array. The 1.0 scale of
+ * the SVG is stored at the 8th index. The smallest possible 1 / 256 scale
+ * rendering is stored at the 0th index.
+ * @const {number}
+ */
+var INDEX_OFFSET = 8;
 
 var SVGSkin = function (_Skin) {
     _inherits(SVGSkin, _Skin);
@@ -16872,14 +16923,17 @@ var SVGSkin = function (_Skin) {
         /** @type {SvgRenderer} */
         _this._svgRenderer = new SvgRenderer();
 
-        /** @type {WebGLTexture} */
-        _this._texture = null;
+        /** @type {Array<WebGLTexture>} */
+        _this._scaledMIPs = [];
 
         /** @type {number} */
-        _this._textureScale = 1;
+        _this._largestMIPScale = 0;
 
-        /** @type {Number} */
-        _this._maxTextureScale = 0;
+        /**
+        * Ratio of the size of the SVG and the max size of the WebGL texture
+        * @type {Number}
+        */
+        _this._maxTextureScale = 1;
         return _this;
     }
 
@@ -16891,10 +16945,7 @@ var SVGSkin = function (_Skin) {
     _createClass(SVGSkin, [{
         key: 'dispose',
         value: function dispose() {
-            if (this._texture) {
-                this._renderer.gl.deleteTexture(this._texture);
-                this._texture = null;
-            }
+            this.resetMIPs();
             _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'dispose', this).call(this);
         }
 
@@ -16917,52 +16968,109 @@ var SVGSkin = function (_Skin) {
         }
 
         /**
+         * Create a MIP for a given scale.
+         * @param {number} scale - The relative size of the MIP
+         * @return {SVGMIP} An object that handles creating and updating SVG textures.
+         */
+
+    }, {
+        key: 'createMIP',
+        value: function createMIP(scale) {
+            this._svgRenderer.draw(scale);
+
+            // Pull out the ImageData from the canvas. ImageData speeds up
+            // updating Silhouette and is better handled by more browsers in
+            // regards to memory.
+            var canvas = this._svgRenderer.canvas;
+            // If one of the canvas dimensions is 0, set this MIP to an empty image texture.
+            // This avoids an IndexSizeError from attempting to getImageData when one of the dimensions is 0.
+            if (canvas.width === 0 || canvas.height === 0) return _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
+
+            var context = canvas.getContext('2d');
+            var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            var textureOptions = {
+                auto: false,
+                wrap: this._renderer.gl.CLAMP_TO_EDGE,
+                src: textureData,
+                premultiplyAlpha: true
+            };
+
+            var mip = twgl.createTexture(this._renderer.gl, textureOptions);
+
+            // Check if this is the largest MIP created so far. Currently, silhouettes only get scaled up.
+            if (this._largestMIPScale < scale) {
+                this._silhouette.update(textureData);
+                this._largestMIPScale = scale;
+            }
+
+            return mip;
+        }
+    }, {
+        key: 'updateSilhouette',
+        value: function updateSilhouette() {
+            var scale = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 1;
+
+            // Ensure a silhouette exists.
+            this.getTexture(scale);
+        }
+
+        /**
          * @param {Array<number>} scale - The scaling factors to be used, each in the [0,100] range.
          * @return {WebGLTexture} The GL texture representation of this skin when drawing at the given scale.
          */
-        // eslint-disable-next-line no-unused-vars
 
     }, {
         key: 'getTexture',
         value: function getTexture(scale) {
-            var _this2 = this;
-
-            if (!this._svgRenderer.canvas.width || !this._svgRenderer.canvas.height) {
-                return _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
-            }
-
             // The texture only ever gets uniform scale. Take the larger of the two axes.
             var scaleMax = scale ? Math.max(Math.abs(scale[0]), Math.abs(scale[1])) : 100;
             var requestedScale = Math.min(scaleMax / 100, this._maxTextureScale);
-            var newScale = this._textureScale;
-            while (newScale < this._maxTextureScale && requestedScale >= 1.5 * newScale) {
-                newScale *= 2;
-            }
-            if (this._textureScale !== newScale) {
-                this._textureScale = newScale;
-                this._svgRenderer._draw(this._textureScale, function () {
-                    if (_this2._textureScale === newScale) {
-                        var canvas = _this2._svgRenderer.canvas;
-                        var context = canvas.getContext('2d');
-                        var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
+            var newScale = 1;
+            var textureIndex = 0;
 
-                        var gl = _this2._renderer.gl;
-                        gl.bindTexture(gl.TEXTURE_2D, _this2._texture);
-                        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-                        _this2._silhouette.update(textureData);
-                    }
-                });
+            if (requestedScale < 1) {
+                while (newScale > MIN_TEXTURE_SCALE && requestedScale <= newScale * .75) {
+                    newScale /= 2;
+                    textureIndex -= 1;
+                }
+            } else {
+                while (newScale < this._maxTextureScale && requestedScale >= 1.5 * newScale) {
+                    newScale *= 2;
+                    textureIndex += 1;
+                }
             }
 
-            return this._texture;
+            if (this._svgRenderer.loaded && !this._scaledMIPs[textureIndex + INDEX_OFFSET]) {
+                this._scaledMIPs[textureIndex + INDEX_OFFSET] = this.createMIP(newScale);
+            }
+
+            return this._scaledMIPs[textureIndex + INDEX_OFFSET] || _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
+        }
+
+        /**
+         * Do a hard reset of the existing MIPs by deleting them.
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the SVG. If not supplied, it will be
+         * calculated from the bounding box
+         * @fires Skin.event:WasAltered
+         */
+
+    }, {
+        key: 'resetMIPs',
+        value: function resetMIPs() {
+            var _this2 = this;
+
+            this._scaledMIPs.forEach(function (oldMIP) {
+                return _this2._renderer.gl.deleteTexture(oldMIP);
+            });
+            this._scaledMIPs.length = 0;
+            this._largestMIPScale = 0;
         }
 
         /**
          * Set the contents of this skin to a snapshot of the provided SVG data.
          * @param {string} svgData - new SVG to use.
-         * @param {Array<number>} [rotationCenter] - Optional rotation center for the SVG. If not supplied, it will be
-         * calculated from the bounding box
-         * @fires Skin.event:WasAltered
+         * @param {Array<number>} [rotationCenter] - Optional rotation center for the SVG.
          */
 
     }, {
@@ -16970,44 +17078,20 @@ var SVGSkin = function (_Skin) {
         value: function setSVG(svgData, rotationCenter) {
             var _this3 = this;
 
-            this._svgRenderer.fromString(svgData, 1, function () {
-                var gl = _this3._renderer.gl;
-                _this3._textureScale = _this3._maxTextureScale = 1;
-
-                // Pull out the ImageData from the canvas. ImageData speeds up
-                // updating Silhouette and is better handled by more browsers in
-                // regards to memory.
-                var canvas = _this3._svgRenderer.canvas;
-
-                if (!canvas.width || !canvas.height) {
+            this._svgRenderer.loadSVG(svgData, false, function () {
+                var svgSize = _this3._svgRenderer.size;
+                if (svgSize[0] === 0 || svgSize[1] === 0) {
                     _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setEmptyImageData', _this3).call(_this3);
                     return;
                 }
 
-                var context = canvas.getContext('2d');
-                var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-                if (_this3._texture) {
-                    gl.bindTexture(gl.TEXTURE_2D, _this3._texture);
-                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-                    _this3._silhouette.update(textureData);
-                } else {
-                    // TODO: mipmaps?
-                    var textureOptions = {
-                        auto: true,
-                        wrap: gl.CLAMP_TO_EDGE,
-                        src: textureData
-                    };
-
-                    _this3._texture = twgl.createTexture(gl, textureOptions);
-                    _this3._silhouette.update(textureData);
-                }
-
-                var maxDimension = Math.max(_this3._svgRenderer.canvas.width, _this3._svgRenderer.canvas.height);
+                var maxDimension = Math.ceil(Math.max(_this3.size[0], _this3.size[1]));
                 var testScale = 2;
                 for (testScale; maxDimension * testScale <= MAX_TEXTURE_DIMENSION; testScale *= 2) {
                     _this3._maxTextureScale = testScale;
                 }
+
+                _this3.resetMIPs();
 
                 if (typeof rotationCenter === 'undefined') rotationCenter = _this3.calculateRotationCenter();
                 _this3.setRotationCenter.apply(_this3, rotationCenter);
@@ -17073,6 +17157,7 @@ class SvgRenderer {
         this._context = this._canvas.getContext('2d');
         this._measurements = {x: 0, y: 0, width: 0, height: 0};
         this._cachedImage = null;
+        this.loaded = false;
     }
 
     /**
@@ -17089,10 +17174,13 @@ class SvgRenderer {
      * @param {string} svgString String of SVG data to draw in quirks-mode.
      * @param {number} [scale] - Optionally, also scale the image by this factor.
      * @param {Function} [onFinish] Optional callback for when drawing finished.
+     * @deprecated Use the `loadSVG` method and public `draw` method instead.
      */
     fromString (svgString, scale, onFinish) {
-        this.loadString(svgString);
-        this._draw(scale, onFinish);
+        this.loadSVG(svgString, false, () => {
+            this.draw(scale);
+            if (onFinish) onFinish();
+        });
     }
 
     /**
@@ -17152,6 +17240,8 @@ class SvgRenderer {
             this._transformText();
             // Transform measurements.
             this._transformMeasurements();
+            // Fix stroke roundedness.
+            this._setGradientStrokeRoundedness();
         } else if (!this._svgTag.getAttribute('viewBox')) {
             // Renderer expects a view box.
             this._transformMeasurements();
@@ -17165,6 +17255,34 @@ class SvgRenderer {
             x: this._svgTag.viewBox.baseVal.x,
             y: this._svgTag.viewBox.baseVal.y
         };
+    }
+
+    /**
+     * Load an SVG string, normalize it, and prepare it for (synchronous) rendering.
+     * @param {!string} svgString String of SVG data to draw in quirks-mode.
+     * @param {?boolean} fromVersion2 True if we should perform conversion from version 2 to version 3 svg.
+     * @param {Function} [onFinish] - An optional callback to call when the SVG is loaded and can be rendered.
+     */
+    loadSVG (svgString, fromVersion2, onFinish) {
+        this.loadString(svgString, fromVersion2);
+        this._createSVGImage(onFinish);
+    }
+
+    /**
+     * Creates an <img> element for the currently loaded SVG string, then calls the callback once it's loaded.
+     * @param {Function} [onFinish] - An optional callback to call when the <img> has loaded.
+     */
+    _createSVGImage (onFinish) {
+        if (this._cachedImage === null) this._cachedImage = new Image();
+        const img = this._cachedImage;
+
+        img.onload = () => {
+            this.loaded = true;
+            if (onFinish) onFinish();
+        };
+        const svgText = this.toString(true /* shouldInjectFonts */);
+        img.src = `data:image/svg+xml;utf8,${encodeURIComponent(svgText)}`;
+        this.loaded = false;
     }
 
     /**
@@ -17264,13 +17382,13 @@ class SvgRenderer {
     }
 
     /**
-     * @param {string} tagName svg tag to search for
+     * @param {string} [tagName] svg tag to search for (or collect all elements if not given)
      * @return {Array} a list of elements with the given tagname in _svgTag
      */
     _collectElements (tagName) {
         const elts = [];
         const collectElements = domElement => {
-            if (domElement.localName === tagName) {
+            if ((domElement.localName === tagName || typeof tagName === 'undefined') && domElement.getAttribute) {
                 elts.push(domElement);
             }
             for (let i = 0; i < domElement.childNodes.length; i++) {
@@ -17303,7 +17421,7 @@ class SvgRenderer {
     _transformImages () {
         const imageElements = this._collectElements('image');
 
-        // For each image element, set image rendering to pixelated"
+        // For each image element, set image rendering to pixelated
         const pixelatedImages = 'image-rendering: optimizespeed; image-rendering: pixelated;';
         for (const elt of imageElements) {
             if (elt.getAttribute('style')) {
@@ -17344,6 +17462,23 @@ class SvgRenderer {
         };
         collectStrokeWidths(rootNode);
         return largestStrokeWidth;
+    }
+
+    /**
+     * Find all instances of a URL-referenced `stroke` in the svg. In 2.0, all gradient strokes
+     * have a round `stroke-linejoin` and `stroke-linecap`... for some reason.
+     */
+    _setGradientStrokeRoundedness () {
+        const elements = this._collectElements();
+
+        for (const elt of elements) {
+            if (!elt.style) continue;
+            const stroke = elt.style.stroke || elt.getAttribute('stroke');
+            if (stroke && stroke.match(/^url\(#.*\)$/)) {
+                elt.style['stroke-linejoin'] = 'round';
+                elt.style['stroke-linecap'] = 'round';
+            }
+        }
     }
 
     /**
@@ -17420,37 +17555,45 @@ class SvgRenderer {
     }
 
     /**
-     * Draw the SVG to a canvas.
+     * Synchronously draw the loaded SVG to this renderer's `canvas`.
+     * @param {number} [scale] - Optionally, also scale the image by this factor.
+     */
+    draw (scale) {
+        if (!this.loaded) throw new Error('SVG image has not finished loading');
+        this._drawFromImage(scale);
+    }
+
+    /**
+     * Asynchronously draw the (possibly non-loaded) SVG to a canvas.
      * @param {number} [scale] - Optionally, also scale the image by this factor.
      * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
+     * @deprecated Use the `loadSVG` and public `draw` method instead.
      */
     _draw (scale, onFinish) {
         // Convert the SVG text to an Image, and then draw it to the canvas.
-        if (this._cachedImage) {
-            this._drawFromImage(scale, onFinish);
+        if (this._cachedImage === null) {
+            this._createSVGImage(() => {
+                this._drawFromImage(scale);
+                onFinish();
+            });
         } else {
-            const img = new Image();
-            img.onload = () => {
-                this._cachedImage = img;
-                this._drawFromImage(scale, onFinish);
-            };
-            const svgText = this.toString(true /* shouldInjectFonts */);
-            img.src = `data:image/svg+xml;utf8,${encodeURIComponent(svgText)}`;
+            this._drawFromImage(scale);
+            onFinish();
         }
     }
 
     /**
      * Draw to the canvas from a loaded image element.
      * @param {number} [scale] - Optionally, also scale the image by this factor.
-     * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
      **/
-    _drawFromImage (scale, onFinish) {
-        if (!this._cachedImage) return;
+    _drawFromImage (scale) {
+        if (this._cachedImage === null) return;
 
         const ratio = Number.isFinite(scale) ? scale : 1;
         const bbox = this._measurements;
         this._canvas.width = bbox.width * ratio;
         this._canvas.height = bbox.height * ratio;
+        if (this._canvas.width <= 0 || this._canvas.height <= 0) return;
         this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
         this._context.scale(ratio, ratio);
         this._context.drawImage(this._cachedImage, 0, 0);
@@ -17459,10 +17602,6 @@ class SvgRenderer {
         // Set the CSS style of the canvas to the actual measurements.
         this._canvas.style.width = bbox.width;
         this._canvas.style.height = bbox.height;
-        // All finished - call the callback if provided.
-        if (onFinish) {
-            onFinish();
-        }
     }
 }
 
@@ -17602,12 +17741,12 @@ module.exports = function (svgString) {
     }
 
     // The <metadata> element is not needed for rendering and sometimes contains
-    // unparseable garbage from Illustrator :(
+    // unparseable garbage from Illustrator :( Empty out the contents.
     // Note: [\s\S] matches everything including newlines, which .* does not
-    svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '');
+    svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '<metadata></metadata>');
 
-    // Strip script tags and javascript executing
-    svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '');
+    // Empty script tags and javascript executing
+    svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '<script></script>');
 
     return svgString;
 };
@@ -18960,9 +19099,6 @@ var TextBubbleSkin = function (_Skin) {
         /** @type {HTMLCanvasElement} */
         _this._canvas = document.createElement('canvas');
 
-        /** @type {WebGLTexture} */
-        _this._texture = null;
-
         /** @type {Array<number>} */
         _this._size = [0, 0];
 
@@ -19221,9 +19357,7 @@ var TextBubbleSkin = function (_Skin) {
                     this._texture = twgl.createTexture(gl, textureOptions);
                 }
 
-                gl.bindTexture(gl.TEXTURE_2D, this._texture);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureData);
-                this._silhouette.update(textureData);
+                this._setTexture(textureData);
             }
 
             return this._texture;
@@ -22302,7 +22436,7 @@ function fromByteArray (uint8) {
 
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var nBits = -7
@@ -22315,12 +22449,12 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   e = s & ((1 << (-nBits)) - 1)
   s >>= (-nBits)
   nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   m = e & ((1 << (-nBits)) - 1)
   e >>= (-nBits)
   nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
   if (e === 0) {
     e = 1 - eBias
@@ -22335,7 +22469,7 @@ exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 
 exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
+  var eLen = (nBytes * 8) - mLen - 1
   var eMax = (1 << eLen) - 1
   var eBias = eMax >> 1
   var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -22368,7 +22502,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       m = 0
       e = eMax
     } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
+      m = ((value * c) - 1) * Math.pow(2, mLen)
       e = e + eBias
     } else {
       m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
