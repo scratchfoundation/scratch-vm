@@ -322,6 +322,12 @@ class Target extends EventEmitter {
                         this.runtime.ioDevices.cloud.requestRenameVariable(oldName, newName);
                     }
 
+                    if (variable.type === '') {
+                        this.runtime.targets.forEach(t => t.blocks.updateVariableName(
+                            oldName, newName, this.isStage ? '_stage_' : this.getName()));
+                        this.runtime.requestBlocksUpdate();
+                    }
+
                     const blocks = this.runtime.monitorBlocks;
                     blocks.changeBlock({
                         id: id,

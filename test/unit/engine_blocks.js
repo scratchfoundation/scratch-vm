@@ -26,6 +26,7 @@ test('spec', t => {
     t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
     t.type(b.mutationToXML, 'function');
+    t.type(b.updateVariableName, 'function');
 
     t.end();
 });
@@ -804,6 +805,108 @@ test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
     t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
     b.updateAssetName('name1', 'name2', 'backdrop');
     t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    t.end();
+});
+
+test('updateVariableName renames variables in sensing_of block', t => {
+    const b = new Blocks(new Runtime());
+    b.createBlock({
+        id: 'id1',
+        opcode: 'sensing_of',
+        fields: {
+            PROPERTY: {
+                name: 'PROPERTY',
+                value: 'foo'
+            }
+        },
+        inputs: {
+            OBJECT: {
+                name: 'OBJECT',
+                block: 'id2',
+                shadow: 'id2'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            OBJECT: {
+                name: 'OBJECT',
+                value: '_stage_'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'foo');
+    b.updateVariableName('foo', 'bar', '_stage_');
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'bar');
+    t.end();
+});
+
+test('updateVariableName doesn\'t rename if name is not being used', t => {
+    const b = new Blocks(new Runtime());
+    b.createBlock({
+        id: 'id1',
+        opcode: 'sensing_of',
+        fields: {
+            PROPERTY: {
+                name: 'PROPERTY',
+                value: 'foo'
+            }
+        },
+        inputs: {
+            OBJECT: {
+                name: 'OBJECT',
+                block: 'id2',
+                shadow: 'id2'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            OBJECT: {
+                name: 'OBJECT',
+                value: '_stage_'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'foo');
+    b.updateVariableName('meow', 'meow2', '_stage_');
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'foo');
+    t.end();
+});
+
+test('updateVariableName doesn\'t rename other targets\' variables', t => {
+    const b = new Blocks(new Runtime());
+    b.createBlock({
+        id: 'id1',
+        opcode: 'sensing_of',
+        fields: {
+            PROPERTY: {
+                name: 'PROPERTY',
+                value: 'foo'
+            }
+        },
+        inputs: {
+            OBJECT: {
+                name: 'OBJECT',
+                block: 'id2',
+                shadow: 'id2'
+            }
+        }
+    });
+    b.createBlock({
+        id: 'id2',
+        fields: {
+            OBJECT: {
+                name: 'OBJECT',
+                value: '_stage_'
+            }
+        }
+    });
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'foo');
+    b.updateVariableName('foo', 'bar', 'Cat');
+    t.equals(b.getBlock('id1').fields.PROPERTY.value, 'foo');
     t.end();
 });
 

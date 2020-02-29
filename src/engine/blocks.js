@@ -915,6 +915,33 @@ class Blocks {
     }
 
     /**
+     * Update blocks after a variable gets renamed.
+     * Any block referring to the old name of the asset should get updated
+     * to refer to the new name.
+     * @param {string} oldName The old name of the asset that was renamed.
+     * @param {string} newName The new name of the asset that was renamed.
+     * @param {string} targetName The name of the target the variable belongs to.
+     */
+    updateVariableName (oldName, newName, targetName) {
+        const blocks = this._blocks;
+        for (const blockId in blocks) {
+            const block = this.getBlock(blockId);
+            if (block &&
+                block.fields.hasOwnProperty('PROPERTY') &&
+                block.opcode === 'sensing_of' &&
+                block.fields.PROPERTY.value === oldName &&
+                block.inputs.hasOwnProperty('OBJECT')) {
+                const menuFields = this.getBlock(block.inputs.OBJECT.shadow).fields;
+                if (
+                    menuFields.hasOwnProperty('OBJECT') &&
+                    menuFields.OBJECT.value === targetName) {
+                    block.fields.PROPERTY.value = newName;
+                }
+            }
+        }
+    }
+
+    /**
      * Update blocks after a sound, costume, or backdrop gets renamed.
      * Any block referring to the old name of the asset should get updated
      * to refer to the new name.
