@@ -334,7 +334,7 @@ class PrimeMotor {
      */
     turnOnForRotation (rotations, sign) {
         if (this._power === 0) return;
-        
+
         const cmd = this._parent.generateOutputCommand({
             m: 'scratch.motor_run_turns',
             p: {
@@ -597,7 +597,7 @@ class Prime {
         const cmd = this.generateOutputCommand({
             m: 'scratch.sound_off'
         });
-        
+
         return this.send(cmd);
     }
 
@@ -645,7 +645,7 @@ class Prime {
             distance: 0
         };
         this._clearSensorsAndMotors();
-        
+
         if (this._bt) {
             this._bt.disconnect();
         }
@@ -736,7 +736,7 @@ class Prime {
      * @private
      */
     _onConnect () {
-             
+
     }
 
     /**
@@ -794,7 +794,7 @@ class Prime {
                 }
                 // TODO: Remove motors if they disappeared!
             }
-            
+
             this._sensors.tiltX = parameters[PrimePort.POSITION][0];
             this._sensors.tiltY = parameters[PrimePort.POSITION][1];
 
