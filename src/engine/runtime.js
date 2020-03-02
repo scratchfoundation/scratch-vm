@@ -969,8 +969,7 @@ class Runtime extends EventEmitter {
                 colour: categoryInfo.color1,
                 colourSecondary: categoryInfo.color2,
                 colourTertiary: categoryInfo.color3,
-                outputShape: menuInfo.acceptReporters ?
-                    ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
+                outputShape: this._calcMenuOutputShape(menuInfo),
                 args0: [
                     {
                         type: menuName === 'columnMenu' ? 'field_datafile' : 'field_dropdown',
@@ -980,6 +979,13 @@ class Runtime extends EventEmitter {
                 ]
             }
         };
+    }
+
+    _calcMenuOutputShape(menuInfo) {
+        if(menuInfo.squareOutput) {
+            return ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+        }
+        else return menuInfo.acceptReporters ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE
     }
 
     _buildCustomFieldInfo (fieldName, fieldInfo, extensionId, categoryInfo) {

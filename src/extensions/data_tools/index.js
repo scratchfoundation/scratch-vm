@@ -39,7 +39,7 @@ class DataTools {
 
         this._mapHelper = new MapHelper();
 
-        this.getColumnAtRow = this.getColumnAtRow.bind(this);
+        this.getRow = this.getRow.bind(this);
         this.generateFileDisplayName = this.generateFileDisplayName.bind(this);
         this.addDataFile = this.addDataFile.bind(this);
     }
@@ -162,14 +162,14 @@ class DataTools {
                     opcode: 'mapFunctionToColumn',
                     text: formatMessage({
                         id: 'datatools.mapFunctionToColumn',
-                        default: 'map [COLUMN]',
+                        default: 'map [NAME]',
                         description: 'maps a given dataset'
                     }),
                     blockType: BlockType.FUNCTION,
                     arguments: {
-                        COLUMN: {
-                            type: ArgumentType.DATA_FILE,
-                            menu: 'columnMenu',
+                        NAME: {
+                            type: ArgumentType.string,
+                            menu: 'fileMenuSquare',
                         }
                     }
                 },
@@ -177,20 +177,30 @@ class DataTools {
                     opcode: 'mapInput',
                     text: formatMessage({
                         id: 'datatools.mapInput',
-                        default: 'map input',
+                        default: 'current row at [COLUMN]',
                         description: 'gets the value of a column for the map function'
-                    }),                
+                    }),     
+                    arguments: {
+                        COLUMN: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "column"
+                        }
+                    },      
                     blockType: BlockType.REPORTER,
                 },
                 {
                     opcode: 'setMapResult',
                     text: formatMessage({
                         id: 'datatools.setMapResult',
-                        default: 'set map result to [VALUE]',
+                        default: 'set map result at [COLUMN] to [VALUE]',
                         description: 'sets the value of the map function'
                     }),                
                     blockType: BlockType.COMMAND,
                     arguments: {
+                        COLUMN: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "column"
+                        },
                         VALUE: {
                             type: ArgumentType.STRING,
                             defaultValue: " "
@@ -219,6 +229,11 @@ class DataTools {
                 },
                 fileMenu: {
                     acceptReporters: true,
+                    items: 'getFileNames'
+                },
+                fileMenuSquare: {
+                    acceptReporters: true,
+                    squareOutput: true,
                     items: 'getFileNames'
                 }
             }
@@ -531,12 +546,12 @@ class DataTools {
     /**
      * Gets a value for the map input
      * See 'getMapInput' in 'map-helper.js' for more.     
-     * @param {object} args The block's arguments, unused
+     * @param {object} args The block's arguments
      * @param {object} util Block utility provided by the runtime
      * @returns {string | number} The column value at the loop's current position
      */
     mapInput(args, util) {
-        return this._mapHelper.getMapInput(util);
+        return this._mapHelper.getMapInput(args, util);
     }
 
     /**
@@ -546,9 +561,7 @@ class DataTools {
      * @param {object} util Block utility provided by the runtime
      */
     setMapResult(args, util) {
-        if(args.VALUE) {
-            this._mapHelper.setMapResult(args.VALUE, util);
-        }
+        this._mapHelper.setMapResult(args, util);
     }
 
 
@@ -562,48 +575,30 @@ class DataTools {
      */
     mapFunctionToColumn(args, util) {
         //Initialization
-        if(typeof args.COLUMN === 'undefined') return;
+        if(typeof args.NAME === 'undefined') return "";
 
-        let colArr = args.COLUMN.split(']');
-        if(colArr.length < 1) {
-            alert("Map Funtion: Invalid input.");
-            return;
-        }
-
-        let fileName = colArr[0].substring(1);
-        let rowCount = this.getRowCount({FILENAME: fileName})
+        //let fileName = colArr[0].substring(1);
+        let rowCount = this.getRowCount({FILENAME: args.NAME})
 
         let topBlock = util.thread.topBlock;
 
-        let generatedMap = this._mapHelper.getGeneratedMap(topBlock, args.COLUMN);
-        if(generatedMap) return generatedMap;
-
         this._mapHelper.checkRegenerateFunctionBlockDepthMap(topBlock, util);
-
         let id = this._mapHelper.getID(topBlock);
 
-        this._mapHelper.initializeUtil(util, id);
-
-        // Only execute once per frame.
-        // When the branch finishes, `repeat` will be executed again and
-        // the second branch will be taken, yielding for the rest of the frame.
-        // Decrease counter
-        util.stackFrame.loopCounter[id]++;
-
-        if(util.stackFrame.loopCounter[id] > 1 && this._mapHelper.checkMapResult(id)) {
-            alert("Map Function: Map result not set.");
-            return;
-        }
-
-        if(rowCount === 0) {
-            alert("Map Function: Must select a file.");
-            return;
-        }
+        let generatedMap = this._mapHelper.getGeneratedMap(topBlock, args.NAME);
+        if(generatedMap) return generatedMap;
 
         // If we still have some left, start the branch.
         return this._mapHelper.executeMapFunction(args, util, id, rowCount, 
                                                     this.addDataFile, this.generateFileDisplayName,
-                                                    this.getColumnAtRow);
+                                                    this.getRow);
+    }
+
+    getRow(fileName, row) {
+        if(this._files[fileName]) {
+            return this._files[fileName][row - 1];
+        }
+        else return null;
     }
 
     /**

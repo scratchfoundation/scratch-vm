@@ -15,7 +15,7 @@ class MapHelper {
          * Holds retrieved column values for each map function block.
          * Each value is accessible by the function block's ID
          */
-        this._columnValues = {};
+        this._currentRowValues = {};
 
         /**
          * Holds the working results of mapping a dataset.
@@ -48,6 +48,10 @@ class MapHelper {
          * Each value is accessible by the top block's ID and the requested column data.
          */
         this._generatedMaps = {};
+
+        this._loopCounters = {};
+
+        this._errors = {};
     }
 
     /**
@@ -60,23 +64,21 @@ class MapHelper {
         return this._depthMaps[topBlock][this._depths[topBlock]];
     }
 
-    /**
-     * Initializes the stack frame's loop counter(s). Each function block's
-     * loop counter is accessible by its ID.
-     * @param {object} util The block utility that is being initialized
-     * @param {string} id The current function block's ID
-     */
-    initializeUtil(util, id) {
-        if (typeof util.stackFrame.loopCounter === 'undefined') {
-            util.stackFrame.loopCounter = {};
-        }
-
-        if(!util.stackFrame.loopCounter[id]) {
-            util.stackFrame.loopCounter[id] = 0;
+    incrementLoopCounter(id, util) {
+        if(!this._loopCounters[id]) {
+            this._loopCounters[id] = 0;
             if(typeof this._mapResults[id] !== 'undefined') {
                 delete this._mapResults[id];
             }
         }
+
+        if(this._loopCounters[id] > 0 && this.checkMapResult(id)) {
+            this._handleError("Map result not set.", util.thread.topBlock);
+            return false;
+        }
+
+        this._loopCounters[id]++;
+        return true;
     }
 
     /**
@@ -84,9 +86,16 @@ class MapHelper {
      * @param {object} util Block utility provided by the runtime
      * @returns {string | number} The current value of the running function block
      */
-    getMapInput(util) {
+    getMapInput(args, util) {
         let id = this._findContainingLoopBlock(util);
-        return this._columnValues[id];
+        if(!this._currentRowValues[id][args.COLUMN]) {
+            //TODO: Check this
+            //return `Column [${args.COLUMN}] not found`;
+            this._handleError(`Can't find column [${args.COLUMN}]`, util.thread.topBlock);
+            return "";
+        }
+
+        return this._currentRowValues[id][args.COLUMN];
     }
 
     /**
@@ -96,15 +105,19 @@ class MapHelper {
      * @param {string | number} value The value to be added
      * @param {object} util Block utility object provided by the runtime
      */
-    setMapResult(value, util) {
+    setMapResult(args, util) {
         //This should always find the parent map function block
-        let current = this._findContainingLoopBlock(util);
+        let id = this._findContainingLoopBlock(util);
 
-        if(typeof this._mapResults[current] === 'undefined') {
-            this._mapResults[current] = [];
+        if(typeof this._mapResults[id] === 'undefined') {
+            this._mapResults[id] = [];
         }
 
-        this._mapResults[current].push(value);
+        if(typeof this._mapResults[id][this._loopCounters[id] - 1] === 'undefined') {
+            this._mapResults[id][this._loopCounters[id] - 1] = {};
+        }
+
+        this._mapResults[id][this._loopCounters[id] - 1][args.COLUMN] = args.VALUE
     }
 
     /**
@@ -112,12 +125,12 @@ class MapHelper {
      * allows us to save time recalculating a map function that has already been
      * run, which additionally spares more issues arising.
      * @param {string} topBlock The running thread's current top block
-     * @param {string} column The current function block's COLUMN input
+     * @param {string} name The current function block's NAME input
      * @returns {string} The generated data set's name (if found) or null
      */
-    getGeneratedMap(topBlock, column) {
-        if(this._generatedMaps[topBlock] && this._generatedMaps[topBlock][column]) {
-            return this._generatedMaps[topBlock][column];
+    getGeneratedMap(topBlock, name) {
+        if(this._generatedMaps[topBlock] && this._generatedMaps[topBlock][name]) {
+            return this._generatedMaps[topBlock][name];
         }
         else return null;
     }
@@ -135,12 +148,12 @@ class MapHelper {
     }
 
     /**
-     * Checks to see if the map results for an ID are empty
+     * Checks to see if the map results for an ID are empty or don't match an expected value
      * @param {string} id The current function block's ID
      * @returns {boolean} Whether or not the map results for this ID are empty
      */
     checkMapResult(id) {
-        return !this._mapResults[id];
+        return !this._mapResults[id] || this._mapResults[id].length !== this._loopCounters[id];
     }
 
     /**
@@ -153,52 +166,116 @@ class MapHelper {
      * @param {int} rowCount The row count of the current data set
      * @param {Function} addDataFile Function to add a data file to the Data Tools extension
      * @param {Function} generateFileDisplayName Function to generate a displayable name for the generated data set
-     * @param {Function} getColumnAtRow Function to get a column value at a specific row
+     * @param {Function} getRow Function to get a column value at a specific row
      * @returns {string} The name of the resulting data set
      */
-    executeMapFunction(args, util, id, rowCount, addDataFile, generateFileDisplayName, getColumnAtRow) {
-        let colArr = args.COLUMN.split(']');
-        let fileName = colArr[0].substring(1);
+    executeMapFunction(args, util, id, rowCount, addDataFile, generateFileDisplayName, getRow) {
+        let topBlock = util.thread.topBlock;
 
-        if (util.stackFrame.loopCounter[id] <= rowCount) {
-            this._columnValues[id] = getColumnAtRow({COLUMN: args.COLUMN, ROW: util.stackFrame.loopCounter[id]});
+        if(!this._errors[topBlock]  && rowCount === 0) {
+            alert("Map Function: Must select a file.");
+            this._handleError("Must select a file.", topBlock);
+        }
 
-            //this._blockIDs[id] = util.startFunctionBranch("datatools_mapFunctionToColumn", this._blockIDs[id]);
+        if(this._errors[topBlock]) {
+            this._deleteWorkingData(id, id !== topBlock ? null : topBlock);
+            return "";
+        }
+
+        if(!this._loopCounters[id]) {
+            this._loopCounters[id] = 0;
+        }
+
+        if(this._loopCounters[id] > 0 && this.checkMapResult(id)) {
+            this._handleError("Map result not set.", util.thread.topBlock);
+            return "";
+        }
+
+        this._loopCounters[id]++;
+
+        if (this._loopCounters[id] <= rowCount) {
+            this._currentRowValues[id] = getRow(args.NAME, this._loopCounters[id]);
+
             util.startFunctionBranch(id);
 
         }
         else {
-            let topBlock = util.thread.topBlock;
-            this._columnValues[id] = "";
-
-            let name = "MAP: " + fileName + " |" + colArr[1];
+            let name = "MAP: " + args.NAME;
 
             name = generateFileDisplayName(name);
 
             if(!this._generatedMaps[topBlock]) {
                 this._generatedMaps[topBlock] = {};
             }
-            this._generatedMaps[topBlock][args.COLUMN] = `[${name}] VALUE`;
+            this._generatedMaps[topBlock][args.NAME] = name;
 
-            addDataFile(name, this._mapResults[id].map(result => {return {"VALUE": result};}))
+            addDataFile(name, this._generateNewDataSet(this._mapResults[id]));
             
             if(this._depths[topBlock] <= 0) {
-                delete this._generatedMaps[topBlock];
-                delete this._depthMaps[topBlock];
-                delete this._depths[topBlock];
+                this._deleteWorkingData(id, topBlock);
             }
             else {
                 this._depths[topBlock]--;
+                this._deleteWorkingData(id);
             }
 
-            delete this._columnValues[id];
-            delete this._mapResults[id];
 
-            return `[${name}] VALUE`;
+            return name;
         }
     }
 
 //#region PRIVATE methods
+
+    _handleError(message, topBlock) {
+        alert("Map Function: " + message);
+
+        //TODO: More graceful error handling;
+        this._errors[topBlock] = true;
+    }
+
+    _deleteWorkingData(id, topBlock) {  
+        if(id) {
+            delete this._currentRowValues[id];
+            delete this._mapResults[id];
+            delete this._loopCounters[id];
+        }
+
+        if(topBlock) {
+            delete this._generatedMaps[topBlock];
+            delete this._depthMaps[topBlock];
+            delete this._depths[topBlock];
+            delete this._errors[topBlock];
+        }
+    }
+
+    _generateNewDataSet(results) {
+        let data = [];
+        let columns = {};
+
+        results.map(result => {
+            //calculate column values
+            Object.keys(result).forEach(key => {
+                if(!columns[key]) {
+                    columns[key] = (typeof result[key]);
+                }
+            });
+
+            //set new value
+            data.push(result);
+        });
+
+        let cols = Object.keys(columns);
+
+        data.forEach(item => {
+            cols.forEach(col => {
+                if(!item[col]) {
+                    item[col] = columns[col] === 'number' ? 0 : ""; 
+                }
+            });
+        });
+
+        return data;
+    }
 
     /**
      * Finds the containing loop block of the currently running block.
@@ -208,19 +285,19 @@ class MapHelper {
      * @returns {string} The ID of the containing loop block
      */
     _findContainingLoopBlock(util) {
-        let current = util.thread.peekStack(); 
+        let id = util.thread.peekStack(); 
         let blocks = util.target.blocks._blocks;
 
-        while(current !== null && blocks[current].opcode !== 'datatools_mapFunctionToColumn') {
-            current = blocks[current].parent;
+        while(id !== null && blocks[id].opcode !== 'datatools_mapFunctionToColumn') {
+            id = blocks[id].parent;
         }
 
-        if(!current) {
-            alert("Can't find containing loop block.");
+        if(!id) {
+            this._handleError("Can't find containing loop block.", util.thread.topBlock);
             return;
         }
 
-        return current;
+        return id;
     }
 
     /**
