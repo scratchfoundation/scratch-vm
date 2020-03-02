@@ -576,16 +576,16 @@ class Prime {
         });
     }
 
+    playTone (note, durationSec) {
         const cmd = this.generateOutputCommand({
             m: 'scratch.sound_beep_for_time',
             p: {
-                volume: 9,
-                frequency: Math.round(tone),
-                duration: 100 * seconds
+                volume: 100,
+                note: note,
+                duration: durationSec * 1000
             }
         });
-
-        return this.send(cmd);
+        this.send(cmd);
     }
 
     /**
@@ -2041,24 +2041,22 @@ class Scratch3PrimeBlocks {
         });
     }
 
-    /**
-     * @param {object} args - the MIDI note value to convert.
-     * @return {number} - the frequency, in Hz, corresponding to that MIDI note value.
-     * @private
-     */
     playNoteForSeconds (args) {
-        // Note that MIDI note 69 is A4, 440 Hz
-        let durationMS = Cast.toNumber(args.DURATION) * 1000;
-        durationMS = MathUtil.clamp(durationMS, 0, 15000);
-        return new Promise(resolve => {
-            this._peripheral.playTone(440 * Math.pow(2, (args.NOTE - 69) / 12), args.DURATION);
+        let durationSec = Cast.toNumber(args.DURATION);
+        durationSec = MathUtil.clamp(durationSec, 0, 10);
 
-            // Run for some time even when no motor is connected
-            setTimeout(resolve, durationMS);
+        let note = Cast.toNumber(args.NOTE);
+        note = MathUtil.clamp(note, 10, 120);
+
+        this._peripheral.playTone(note, durationSec);
+
+        return new Promise(resolve => {
+            setTimeout(resolve, durationSec * 1000);
         });
     }
 
     // todo: because the input is droppable, this function should:
+    // - strip out any whitespace (e.g. spaces added by the list reporter)
     // - make sure we give the display a string of digits
     // - make sure the string of numbers is the correct length
     displaySymbol (args) {
