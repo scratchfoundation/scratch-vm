@@ -188,7 +188,7 @@ class PrimeMotor {
 
         this._pendingPromiseId = null;
 
-        this.startBraking = this.startBraking.bind(this);
+        // this.startBraking = this.startBraking.bind(this);
         this.turnOff = this.turnOff.bind(this);
     }
 
@@ -304,7 +304,8 @@ class PrimeMotor {
             m: 'scratch.motor_start',
             p: {
                 port: _.invert(PrimePort)[this._index],
-                speed: this._power * this._direction
+                speed: this._power * this._direction,
+                stall: 'True'
             }
         });
 
@@ -312,7 +313,6 @@ class PrimeMotor {
 
         this._isOn = true;
         this._clearTimeout();
-
     }
 
     /**
@@ -323,7 +323,7 @@ class PrimeMotor {
         if (this._power === 0) return;
         milliseconds = Math.max(0, milliseconds);
         this.turnOn();
-        this._setNewTimeout(this.startBraking, milliseconds);
+        this._setNewTimeout(this.turnOff, milliseconds);
     }
 
     /**
@@ -358,10 +358,10 @@ class PrimeMotor {
         const cmd = this._parent.generateOutputCommand({
             m: 'scratch.motor_stop',
             p: {
-                port: _.invert(PrimePort)[this._index]
+                port: _.invert(PrimePort)[this._index],
+                stop: 1 // 0 = STOP_FLOAT, 1 = STOP_BRAKE, 2 = STOP_HOLD
             }
         });
-        log.warn(useLimiter);
         this._parent.send(cmd);
 
         this._isOn = false;
@@ -643,7 +643,7 @@ class Prime {
             tiltY: 0,
             distance: 0
         };
-        this._clearSensorsAndMotors();
+        // this._clearSensorsAndMotors();
 
         if (this._bt) {
             this._bt.disconnect();
@@ -735,7 +735,7 @@ class Prime {
      * @private
      */
     _onConnect () {
-
+        console.log('_onConnect');
     }
 
     /**
@@ -748,14 +748,32 @@ class Prime {
         /**
          * First messages from the hub are non-JSON messages from the REPL.
          */
+        let data;
         try {
-            JSON.parse(Base64Util.base64ToString(base64.message));
+            data = JSON.parse(atob(base64.message));
         } catch (e) {
+            // the errors I've seen here incude:
+            // - the very first message is something like "MicroPython
+            //    v1.10-1527-g865e961de on 2020-01-23; LEGO Technic Large Hub
+            //    with STM32F413xxType "help()" for more information.
+            //    >>>"
+            // - there's an unexpected { character because the message is
+            //    actually two messages concatenated.
+            console.error(e);
             return false;
         }
-        const data = JSON.parse(Base64Util.base64ToString(base64.message));
         const method = data.m;
         const parameters = data.p;
+
+        // console.log('_onMessage', data);
+
+        if (data.e) {
+          console.log('error', atob(data.e));
+        }
+
+        if (method === 'runtime_error') {
+            console.log(atob(parameters[3]));
+        }
 
         switch (method) {
         case PrimeMessage.SENSOR_DATA: {
@@ -788,7 +806,7 @@ class Prime {
                         }
                         break;
                     default:
-                        log.warn(`Type ${type} on port ${_.invert(PrimePort)[port]}`);
+                        // log.warn(`Type ${type} on port ${_.invert(PrimePort)[port]}`);
                     }
                 }
                 // TODO: Remove motors if they disappeared!
@@ -831,6 +849,7 @@ class Prime {
      * @private
      */
     _registerSensorOrMotor (connectID, type) {
+      console.log('_registerSensorOrMotor', connectID, type);
         // TODO: Rename to motor if only doing motor-stuff.
         if (type === PrimeIO.MOTOR_MEDIUM || type === PrimeIO.MOTOR_LARGE) {
             this._motors[connectID] = new PrimeMotor(this, connectID);
@@ -843,7 +862,7 @@ class Prime {
      * @private
      */
     _clearPort (connectID) {
-        log.warn(connectID);
+        // log.warn(connectID);
         // TODO: Rework
         /*
         const type = this._ports[connectID - 1];
