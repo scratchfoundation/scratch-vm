@@ -2058,11 +2058,15 @@ class Scratch3PrimeBlocks {
         });
     }
 
+    // todo: because the input is droppable, this function should:
+    // - make sure we give the display a string of digits
+    // - make sure the string of numbers is the correct length
     displaySymbol (args) {
         return this._peripheral.display(args.MATRIX);
     }
 
     displayClear () {
+      // todo: use a const
         return this._peripheral.display('0000000000000000000000000');
     }
 }
