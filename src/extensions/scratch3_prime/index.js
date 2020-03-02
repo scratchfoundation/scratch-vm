@@ -553,7 +553,7 @@ class Prime {
     }
 
     /**
-     * Displays pixels on the 5x5 LED Matrix
+     * Displays pixels on the 5x5 LED Matrix.
      * @param {int} pixels from left-to-right, top-to-bottom
      * @return {Promise} - a promise of the completion of the display operation.
      */
@@ -566,16 +566,15 @@ class Prime {
                 image: pixels
             }
         });
-        return this.send(cmd);
-    }
 
-    /**
-     * Play a tone from the Prime peripheral for a specific amount of time.
-     * @param {int} tone - the pitch of the tone, in Hz.
-     * @param {int} seconds - the duration of the note, in seconds.
-     * @return {Promise} - a promise of the completion of the play tone send operation.
-     */
-    playTone (tone, seconds) {
+        this.send(cmd);
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, PrimeBT.sendInterval);
+        });
+    }
 
         const cmd = this.generateOutputCommand({
             m: 'scratch.sound_beep_for_time',
