@@ -2083,14 +2083,14 @@ class Scratch3PrimeBlocks {
      * @param {object} args - the pixels to be displayed on the LED Matrix.
      */
     displaySymbol (args) {
-        this._peripheral.display(args.MATRIX);
+        return this._peripheral.display(args.MATRIX);
     }
 
     /**
      * DESCRIPTION
      */
     displayClear () {
-        this._peripheral.display('0000000000000000000000000');
+        return this._peripheral.display('0000000000000000000000000');
     }
 }
 
