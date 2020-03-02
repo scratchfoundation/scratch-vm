@@ -2058,37 +2058,11 @@ class Scratch3PrimeBlocks {
             setTimeout(resolve, durationMS);
         });
     }
-    
-    /**
-     * The samples array for each instrument is the set of pitches of the available audio samples.
-     * This function selects the best one to use to play a given input note, and returns its index
-     * in the samples array.
-     * @param  {number} note - the input note to select a sample for.
-     * @param  {number[]} samples - an array of the pitches of the available samples.
-     * @return {index} the index of the selected sample in the samples array.
-     * @private
-     */
-    _selectSampleIndexForNote (note, samples) {
-        // Step backwards through the array of samples, i.e. in descending pitch, in order to find
-        // the sample that is the closest one below (or matching) the pitch of the input note.
-        for (let i = samples.length - 1; i >= 0; i--) {
-            if (note >= samples[i]) {
-                return i;
-            }
-        }
-        return 0;
-    }
 
-    /**
-     * @param {object} args - the pixels to be displayed on the LED Matrix.
-     */
     displaySymbol (args) {
         return this._peripheral.display(args.MATRIX);
     }
 
-    /**
-     * DESCRIPTION
-     */
     displayClear () {
         return this._peripheral.display('0000000000000000000000000');
     }
