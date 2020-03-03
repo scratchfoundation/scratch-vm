@@ -336,11 +336,13 @@ class PrimeMotor {
         if (this._power === 0) return;
 
         const cmd = this._parent.generateOutputCommand({
-            m: 'scratch.motor_run_turns',
+            m: 'scratch.motor_run_for_degrees',
             p: {
                 port: _.invert(PrimePort)[this._index],
+                degrees: rotations * 360,
                 speed: this._power * this._direction * sign,
-                turns: rotations
+                stall: 'True',
+                stop: 1 // 0 = STOP_FLOAT, 1 = STOP_BRAKE, 2 = STOP_HOLD
             }
         });
 
