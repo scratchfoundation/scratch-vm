@@ -49,6 +49,12 @@ class MapHelper {
          */
         this._generatedMaps = {};
 
+        /**
+         * Holds the loop counters for each currently iterating function block. This allows us
+         * to accurately insert data in the setMapResult function, as we know which row the iteration
+         * is currently on. 
+         * Each value is accessible by the function block's ID
+         */
         this._loopCounters = {};
 
         this._errors = {};
@@ -72,11 +78,6 @@ class MapHelper {
             }
         }
 
-        if(this._loopCounters[id] > 0 && this.checkMapResult(id)) {
-            this._handleError("Map result not set.", util.thread.topBlock);
-            return false;
-        }
-
         this._loopCounters[id]++;
         return true;
     }
@@ -87,7 +88,8 @@ class MapHelper {
      * @returns {string | number} The current value of the running function block
      */
     getMapInput(args, util) {
-        let id = this._findContainingLoopBlock(util);
+        let id = this._findContainingLoopBlock(util, true);
+        if(!id) return;
         if(!this._currentRowValues[id][args.COLUMN]) {
             //TODO: Check this
             //return `Column [${args.COLUMN}] not found`;
@@ -106,8 +108,15 @@ class MapHelper {
      * @param {object} util Block utility object provided by the runtime
      */
     setMapResult(args, util) {
+        if(this._errors[util.thread.topBlock]) {
+            let id = this._findContainingLoopBlock(util, false);
+            if(!id) {
+                this._deleteWorkingData(null, util.thread.topBlock);
+            }
+            return;
+        }
         //This should always find the parent map function block
-        let id = this._findContainingLoopBlock(util);
+        let id = this._findContainingLoopBlock(util, true);
 
         if(typeof this._mapResults[id] === 'undefined') {
             this._mapResults[id] = [];
@@ -172,22 +181,20 @@ class MapHelper {
     executeMapFunction(args, util, id, rowCount, addDataFile, generateFileDisplayName, getRow) {
         let topBlock = util.thread.topBlock;
 
-        if(!this._errors[topBlock]  && rowCount === 0) {
-            alert("Map Function: Must select a file.");
+        if(!this._errors[topBlock] && rowCount === 0) {
             this._handleError("Must select a file.", topBlock);
-        }
-
-        if(this._errors[topBlock]) {
-            this._deleteWorkingData(id, id !== topBlock ? null : topBlock);
-            return "";
         }
 
         if(!this._loopCounters[id]) {
             this._loopCounters[id] = 0;
         }
 
-        if(this._loopCounters[id] > 0 && this.checkMapResult(id)) {
-            this._handleError("Map result not set.", util.thread.topBlock);
+        if(!this._errors[topBlock] && this._loopCounters[id] > 0 && this.checkMapResult(id)) {
+            this._handleError("Map result not set.", topBlock);
+        }
+ 
+        if(this._errors[topBlock]) {
+            this._deleteWorkingData(id, id !== topBlock ? null : topBlock);
             return "";
         }
 
@@ -222,6 +229,14 @@ class MapHelper {
 
             return name;
         }
+    }
+
+    checkID(id) {
+        if(id.includes('datatools')) {
+            alert("Map Function: Can't run in toolbar.");
+            return true;
+        }
+        return false;
     }
 
 //#region PRIVATE methods
@@ -282,17 +297,20 @@ class MapHelper {
      * Can be used to correctly identify which values to return while 
      * running nested loop blocks.
      * @param {object} util Block utility object provided by the runtime
+     * @param {Boolean} showError Allow the function to handle an error.
      * @returns {string} The ID of the containing loop block
      */
-    _findContainingLoopBlock(util) {
+    _findContainingLoopBlock(util, showError) {
         let id = util.thread.peekStack(); 
+        if(this.checkID(id)) return;
+
         let blocks = util.target.blocks._blocks;
 
         while(id !== null && blocks[id].opcode !== 'datatools_mapFunctionToColumn') {
             id = blocks[id].parent;
         }
 
-        if(!id) {
+        if(showError && !id) {
             this._handleError("Can't find containing loop block.", util.thread.topBlock);
             return;
         }
@@ -309,6 +327,9 @@ class MapHelper {
     _getOutermostBlock(util) {
         let outermost;
         let executingBlock = util.thread.peekStack();
+        //We can't run this in the toolbar
+        if(this.checkID(executingBlock)) return null;
+
         let blocks = util.target.blocks._blocks;         
         let options = Object.keys(blocks).filter(key => blocks[key].opcode === 'datatools_mapFunctionToColumn');
 
@@ -341,6 +362,8 @@ class MapHelper {
         let blocks = util.target.blocks._blocks;         
         let options = Object.keys(blocks).filter(key => blocks[key].opcode === 'datatools_mapFunctionToColumn');
         let outermost = this._getOutermostBlock(util);
+        //We can't run this function in the toolbar
+        if(!outermost) return;
 
         let depth = 0;
         let block = outermost;

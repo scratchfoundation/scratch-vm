@@ -577,6 +577,9 @@ class DataTools {
         //Initialization
         if(typeof args.NAME === 'undefined') return "";
 
+        //If we're trying to run in the toolbar, don't
+        if(this._mapHelper.checkID(util.thread.peekStack())) return;
+
         //let fileName = colArr[0].substring(1);
         let rowCount = this.getRowCount({FILENAME: args.NAME})
 
