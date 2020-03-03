@@ -206,21 +206,6 @@ class DataTools {
                             defaultValue: " "
                         }
                     }
-                },
-                {
-                    opcode: 'reduceMappedDataSet',
-                    text: formatMessage({
-                        id: 'datatools.reduceMappedDataSet',
-                        default: 'reduce [NAME]',
-                        description: 'reduces a dataset'
-                    }),                
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        NAME: {
-                            type: ArgumentType.STRING,
-                            defaultValue: " "
-                        }
-                    }       
                 }
             ],
             menus: {
@@ -608,18 +593,6 @@ class DataTools {
             return this._files[fileName][row - 1];
         }
         else return null;
-    }
-
-    /**
-     * Reduces a mapped data set
-     * @param {Object} args The block arguments
-     */
-    reduceMappedDataSet(args) {
-        if(typeof this._files[args.NAME] === 'undefined') {
-            return " ";
-        }
-
-        return JSON.stringify(this._files[args.NAME]);
     }
 }
 
