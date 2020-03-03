@@ -46,7 +46,7 @@ class DataTools {
 
     /**
      * Define the DataTools extension.
-     * @return {object} Extension description.
+     * @return {Object} Extension description.
      */
     getInfo(){
         return {
@@ -242,8 +242,8 @@ class DataTools {
 
     /**
      * Performs a specified action
-     * @param {string} action The action
-     * @param {object} args The arguments for the function
+     * @param {String} action The action
+     * @param {Object} args The arguments for the function
      */
     performAction(action, args) {
         switch(action) {
@@ -268,7 +268,7 @@ class DataTools {
 
     /**
      * Generates column data for dropdown display
-     * @returns {object} An object containing arrays with the columns of each file
+     * @returns {Object} An object containing arrays with the columns of each file
      */
     generateColumnData() {
         let fileNames = Object.keys(this._files);
@@ -339,8 +339,8 @@ class DataTools {
 
     /**
      * Gets the value at a row and column in a given file
-     * @param {object} args Object containing arguments, including COLUMN, ROW, and FILENAME
-     * @returns {string | number} The value at the specified row and column in the specified file 
+     * @param {Object} args Object containing arguments, including COLUMN, ROW, and FILENAME
+     * @returns {String | Number} The value at the specified row and column in the specified file 
      */
     getColumnAtRow(args) {
         let { COLUMN, ROW } = args;
@@ -359,9 +359,9 @@ class DataTools {
     /**
     * Found at https://stackoverflow.com/questions/11665884/how-can-i-parse-a-string-with-a-comma-thousand-separator-to-a-number
     * Parses a number from a localized string 
-    * @param {string} value The initial string value (e.g. '453,323')
-    * @param {string} locale The locale used to parse the string, defaults to the navigator's locale
-    * @return {int} The float value of the string (e.g. 453323)
+    * @param {String} value The initial string value (e.g. '453,323')
+    * @param {String} locale The locale used to parse the string, defaults to the navigator's locale
+    * @return {Number} The float value of the string (e.g. 453323)
     */
     parseNumber(value, locale = navigator.language) {
         const example = Intl.NumberFormat(locale).format('1.1');
@@ -374,7 +374,7 @@ class DataTools {
 
     /**
      * Sets the value at a row and column in a given file
-     * @param {object} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
+     * @param {Object} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
      */
     setColumnAtRow(args) {
         let { COLUMN, ROW, VALUE} = args;
@@ -399,7 +399,7 @@ class DataTools {
 
     /**
      * Adds an empty row to a dataset
-     * @param {object} args Object containing the file name
+     * @param {Object} args Object containing the file name
      */
     addDataFileRow(args) {
         let { FILENAME } = args;
@@ -422,7 +422,7 @@ class DataTools {
 
     /**
      * Gets the row count of a given file
-     * @param {object} args Object containing arguments, including FILENAME
+     * @param {Object} args Object containing arguments, including FILENAME
      * @returns {Number} The row count of the given file
      */
     getRowCount(args){
@@ -437,9 +437,9 @@ class DataTools {
 
     /**
      * Gets the filename of a given reporter block
-     * @param {object} args Unused, holds arguments from the block
-     * @param {object} util Unused, holds utility functions for the block
-     * @param {object} block The block that originally called this function, used to extract the file name
+     * @param {Object} args Unused, holds arguments from the block
+     * @param {Object} util Unused, holds utility functions for the block
+     * @param {Object} block The block that originally called this function, used to extract the file name
      * @returns {String} The name of the file
      */
     getFilename(args, util, block) {
@@ -449,7 +449,7 @@ class DataTools {
     /**
      * Adds a data file to the extension's array of files using the
      * file name as a key.
-     * @param {string} name The original name of the file
+     * @param {String} name The original name of the file
      * @param {Array} fileData The parsed file data stored as an array of JSON objects
      */
     addDataFile(name, fileData) {
@@ -475,7 +475,7 @@ class DataTools {
 
     /**
      * Removes a data file with a given name
-     * @param {string} name The name of the file to be removed
+     * @param {String} name The name of the file to be removed
      * @returns {Boolean} Whether or not the file was successfully removed
      */
     removeDataFile(name) {
@@ -492,8 +492,8 @@ class DataTools {
 
     /**
      * Generates a displayable file name that will handle duplicates by appending "(DUPLICATE_NUM)" if necessary
-     * @param {string} name The original name of the file
-     * @returns {string} The file name that will be displayed
+     * @param {String} name The original name of the file
+     * @returns {String} The file name that will be displayed
      */
     generateFileDisplayName(original) {
         if(!this._files[original]) return original;
@@ -522,7 +522,7 @@ class DataTools {
 
     /**
      * Gets the content of the file
-     * @param {string} name The file's name
+     * @param {String} name The file's name
      * @returns {Array} An array representing the file's contents
      */
     getDataFileContents(name) {
@@ -531,10 +531,10 @@ class DataTools {
 
     /**
      * Updates a data file given a table update
-     * @param {string} fileName The file's name
-     * @param {number} row The specified row
-     * @param {string} colName The specified column
-     * @param {string | number} value The new value
+     * @param {String} fileName The file's name
+     * @param {Number} row The specified row
+     * @param {String} colName The specified column
+     * @param {String | Number} value The new value
      * @returns {Array} An array representing the updated data
      */
     updateDataFileFromTable(fileName, row, colName, value) {
@@ -546,9 +546,9 @@ class DataTools {
     /**
      * Gets a value for the map input
      * See 'getMapInput' in 'map-helper.js' for more.     
-     * @param {object} args The block's arguments
-     * @param {object} util Block utility provided by the runtime
-     * @returns {string | number} The column value at the loop's current position
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility provided by the runtime
+     * @returns {String | Number} The column value at the loop's current position
      */
     mapInput(args, util) {
         return this._mapHelper.getMapInput(args, util);
@@ -557,8 +557,8 @@ class DataTools {
     /**
      * Sets the result of a mapping function to a given value.
      * See 'setMapResult' in 'map-helper.js' for more.
-     * @param {object} args The block's arguments
-     * @param {object} util Block utility provided by the runtime
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility provided by the runtime
      */
     setMapResult(args, util) {
         this._mapHelper.setMapResult(args, util);
@@ -569,16 +569,16 @@ class DataTools {
      * Defines the mapping function loop to iterate through a given data set.
      * Each iteration executes a branch on the given data set and requires 'setMapResult' 
      * to be called on each iteration. 
-     * @param {object} args The block's arguments
-     * @param {object} util Block utility object, used to control the stack frame.
-     * @returns {string} The name of the resulting data set
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility object, used to control the stack frame.
+     * @returns {String} The name of the resulting data set
      */
     mapFunctionToColumn(args, util) {
         //Initialization
         if(typeof args.NAME === 'undefined') return "";
 
         //If we're trying to run in the toolbar, don't
-        if(this._mapHelper.checkID(util.thread.peekStack())) return;
+        if(this._mapHelper.checkRunningInToolbar(util.thread.peekStack())) return;
 
         //let fileName = colArr[0].substring(1);
         let rowCount = this.getRowCount({FILENAME: args.NAME})
@@ -597,6 +597,12 @@ class DataTools {
                                                     this.getRow);
     }
 
+    /**
+     * Gets a row from a dataset
+     * @param {String} fileName The name of the dataset
+     * @param {Number} row The row number, off by 1
+     * @returns {Object} The specified row, or null if the file doesn't exist
+     */
     getRow(fileName, row) {
         if(this._files[fileName]) {
             return this._files[fileName][row - 1];
@@ -606,7 +612,7 @@ class DataTools {
 
     /**
      * Reduces a mapped data set
-     * @param {object} args The block arguments
+     * @param {Object} args The block arguments
      */
     reduceMappedDataSet(args) {
         if(typeof this._files[args.NAME] === 'undefined') {
