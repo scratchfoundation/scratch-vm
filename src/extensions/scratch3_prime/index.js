@@ -738,19 +738,11 @@ class Prime {
         console.log('_onConnect');
     }
 
-    /**
-     * Process the sensor data from the incoming BLE characteristic.
-     * @param {object} base64 - the incoming BLE data.
-     * @return {boolean} - returns false if incoming message is not valid JSON.
-     * @private
-     */
     _onMessage (base64) {
-        /**
-         * First messages from the hub are non-JSON messages from the REPL.
-         */
-        let data;
+        const messageString = atob(base64.message);
+        let messageData = {};
         try {
-            data = JSON.parse(atob(base64.message));
+            messageData = JSON.parse(messageString);
         } catch (e) {
             // the errors I've seen here incude:
             // - the very first message is something like "MicroPython
@@ -759,20 +751,37 @@ class Prime {
             //    >>>"
             // - there's an unexpected { character because the message is
             //    actually two messages concatenated.
-            console.error(e);
-            return false;
+            console.log('caught error', e);
+            const messageStrings = messageString.split('\r');
+            messageStrings.forEach(string => {
+                try {
+                    messageData = JSON.parse(string);
+                } catch (e2) {
+                    console.log('second try caught error', e2);
+                    return;
+                }
+                console.log('handling combined message part', messageData);
+                this._handleMessage(messageData);
+            });
+            return;
         }
+
+        this._handleMessage(messageData);
+    }
+
+    _handleMessage (data) {
         const method = data.m;
         const parameters = data.p;
-
         // console.log('_onMessage', data);
 
         if (data.e) {
-          console.log('error', atob(data.e));
+            console.log('error', atob(data.e));
+            return;
         }
 
         if (method === 'runtime_error') {
             console.log(atob(parameters[3]));
+            return;
         }
 
         switch (method) {
@@ -789,8 +798,8 @@ class Prime {
                         this._sensors.color = 'none';
                         if (info[1][1]) {
                             const c = info[1][1];
-                            this._sensors.color = _.invert(PrimeColor)[c]
-                                .toLowerCase();
+                            // this._sensors.color = _.invert(PrimeColor)[c]
+                            //     .toLowerCase();
                         }
                         break;
                     case PrimeIO.ULTRASONIC:
