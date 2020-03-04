@@ -750,23 +750,16 @@ class Prime {
         try {
             messageData = JSON.parse(messageString);
         } catch (e) {
-            // the errors I've seen here incude:
-            // - the very first message is something like "MicroPython
-            //    v1.10-1527-g865e961de on 2020-01-23; LEGO Technic Large Hub
-            //    with STM32F413xxType "help()" for more information.
-            //    >>>"
-            // - there's an unexpected { character because the message is
-            //    actually two messages concatenated.
-            console.log('caught error', e);
+            // console.log('caught error', e);
             const messageStrings = messageString.split('\r');
             messageStrings.forEach(string => {
                 try {
                     messageData = JSON.parse(string);
                 } catch (e2) {
-                    console.log('second try caught error', e2);
+                    // console.log('second try caught error', e2);
                     return;
                 }
-                console.log('handling combined message part', messageData);
+                // console.log('handling combined message part', messageData);
                 this._handleMessage(messageData);
             });
             return;
