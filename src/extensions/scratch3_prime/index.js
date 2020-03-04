@@ -792,32 +792,33 @@ class Prime {
 
         switch (method) {
         case PrimeMessage.SENSOR_DATA: {
+            // todo: summarize the sensor data spec here
             const ports = parameters.slice(0, 6);
             for (const [port, info] of ports.entries()) {
-                if (info.length) {
-                    const type = info[0];
-                    switch (type) {
+                const deviceType = info[0];
+                if (deviceType !== 0) {
+                    const deviceData = info[1];
+                    switch (deviceType) {
                     case PrimeIO.FORCE:
-                        this._sensors.force = info[1][0];
+                        this._sensors.force = deviceData[0];
                         break;
                     case PrimeIO.COLOR:
                         this._sensors.color = 'none';
-                        if (info[1][1]) {
-                            const c = info[1][1];
-                            // this._sensors.color = _.invert(PrimeColor)[c]
-                            //     .toLowerCase();
-                        }
+                        const c = deviceData[1];
+                        console.log(c);
+                        // this._sensors.color = _.invert(PrimeColor)[c]
+                        //     .toLowerCase();
                         break;
                     case PrimeIO.ULTRASONIC:
-                        this._sensors.distance = info[1][0];
+                        this._sensors.distance = deviceData[0];
                         break;
                     case PrimeIO.MOTOR_MEDIUM:
                     case PrimeIO.MOTOR_LARGE:
                         // Register sensor value
                         if (this.motor(port)) {
-                            this._motors[port].position = info[1][2];
+                            this._motors[port].position = deviceData[2];
                         } else {
-                            this._registerSensorOrMotor(port, type);
+                            this._registerSensorOrMotor(port, deviceType);
                         }
                         break;
                     default:
