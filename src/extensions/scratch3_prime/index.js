@@ -305,7 +305,7 @@ class PrimeMotor {
             p: {
                 port: _.invert(PrimePort)[this._index],
                 speed: this._power * this._direction,
-                stall: 'True'
+                stall: 'False'
             }
         });
 
@@ -341,7 +341,7 @@ class PrimeMotor {
                 port: _.invert(PrimePort)[this._index],
                 degrees: rotations * 360,
                 speed: this._power * this._direction * sign,
-                stall: 'True',
+                stall: 'False',
                 stop: 1 // 0 = STOP_FLOAT, 1 = STOP_BRAKE, 2 = STOP_HOLD
             }
         });
