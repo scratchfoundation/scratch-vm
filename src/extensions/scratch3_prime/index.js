@@ -453,7 +453,7 @@ class Prime {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
-            tiltZ: 0,
+            yaw: 0,
             color: 'none',
             oldColor: 'none',
             force: 0
@@ -493,6 +493,10 @@ class Prime {
      */
     get tiltY () {
         return this._sensors.tiltY;
+    }
+
+    get yaw () {
+        return this._sensors.yaw;
     }
 
     /**
@@ -823,8 +827,10 @@ class Prime {
                 // TODO: Remove motors if they disappeared!
             }
 
-            this._sensors.tiltX = parameters[PrimePort.POSITION][0];
+            // position data here is in the order: yaw, pitch, roll
+            this._sensors.yaw = parameters[PrimePort.POSITION][0];
             this._sensors.tiltY = parameters[PrimePort.POSITION][1];
+            this._sensors.tiltX = parameters[PrimePort.POSITION][2];
 
             break;
         }
@@ -1264,7 +1270,17 @@ class Scratch3PrimeBlocks {
                             defaultValue: PrimeTiltDirection.UP
                         }
                     }
-                }/* ,
+                }
+                // {
+                //     opcode: 'getYaw',
+                //     text: formatMessage({
+                //         id: 'Prime.getYaw',
+                //         default: 'direction',
+                //         description: 'the yaw angle reported by the hub'
+                //     }),
+                //     blockType: BlockType.REPORTER
+                // }
+                /* ,
                 {
                     opcode: 'setLightHue',
                     text: formatMessage({
@@ -1960,16 +1976,20 @@ class Scratch3PrimeBlocks {
     _getTiltAngle (direction) {
         switch (direction) {
         case PrimeTiltDirection.UP:
-            return this._peripheral.tiltY > 90 ? 256 - this._peripheral.tiltY : -this._peripheral.tiltY;
+            return this._peripheral.tiltY
         case PrimeTiltDirection.DOWN:
-            return this._peripheral.tiltY > 90 ? this._peripheral.tiltY - 256 : this._peripheral.tiltY;
+            return -this._peripheral.tiltY;
         case PrimeTiltDirection.LEFT:
-            return this._peripheral.tiltX > 90 ? this._peripheral.tiltX - 256 : this._peripheral.tiltX;
+            return this._peripheral.tiltX;
         case PrimeTiltDirection.RIGHT:
-            return this._peripheral.tiltX > 90 ? 256 - this._peripheral.tiltX : -this._peripheral.tiltX;
+            return -this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
+    }
+
+    getYaw () {
+        return this._peripheral.yaw;
     }
 
     /**
