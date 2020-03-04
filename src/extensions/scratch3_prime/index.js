@@ -599,6 +599,10 @@ class Prime {
      * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
+        // todo: this causes the speaker to make a clicking sound, and this
+        // command is run every time you click stop or green flag. is this a
+        // spike hub runtime bug? or should we keep a flag and only call this
+        // if we are currently playing a tone?
         const cmd = this.generateOutputCommand({
             m: 'scratch.sound_off'
         });
@@ -1662,6 +1666,7 @@ class Scratch3PrimeBlocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnForRotation (args) {
+        // todo: block should bail out if no motor is connected
         // TODO: cast args.MOTOR_ID?
         // let degrees = Cast.toNumber(args.ROTATION) * 360;
         // TODO: Clamps to 100 rotations. Consider changing.
