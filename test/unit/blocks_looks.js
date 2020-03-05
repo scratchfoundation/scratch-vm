@@ -15,7 +15,9 @@ const util = {
                 {name: 'second name'},
                 {name: 'third name'}
             ]
-        }
+        },
+        _customState: {},
+        getCustomState: () => util.target._customState
     }
 };
 
@@ -202,14 +204,15 @@ test('numbers should be rounded to two decimals in say', t => {
     const args = {MESSAGE: 3.14159};
     const expectedSayString = '3.14';
 
-    rt.removeAllListeners('SAY'); // Prevent say blocks from executing
-
-    rt.addListener('SAY', (target, type, sayString) => {
-        t.strictEqual(sayString, expectedSayString);
-        t.end();
+    rt.addListener('SAY', () => {
+        const bubbleState = util.target.getCustomState(Looks.STATE_KEY);
+        t.strictEqual(bubbleState.text, expectedSayString);
     });
 
     looks.say(args, util);
+    looks.think(args, util);
+
+    t.end();
 });
 
 test('clamp graphic effects', t => {
