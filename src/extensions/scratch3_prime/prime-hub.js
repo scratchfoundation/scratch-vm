@@ -43,7 +43,7 @@ const PrimeMessage = {
     FIRMWARE_STATUS: 6
 };
 
-const PrimePort = {
+const PrimePortId = {
     A: 0,
     B: 1,
     C: 2,
@@ -480,9 +480,9 @@ class PrimeHub {
             }
 
             // position data here is in the order: yaw, pitch, roll
-            this._sensors.yaw = parameters[PrimePort.POSITION][0];
-            this._sensors.tiltY = parameters[PrimePort.POSITION][1];
-            this._sensors.tiltX = parameters[PrimePort.POSITION][2];
+            this._sensors.yaw = parameters[PrimePortId.POSITION][0];
+            this._sensors.tiltY = parameters[PrimePortId.POSITION][1];
+            this._sensors.tiltX = parameters[PrimePortId.POSITION][2];
 
             break;
         }

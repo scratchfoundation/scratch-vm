@@ -4,6 +4,12 @@
 
 const PrimePortName = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+const PrimeMotorStopState = {
+    FLOAT: 0,
+    BRAKE: 1,
+    HOLD: 2
+};
+
 class PrimeMotor {
     /**
      * Construct a Prime Motor instance.
@@ -231,7 +237,7 @@ class PrimeMotor {
                 degrees: rotations * 360,
                 speed: this._power * this._direction * sign,
                 stall: 'False',
-                stop: 1 // 0 = STOP_FLOAT, 1 = STOP_BRAKE, 2 = STOP_HOLD
+                stop: PrimeMotorStopState.FLOAT
             }
         });
 
@@ -250,7 +256,7 @@ class PrimeMotor {
             m: 'scratch.motor_stop',
             p: {
                 port: PrimePortName[this._index],
-                stop: 1 // 0 = STOP_FLOAT, 1 = STOP_BRAKE, 2 = STOP_HOLD
+                stop: PrimeMotorStopState.FLOAT
             }
         });
         this._parent.send(cmd);

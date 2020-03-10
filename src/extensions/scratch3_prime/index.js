@@ -63,7 +63,7 @@ const PrimeGesture = {
  * @readonly
  * @enum {string}
  */
-const PrimeMotorLabel = {
+const PrimeMotorValue = {
     A: 'A',
     B: 'B',
     C: 'C',
@@ -164,7 +164,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         },
                         DURATION: {
                             type: ArgumentType.NUMBER,
@@ -184,7 +184,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         },
                         ROTATION: {
                             type: ArgumentType.NUMBER,
@@ -204,7 +204,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         }
                     }
                 },
@@ -220,7 +220,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         }
                     }
                 },
@@ -236,7 +236,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.ALL
+                            defaultValue: PrimeMotorValue.ALL
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
@@ -256,7 +256,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_ID: {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         },
                         MOTOR_DIRECTION: {
                             type: ArgumentType.STRING,
@@ -277,7 +277,7 @@ class Scratch3PrimeBlocks {
                         MOTOR_REPORTER_ID: {
                             type: ArgumentType.NUMBER,
                             menu: 'MOTOR_REPORTER_ID',
-                            defaultValue: PrimeMotorLabel.A
+                            defaultValue: PrimeMotorValue.A
                         }
                     }
                 },
@@ -478,52 +478,28 @@ class Scratch3PrimeBlocks {
             menus: {
                 MOTOR_ID: [
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorId.a',
-                            default: 'A',
-                            description: 'label for motor A element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.A
+                        text: 'A',
+                        value: PrimeMotorValue.A
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorId.b',
-                            default: 'B',
-                            description: 'label for motor B element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.B
+                        text: 'B',
+                        value: PrimeMotorValue.B
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorId.c',
-                            default: 'C',
-                            description: 'label for motor C element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.C
+                        text: 'C',
+                        value: PrimeMotorValue.C
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorId.d',
-                            default: 'D',
-                            description: 'label for motor D element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.D
+                        text: 'D',
+                        value: PrimeMotorValue.D
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.e',
-                            default: 'E',
-                            description: 'label for motor E element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.E
+                        text: 'E',
+                        value: PrimeMotorValue.E
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.f',
-                            default: 'F',
-                            description: 'label for motor F element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimeMotorLabel.F
+                        text: 'F',
+                        value: PrimeMotorValue.F
                     },
                     {
                         text: formatMessage({
@@ -531,57 +507,33 @@ class Scratch3PrimeBlocks {
                             default: 'all motors',
                             description: 'label for all motors element in motor menu for LEGO Prime extension'
                         }),
-                        value: PrimeMotorLabel.ALL
+                        value: PrimeMotorValue.ALL
                     }
                 ],
                 MOTOR_REPORTER_ID: [
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.a',
-                            default: 'A',
-                            description: 'label for motor A element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.A
+                        text: 'A',
+                        value: PrimeMotorValue.A
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.b',
-                            default: 'B',
-                            description: 'label for motor B element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.B
+                        text: 'B',
+                        value: PrimeMotorValue.B
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.c',
-                            default: 'C',
-                            description: 'label for motor C element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.C
+                        text: 'C',
+                        value: PrimeMotorValue.C
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.d',
-                            default: 'D',
-                            description: 'label for motor D element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.D
+                        text: 'D',
+                        value: PrimeMotorValue.D
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.e',
-                            default: 'E',
-                            description: 'label for motor E element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.E
+                        text: 'E',
+                        value: PrimeMotorValue.E
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.motorReporterId.f',
-                            default: 'F',
-                            description: 'label for motor F element in motor menu for LEGO Prime extension'
-                        }),
-                        value: PrimePort.F
+                        text: 'F',
+                        value: PrimeMotorValue.F
                     }
                 ],
                 MOTOR_DIRECTION: [
@@ -1055,22 +1007,22 @@ class Scratch3PrimeBlocks {
     getMotorPosition (args) {
         let portID = null;
         switch (args.MOTOR_REPORTER_ID) {
-        case PrimeMotorLabel.A:
+        case PrimeMotorValue.A:
             portID = PrimePort.A;
             break;
-        case PrimeMotorLabel.B:
+        case PrimeMotorValue.B:
             portID = PrimePort.B;
             break;
-        case PrimeMotorLabel.C:
+        case PrimeMotorValue.C:
             portID = PrimePort.C;
             break;
-        case PrimeMotorLabel.D:
+        case PrimeMotorValue.D:
             portID = PrimePort.D;
             break;
-        case PrimeMotorLabel.E:
+        case PrimeMotorValue.E:
             portID = PrimePort.E;
             break;
-        case PrimeMotorLabel.F:
+        case PrimeMotorValue.F:
             portID = PrimePort.F;
             break;
         default:
@@ -1196,25 +1148,25 @@ class Scratch3PrimeBlocks {
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {
-        case PrimeMotorLabel.A:
+        case PrimeMotorValue.A:
             motors = [PrimePort.A];
             break;
-        case PrimeMotorLabel.B:
+        case PrimeMotorValue.B:
             motors = [PrimePort.B];
             break;
-        case PrimeMotorLabel.C:
+        case PrimeMotorValue.C:
             motors = [PrimePort.C];
             break;
-        case PrimeMotorLabel.D:
+        case PrimeMotorValue.D:
             motors = [PrimePort.D];
             break;
-        case PrimeMotorLabel.E:
+        case PrimeMotorValue.E:
             motors = [PrimePort.E];
             break;
-        case PrimeMotorLabel.F:
+        case PrimeMotorValue.F:
             motors = [PrimePort.F];
             break;
-        case PrimeMotorLabel.ALL:
+        case PrimeMotorValue.ALL:
             motors = [PrimePort.A, PrimePort.B, PrimePort.C, PrimePort.D, PrimePort.E, PrimePort.F];
             break;
         default:
