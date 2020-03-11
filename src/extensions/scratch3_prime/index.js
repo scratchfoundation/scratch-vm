@@ -801,7 +801,7 @@ class Scratch3PrimeBlocks {
         });
     }
 
-    sendIntervalPromise () {
+    sendAndWait () {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
@@ -824,7 +824,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendIntervalPromise();
+        return this.sendAndWait();
     }
 
     /**
@@ -842,7 +842,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendIntervalPromise();
+        return this.sendAndWait();
     }
 
     /**
@@ -861,7 +861,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendIntervalPromise();
+        return this.sendAndWait();
     }
 
     /**
@@ -900,7 +900,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendIntervalPromise();
+        return this.sendAndWait();
     }
 
     /**
@@ -922,7 +922,7 @@ class Scratch3PrimeBlocks {
         this._peripheral._led = inputHue;
         this._peripheral.setLED(rgbDecimal);
 
-        return this.sendIntervalPromise();
+        return this.sendAndWait();
     }
 
     /**
