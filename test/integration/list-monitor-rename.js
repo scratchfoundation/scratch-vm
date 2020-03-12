@@ -14,16 +14,22 @@ test('importing sb3 project with incorrect list monitor name', t => {
     // Evaluate playground data and exit
     vm.on('playgroundData', () => {
         const stage = vm.runtime.targets[0];
+        const cat = vm.runtime.targets[1];
 
-        // Global list named "renamed" exists
-        const variableId = Object.keys(stage.variables).find(k => stage.variables[k].name === 'renamed');
-        const monitorRecord = vm.runtime._monitorState.get(variableId);
-        const monitorBlock = vm.runtime.monitorBlocks.getBlock(variableId);
-        t.equal(monitorRecord.opcode, 'data_listcontents');
+        for (const {target, renamedListName} of [
+            {target: stage, renamedListName: 'renamed global'},
+            {target: cat, renamedListName: 'renamed local'}
+        ]) {
+            const listId = Object.keys(target.variables).find(k => target.variables[k].name === renamedListName);
 
-        // The list name should be properly set to "renamed"
-        t.equal(monitorRecord.params.LIST, 'renamed');
-        t.equal(monitorBlock.fields.LIST.value, 'renamed');
+            const monitorRecord = vm.runtime._monitorState.get(listId);
+            const monitorBlock = vm.runtime.monitorBlocks.getBlock(listId);
+            t.equal(monitorRecord.opcode, 'data_listcontents');
+
+            // The list name should be properly renamed
+            t.equal(monitorRecord.params.LIST, renamedListName);
+            t.equal(monitorBlock.fields.LIST.value, renamedListName);
+        }
 
         t.end();
         process.nextTick(process.exit);
