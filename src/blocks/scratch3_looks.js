@@ -253,7 +253,7 @@ class Scratch3LooksBlocks {
         if (text === '') return text;
 
         // Limit decimal precision to 2 digits.
-        if (typeof text === 'number') {
+        if (typeof text === 'number' && text >= .01) {
             text = parseFloat(text.toFixed(2));
         }
 
