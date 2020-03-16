@@ -43,7 +43,7 @@ const PrimeMessage = {
     FIRMWARE_STATUS: 6
 };
 
-const PrimePortId = {
+const PrimePortIndex = {
     A: 0,
     B: 1,
     C: 2,
@@ -181,6 +181,19 @@ class PrimeHub {
         return this._motors[index];
     }
 
+    forEachMotor (motorLabel, callback) {
+        const index = PrimePortIndex[motorLabel];
+        if (typeof index !== 'undefined') {
+            callback(index);
+            return;
+        }
+        if (motorLabel === 'ALL') {
+            for (let i = 0; i < this._motors.length; i++) {
+                callback(i);
+            }
+        }
+    }
+
     /**
      * Stop all the motors that are currently running.
      */
@@ -193,6 +206,14 @@ class PrimeHub {
                 motor.turnOff(false);
             }
         });
+    }
+
+    getMotorPosition (portLabel) {
+        const portIndex = PrimePortIndex[portLabel];
+        if (typeof portIndex !== 'undefined' && this.motor(portIndex)) {
+            return this.motor(portIndex).position;
+        }
+        return 0;
     }
 
     /**
@@ -301,7 +322,7 @@ class PrimeHub {
      */
     disconnect () {
         this._ports = ['none', 'none'];
-        this._motors = [null, null];
+        this._motors = [null, null, null, null, null, null];
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
@@ -480,9 +501,9 @@ class PrimeHub {
             }
 
             // position data here is in the order: yaw, pitch, roll
-            this._sensors.yaw = parameters[PrimePortId.POSITION][0];
-            this._sensors.tiltY = parameters[PrimePortId.POSITION][1];
-            this._sensors.tiltX = parameters[PrimePortId.POSITION][2];
+            this._sensors.yaw = parameters[PrimePortIndex.POSITION][0];
+            this._sensors.tiltY = parameters[PrimePortIndex.POSITION][1];
+            this._sensors.tiltX = parameters[PrimePortIndex.POSITION][2];
 
             break;
         }

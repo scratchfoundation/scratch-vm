@@ -70,7 +70,7 @@ const PrimeMotorValue = {
     D: 'D',
     E: 'E',
     F: 'F',
-    ALL: 'all motors'
+    ALL: 'ALL'
 };
 
 /**
@@ -763,7 +763,7 @@ class Scratch3PrimeBlocks {
         let durationMS = Cast.toNumber(args.DURATION) * 1000;
         durationMS = MathUtil.clamp(durationMS, 0, 15000);
         return new Promise(resolve => {
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOnFor(durationMS);
@@ -790,7 +790,7 @@ class Scratch3PrimeBlocks {
         const sign = Math.sign(args.ROTATION);
         const rotations = Math.abs(MathUtil.clamp(args.ROTATION, -100, 100));
         return new Promise(resolve => {
-            this._forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     const id = motor.turnOnForRotation(rotations, sign);
@@ -817,7 +817,7 @@ class Scratch3PrimeBlocks {
      */
     motorOn (args) {
         // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+        this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.turnOn();
@@ -835,7 +835,7 @@ class Scratch3PrimeBlocks {
      */
     motorOff (args) {
         // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+        this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.turnOff();
@@ -854,7 +854,7 @@ class Scratch3PrimeBlocks {
      */
     setMotorPower (args) {
         // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+        this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
@@ -874,7 +874,7 @@ class Scratch3PrimeBlocks {
      */
     setMotorDirection (args) {
         // TODO: cast args.MOTOR_ID?
-        this._forEachMotor(args.MOTOR_ID, motorIndex => {
+        this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
                 switch (args.MOTOR_DIRECTION) {
@@ -1005,34 +1005,7 @@ class Scratch3PrimeBlocks {
      * @return {number} - returns the motor's position.
      */
     getMotorPosition (args) {
-        let portID = null;
-        switch (args.MOTOR_REPORTER_ID) {
-        case PrimeMotorValue.A:
-            portID = PrimePort.A;
-            break;
-        case PrimeMotorValue.B:
-            portID = PrimePort.B;
-            break;
-        case PrimeMotorValue.C:
-            portID = PrimePort.C;
-            break;
-        case PrimeMotorValue.D:
-            portID = PrimePort.D;
-            break;
-        case PrimeMotorValue.E:
-            portID = PrimePort.E;
-            break;
-        case PrimeMotorValue.F:
-            portID = PrimePort.F;
-            break;
-        default:
-            log.warn('Asked for a motor position that doesnt exist!');
-            return false;
-        }
-        if (portID !== null && this._peripheral.motor(portID)) {
-            return this._peripheral.motor(portID).position;
-        }
-        return 0;
+        return this._peripheral.getMotorPosition(args.MOTOR_REPORTER_ID);
     }
 
     /**
@@ -1137,46 +1110,6 @@ class Scratch3PrimeBlocks {
     getDistance () {
         // To get a string representation, lookup the key of the PrimeColor-enum value
         return this._peripheral.distance;
-    }
-
-    /**
-     * Call a callback for each motor indexed by the provided motor ID.
-     * @param {MotorID} motorID - the ID specifier.
-     * @param {Function} callback - the function to call with the numeric motor index for each motor.
-     * @private
-     */
-    _forEachMotor (motorID, callback) {
-        let motors;
-        switch (motorID) {
-        case PrimeMotorValue.A:
-            motors = [PrimePort.A];
-            break;
-        case PrimeMotorValue.B:
-            motors = [PrimePort.B];
-            break;
-        case PrimeMotorValue.C:
-            motors = [PrimePort.C];
-            break;
-        case PrimeMotorValue.D:
-            motors = [PrimePort.D];
-            break;
-        case PrimeMotorValue.E:
-            motors = [PrimePort.E];
-            break;
-        case PrimeMotorValue.F:
-            motors = [PrimePort.F];
-            break;
-        case PrimeMotorValue.ALL:
-            motors = [PrimePort.A, PrimePort.B, PrimePort.C, PrimePort.D, PrimePort.E, PrimePort.F];
-            break;
-        default:
-            log.warn(`Invalid motor ID: ${motorID}`);
-            motors = [];
-            break;
-        }
-        for (const index of motors) {
-            callback(index);
-        }
     }
 
     /**
