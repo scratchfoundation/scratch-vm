@@ -1098,6 +1098,20 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // This will be undefined for extension blocks
     const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
 
+    // Due to a bug (see https://github.com/LLK/scratch-vm/pull/2322), renamed list monitors may have been serialized
+    // with an outdated/incorrect LIST parameter. Fix it up to use the current name of the actual corresponding list.
+    if (monitorData.opcode === 'data_listcontents') {
+        const listTarget = monitorData.targetId ?
+            targets.find(t => t.id === monitorData.targetId) :
+            targets.find(t => t.isStage);
+        if (
+            listTarget &&
+            Object.prototype.hasOwnProperty.call(listTarget.variables, monitorData.id)
+        ) {
+            monitorData.params.LIST = listTarget.variables[monitorData.id].name;
+        }
+    }
+
     // Convert the serialized monitorData params into the block fields structure
     const fields = {};
     for (const paramKey in monitorData.params) {
