@@ -104,8 +104,8 @@ class PrimeHub {
             tiltX: 0,
             tiltY: 0,
             yaw: 0,
-            color: 'none',
-            oldColor: 'none',
+            colorIndex: -1,     // todo: should use enum
+            prevColorIndex: -1, // todo: should use enum
             force: 0
         };
 
@@ -152,12 +152,12 @@ class PrimeHub {
     /**
      * @return {number} - the latest value received from the color sensor.
      */
-    get color () {
-        return this._sensors.color;
+    get colorIndex () {
+        return this._sensors.colorIndex;
     }
 
-    get oldColor () {
-        return this._sensors.oldColor;
+    get prevColorIndex () {
+        return this._sensors.prevColorIndex;
     }
 
     get force () {
@@ -475,11 +475,13 @@ class PrimeHub {
                         this._sensors.force = deviceData[0];
                         break;
                     case PrimeIO.COLOR:
-                        this._sensors.color = 'none';
-                        const c = deviceData[1];
-                        console.log(c);
-                        // this._sensors.color = _.invert(PrimeColor)[c]
-                        //     .toLowerCase();
+                        this._sensors.prevColorIndex = this._sensors.colorIndex;
+                        // todo: better way to handle this case?
+                        if (deviceData[1] === null) {
+                            this._sensors.colorIndex = -1; // todo: use enum
+                        } else {
+                            this._sensors.colorIndex = deviceData[1];
+                        }
                         break;
                     case PrimeIO.ULTRASONIC:
                         this._sensors.distance = deviceData[0];

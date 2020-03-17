@@ -20,7 +20,7 @@ const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4
  * @readonly
  * @enum {string}
  */
-const PrimeColor = {
+const PrimeColorValue = {
     ANY: 'any',
     NONE: 'none',
     VIOLET: 'violet',
@@ -39,15 +39,68 @@ const PrimeColor = {
  * @enum {number}
  */
 const PrimeColorIndex = {
-    [PrimeColor.NONE]: -1,
-    [PrimeColor.BLACK]: 0,
-    [PrimeColor.VIOLET]: 1,
-    [PrimeColor.BLUE]: 3,
-    [PrimeColor.AZURE]: 4,
-    [PrimeColor.GREEN]: 5,
-    [PrimeColor.YELLOW]: 7,
-    [PrimeColor.RED]: 9,
-    [PrimeColor.WHITE]: 10
+    [PrimeColorValue.NONE]: -1,
+    [PrimeColorValue.BLACK]: 0,
+    [PrimeColorValue.VIOLET]: 1,
+    [PrimeColorValue.BLUE]: 3,
+    [PrimeColorValue.AZURE]: 4,
+    [PrimeColorValue.GREEN]: 5,
+    [PrimeColorValue.YELLOW]: 7,
+    [PrimeColorValue.RED]: 9,
+    [PrimeColorValue.WHITE]: 10
+};
+
+const PrimeColorLocalizedName = {
+    [PrimeColorValue.ANY]: formatMessage({
+        id: 'Prime.color.any',
+        default: 'any',
+        description: 'any color'
+    }),
+    [PrimeColorValue.NONE]: formatMessage({
+        id: 'Prime.color.none',
+        default: 'none',
+        description: 'no color'
+    }),
+    [PrimeColorValue.BLACK]: formatMessage({
+        id: 'Prime.color.black',
+        default: 'black',
+        description: 'the color black'
+    }),
+    [PrimeColorValue.VIOLET]: formatMessage({
+        id: 'Prime.color.violet',
+        default: 'violet',
+        description: 'the color violet'
+    }),
+    [PrimeColorValue.BLUE]: formatMessage({
+        id: 'Prime.color.blue',
+        default: 'blue',
+        description: 'the color blue'
+    }),
+    [PrimeColorValue.AZURE]: formatMessage({
+        id: 'Prime.color.azure',
+        default: 'azure',
+        description: 'the color azure'
+    }),
+    [PrimeColorValue.GREEN]: formatMessage({
+        id: 'Prime.color.green',
+        default: 'green',
+        description: 'the color green'
+    }),
+    [PrimeColorValue.YELLOW]: formatMessage({
+        id: 'Prime.color.yellow',
+        default: 'yellow',
+        description: 'the color yellow'
+    }),
+    [PrimeColorValue.RED]: formatMessage({
+        id: 'Prime.color.red',
+        default: 'red',
+        description: 'the color red'
+    }),
+    [PrimeColorValue.WHITE]: formatMessage({
+        id: 'Prime.color.white',
+        default: 'white',
+        description: 'the color white'
+    })
 };
 
 const PrimeGesture = {
@@ -337,12 +390,12 @@ class Scratch3PrimeBlocks {
                         COLOR: {
                             type: ArgumentType.STRING,
                             menu: 'COLOR',
-                            defaultValue: PrimeColor.ANY
+                            defaultValue: PrimeColorValue.ANY
                         }
                     }
                 },
                 {
-                    opcode: 'getColor',
+                    opcode: 'getColorName',
                     text: formatMessage({
                         id: 'Prime.getColor',
                         default: 'color',
@@ -674,76 +727,40 @@ class Scratch3PrimeBlocks {
                 ],
                 COLOR: [
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.red',
-                            default: 'red',
-                            description: 'the color red'
-                        }),
-                        value: PrimeColor.RED
+                        text: PrimeColorLocalizedName[PrimeColorValue.RED],
+                        value: PrimeColorValue.RED
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.blue',
-                            default: 'blue',
-                            description: 'the color blue'
-                        }),
-                        value: PrimeColor.BLUE
+                        text: PrimeColorLocalizedName[PrimeColorValue.BLUE],
+                        value: PrimeColorValue.BLUE
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.violet',
-                            default: 'violet',
-                            description: 'the color violet'
-                        }),
-                        value: PrimeColor.VIOLET
+                        text: PrimeColorLocalizedName[PrimeColorValue.VIOLET],
+                        value: PrimeColorValue.VIOLET
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.azure',
-                            default: 'azure',
-                            description: 'the color azure'
-                        }),
-                        value: PrimeColor.AZURE
+                        text: PrimeColorLocalizedName[PrimeColorValue.AZURE],
+                        value: PrimeColorValue.AZURE
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.green',
-                            default: 'green',
-                            description: 'the color green'
-                        }),
-                        value: PrimeColor.GREEN
+                        text: PrimeColorLocalizedName[PrimeColorValue.GREEN],
+                        value: PrimeColorValue.GREEN
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.yellow',
-                            default: 'yellow',
-                            description: 'the color yellow'
-                        }),
-                        value: PrimeColor.YELLOW
+                        text: PrimeColorLocalizedName[PrimeColorValue.YELLOW],
+                        value: PrimeColorValue.YELLOW
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.white',
-                            default: 'white',
-                            desription: 'the color white'
-                        }),
-                        value: PrimeColor.WHITE
+                        text: PrimeColorLocalizedName[PrimeColorValue.WHITE],
+                        value: PrimeColorValue.WHITE
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.black',
-                            default: 'black',
-                            description: 'the color black'
-                        }),
-                        value: PrimeColor.BLACK
+                        text: PrimeColorLocalizedName[PrimeColorValue.BLACK],
+                        value: PrimeColorValue.BLACK
                     },
                     {
-                        text: formatMessage({
-                            id: 'Prime.color.any',
-                            default: 'any',
-                            description: 'any color'
-                        }),
-                        value: PrimeColor.ANY
+                        text: PrimeColorLocalizedName[PrimeColorValue.ANY],
+                        value: PrimeColorValue.ANY
                     }
                 ],
                 OP: ['<', '>']
@@ -961,43 +978,34 @@ class Scratch3PrimeBlocks {
         }
     }
 
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {object} args - the block's arguments.
-     * @property {Color} COLOR - the color to test.
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     */
     whenColor (args) {
-        return this._isColor(args.COLOR);
-    }
-
-    /**
-     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
-     */
-    getColor () {
-        // To get a string representation, lookup the key of the PrimeColor-enum value
-        return this._peripheral.color;
-    }
-
-    /**
-     * Test whether the vision sensor is detecting a certain color.
-     * @param {number} clr - the color to test.
-     * @return {boolean} - true when the color sensor senses the specified color.
-     * @private
-     */
-    _isColor (clr) {
-        if (clr === PrimeColor.ANY) {
-            if (Object.keys(PrimeColor).find(key => PrimeColor[key])
-                .toLowerCase() !== this.getColor()) {
-                if (this.getColor() === this._peripheral.oldColor) {
-                    return false;
-                }
-                this._peripheral._sensors.oldColor = this.getColor();
-                return true;
+        if (args.COLOR === PrimeColorValue.ANY) {
+            // For 'any color', if the sensed color is 'none', always return false
+            // This way e.g. the transition from 'red' to 'none' does not trigger
+            // the hat.
+            if (this._peripheral.colorIndex === PrimeColorIndex[PrimeColorValue.NONE]) {
+                return false;
             }
-        } else {
-            return this.getColor() === color.toLowerCase();
+            // For any other change from previous to current color, return true
+            return this._peripheral.colorIndex !== this._peripheral.prevColorIndex;
         }
+        return this._peripheral.colorIndex === PrimeColorIndex[args.COLOR];
+    }
+
+    getColorName () {
+        const index = this._peripheral.colorIndex;
+        const value = this.getColorValueForIndex(index);
+        const name = PrimeColorLocalizedName[value];
+        if (name) {
+            return name;
+        }
+        return PrimeColorLocalizedName.NONE;
+    }
+
+    getColorValueForIndex (index) {
+        return Object.keys(PrimeColorIndex).find(
+            key => PrimeColorIndex[key] === index
+        );
     }
 
     /**
@@ -1100,7 +1108,6 @@ class Scratch3PrimeBlocks {
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
      */
     getForce () {
-        // To get a string representation, lookup the key of the PrimeColor-enum value
         return this._peripheral.force;
     }
 
@@ -1108,7 +1115,6 @@ class Scratch3PrimeBlocks {
      * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
      */
     getDistance () {
-        // To get a string representation, lookup the key of the PrimeColor-enum value
         return this._peripheral.distance;
     }
 
