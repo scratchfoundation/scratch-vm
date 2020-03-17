@@ -206,6 +206,50 @@ class Scratch3PrimeBlocks {
             showStatusButton: true,
             blocks: [
                 {
+                    opcode: 'displaySymbol',
+                    text: formatMessage({
+                        id: 'Prime.displaySymbol',
+                        default: 'display [MATRIX]',
+                        description: 'display a pattern on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        MATRIX: {
+                            type: ArgumentType.MATRIX,
+                            defaultValue: '0101010101100010101000100'
+                        }
+                    }
+                },
+                {
+                    opcode: 'displayClear',
+                    text: formatMessage({
+                        id: 'Prime.clearDisplay',
+                        default: 'clear display',
+                        description: 'display nothing on the micro:bit display'
+                    }),
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'playNoteForSeconds',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'Prime.playNoteForSeconds',
+                        default: 'beep note [NOTE] for [DURATION] seconds',
+                        description: 'beep a note for a number of seconds'
+                    }),
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NOTE,
+                            defaultValue: 84
+                        },
+                        DURATION: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.1
+                        }
+                    }
+                },
+                '---',
+                {
                     opcode: 'motorOnFor',
                     text: formatMessage({
                         id: 'Prime.motorOnFor',
@@ -335,49 +379,6 @@ class Scratch3PrimeBlocks {
                     }
                 },
                 '---',
-                {
-                    opcode: 'displaySymbol',
-                    text: formatMessage({
-                        id: 'Prime.displaySymbol',
-                        default: 'display [MATRIX]',
-                        description: 'display a pattern on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MATRIX: {
-                            type: ArgumentType.MATRIX,
-                            defaultValue: '0101010101100010101000100'
-                        }
-                    }
-                },
-                {
-                    opcode: 'displayClear',
-                    text: formatMessage({
-                        id: 'Prime.clearDisplay',
-                        default: 'clear display',
-                        description: 'display nothing on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND
-                },
-                {
-                    opcode: 'playNoteForSeconds',
-                    blockType: BlockType.COMMAND,
-                    text: formatMessage({
-                        id: 'Prime.playNoteForSeconds',
-                        default: 'beep note [NOTE] for [DURATION] seconds',
-                        description: 'beep a note for a number of seconds'
-                    }),
-                    arguments: {
-                        NOTE: {
-                            type: ArgumentType.NOTE,
-                            defaultValue: 84
-                        },
-                        DURATION: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 0.1
-                        }
-                    }
-                },
                 {
                     opcode: 'whenColor',
                     text: formatMessage({
