@@ -106,7 +106,8 @@ class PrimeHub {
             yaw: 0,
             colorIndex: -1,     // todo: should use enum
             prevColorIndex: -1, // todo: should use enum
-            force: 0
+            force: 0,
+            distance: 0
         };
 
         /**
