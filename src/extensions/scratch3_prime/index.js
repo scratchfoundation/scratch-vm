@@ -67,19 +67,19 @@ const PrimeColorLocalizedName = {
         description: 'the color black'
     }),
     [PrimeColorValue.VIOLET]: formatMessage({
-        id: 'Prime.color.violet',
-        default: 'violet',
-        description: 'the color violet'
+        id: 'Prime.color.purple',
+        default: 'purple',
+        description: 'the color purple'
     }),
     [PrimeColorValue.BLUE]: formatMessage({
-        id: 'Prime.color.blue',
-        default: 'blue',
-        description: 'the color blue'
+        id: 'Prime.color.darkBlue',
+        default: 'dark blue',
+        description: 'the color dark blue'
     }),
     [PrimeColorValue.AZURE]: formatMessage({
-        id: 'Prime.color.azure',
-        default: 'azure',
-        description: 'the color azure'
+        id: 'Prime.color.lightBlue',
+        default: 'light blue',
+        description: 'the color light blue'
     }),
     [PrimeColorValue.GREEN]: formatMessage({
         id: 'Prime.color.green',
@@ -728,28 +728,32 @@ class Scratch3PrimeBlocks {
                 ],
                 COLOR: [
                     {
+                        text: PrimeColorLocalizedName[PrimeColorValue.ANY],
+                        value: PrimeColorValue.ANY
+                    },
+                    {
                         text: PrimeColorLocalizedName[PrimeColorValue.RED],
                         value: PrimeColorValue.RED
                     },
                     {
-                        text: PrimeColorLocalizedName[PrimeColorValue.BLUE],
-                        value: PrimeColorValue.BLUE
-                    },
-                    {
-                        text: PrimeColorLocalizedName[PrimeColorValue.VIOLET],
-                        value: PrimeColorValue.VIOLET
-                    },
-                    {
-                        text: PrimeColorLocalizedName[PrimeColorValue.AZURE],
-                        value: PrimeColorValue.AZURE
+                        text: PrimeColorLocalizedName[PrimeColorValue.YELLOW],
+                        value: PrimeColorValue.YELLOW
                     },
                     {
                         text: PrimeColorLocalizedName[PrimeColorValue.GREEN],
                         value: PrimeColorValue.GREEN
                     },
                     {
-                        text: PrimeColorLocalizedName[PrimeColorValue.YELLOW],
-                        value: PrimeColorValue.YELLOW
+                        text: PrimeColorLocalizedName[PrimeColorValue.BLUE],
+                        value: PrimeColorValue.BLUE
+                    },
+                    {
+                        text: PrimeColorLocalizedName[PrimeColorValue.AZURE],
+                        value: PrimeColorValue.AZURE
+                    },
+                    {
+                        text: PrimeColorLocalizedName[PrimeColorValue.VIOLET],
+                        value: PrimeColorValue.VIOLET
                     },
                     {
                         text: PrimeColorLocalizedName[PrimeColorValue.WHITE],
@@ -758,10 +762,6 @@ class Scratch3PrimeBlocks {
                     {
                         text: PrimeColorLocalizedName[PrimeColorValue.BLACK],
                         value: PrimeColorValue.BLACK
-                    },
-                    {
-                        text: PrimeColorLocalizedName[PrimeColorValue.ANY],
-                        value: PrimeColorValue.ANY
                     }
                 ],
                 OP: ['<', '>']
