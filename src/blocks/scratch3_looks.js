@@ -34,7 +34,7 @@ class Scratch3LooksBlocks {
         this.runtime.on('targetWasRemoved', this._onTargetWillExit);
 
         // Enable other blocks to use bubbles like ask/answer
-        this.runtime.on(Scratch3LooksBlocks.SAY_OR_THINK, this._updateBubble);
+        this.runtime.on('SAY', this._updateBubble);
     }
 
     /**
@@ -58,16 +58,6 @@ class Scratch3LooksBlocks {
      */
     static get STATE_KEY () {
         return 'Scratch.looks';
-    }
-
-    /**
-     * Event name for a text bubble being created or updated.
-     * @const {string}
-     */
-    static get SAY_OR_THINK () {
-        // There are currently many places in the codebase which explicitly refer to this event by the string 'SAY',
-        // so keep this as the string 'SAY' for now rather than changing it to 'SAY_OR_THINK' and breaking things.
-        return 'SAY';
     }
 
     /**
@@ -244,26 +234,6 @@ class Scratch3LooksBlocks {
     }
 
     /**
-     * Properly format text for a text bubble.
-     * @param {string} text The text to be formatted
-     * @return {string} The formatted text
-     * @private
-     */
-    _formatBubbleText (text) {
-        if (text === '') return text;
-
-        // Limit decimal precision to 2 digits.
-        if (typeof text === 'number' && Math.abs(text) >= .01) {
-            text = parseFloat(text.toFixed(2));
-        }
-
-        // Limit the length of the string.
-        text = String(text).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
-
-        return text;
-    }
-
-    /**
      * The entry point for say/think blocks. Clears existing bubble if the text is empty.
      * Set the bubble custom state and then call _renderBubble.
      * @param {!Target} target Target that say/think blocks are being called on.
@@ -274,7 +244,7 @@ class Scratch3LooksBlocks {
     _updateBubble (target, type, text) {
         const bubbleState = this._getBubbleState(target);
         bubbleState.type = type;
-        bubbleState.text = this._formatBubbleText(text);
+        bubbleState.text = text;
         bubbleState.usageId = uid();
         this._renderBubble(target);
     }
@@ -330,7 +300,12 @@ class Scratch3LooksBlocks {
 
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
-        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'say', args.MESSAGE);
+        let message = args.MESSAGE;
+        if (typeof message === 'number') {
+            message = parseFloat(message.toFixed(2));
+        }
+        message = String(message).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
+        this.runtime.emit('SAY', util.target, 'say', message);
     }
 
     sayforsecs (args, util) {
@@ -350,7 +325,7 @@ class Scratch3LooksBlocks {
     }
 
     think (args, util) {
-        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'think', args.MESSAGE);
+        this._updateBubble(util.target, 'think', String(args.MESSAGE).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT));
     }
 
     thinkforsecs (args, util) {
