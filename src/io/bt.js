@@ -46,7 +46,7 @@ class BT extends JSONRPC {
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
-        this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
+        this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 60000);
         this.sendRemoteRequest('discover', this._peripheralOptions)
             .catch(
                 e => this._handleRequestError(e)
