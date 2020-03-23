@@ -216,7 +216,7 @@ class Scratch3PrimeBlocks {
                     arguments: {
                         MATRIX: {
                             type: ArgumentType.MATRIX,
-                            defaultValue: '0101010101100010101000100'
+                            defaultValue: '0010100111101110111001010'
                         }
                     }
                 },
