@@ -188,7 +188,7 @@ class PrimeHub {
             callback(index);
             return;
         }
-        if (motorLabel === 'ALL') {
+        if (motorLabel === 'ALL') { //todo: use PrimeMotorValue enum
             for (let i = 0; i < this._motors.length; i++) {
                 callback(i);
             }
