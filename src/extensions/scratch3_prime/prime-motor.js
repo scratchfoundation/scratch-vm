@@ -124,15 +124,7 @@ class PrimeMotor {
      * @param {int} value - this motor's new power level, in the range [0,100].
      */
     set power (value) {
-        const p = Math.max(0, Math.min(value, 100));
-        // Lego Wedo 2.0 hub only turns motors at power range [30 - 100], so
-        // map value from [0 - 100] to [30 - 100].
-        if (p === 0) {
-            this._power = 0;
-        } else {
-            const delta = 100 / p;
-            this._power = 30 + (70 / delta);
-        }
+        this._power = Math.round(value);
     }
 
     /**
