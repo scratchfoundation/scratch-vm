@@ -113,6 +113,7 @@ class PrimeHub {
         this._rateLimiter = new RateLimiter(PrimeBT.sendRateMax);
 
         this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
     }
@@ -291,7 +292,7 @@ class PrimeHub {
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onConnect, this.disconnect, this._onMessage);
+        }, this._onConnect, this.reset, this._onMessage);
     }
 
     /**
@@ -304,22 +305,21 @@ class PrimeHub {
         }
     }
 
-    /**
-     * Disconnects from the current BLE socket.
-     */
     disconnect () {
-        this._ports = ['none', 'none'];
+        if (this._bt) {
+            this._bt.disconnect();
+        }
+
+        this.reset();
+    }
+
+    reset () {
         this._motors = [null, null, null, null, null, null];
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
             distance: 0
         };
-        // this._clearSensorsAndMotors();
-
-        if (this._bt) {
-            this._bt.disconnect();
-        }
     }
 
     /**
