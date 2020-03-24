@@ -475,18 +475,20 @@ class PrimeHub {
                         break;
                     case PrimeIO.MOTOR_MEDIUM:
                     case PrimeIO.MOTOR_LARGE:
-                        // Register sensor value
                         if (this.motor(port)) {
                             this._motors[port].position = deviceData[2];
                         } else {
-                            this._registerSensorOrMotor(port, deviceType);
+                            this._registerMotor(port, deviceType);
                         }
                         break;
                     default:
                         // log.warn(`Type ${type} on port ${_.invert(PrimePort)[port]}`);
                     }
                 }
-                // TODO: Remove motors if they disappeared!
+                // Remove a motor that was disconnected
+                if (this.motor(port) && deviceType === 0) {
+                    this._motors[port] = null;
+                }
             }
 
             // position data here is in the order: yaw, pitch, roll
@@ -519,19 +521,9 @@ class PrimeHub {
         }
     }
 
-    /**
-     * Register a new sensor or motor connected at a port. Store the type of
-     * sensor or motor internally, and then register for notifications on input
-     * values if it is a sensor.
-     * @param {number} connectID - the port to register a sensor or motor on.
-     * @param {number} type - the type ID of the sensor or motor
-     * @private
-     */
-    _registerSensorOrMotor (connectID, type) {
-        console.log('_registerSensorOrMotor', connectID, type);
-        // TODO: Rename to motor if only doing motor-stuff.
+    _registerMotor (portNum, type) {
         if (type === PrimeIO.MOTOR_MEDIUM || type === PrimeIO.MOTOR_LARGE) {
-            this._motors[connectID] = new PrimeMotor(this, connectID);
+            this._motors[portNum] = new PrimeMotor(this, portNum);
         }
     }
 
