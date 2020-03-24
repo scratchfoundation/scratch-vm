@@ -75,20 +75,6 @@ class PrimeHub {
         this._extensionId = extensionId;
 
         /**
-         * A list of the ids of the motors or sensors in ports 1-6.
-         * @type {string[]}
-         * @private
-         */
-        this._ports = {
-            A: {},
-            B: {},
-            C: {},
-            D: {},
-            E: {},
-            F: {}
-        };
-
-        /**
          * The motors which this Prime could possibly have.
          * @type {PrimeMotor[]}
          * @private
