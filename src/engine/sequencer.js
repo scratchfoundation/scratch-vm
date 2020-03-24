@@ -81,6 +81,7 @@ class Sequencer {
         // Whether `stepThreads` has run through a full single tick.
         let ranFirstTick = false;
         const doneThreads = [];
+        window.vmLoadHigh = false;
         // Conditions for continuing to stepping threads:
         // 1. We must have threads in the list, and some must be active.
         // 2. Time elapsed must be less than WORK_TIME.
@@ -165,6 +166,10 @@ class Sequencer {
                 }
                 this.runtime.threads.length = nextActiveThread;
             }
+        }
+
+        if (this.timer.timeElapsed() >= WORK_TIME / 2 || this.runtime.turboMode) {
+            window.vmLoadHigh = true;
         }
 
         this.activeThread = null;
