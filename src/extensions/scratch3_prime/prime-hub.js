@@ -79,22 +79,17 @@ class PrimeHub {
          * @type {PrimeMotor[]}
          * @private
          */
-        this._motors = [null, null, null, null, null, null];
+        this._motors = [];
 
         /**
          * The most recently received value for each sensor.
          * @type {Object.<string, number>}
          * @private
          */
-        this._sensors = {
-            tiltX: 0,
-            tiltY: 0,
-            yaw: 0,
-            colorIndex: -1,     // todo: should use enum
-            prevColorIndex: -1, // todo: should use enum
-            force: 0,
-            distance: 0
-        };
+        this._sensors = {};
+
+        // Set sensor and motor states to their defaults
+        this.reset();
 
         /**
          * The Serial connection socket for reading/writing port data.
@@ -301,6 +296,10 @@ class PrimeHub {
         this._sensors = {
             tiltX: 0,
             tiltY: 0,
+            yaw: 0,
+            colorIndex: -1, // todo: should use enum
+            prevColorIndex: -1, // todo: should use enum
+            force: 0,
             distance: 0
         };
     }
