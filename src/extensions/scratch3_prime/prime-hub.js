@@ -149,7 +149,7 @@ class PrimeHub {
     }
 
     get force () {
-        return this._sensors.force;
+        return this._sensors.force * 10;
     }
 
     get distance () {

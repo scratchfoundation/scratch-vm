@@ -169,6 +169,10 @@ class Scratch3PrimeBlocks {
         return 15;
     }
 
+    static get FORCE_THRESHOLD () {
+        return 10;
+    }
+
     /**
      * The minimum and maximum MIDI note numbers, for clamping the input to play note.
      * @type {{min: number, max: number}}
@@ -403,6 +407,15 @@ class Scratch3PrimeBlocks {
                         description: 'the color returned by the vision sensor'
                     }),
                     blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'whenForce',
+                    text: formatMessage({
+                        id: 'Prime.whenForce',
+                        default: 'when force sensor pressed',
+                        description: 'when the force sensor is pressed'
+                    }),
+                    blockType: BlockType.HAT
                 },
                 {
                     opcode: 'getForce',
@@ -1025,6 +1038,10 @@ class Scratch3PrimeBlocks {
         default:
             return this._peripheral._sensors.gesture === gesture;
         }
+    }
+
+    whenForce () {
+        return this._peripheral.force > Scratch3PrimeBlocks.FORCE_THRESHOLD;
     }
 
     /**
