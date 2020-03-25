@@ -526,27 +526,6 @@ class PrimeHub {
             this._motors[portNum] = new PrimeMotor(this, portNum);
         }
     }
-
-    /**
-     * Clear the sensor or motor present at port 1 or 2.
-     * @param {number} connectID - the port to clear.
-     * @private
-     */
-    _clearPort (connectID) {
-        // log.warn(connectID);
-        // TODO: Rework
-        /*
-        const type = this._ports[connectID - 1];
-        if (type === PrimeDevice.TILT) {
-            this._sensors.tiltX = this._sensors.tiltY = 0;
-        }
-        if (type === PrimeDevice.DISTANCE) {
-            this._sensors.distance = 0;
-        }
-        this._ports[connectID - 1] = 'none';
-        this._motors[connectID - 1] = null;
-        */
-    }
 }
 
 module.exports = PrimeHub;
