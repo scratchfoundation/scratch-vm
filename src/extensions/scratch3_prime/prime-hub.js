@@ -453,7 +453,9 @@ class PrimeHub {
                         }
                         break;
                     case PrimeIO.ULTRASONIC:
-                        this._sensors.distance = deviceData[0];
+                        if (deviceData[0] !== null) { // todo: why do we often get null here?
+                            this._sensors.distance = deviceData[0];
+                        }
                         break;
                     case PrimeIO.MOTOR_MEDIUM:
                     case PrimeIO.MOTOR_LARGE:
