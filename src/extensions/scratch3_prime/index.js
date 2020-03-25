@@ -488,46 +488,6 @@ class Scratch3PrimeBlocks {
                         }
                     }
                 }
-                // {
-                //     opcode: 'getYaw',
-                //     text: formatMessage({
-                //         id: 'Prime.getYaw',
-                //         default: 'direction',
-                //         description: 'the yaw angle reported by the hub'
-                //     }),
-                //     blockType: BlockType.REPORTER
-                // }
-                /* ,
-                {
-                    opcode: 'setLightHue',
-                    text: formatMessage({
-                        id: 'Prime.setLightHue',
-                        default: 'set light color to [HUE]',
-                        description: 'set the LED color'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 50
-                        }
-                    }
-                },
-                {
-                    opcode: 'changeLightHueBy',
-                    text: formatMessage({
-                        id: 'Prime.changeLightHueBy',
-                        default: 'change light color by [HUE]',
-                        description: 'change the LED color by a given amount'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HUE: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 5
-                        }
-                    }
-                }*/
             ],
             menus: {
                 MOTOR_ID: [
@@ -922,40 +882,6 @@ class Scratch3PrimeBlocks {
     }
 
     /**
-     * Set the LED's hue.
-     * @param {object} args - the block's arguments.
-     * @property {number} HUE - the hue to set, in the range [0,100].
-     * @return {Promise} - a Promise that resolves after some delay.
-     */
-    setLightHue (args) {
-        // Convert from [0,100] to [0,360]
-        let inputHue = Cast.toNumber(args.HUE);
-        inputHue = MathUtil.wrapClamp(inputHue, 0, 100);
-        const hue = inputHue * 360 / 100;
-
-        const rgbObject = color.hsvToRgb({h: hue, s: 1, v: 1});
-
-        const rgbDecimal = color.rgbToDecimal(rgbObject);
-
-        this._peripheral._led = inputHue;
-        this._peripheral.setLED(rgbDecimal);
-
-        return this.sendAndWait();
-    }
-
-    /**
-     * Change the LED's hue by a give number.
-     * @param {object} args - the block's arguments.
-     * @property {number} HUE - the hue to set, in the range [0,100].
-     */
-    changeLightHueBy (args) {
-        // TODO: Clean up this block and its opcode
-        const n = {};
-        n.HUE = Cast.toNumber(args.HUE) + this._peripheral._led;
-        this.setLightHue(n);
-    }
-
-    /**
      * Test whether the tilt sensor is currently tilted.
      * @param {object} args - the block's arguments.
      * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
@@ -1072,10 +998,6 @@ class Scratch3PrimeBlocks {
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
-    }
-
-    getYaw () {
-        return this._peripheral.yaw;
     }
 
     /**

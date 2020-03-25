@@ -175,7 +175,7 @@ class PrimeHub {
             callback(index);
             return;
         }
-        if (motorLabel === 'ALL') { //todo: use PrimeMotorValue enum
+        if (motorLabel === 'ALL') { // todo: use PrimeMotorValue enum
             for (let i = 0; i < this._motors.length; i++) {
                 callback(i);
             }
@@ -202,23 +202,6 @@ class PrimeHub {
             return this.motor(portIndex).position;
         }
         return 0;
-    }
-
-    /**
-     * Set the Prime peripheral's LED to a specific color.
-     * @param {int} inputRGB - a 24-bit RGB color in 0xRRGGBB format.
-     * @return {Promise} - a promise of the completion of the set led send operation.
-     */
-    setLED (inputRGB) {
-        return inputRGB; // TODO
-    }
-
-    /**
-     * Switch off the LED on the Prime.
-     * @return {Promise} - a promise of the completion of the stop led send operation.
-     */
-    stopLED () {
-        return false; // TODO
     }
 
     /**
