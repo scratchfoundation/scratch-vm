@@ -427,6 +427,21 @@ class Scratch3PrimeBlocks {
                     blockType: BlockType.REPORTER
                 },
                 {
+                    opcode: 'whenDistance',
+                    text: formatMessage({
+                        id: 'Prime.whenDistance',
+                        default: 'when distance < [DISTANCE]',
+                        description: 'when the distance measure by the distance sensor is less than some value'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        DISTANCE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 10
+                        }
+                    }
+                },
+                {
                     opcode: 'getDistance',
                     text: formatMessage({
                         id: 'Prime.getDistance',
@@ -1044,27 +1059,18 @@ class Scratch3PrimeBlocks {
         return this._peripheral.force > Scratch3PrimeBlocks.FORCE_THRESHOLD;
     }
 
-    /**
-     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
-     */
     getForce () {
         return this._peripheral.force;
     }
 
-    /**
-     * @return {number} - the vision sensor's color value. Indexed LEGO brick colors.
-     */
+    whenDistance (args) {
+        const threshold = Cast.toNumber(args.DISTANCE);
+        return this._peripheral.distance < threshold;
+    }
+
     getDistance () {
         return this._peripheral.distance;
     }
-
-    /**
-     * Make the Prime peripheral play a MIDI note for the specified duration.
-     * @param {object} args - the block's arguments.
-     * @property {number} NOTE - the MIDI note to play.
-     * @property {number} DURATION - the duration of the note, in seconds.
-     * @return {Promise} - a promise which will resolve at the end of the duration.
-     */
 
     _playNoteForPicker (note, category) {
         if (category !== this.getInfo().name) return;
