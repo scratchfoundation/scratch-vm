@@ -992,9 +992,9 @@ class Scratch3PrimeBlocks {
         case PrimeTiltDirection.DOWN:
             return -this._peripheral.tiltY;
         case PrimeTiltDirection.LEFT:
-            return this._peripheral.tiltX;
-        case PrimeTiltDirection.RIGHT:
             return -this._peripheral.tiltX;
+        case PrimeTiltDirection.RIGHT:
+            return this._peripheral.tiltX;
         default:
             log.warn(`Unknown tilt direction in _getTiltAngle: ${direction}`);
         }
