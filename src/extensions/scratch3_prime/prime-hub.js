@@ -202,7 +202,6 @@ class PrimeHub {
     /**
      * Displays pixels on the 5x5 LED Matrix.
      * @param {int} pixels from left-to-right, top-to-bottom
-     * @return {Promise} - a promise of the completion of the display operation.
      */
     display (pixels) {
         pixels = pixels.replace(/(.{5})/g, '$1:').slice(0, -1); // Insert :-separator after every 5th pixel
@@ -215,12 +214,6 @@ class PrimeHub {
         });
 
         this.send(cmd);
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, PrimeBT.sendInterval);
-        });
     }
 
     playTone (note, durationSec) {
@@ -237,7 +230,6 @@ class PrimeHub {
 
     /**
      * Stop the tone playing from the Prime peripheral, if any.
-     * @return {Promise} - a promise that the command sent.
      */
     stopTone () {
         // todo: this causes the speaker to make a clicking sound, and this
@@ -248,7 +240,7 @@ class PrimeHub {
             m: 'scratch.sound_off'
         });
 
-        return this.send(cmd);
+        this.send(cmd);
     }
 
     /**

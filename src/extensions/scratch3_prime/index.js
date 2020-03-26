@@ -807,7 +807,7 @@ class Scratch3PrimeBlocks {
         });
     }
 
-    sendAndWait () {
+    promiseToWait () {
         return new Promise(resolve => {
             window.setTimeout(() => {
                 resolve();
@@ -830,7 +830,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendAndWait();
+        return this.promiseToWait();
     }
 
     /**
@@ -848,7 +848,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendAndWait();
+        return this.promiseToWait();
     }
 
     /**
@@ -867,7 +867,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendAndWait();
+        return this.promiseToWait();
     }
 
     /**
@@ -906,7 +906,7 @@ class Scratch3PrimeBlocks {
             }
         });
 
-        return this.sendAndWait();
+        return this.promiseToWait();
     }
 
     /**
@@ -1099,12 +1099,14 @@ class Scratch3PrimeBlocks {
     // - make sure we give the display a string of digits
     // - make sure the string of numbers is the correct length
     displaySymbol (args) {
-        return this._peripheral.display(args.MATRIX);
+        this._peripheral.display(args.MATRIX);
+        return this.promiseToWait();
     }
 
     displayClear () {
       // todo: use a const
-        return this._peripheral.display('0000000000000000000000000');
+        this._peripheral.display('0000000000000000000000000');
+        return this.promiseToWait();
     }
 }
 
