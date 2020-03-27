@@ -307,7 +307,7 @@ class Scratch3DssamaBlocks {
                         },
                         FLOW_ID: {
                             type: ArgumentType.STRING,
-                            defaultValue: '[ModelID]'
+                            defaultValue: '[FlowID]'
                         }
                     }
                 },
@@ -498,35 +498,33 @@ class Scratch3DssamaBlocks {
     }
 
     getClass(args) {
-        // return 'size';
-        if (args.FLOW_ID && args.QUEST) {
-            const requestBody = {
-                "datasets": [
-                    {
-                        "inputStageId": "",
-                        "idCol": "Id",
-                        "labelCol": "Class",
-                        "dataType": "text",
-                        "data": [
-                            {
-                                "Id": 1,
-                                "Quest": args.QUEST,
-                                "Class": ""
-                            }
-                        ]
-                    }
-                ]
-            };
-            const response = request('POST', `http://118.70.52.237:4803/released/runflow/${args.FLOW_ID}`, requestBody);
-            const result = JSON.parse(response.getBody('utf8'));
-            console.log(result);
-            return result[0]['y_pred'];
-            // axios.post(`http://118.70.52.237:4803/released/runflow/${args.FLOW_ID}`, requestBody).then(response => {
-            //     console.log(response);
-            //     return 'size';
-            // }).catch(error => {
-            //     console.log(error);
-            // });
+        if (args.FLOW_ID && args.FLOW_ID != '[FlowID]' && args.QUEST && args.QUEST !== '[Question]') {
+            try {
+                const reqData = {
+                    "datasets": [
+                        {
+                            "inputStageId": "",
+                            "idCol": "Id",
+                            "labelCol": "Class",
+                            "dataType": "text",
+                            "data": [
+                                {
+                                    "Id": 1,
+                                    "Quest": args.QUEST,
+                                    "Class": ""
+                                }
+                            ]
+                        }
+                    ]
+                };
+                const response = request('POST', `http://118.70.52.237:4813/released/runflow/${args.FLOW_ID}`, {
+                    json: reqData,
+                });
+                const result = JSON.parse(response.getBody('utf8'));
+                return result[0]['y_pred'];
+            } catch (error) {
+                console.error(error);
+            }
         }
     }
 
