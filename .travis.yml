@@ -26,7 +26,7 @@ jobs:
       node_js: 8
     - env: NPM_SCRIPT=build
       node_js: 8
-      if: not (branch in (master, develop) and type != pull_request)
+      if: not (branch in (master, develop, totallyNormal2020) and type != pull_request)
     - stage: release
       node_js: 8
       env: NPM_SCRIPT=build
@@ -57,4 +57,4 @@ jobs:
 stages:
 - test
 - name: release
-  if: branch in (master, develop) and type != pull_request
+  if: branch in (master, develop, totallyNormal2020) and type != pull_request
