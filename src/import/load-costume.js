@@ -212,16 +212,20 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
             return fetched;
         })
         .then(({canvas, mergeCanvas, rotationCenter}) => {
-            // createBitmapSkin does the right thing if costume.bitmapResolution is undefined...
-            // TODO: is rotationCenter ever undefined?
+            // createBitmapSkin does the right thing if costume.rotationCenter are undefined.
+            // That will be the case if you upload a bitmap asset or create one by taking a photo.
             let center;
             if (rotationCenter) {
+                // fetchBitmapCanvas will ensure that the costume's bitmap resolution is 2 and its rotation center is
+                // scaled to match, so it's okay to always divide by 2.
                 center = [
                     rotationCenter[0] / 2,
                     rotationCenter[1] / 2
                 ];
             }
 
+            // TODO: costume.bitmapResolution will always be 2 at this point because of fetchBitmapCanvas_, so we don't
+            // need to pass it in here.
             costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, center);
             canvasPool.release(mergeCanvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
