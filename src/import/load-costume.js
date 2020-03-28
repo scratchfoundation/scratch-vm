@@ -212,7 +212,7 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
             return fetched;
         })
         .then(({canvas, mergeCanvas, rotationCenter}) => {
-            // createBitmapSkin does the right thing if costume.rotationCenter are undefined.
+            // createBitmapSkin does the right thing if costume.rotationCenter is undefined.
             // That will be the case if you upload a bitmap asset or create one by taking a photo.
             let center;
             if (rotationCenter) {
