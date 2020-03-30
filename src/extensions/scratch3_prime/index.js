@@ -103,13 +103,13 @@ const PrimeColorLocalizedName = {
     })
 };
 
-const PrimeGesture = {
-    SHAKE: 'shake',
-    TAPPED: 'tapped',
-    DOUBLETAPPED: 'doubletapped',
-    FREEFALL: 'freefall',
-    ANY: 'any'
-};
+// const PrimeGesture = {
+//     SHAKE: 'shake',
+//     TAPPED: 'tapped',
+//     DOUBLETAPPED: 'doubletapped',
+//     FREEFALL: 'freefall',
+//     ANY: 'any'
+// };
 
 /**
  * Enum for motor specification.
@@ -467,23 +467,23 @@ class Scratch3PrimeBlocks {
                         }
                     }
                 },
-                {
-                    opcode: 'whenGesture',
-                    text: formatMessage({
-                        id: 'Prime.whenGesture',
-                        default: 'when gesture [GESTURE_ANY]',
-                        description: 'check when a certain gesture has been performed with the hub'
-                    }),
-                    func: 'isGesture',
-                    blockType: BlockType.HAT,
-                    arguments: {
-                        GESTURE_ANY: {
-                            type: ArgumentType.STRING,
-                            menu: 'GESTURE_ANY',
-                            defaultValue: PrimeGesture.ANY
-                        }
-                    }
-                },
+                // {
+                //     opcode: 'whenGesture',
+                //     text: formatMessage({
+                //         id: 'Prime.whenGesture',
+                //         default: 'when gesture [GESTURE_ANY]',
+                //         description: 'check when a certain gesture has been performed with the hub'
+                //     }),
+                //     func: 'isGesture',
+                //     blockType: BlockType.HAT,
+                //     arguments: {
+                //         GESTURE_ANY: {
+                //             type: ArgumentType.STRING,
+                //             menu: 'GESTURE_ANY',
+                //             defaultValue: PrimeGesture.ANY
+                //         }
+                //     }
+                // },
                 {
                     opcode: 'isTilted',
                     text: formatMessage({
@@ -676,44 +676,44 @@ class Scratch3PrimeBlocks {
                         value: PrimeTiltDirection.ANY
                     }
                 ],
-                GESTURE_ANY: [
-                    {
-                        text: formatMessage({
-                            id: 'Prime.gesture.shake',
-                            default: 'shake'
-                        }),
-                        value: PrimeGesture.SHAKE
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'Prime.gesture.tap',
-                            default: 'tap'
-                        }),
-                        value: PrimeGesture.TAP
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'Prime.gesture.doubletap',
-                            default: 'doubletap'
-                        }),
-                        value: PrimeGesture.DOUBLETAPPED
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'Prime.gesture.freefall',
-                            default: 'freefall'
-                        }),
-                        value: PrimeGesture.FREEFALL
-                    },
-                    {
-                        text: formatMessage({
-                            id: 'Prime.gesture.any',
-                            default: 'any',
-                            description: 'label for any element in gesture menu for LEGO Prime extension'
-                        }),
-                        value: PrimeGesture.ANY
-                    }
-                ],
+                // GESTURE_ANY: [
+                //     {
+                //         text: formatMessage({
+                //             id: 'Prime.gesture.shake',
+                //             default: 'shake'
+                //         }),
+                //         value: PrimeGesture.SHAKE
+                //     },
+                //     {
+                //         text: formatMessage({
+                //             id: 'Prime.gesture.tap',
+                //             default: 'tap'
+                //         }),
+                //         value: PrimeGesture.TAP
+                //     },
+                //     {
+                //         text: formatMessage({
+                //             id: 'Prime.gesture.doubletap',
+                //             default: 'doubletap'
+                //         }),
+                //         value: PrimeGesture.DOUBLETAPPED
+                //     },
+                //     {
+                //         text: formatMessage({
+                //             id: 'Prime.gesture.freefall',
+                //             default: 'freefall'
+                //         }),
+                //         value: PrimeGesture.FREEFALL
+                //     },
+                //     {
+                //         text: formatMessage({
+                //             id: 'Prime.gesture.any',
+                //             default: 'any',
+                //             description: 'label for any element in gesture menu for LEGO Prime extension'
+                //         }),
+                //         value: PrimeGesture.ANY
+                //     }
+                // ],
                 COLOR: [
                     {
                         text: PrimeColorLocalizedName[PrimeColorValue.ANY],
@@ -919,19 +919,19 @@ class Scratch3PrimeBlocks {
         return this._isTilted(args.TILT_DIRECTION_ANY);
     }
 
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {object} args - the block's arguments.
-     * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     */
-    whenGesture (args) {
-        const bool = this._isGesture(args.GESTURE_ANY);
-        if (bool) {
-            this._peripheral._sensors.gesture = false;
-            return true;
-        }
-    }
+    // /**
+    //  * Test whether the tilt sensor is currently tilted.
+    //  * @param {object} args - the block's arguments.
+    //  * @property {TiltDirection} TILT_DIRECTION_ANY - the tilt direction to test (up, down, left, right, or any).
+    //  * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+    //  */
+    // whenGesture (args) {
+    //     const bool = this._isGesture(args.GESTURE_ANY);
+    //     if (bool) {
+    //         this._peripheral._sensors.gesture = false;
+    //         return true;
+    //     }
+    // }
 
     whenColor (args) {
         if (args.COLOR === PrimeColorValue.ANY) {
@@ -1028,32 +1028,32 @@ class Scratch3PrimeBlocks {
         }
     }
 
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {object} args - the block's arguments.
-     * @property {Gesture} GESTURE_ANY - the tilt direction to test (up, down, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     */
-    isGesture (args) {
-        return this._isGesture(args.GESTURE_ANY);
-    }
-
-    /**
-     * Test whether the tilt sensor is currently tilted.
-     * @param {Gesture} gesture - the tilt direction to test (up, down, left, right, or any).
-     * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
-     * @private
-     */
-    _isGesture (gesture) {
-        switch (gesture) {
-        case PrimeGesture.ANY: {
-            const bool = this._peripheral._sensors.gesture;
-            return bool;
-        }
-        default:
-            return this._peripheral._sensors.gesture === gesture;
-        }
-    }
+    // /**
+    //  * Test whether the tilt sensor is currently tilted.
+    //  * @param {object} args - the block's arguments.
+    //  * @property {Gesture} GESTURE_ANY - the tilt direction to test (up, down, left, right, or any).
+    //  * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+    //  */
+    // isGesture (args) {
+    //     return this._isGesture(args.GESTURE_ANY);
+    // }
+    //
+    // /**
+    //  * Test whether the tilt sensor is currently tilted.
+    //  * @param {Gesture} gesture - the tilt direction to test (up, down, left, right, or any).
+    //  * @return {boolean} - true if the tilt sensor is tilted past a threshold in the specified direction.
+    //  * @private
+    //  */
+    // _isGesture (gesture) {
+    //     switch (gesture) {
+    //     case PrimeGesture.ANY: {
+    //         const bool = this._peripheral._sensors.gesture;
+    //         return bool;
+    //     }
+    //     default:
+    //         return this._peripheral._sensors.gesture === gesture;
+    //     }
+    // }
 
     whenForce () {
         return this._peripheral.force > Scratch3PrimeBlocks.FORCE_THRESHOLD;
