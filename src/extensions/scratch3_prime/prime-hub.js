@@ -425,6 +425,7 @@ class PrimeHub {
 
         switch (method) {
         case PrimeMessage.SENSOR_DATA: {
+            const updatedSensors = [];
             // todo: summarize the sensor data spec here
             const ports = parameters.slice(0, 6);
             for (const [port, info] of ports.entries()) {
@@ -433,9 +434,11 @@ class PrimeHub {
                     const deviceData = info[1];
                     switch (deviceType) {
                     case PrimeIO.FORCE:
+                        updatedSensors.push(PrimeIO.FORCE);
                         this._sensors.force = deviceData[0];
                         break;
                     case PrimeIO.COLOR:
+                        updatedSensors.push(PrimeIO.COLOR);
                         this._sensors.prevColorIndex = this._sensors.colorIndex;
                         // todo: better way to handle this case?
                         if (deviceData[1] === null) {
@@ -445,6 +448,7 @@ class PrimeHub {
                         }
                         break;
                     case PrimeIO.ULTRASONIC:
+                        updatedSensors.push(PrimeIO.ULTRASONIC);
                         if (deviceData[0] !== null) { // todo: why do we often get null here?
                             this._sensors.distance = deviceData[0];
                         }
@@ -471,6 +475,17 @@ class PrimeHub {
             this._sensors.yaw = parameters[PrimePortIndex.POSITION][0];
             this._sensors.tiltY = parameters[PrimePortIndex.POSITION][1];
             this._sensors.tiltX = parameters[PrimePortIndex.POSITION][2];
+
+            // Reset sensors that did not receive an update
+            if (!updatedSensors.includes(PrimeIO.FORCE)) {
+                this._sensors.force = 0;
+            }
+            if (!updatedSensors.includes(PrimeIO.COLOR)) {
+                this._sensors.colorIndex = -1; // todo: use enum
+            }
+            if (!updatedSensors.includes(PrimeIO.ULTRASONIC)) {
+                this._sensors.distance = 0;
+            }
 
             break;
         }
