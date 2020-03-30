@@ -342,44 +342,6 @@ class PrimeHub {
         return command;
     }
 
-    /**
-     * Generate a Prime 'Input Command' in the byte array format
-     * (COMMAND ID, COMMAND TYPE, CONNECT ID, TYPE ID, MODE, DELTA INTERVAL (4 BYTES),
-     * UNIT, NOTIFICATIONS ENABLED).
-     *
-     * This sends a command to the Prime that sets that input format
-     * of the specified inputs and sets value change notifications.
-     *
-     * @param  {number}  connectID           - the port (Connect ID) to send a command to.
-     * @param  {number}  type                - the type of input sensor.
-     * @param  {number}  mode                - the mode of the input sensor.
-     * @param  {number}  delta               - the delta change needed to trigger notification.
-     * @param  {array}   units               - the unit of the input sensor value.
-     * @param  {boolean} enableNotifications - whether to enable notifications.
-     * @return {array}                       - a generated input command.
-     */
-    generateInputCommand (connectID, type, mode, delta, units, enableNotifications) {
-        const command = [
-            1, // Command ID = 1 = "Sensor Format"
-            2, // Command Type = 2 = "Write"
-            connectID,
-            type,
-            mode,
-            delta,
-            0, // Delta Interval Byte 2
-            0, // Delta Interval Byte 3
-            0, // Delta Interval Byte 4
-            units,
-            enableNotifications ? 1 : 0
-        ];
-
-        return command;
-    }
-
-    /**
-     * Sets LED mode and initial color and starts reading data from peripheral after BLE has connected.
-     * @private
-     */
     _onConnect () {
         console.log('_onConnect');
     }
