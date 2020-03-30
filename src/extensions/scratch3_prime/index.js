@@ -484,22 +484,22 @@ class Scratch3PrimeBlocks {
                 //         }
                 //     }
                 // },
-                {
-                    opcode: 'isTilted',
-                    text: formatMessage({
-                        id: 'Prime.isTilted',
-                        default: 'tilted [TILT_DIRECTION_ANY]?',
-                        description: 'whether the tilt sensor is tilted'
-                    }),
-                    blockType: BlockType.BOOLEAN,
-                    arguments: {
-                        TILT_DIRECTION_ANY: {
-                            type: ArgumentType.STRING,
-                            menu: 'TILT_DIRECTION_ANY',
-                            defaultValue: PrimeTiltDirection.ANY
-                        }
-                    }
-                },
+                // {
+                //     opcode: 'isTilted',
+                //     text: formatMessage({
+                //         id: 'Prime.isTilted',
+                //         default: 'tilted [TILT_DIRECTION_ANY]?',
+                //         description: 'whether the tilt sensor is tilted'
+                //     }),
+                //     blockType: BlockType.BOOLEAN,
+                //     arguments: {
+                //         TILT_DIRECTION_ANY: {
+                //             type: ArgumentType.STRING,
+                //             menu: 'TILT_DIRECTION_ANY',
+                //             defaultValue: PrimeTiltDirection.ANY
+                //         }
+                //     }
+                // },
                 {
                     opcode: 'getTiltAngle',
                     text: formatMessage({
