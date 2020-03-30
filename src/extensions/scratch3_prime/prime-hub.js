@@ -373,10 +373,14 @@ class PrimeHub {
     _handleMessage (data) {
         const method = data.m;
         const parameters = data.p;
+        const result = data.r;
+        const error = data.e;
+        const messageId = data.i;
+
         // console.log('_onMessage', data);
 
-        if (data.e) {
-            console.log('error', atob(data.e));
+        if (error) {
+            console.log('error', atob(error));
             return;
         }
 
@@ -387,51 +391,11 @@ class PrimeHub {
 
         switch (method) {
         case PrimeMessage.SENSOR_DATA: {
-            const updatedSensors = [];
             // todo: summarize the sensor data spec here
             const ports = parameters.slice(0, 6);
-            for (const [port, info] of ports.entries()) {
-                const deviceType = info[0];
-                if (deviceType !== 0) {
-                    const deviceData = info[1];
-                    switch (deviceType) {
-                    case PrimeIO.FORCE:
-                        updatedSensors.push(PrimeIO.FORCE);
-                        this._sensors.force = deviceData[0];
-                        break;
-                    case PrimeIO.COLOR:
-                        updatedSensors.push(PrimeIO.COLOR);
-                        this._sensors.prevColorIndex = this._sensors.colorIndex;
-                        // todo: better way to handle this case?
-                        if (deviceData[1] === null) {
-                            this._sensors.colorIndex = -1; // todo: use enum
-                        } else {
-                            this._sensors.colorIndex = deviceData[1];
-                        }
-                        break;
-                    case PrimeIO.ULTRASONIC:
-                        updatedSensors.push(PrimeIO.ULTRASONIC);
-                        if (deviceData[0] !== null) { // todo: why do we often get null here?
-                            this._sensors.distance = deviceData[0];
-                        }
-                        break;
-                    case PrimeIO.MOTOR_MEDIUM:
-                    case PrimeIO.MOTOR_LARGE:
-                        if (this.motor(port)) {
-                            this._motors[port].position = deviceData[2];
-                        } else {
-                            this._registerMotor(port, deviceType);
-                        }
-                        break;
-                    default:
-                        // log.warn(`Type ${type} on port ${_.invert(PrimePort)[port]}`);
-                    }
-                }
-                // Remove a motor that was disconnected
-                if (this.motor(port) && deviceType === 0) {
-                    this._motors[port] = null;
-                }
-            }
+            ports.forEach((portData, portIndex) => {
+                this._handleSensorDataForPort(portData, portIndex);
+            });
 
             // position data here is in the order: yaw, pitch, roll
             this._sensors.yaw = parameters[PrimePortIndex.POSITION][0];
@@ -439,14 +403,23 @@ class PrimeHub {
             this._sensors.tiltX = parameters[PrimePortIndex.POSITION][2];
 
             // Reset sensors that did not receive an update
-            if (!updatedSensors.includes(PrimeIO.FORCE)) {
-                this._sensors.force = 0;
+            if (!this._sensorWasUpdated(PrimeIO.FORCE, ports)) {
+                if (this._sensors.force !== 0) {
+                    console.log('force disconnected');
+                    this._sensors.force = 0;
+                }
             }
-            if (!updatedSensors.includes(PrimeIO.COLOR)) {
-                this._sensors.colorIndex = -1; // todo: use enum
+            if (!this._sensorWasUpdated(PrimeIO.COLOR, ports)) {
+                if (this._sensors.colorIndex !== -1) {
+                    console.log('color disconnected');
+                    this._sensors.colorIndex = -1; // todo: use enum
+                }
             }
-            if (!updatedSensors.includes(PrimeIO.ULTRASONIC)) {
-                this._sensors.distance = 0;
+            if (!this._sensorWasUpdated(PrimeIO.ULTRASONIC, ports)) {
+                if (this._sensors.distance !== 0) {
+                    console.log('distance disconnected');
+                    this._sensors.distance = 0;
+                }
             }
 
             break;
@@ -461,10 +434,11 @@ class PrimeHub {
         case PrimeMessage.FIRMWARE_STATUS:
             break;
         default: {
-            if (data.r !== null && data.i) {
+            if (result !== null && messageId) {
+                console.log(data);
                 for (const portID of this._motors.keys()) {
                     const motor = this.motor(portID);
-                    if (motor && motor.pendingPromiseId === data.i) {
+                    if (motor && motor.pendingPromiseId === messageId) {
                         motor.pendingPromiseFunction();
                     }
                 }
@@ -474,9 +448,58 @@ class PrimeHub {
         }
     }
 
-    _registerMotor (portNum, type) {
+    _handleSensorDataForPort (portData, portIndex) {
+        const deviceType = portData[0];
+        if (deviceType !== 0) {
+            const deviceData = portData[1];
+            switch (deviceType) {
+            case PrimeIO.FORCE:
+                this._sensors.force = deviceData[0];
+                break;
+            case PrimeIO.COLOR:
+                this._sensors.prevColorIndex = this._sensors.colorIndex;
+                // todo: better way to handle this case?
+                if (deviceData[1] === null) {
+                    this._sensors.colorIndex = -1; // todo: use enum
+                } else {
+                    this._sensors.colorIndex = deviceData[1];
+                }
+                break;
+            case PrimeIO.ULTRASONIC:
+                if (deviceData[0] !== null) { // todo: why do we often get null here?
+                    this._sensors.distance = deviceData[0];
+                }
+                break;
+            case PrimeIO.MOTOR_MEDIUM:
+            case PrimeIO.MOTOR_LARGE:
+                if (this.motor(portIndex)) {
+                    this._motors[portIndex].position = deviceData[2];
+                } else {
+                    this._registerMotor(portIndex, deviceType);
+                }
+                break;
+            default:
+            }
+        }
+        // Remove a motor that was disconnected
+        if (this.motor(portIndex) && deviceType === 0) {
+            this._motors[portIndex] = null;
+        }
+    }
+
+    _sensorWasUpdated (sensorType, portArray) {
+        let updated = false;
+        portArray.forEach(portData => {
+            if (portData[0] === sensorType) {
+                updated = true;
+            }
+        });
+        return updated;
+    }
+
+    _registerMotor (portIndex, type) {
         if (type === PrimeIO.MOTOR_MEDIUM || type === PrimeIO.MOTOR_LARGE) {
-            this._motors[portNum] = new PrimeMotor(this, portNum);
+            this._motors[portIndex] = new PrimeMotor(this, portIndex);
         }
     }
 }
