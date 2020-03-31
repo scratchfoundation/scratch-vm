@@ -216,25 +216,27 @@ class PrimeHub {
     display (pixels) {
         pixels = pixels.replace(/(.{5})/g, '$1:').slice(0, -1); // Insert :-separator after every 5th pixel
         pixels = pixels.replace(/(1)/g, '9'); // Replace all 1's with 9's
-        const cmd = this.generateOutputCommand({
+        const cmd = {
             m: 'scratch.display_image',
             p: {
                 image: pixels
-            }
-        });
+            },
+            i: this.generateCommandId()
+        };
 
         this.send(cmd);
     }
 
     playTone (note, durationSec) {
-        const cmd = this.generateOutputCommand({
+        const cmd = {
             m: 'scratch.sound_beep_for_time',
             p: {
                 volume: 100,
                 note: note,
                 duration: durationSec * 1000
-            }
-        });
+            },
+            i: this.generateCommandId()
+        };
         this.send(cmd);
     }
 
@@ -246,9 +248,10 @@ class PrimeHub {
         // command is run every time you click stop or green flag. is this a
         // spike hub runtime bug? or should we keep a flag and only call this
         // if we are currently playing a tone?
-        const cmd = this.generateOutputCommand({
-            m: 'scratch.sound_off'
-        });
+        const cmd = {
+            m: 'scratch.sound_off',
+            i: this.generateCommandId()
+        };
 
         this.send(cmd);
     }
@@ -345,16 +348,8 @@ class PrimeHub {
         });
     }
 
-    /**
-     * Generate a Prime 'Output Command' with a unique id added.
-     *
-     * @param  {object} command   - the command object.
-     * @return {object}            - the same command object with a unique id added.
-     */
-    generateOutputCommand (command) {
-        // Add random id number
-        command.i = String(Math.floor(Math.random() * 10000000));
-        return command;
+    generateCommandId () {
+        return String(Math.floor(Math.random() * 10000000));
     }
 
     _onConnect () {
@@ -362,9 +357,10 @@ class PrimeHub {
     }
 
     _requestFirmwareInfo () {
-        const cmd = this.generateOutputCommand({
-            m: 'get_firmware_info'
-        });
+        const cmd = {
+            m: 'get_firmware_info',
+            i: this.generateCommandId()
+        };
         this.send(cmd);
     }
 

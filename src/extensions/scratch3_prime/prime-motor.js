@@ -187,14 +187,15 @@ class PrimeMotor {
     turnOn () {
         if (this._power === 0) return;
 
-        const cmd = this._parent.generateOutputCommand({
+        const cmd = {
             m: 'scratch.motor_start',
             p: {
                 port: PrimePortName[this._index],
                 speed: this._power * this._direction,
                 stall: 'False'
-            }
-        });
+            },
+            i: this._parent.generateCommandId()
+        };
 
         this._parent.send(cmd);
 
@@ -222,7 +223,7 @@ class PrimeMotor {
     turnOnForRotation (rotations, sign) {
         if (this._power === 0) return;
 
-        const cmd = this._parent.generateOutputCommand({
+        const cmd = {
             m: 'scratch.motor_run_for_degrees',
             p: {
                 port: PrimePortName[this._index],
@@ -230,8 +231,9 @@ class PrimeMotor {
                 speed: this._power * this._direction * sign,
                 stall: 'False',
                 stop: PrimeMotorStopState.FLOAT
-            }
-        });
+            },
+            i: this._parent.generateCommandId()
+        };
 
         this._parent.send(cmd);
         return cmd.i;
@@ -244,13 +246,14 @@ class PrimeMotor {
     turnOff (useLimiter = true) {
         if (this._power === 0) return;
 
-        const cmd = this._parent.generateOutputCommand({
+        const cmd = {
             m: 'scratch.motor_stop',
             p: {
                 port: PrimePortName[this._index],
                 stop: PrimeMotorStopState.FLOAT
-            }
-        });
+            },
+            i: this._parent.generateCommandId()
+        };
         this._parent.send(cmd);
 
         this._isOn = false;
