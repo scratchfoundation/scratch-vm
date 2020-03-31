@@ -16,6 +16,13 @@ const PrimeBT = {
 };
 
 /**
+ * A time interval to wait (in milliseconds) in between pings, which are used to
+ * detect that the device has powered off.
+ * @type {number}
+ */
+const PrimePingInterval = 5000;
+
+/**
  * Enum for Prime sensor and output types.
  * @readonly
  * @enum {number}
@@ -111,6 +118,9 @@ class PrimeHub {
         this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+        this._requestFirmwareInfo = this._requestFirmwareInfo.bind(this);
+
+        this._pingIntervalId = null;
     }
 
     /**
@@ -294,6 +304,11 @@ class PrimeHub {
             force: 0,
             distance: 0
         };
+
+        if (this._pingIntervalId) {
+            window.clearInterval(this._pingIntervalId);
+            this._pingIntervalId = null;
+        }
     }
 
     /**
@@ -343,7 +358,14 @@ class PrimeHub {
     }
 
     _onConnect () {
-        console.log('_onConnect');
+        this._pingIntervalId = window.setInterval(this._requestFirmwareInfo, PrimePingInterval);
+    }
+
+    _requestFirmwareInfo () {
+        const cmd = this.generateOutputCommand({
+            m: 'get_firmware_info'
+        });
+        this.send(cmd);
     }
 
     _onMessage (base64) {
