@@ -161,6 +161,14 @@ class PrimeHub {
         return this._sensors.distance;
     }
 
+    get buttonLeft () {
+        return this._sensors.buttonLeft;
+    }
+
+    get buttonRight () {
+        return this._sensors.buttonRight;
+    }
+
     get sendInterval () {
         return PrimeBT.sendInterval;
     }
@@ -305,7 +313,9 @@ class PrimeHub {
             colorIndex: -1, // todo: should use enum
             prevColorIndex: -1, // todo: should use enum
             force: 0,
-            distance: 0
+            distance: 0,
+            buttonLeft: false,
+            buttonRight: false
         };
 
         if (this._pingIntervalId) {
@@ -428,9 +438,19 @@ class PrimeHub {
             this._sensors.gesture = parameters;
             break;
         case PrimeMessage.BATTERY_STATUS:
+            break;
         case PrimeMessage.BUTTON_EVENT:
+            if (parameters[0] === 'right') { // todo: use enum
+                this._sensors.buttonRight = parameters[1] === 0;
+            }
+            if (parameters[0] === 'left') { // todo: use enum
+                this._sensors.buttonLeft = parameters[1] === 0;
+            }
+            break;
         case PrimeMessage.STORAGE_DATA:
+            break;
         case PrimeMessage.DISPLAY_STATUS:
+            break;
         case PrimeMessage.FIRMWARE_STATUS:
             break;
         default: {

@@ -150,6 +150,11 @@ const PrimeTiltDirection = {
     ANY: 'any'
 };
 
+const PrimeButtonValue = {
+    LEFT: 'left',
+    RIGHT: 'right'
+};
+
 /**
  * Scratch 3.0 blocks to interact with a LEGO Prime peripheral.
  */
@@ -249,6 +254,22 @@ class Scratch3PrimeBlocks {
                         DURATION: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0.1
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenButton',
+                    text: formatMessage({
+                        id: 'Prime.whenButton',
+                        default: 'when [BUTTON] button pressed',
+                        description: 'when a button on the hub is pressed'
+                    }),
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        BUTTON: {
+                            type: ArgumentType.STRING,
+                            menu: 'BUTTON',
+                            defaultValue: PrimeButtonValue.LEFT
                         }
                     }
                 },
@@ -752,7 +773,23 @@ class Scratch3PrimeBlocks {
                         value: PrimeColorValue.BLACK
                     }
                 ],
-                OP: ['<', '>']
+                OP: ['<', '>'],
+                BUTTON: [
+                    {
+                        text: formatMessage({
+                            id: 'Prime.button.left',
+                            default: 'left'
+                        }),
+                        value: PrimeButtonValue.LEFT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'Prime.button.right',
+                            default: 'right'
+                        }),
+                        value: PrimeButtonValue.RIGHT
+                    }
+                ]
             }
         };
     }
@@ -932,6 +969,16 @@ class Scratch3PrimeBlocks {
     //         return true;
     //     }
     // }
+
+    whenButton (args) {
+        if (args.BUTTON === PrimeButtonValue.LEFT) {
+            return this._peripheral.buttonLeft;
+        }
+        if (args.BUTTON === PrimeButtonValue.RIGHT) {
+            return this._peripheral.buttonRight;
+        }
+        return false;
+    }
 
     whenColor (args) {
         if (args.COLOR === PrimeColorValue.ANY) {
