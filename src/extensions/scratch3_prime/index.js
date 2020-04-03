@@ -567,7 +567,7 @@ class Scratch3PrimeBlocks {
                     {
                         text: formatMessage({
                             id: 'Prime.motorId.all',
-                            default: 'all motors',
+                            default: 'all',
                             description: 'label for all motors element in motor menu for LEGO Prime extension'
                         }),
                         value: PrimeMotorValue.ALL
