@@ -832,6 +832,7 @@ class Scratch3PrimeBlocks {
         // TODO: Clamps to 100 rotations. Consider changing.
         const sign = Math.sign(args.ROTATION);
         const rotations = Math.abs(MathUtil.clamp(args.ROTATION, -100, 100));
+        // todo: need to use promise.all here
         return new Promise(resolve => {
             this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
