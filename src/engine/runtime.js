@@ -1835,6 +1835,7 @@ class Runtime extends EventEmitter {
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
         this.emit(Runtime.RUNTIME_DISPOSED);
+        this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
 
         // *********** Cloud *******************
