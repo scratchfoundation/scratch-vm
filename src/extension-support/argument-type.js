@@ -45,6 +45,7 @@ const ArgumentType = {
      * Data file column value with column picker field
      */
     DATA_FILE: 'datafile',
+    
     /** 
      * Inline image on block (as part of the label)
      */

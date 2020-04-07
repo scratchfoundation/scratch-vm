@@ -8,14 +8,11 @@ const BlockType = require('../../extension-support/block-type');
 // ...or VM dependencies:
 const formatMessage = require('format-message');
 
+const MapHelper = require('./map-helper');
+
 //this is where we define the icon image like 
 const blockIconURI ='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgaWQ9IkxheWVyXzEiCiAgIGRhdGEtbmFtZT0iTGF5ZXIgMSIKICAgdmlld0JveD0iMCAwIDE1MCAxNTAiCiAgIHZlcnNpb249IjEuMSIKICAgc29kaXBvZGk6ZG9jbmFtZT0iU2NyYXRjaC0wMi5zdmciCiAgIGlua3NjYXBlOnZlcnNpb249IjAuOTIuNCAoZjhkY2U5MSwgMjAxOS0wOC0wMikiPgogIDxtZXRhZGF0YQogICAgIGlkPSJtZXRhZGF0YTIxIj4KICAgIDxyZGY6UkRGPgogICAgICA8Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+CiAgICAgICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICAgICAgPGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPgogICAgICAgIDxkYzp0aXRsZT5TY3JhdGNoPC9kYzp0aXRsZT4KICAgICAgPC9jYzpXb3JrPgogICAgPC9yZGY6UkRGPgogIDwvbWV0YWRhdGE+CiAgPHNvZGlwb2RpOm5hbWVkdmlldwogICAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgICBib3JkZXJjb2xvcj0iIzY2NjY2NiIKICAgICBib3JkZXJvcGFjaXR5PSIxIgogICAgIG9iamVjdHRvbGVyYW5jZT0iMTAiCiAgICAgZ3JpZHRvbGVyYW5jZT0iMTAiCiAgICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIgogICAgIGlua3NjYXBlOnBhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIxOTIwIgogICAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEwMjUiCiAgICAgaWQ9Im5hbWVkdmlldzE5IgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBpbmtzY2FwZTp6b29tPSI1LjY1Njg1NDMiCiAgICAgaW5rc2NhcGU6Y3g9IjY4LjA2MDcxOCIKICAgICBpbmtzY2FwZTpjeT0iNzUuOTA4NjkyIgogICAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICAgIGlua3NjYXBlOndpbmRvdy15PSIyNyIKICAgICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIxIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkxheWVyXzEiIC8+CiAgPGRlZnMKICAgICBpZD0iZGVmczQiPgogICAgPHN0eWxlCiAgICAgICBpZD0ic3R5bGUyIj4uY2xzLTEsLmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzAwMDtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9LmNscy0xe3N0cm9rZS13aWR0aDoxLjRweDt9LmNscy0ye3N0cm9rZS13aWR0aDoxLjc4cHg7fTwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZQogICAgIGlkPSJ0aXRsZTYiPlNjcmF0Y2g8L3RpdGxlPgogIDxyZWN0CiAgICAgY2xhc3M9ImNscy0xIgogICAgIHg9IjMxLjEiCiAgICAgeT0iMTMuNjkiCiAgICAgd2lkdGg9Ijg4LjQ4IgogICAgIGhlaWdodD0iMTI2LjQiCiAgICAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNCAxNTIuMzcpIHJvdGF0ZSgtOTAuMTEpIgogICAgIGlkPSJyZWN0OCIKICAgICBzdHlsZT0iZmlsbDojZWJkOWI2O2ZpbGwtb3BhY2l0eToxIiAvPgogIDxwYXRoCiAgICAgY2xhc3M9ImNscy0yIgogICAgIGQ9Ik0xOC41MSwxMDkuNjhjMi44Ni01LjgsNS4yMS03LDYuODQtNywyLjE1LDAsMi42MywyLjA5LDYuNzgsNC4yNS44Ni40NCw3LjMyLDMuNzMsMTMuNTksMi44OCw0LjIzLS41Nyw0LjA1LTIuNDMsMTEuMzctNS41NSw0LjM5LTEuODgsOC4xNi0zLjQ4LDExLjM2LTIuNzUsNC4wNi45MiwyLjgzLDQuNTksNi43OCw1LjY1LDQuODgsMS4zMiw5LjM1LTMuNjEsMTUuODktMi43Miw2LjI1Ljg1LDguMzUsNi4xOCwxMS4zMSw1LjY4LDIuNzEtLjQ2LDEuNjItNSw0LjU3LTUuNiwzLjE5LS42LDYuMjgsNC40NiwxMS4zMSw0LjI4LDQuNjEtLjE3LDYuNzEtNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yNCw1LjYzIgogICAgIGlkPSJwYXRoMTAiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTE4LjE5LDg5LjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTIiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTE5LjE5LDczLjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTQiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTIwLjE5LDU1LjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTYiIC8+Cjwvc3ZnPg==';
 
-const files = {};
-
-var fileBlocks = [];
-
-const NO_FILES ="";
 
 class DataTools {
     static get EXTENSION_ID() {
@@ -28,13 +25,28 @@ class DataTools {
     constructor(runtime){
         this._runtime = runtime;
         this._runtime.registerPeripheralExtension('datatools', this);
-        //Do something here to render the file upload button
-        //Maybe not, actually. It might be better to hijack that functionality with the modal.
+        
+        
+        /**
+         * holds data for any uploaded data set
+         */
+        this._files = {};
+
+        /**
+         * holds the blocks representing each uploaded data set
+         */
+        this._fileBlocks = [];
+
+        this._mapHelper = new MapHelper();
+
+        this.getRow = this.getRow.bind(this);
+        this.generateFileDisplayName = this.generateFileDisplayName.bind(this);
+        this.addDataFile = this.addDataFile.bind(this);
     }
 
     /**
      * Define the DataTools extension.
-     * @return {object} Extension description.
+     * @return {Object} Extension description.
      */
     getInfo(){
         return {
@@ -46,8 +58,12 @@ class DataTools {
             }),
             blockIconURI: blockIconURI, 
             showStatusButton: true,
+            
+            color1: '#7851a9',
+            color2: '#553A76',
+
             blocks: [
-                ...fileBlocks,
+                ...this._fileBlocks,
                 '---',
                 //Add other blocks below
                 {
@@ -92,7 +108,6 @@ class DataTools {
                         COLUMN: {
                             type: ArgumentType.DATA_FILE,
                             menu: 'columnMenu',
-                            default: '[FILE] COLUMN'
                         },
                         ROW: {
                             type: ArgumentType.NUMBER,
@@ -112,7 +127,6 @@ class DataTools {
                         COLUMN: {
                             type: ArgumentType.DATA_FILE,
                             menu: 'columnMenu',
-                            default: '[FILE] COLUMN'
                         },
                         ROW: {
                             type: ArgumentType.NUMBER,
@@ -131,7 +145,7 @@ class DataTools {
                         default: 'duplicate [ORIGINAL] as [NEW]',
                         description: 'duplicate an existing dataset and give it a new name'
                     }),
-                    blocktype: BlockType.COMMAND,
+                    blockType: BlockType.COMMAND,
                     arguments: {
                         ORIGINAL: {
                           type: ArgumentType.STRING,
@@ -143,6 +157,56 @@ class DataTools {
                         }
                     }
                 },
+                '---',
+                {
+                    opcode: 'mapFunctionToColumn',
+                    text: formatMessage({
+                        id: 'datatools.mapFunctionToColumn',
+                        default: 'map [NAME]',
+                        description: 'maps a given dataset'
+                    }),
+                    blockType: BlockType.FUNCTION,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.string,
+                            menu: 'fileMenuSquare',
+                        }
+                    }
+                },
+                {
+                    opcode: 'mapInput',
+                    text: formatMessage({
+                        id: 'datatools.mapInput',
+                        default: 'current row at [COLUMN]',
+                        description: 'gets the value of a column for the map function'
+                    }),     
+                    arguments: {
+                        COLUMN: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "column"
+                        }
+                    },      
+                    blockType: BlockType.REPORTER,
+                },
+                {
+                    opcode: 'setMapResult',
+                    text: formatMessage({
+                        id: 'datatools.setMapResult',
+                        default: 'set map result at [COLUMN] to [VALUE]',
+                        description: 'sets the value of the map function'
+                    }),                
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        COLUMN: {
+                            type: ArgumentType.STRING,
+                            defaultValue: "column"
+                        },
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: " "
+                        }
+                    }
+                }
             ],
             menus: {
                 columnMenu: {
@@ -151,6 +215,11 @@ class DataTools {
                 fileMenu: {
                     acceptReporters: true,
                     items: 'getFileNames'
+                },
+                fileMenuSquare: {
+                    acceptReporters: true,
+                    squareOutput: true,
+                    items: 'getFileNames'
                 }
             }
         }
@@ -158,8 +227,8 @@ class DataTools {
 
     /**
      * Performs a specified action
-     * @param {string} action The action
-     * @param {object} args The arguments for the function
+     * @param {String} action The action
+     * @param {Object} args The arguments for the function
      */
     performAction(action, args) {
         switch(action) {
@@ -184,10 +253,10 @@ class DataTools {
 
     /**
      * Generates column data for dropdown display
-     * @returns {object} An object containing arrays with the columns of each file
+     * @returns {Object} An object containing arrays with the columns of each file
      */
     generateColumnData() {
-        let fileNames = Object.keys(files);
+        let fileNames = Object.keys(this._files);
         if(fileNames.length === 0) {
             return {
                 
@@ -197,7 +266,7 @@ class DataTools {
         let data = {};
     
         fileNames.forEach(name =>{
-            let columns = Object.keys(files[name][0]);
+            let columns = Object.keys(this._files[name][0]);
             data[name] = columns;
         });
 
@@ -213,7 +282,7 @@ class DataTools {
         if(NEW === ""){
             NEW = ORIGINAL;
         }
-        let data = JSON.parse(JSON.stringify(files[ORIGINAL]));
+        let data = JSON.parse(JSON.stringify(this._files[ORIGINAL]));
         this.addDataFile(NEW, data);
     }
 
@@ -221,7 +290,7 @@ class DataTools {
      * Dummy method to ensure the status button works
      */
     isConnected() {
-        return fileBlocks.length > 0;
+        return this._fileBlocks.length > 0;
     }
 
     /**
@@ -245,18 +314,18 @@ class DataTools {
      */
     getFileNames() {
         let names = [];
-        fileBlocks.forEach(file => {
+        this._fileBlocks.forEach(file => {
             names.push(file.text);
         });
 
-        if(names.length === 0) names.push(NO_FILES);
+        if(names.length === 0) names.push("");
         return names;
     }
 
     /**
      * Gets the value at a row and column in a given file
-     * @param {object} args Object containing arguments, including COLUMN, ROW, and FILENAME
-     * @returns {*} The value at the specified row and column in the specified file 
+     * @param {Object} args Object containing arguments, including COLUMN, ROW, and FILENAME
+     * @returns {String | Number} The value at the specified row and column in the specified file 
      */
     getColumnAtRow(args) {
         let { COLUMN, ROW } = args;
@@ -265,19 +334,19 @@ class DataTools {
         let fileName = colArr[0].substring(1);
         let col = colArr.slice(1, colArr.length).join(']').substring(1);
 
-        if(!files[fileName] || ROW < 1 || ROW > files[fileName].length || files[fileName][ROW - 1][col] === 'undefined') {
+        if(!this._files[fileName] || ROW < 1 || ROW > this._files[fileName].length || this._files[fileName][ROW - 1][col] === 'undefined') {
             return "";
         }
 
-        return files[fileName][ROW - 1][col];
+        return this._files[fileName][ROW - 1][col];
     }
 
     /**
     * Found at https://stackoverflow.com/questions/11665884/how-can-i-parse-a-string-with-a-comma-thousand-separator-to-a-number
     * Parses a number from a localized string 
-    * @param {string} value The initial string value (e.g. '453,323')
-    * @param {string} locale The locale used to parse the string, defaults to the navigator's locale
-    * @return {int} The float value of the string (e.g. 453323)
+    * @param {String} value The initial string value (e.g. '453,323')
+    * @param {String} locale The locale used to parse the string, defaults to the navigator's locale
+    * @return {Number} The float value of the string (e.g. 453323)
     */
     parseNumber(value, locale = navigator.language) {
         const example = Intl.NumberFormat(locale).format('1.1');
@@ -290,7 +359,7 @@ class DataTools {
 
     /**
      * Sets the value at a row and column in a given file
-     * @param {object} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
+     * @param {Object} args Object containing arguments, including COlUMN, ROW, and VALUE to set to
      */
     setColumnAtRow(args) {
         let { COLUMN, ROW, VALUE} = args;
@@ -299,23 +368,23 @@ class DataTools {
         let fileName = colArr[0].substring(1);
         let col = colArr.slice(1, colArr.length).join(']').substring(1);
 
-        if(!files[fileName] || ROW < 1 || ROW > files[fileName].length || files[fileName][ROW - 1][col]  === 'undefined') {
+        if(!this._files[fileName] || ROW < 1 || ROW > this._files[fileName].length || this._files[fileName][ROW - 1][col]  === 'undefined') {
             return "";
         }
-        if(typeof(files[fileName][ROW - 1][col]) === "number") {
+        if(typeof(this._files[fileName][ROW - 1][col]) === "number") {
             if(!isNaN(VALUE)){
-                files[fileName][ROW - 1][col] = this.parseNumber(VALUE);
+                this._files[fileName][ROW - 1][col] = this.parseNumber(VALUE);
             }
         }
         else{
-            files[fileName][ROW - 1][col] = VALUE;
+            this._files[fileName][ROW - 1][col] = VALUE;
         }
         
     }
 
     /**
      * Adds an empty row to a dataset
-     * @param {object} args Object containing the file name
+     * @param {Object} args Object containing the file name
      */
     addDataFileRow(args) {
         let { FILENAME } = args;
@@ -323,7 +392,7 @@ class DataTools {
             return;
         }
 
-        let first = files[FILENAME][0];
+        let first = this._files[FILENAME][0];
         let newRow = {};
         Object.keys(first).map(key => {
             if(typeof(first[key]) === 'number')
@@ -333,29 +402,29 @@ class DataTools {
             }
         });
 
-        files[FILENAME].push(newRow);
+        this._files[FILENAME].push(newRow);
     }
 
     /**
      * Gets the row count of a given file
-     * @param {object} args Object containing arguments, including FILENAME
+     * @param {Object} args Object containing arguments, including FILENAME
      * @returns {Number} The row count of the given file
      */
     getRowCount(args){
         let { FILENAME } = args;
 
-        if(!files[FILENAME]) {
+        if(!this._files[FILENAME]) {
             return 0;
         }
 
-        return files[FILENAME].length;
+        return this._files[FILENAME].length;
     }
 
     /**
      * Gets the filename of a given reporter block
-     * @param {object} args Unused, holds arguments from the block
-     * @param {*} util Unused, holds utility functions for the block
-     * @param {*} block The block that originally called this function, used to extract the file name
+     * @param {Object} args Unused, holds arguments from the block
+     * @param {Object} util Unused, holds utility functions for the block
+     * @param {Object} block The block that originally called this function, used to extract the file name
      * @returns {String} The name of the file
      */
     getFilename(args, util, block) {
@@ -365,42 +434,42 @@ class DataTools {
     /**
      * Adds a data file to the extension's array of files using the
      * file name as a key.
-     * @param {string} name The original name of the file
+     * @param {String} name The original name of the file
      * @param {Array} fileData The parsed file data stored as an array of JSON objects
      */
     addDataFile(name, fileData) {
         //Generate a displayable file name if a duplicate is found
         if(fileData.length < 1) return;
 
-        if(files[name]){
+        if(this._files[name]){
             name = this.generateFileDisplayName(name);
         }
 
-        files[name] = fileData;
-        fileBlocks.push(
+        this._files[name] = fileData;
+        this._fileBlocks.push(
         {
             opcode: 'file_' + name,
             func: 'getFilename',
             text: name,
             blockType: BlockType.REPORTER
         });
-        console.log(files);
+
         //Update the workspace to add the new file
         this._runtime.requestToolboxExtensionsUpdate();
     }
 
     /**
      * Removes a data file with a given name
-     * @param {string} name The name of the file to be removed
+     * @param {String} name The name of the file to be removed
      * @returns {Boolean} Whether or not the file was successfully removed
      */
     removeDataFile(name) {
-        if(name === null || name === "" || !files[name]) {
+        if(name === null || name === "" || !this._files[name]) {
             return false;
         }
 
-        delete files[name];
-        fileBlocks = fileBlocks.filter(block => block.text !== name);
+        delete this._files[name];
+        this._fileBlocks = this._fileBlocks.filter(block => block.text !== name);
 
         this._runtime.requestToolboxExtensionsUpdate();
         return true;
@@ -408,12 +477,13 @@ class DataTools {
 
     /**
      * Generates a displayable file name that will handle duplicates by appending "(DUPLICATE_NUM)" if necessary
-     * @param {string} name The original name of the file
-     * @returns {string} The file name that will be displayed
+     * @param {String} name The original name of the file
+     * @returns {String} The file name that will be displayed
      */
     generateFileDisplayName(original) {
+        if(!this._files[original]) return original;
         let num = 1;
-        while(files[original + " (" + num + ")"]) {
+        while(this._files[original + " (" + num + ")"]) {
             num++;
         }
         return original + " (" + num + ")";
@@ -437,25 +507,92 @@ class DataTools {
 
     /**
      * Gets the content of the file
-     * @param {string} name The file's name
+     * @param {String} name The file's name
      * @returns {Array} An array representing the file's contents
      */
     getDataFileContents(name) {
-        return [...files[name]];
+        return [...this._files[name]];
     }
 
     /**
      * Updates a data file given a table update
-     * @param {string} fileName The file's name
-     * @param {number} row The specified row
-     * @param {string} colName The specified column
-     * @param {*} value The new value
+     * @param {String} fileName The file's name
+     * @param {Number} row The specified row
+     * @param {String} colName The specified column
+     * @param {String | Number} value The new value
      * @returns {Array} An array representing the updated data
      */
     updateDataFileFromTable(fileName, row, colName, value) {
-        files[fileName][row][colName] = value;
+        this._files[fileName][row][colName] = value;
 
-        return [...files[fileName]];
+        return [...this._files[fileName]];
+    }
+
+    /**
+     * Gets a value for the map input
+     * See 'getMapInput' in 'map-helper.js' for more.     
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility provided by the runtime
+     * @returns {String | Number} The column value at the loop's current position
+     */
+    mapInput(args, util) {
+        return this._mapHelper.getMapInput(args, util);
+    }
+
+    /**
+     * Sets the result of a mapping function to a given value.
+     * See 'setMapResult' in 'map-helper.js' for more.
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility provided by the runtime
+     */
+    setMapResult(args, util) {
+        this._mapHelper.setMapResult(args, util);
+    }
+
+
+    /**
+     * Defines the mapping function loop to iterate through a given data set.
+     * Each iteration executes a branch on the given data set and requires 'setMapResult' 
+     * to be called on each iteration. 
+     * @param {Object} args The block's arguments
+     * @param {Object} util Block utility object, used to control the stack frame.
+     * @returns {String} The name of the resulting data set
+     */
+    mapFunctionToColumn(args, util) {
+        //Initialization
+        if(typeof args.NAME === 'undefined') return "";
+
+        //If we're trying to run in the toolbar, don't
+        if(this._mapHelper.checkRunningInToolbar(util.thread.peekStack())) return;
+
+        //let fileName = colArr[0].substring(1);
+        let rowCount = this.getRowCount({FILENAME: args.NAME})
+
+        let topBlock = util.thread.topBlock;
+
+        this._mapHelper.checkRegenerateFunctionBlockDepthMap(topBlock, util);
+        let id = this._mapHelper.getID(topBlock);
+
+        let generatedMap = this._mapHelper.getGeneratedMap(topBlock, args.NAME);
+        if(generatedMap) return generatedMap;
+
+        // If we still have some left, start the branch.
+        return this._mapHelper.executeMapFunction(args, util, id, rowCount, 
+                                                    this.addDataFile, this.generateFileDisplayName,
+                                                    this.getRow);
+    }
+
+    /**
+     * Gets a row from a dataset
+     * @param {String} fileName The name of the dataset
+     * @param {Number} row The row number, off by 1
+     * @returns {Object} The specified row, or null if the file doesn't exist
+     */
+    getRow(fileName, row) {
+        if(this._files[fileName]) {
+            return this._files[fileName][row - 1];
+        }
+        else return null;
     }
 }
 

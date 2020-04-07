@@ -104,8 +104,8 @@ const ArgumentTypeMap = (() => {
         // They are more analagous to the label on a block.
         fieldType: 'field_image'
     };
+
     map[ArgumentType.DATA_FILE] = {
-        shadowType: 'datafile',
         fieldType: 'DATAFILE'
     };
     return map;
@@ -969,17 +969,23 @@ class Runtime extends EventEmitter {
                 colour: categoryInfo.color1,
                 colourSecondary: categoryInfo.color2,
                 colourTertiary: categoryInfo.color3,
-                outputShape: menuInfo.acceptReporters ?
-                    ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
+                outputShape: this._calcMenuOutputShape(menuInfo),
                 args0: [
                     {
-                        type: 'field_dropdown',
+                        type: menuName === 'columnMenu' ? 'field_datafile' : 'field_dropdown',
                         name: menuName,
                         options: menuItems
                     }
                 ]
             }
         };
+    }
+
+    _calcMenuOutputShape(menuInfo) {
+        if(menuInfo.squareOutput) {
+            return ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
+        }
+        else return menuInfo.acceptReporters ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE
     }
 
     _buildCustomFieldInfo (fieldName, fieldInfo, extensionId, categoryInfo) {
@@ -1139,6 +1145,10 @@ class Runtime extends EventEmitter {
                 blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             }
             break;
+        case BlockType.FUNCTION: 
+            blockJSON.output = 'String';
+            blockInfo.branchCount = 1;
+            blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
         }
 
         const blockText = Array.isArray(blockInfo.text) ? blockInfo.text : [blockInfo.text];
@@ -1318,9 +1328,10 @@ class Runtime extends EventEmitter {
             //Data files need a custom menu displayed
             if(argInfo.type === ArgumentType.DATA_FILE) {
                 const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
-                argJSON.type = 'field_datafile';
+                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                valueName = placeholder;
                 argJSON.options = menuInfo.items;
-                fieldName = placeholder;
+                fieldName = argInfo.menu;
             }
             else {
                 const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
