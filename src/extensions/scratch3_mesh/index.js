@@ -23,6 +23,22 @@ class Scratch3MeshBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+
+        /**
+         * Host and clients global variable name and value pair.
+         * @type {Object.<string, Object>}
+         */
+        this.variables = {};
+
+        /**
+         * Host and clients global variable names
+         * @type {string[]}
+         */
+        this.variableNames = [];
+
+        // FIXME: for debug
+        this._setVariable('var1', 10);
+        this._setVariable('var2', 20);
     }
 
     /**
@@ -42,20 +58,47 @@ class Scratch3MeshBlocks {
                     opcode: 'getSensorValue',
                     text: formatMessage({
                         id: 'mesh.sensorValue',
-                        default: 'sensor value',
+                        default: '[NAME] sensor value',
                         description: 'Any global variables from other projects'
                     }),
-                    blockType: BlockType.REPORTER
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            menu: 'variableNames',
+                            defaultValue: ''
+                        }
+                    }
                 }
-            ]
+            ],
+            menus: {
+                variableNames: {
+                    acceptReporters: true,
+                    items: '_getVariableNamesMenuItems'
+                }
+            }
         };
     }
 
     /**
-     * @return {number} - the global variable's value from other projects
+     * @return {Object} - the global variable's value from other projects
      */
-    getSensorValue () {
-        return 1;
+    getSensorValue (args) {
+        if (!this.variableNames.includes(args.NAME)) {
+            return '';
+        }
+        return this.variables[args.NAME];
+    }
+
+    _setVariable (name, value) {
+        if (!this.variableNames.includes(name)) {
+            this.variableNames.push(name);
+        }
+        this.variables[name] = value;
+    }
+
+    _getVariableNamesMenuItems () {
+        return [''].concat(this.variableNames);
     }
 }
 
