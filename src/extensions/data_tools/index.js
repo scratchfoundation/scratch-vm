@@ -71,8 +71,8 @@ class DataTools {
 
             blocks: [
                 ...this._fileBlocks,
-                '---',
                 //Add other blocks below
+                '---',
                 {
                     opcode: 'getRowCount',
                     text: formatMessage({
@@ -203,6 +203,7 @@ class DataTools {
                             defaultValue: " "
                         }
                     },
+                },
                 '---',
                 {
                     opcode: 'mapFunctionToColumn',
@@ -315,30 +316,30 @@ class DataTools {
             return;
         if(TYPE !='word' && TYPE!='number')
             return;
-        if(files[FILENAME].length === 0){
-            files[FILENAME][0]={};
+        if(this._files[FILENAME].length === 0){
+            this._files[FILENAME][0]={};
             if(TYPE == 'word'){
-                files[FILENAME][0][NAME] = '';
+                this._files[FILENAME][0][NAME] = '';
             } 
             else {
-                files[FILENAME][0][NAME] = 0;
+                this._files[FILENAME][0][NAME] = 0;
             }
         }
         else {
-            if(files[FILENAME][0][NAME]){
+            if(this._files[FILENAME][0][NAME]){
                 alert("Column already exists, please try again with a different name");
                 return;
             }
             let i;
-            let rowCount = files[FILENAME].length;
+            let rowCount = this._files[FILENAME].length;
             if(TYPE == 'word'){
                 for(i = 0; i < rowCount; i++){
-                    files[FILENAME][i][NAME] = '';
+                    this._files[FILENAME][i][NAME] = '';
                 }
             }
             else{
                 for(i =0; i<rowCount; i++){
-                    files[FILENAME][i][NAME] = 0;
+                    this._files[FILENAME][i][NAME] = 0;
                 }
             }
         }
@@ -351,12 +352,12 @@ class DataTools {
      */
     createEmptyDataset(args) {
         let {NAME} = args;
-        if(files[NAME]){
+        if(this._files[NAME]){
             NAME = this.generateFileDisplayName(NAME);
         }
 
-        files[NAME] = [];//doing the exact same thing as addDataFile but without the check for an empty dataset so it is created without columns
-        fileBlocks.push(
+        this._files[NAME] = [];//doing the exact same thing as addDataFile but without the check for an empty dataset so it is created without columns
+        this._fileBlocks.push(
         {
             opcode: 'file_' + NAME,
             func: 'getFilename',
