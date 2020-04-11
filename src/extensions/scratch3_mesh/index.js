@@ -1,6 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
+const {blockUtility} = require('../../engine/execute');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -163,6 +164,13 @@ class Scratch3MeshBlocks {
         switch (message.type) {
         case 'broadcast':
             console.log(`received broadcast: ${message.data}`);
+            const args = {
+                BROADCAST_OPTION: {
+                    id: null,
+                    name: message.data
+                }
+            };
+            this.eventBroadcast(args, blockUtility);
             break;
         default:
             console.error(`invalid message type: ${message.type}`);
@@ -206,6 +214,9 @@ class Scratch3MeshBlocks {
                         this.rtcDataChannels.push(dataChannel);
 
                         connection.setLocalDescription(hostDesc);
+
+                        console.log(`Host: localDescription in createOffer:\n${JSON.stringify(connection.localDescription)}`);
+
                     },
                     (error) => {
                         // TODO: エラー処理
@@ -243,18 +254,7 @@ class Scratch3MeshBlocks {
 
                 const connection = new RTCPeerConnection(null);
                 connection.onicecandidate = e => {
-                    if (e.candidate) {
-                        console.log(`Client: connection.onicecandidate:\n${JSON.stringify(e.candidate)}`);
-                        connection.addIceCandidate(e.candidate).then(
-                            () => {
-                                console.log(`Client: connection.onicecandidate: success`);
-                            },
-                            (error) => {
-                                console.error(`Client: connection.onicecandidate: error=<${error}>`);
-                            }
-                        );
-                    }
-                    else {
+                    if (!e.candidate) {
                         // NOTE: これをクライアントへコピーする
                         const clientDescJSON = JSON.stringify(connection.localDescription);
 
@@ -287,6 +287,7 @@ class Scratch3MeshBlocks {
                         this.rtcConnections.push(connection);
 
                         connection.setLocalDescription(clientDesc);
+                        console.log(`Client: localDescription in createAnswer:\n${JSON.stringify(connection.localDescription)}`);
                     },
                     (error) => {
                         // TODO: エラー処理

@@ -587,4 +587,7 @@ const execute = function (sequencer, thread) {
     }
 };
 
-module.exports = execute;
+module.exports = {
+    execute,
+    blockUtility
+};
