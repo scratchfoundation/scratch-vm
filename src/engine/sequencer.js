@@ -1,6 +1,6 @@
 const Timer = require('../util/timer');
 const Thread = require('./thread');
-const {execute} = require('./execute.js');
+const execute = require('./execute.js');
 
 /**
  * Profiler frame name for stepping a single thread.

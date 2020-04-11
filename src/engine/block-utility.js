@@ -7,6 +7,8 @@ const Timer = require('../util/timer');
  * runtime, thread, target, and convenient methods.
  */
 
+let lastInstance;
+
 class BlockUtility {
     constructor (sequencer = null, thread = null) {
         /**
@@ -25,6 +27,8 @@ class BlockUtility {
         this._nowObj = {
             now: () => this.sequencer.runtime.currentMSecs
         };
+
+        lastInstance = this;
     }
 
     /**
@@ -234,6 +238,10 @@ class BlockUtility {
             const devObject = this.sequencer.runtime.ioDevices[device];
             return devObject[func].apply(devObject, args);
         }
+    }
+
+    static lastInstance () {
+        return lastInstance;
     }
 }
 

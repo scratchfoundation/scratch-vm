@@ -1,7 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
-const {blockUtility} = require('../../engine/execute.js');
+const BlockUtility = require('../../engine/block-utility');
 const uid = require('../../util/uid');
 const Variable = require('../../engine/variable');
 
@@ -217,7 +217,7 @@ class Scratch3MeshBlocks {
                         name: broadcastName
                     }
                 };
-                this.eventBroadcast(args, blockUtility);
+                this.eventBroadcast(args, BlockUtility.lastInstance());
             }
             break;
         case 'variable':
