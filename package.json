@@ -36,6 +36,7 @@
     "canvas-toBlob": "1.0.0",
     "decode-html": "2.0.0",
     "diff-match-patch": "1.0.4",
+    "fingerprintjs2": "2.1.0",
     "format-message": "6.2.1",
     "htmlparser2": "3.10.0",
     "immutable": "3.8.1",
