@@ -74,6 +74,8 @@ class Scratch3MeshBlocks {
 
         this.dataChangevariableby = this.runtime.getOpcodeFunction('data_changevariableby');
         this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
+
+        this._setVariableFunctionHOC();
     }
 
     /**
@@ -173,11 +175,9 @@ class Scratch3MeshBlocks {
 
     _onRtcOpen (connection, dataChannel) {
         console.log(`data channel open`);
-        let variables;
+        let variables = this._getGlobalVariables();
         if (this.isHost) {
-            variables = this.variables;
-        } else {
-            variables = this._getGlobalVariables();
+            variables = Object.assign(variables, this.variables);
         }
         Object.keys(variables).forEach(name => {
             const value = variables[name];
@@ -248,7 +248,6 @@ class Scratch3MeshBlocks {
     createHostOffer (_) {
         try {
             this.isHost = true;
-            this.variables = this._getGlobalVariables();
 
             if (this.rtcConnections.length == 0) {
                 const connection = new RTCPeerConnection(null);
@@ -431,16 +430,16 @@ class Scratch3MeshBlocks {
     _setVariableTo (args, util) {
         console.log('data_setvariableto in mesh');
         this.dataSetvariableto(args, util);
-        this._sendVariable(args, util);
+        this._sendVariableByOpcodeFunction(args, util);
     }
 
     _changeVariableBy (args, util) {
         console.log('data_changevariableby in mesh');
         this.dataChangevariableby(args, util);
-        this._sendVariable(args, util);
+        this._sendVariableByOpcodeFunction(args, util);
     }
 
-    _sendVariable (args, util) {
+    _sendVariableByOpcodeFunction (args, util) {
         try {
             const stage = this.runtime.getTargetForStage();
             let variable = stage.lookupVariableById(args.VARIABLE.id);
@@ -451,18 +450,96 @@ class Scratch3MeshBlocks {
                 return;
             }
 
+            this._sendVariable(variable.name, variable.value);
+        }
+        catch (e) {
+            // TODO: エラー処理
+            console.log(e);
+        }
+    }
+
+    _sendVariable (name, value) {
+        try {
             this._sendMessage({
                 owner: this.id,
                 type: 'variable',
                 data: {
-                    name: variable.name,
-                    value: variable.value
+                    name: name,
+                    value: value
                 }
             });
         }
         catch (e) {
             // TODO: エラー処理
             console.log(e);
+        }
+    }
+
+    _setVariableFunctionHOC () {
+        const stage = this.runtime.getTargetForStage();
+        this._variableFunctions = {
+            runtime: {
+                createNewGlobalVariable: this.runtime.createNewGlobalVariable.bind(this.runtime)
+            },
+            stage: {
+                lookupOrCreateVariable: stage.lookupOrCreateVariable.bind(stage),
+                createVariable: stage.createVariable.bind(stage),
+                renameVariable: stage.renameVariable.bind(stage)
+            }
+        };
+
+        this.runtime.createNewGlobalVariable = this._createNewGlobalVariable.bind(this);
+
+        stage.lookupOrCreateVariable = this._lookupOrCreateVariable.bind(this);
+        stage.createVariable = this._createVariable.bind(this);
+        stage.renameVariable = this._renameVariable.bind(this);
+    }
+
+    _createNewGlobalVariable (variableName, optVarId, optVarType) {
+        console.log('runtime.createNewGlobalVariable in mesh');
+        const variable = this._variableFunctions.runtime.createNewGlobalVariable(variableName, optVarId, optVarType);
+        this._sendVariable(variable.name, variable.value);
+        return variable;
+    }
+
+    _lookupOrCreateVariable (id, name) {
+        console.log('stage.lookupOrCreateVariable in mesh');
+
+        const stage = this.runtime.getTargetForStage();
+        let variable = stage.lookupVariableById(id);
+        if (variable) return variable;
+
+        variable = stage.lookupVariableByNameAndType(name, Variable.SCALAR_TYPE);
+        if (variable) return variable;
+
+        // No variable with this name exists - create it locally.
+        const newVariable = new Variable(id, name, Variable.SCALAR_TYPE, false);
+        stage.variables[id] = newVariable;
+        this._sendVariable(newVariable.name, newVariable.value);
+        return newVariable;
+    }
+
+    _createVariable (id, name, type, isCloud) {
+        console.log('stage.createVariable in mesh');
+
+        const stage = this.runtime.getTargetForStage();
+        if (!stage.variables.hasOwnProperty(id)) {
+            this._variableFunctions.stage.createVariable(id, name, type, isCloud);
+            const variable = stage.variables[id];
+            this._sendVariable(variable.name, variable.value);
+        }
+    }
+
+    _renameVariable (id, newName) {
+        console.log('stage.renameVariable in mesh');
+
+        const stage = this.runtime.getTargetForStage();
+        if (stage.variables.hasOwnProperty(id)) {
+            const variable = stage.variables[id];
+            if (variable.id === id) {
+                this._variableFunctions.stage.renameVariable(id, newName);
+                this._sendVariable(variable.name, variable.value);
+            }
         }
     }
 }
