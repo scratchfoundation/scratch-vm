@@ -3,6 +3,7 @@ const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const {blockUtility} = require('../../engine/execute.js');
 const {v4: uuidv4} = require('uuid');
+const Variable = require('../../engine/variable');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -68,11 +69,11 @@ class Scratch3MeshBlocks {
         this.eventBroadcastandwait = this.runtime.getOpcodeFunction('event_broadcastandwait');
         this.runtime._primitives['event_broadcastandwait'] = this._broadcastAndWait.bind(this);
 
-        // FIXME: for debug
-        this._setVariable('message', 'Hello');
-        this._setVariable('answer1', 'apple');
-        this._setVariable('messageA', 'How are you?');
-        this._setVariable('messageB', "I'm fine,and you?");
+        this.dataSetvariableto = this.runtime.getOpcodeFunction('data_setvariableto');
+        this.runtime._primitives['data_setvariableto'] = this._setVariableTo.bind(this);
+
+        this.dataChangevariableby = this.runtime.getOpcodeFunction('data_changevariableby');
+        this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
     }
 
     /**
@@ -148,34 +149,90 @@ class Scratch3MeshBlocks {
      * @return {Object} - the global variable's value from other projects
      */
     getSensorValue (args) {
-        if (!this.variableNames.includes(args.NAME)) {
+        return this._getVariable(args.NAME);
+    }
+
+    _getVariable (name) {
+        if (!this.variableNames.includes(name)) {
             return '';
         }
-        return this.variables[args.NAME];
+        return this.variables[name];
+    }
+
+    _getGlobalVariables () {
+        const variables = {};
+        const stage = this.runtime.getTargetForStage();
+        for (const varId in stage.variables) {
+            const currVar = stage.variables[varId];
+            if (currVar.type === Variable.SCALAR_TYPE) {
+                variables[currVar.name] = currVar.value;
+            }
+        }
+        return variables;
+    }
+
+    _onRtcOpen (connection, dataChannel) {
+        console.log(`data channel open`);
+        let variables;
+        if (this.isHost) {
+            variables = this.variables;
+        } else {
+            variables = this._getGlobalVariables();
+        }
+        Object.keys(variables).forEach(name => {
+            const value = variables[name];
+
+            const message = {
+                owner: this.id,
+                type: 'variable',
+                data: {
+                    name: name,
+                    value: value
+                }
+            };
+            dataChannel.send(JSON.stringify(message));
+            console.log(`send variable: name=<${name}> value=<${value}>`);
+        });
     }
 
     _onRtcMessage (message) {
-        console.log(`received message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${message.data}>`);
+        console.log(`received message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${JSON.stringify(message.data)}>`);
         switch (message.type) {
         case 'broadcast':
-            console.log(`received broadcast: ${message.data}`);
+            const broadcastName = message.data;
+            console.log(`received broadcast: ${broadcastName}`);
             if (this.isHost) {
-                console.log('broadcast all clients');
+                console.log('send broadcast all clients');
 
-                this._sendMessageToClients(message);
+                this._sendMessage(message);
             }
             if (this.id == message.owner) {
                 console.log('ignore broadcast: reason=<own broadcast>');
             } else {
-                console.log('broadcast me');
+                console.log('process broadcast');
 
                 const args = {
                     BROADCAST_OPTION: {
                         id: null,
-                        name: message.data
+                        name: broadcastName
                     }
                 };
                 this.eventBroadcast(args, blockUtility);
+            }
+            break;
+        case 'variable':
+            const variable = message.data;
+            console.log(`received variable: name=<${variable.name}> value=<${variable.value}>`);
+            if (this.isHost) {
+                console.log('send variable all clients');
+
+                this._sendMessage(message);
+            }
+            if (this.id == message.owner) {
+                console.log('ignore variable: reason=<own broadcast>');
+            } else {
+                console.log(`update variable: name=<${variable.name}> from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
+                this._setVariable(variable.name, variable.value);
             }
             break;
         default:
@@ -184,9 +241,14 @@ class Scratch3MeshBlocks {
         }
     }
 
+    _onRtcClose (connection, dataChannel) {
+        console.log(`data channel close`);
+    }
+
     createHostOffer (_) {
         try {
             this.isHost = true;
+            this.variables = this._getGlobalVariables();
 
             if (this.rtcConnections.length == 0) {
                 const connection = new RTCPeerConnection(null);
@@ -208,15 +270,15 @@ class Scratch3MeshBlocks {
                 };
 
                 const dataChannel = connection.createDataChannel('dataChannel');
-                dataChannel.onopen = (e => {
-                    console.log(`Host: data channel onopen: readyState=<${dataChannel.readyState}>`);
-                }).bind(this);
-                dataChannel.onmessage = (e => {
+                dataChannel.onopen = e => {
+                    this._onRtcOpen(connection, dataChannel);
+                };
+                dataChannel.onmessage = e => {
                     this._onRtcMessage(JSON.parse(e.data));
-                }).bind(this);
-                dataChannel.onclose = (e => {
-                    console.log(`Host: data channel onclose: readyState=<${dataChannel.readyState}>`);
-                }).bind(this);
+                };
+                dataChannel.onclose = e => {
+                    this._onRtcClose(connection, dataChannel);
+                };
 
                 connection.createOffer().then(
                     (hostDesc) => {
@@ -280,21 +342,21 @@ class Scratch3MeshBlocks {
                         }
                     }
                 };
-                connection.ondatachannel = (event => {
+                connection.ondatachannel = event => {
                     const dataChannel = event.channel;
 
-                    dataChannel.onopen = (e => {
-                        console.log(`Client: data channel onopen: readyState=<${dataChannel.readyState}>`);
-                    }).bind(this);
-                    dataChannel.onmessage = (e => {
+                    dataChannel.onopen = e => {
+                        this._onRtcOpen(connection, dataChannel);
+                    };
+                    dataChannel.onmessage = e => {
                         this._onRtcMessage(JSON.parse(e.data));
-                    }).bind(this);
-                    dataChannel.onclose = (e => {
-                        console.log(`Client: data channel onclose: readyState=<${dataChannel.readyState}>`);
-                    }).bind(this);
+                    };
+                    dataChannel.onclose = e => {
+                        this._onRtcClose(connection, dataChannel);
+                    };
 
                     this.rtcDataChannels.push(dataChannel);
-                }).bind(this);
+                };
 
                 connection.setRemoteDescription(new RTCSessionDescription(hostDesc.description));
                 connection.createAnswer().then(
@@ -327,6 +389,18 @@ class Scratch3MeshBlocks {
         return [''].concat(this.variableNames);
     }
 
+    _sendMessage (message) {
+        try {
+            this.rtcDataChannels.forEach(channel => {
+                channel.send(JSON.stringify(message));
+            });
+        }
+        catch (e) {
+            // TODO: エラー処理
+            console.log(e);
+        }
+    }
+
     _broadcast (args, util) {
         console.log('event_broadcast in mesh');
         this._sendBroadcast(args);
@@ -342,12 +416,11 @@ class Scratch3MeshBlocks {
     _sendBroadcast (args) {
         try {
             const broadcastName = args.BROADCAST_OPTION.name;
-            if (this.isHost) {
-                this._sendBroadcastToClients(broadcastName);
-            }
-            else {
-                this._sendBroadcastToHost(broadcastName);
-            }
+            this._sendMessage({
+                owner: this.id,
+                type: 'broadcast',
+                data: broadcastName
+            });
         }
         catch (e) {
             // TODO: エラー処理
@@ -355,22 +428,36 @@ class Scratch3MeshBlocks {
         }
     }
 
-    _sendBroadcastToClients (broadcastName) {
-        this._sendMessageToClients({
-            owner: this.id,
-            type: 'broadcast',
-            data: broadcastName
-        });
+    _setVariableTo (args, util) {
+        console.log('data_setvariableto in mesh');
+        this.dataSetvariableto(args, util);
+        this._sendVariable(args, util);
     }
 
-    _sendBroadcastToHost (broadcastName) {
-        this._sendBroadcastToClients(broadcastName);
+    _changeVariableBy (args, util) {
+        console.log('data_changevariableby in mesh');
+        this.dataChangevariableby(args, util);
+        this._sendVariable(args, util);
     }
 
-    _sendMessageToClients (message) {
+    _sendVariable (args, util) {
         try {
-            this.rtcDataChannels.forEach(channel => {
-                channel.send(JSON.stringify(message));
+            const stage = this.runtime.getTargetForStage();
+            let variable = stage.lookupVariableById(args.VARIABLE.id);
+            if (!variable) {
+                variable = stage.lookupVariableByNameAndType(args.VARIABLE.name, Variable.SCALAR_TYPE);
+            }
+            if (!variable) {
+                return;
+            }
+
+            this._sendMessage({
+                owner: this.id,
+                type: 'variable',
+                data: {
+                    name: variable.name,
+                    value: variable.value
+                }
             });
         }
         catch (e) {
