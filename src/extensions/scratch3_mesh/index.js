@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const {blockUtility} = require('../../engine/execute.js');
-const Fingerprint2 = require('fingerprintjs2');
+const {v4: uuidv4} = require('uuid');
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -57,11 +57,10 @@ class Scratch3MeshBlocks {
         this.isHost = false;
 
         /**
-         * Fingerprint
+         * ID
          * @type {string}
          */
-        this.fingerprint = null;
-        this._setFingerprint();
+        this.id = uuidv4();
 
         this.eventBroadcast = this.runtime.getOpcodeFunction('event_broadcast');
         this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
@@ -155,44 +154,21 @@ class Scratch3MeshBlocks {
         return this.variables[args.NAME];
     }
 
-    _setFingerprint () {
-        if (!this.fingerprint) {
-            Fingerprint2.get(components => {
-                console.log(`Fingerprint2: componets:\n<${JSON.stringify(components)}>`);
-                this.fingerprint = Fingerprint2.x64hash128(components.map(c => c.value).join(''), 31);
-                console.log(`Fingerprint2: fingerprint=<${this.fingerprint}>`);
-            });
-        }
-    }
-
-    _receivedMessageFromClient (message) {
-        console.log(`Host: received message: fingerprint=<${message.fingerprint}> type=<${message.type}> data=<${message.data}>`);
+    _onRtcMessage (message) {
+        console.log(`received message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${message.data}>`);
         switch (message.type) {
         case 'broadcast':
             console.log(`received broadcast: ${message.data}`);
-            this._sendMessageToClients(message);
-            const args = {
-                BROADCAST_OPTION: {
-                    id: null,
-                    name: message.data
-                }
-            };
-            this.eventBroadcast(args, blockUtility);
-            break;
-        default:
-            console.error(`invalid message type: ${message.type}`);
-            break;
-        }
-    }
+            if (this.isHost) {
+                console.log('broadcast all clients');
 
-    _receivedMessageFromHost (message) {
-        console.log(`Client: received message: fingerprint=<${message.fingerprint}> type=<${message.type}> data=<${message.data}>`);
-        switch (message.type) {
-        case 'broadcast':
-            console.log(`received broadcast: ${message.data}`);
-            if (message.fingerprint == this.fingerprint) {
+                this._sendMessageToClients(message);
+            }
+            if (this.id == message.owner) {
                 console.log('ignore broadcast: reason=<own broadcast>');
             } else {
+                console.log('broadcast me');
+
                 const args = {
                     BROADCAST_OPTION: {
                         id: null,
@@ -218,7 +194,7 @@ class Scratch3MeshBlocks {
                     if (!e.candidate) {
                         // NOTE: これをクライアントへコピーする
                         const data = {
-                            fingerprint: this.fingerprint,
+                            id: this.id,
                             description: connection.localDescription
                         };
                         const hostDescJSON = JSON.stringify(data);
@@ -236,7 +212,7 @@ class Scratch3MeshBlocks {
                     console.log(`Host: data channel onopen: readyState=<${dataChannel.readyState}>`);
                 }).bind(this);
                 dataChannel.onmessage = (e => {
-                    this._receivedMessageFromClient(JSON.parse(e.data));
+                    this._onRtcMessage(JSON.parse(e.data));
                 }).bind(this);
                 dataChannel.onclose = (e => {
                     console.log(`Host: data channel onclose: readyState=<${dataChannel.readyState}>`);
@@ -291,7 +267,7 @@ class Scratch3MeshBlocks {
                 connection.onicecandidate = e => {
                     if (!e.candidate) {
                         const data = {
-                            fingerprint: this.fingerprint,
+                            id: this.id,
                             description: connection.localDescription
                         };
                         // NOTE: これをクライアントへコピーする
@@ -311,7 +287,7 @@ class Scratch3MeshBlocks {
                         console.log(`Client: data channel onopen: readyState=<${dataChannel.readyState}>`);
                     }).bind(this);
                     dataChannel.onmessage = (e => {
-                        this._receivedMessageFromHost(JSON.parse(e.data));
+                        this._onRtcMessage(JSON.parse(e.data));
                     }).bind(this);
                     dataChannel.onclose = (e => {
                         console.log(`Client: data channel onclose: readyState=<${dataChannel.readyState}>`);
@@ -381,7 +357,7 @@ class Scratch3MeshBlocks {
 
     _sendBroadcastToClients (broadcastName) {
         this._sendMessageToClients({
-            fingerprint: this.fingerprint,
+            owner: this.id,
             type: 'broadcast',
             data: broadcastName
         });
