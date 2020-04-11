@@ -484,6 +484,7 @@ class Scratch3MeshBlocks {
             stage: {
                 lookupOrCreateVariable: stage.lookupOrCreateVariable.bind(stage),
                 createVariable: stage.createVariable.bind(stage),
+                setVariableValue: stage.setVariableValue.bind(stage),
                 renameVariable: stage.renameVariable.bind(stage)
             }
         };
@@ -492,6 +493,7 @@ class Scratch3MeshBlocks {
 
         stage.lookupOrCreateVariable = this._lookupOrCreateVariable.bind(this);
         stage.createVariable = this._createVariable.bind(this);
+        stage.setVariableValue = this._setVariableValue.bind(this);
         stage.renameVariable = this._renameVariable.bind(this);
     }
 
@@ -527,6 +529,19 @@ class Scratch3MeshBlocks {
             this._variableFunctions.stage.createVariable(id, name, type, isCloud);
             const variable = stage.variables[id];
             this._sendVariable(variable.name, variable.value);
+        }
+    }
+
+    _setVariableValue (id, newValue) {
+        console.log('stage.setVariableValue in mesh');
+
+        const stage = this.runtime.getTargetForStage();
+        if (stage.variables.hasOwnProperty(id)) {
+            const variable = stage.variables[id];
+            if (variable.id === id) {
+                this._variableFunctions.stage.setVariableValue(id, newValue);
+                this._sendVariable(variable.name, variable.value);
+            }
         }
     }
 
