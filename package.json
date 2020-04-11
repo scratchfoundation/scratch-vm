@@ -46,7 +46,6 @@
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",
     "text-encoding": "0.7.0",
-    "uuid": "^7.0.3",
     "worker-loader": "^1.1.1"
   },
   "devDependencies": {

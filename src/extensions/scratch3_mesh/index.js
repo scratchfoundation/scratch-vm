@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
 const {blockUtility} = require('../../engine/execute.js');
-const {v4: uuidv4} = require('uuid');
+const uid = require('../../util/uid');
 const Variable = require('../../engine/variable');
 
 /**
@@ -61,7 +61,7 @@ class Scratch3MeshBlocks {
          * ID
          * @type {string}
          */
-        this.id = uuidv4();
+        this.id = uid();
 
         this.eventBroadcast = this.runtime.getOpcodeFunction('event_broadcast');
         this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
