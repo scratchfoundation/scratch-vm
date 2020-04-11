@@ -368,9 +368,15 @@ class Scratch3MeshBlocks {
     }
 
     _sendMessageToClients (message) {
-        this.rtcDataChannels.forEach(channel => {
-            channel.send(JSON.stringify(message));
-        });
+        try {
+            this.rtcDataChannels.forEach(channel => {
+                channel.send(JSON.stringify(message));
+            });
+        }
+        catch (e) {
+            // TODO: エラー処理
+            console.log(e);
+        }
     }
 }
 
