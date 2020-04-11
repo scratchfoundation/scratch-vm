@@ -36,9 +36,35 @@ class Scratch3MeshBlocks {
          */
         this.variableNames = [];
 
+        /**
+         * WebRTC connections
+         * @type {RTCPeerConnection[]}
+         */
+        this.rtcConnections = [];
+
+        /**
+         * WebRTC data channels
+         * @type {RTCDataChannel[]}
+         */
+        this.rtcDataChannels = [];
+
+        /**
+         * Host or not
+         * @type {bool}
+         */
+        this.isHost = false;
+
+        this.eventBroadcast = this.runtime.getOpcodeFunction('event_broadcast');
+        this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
+
+        this.eventBroadcastandwait = this.runtime.getOpcodeFunction('event_broadcastandwait');
+        this.runtime._primitives['event_broadcastandwait'] = this._broadcastAndWait.bind(this);
+
         // FIXME: for debug
-        this._setVariable('var1', 10);
-        this._setVariable('var2', 20);
+        this._setVariable('message', 'Hello');
+        this._setVariable('answer1', 'apple');
+        this._setVariable('messageA', 'How are you?');
+        this._setVariable('messageB', "I'm fine,and you?");
     }
 
     /**
@@ -53,6 +79,7 @@ class Scratch3MeshBlocks {
                 description: 'Label for the mesh extension category'
             }),
             blockIconURI: blockIconURI,
+            showStatusButton: true,
             blocks: [
                 {
                     opcode: 'getSensorValue',
@@ -67,6 +94,35 @@ class Scratch3MeshBlocks {
                             type: ArgumentType.STRING,
                             menu: 'variableNames',
                             defaultValue: ''
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'createHostOffer',
+                    text: 'Host: create offer',
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'connectClient',
+                    text: 'Host: connect client [CLIENT_DESC_JSON]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        CLIENT_DESC_JSON: {
+                            type: ArgumentType.STRING,
+                            defaultValue: ' '
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'createClientAnswer',
+                    text: 'Client: create answer [HOST_DESC_JSON]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HOST_DESC_JSON: {
+                            type: ArgumentType.STRING,
+                            defaultValue: ' '
                         }
                     }
                 }
@@ -90,6 +146,160 @@ class Scratch3MeshBlocks {
         return this.variables[args.NAME];
     }
 
+    _receivedMessageFromClient (message) {
+        console.log(`Host: received message: type=<${message.type}> data=<${message.data}>`);
+        switch (message.type) {
+        case 'broadcast':
+            console.log(`received broadcast: ${message.data}`);
+            break;
+        default:
+            console.error(`invalid message type: ${message.type}`);
+            break;
+        }
+    }
+
+    _receivedMessageFromHost (message) {
+        console.log(`Client: received message: type=<${message.type}> data=<${message.data}>`);
+        switch (message.type) {
+        case 'broadcast':
+            console.log(`received broadcast: ${message.data}`);
+            break;
+        default:
+            console.error(`invalid message type: ${message.type}`);
+            break;
+        }
+    }
+
+    createHostOffer (_) {
+        try {
+            this.isHost = true;
+
+            if (this.rtcConnections.length == 0) {
+                const connection = new RTCPeerConnection(null);
+                connection.onicecandidate = e => {
+                    if (!e.candidate) {
+                        // NOTE: これをクライアントへコピーする
+                        const hostDescJSON = JSON.stringify(connection.localDescription);
+
+                        console.log(`Host: connection.onicecandidate: offer\n${hostDescJSON}`);
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(hostDescJSON);
+                            console.log('Host: copied offer to clipboard');
+                        }
+                    }
+                };
+
+                const dataChannel = connection.createDataChannel('dataChannel');
+                dataChannel.onopen = (e => {
+                    console.log(`Host: data channel onopen: readyState=<${dataChannel.readyState}>`);
+                }).bind(this);
+                dataChannel.onmessage = (e => {
+                    this._receivedMessageFromClient(JSON.parse(e.data));
+                }).bind(this);
+                dataChannel.onclose = (e => {
+                    console.log(`Host: data channel onclose: readyState=<${dataChannel.readyState}>`);
+                }).bind(this);
+
+                connection.createOffer().then(
+                    (hostDesc) => {
+                        this.rtcConnections.push(connection);
+                        this.rtcDataChannels.push(dataChannel);
+
+                        connection.setLocalDescription(hostDesc);
+                    },
+                    (error) => {
+                        // TODO: エラー処理
+                        console.error(`Host: error ${error}`);
+                    }
+                );
+            }
+        }
+        catch (e) {
+            console.error(`Host: ${e}`);
+        }
+    }
+
+    connectClient (args) {
+        try {
+            const clientDescJson = args.CLIENT_DESC_JSON;
+            if (clientDescJson.length > 0 && this.rtcConnections.length > 0) {
+                const clientDesc = JSON.parse(clientDescJson);
+                const connection = this.rtcConnections[0];
+                connection.setRemoteDescription(new RTCSessionDescription(clientDesc));
+
+                console.log('Host: connect Client');
+            }
+        }
+        catch (e) {
+            console.error(`Host: ${e}`);
+        }
+    }
+
+    createClientAnswer (args) {
+        try {
+            const hostDescJson = args.HOST_DESC_JSON;
+            if (hostDescJson.length > 0 && this.rtcConnections.length == 0) {
+                const hostDesc = JSON.parse(hostDescJson);
+
+                const connection = new RTCPeerConnection(null);
+                connection.onicecandidate = e => {
+                    if (e.candidate) {
+                        console.log(`Client: connection.onicecandidate:\n${JSON.stringify(e.candidate)}`);
+                        connection.addIceCandidate(e.candidate).then(
+                            () => {
+                                console.log(`Client: connection.onicecandidate: success`);
+                            },
+                            (error) => {
+                                console.error(`Client: connection.onicecandidate: error=<${error}>`);
+                            }
+                        );
+                    }
+                    else {
+                        // NOTE: これをクライアントへコピーする
+                        const clientDescJSON = JSON.stringify(connection.localDescription);
+
+                        console.log(`Client: connection.onicecandidate: answer\n${clientDescJSON}`);
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(clientDescJSON);
+                            console.log('Client: copied answer to clipboard');
+                        }
+                    }
+                };
+                connection.ondatachannel = (event => {
+                    const dataChannel = event.channel;
+
+                    dataChannel.onopen = (e => {
+                        console.log(`Client: data channel onopen: readyState=<${dataChannel.readyState}>`);
+                    }).bind(this);
+                    dataChannel.onmessage = (e => {
+                        this._receivedMessageFromHost(JSON.parse(e.data));
+                    }).bind(this);
+                    dataChannel.onclose = (e => {
+                        console.log(`Client: data channel onclose: readyState=<${dataChannel.readyState}>`);
+                    }).bind(this);
+
+                    this.rtcDataChannels.push(dataChannel);
+                }).bind(this);
+
+                connection.setRemoteDescription(new RTCSessionDescription(hostDesc));
+                connection.createAnswer().then(
+                    (clientDesc) => {
+                        this.rtcConnections.push(connection);
+
+                        connection.setLocalDescription(clientDesc);
+                    },
+                    (error) => {
+                        // TODO: エラー処理
+                        console.error(`Client: error ${error}`);
+                    }
+                );
+            }
+        }
+        catch (e) {
+            console.error(`Client: ${e}`);
+        }
+    }
+
     _setVariable (name, value) {
         if (!this.variableNames.includes(name)) {
             this.variableNames.push(name);
@@ -99,6 +309,52 @@ class Scratch3MeshBlocks {
 
     _getVariableNamesMenuItems () {
         return [''].concat(this.variableNames);
+    }
+
+    _broadcast (args, util) {
+        console.log('event_broadcast in mesh');
+        this._sendBroadcast(args);
+        this.eventBroadcast(args, util);
+    }
+
+    _broadcastAndWait (args, util) {
+        console.log('event_broadcastandwait in mesh');
+        this._sendBroadcast(args);
+        this.eventBroadcastandwait(args, util);
+    }
+
+    _sendBroadcast (args) {
+        try {
+            const broadcastName = args.BROADCAST_OPTION.name;
+            if (this.isHost) {
+                this._sendBroadcastToClients(broadcastName);
+            }
+            else {
+                this._sendBroadcastToHost(broadcastName);
+            }
+        }
+        catch (e) {
+            // TODO: エラー処理
+            console.log(e);
+        }
+    }
+
+    _sendBroadcastToClients (broadcastName) {
+        this.rtcDataChannels.forEach(channel => {
+            channel.send(JSON.stringify({
+                type: 'broadcast',
+                data: broadcastName
+            }));
+        });
+    }
+
+    _sendBroadcastToHost (broadcastName) {
+        this.rtcDataChannels.forEach(channel => {
+            channel.send(JSON.stringify({
+                type: 'broadcast',
+                data: broadcastName
+            }));
+        });
     }
 }
 
