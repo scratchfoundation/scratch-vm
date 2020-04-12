@@ -145,35 +145,6 @@ class Scratch3MeshBlocks {
                             defaultValue: ' '
                         }
                     }
-                },
-                '---',
-                {
-                    opcode: 'createHostOffer',
-                    text: 'Host: create offer',
-                    blockType: BlockType.COMMAND
-                },
-                {
-                    opcode: 'connectClient',
-                    text: 'Host: connect client [CLIENT_DESC_JSON]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        CLIENT_DESC_JSON: {
-                            type: ArgumentType.STRING,
-                            defaultValue: ' '
-                        }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'createClientAnswer',
-                    text: 'Client: create answer [HOST_DESC_JSON]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HOST_DESC_JSON: {
-                            type: ArgumentType.STRING,
-                            defaultValue: ' '
-                        }
-                    }
                 }
             ],
             menus: {
@@ -284,16 +255,65 @@ class Scratch3MeshBlocks {
                 console.error('WebSocket is not opened');
                 return;
             }
+            if (this.isHost) {
+                console.error('I am host');
+                return;
+            }
+            if (this.rtcConnections.length > 0) {
+                console.error('Already WebRTC connected');
+                return;
+            }
 
-            this._websocket.send(JSON.stringify({
-                service: 'mesh',
-                action: 'offer',
-                data: {
-                    id: this.id,
-                    hostId: args.HOST_ID,
-                    clientDescription: 'Client Description' // TODO: make description
+            const connection = new RTCPeerConnection(null);
+            this.rtcConnections.push(connection);
+
+            connection.onconnectionstatechange = e => {
+                console.log(`Client: onconnectionstatechange: ${connection.connectionState}`);
+
+                switch (connection.connectionState) {
+                case 'disconnected':
+                case 'failed':
+                case 'closed':
+                    // TODO: this.rtcConnectionsから削除する
+                    break;
                 }
-            }));
+            };
+            connection.onicecandidate = e => {
+                if (!e.candidate) {
+                    console.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
+
+                    this._websocket.send(JSON.stringify({
+                        service: 'mesh',
+                        action: 'offer',
+                        data: {
+                            id: this.id,
+                            hostId: args.HOST_ID,
+                            clientDescription: connection.localDescription
+                        }
+                    }));
+                }
+            };
+
+            const dataChannel = connection.createDataChannel('dataChannel');
+            dataChannel.onopen = e => {
+                this._onRtcOpen(connection, dataChannel);
+            };
+            dataChannel.onmessage = e => {
+                this._onRtcMessage(JSON.parse(e.data));
+            };
+            dataChannel.onclose = e => {
+                this._onRtcClose(connection, dataChannel);
+            };
+
+            connection.createOffer().then(
+                (desc) => {
+                    connection.setLocalDescription(desc);
+                },
+                (error) => {
+                    // TODO: エラー処理
+                    console.error(`Client: Error in createOffer: ${error}`);
+                }
+            );
         }
         catch (e) {
             console.error(`Error in offerToHost: ${e}`);
@@ -314,6 +334,9 @@ class Scratch3MeshBlocks {
 
     _onRtcOpen (connection, dataChannel) {
         console.log(`data channel open`);
+
+        this.rtcDataChannels.push(dataChannel);
+
         let variables = this._getGlobalVariables();
         if (this.isHost) {
             variables = Object.assign(variables, this.variables);
@@ -342,30 +365,97 @@ class Scratch3MeshBlocks {
             return;
         }
 
-        const {action, data} = message;
+        let connection;
 
+        const {action, data} = message;
         switch (action) {
         case 'list':
             this._hostIds = data.hostIds;
             break;
         case 'offer':
-            if (this.isHost) {
-                if (data.hostId === this.id) {
+            if (!this.isHost) {
+                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
+                return;
+            }
+            if (data.hostId !== this.id) {
+                console.error(`failed action: action=<${message.action}> reason=<invalid hostId> actual=<${data.hostId}> expected=<${this.id}>`);
+            }
+
+            connection = new RTCPeerConnection(null);
+            this.rtcConnections.push(connection);
+
+            connection.onconnectionstatechange = e => {
+                console.log(`Host: onconnectionstatechange: ${connection.connectionState}`);
+
+                switch (connection.connectionState) {
+                case 'disconnected':
+                case 'failed':
+                case 'closed':
+                    // TODO: this.rtcConnectionsから削除する
+                    break;
+                }
+            };
+            connection.onicecandidate = e => {
+                if (!e.candidate) {
+                    console.log(`Host: answer to Client:\n${JSON.stringify(connection.localDescription)}`);
+
                     this._websocket.send(JSON.stringify({
                         service: 'mesh',
                         action: 'answer',
                         data: {
                             id: this.id,
                             clientId: data.id,
-                            hostDescription: 'Host description' // TODO: make description
+                            hostDescription: connection.localDescription
                         }
                     }));
-                } else {
-                    console.error(`failed action: action=<${message.action}> reason=<invalid hostId>`);
                 }
-            } else {
-                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
+            };
+            connection.ondatachannel = event => {
+                const dataChannel = event.channel;
+
+                dataChannel.onopen = e => {
+                    this._onRtcOpen(connection, dataChannel);
+                };
+                dataChannel.onmessage = e => {
+                    this._onRtcMessage(JSON.parse(e.data));
+                };
+                dataChannel.onclose = e => {
+                    this._onRtcClose(connection, dataChannel);
+                };
+            };
+
+            connection.setRemoteDescription(new RTCSessionDescription(data.clientDescription));
+            connection.createAnswer().then(
+                (desc) => {
+                    connection.setLocalDescription(desc);
+                },
+                (error) => {
+                    // TODO: エラー処理
+                    console.error(`Host: Error in createAnswer: ${error}`);
+                }
+            );
+            break;
+        case 'answer':
+            if (this.isHost) {
+                console.error(`failed action: action=<${message.action}> reason=<I'm not Client>`);
+                return;
             }
+            if (data.clientId !== this.id) {
+                console.error(`failed action: action=<${message.action}> reason=<invalid clientId> actual=<${data.clientId}> expected=<${this.id}>`);
+                return;
+            }
+
+            if (this.rtcConnections.length == 0) {
+                console.error(`failed action: action=<${message.action}> reason=<WebRTC not connecting>`);
+                return;
+            }
+
+            console.log('Client: set Host description');
+
+            connection = this.rtcConnections[0];
+            connection.setRemoteDescription(new RTCSessionDescription(data.hostDescription));
+
+            this._websocket.close();
             break;
         }
     }
@@ -404,7 +494,7 @@ class Scratch3MeshBlocks {
                 this._sendMessage(message);
             }
             if (this.id == message.owner) {
-                console.log('ignore variable: reason=<own broadcast>');
+                console.log('ignore variable: reason=<own variable>');
             } else {
                 console.log(`update variable: name=<${variable.name}> from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
                 this._setVariable(variable.name, variable.value);
@@ -418,138 +508,6 @@ class Scratch3MeshBlocks {
 
     _onRtcClose (connection, dataChannel) {
         console.log(`data channel close`);
-    }
-
-    createHostOffer (_) {
-        try {
-            this.isHost = true;
-
-            if (this.rtcConnections.length == 0) {
-                const connection = new RTCPeerConnection(null);
-                connection.onicecandidate = e => {
-                    if (!e.candidate) {
-                        // NOTE: これをクライアントへコピーする
-                        const data = {
-                            id: this.id,
-                            description: connection.localDescription
-                        };
-                        const hostDescJSON = JSON.stringify(data);
-
-                        console.log(`Host: connection.onicecandidate: offer\n${hostDescJSON}`);
-                        if (navigator.clipboard) {
-                            navigator.clipboard.writeText(hostDescJSON);
-                            console.log('Host: copied offer to clipboard');
-                        }
-                    }
-                };
-
-                const dataChannel = connection.createDataChannel('dataChannel');
-                dataChannel.onopen = e => {
-                    this._onRtcOpen(connection, dataChannel);
-                };
-                dataChannel.onmessage = e => {
-                    this._onRtcMessage(JSON.parse(e.data));
-                };
-                dataChannel.onclose = e => {
-                    this._onRtcClose(connection, dataChannel);
-                };
-
-                connection.createOffer().then(
-                    (hostDesc) => {
-                        this.rtcConnections.push(connection);
-                        this.rtcDataChannels.push(dataChannel);
-
-                        connection.setLocalDescription(hostDesc);
-
-                        console.log(`Host: localDescription in createOffer:\n${JSON.stringify(connection.localDescription)}`);
-
-                    },
-                    (error) => {
-                        // TODO: エラー処理
-                        console.error(`Host: error ${error}`);
-                    }
-                );
-            }
-        }
-        catch (e) {
-            console.error(`Host: ${e}`);
-        }
-    }
-
-    connectClient (args) {
-        try {
-            const clientDescJson = args.CLIENT_DESC_JSON;
-            if (clientDescJson.length > 0 && this.rtcConnections.length > 0) {
-                const clientDesc = JSON.parse(clientDescJson);
-                const connection = this.rtcConnections[0];
-                connection.setRemoteDescription(new RTCSessionDescription(clientDesc.description));
-
-                console.log('Host: connect Client');
-            }
-        }
-        catch (e) {
-            console.error(`Host: ${e}`);
-        }
-    }
-
-    createClientAnswer (args) {
-        try {
-            const hostDescJson = args.HOST_DESC_JSON;
-            if (hostDescJson.length > 0 && this.rtcConnections.length == 0) {
-                const hostDesc = JSON.parse(hostDescJson);
-                console.log(`Client: Host desc: <${JSON.stringify(hostDesc)}>`);
-
-                const connection = new RTCPeerConnection(null);
-                connection.onicecandidate = e => {
-                    if (!e.candidate) {
-                        const data = {
-                            id: this.id,
-                            description: connection.localDescription
-                        };
-                        // NOTE: これをクライアントへコピーする
-                        const clientDescJSON = JSON.stringify(data);
-
-                        console.log(`Client: connection.onicecandidate: answer\n${clientDescJSON}`);
-                        if (navigator.clipboard) {
-                            navigator.clipboard.writeText(clientDescJSON);
-                            console.log('Client: copied answer to clipboard');
-                        }
-                    }
-                };
-                connection.ondatachannel = event => {
-                    const dataChannel = event.channel;
-
-                    dataChannel.onopen = e => {
-                        this._onRtcOpen(connection, dataChannel);
-                    };
-                    dataChannel.onmessage = e => {
-                        this._onRtcMessage(JSON.parse(e.data));
-                    };
-                    dataChannel.onclose = e => {
-                        this._onRtcClose(connection, dataChannel);
-                    };
-
-                    this.rtcDataChannels.push(dataChannel);
-                };
-
-                connection.setRemoteDescription(new RTCSessionDescription(hostDesc.description));
-                connection.createAnswer().then(
-                    (clientDesc) => {
-                        this.rtcConnections.push(connection);
-
-                        connection.setLocalDescription(clientDesc);
-                        console.log(`Client: localDescription in createAnswer:\n${JSON.stringify(connection.localDescription)}`);
-                    },
-                    (error) => {
-                        // TODO: エラー処理
-                        console.error(`Client: error ${error}`);
-                    }
-                );
-            }
-        }
-        catch (e) {
-            console.error(`Client: ${e}`);
-        }
     }
 
     _setVariable (name, value) {
