@@ -199,15 +199,7 @@ class Scratch3MeshBlocks {
                 this.rtcConnections.push(connection);
 
                 connection.onconnectionstatechange = e => {
-                    console.log(`Client: onconnectionstatechange: ${connection.connectionState}`);
-
-                    switch (connection.connectionState) {
-                    case 'disconnected':
-                    case 'failed':
-                    case 'closed':
-                        // TODO: this.rtcConnectionsから削除する
-                        break;
-                    }
+                    this._onRtcConnectionStateChange(connection);
                 };
                 connection.onicecandidate = e => {
                     if (!e.candidate) {
@@ -263,11 +255,6 @@ class Scratch3MeshBlocks {
     disconnect () {
         console.log(`disconnect in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
-        if (!this._connected) {
-            console.warn('Mesh: Already disconnected');
-            return;
-        }
-
         if (this._websocket) {
             this._websocket.close();
         }
@@ -284,6 +271,8 @@ class Scratch3MeshBlocks {
         this._connected = false;
 
         this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
+
+        console.log(`disconnected in mesh`);
     }
 
     /**
@@ -420,14 +409,27 @@ class Scratch3MeshBlocks {
     _onWebSocketMessage (message) {
         console.log(`received WebSocket message: isHost=<${this.isHost}> message=<${JSON.stringify(message)}>`);
 
-        if (message.hasOwnProperty('result') && !message.result) {
-            console.error(`failed action: action=<${message.action}> error=<${message.data.error}>`);
+        const {action, result, data} = message;
+
+        if (message.hasOwnProperty('result') && !result) {
+            console.error(`failed action: action=<${action}> error=<${data.error}>`);
+
+            switch (action) {
+            case 'offer':
+                if (!this.isHost) {
+                    this.disconnect();
+
+                    this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                        extensionId: Scratch3MeshBlocks.EXTENSION_ID
+                    });
+                }
+                break;
+            }
             return;
         }
 
         let connection;
 
-        const {action, data} = message;
         switch (action) {
         case 'register':
             if (!this.isHost) {
@@ -483,15 +485,7 @@ class Scratch3MeshBlocks {
             this.rtcConnections.push(connection);
 
             connection.onconnectionstatechange = e => {
-                console.log(`Host: onconnectionstatechange: ${connection.connectionState}`);
-
-                switch (connection.connectionState) {
-                case 'disconnected':
-                case 'failed':
-                case 'closed':
-                    // TODO: this.rtcConnectionsから削除する
-                    break;
-                }
+                this._onRtcConnectionStateChange(connection);
             };
             connection.onicecandidate = e => {
                 if (!e.candidate) {
@@ -562,6 +556,17 @@ class Scratch3MeshBlocks {
         }
     }
 
+    _onRtcConnectionStateChange (connection) {
+        console.log(`onRtcConnectionStateChange: ${connection.connectionState}`);
+
+        switch (connection.connectionState) {
+        case 'disconnected':
+        case 'failed':
+            connection.close();
+            break;
+        }
+    }
+
     _onRtcMessage (message) {
         console.log(`received WebRTC message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${JSON.stringify(message.data)}>`);
         switch (message.type) {
@@ -610,6 +615,19 @@ class Scratch3MeshBlocks {
 
     _onRtcClose (connection, dataChannel) {
         console.log(`data channel close`);
+
+        this.rtcConnections = this.rtcConnections.filter(c => c !== connection);
+        this.rtcDataChannels = this.rtcDataChannels.filter(c => c !== dataChannel);
+
+        if (!this.isHost && this._connected) {
+            this.disconnect();
+
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {
+                extensionId: Scratch3MeshBlocks.EXTENSION_ID
+            });
+        }
+
+        console.log(`data channel closed`);
     }
 
     _setVariable (name, value, owner) {
