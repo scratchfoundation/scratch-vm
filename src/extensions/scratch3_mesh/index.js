@@ -20,6 +20,20 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
  * @constructor
  */
 class Scratch3MeshBlocks {
+    /**
+     * @return {string} - the name of this extension.
+     */
+    static get EXTENSION_NAME () {
+        return 'Mesh';
+    }
+
+    /**
+     * @return {string} - the ID of this extension.
+     */
+    static get EXTENSION_ID () {
+        return 'mesh';
+    }
+
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -63,21 +77,51 @@ class Scratch3MeshBlocks {
          */
         this.id = uid();
 
-        this.eventBroadcast = this.runtime.getOpcodeFunction('event_broadcast');
-        this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
-
-        this.eventBroadcastandwait = this.runtime.getOpcodeFunction('event_broadcastandwait');
-        this.runtime._primitives['event_broadcastandwait'] = this._broadcastAndWait.bind(this);
-
-        this.dataSetvariableto = this.runtime.getOpcodeFunction('data_setvariableto');
-        this.runtime._primitives['data_setvariableto'] = this._setVariableTo.bind(this);
-
-        this.dataChangevariableby = this.runtime.getOpcodeFunction('data_changevariableby');
-        this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
-
+        this._setOpcodeFunctionHOC();
         this._setVariableFunctionHOC();
 
         this._hostIds = [];
+
+        this.runtime.registerPeripheralExtension(Scratch3MeshBlocks.EXTENSION_ID, this);
+    }
+
+    /**
+     * Called by the runtime when user wants to scan for a peripheral.
+     */
+    scan () {
+        console.log('scan in mesh');
+    }
+
+    /**
+     * Called by the runtime when user wants to connect to a certain peripheral.
+     * @param {number} id - the id of the peripheral to connect to.
+     */
+    connect (id) {
+        console.log(`connect in mesh: ${id}`);
+    }
+
+    /**
+     * Disconnect from the micro:bit.
+     */
+    disconnect () {
+        console.log(`disconnect in mesh`);
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        console.log(`reset in mesh`);
+    }
+
+    /**
+     * Return true if connected to the micro:bit.
+     * @return {boolean} - whether the micro:bit is connected.
+     */
+    isConnected () {
+        console.log(`isConnected in mesh`);
+
+        return false;
     }
 
     /**
@@ -85,12 +129,8 @@ class Scratch3MeshBlocks {
      */
     getInfo () {
         return {
-            id: 'mesh',
-            name: formatMessage({
-                id: 'mesh.categoryName',
-                default: 'Mesh',
-                description: 'Label for the mesh extension category'
-            }),
+            id: Scratch3MeshBlocks.EXTENSION_ID,
+            name: Scratch3MeshBlocks.EXTENSION_NAME,
             blockIconURI: blockIconURI,
             showStatusButton: true,
             blocks: [
@@ -482,7 +522,7 @@ class Scratch3MeshBlocks {
                         name: broadcastName
                     }
                 };
-                this.eventBroadcast(args, BlockUtility.lastInstance());
+                this._opcodeFunctions['event_broadcast'](args, BlockUtility.lastInstance());
             }
             break;
         case 'variable':
@@ -540,13 +580,13 @@ class Scratch3MeshBlocks {
     _broadcast (args, util) {
         console.log('event_broadcast in mesh');
         this._sendBroadcast(args);
-        this.eventBroadcast(args, util);
+        this._opcodeFunctions['event_broadcast'](args, util);
     }
 
     _broadcastAndWait (args, util) {
         console.log('event_broadcastandwait in mesh');
         this._sendBroadcast(args);
-        this.eventBroadcastandwait(args, util);
+        this._opcodeFunctions['event_broadcastandwait'](args, util);
     }
 
     _sendBroadcast (args) {
@@ -566,13 +606,13 @@ class Scratch3MeshBlocks {
 
     _setVariableTo (args, util) {
         console.log('data_setvariableto in mesh');
-        this.dataSetvariableto(args, util);
+        this._opcodeFunctions['data_setvariableto'](args, util);
         this._sendVariableByOpcodeFunction(args, util);
     }
 
     _changeVariableBy (args, util) {
         console.log('data_changevariableby in mesh');
-        this.dataChangevariableby(args, util);
+        this._opcodeFunctions['data_changevariableby'](args, util);
         this._sendVariableByOpcodeFunction(args, util);
     }
 
@@ -610,6 +650,20 @@ class Scratch3MeshBlocks {
             // TODO: エラー処理
             console.log(e);
         }
+    }
+
+    _setOpcodeFunctionHOC () {
+        this._opcodeFunctions = {
+            event_broadcast: this.runtime.getOpcodeFunction('event_broadcast'),
+            event_broadcastandwait: this.runtime.getOpcodeFunction('event_broadcastandwait'),
+            data_setvariableto: this.runtime.getOpcodeFunction('data_setvariableto'),
+            data_changevariableby: this.runtime.getOpcodeFunction('data_changevariableby')
+        };
+
+        this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
+        this.runtime._primitives['event_broadcastandwait'] = this._broadcastAndWait.bind(this);
+        this.runtime._primitives['data_setvariableto'] = this._setVariableTo.bind(this);
+        this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
     }
 
     _setVariableFunctionHOC () {
