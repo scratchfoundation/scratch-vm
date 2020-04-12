@@ -100,7 +100,7 @@ class Scratch3MeshBlocks {
                     default: 'Host Mesh',
                     description: 'label for "Host Mesh" in connect modal for Mesh extension'
                 }) + ` [${this.id.slice(0, 8)}]`,
-                periperalId: MESH_HOST_PERIPHERAL_ID,
+                peripheralId: MESH_HOST_PERIPHERAL_ID,
                 rssi: 0
             };
 
@@ -148,11 +148,8 @@ class Scratch3MeshBlocks {
             }
         }
         catch (e) {
-            console.error(`Error in connectSignalingServer: ${e}`);
+            console.error(`Error in scan: ${e}`);
         }
-
-        setTimeout(() => {
-        }, 500);
     }
 
     /**
@@ -494,7 +491,7 @@ class Scratch3MeshBlocks {
                         default: 'Join Mesh',
                         description: 'label for "Join Mesh" in connect modal for Mesh extension'
                     }) + ` [${hostId.id.slice(0, 8)}]`,
-                    periperalId: hostId.id,
+                    peripheralId: hostId.id,
                     rssi: rssi
                 };
             });
