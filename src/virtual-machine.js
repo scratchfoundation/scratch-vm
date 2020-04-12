@@ -290,6 +290,15 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Returns connected message.
+     * @param {string} extensionId - the id of the extension.
+     * @return {string} - connected message.
+     */
+    getPeripheralConnectedMessage (extensionId) {
+        return this.runtime.getPeripheralConnectedMessage(extensionId);
+    }
+
+    /**
      * Load a Scratch project from a .sb, .sb2, .sb3 or json string.
      * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.
      * @return {!Promise} Promise that resolves after targets are installed.

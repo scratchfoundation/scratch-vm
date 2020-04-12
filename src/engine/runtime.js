@@ -1489,6 +1489,20 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Returns the connected message.
+     * @param {string} extensionId - the id of the extension.
+     * @return {string|null} - the connected message.
+     */
+    getPeripheralConnectedMessage (extensionId) {
+        if (this.getPeripheralIsConnected(extensionId) &&
+            this.peripheralExtensions[extensionId] &&
+            this.peripheralExtensions[extensionId].connectedMessage) {
+            return this.peripheralExtensions[extensionId].connectedMessage();
+        }
+        return null;
+    }
+
+    /**
      * Emit an event to indicate that the microphone is being used to stream audio.
      * @param {boolean} listening - true if the microphone is currently listening.
      */

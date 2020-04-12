@@ -279,17 +279,11 @@ class Scratch3MeshBlocks {
         this.rtcConnections = [];
         this.rtcDataChannels = [];
         this.isHost = false;
+        this._hostId = null;
 
         this._connected = false;
 
         this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
-    }
-
-    /**
-     * Reset all the state and timeout/interval ids.
-     */
-    reset () {
-        console.log(`reset in mesh`);
     }
 
     /**
@@ -300,6 +294,33 @@ class Scratch3MeshBlocks {
         console.log(`isConnected in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
         return this._connected;
+    }
+
+    /**
+     * Return connected message if connected to the Mesh
+     * @return {string} - connected message.
+     */
+    connectedMessage () {
+        console.log(`connectedMessage in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
+
+        let message;
+        let id;
+        if (this.isHost) {
+            message = formatMessage({
+                id: 'mesh.registeredHost',
+                default: 'Registered Host Mesh [[ID]]',
+                description: 'label for registered Host Mesh in connect modal for Mesh extension'
+            });
+            id = this.id;
+        } else {
+            message = formatMessage({
+                id: 'mesh.joinedMesh',
+                default: 'Joined Mesh [[ID]]',
+                description: 'label for joined Mesh in connect modal for Mesh extension'
+            });
+            id = this._hostId;
+        }
+        return message.replace('[ID]', id.slice(0, 8));
     }
 
     /**
@@ -527,6 +548,7 @@ class Scratch3MeshBlocks {
 
             this._websocket.close();
 
+            this._hostId = data.id;
             this._connected = true;
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
