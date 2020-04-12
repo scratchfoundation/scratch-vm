@@ -370,7 +370,7 @@ class Scratch3MeshBlocks {
         if (!this.variableNames.includes(name)) {
             return '';
         }
-        return this.variables[name];
+        return this.variables[name].value;
     }
 
     _getGlobalVariables () {
@@ -379,7 +379,11 @@ class Scratch3MeshBlocks {
         for (const varId in stage.variables) {
             const currVar = stage.variables[varId];
             if (currVar.type === Variable.SCALAR_TYPE) {
-                variables[currVar.name] = currVar.value;
+                variables[currVar.name] = {
+                    name: currVar.name,
+                    value: currVar.value,
+                    owner: this.id
+                };
             }
         }
         return variables;
@@ -390,23 +394,26 @@ class Scratch3MeshBlocks {
 
         this.rtcDataChannels.push(dataChannel);
 
-        let variables = this._getGlobalVariables();
+        this._sendVariablesTo(this._getGlobalVariables(), dataChannel);
         if (this.isHost) {
-            variables = Object.assign(variables, this.variables);
+            this._sendVariablesTo(this.variables, dataChannel);
         }
+    }
+
+    _sendVariablesTo (variables, dataChannel) {
         Object.keys(variables).forEach(name => {
-            const value = variables[name];
+            const variable = variables[name];
 
             const message = {
-                owner: this.id,
+                owner: variable.owner,
                 type: 'variable',
                 data: {
-                    name: name,
-                    value: value
+                    name: variable.name,
+                    value: variable.value
                 }
             };
             dataChannel.send(JSON.stringify(message));
-            console.log(`send variable: name=<${name}> value=<${value}>`);
+            console.log(`send variable: name=<${variable.name}> value=<${variable.value}> owner=<${variable.owner}>`);
         });
     }
 
@@ -592,7 +599,7 @@ class Scratch3MeshBlocks {
                 console.log('ignore variable: reason=<own variable>');
             } else {
                 console.log(`update variable: name=<${variable.name}> from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
-                this._setVariable(variable.name, variable.value);
+                this._setVariable(variable.name, variable.value, message.owner);
             }
             break;
         default:
@@ -605,11 +612,15 @@ class Scratch3MeshBlocks {
         console.log(`data channel close`);
     }
 
-    _setVariable (name, value) {
+    _setVariable (name, value, owner) {
         if (!this.variableNames.includes(name)) {
             this.variableNames.push(name);
         }
-        this.variables[name] = value;
+        this.variables[name] = {
+            name: name,
+            value: value,
+            owner: owner
+        };
     }
 
     _getVariableNamesMenuItems () {
