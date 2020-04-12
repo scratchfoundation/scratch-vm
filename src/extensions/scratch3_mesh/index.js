@@ -76,6 +76,8 @@ class Scratch3MeshBlocks {
         this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
 
         this._setVariableFunctionHOC();
+
+        this._hostIds = [];
     }
 
     /**
@@ -105,6 +107,42 @@ class Scratch3MeshBlocks {
                             type: ArgumentType.STRING,
                             menu: 'variableNames',
                             defaultValue: ''
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'connectSignalingServer',
+                    text: 'H&C: connect [WSS_URL]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        WSS_URL: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'ws://localhost:8080'
+                        }
+                    }
+                },
+                '---',
+                {
+                    opcode: 'registerHost',
+                    text: 'Host: register',
+                    blockType: BlockType.COMMAND
+                },
+                '---',
+                {
+                    opcode: 'listHosts',
+                    text: 'Client: list Hosts',
+                    blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'offerToHost',
+                    text: 'Client: offer to [HOST_ID]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        HOST_ID: {
+                            type: ArgumentType.STRING,
+                            menu: 'hostIds',
+                            defaultValue: ' '
                         }
                     }
                 },
@@ -142,7 +180,11 @@ class Scratch3MeshBlocks {
                 variableNames: {
                     acceptReporters: true,
                     items: '_getVariableNamesMenuItems'
-                }
+                },
+                hostIds: {
+                    acceptReporters: true,
+                    items: '_getHostIdsMenuItems'
+                },
             }
         };
     }
@@ -159,6 +201,103 @@ class Scratch3MeshBlocks {
             return '';
         }
         return this.variables[name];
+    }
+
+    connectSignalingServer (args) {
+        try {
+            if (this._websocket) {
+                console.error('WebSocket already opened');
+            } else {
+                const websocket = new WebSocket(args.WSS_URL);
+                websocket.onopen = e => {
+                    this._websocket = websocket;
+                };
+                websocket.onmessage = e => {
+                    try {
+                        this._onWebSocketMessage(JSON.parse(e.data));
+                    }
+                    catch (error) {
+                        console.error(`Error in WebSocket.onmessage: ${error}`);
+                    }
+                };
+                websocket.onclose = e => {
+                    this._websocket = null;
+                };
+                websocket.onerror = e => {
+                    console.error(`Error in WebSocket: ${e}`);
+                };
+            }
+        }
+        catch (e) {
+            console.error(`Error in connectSignalingServer: ${e}`);
+        }
+    }
+
+    registerHost (args) {
+        try {
+            if (!this._websocket) {
+                console.error('WebSocket is not opened');
+                return;
+            }
+
+            this._websocket.send(JSON.stringify({
+                service: 'mesh',
+                action: 'register',
+                data: {
+                    id: this.id
+                }
+            }));
+            this.isHost = true;
+        }
+        catch (e) {
+            console.error(`Error in registerHost: ${e}`);
+        }
+    }
+
+    listHosts (args) {
+        try {
+            if (!this._websocket) {
+                console.error('WebSocket is not opened');
+                return;
+            }
+
+            this._websocket.send(JSON.stringify({
+                service: 'mesh',
+                action: 'list',
+                data: {
+                    id: this.id
+                }
+            }));
+        }
+        catch (e) {
+            console.error(`Error in listHosts: ${e}`);
+        }
+    }
+
+    offerToHost (args) {
+        try {
+            if (!args.HOST_ID || args.HOST_ID.trim() === '') {
+                console.error('Not select HOST_ID');
+                return;
+            }
+            if (!this._websocket) {
+                console.error('WebSocket is not opened');
+                return;
+            }
+
+            this._websocket.send(JSON.stringify({
+                service: 'mesh',
+                action: 'offer',
+                data: {
+                    id: this.id,
+                    hostId: args.HOST_ID,
+                    clientDescription: 'Client Description' // TODO: make description
+                }
+            }));
+        }
+        catch (e) {
+            console.error(`Error in offerToHost: ${e}`);
+        }
     }
 
     _getGlobalVariables () {
@@ -195,8 +334,44 @@ class Scratch3MeshBlocks {
         });
     }
 
+    _onWebSocketMessage (message) {
+        console.log(`received WebSocket message: isHost=<${this.isHost}> message=<${JSON.stringify(message)}>`);
+
+        if (message.hasOwnProperty('result') && !message.result) {
+            console.error(`failed action: action=<${message.action}> error=<${message.data.error}>`);
+            return;
+        }
+
+        const {action, data} = message;
+
+        switch (action) {
+        case 'list':
+            this._hostIds = data.hostIds;
+            break;
+        case 'offer':
+            if (this.isHost) {
+                if (data.hostId === this.id) {
+                    this._websocket.send(JSON.stringify({
+                        service: 'mesh',
+                        action: 'answer',
+                        data: {
+                            id: this.id,
+                            clientId: data.id,
+                            hostDescription: 'Host description' // TODO: make description
+                        }
+                    }));
+                } else {
+                    console.error(`failed action: action=<${message.action}> reason=<invalid hostId>`);
+                }
+            } else {
+                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
+            }
+            break;
+        }
+    }
+
     _onRtcMessage (message) {
-        console.log(`received message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${JSON.stringify(message.data)}>`);
+        console.log(`received WebRTC message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${JSON.stringify(message.data)}>`);
         switch (message.type) {
         case 'broadcast':
             const broadcastName = message.data;
@@ -385,7 +560,11 @@ class Scratch3MeshBlocks {
     }
 
     _getVariableNamesMenuItems () {
-        return [''].concat(this.variableNames);
+        return [' '].concat(this.variableNames);
+    }
+
+    _getHostIdsMenuItems () {
+        return [' '].concat(this._hostIds);
     }
 
     _sendMessage (message) {
