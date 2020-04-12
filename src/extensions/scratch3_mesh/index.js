@@ -81,7 +81,6 @@ class Scratch3MeshBlocks {
         this._setOpcodeFunctionHOC();
         this._setVariableFunctionHOC();
 
-        this._hostIds = [];
         this._availablePeripherals = {};
 
         this.runtime.registerPeripheralExtension(Scratch3MeshBlocks.EXTENSION_ID, this);
@@ -306,53 +305,13 @@ class Scratch3MeshBlocks {
                             defaultValue: ''
                         }
                     }
-                },
-                '---',
-                {
-                    opcode: 'connectSignalingServer',
-                    text: 'H&C: connect [WSS_URL]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        WSS_URL: {
-                            type: ArgumentType.STRING,
-                            defaultValue: 'ws://localhost:8080'
-                        }
-                    }
-                },
-                '---',
-                {
-                    opcode: 'registerHost',
-                    text: 'Host: register',
-                    blockType: BlockType.COMMAND
-                },
-                '---',
-                {
-                    opcode: 'listHosts',
-                    text: 'Client: list Hosts',
-                    blockType: BlockType.COMMAND
-                },
-                {
-                    opcode: 'offerToHost',
-                    text: 'Client: offer to [HOST_ID]',
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        HOST_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'hostIds',
-                            defaultValue: ' '
-                        }
-                    }
                 }
             ],
             menus: {
                 variableNames: {
                     acceptReporters: true,
                     items: '_getVariableNamesMenuItems'
-                },
-                hostIds: {
-                    acceptReporters: true,
-                    items: '_getHostIdsMenuItems'
-                },
+                }
             }
         };
     }
@@ -369,157 +328,6 @@ class Scratch3MeshBlocks {
             return '';
         }
         return this.variables[name];
-    }
-
-    connectSignalingServer (args) {
-        try {
-            if (this._websocket) {
-                console.error('WebSocket already opened');
-            } else {
-                const websocket = new WebSocket(args.WSS_URL);
-                websocket.onopen = e => {
-                    this._websocket = websocket;
-                };
-                websocket.onmessage = e => {
-                    try {
-                        this._onWebSocketMessage(JSON.parse(e.data));
-                    }
-                    catch (error) {
-                        console.error(`Error in WebSocket.onmessage: ${error}`);
-                    }
-                };
-                websocket.onclose = e => {
-                    this._websocket = null;
-                };
-                websocket.onerror = e => {
-                    console.error(`Error in WebSocket: ${e}`);
-                };
-            }
-        }
-        catch (e) {
-            console.error(`Error in connectSignalingServer: ${e}`);
-        }
-    }
-
-    registerHost (args) {
-        try {
-            if (!this._websocket) {
-                console.error('WebSocket is not opened');
-                return;
-            }
-
-            this._websocket.send(JSON.stringify({
-                service: 'mesh',
-                action: 'register',
-                data: {
-                    id: this.id
-                }
-            }));
-            this.isHost = true;
-        }
-        catch (e) {
-            console.error(`Error in registerHost: ${e}`);
-        }
-    }
-
-    listHosts (args) {
-        try {
-            if (!this._websocket) {
-                console.error('WebSocket is not opened');
-                return;
-            }
-
-            this._websocket.send(JSON.stringify({
-                service: 'mesh',
-                action: 'list',
-                data: {
-                    id: this.id
-                }
-            }));
-        }
-        catch (e) {
-            console.error(`Error in listHosts: ${e}`);
-        }
-    }
-
-    offerToHost (args) {
-        try {
-            if (!args.HOST_ID || args.HOST_ID.trim() === '') {
-                console.error('Not select HOST_ID');
-                return;
-            }
-            if (!this._websocket) {
-                console.error('WebSocket is not opened');
-                return;
-            }
-            if (this.isHost) {
-                console.error('I am host');
-                return;
-            }
-            if (this.rtcConnections.length > 0) {
-                console.error('Already WebRTC connected');
-                return;
-            }
-
-            const connection = new RTCPeerConnection(null);
-            this.rtcConnections.push(connection);
-
-            connection.onconnectionstatechange = e => {
-                console.log(`Client: onconnectionstatechange: ${connection.connectionState}`);
-
-                switch (connection.connectionState) {
-                case 'disconnected':
-                case 'failed':
-                case 'closed':
-                    // TODO: this.rtcConnectionsから削除する
-                    break;
-                }
-            };
-            connection.onicecandidate = e => {
-                if (!e.candidate) {
-                    console.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
-
-                    this._websocket.send(JSON.stringify({
-                        service: 'mesh',
-                        action: 'offer',
-                        data: {
-                            id: this.id,
-                            hostId: args.HOST_ID,
-                            clientDescription: connection.localDescription
-                        }
-                    }));
-                }
-            };
-
-            const dataChannel = connection.createDataChannel('dataChannel');
-            dataChannel.onopen = e => {
-                this._onRtcOpen(connection, dataChannel);
-            };
-            dataChannel.onmessage = e => {
-                try {
-                    this._onRtcMessage(JSON.parse(e.data));
-                }
-                catch (error) {
-                    console.error(`Client: Error in dataChannel.onmessage: ${error}`);
-                }
-            };
-            dataChannel.onclose = e => {
-                this._onRtcClose(connection, dataChannel);
-            };
-
-            connection.createOffer().then(
-                (desc) => {
-                    connection.setLocalDescription(desc);
-                },
-                (error) => {
-                    // TODO: エラー処理
-                    console.error(`Client: Error in createOffer: ${error}`);
-                }
-            );
-        }
-        catch (e) {
-            console.error(`Error in offerToHost: ${e}`);
-        }
     }
 
     _getGlobalVariables () {
@@ -762,10 +570,6 @@ class Scratch3MeshBlocks {
 
     _getVariableNamesMenuItems () {
         return [' '].concat(this.variableNames);
-    }
-
-    _getHostIdsMenuItems () {
-        return [' '].concat(this._hostIds);
     }
 
     _sendMessage (message) {
