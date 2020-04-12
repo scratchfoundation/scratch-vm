@@ -637,7 +637,9 @@ class Scratch3MeshBlocks {
     _createNewGlobalVariable (variableName, optVarId, optVarType) {
         console.log('runtime.createNewGlobalVariable in mesh');
         const variable = this._variableFunctions.runtime.createNewGlobalVariable(variableName, optVarId, optVarType);
-        this._sendVariable(variable.name, variable.value);
+        if (variable.type === Variable.SCALAR_TYPE) {
+            this._sendVariable(variable.name, variable.value);
+        }
         return variable;
     }
 
@@ -664,8 +666,10 @@ class Scratch3MeshBlocks {
         const stage = this.runtime.getTargetForStage();
         if (!stage.variables.hasOwnProperty(id)) {
             this._variableFunctions.stage.createVariable(id, name, type, isCloud);
-            const variable = stage.variables[id];
-            this._sendVariable(variable.name, variable.value);
+            if (type === Variable.SCALAR_TYPE) {
+                const variable = stage.variables[id];
+                this._sendVariable(variable.name, variable.value);
+            }
         }
     }
 
@@ -677,7 +681,9 @@ class Scratch3MeshBlocks {
             const variable = stage.variables[id];
             if (variable.id === id) {
                 this._variableFunctions.stage.setVariableValue(id, newValue);
-                this._sendVariable(variable.name, variable.value);
+                if (variable.type === Variable.SCALAR_TYPE) {
+                    this._sendVariable(variable.name, variable.value);
+                }
             }
         }
     }
@@ -690,7 +696,9 @@ class Scratch3MeshBlocks {
             const variable = stage.variables[id];
             if (variable.id === id) {
                 this._variableFunctions.stage.renameVariable(id, newName);
-                this._sendVariable(variable.name, variable.value);
+                if (variable.type === Variable.SCALAR_TYPE) {
+                    this._sendVariable(variable.name, variable.value);
+                }
             }
         }
     }
