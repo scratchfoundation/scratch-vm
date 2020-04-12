@@ -157,7 +157,104 @@ class Scratch3MeshBlocks {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        console.log(`connect in mesh: ${id}`);
+        try {
+            console.log(`connect in mesh: ${id}`);
+
+            this._connected = false;
+
+            if (id === MESH_HOST_PERIPHERAL_ID) {
+                if (!this._websocket) {
+                    console.error('WebSocket is not opened');
+                    return;
+                }
+
+                this._websocket.send(JSON.stringify({
+                    service: 'mesh',
+                    action: 'register',
+                    data: {
+                        id: this.id
+                    }
+                }));
+
+                this.isHost = true;
+            } else {
+                if (!id || id.trim() === '') {
+                    console.error('Not select id');
+                    return;
+                }
+                if (!this._websocket) {
+                    console.error('WebSocket is not opened');
+                    return;
+                }
+                if (this.isHost) {
+                    console.error('I am not Client');
+                    return;
+                }
+                if (this.rtcConnections.length > 0) {
+                    console.error('Already WebRTC connected');
+                    return;
+                }
+
+                const connection = new RTCPeerConnection(null);
+                this.rtcConnections.push(connection);
+
+                connection.onconnectionstatechange = e => {
+                    console.log(`Client: onconnectionstatechange: ${connection.connectionState}`);
+
+                    switch (connection.connectionState) {
+                    case 'disconnected':
+                    case 'failed':
+                    case 'closed':
+                        // TODO: this.rtcConnectionsから削除する
+                        break;
+                    }
+                };
+                connection.onicecandidate = e => {
+                    if (!e.candidate) {
+                        console.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
+
+                        this._websocket.send(JSON.stringify({
+                            service: 'mesh',
+                            action: 'offer',
+                            data: {
+                                id: this.id,
+                                hostId: id,
+                                clientDescription: connection.localDescription
+                            }
+                        }));
+                    }
+                };
+
+                const dataChannel = connection.createDataChannel('dataChannel');
+                dataChannel.onopen = e => {
+                    this._onRtcOpen(connection, dataChannel);
+                };
+                dataChannel.onmessage = e => {
+                    try {
+                        this._onRtcMessage(JSON.parse(e.data));
+                    }
+                    catch (error) {
+                        console.error(`Client: Error in dataChannel.onmessage: ${error}`);
+                    }
+                };
+                dataChannel.onclose = e => {
+                    this._onRtcClose(connection, dataChannel);
+                };
+
+                connection.createOffer().then(
+                    (desc) => {
+                        connection.setLocalDescription(desc);
+                    },
+                    (error) => {
+                        // TODO: エラー処理
+                        console.error(`Client: Error in createOffer: ${error}`);
+                    }
+                );
+            }
+        }
+        catch (e) {
+            console.error(`Error in connect: ${e}`);
+        }
     }
 
     /**
@@ -175,13 +272,13 @@ class Scratch3MeshBlocks {
     }
 
     /**
-     * Return true if connected to the micro:bit.
-     * @return {boolean} - whether the micro:bit is connected.
+     * Return true if connected to the Mesh
+     * @return {boolean} - whether the Mesh is connected.
      */
     isConnected () {
-        console.log(`isConnected in mesh`);
+        console.log(`isConnected in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
-        return false;
+        return this._connected;
     }
 
     /**
@@ -399,7 +496,12 @@ class Scratch3MeshBlocks {
                 this._onRtcOpen(connection, dataChannel);
             };
             dataChannel.onmessage = e => {
-                this._onRtcMessage(JSON.parse(e.data));
+                try {
+                    this._onRtcMessage(JSON.parse(e.data));
+                }
+                catch (error) {
+                    console.error(`Client: Error in dataChannel.onmessage: ${error}`);
+                }
             };
             dataChannel.onclose = e => {
                 this._onRtcClose(connection, dataChannel);
@@ -469,6 +571,15 @@ class Scratch3MeshBlocks {
 
         const {action, data} = message;
         switch (action) {
+        case 'register':
+            if (!this.isHost) {
+                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
+                return;
+            }
+
+            this._connected = true;
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
+            break;
         case 'list':
             const now = new Date();
             data.hostIds.forEach(hostId => {
@@ -585,6 +696,9 @@ class Scratch3MeshBlocks {
             connection.setRemoteDescription(new RTCSessionDescription(data.hostDescription));
 
             this._websocket.close();
+
+            this._connected = true;
+            this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
         }
     }
