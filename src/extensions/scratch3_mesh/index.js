@@ -93,6 +93,7 @@ class Scratch3MeshBlocks {
         console.log('scan in mesh');
 
         try {
+            this._availablePeripherals = {};
             this._availablePeripherals[MESH_HOST_PERIPHERAL_ID] = {
                 name: formatMessage({
                     id: 'mesh.hostPeripheralName',
@@ -257,10 +258,31 @@ class Scratch3MeshBlocks {
     }
 
     /**
-     * Disconnect from the micro:bit.
+     * Disconnect from the Mesh.
      */
     disconnect () {
-        console.log(`disconnect in mesh`);
+        console.log(`disconnect in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
+
+        if (!this._connected) {
+            console.warn('Mesh: Already disconnected');
+            return;
+        }
+
+        if (this._websocket) {
+            this._websocket.close();
+        }
+        this.variables = {};
+        this.variableNames = [];
+        this.rtcConnections.forEach(connection => {
+            connection.close();
+        });
+        this.rtcConnections = [];
+        this.rtcDataChannels = [];
+        this.isHost = false;
+
+        this._connected = false;
+
+        this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
     }
 
     /**
