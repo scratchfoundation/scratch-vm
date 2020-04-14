@@ -1,5 +1,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const log = require('../../util/log');
 const formatMessage = require('format-message');
 const BlockUtility = require('../../engine/block-utility.js');
 const uid = require('../../util/uid');
@@ -90,7 +91,7 @@ class Scratch3MeshBlocks {
      * Called by the runtime when user wants to scan for a peripheral.
      */
     scan () {
-        console.log('scan in mesh');
+        log.log('scan in mesh');
 
         try {
             this._availablePeripherals = {};
@@ -116,7 +117,7 @@ class Scratch3MeshBlocks {
             } else {
                 this._websocket = new WebSocket(MESH_WSS_URL);
                 const websocket = this._websocket;
-                websocket.onopen = e => {
+                websocket.onopen = () => {
                     this.runtime.emit(
                         this.runtime.constructor.PERIPHERAL_LIST_UPDATE,
                         this._availablePeripherals
@@ -133,18 +134,18 @@ class Scratch3MeshBlocks {
                     try {
                         this._onWebSocketMessage(JSON.parse(e.data));
                     } catch (error) {
-                        console.error(`Error in WebSocket.onmessage: ${error}`);
+                        log.error(`Error in WebSocket.onmessage: ${error}`);
                     }
                 };
-                websocket.onclose = e => {
+                websocket.onclose = () => {
                     this._websocket = null;
                 };
                 websocket.onerror = e => {
-                    console.error(`Error in WebSocket: ${e}`);
+                    log.error(`Error in WebSocket: ${e}`);
                 };
             }
         } catch (e) {
-            console.error(`Error in scan: ${e}`);
+            log.error(`Error in scan: ${e}`);
         }
     }
 
@@ -154,13 +155,13 @@ class Scratch3MeshBlocks {
      */
     connect (meshId) {
         try {
-            console.log(`connect in mesh: ${meshId}`);
+            log.log(`connect in mesh: ${meshId}`);
 
             this._connected = false;
 
             if (meshId === MESH_HOST_PERIPHERAL_ID) {
                 if (!this._websocket) {
-                    console.error('WebSocket is not opened');
+                    log.error('WebSocket is not opened');
                     return;
                 }
 
@@ -174,31 +175,31 @@ class Scratch3MeshBlocks {
                 this.isHost = true;
             } else {
                 if (!meshId || meshId.trim() === '') {
-                    console.error('Not select Mesh ID');
+                    log.error('Not select Mesh ID');
                     return;
                 }
                 if (!this._websocket) {
-                    console.error('WebSocket is not opened');
+                    log.error('WebSocket is not opened');
                     return;
                 }
                 if (this.isHost) {
-                    console.error('I am not Client');
+                    log.error('I am not Client');
                     return;
                 }
                 if (this.rtcConnections.length > 0) {
-                    console.error('Already WebRTC connected');
+                    log.error('Already WebRTC connected');
                     return;
                 }
 
                 const connection = new RTCPeerConnection(null);
                 this.rtcConnections.push(connection);
 
-                connection.onconnectionstatechange = e => {
+                connection.onconnectionstatechange = () => {
                     this._onRtcConnectionStateChange(connection);
                 };
                 connection.onicecandidate = e => {
                     if (!e.candidate) {
-                        console.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
+                        log.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
 
                         this._websocket.send(JSON.stringify({
                             action: 'offer',
@@ -212,17 +213,13 @@ class Scratch3MeshBlocks {
                 };
 
                 const dataChannel = connection.createDataChannel('dataChannel');
-                dataChannel.onopen = e => {
+                dataChannel.onopen = () => {
                     this._onRtcOpen(connection, dataChannel);
                 };
                 dataChannel.onmessage = e => {
-                    try {
-                        this._onRtcMessage(JSON.parse(e.data));
-                    } catch (error) {
-                        console.error(`Client: Error in dataChannel.onmessage: ${error}`);
-                    }
+                    this._onRtcMessage(e.data);
                 };
-                dataChannel.onclose = e => {
+                dataChannel.onclose = () => {
                     this._onRtcClose(connection, dataChannel);
                 };
 
@@ -231,13 +228,17 @@ class Scratch3MeshBlocks {
                         connection.setLocalDescription(desc);
                     },
                     error => {
-                        // TODO: エラー処理
-                        console.error(`Client: Error in createOffer: ${error}`);
+                        log.error(`Client: Error in createOffer: ${error}`);
+
+                        this.disconnect();
+                        this.runtime.emit(this.runtime.constructor.PERIPHERAL_REQUEST_ERROR, {
+                            extensionId: Scratch3MeshBlocks.EXTENSION_ID
+                        });
                     }
                 );
             }
         } catch (e) {
-            console.error(`Error in connect: ${e}`);
+            log.error(`Error in connect: ${e}`);
         }
     }
 
@@ -245,7 +246,7 @@ class Scratch3MeshBlocks {
      * Disconnect from the Mesh.
      */
     disconnect () {
-        console.log(`disconnect in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
+        log.log(`disconnect in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
         if (this._websocket) {
             this._websocket.close();
@@ -264,7 +265,7 @@ class Scratch3MeshBlocks {
 
         this.runtime.emit(this.runtime.constructor.PERIPHERAL_DISCONNECTED);
 
-        console.log(`disconnected in mesh`);
+        log.log(`disconnected in mesh`);
     }
 
     /**
@@ -272,7 +273,7 @@ class Scratch3MeshBlocks {
      * @return {boolean} - whether the Mesh is connected.
      */
     isConnected () {
-        console.log(`isConnected in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
+        log.log(`isConnected in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
         return this._connected;
     }
@@ -282,10 +283,9 @@ class Scratch3MeshBlocks {
      * @return {string} - connected message.
      */
     connectedMessage () {
-        console.log(`connectedMessage in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
+        log.log(`connectedMessage in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
         let message;
-        let meshId;
         if (this.isHost) {
             message = formatMessage({
                 id: 'mesh.registeredHost',
@@ -342,9 +342,6 @@ class Scratch3MeshBlocks {
         };
     }
 
-    /**
-     * @return {object} - the global variable's value from other projects
-     */
     getSensorValue (args) {
         return this._getVariable(args.NAME);
     }
@@ -373,7 +370,7 @@ class Scratch3MeshBlocks {
     }
 
     _onRtcOpen (connection, dataChannel) {
-        console.log(`data channel open`);
+        log.log(`data channel open`);
 
         this.rtcDataChannels.push(dataChannel);
 
@@ -396,17 +393,17 @@ class Scratch3MeshBlocks {
                 }
             };
             dataChannel.send(JSON.stringify(message));
-            console.log(`send variable: name=<${variable.name}> value=<${variable.value}> owner=<${variable.owner}>`);
+            log.log(`send variable: name=<${variable.name}> value=<${variable.value}> owner=<${variable.owner}>`);
         });
     }
 
     _onWebSocketMessage (message) {
-        console.log(`received WebSocket message: isHost=<${this.isHost}> message=<${JSON.stringify(message)}>`);
+        log.log(`received WebSocket message: isHost=<${this.isHost}> message=<${JSON.stringify(message)}>`);
 
         const {action, result, data} = message;
 
         if (message.hasOwnProperty('result') && !result) {
-            console.error(`failed action: action=<${action}> error=<${data.error}>`);
+            log.error(`failed action: action=<${action}> error=<${data.error}>`);
 
             switch (action) {
             case 'offer':
@@ -423,11 +420,12 @@ class Scratch3MeshBlocks {
         }
 
         let connection;
+        let now;
 
         switch (action) {
         case 'register':
             if (!this.isHost) {
-                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
+                log.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
                 return;
             }
 
@@ -435,7 +433,7 @@ class Scratch3MeshBlocks {
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
         case 'list':
-            const now = Math.floor(Date.now() / 1000);
+            now = Math.floor(Date.now() / 1000);
             data.hosts.forEach(host => {
                 const t = host.ttl - now;
                 let rssi;
@@ -472,18 +470,19 @@ class Scratch3MeshBlocks {
             }
 
             if (data.hostMeshId !== this.meshId) {
-                console.error(`failed action: action=<${message.action}> reason=<invalid hostMeshId> actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
+                log.error(`failed action: action=<${message.action}> reason=<invalid hostMeshId> ` +
+                          `actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
             }
 
             connection = new RTCPeerConnection(null);
             this.rtcConnections.push(connection);
 
-            connection.onconnectionstatechange = e => {
+            connection.onconnectionstatechange = () => {
                 this._onRtcConnectionStateChange(connection);
             };
             connection.onicecandidate = e => {
                 if (!e.candidate) {
-                    console.log(`Host: answer to Client:\n${JSON.stringify(connection.localDescription)}`);
+                    log.log(`Host: answer to Client:\n${JSON.stringify(connection.localDescription)}`);
 
                     this._websocket.send(JSON.stringify({
                         action: 'answer',
@@ -498,13 +497,13 @@ class Scratch3MeshBlocks {
             connection.ondatachannel = event => {
                 const dataChannel = event.channel;
 
-                dataChannel.onopen = e => {
+                dataChannel.onopen = () => {
                     this._onRtcOpen(connection, dataChannel);
                 };
                 dataChannel.onmessage = e => {
-                    this._onRtcMessage(JSON.parse(e.data));
+                    this._onRtcMessage(e.data);
                 };
-                dataChannel.onclose = e => {
+                dataChannel.onclose = () => {
                     this._onRtcClose(connection, dataChannel);
                 };
             };
@@ -515,8 +514,9 @@ class Scratch3MeshBlocks {
                     connection.setLocalDescription(desc);
                 },
                 error => {
-                    // TODO: エラー処理
-                    console.error(`Host: Error in createAnswer: ${error}`);
+                    log.error(`Host: Error in createAnswer: ${error}`);
+                    connection.close();
+                    this.rtcConnections = this.rtcConnections.filter(c => c !== connection);
                 }
             );
             break;
@@ -526,16 +526,17 @@ class Scratch3MeshBlocks {
             }
 
             if (data.clientMeshId !== this.meshId) {
-                console.error(`failed action: action=<${message.action}> reason=<invalid clientMeshId> actual=<${data.clientMeshId}> expected=<${this.meshId}>`);
+                log.error(`failed action: action=<${message.action}> reason=<invalid clientMeshId>` +
+                          ` actual=<${data.clientMeshId}> expected=<${this.meshId}>`);
                 return;
             }
 
             if (this.rtcConnections.length === 0) {
-                console.error(`failed action: action=<${message.action}> reason=<WebRTC not connecting>`);
+                log.error(`failed action: action=<${message.action}> reason=<WebRTC not connecting>`);
                 return;
             }
 
-            console.log('Client: set Host description');
+            log.log('Client: set Host description');
 
             connection = this.rtcConnections[0];
             connection.setRemoteDescription(new RTCSessionDescription(data.hostDescription));
@@ -550,7 +551,7 @@ class Scratch3MeshBlocks {
     }
 
     _onRtcConnectionStateChange (connection) {
-        console.log(`onRtcConnectionStateChange: ${connection.connectionState}`);
+        log.log(`onRtcConnectionStateChange: ${connection.connectionState}`);
 
         switch (connection.connectionState) {
         case 'disconnected':
@@ -560,21 +561,34 @@ class Scratch3MeshBlocks {
         }
     }
 
-    _onRtcMessage (message) {
-        console.log(`received WebRTC message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}> data=<${JSON.stringify(message.data)}>`);
+    _onRtcMessage (data) {
+        let message;
+        try {
+            message = JSON.parse(data);
+        } catch (error) {
+            log.error(`Invalid WebRTC message format: ${error}`);
+            return;
+        }
+
+        log.log(`received WebRTC message: isHost=<${this.isHost}> owner=<${message.owner}> type=<${message.type}>` +
+                ` data=<${JSON.stringify(message.data)}>`);
+
+        let broadcastName;
+        let variable;
         switch (message.type) {
         case 'broadcast':
-            const broadcastName = message.data;
-            console.log(`received broadcast: ${broadcastName}`);
+            broadcastName = message.data;
+            log.log(`received broadcast: ${broadcastName}`);
+
             if (this.isHost) {
-                console.log('send broadcast all clients');
+                log.log('send broadcast all clients');
 
                 this._sendMessage(message);
             }
             if (this.meshId === message.owner) {
-                console.log('ignore broadcast: reason=<own broadcast>');
+                log.log('ignore broadcast: reason=<own broadcast>');
             } else {
-                console.log('process broadcast');
+                log.log('process broadcast');
 
                 const args = {
                     BROADCAST_OPTION: {
@@ -590,28 +604,30 @@ class Scratch3MeshBlocks {
             }
             break;
         case 'variable':
-            const variable = message.data;
-            console.log(`received variable: name=<${variable.name}> value=<${variable.value}>`);
+            variable = message.data;
+            log.log(`received variable: name=<${variable.name}> value=<${variable.value}>`);
+
             if (this.isHost) {
-                console.log('send variable all clients');
+                log.log('send variable all clients');
 
                 this._sendMessage(message);
             }
             if (this.meshId === message.owner) {
-                console.log('ignore variable: reason=<own variable>');
+                log.log('ignore variable: reason=<own variable>');
             } else {
-                console.log(`update variable: name=<${variable.name}> from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
+                log.log(`update variable: name=<${variable.name}>` +
+                        ` from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
                 this._setVariable(variable.name, variable.value, message.owner);
             }
             break;
         default:
-            console.error(`invalid message type: ${message.type}`);
+            log.error(`invalid message type: ${message.type}`);
             break;
         }
     }
 
     _onRtcClose (connection, dataChannel) {
-        console.log(`data channel close`);
+        log.log(`data channel close`);
 
         this.rtcConnections = this.rtcConnections.filter(c => c !== connection);
         this.rtcDataChannels = this.rtcDataChannels.filter(c => c !== dataChannel);
@@ -624,7 +640,7 @@ class Scratch3MeshBlocks {
             });
         }
 
-        console.log(`data channel closed`);
+        log.log(`data channel closed`);
     }
 
     _setVariable (name, value, owner) {
@@ -648,65 +664,70 @@ class Scratch3MeshBlocks {
                 channel.send(JSON.stringify(message));
             });
         } catch (e) {
-            // TODO: エラー処理
-            console.log(e);
+            log.error(`Failed to send WebRTC message: error=<${e}> message=<${JSON.stringify(message)}>`);
         }
     }
 
     _broadcast (args, util) {
-        console.log('event_broadcast in mesh');
-        this._sendBroadcast(args);
-        this._opcodeFunctions.event_broadcast(args, util);
+        try {
+            log.log('event_broadcast in mesh');
+            this._sendBroadcast(args);
+            this._opcodeFunctions.event_broadcast(args, util);
+        } catch (error) {
+            log.error(`Failed to execute event_broadcast: ${error}`);
+        }
     }
 
     _broadcastAndWait (args, util) {
-        console.log('event_broadcastandwait in mesh');
-        this._sendBroadcast(args);
-        this._opcodeFunctions.event_broadcastandwait(args, util);
+        try {
+            log.log('event_broadcastandwait in mesh');
+            this._sendBroadcast(args);
+            this._opcodeFunctions.event_broadcastandwait(args, util);
+        } catch (error) {
+            log.error(`Failed to execute event_broadcastandwait: ${error}`);
+        }
     }
 
     _sendBroadcast (args) {
-        try {
-            const broadcastName = args.BROADCAST_OPTION.name;
-            this._sendMessage({
-                owner: this.meshId,
-                type: 'broadcast',
-                data: broadcastName
-            });
-        } catch (e) {
-            // TODO: エラー処理
-            console.log(e);
-        }
+        const broadcastName = args.BROADCAST_OPTION.name;
+        this._sendMessage({
+            owner: this.meshId,
+            type: 'broadcast',
+            data: broadcastName
+        });
     }
 
     _setVariableTo (args, util) {
-        console.log('data_setvariableto in mesh');
-        this._opcodeFunctions.data_setvariableto(args, util);
-        this._sendVariableByOpcodeFunction(args, util);
+        try {
+            log.log('data_setvariableto in mesh');
+            this._opcodeFunctions.data_setvariableto(args, util);
+            this._sendVariableByOpcodeFunction(args);
+        } catch (error) {
+            log.error(`Failed to execute data_setvariableto: ${error}`);
+        }
     }
 
     _changeVariableBy (args, util) {
-        console.log('data_changevariableby in mesh');
-        this._opcodeFunctions.data_changevariableby(args, util);
-        this._sendVariableByOpcodeFunction(args, util);
+        try {
+            log.log('data_changevariableby in mesh');
+            this._opcodeFunctions.data_changevariableby(args, util);
+            this._sendVariableByOpcodeFunction(args);
+        } catch (error) {
+            log.error(`Failed to execute data_changevariableby: ${error}`);
+        }
     }
 
-    _sendVariableByOpcodeFunction (args, util) {
-        try {
-            const stage = this.runtime.getTargetForStage();
-            let variable = stage.lookupVariableById(args.VARIABLE.id);
-            if (!variable) {
-                variable = stage.lookupVariableByNameAndType(args.VARIABLE.name, Variable.SCALAR_TYPE);
-            }
-            if (!variable) {
-                return;
-            }
-
-            this._sendVariable(variable.name, variable.value);
-        } catch (e) {
-            // TODO: エラー処理
-            console.log(e);
+    _sendVariableByOpcodeFunction (args) {
+        const stage = this.runtime.getTargetForStage();
+        let variable = stage.lookupVariableById(args.VARIABLE.id);
+        if (!variable) {
+            variable = stage.lookupVariableByNameAndType(args.VARIABLE.name, Variable.SCALAR_TYPE);
         }
+        if (!variable) {
+            return;
+        }
+
+        this._sendVariable(variable.name, variable.value);
     }
 
     _sendVariable (name, value) {
@@ -719,9 +740,8 @@ class Scratch3MeshBlocks {
                     value: value
                 }
             });
-        } catch (e) {
-            // TODO: エラー処理
-            console.log(e);
+        } catch (error) {
+            log.error(`Failed to send variable: error=<${error}> name=<${name}> value=<${value}>`);
         }
     }
 
@@ -762,7 +782,7 @@ class Scratch3MeshBlocks {
     }
 
     _createNewGlobalVariable (variableName, optVarId, optVarType) {
-        console.log('runtime.createNewGlobalVariable in mesh');
+        log.log('runtime.createNewGlobalVariable in mesh');
         const variable = this._variableFunctions.runtime.createNewGlobalVariable(variableName, optVarId, optVarType);
         if (variable.type === Variable.SCALAR_TYPE) {
             this._sendVariable(variable.name, variable.value);
@@ -771,7 +791,7 @@ class Scratch3MeshBlocks {
     }
 
     _lookupOrCreateVariable (id, name) {
-        console.log('stage.lookupOrCreateVariable in mesh');
+        log.log('stage.lookupOrCreateVariable in mesh');
 
         const stage = this.runtime.getTargetForStage();
         let variable = stage.lookupVariableById(id);
@@ -788,7 +808,7 @@ class Scratch3MeshBlocks {
     }
 
     _createVariable (id, name, type, isCloud) {
-        console.log('stage.createVariable in mesh');
+        log.log('stage.createVariable in mesh');
 
         const stage = this.runtime.getTargetForStage();
         if (!stage.variables.hasOwnProperty(id)) {
@@ -801,7 +821,7 @@ class Scratch3MeshBlocks {
     }
 
     _setVariableValue (id, newValue) {
-        console.log('stage.setVariableValue in mesh');
+        log.log('stage.setVariableValue in mesh');
 
         const stage = this.runtime.getTargetForStage();
         if (stage.variables.hasOwnProperty(id)) {
@@ -816,7 +836,7 @@ class Scratch3MeshBlocks {
     }
 
     _renameVariable (id, newName) {
-        console.log('stage.renameVariable in mesh');
+        log.log('stage.renameVariable in mesh');
 
         const stage = this.runtime.getTargetForStage();
         if (stage.variables.hasOwnProperty(id)) {
