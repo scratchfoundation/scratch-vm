@@ -42,6 +42,7 @@
     "jszip": "^3.2.2",
     "minilog": "3.1.0",
     "nets": "3.2.0",
+    "schema-utils": "^2.6.5",
     "scratch-parser": "5.0.0",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",

@@ -8,7 +8,7 @@ const BlockType = require('../../extension-support/block-type');
 // ...or VM dependencies:
 const formatMessage = require('format-message');
 
-const MapHelper = require('./map-helper');
+const DataFunctionHelper = require('./data-function-helper');
 
 //this is where we define the icon image like 
 const blockIconURI ='data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjxzdmcKICAgeG1sbnM6ZGM9Imh0dHA6Ly9wdXJsLm9yZy9kYy9lbGVtZW50cy8xLjEvIgogICB4bWxuczpjYz0iaHR0cDovL2NyZWF0aXZlY29tbW9ucy5vcmcvbnMjIgogICB4bWxuczpyZGY9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkvMDIvMjItcmRmLXN5bnRheC1ucyMiCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgaWQ9IkxheWVyXzEiCiAgIGRhdGEtbmFtZT0iTGF5ZXIgMSIKICAgdmlld0JveD0iMCAwIDE1MCAxNTAiCiAgIHZlcnNpb249IjEuMSIKICAgc29kaXBvZGk6ZG9jbmFtZT0iU2NyYXRjaC0wMi5zdmciCiAgIGlua3NjYXBlOnZlcnNpb249IjAuOTIuNCAoZjhkY2U5MSwgMjAxOS0wOC0wMikiPgogIDxtZXRhZGF0YQogICAgIGlkPSJtZXRhZGF0YTIxIj4KICAgIDxyZGY6UkRGPgogICAgICA8Y2M6V29yawogICAgICAgICByZGY6YWJvdXQ9IiI+CiAgICAgICAgPGRjOmZvcm1hdD5pbWFnZS9zdmcreG1sPC9kYzpmb3JtYXQ+CiAgICAgICAgPGRjOnR5cGUKICAgICAgICAgICByZGY6cmVzb3VyY2U9Imh0dHA6Ly9wdXJsLm9yZy9kYy9kY21pdHlwZS9TdGlsbEltYWdlIiAvPgogICAgICAgIDxkYzp0aXRsZT5TY3JhdGNoPC9kYzp0aXRsZT4KICAgICAgPC9jYzpXb3JrPgogICAgPC9yZGY6UkRGPgogIDwvbWV0YWRhdGE+CiAgPHNvZGlwb2RpOm5hbWVkdmlldwogICAgIHBhZ2Vjb2xvcj0iI2ZmZmZmZiIKICAgICBib3JkZXJjb2xvcj0iIzY2NjY2NiIKICAgICBib3JkZXJvcGFjaXR5PSIxIgogICAgIG9iamVjdHRvbGVyYW5jZT0iMTAiCiAgICAgZ3JpZHRvbGVyYW5jZT0iMTAiCiAgICAgZ3VpZGV0b2xlcmFuY2U9IjEwIgogICAgIGlua3NjYXBlOnBhZ2VvcGFjaXR5PSIwIgogICAgIGlua3NjYXBlOnBhZ2VzaGFkb3c9IjIiCiAgICAgaW5rc2NhcGU6d2luZG93LXdpZHRoPSIxOTIwIgogICAgIGlua3NjYXBlOndpbmRvdy1oZWlnaHQ9IjEwMjUiCiAgICAgaWQ9Im5hbWVkdmlldzE5IgogICAgIHNob3dncmlkPSJmYWxzZSIKICAgICBpbmtzY2FwZTp6b29tPSI1LjY1Njg1NDMiCiAgICAgaW5rc2NhcGU6Y3g9IjY4LjA2MDcxOCIKICAgICBpbmtzY2FwZTpjeT0iNzUuOTA4NjkyIgogICAgIGlua3NjYXBlOndpbmRvdy14PSIwIgogICAgIGlua3NjYXBlOndpbmRvdy15PSIyNyIKICAgICBpbmtzY2FwZTp3aW5kb3ctbWF4aW1pemVkPSIxIgogICAgIGlua3NjYXBlOmN1cnJlbnQtbGF5ZXI9IkxheWVyXzEiIC8+CiAgPGRlZnMKICAgICBpZD0iZGVmczQiPgogICAgPHN0eWxlCiAgICAgICBpZD0ic3R5bGUyIj4uY2xzLTEsLmNscy0ye2ZpbGw6bm9uZTtzdHJva2U6IzAwMDtzdHJva2UtbWl0ZXJsaW1pdDoxMDt9LmNscy0xe3N0cm9rZS13aWR0aDoxLjRweDt9LmNscy0ye3N0cm9rZS13aWR0aDoxLjc4cHg7fTwvc3R5bGU+CiAgPC9kZWZzPgogIDx0aXRsZQogICAgIGlkPSJ0aXRsZTYiPlNjcmF0Y2g8L3RpdGxlPgogIDxyZWN0CiAgICAgY2xhc3M9ImNscy0xIgogICAgIHg9IjMxLjEiCiAgICAgeT0iMTMuNjkiCiAgICAgd2lkdGg9Ijg4LjQ4IgogICAgIGhlaWdodD0iMTI2LjQiCiAgICAgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTEuNCAxNTIuMzcpIHJvdGF0ZSgtOTAuMTEpIgogICAgIGlkPSJyZWN0OCIKICAgICBzdHlsZT0iZmlsbDojZWJkOWI2O2ZpbGwtb3BhY2l0eToxIiAvPgogIDxwYXRoCiAgICAgY2xhc3M9ImNscy0yIgogICAgIGQ9Ik0xOC41MSwxMDkuNjhjMi44Ni01LjgsNS4yMS03LDYuODQtNywyLjE1LDAsMi42MywyLjA5LDYuNzgsNC4yNS44Ni40NCw3LjMyLDMuNzMsMTMuNTksMi44OCw0LjIzLS41Nyw0LjA1LTIuNDMsMTEuMzctNS41NSw0LjM5LTEuODgsOC4xNi0zLjQ4LDExLjM2LTIuNzUsNC4wNi45MiwyLjgzLDQuNTksNi43OCw1LjY1LDQuODgsMS4zMiw5LjM1LTMuNjEsMTUuODktMi43Miw2LjI1Ljg1LDguMzUsNi4xOCwxMS4zMSw1LjY4LDIuNzEtLjQ2LDEuNjItNSw0LjU3LTUuNiwzLjE5LS42LDYuMjgsNC40NiwxMS4zMSw0LjI4LDQuNjEtLjE3LDYuNzEtNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yNCw1LjYzIgogICAgIGlkPSJwYXRoMTAiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTE4LjE5LDg5LjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTIiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTE5LjE5LDczLjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTQiIC8+CiAgPHBhdGgKICAgICBjbGFzcz0iY2xzLTIiCiAgICAgZD0iTTIwLjE5LDU1LjkxYzIuODYtNS44LDUuMjItNyw2Ljg0LTcsMi4xNiwwLDIuNjMsMi4wOSw2Ljc5LDQuMjUuODUuNDQsNy4zMiwzLjcyLDEzLjU5LDIuODgsNC4yMy0uNTcsNC4wNS0yLjQzLDExLjM3LTUuNTYsNC4zOS0xLjg3LDguMTUtMy40OCwxMS4zNi0yLjc1LDQsLjkzLDIuODMsNC41OSw2Ljc3LDUuNjYsNC44OSwxLjMyLDkuMzUtMy42MSwxNS44OS0yLjcyLDYuMjUuODQsOC4zNiw2LjE3LDExLjMyLDUuNjcsMi43LS40NSwxLjYyLTUsNC41Ni01LjU5LDMuMi0uNiw2LjI4LDQuNDYsMTEuMzIsNC4yOCw0LjYxLS4xNyw2LjctNC41Nyw5LjEtNC4xNywxLC4xOCwyLjE3LDEuMjUsMi4yMyw1LjYzIgogICAgIGlkPSJwYXRoMTYiIC8+Cjwvc3ZnPg==';
@@ -32,12 +32,9 @@ class DataTools {
          */
         this._files = {};
 
-        /**
-         * holds the blocks representing each uploaded data set
-         */
-        this._fileBlocks = [];
+        this._hiddenFiles = [];
 
-        this._mapHelper = new MapHelper();
+        this._helper = new DataFunctionHelper();
 
         this.getRow = this.getRow.bind(this);
         this.generateFileDisplayName = this.generateFileDisplayName.bind(this);
@@ -63,7 +60,7 @@ class DataTools {
             color2: '#553A76',
 
             blocks: [
-                ...this._fileBlocks,
+                ...this.generateDisplayedBlocks(),
                 '---',
                 //Add other blocks below
                 {
@@ -159,26 +156,51 @@ class DataTools {
                 },
                 '---',
                 {
-                    opcode: 'mapFunctionToColumn',
+                    opcode: 'saveFunctionData',
                     text: formatMessage({
-                        id: 'datatools.mapFunctionToColumn',
-                        default: 'map [NAME]',
+                        id: 'datatools.saveFunctionData',
+                        default: 'save [FUNCTION] as [NAME]',
+                        description: 'saves a mapped data set'
+                    }),
+                    blockType: BlockType.FUNCTION,
+                    branchCount: 0,
+                    arguments: {
+                        FUNCTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'fileMenuSquare',
+                        },
+                        NAME: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'filename',
+                        }
+                    }
+                },
+                {
+                    opcode: 'executeDataFunction',
+                    text: formatMessage({
+                        id: 'datatools.executeDataFunction',
+                        default: '[FUNCTION] [NAME]',
                         description: 'maps a given dataset'
                     }),
                     blockType: BlockType.FUNCTION,
+                    branchCount: 1,
                     arguments: {
+                        FUNCTION: {
+                            type: ArgumentType.STRING,
+                            menu: 'functionMenu'
+                        },
                         NAME: {
-                            type: ArgumentType.string,
+                            type: ArgumentType.STRING,
                             menu: 'fileMenuSquare',
                         }
                     }
                 },
                 {
-                    opcode: 'mapInput',
+                    opcode: 'getCurrentRow',
                     text: formatMessage({
-                        id: 'datatools.mapInput',
+                        id: 'datatools.getCurrentRow',
                         default: 'current row at [COLUMN]',
-                        description: 'gets the value of a column for the map function'
+                        description: 'gets the value of a column for a function'
                     }),     
                     arguments: {
                         COLUMN: {
@@ -192,7 +214,7 @@ class DataTools {
                     opcode: 'setMapResult',
                     text: formatMessage({
                         id: 'datatools.setMapResult',
-                        default: 'set map result at [COLUMN] to [VALUE]',
+                        default: 'map: set result at [COLUMN] to [VALUE]',
                         description: 'sets the value of the map function'
                     }),                
                     blockType: BlockType.COMMAND,
@@ -206,7 +228,39 @@ class DataTools {
                             defaultValue: " "
                         }
                     }
-                }
+                },
+                //FOR REFERENCE: This is theoretical, and not an actual representation of
+                //               how the implementation might work. Just a proof of concept
+                {
+                    opcode: 'setFilterResult',
+                    text: formatMessage({
+                        id: 'datatools.setFilterResult',
+                        default: 'filter: return [VALUE]',
+                        description: 'sets the return value of the filter function'
+                    }),                
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            menu: 'filterMenu'
+                        }
+                    }
+                },
+                {
+                    opcode: 'updateReduceResult',
+                    text: formatMessage({
+                        id: 'datatools.updateReduceResult',
+                        default: 'reduce: update accumulator by [VALUE]',
+                        description: 'updates the accumulator value of the reduce function'
+                    }),                
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VALUE: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0
+                        }
+                    }
+                }, 
             ],
             menus: {
                 columnMenu: {
@@ -220,10 +274,19 @@ class DataTools {
                     acceptReporters: true,
                     squareOutput: true,
                     items: 'getFileNames'
+                },
+                functionMenu: {
+                    items: ['map', 'filter', 'reduce']
+                },
+                filterMenu: {
+                    acceptReporters: true,
+                    items: ['true', 'false']
                 }
             }
         }
     }
+
+//#region pls hide this
 
     /**
      * Performs a specified action
@@ -290,7 +353,7 @@ class DataTools {
      * Dummy method to ensure the status button works
      */
     isConnected() {
-        return this._fileBlocks.length > 0;
+        return Object.keys(this._files).length > 0;
     }
 
     /**
@@ -314,8 +377,10 @@ class DataTools {
      */
     getFileNames() {
         let names = [];
-        this._fileBlocks.forEach(file => {
-            names.push(file.text);
+        Object.keys(this._files).forEach(file => {
+            if(!this._hiddenFiles.includes(file)) {
+                names.push(file);
+            }
         });
 
         if(names.length === 0) names.push("");
@@ -437,7 +502,7 @@ class DataTools {
      * @param {String} name The original name of the file
      * @param {Array} fileData The parsed file data stored as an array of JSON objects
      */
-    addDataFile(name, fileData) {
+    addDataFile(name, fileData, hidden = false) {
         //Generate a displayable file name if a duplicate is found
         if(fileData.length < 1) return;
 
@@ -446,16 +511,29 @@ class DataTools {
         }
 
         this._files[name] = fileData;
-        this._fileBlocks.push(
-        {
-            opcode: 'file_' + name,
-            func: 'getFilename',
-            text: name,
-            blockType: BlockType.REPORTER
-        });
+
+        if(hidden) {
+            this._hiddenFiles.push(name);
+        }
 
         //Update the workspace to add the new file
         this._runtime.requestToolboxExtensionsUpdate();
+    }
+
+    generateDisplayedBlocks() {
+        let blocks = [];
+        Object.keys(this._files).forEach(file => {
+            if(!this._hiddenFiles.includes(file)) {
+                blocks.push({
+                    opcode: 'file_' + file,
+                    func: 'getFilename',
+                    text: file,
+                    blockType: BlockType.REPORTER
+                });
+            }
+        });
+
+        return blocks;
     }
 
     /**
@@ -469,7 +547,6 @@ class DataTools {
         }
 
         delete this._files[name];
-        this._fileBlocks = this._fileBlocks.filter(block => block.text !== name);
 
         this._runtime.requestToolboxExtensionsUpdate();
         return true;
@@ -528,15 +605,58 @@ class DataTools {
         return [...this._files[fileName]];
     }
 
-    /**
-     * Gets a value for the map input
-     * See 'getMapInput' in 'map-helper.js' for more.     
-     * @param {Object} args The block's arguments
-     * @param {Object} util Block utility provided by the runtime
-     * @returns {String | Number} The column value at the loop's current position
-     */
-    mapInput(args, util) {
-        return this._mapHelper.getMapInput(args, util);
+//#endregion
+
+
+
+    getCurrentRow(args, util) {
+        return this._helper.getCurrentRow(args, util);
+    }
+
+    executeDataFunctionAndSave(args, util) {
+        args["SAVE"] = true;
+        return this.executeDataFunction(args, util);
+    }
+
+    executeDataFunction(args, util) {
+        switch(args.FUNCTION) {
+            case 'map':
+                return this.map(args, util);
+            case 'filter':
+                return "filter";
+            case 'reduce':
+                return "reduce";
+            default:
+                return null;
+        }
+    }
+
+    saveFunctionData(args) {
+        if(args.FUNCTION) {
+            let oldName = args.FUNCTION;
+            let file = this._files[oldName];
+
+            this._hiddenFiles = this._hiddenFiles.filter(file => file !== oldName);
+
+            let name = args.NAME;
+
+            if(this._files[name]){
+                name = this.generateFileDisplayName(name);
+            }
+            this._files[name] = file;
+            delete this._files[oldName];
+
+            this._runtime.requestToolboxExtensionsUpdate();
+            return name;
+        }
+    }
+
+    setFilterResult(args, util) {
+        console.log(args);
+    }
+
+    updateReduceResult(args, util) {
+        console.log(args);
     }
 
     /**
@@ -546,7 +666,7 @@ class DataTools {
      * @param {Object} util Block utility provided by the runtime
      */
     setMapResult(args, util) {
-        this._mapHelper.setMapResult(args, util);
+        this._helper.setMapResult(args, util);
     }
 
 
@@ -558,26 +678,25 @@ class DataTools {
      * @param {Object} util Block utility object, used to control the stack frame.
      * @returns {String} The name of the resulting data set
      */
-    mapFunctionToColumn(args, util) {
+    map(args, util) {
         //Initialization
         if(typeof args.NAME === 'undefined') return "";
 
         //If we're trying to run in the toolbar, don't
-        if(this._mapHelper.checkRunningInToolbar(util.thread.peekStack())) return;
+        if(this._helper.checkRunningInToolbar(util.thread.peekStack())) return;
 
         //let fileName = colArr[0].substring(1);
         let rowCount = this.getRowCount({FILENAME: args.NAME})
 
         let topBlock = util.thread.topBlock;
 
-        this._mapHelper.checkRegenerateFunctionBlockDepthMap(topBlock, util);
-        let id = this._mapHelper.getID(topBlock);
+        this._helper.checkRegenerateFunctionBlockDepthMap(topBlock, util);
+        let id = this._helper.getID(topBlock);
 
-        let generatedMap = this._mapHelper.getGeneratedMap(topBlock, args.NAME);
+        let generatedMap = this._helper.getGeneratedData(topBlock, args.NAME);
         if(generatedMap) return generatedMap;
 
-        // If we still have some left, start the branch.
-        return this._mapHelper.executeMapFunction(args, util, id, rowCount, 
+        return this._helper.executeMapFunction(args, util, id, rowCount, 
                                                     this.addDataFile, this.generateFileDisplayName,
                                                     this.getRow);
     }

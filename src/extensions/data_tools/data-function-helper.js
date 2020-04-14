@@ -1,6 +1,9 @@
 //Created by: Alex Burroughs, Zachary Fernbaugh, Phillip Carroll, and Nathanael Hood with the KSU Scratch Data Tools group
 //See LICENSE for more information.
 
+const functionBlockOpcode = "datatools_executeDataFunction";
+const functionBlockSaveOpcode = "datatools_executeDataFunctionAndSave";
+
 /**
  * This class is used to assist the Data Tools extension in mapping data sets. 
  * Given the limitations of building an extension in Scratch, this class is necessary
@@ -9,7 +12,7 @@
  * are running simultaneously. By keeping track of different state variables accessible by 
  * block ID, the MapHelper fully manages all possible configurations of map functions.
  */
-class MapHelper {
+class DataFunctionHelper {
     constructor() {
         /**
          * Holds retrieved column values for each map function block.
@@ -23,7 +26,7 @@ class MapHelper {
          * when it gets added to the extension as its own dataset.
          * Each value is accessible by the function block's ID.
          */
-        this._mapResults = {};
+        this._results = {};
 
         /**
          * Holds the results of mapping nested function blocks.
@@ -47,7 +50,7 @@ class MapHelper {
          * recalculation by storing the names of the resulting dataset for each block.
          * Each value is accessible by the top block's ID and the requested column data.
          */
-        this._generatedMaps = {};
+        this._generatedData = {};
 
         /**
          * Holds the loop counters for each currently iterating function block. This allows us
@@ -82,7 +85,7 @@ class MapHelper {
      * @param {Object} util Block utility provided by the runtime
      * @returns {String | Number} The current value of the running function block
      */
-    getMapInput(args, util) {
+    getCurrentRow(args, util) {
         let id = this._findContainingLoopBlock(util, true);
         if(!id) return;
         if(typeof this._currentRowValues[id][args.COLUMN] === 'undefined') {
@@ -91,6 +94,61 @@ class MapHelper {
         }
 
         return this._currentRowValues[id][args.COLUMN];
+    }
+
+    /**
+     * Gets a generated map based on the top block and column input. This
+     * allows us to save time recalculating a map function that has already been
+     * run, which additionally spares more issues arising.
+     * @param {String} topBlock The running thread's current top block
+     * @param {String} name The current function block's NAME input
+     * @returns {String} The generated data set's name (if found) or null
+     */
+    getGeneratedData(topBlock, name) {
+        if(this._generatedData[topBlock] && this._generatedData[topBlock][name]) {
+            return this._generatedData[topBlock][name];
+        }
+        else return null;
+    }
+
+    /**
+     * Checks to see if the function block depth map for the given top block needs 
+     * to be recalculated and does so if needed.
+     * @param {String} topBlock The running thread's current top block
+     * @param {Object} util Block utility object provided by the runtime
+     */
+    checkRegenerateFunctionBlockDepthMap(topBlock, util) {
+        if(!this._depthMaps[topBlock] || this._getOutermostBlock(util) !== this._depthMaps[topBlock][0]) {
+            this._generateFunctionBlockDepthMap(util);
+        }
+    }
+
+    /**
+     * Checks whether the program is currently running in the toolbar.
+     * Which, given the nature of the map function, is not allowed. This
+     * will alert the user and help exit the program gracefully.
+     * @param {String} currentBlock The currently executing block on the stack. If
+     *                          the program is running in the toolbar it will
+     *                          contain an opcode (i.e. 'datatools_[SOMETHING]')
+     * @returns {Boolean} Whether or not the current block is in the toolbar.
+     */
+    checkRunningInToolbar(currentBlock) {
+        if(currentBlock.includes('datatools')) {
+            alert("Map Function: Can't run in toolbar.");
+            return true;
+        }
+        return false;
+    }
+
+//#region Mapping Functions
+
+    /**
+     * Checks to see if the map results for an ID are empty or don't match an expected value
+     * @param {String} id The current function block's ID
+     * @returns {Boolean} Whether or not the map results for this ID are empty
+     */
+    checkMapResult(id) {
+        return !this._results[id] || this._results[id].length !== this._loopCounters[id];
     }
 
     /**
@@ -111,51 +169,15 @@ class MapHelper {
         //This should always find the parent map function block
         let id = this._findContainingLoopBlock(util, true);
 
-        if(typeof this._mapResults[id] === 'undefined') {
-            this._mapResults[id] = [];
+        if(typeof this._results[id] === 'undefined') {
+            this._results[id] = [];
         }
 
-        if(typeof this._mapResults[id][this._loopCounters[id] - 1] === 'undefined') {
-            this._mapResults[id][this._loopCounters[id] - 1] = {};
+        if(typeof this._results[id][this._loopCounters[id] - 1] === 'undefined') {
+            this._results[id][this._loopCounters[id] - 1] = {};
         }
 
-        this._mapResults[id][this._loopCounters[id] - 1][args.COLUMN] = args.VALUE
-    }
-
-    /**
-     * Gets a generated map based on the top block and column input. This
-     * allows us to save time recalculating a map function that has already been
-     * run, which additionally spares more issues arising.
-     * @param {String} topBlock The running thread's current top block
-     * @param {String} name The current function block's NAME input
-     * @returns {String} The generated data set's name (if found) or null
-     */
-    getGeneratedMap(topBlock, name) {
-        if(this._generatedMaps[topBlock] && this._generatedMaps[topBlock][name]) {
-            return this._generatedMaps[topBlock][name];
-        }
-        else return null;
-    }
-
-    /**
-     * Checks to see if the function block depth map for the given top block needs 
-     * to be recalculated and does so if needed.
-     * @param {String} topBlock The running thread's current top block
-     * @param {Object} util Block utility object provided by the runtime
-     */
-    checkRegenerateFunctionBlockDepthMap(topBlock, util) {
-        if(!this._depthMaps[topBlock] || this._getOutermostBlock(util) !== this._depthMaps[topBlock][0]) {
-            this._generateFunctionBlockDepthMap(util);
-        }
-    }
-
-    /**
-     * Checks to see if the map results for an ID are empty or don't match an expected value
-     * @param {String} id The current function block's ID
-     * @returns {Boolean} Whether or not the map results for this ID are empty
-     */
-    checkMapResult(id) {
-        return !this._mapResults[id] || this._mapResults[id].length !== this._loopCounters[id];
+        this._results[id][this._loopCounters[id] - 1][args.COLUMN] = args.VALUE
     }
 
     /**
@@ -200,16 +222,22 @@ class MapHelper {
 
         }
         else {
-            let name = "MAP: " + args.NAME;
+            let name;
+            if(args.SAVE) {
+                name = args.NEWNAME;
+            }
+            else {
+                name = "map: " + args.NAME;
+            }
 
             name = generateFileDisplayName(name);
 
-            if(!this._generatedMaps[topBlock]) {
-                this._generatedMaps[topBlock] = {};
+            if(!this._generatedData[topBlock]) {
+                this._generatedData[topBlock] = {};
             }
-            this._generatedMaps[topBlock][args.NAME] = name;
+            this._generatedData[topBlock][args.NAME] = name;
 
-            addDataFile(name, this._generateNewDataSet(this._mapResults[id]));
+            addDataFile(name, this._generateNewDataSet(this._results[id]), args.SAVE ? false : true);
             
             if(this._depths[topBlock] <= 0) {
                 this._deleteWorkingData(id, topBlock);
@@ -221,60 +249,6 @@ class MapHelper {
 
 
             return name;
-        }
-    }
-
-    /**
-     * Checks whether the program is currently running in the toolbar.
-     * Which, given the nature of the map function, is not allowed. This
-     * will alert the user and help exit the program gracefully.
-     * @param {String} currentBlock The currently executing block on the stack. If
-     *                          the program is running in the toolbar it will
-     *                          contain an opcode (i.e. 'datatools_[SOMETHING]')
-     * @returns {Boolean} Whether or not the current block is in the toolbar.
-     */
-    checkRunningInToolbar(currentBlock) {
-        if(currentBlock.includes('datatools')) {
-            alert("Map Function: Can't run in toolbar.");
-            return true;
-        }
-        return false;
-    }
-
-//#region PRIVATE methods
-
-    /**
-     * Handles an error in the program by alerting the user and storing
-     * the error state in this._errors using the top block. This will 
-     * allow the program to finish execution gracefully. 
-     * @param {String} message The message to be displayed to the user 
-     * @param {String} topBlock The top block under which the error occurred
-     */
-    _handleError(message, topBlock) {
-        alert("Map Function: " + message);
-        this._errors[topBlock] = true;
-    }
-
-    /**
-     * Deletes the working data for a given ID and top block. This is
-     * to be called any time the program exits. Both parameters are 
-     * considered optional, as some situations (i.e. nested functions) 
-     * require information accessible by the top block.
-     * @param {String} id The id of the currently executing loop block - optional.
-     * @param {String} topBlock The top block of the current thread - optional.
-     */
-    _deleteWorkingData(id, topBlock) {  
-        if(id) {
-            delete this._currentRowValues[id];
-            delete this._mapResults[id];
-            delete this._loopCounters[id];
-        }
-
-        if(topBlock) {
-            delete this._generatedMaps[topBlock];
-            delete this._depthMaps[topBlock];
-            delete this._depths[topBlock];
-            delete this._errors[topBlock];
         }
     }
 
@@ -315,6 +289,44 @@ class MapHelper {
 
         return data;
     }
+//#endregion
+
+//#region PRIVATE methods
+
+    /**
+     * Handles an error in the program by alerting the user and storing
+     * the error state in this._errors using the top block. This will 
+     * allow the program to finish execution gracefully. 
+     * @param {String} message The message to be displayed to the user 
+     * @param {String} topBlock The top block under which the error occurred
+     */
+    _handleError(message, topBlock) {
+        alert("Map Function: " + message);
+        this._errors[topBlock] = true;
+    }
+
+    /**
+     * Deletes the working data for a given ID and top block. This is
+     * to be called any time the program exits. Both parameters are 
+     * considered optional, as some situations (i.e. nested functions) 
+     * require information accessible by the top block.
+     * @param {String} id The id of the currently executing loop block - optional.
+     * @param {String} topBlock The top block of the current thread - optional.
+     */
+    _deleteWorkingData(id, topBlock) {  
+        if(id) {
+            delete this._currentRowValues[id];
+            delete this._results[id];
+            delete this._loopCounters[id];
+        }
+
+        if(topBlock) {
+            delete this._generatedData[topBlock];
+            delete this._depthMaps[topBlock];
+            delete this._depths[topBlock];
+            delete this._errors[topBlock];
+        }
+    }
 
     /**
      * Finds the containing loop block of the currently running block.
@@ -330,7 +342,7 @@ class MapHelper {
 
         let blocks = util.target.blocks._blocks;
 
-        while(id !== null && blocks[id].opcode !== 'datatools_mapFunctionToColumn') {
+        while(id !== null && !this._checkOpcode(blocks[id].opcode)) {
             id = blocks[id].parent;
         }
 
@@ -340,6 +352,10 @@ class MapHelper {
         }
 
         return id;
+    }
+
+    _checkOpcode(opcode) {
+        return opcode === functionBlockOpcode || opcode === functionBlockSaveOpcode;
     }
 
     /**
@@ -355,7 +371,7 @@ class MapHelper {
         if(this.checkRunningInToolbar(executingBlock)) return null;
 
         let blocks = util.target.blocks._blocks;         
-        let options = Object.keys(blocks).filter(key => blocks[key].opcode === 'datatools_mapFunctionToColumn');
+        let options = Object.keys(blocks).filter(key => this._checkOpcode(blocks[key].opcode));
 
         if(options.includes(executingBlock)) {
             outermost = executingBlock;
@@ -384,7 +400,7 @@ class MapHelper {
      */
     _generateFunctionBlockDepthMap(util) {
         let blocks = util.target.blocks._blocks;         
-        let options = Object.keys(blocks).filter(key => blocks[key].opcode === 'datatools_mapFunctionToColumn');
+        let options = Object.keys(blocks).filter(key => this._checkOpcode(blocks[key].opcode));
         let outermost = this._getOutermostBlock(util);
         //We can't run this function in the toolbar
         if(!outermost) return;
@@ -416,4 +432,4 @@ class MapHelper {
 }
 //#endregion
 
-module.exports = MapHelper
+module.exports = DataFunctionHelper
