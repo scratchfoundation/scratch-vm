@@ -1,7 +1,7 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const formatMessage = require('format-message');
-const BlockUtility = require('../../engine/block-utility');
+const BlockUtility = require('../../engine/block-utility.js');
 const uid = require('../../util/uid');
 const Variable = require('../../engine/variable');
 
@@ -584,8 +584,11 @@ class Scratch3MeshBlocks {
                         name: broadcastName
                     }
                 };
-                // TODO: 1度もブロックを実行していないときに BlockUtility.lastInstance が null であるため期待通りに動作しない。
-                this._opcodeFunctions['event_broadcast'](args, BlockUtility.lastInstance());
+                const util = BlockUtility.lastInstance();
+                if (!util.sequencer) {
+                    util.sequencer = this.runtime.sequencer;
+                }
+                this._opcodeFunctions['event_broadcast'](args, util);
             }
             break;
         case 'variable':

@@ -240,6 +240,10 @@ class BlockUtility {
         }
     }
 
+    /**
+     * Returns BlockUtility instance to use same instance in runtime and extension.
+     * @return {BlockUtility} The BlockUtility instance.
+     */
     static lastInstance () {
         return lastInstance;
     }
