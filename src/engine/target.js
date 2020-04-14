@@ -747,8 +747,7 @@ class Target extends EventEmitter {
         }
         // Rename any local variables that were missed above because they aren't
         // referenced by any blocks
-        for (const id in unreferencedLocalVarIds) {
-            const varId = unreferencedLocalVarIds[id];
+        for (const varId of unreferencedLocalVarIds) {
             const name = this.variables[varId].name;
             const type = this.variables[varId].type;
             renameConflictingLocalVar(varId, name, type);
