@@ -99,7 +99,7 @@ class Scratch3MeshBlocks {
                     id: 'mesh.hostPeripheralName',
                     default: 'Host Mesh [{ MESH_ID }]',
                     description: 'label for "Host Mesh" in connect modal for Mesh extension'
-                }, { MESH_ID: this._makeMeshIdLabel(this.meshId) }),
+                }, {MESH_ID: this._makeMeshIdLabel(this.meshId)}),
                 peripheralId: MESH_HOST_PERIPHERAL_ID,
                 rssi: 0
             };
@@ -132,8 +132,7 @@ class Scratch3MeshBlocks {
                 websocket.onmessage = e => {
                     try {
                         this._onWebSocketMessage(JSON.parse(e.data));
-                    }
-                    catch (error) {
+                    } catch (error) {
                         console.error(`Error in WebSocket.onmessage: ${error}`);
                     }
                 };
@@ -144,8 +143,7 @@ class Scratch3MeshBlocks {
                     console.error(`Error in WebSocket: ${e}`);
                 };
             }
-        }
-        catch (e) {
+        } catch (e) {
             console.error(`Error in scan: ${e}`);
         }
     }
@@ -220,8 +218,7 @@ class Scratch3MeshBlocks {
                 dataChannel.onmessage = e => {
                     try {
                         this._onRtcMessage(JSON.parse(e.data));
-                    }
-                    catch (error) {
+                    } catch (error) {
                         console.error(`Client: Error in dataChannel.onmessage: ${error}`);
                     }
                 };
@@ -230,17 +227,16 @@ class Scratch3MeshBlocks {
                 };
 
                 connection.createOffer().then(
-                    (desc) => {
+                    desc => {
                         connection.setLocalDescription(desc);
                     },
-                    (error) => {
+                    error => {
                         // TODO: エラー処理
                         console.error(`Client: Error in createOffer: ${error}`);
                     }
                 );
             }
-        }
-        catch (e) {
+        } catch (e) {
             console.error(`Error in connect: ${e}`);
         }
     }
@@ -295,13 +291,13 @@ class Scratch3MeshBlocks {
                 id: 'mesh.registeredHost',
                 default: 'Registered Host Mesh [{ MESH_ID }]',
                 description: 'label for registered Host Mesh in connect modal for Mesh extension'
-            }, { MESH_ID: this._makeMeshIdLabel(this.meshId) });
+            }, {MESH_ID: this._makeMeshIdLabel(this.meshId)});
         } else {
             message = formatMessage({
                 id: 'mesh.joinedMesh',
                 default: 'Joined Mesh [{ MESH_ID }]',
                 description: 'label for joined Mesh in connect modal for Mesh extension'
-            }, { MESH_ID: this._makeMeshIdLabel(this._hostMeshId) });
+            }, {MESH_ID: this._makeMeshIdLabel(this._hostMeshId)});
         }
         return message;
     }
@@ -347,7 +343,7 @@ class Scratch3MeshBlocks {
     }
 
     /**
-     * @return {Object} - the global variable's value from other projects
+     * @return {object} - the global variable's value from other projects
      */
     getSensorValue (args) {
         return this._getVariable(args.NAME);
@@ -459,7 +455,7 @@ class Scratch3MeshBlocks {
                         id: 'mesh.clientPeripheralName',
                         default: 'Join Mesh [{ MESH_ID }]',
                         description: 'label for "Join Mesh" in connect modal for Mesh extension'
-                    }, { MESH_ID: this._makeMeshIdLabel(host.meshId) }),
+                    }, {MESH_ID: this._makeMeshIdLabel(host.meshId)}),
                     peripheralId: host.meshId,
                     rssi: rssi
                 };
@@ -515,10 +511,10 @@ class Scratch3MeshBlocks {
 
             connection.setRemoteDescription(new RTCSessionDescription(data.clientDescription));
             connection.createAnswer().then(
-                (desc) => {
+                desc => {
                     connection.setLocalDescription(desc);
                 },
-                (error) => {
+                error => {
                     // TODO: エラー処理
                     console.error(`Host: Error in createAnswer: ${error}`);
                 }
@@ -590,7 +586,7 @@ class Scratch3MeshBlocks {
                 if (!util.sequencer) {
                     util.sequencer = this.runtime.sequencer;
                 }
-                this._opcodeFunctions['event_broadcast'](args, util);
+                this._opcodeFunctions.event_broadcast(args, util);
             }
             break;
         case 'variable':
@@ -651,8 +647,7 @@ class Scratch3MeshBlocks {
             this.rtcDataChannels.forEach(channel => {
                 channel.send(JSON.stringify(message));
             });
-        }
-        catch (e) {
+        } catch (e) {
             // TODO: エラー処理
             console.log(e);
         }
@@ -661,13 +656,13 @@ class Scratch3MeshBlocks {
     _broadcast (args, util) {
         console.log('event_broadcast in mesh');
         this._sendBroadcast(args);
-        this._opcodeFunctions['event_broadcast'](args, util);
+        this._opcodeFunctions.event_broadcast(args, util);
     }
 
     _broadcastAndWait (args, util) {
         console.log('event_broadcastandwait in mesh');
         this._sendBroadcast(args);
-        this._opcodeFunctions['event_broadcastandwait'](args, util);
+        this._opcodeFunctions.event_broadcastandwait(args, util);
     }
 
     _sendBroadcast (args) {
@@ -678,8 +673,7 @@ class Scratch3MeshBlocks {
                 type: 'broadcast',
                 data: broadcastName
             });
-        }
-        catch (e) {
+        } catch (e) {
             // TODO: エラー処理
             console.log(e);
         }
@@ -687,13 +681,13 @@ class Scratch3MeshBlocks {
 
     _setVariableTo (args, util) {
         console.log('data_setvariableto in mesh');
-        this._opcodeFunctions['data_setvariableto'](args, util);
+        this._opcodeFunctions.data_setvariableto(args, util);
         this._sendVariableByOpcodeFunction(args, util);
     }
 
     _changeVariableBy (args, util) {
         console.log('data_changevariableby in mesh');
-        this._opcodeFunctions['data_changevariableby'](args, util);
+        this._opcodeFunctions.data_changevariableby(args, util);
         this._sendVariableByOpcodeFunction(args, util);
     }
 
@@ -709,8 +703,7 @@ class Scratch3MeshBlocks {
             }
 
             this._sendVariable(variable.name, variable.value);
-        }
-        catch (e) {
+        } catch (e) {
             // TODO: エラー処理
             console.log(e);
         }
@@ -726,8 +719,7 @@ class Scratch3MeshBlocks {
                     value: value
                 }
             });
-        }
-        catch (e) {
+        } catch (e) {
             // TODO: エラー処理
             console.log(e);
         }
@@ -741,10 +733,10 @@ class Scratch3MeshBlocks {
             data_changevariableby: this.runtime.getOpcodeFunction('data_changevariableby')
         };
 
-        this.runtime._primitives['event_broadcast'] = this._broadcast.bind(this);
-        this.runtime._primitives['event_broadcastandwait'] = this._broadcastAndWait.bind(this);
-        this.runtime._primitives['data_setvariableto'] = this._setVariableTo.bind(this);
-        this.runtime._primitives['data_changevariableby'] = this._changeVariableBy.bind(this);
+        this.runtime._primitives.event_broadcast = this._broadcast.bind(this);
+        this.runtime._primitives.event_broadcastandwait = this._broadcastAndWait.bind(this);
+        this.runtime._primitives.data_setvariableto = this._setVariableTo.bind(this);
+        this.runtime._primitives.data_changevariableby = this._changeVariableBy.bind(this);
     }
 
     _setVariableFunctionHOC () {
