@@ -470,9 +470,9 @@ class Scratch3MeshBlocks {
             break;
         case 'offer':
             if (!this.isHost) {
-                console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
                 return;
             }
+
             if (data.hostMeshId !== this.meshId) {
                 console.error(`failed action: action=<${message.action}> reason=<invalid hostMeshId> actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
             }
@@ -524,9 +524,9 @@ class Scratch3MeshBlocks {
             break;
         case 'answer':
             if (this.isHost) {
-                console.error(`failed action: action=<${message.action}> reason=<I'm not Client>`);
                 return;
             }
+
             if (data.clientMeshId !== this.meshId) {
                 console.error(`failed action: action=<${message.action}> reason=<invalid clientMeshId> actual=<${data.clientMeshId}> expected=<${this.meshId}>`);
                 return;
