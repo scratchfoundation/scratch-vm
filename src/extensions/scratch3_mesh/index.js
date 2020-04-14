@@ -13,7 +13,7 @@ const Variable = require('../../engine/variable');
 const blockIconURI = 'data:image/png;base64,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';
 
 const MESH_HOST_PERIPHERAL_ID = 'mesh_host';
-const MESH_WSS_URL = 'ws://localhost:8080';
+const MESH_WSS_URL = 'wss://3rnikeqwld.execute-api.ap-northeast-1.amazonaws.com/dev';
 
 /**
  * Host for the Mesh-related blocks
@@ -73,10 +73,10 @@ class Scratch3MeshBlocks {
         this.isHost = false;
 
         /**
-         * ID
+         * Mesh ID
          * @type {string}
          */
-        this.id = uid();
+        this.meshId = uid();
 
         this._setOpcodeFunctionHOC();
         this._setVariableFunctionHOC();
@@ -99,7 +99,7 @@ class Scratch3MeshBlocks {
                     id: 'mesh.hostPeripheralName',
                     default: 'Host Mesh',
                     description: 'label for "Host Mesh" in connect modal for Mesh extension'
-                }) + ` [${this.id.slice(0, 8)}]`,
+                }) + ` [${this.meshId.slice(0, 8)}]`,
                 peripheralId: MESH_HOST_PERIPHERAL_ID,
                 rssi: 0
             };
@@ -108,10 +108,9 @@ class Scratch3MeshBlocks {
                 const websocket = this._websocket;
 
                 websocket.send(JSON.stringify({
-                    service: 'mesh',
                     action: 'list',
                     data: {
-                        id: this.id
+                        meshId: this.meshId
                     }
                 }));
             } else {
@@ -124,10 +123,9 @@ class Scratch3MeshBlocks {
                     );
 
                     websocket.send(JSON.stringify({
-                        service: 'mesh',
                         action: 'list',
                         data: {
-                            id: this.id
+                            meshId: this.meshId
                         }
                     }));
                 };
@@ -154,32 +152,31 @@ class Scratch3MeshBlocks {
 
     /**
      * Called by the runtime when user wants to connect to a certain peripheral.
-     * @param {number} id - the id of the peripheral to connect to.
+     * @param {string} meshId - the Mesh ID of the peripheral to connect to.
      */
-    connect (id) {
+    connect (meshId) {
         try {
-            console.log(`connect in mesh: ${id}`);
+            console.log(`connect in mesh: ${meshId}`);
 
             this._connected = false;
 
-            if (id === MESH_HOST_PERIPHERAL_ID) {
+            if (meshId === MESH_HOST_PERIPHERAL_ID) {
                 if (!this._websocket) {
                     console.error('WebSocket is not opened');
                     return;
                 }
 
                 this._websocket.send(JSON.stringify({
-                    service: 'mesh',
                     action: 'register',
                     data: {
-                        id: this.id
+                        meshId: this.meshId
                     }
                 }));
 
                 this.isHost = true;
             } else {
-                if (!id || id.trim() === '') {
-                    console.error('Not select id');
+                if (!meshId || meshId.trim() === '') {
+                    console.error('Not select Mesh ID');
                     return;
                 }
                 if (!this._websocket) {
@@ -206,11 +203,10 @@ class Scratch3MeshBlocks {
                         console.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
 
                         this._websocket.send(JSON.stringify({
-                            service: 'mesh',
                             action: 'offer',
                             data: {
-                                id: this.id,
-                                hostId: id,
+                                meshId: this.meshId,
+                                hostMeshId: meshId,
                                 clientDescription: connection.localDescription
                             }
                         }));
@@ -266,7 +262,7 @@ class Scratch3MeshBlocks {
         this.rtcConnections = [];
         this.rtcDataChannels = [];
         this.isHost = false;
-        this._hostId = null;
+        this._hostMeshId = null;
 
         this._connected = false;
 
@@ -293,23 +289,23 @@ class Scratch3MeshBlocks {
         console.log(`connectedMessage in mesh: isHost=<${this.isHost}> connected=<${this._connected}>`);
 
         let message;
-        let id;
+        let meshId;
         if (this.isHost) {
             message = formatMessage({
                 id: 'mesh.registeredHost',
-                default: 'Registered Host Mesh [[ID]]',
+                default: 'Registered Host Mesh [[MESH_ID]]',
                 description: 'label for registered Host Mesh in connect modal for Mesh extension'
             });
-            id = this.id;
+            meshId = this.meshId;
         } else {
             message = formatMessage({
                 id: 'mesh.joinedMesh',
-                default: 'Joined Mesh [[ID]]',
+                default: 'Joined Mesh [[MESH_ID]]',
                 description: 'label for joined Mesh in connect modal for Mesh extension'
             });
-            id = this._hostId;
+            meshId = this._hostMeshId;
         }
-        return message.replace('[ID]', id.slice(0, 8));
+        return message.replace('[MESH_ID]', meshId.slice(0, 8));
     }
 
     /**
@@ -371,7 +367,7 @@ class Scratch3MeshBlocks {
                 variables[currVar.name] = {
                     name: currVar.name,
                     value: currVar.value,
-                    owner: this.id
+                    owner: this.meshId
                 };
             }
         }
@@ -441,28 +437,28 @@ class Scratch3MeshBlocks {
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
         case 'list':
-            const now = new Date();
-            data.hostIds.forEach(hostId => {
-                const t = now - Date.parse(hostId.updatedAt);
+            const now = Math.floor(Date.now() / 1000);
+            data.hosts.forEach(host => {
+                const t = host.ttl - now;
                 let rssi;
-                if (t <= 1 * 60 * 1000) {
+                if (t >= 4 * 60) {
                     rssi = 0;
-                } else if (t <= 3 * 60 * 1000) {
+                } else if (t >= 3 * 60) {
                     rssi = -20;
-                } else if (t <= 15 * 60 * 1000) {
+                } else if (t >= 2 * 60) {
                     rssi = -40;
-                } else if (t <= 30 * 60 * 1000) {
+                } else if (t >= 1 * 60) {
                     rssi = -60;
                 } else {
                     rssi = -80;
                 }
-                this._availablePeripherals[hostId.id] = {
+                this._availablePeripherals[host.meshId] = {
                     name: formatMessage({
                         id: 'mesh.clientPeripheralName',
                         default: 'Join Mesh',
                         description: 'label for "Join Mesh" in connect modal for Mesh extension'
-                    }) + ` [${hostId.id.slice(0, 8)}]`,
-                    peripheralId: hostId.id,
+                    }) + ` [${host.meshId.slice(0, 8)}]`,
+                    peripheralId: host.meshId,
                     rssi: rssi
                 };
             });
@@ -477,8 +473,8 @@ class Scratch3MeshBlocks {
                 console.error(`failed action: action=<${message.action}> reason=<I'm not Host>`);
                 return;
             }
-            if (data.hostId !== this.id) {
-                console.error(`failed action: action=<${message.action}> reason=<invalid hostId> actual=<${data.hostId}> expected=<${this.id}>`);
+            if (data.hostMeshId !== this.meshId) {
+                console.error(`failed action: action=<${message.action}> reason=<invalid hostMeshId> actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
             }
 
             connection = new RTCPeerConnection(null);
@@ -492,11 +488,10 @@ class Scratch3MeshBlocks {
                     console.log(`Host: answer to Client:\n${JSON.stringify(connection.localDescription)}`);
 
                     this._websocket.send(JSON.stringify({
-                        service: 'mesh',
                         action: 'answer',
                         data: {
-                            id: this.id,
-                            clientId: data.id,
+                            meshId: this.meshId,
+                            clientMeshId: data.meshId,
                             hostDescription: connection.localDescription
                         }
                     }));
@@ -532,12 +527,12 @@ class Scratch3MeshBlocks {
                 console.error(`failed action: action=<${message.action}> reason=<I'm not Client>`);
                 return;
             }
-            if (data.clientId !== this.id) {
-                console.error(`failed action: action=<${message.action}> reason=<invalid clientId> actual=<${data.clientId}> expected=<${this.id}>`);
+            if (data.clientMeshId !== this.meshId) {
+                console.error(`failed action: action=<${message.action}> reason=<invalid clientMeshId> actual=<${data.clientMeshId}> expected=<${this.meshId}>`);
                 return;
             }
 
-            if (this.rtcConnections.length == 0) {
+            if (this.rtcConnections.length === 0) {
                 console.error(`failed action: action=<${message.action}> reason=<WebRTC not connecting>`);
                 return;
             }
@@ -549,7 +544,7 @@ class Scratch3MeshBlocks {
 
             this._websocket.close();
 
-            this._hostId = data.id;
+            this._hostMeshId = data.meshId;
             this._connected = true;
             this.runtime.emit(this.runtime.constructor.PERIPHERAL_CONNECTED);
             break;
@@ -578,7 +573,7 @@ class Scratch3MeshBlocks {
 
                 this._sendMessage(message);
             }
-            if (this.id == message.owner) {
+            if (this.meshId === message.owner) {
                 console.log('ignore broadcast: reason=<own broadcast>');
             } else {
                 console.log('process broadcast');
@@ -589,6 +584,7 @@ class Scratch3MeshBlocks {
                         name: broadcastName
                     }
                 };
+                // TODO: 1度もブロックを実行していないときに BlockUtility.lastInstance が null であるため期待通りに動作しない。
                 this._opcodeFunctions['event_broadcast'](args, BlockUtility.lastInstance());
             }
             break;
@@ -600,7 +596,7 @@ class Scratch3MeshBlocks {
 
                 this._sendMessage(message);
             }
-            if (this.id == message.owner) {
+            if (this.meshId === message.owner) {
                 console.log('ignore variable: reason=<own variable>');
             } else {
                 console.log(`update variable: name=<${variable.name}> from=<${this._getVariable(variable.name)}> to=<${variable.value}>`);
@@ -673,7 +669,7 @@ class Scratch3MeshBlocks {
         try {
             const broadcastName = args.BROADCAST_OPTION.name;
             this._sendMessage({
-                owner: this.id,
+                owner: this.meshId,
                 type: 'broadcast',
                 data: broadcastName
             });
@@ -718,7 +714,7 @@ class Scratch3MeshBlocks {
     _sendVariable (name, value) {
         try {
             this._sendMessage({
-                owner: this.id,
+                owner: this.meshId,
                 type: 'variable',
                 data: {
                     name: name,
