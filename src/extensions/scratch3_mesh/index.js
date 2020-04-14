@@ -97,9 +97,9 @@ class Scratch3MeshBlocks {
             this._availablePeripherals[MESH_HOST_PERIPHERAL_ID] = {
                 name: formatMessage({
                     id: 'mesh.hostPeripheralName',
-                    default: 'Host Mesh',
+                    default: 'Host Mesh [{ MESH_ID }]',
                     description: 'label for "Host Mesh" in connect modal for Mesh extension'
-                }) + ` [${this.meshId.slice(0, 8)}]`,
+                }, { MESH_ID: this._makeMeshIdLabel(this.meshId) }),
                 peripheralId: MESH_HOST_PERIPHERAL_ID,
                 rssi: 0
             };
@@ -293,19 +293,21 @@ class Scratch3MeshBlocks {
         if (this.isHost) {
             message = formatMessage({
                 id: 'mesh.registeredHost',
-                default: 'Registered Host Mesh [[MESH_ID]]',
+                default: 'Registered Host Mesh [{ MESH_ID }]',
                 description: 'label for registered Host Mesh in connect modal for Mesh extension'
-            });
-            meshId = this.meshId;
+            }, { MESH_ID: this._makeMeshIdLabel(this.meshId) });
         } else {
             message = formatMessage({
                 id: 'mesh.joinedMesh',
-                default: 'Joined Mesh [[MESH_ID]]',
+                default: 'Joined Mesh [{ MESH_ID }]',
                 description: 'label for joined Mesh in connect modal for Mesh extension'
-            });
-            meshId = this._hostMeshId;
+            }, { MESH_ID: this._makeMeshIdLabel(this._hostMeshId) });
         }
-        return message.replace('[MESH_ID]', meshId.slice(0, 8));
+        return message;
+    }
+
+    _makeMeshIdLabel (meshId) {
+        return meshId.slice(0, 6);
     }
 
     /**
@@ -455,9 +457,9 @@ class Scratch3MeshBlocks {
                 this._availablePeripherals[host.meshId] = {
                     name: formatMessage({
                         id: 'mesh.clientPeripheralName',
-                        default: 'Join Mesh',
+                        default: 'Join Mesh [{ MESH_ID }]',
                         description: 'label for "Join Mesh" in connect modal for Mesh extension'
-                    }) + ` [${host.meshId.slice(0, 8)}]`,
+                    }, { MESH_ID: this._makeMeshIdLabel(host.meshId) }),
                     peripheralId: host.meshId,
                     rssi: rssi
                 };
