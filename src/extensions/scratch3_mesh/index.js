@@ -3,7 +3,8 @@ const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const formatMessage = require('format-message');
 const BlockUtility = require('../../engine/block-utility.js');
-const uid = require('../../util/uid');
+const uuidv4 = require('uuid/v4');
+uuidv4();
 const Variable = require('../../engine/variable');
 
 /**
@@ -88,7 +89,7 @@ class Scratch3MeshBlocks {
          * Mesh ID
          * @type {string}
          */
-        this.meshId = uid();
+        this.meshId = uuidv4();
 
         this._setOpcodeFunctionHOC();
         this._setVariableFunctionHOC();
