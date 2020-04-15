@@ -15,6 +15,17 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
 
 const MESH_HOST_PERIPHERAL_ID = 'mesh_host';
 const MESH_WSS_URL = 'wss://3rnikeqwld.execute-api.ap-northeast-1.amazonaws.com/dev';
+const ICE_SERVERS = [
+    {
+        urls: [
+            "stun:stun.l.google.com:19302",
+            "stun:stun1.l.google.com:19302",
+            "stun:stun2.l.google.com:19302",
+            "stun:stun3.l.google.com:19302",
+            "stun:stun4.l.google.com:19302"
+        ]
+    }
+];
 
 /**
  * Host for the Mesh-related blocks
@@ -191,14 +202,16 @@ class Scratch3MeshBlocks {
                     return;
                 }
 
-                const connection = new RTCPeerConnection(null);
+                const connection = new RTCPeerConnection({iceServers: ICE_SERVERS});
                 this.rtcConnections.push(connection);
 
                 connection.onconnectionstatechange = () => {
                     this._onRtcConnectionStateChange(connection);
                 };
                 connection.onicecandidate = e => {
-                    if (!e.candidate) {
+                    if (e.candidate) {
+                        log.log('ICE candidate', JSON.stringify(e.candidate, null, 2));
+                    } else {
                         log.log(`Client: offer to Host\n${JSON.stringify(connection.localDescription)}`);
 
                         this._websocket.send(JSON.stringify({
@@ -474,14 +487,16 @@ class Scratch3MeshBlocks {
                           `actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
             }
 
-            connection = new RTCPeerConnection(null);
+            connection = new RTCPeerConnection({iceServers: ICE_SERVERS});
             this.rtcConnections.push(connection);
 
             connection.onconnectionstatechange = () => {
                 this._onRtcConnectionStateChange(connection);
             };
             connection.onicecandidate = e => {
-                if (!e.candidate) {
+                if (e.candidate) {
+                    log.log('ICE candidate', JSON.stringify(e.candidate, null, 2));
+                } else {
                     log.log(`Host: answer to Client:\n${JSON.stringify(connection.localDescription)}`);
 
                     this._websocket.send(JSON.stringify({
