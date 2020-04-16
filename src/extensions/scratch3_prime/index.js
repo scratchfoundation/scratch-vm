@@ -147,6 +147,11 @@ const PrimeButtonValue = {
     RIGHT: 'right'
 };
 
+const PrimeOnOffValue = {
+    ON: 'on',
+    OFF: 'off'
+};
+
 /**
  * Scratch 3.0 blocks to interact with a LEGO Prime peripheral.
  */
@@ -298,11 +303,11 @@ class Scratch3PrimeBlocks {
                     }
                 },
                 {
-                    opcode: 'motorOn',
+                    opcode: 'motorOnOff',
                     text: formatMessage({
-                        id: 'Prime.motorOn',
-                        default: 'turn motor [MOTOR_ID] on',
-                        description: 'turn a motor on indefinitely'
+                        id: 'Prime.motorOnOff',
+                        default: 'turn motor [MOTOR_ID] [ON_OFF]',
+                        description: 'turn a motor on or off'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
@@ -310,22 +315,11 @@ class Scratch3PrimeBlocks {
                             type: ArgumentType.STRING,
                             menu: 'MOTOR_ID',
                             defaultValue: PrimeMotorValue.A
-                        }
-                    }
-                },
-                {
-                    opcode: 'motorOff',
-                    text: formatMessage({
-                        id: 'Prime.motorOff',
-                        default: 'turn motor [MOTOR_ID] off',
-                        description: 'turn a motor off'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
+                        },
+                        ON_OFF: {
                             type: ArgumentType.STRING,
-                            menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorValue.A
+                            menu: 'ON_OFF',
+                            defaultValue: PrimeOnOffValue.ON
                         }
                     }
                 },
@@ -685,7 +679,6 @@ class Scratch3PrimeBlocks {
                         value: PrimeColorValue.BLACK
                     }
                 ],
-                OP: ['<', '>'],
                 BUTTON: [
                     {
                         text: formatMessage({
@@ -700,6 +693,22 @@ class Scratch3PrimeBlocks {
                             default: 'right'
                         }),
                         value: PrimeButtonValue.RIGHT
+                    }
+                ],
+                ON_OFF: [
+                    {
+                        text: formatMessage({
+                            id: 'Prime.onOff.on',
+                            default: 'on'
+                        }),
+                        value: PrimeOnOffValue.ON
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'Prime.onOff.off',
+                            default: 'off'
+                        }),
+                        value: PrimeOnOffValue.OFF
                     }
                 ]
             }
@@ -766,38 +775,22 @@ class Scratch3PrimeBlocks {
     }
 
     /**
-     * Turn specified motor(s) on indefinitely.
+     * Turn specified motor(s) on or off.
      * @param {object} args - the block's arguments.
-     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
+     * @property {MotorID} MOTOR_ID - the motor(s) to turn on or off.
      * @return {Promise} - a Promise that resolves after some delay.
      */
-    motorOn (args) {
-        // TODO: cast args.MOTOR_ID?
+    motorOnOff (args) {
         this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
-                motor.turnOn();
+                if (args.ON_OFF === PrimeOnOffValue.OFF) {
+                    motor.turnOff();
+                } else {
+                    motor.turnOn();
+                }
             }
         });
-
-        return this.promiseToWait();
-    }
-
-    /**
-     * Turn specified motor(s) off.
-     * @param {object} args - the block's arguments.
-     * @property {MotorID} MOTOR_ID - the motor(s) to deactivate.
-     * @return {Promise} - a Promise that resolves after some delay.
-     */
-    motorOff (args) {
-        // TODO: cast args.MOTOR_ID?
-        this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
-            const motor = this._peripheral.motor(motorIndex);
-            if (motor) {
-                motor.turnOff();
-            }
-        });
-
         return this.promiseToWait();
     }
 
