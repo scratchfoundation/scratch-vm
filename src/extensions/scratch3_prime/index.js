@@ -230,15 +230,6 @@ class Scratch3PrimeBlocks {
                     }
                 },
                 {
-                    opcode: 'displayClear',
-                    text: formatMessage({
-                        id: 'Prime.clearDisplay',
-                        default: 'clear display',
-                        description: 'display nothing on the micro:bit display'
-                    }),
-                    blockType: BlockType.COMMAND
-                },
-                {
                     opcode: 'playNoteForSeconds',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -1148,12 +1139,6 @@ class Scratch3PrimeBlocks {
     // - make sure the string of numbers is the correct length
     displaySymbol (args) {
         this._peripheral.display(args.MATRIX);
-        return this.promiseToWait();
-    }
-
-    displayClear () {
-      // todo: use a const
-        this._peripheral.display('0000000000000000000000000');
         return this.promiseToWait();
     }
 }
