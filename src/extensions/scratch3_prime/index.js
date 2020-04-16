@@ -152,6 +152,11 @@ const PrimeOnOffValue = {
     OFF: 'off'
 };
 
+const PrimeRotationUnitValue = {
+    SECONDS: 'seconds',
+    ROTATIONS: 'rotations'
+};
+
 /**
  * Scratch 3.0 blocks to interact with a LEGO Prime peripheral.
  */
@@ -266,7 +271,7 @@ class Scratch3PrimeBlocks {
                     opcode: 'motorOnFor',
                     text: formatMessage({
                         id: 'Prime.motorOnFor',
-                        default: 'turn motor [MOTOR_ID] for [DURATION] seconds',
+                        default: 'turn motor [MOTOR_ID] for [VALUE] [UNIT]',
                         description: 'turn a motor on for some time'
                     }),
                     blockType: BlockType.COMMAND,
@@ -276,29 +281,14 @@ class Scratch3PrimeBlocks {
                             menu: 'MOTOR_ID',
                             defaultValue: PrimeMotorValue.A
                         },
-                        DURATION: {
+                        VALUE: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
-                        }
-                    }
-                },
-                {
-                    opcode: 'motorOnForRotation',
-                    text: formatMessage({
-                        id: 'Prime.motorOnForRotation',
-                        default: 'turn motor [MOTOR_ID] for [ROTATION] rotations',
-                        description: 'turn a motor on for rotation'
-                    }),
-                    blockType: BlockType.COMMAND,
-                    arguments: {
-                        MOTOR_ID: {
-                            type: ArgumentType.STRING,
-                            menu: 'MOTOR_ID',
-                            defaultValue: PrimeMotorValue.A
                         },
-                        ROTATION: {
-                            type: ArgumentType.NUMBER,
-                            defaultValue: 1
+                        UNIT: {
+                            type: ArgumentType.STRING,
+                            menu: 'ROTATION_UNIT',
+                            defaultValue: PrimeRotationUnitValue.SECONDS
                         }
                     }
                 },
@@ -710,24 +700,48 @@ class Scratch3PrimeBlocks {
                         }),
                         value: PrimeOnOffValue.OFF
                     }
+                ],
+                ROTATION_UNIT: [
+                    {
+                        text: formatMessage({
+                            id: 'Prime.rotationUnits.seconds',
+                            default: 'seconds'
+                        }),
+                        value: PrimeRotationUnitValue.SECONDS
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'Prime.rotationUnits.rotations',
+                            default: 'rotations'
+                        }),
+                        value: PrimeRotationUnitValue.ROTATIONS
+                    }
                 ]
             }
         };
     }
 
+    motorOnFor (args) {
+        if (args.UNIT === PrimeRotationUnitValue.SECONDS) {
+            return this.motorOnForSeconds(args.MOTOR_ID, args.VALUE);
+        }
+        if (args.UNIT === PrimeRotationUnitValue.ROTATIONS) {
+            return this.motorOnForRotations(args.MOTOR_ID, args.VALUE);
+        }
+    }
+
     /**
      * Turn specified motor(s) on for a specified duration.
-     * @param {object} args - the block's arguments.
-     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-     * @property {int} DURATION - the amount of time to run the motors.
+     * @param {MotorID} motorId - the motor(s) to activate.
+     * @param {number} duration - the amount of time to run the motors.
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
-    motorOnFor (args) {
+    motorOnForSeconds (motorId, duration) {
         // TODO: cast args.MOTOR_ID?
-        let durationMS = Cast.toNumber(args.DURATION) * 1000;
+        let durationMS = Cast.toNumber(duration) * 1000;
         durationMS = MathUtil.clamp(durationMS, 0, 15000);
         return new Promise(resolve => {
-            this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._peripheral.forEachMotor(motorId, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
                     motor.turnOnFor(durationMS);
@@ -741,24 +755,23 @@ class Scratch3PrimeBlocks {
 
     /**
      * Turn specified motor(s) on for a specified rotation in full rotations.
-     * @param {object} args - the block's arguments.
-     * @property {MotorID} MOTOR_ID - the motor(s) to activate.
-     * @property {int} ROTATION - the amount of full rotations to turn the motors.
+     * @param {MotorID} motorId - the motor(s) to activate.
+     * @param {number} rotations - the number of rotations.
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
-    motorOnForRotation (args) {
+    motorOnForRotations (motorId, rotations) {
         // todo: block should bail out if no motor is connected
         // TODO: cast args.MOTOR_ID?
         // let degrees = Cast.toNumber(args.ROTATION) * 360;
         // TODO: Clamps to 100 rotations. Consider changing.
-        const sign = Math.sign(args.ROTATION);
-        const rotations = Math.abs(MathUtil.clamp(args.ROTATION, -100, 100));
+        const sign = Math.sign(rotations);
+        const rotationsAbs = Math.abs(MathUtil.clamp(rotations, -100, 100));
         // todo: need to use promise.all here
         return new Promise(resolve => {
-            this._peripheral.forEachMotor(args.MOTOR_ID, motorIndex => {
+            this._peripheral.forEachMotor(motorId, motorIndex => {
                 const motor = this._peripheral.motor(motorIndex);
                 if (motor) {
-                    const id = motor.turnOnForRotation(rotations, sign);
+                    const id = motor.turnOnForRotation(rotationsAbs, sign);
                     this._peripheral.motor(motorIndex).pendingPromiseId = id;
                     this._peripheral.motor(motorIndex).pendingPromiseFunction = resolve;
                 }
