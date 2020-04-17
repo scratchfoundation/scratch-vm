@@ -762,23 +762,32 @@ class Scratch3PrimeBlocks {
      * @return {Promise} - a promise which will resolve at the end of the duration.
      */
     motorOnForRotations (motorId, rotations) {
-        // todo: block should bail out if no motor is connected
-        // TODO: cast args.MOTOR_ID?
-        // let degrees = Cast.toNumber(args.ROTATION) * 360;
-        // TODO: Clamps to 100 rotations. Consider changing.
         const sign = Math.sign(rotations);
         const rotationsAbs = Math.abs(MathUtil.clamp(rotations, -100, 100));
-        // todo: need to use promise.all here
-        return new Promise(resolve => {
-            this._peripheral.forEachMotor(motorId, motorIndex => {
-                const motor = this._peripheral.motor(motorIndex);
-                if (motor) {
-                    const id = motor.turnOnForRotation(rotationsAbs, sign);
-                    this._peripheral.motor(motorIndex).pendingPromiseId = id;
-                    this._peripheral.motor(motorIndex).pendingPromiseFunction = resolve;
-                }
-            });
+
+        const motorsConnected = [];
+        this._peripheral.forEachMotor(motorId, motorIndex => {
+            motorsConnected.push(motorIndex);
         });
+
+        const promises = motorsConnected.map(motorIndex => {
+            const motor = this._peripheral.motor(motorIndex);
+            if (motor) {
+                // to avoid a hanging block if power is 0, return an immediately resolving promise.
+                if (motor.power === 0) return Promise.resolve();
+                return new Promise(resolve => {
+                    const id = motor.turnOnForRotation(rotationsAbs, sign);
+                    motor.pendingPromiseFunction = resolve;
+                    motor.pendingPromiseId = id;
+                });
+            }
+            return null;
+        });
+        /**
+         * Make sure all promises are resolved, i.e. all motor-commands have completed.
+         * To prevent the block from returning a value, an empty function is added to the .then
+         */
+        return Promise.all(promises).then(() => {});
     }
 
     promiseToWait () {
