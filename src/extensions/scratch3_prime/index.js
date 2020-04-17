@@ -157,6 +157,8 @@ const PrimeRotationUnitValue = {
     ROTATIONS: 'rotations'
 };
 
+const PrimeMatrixCat = '0010100111101110111001010';
+
 /**
  * Scratch 3.0 blocks to interact with a LEGO Prime peripheral.
  */
@@ -217,9 +219,9 @@ class Scratch3PrimeBlocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'displaySymbol',
+                    opcode: 'displayMatrix',
                     text: formatMessage({
-                        id: 'Prime.displaySymbol',
+                        id: 'Prime.displayMatrix',
                         default: 'display [MATRIX]',
                         description: 'display a pattern on the micro:bit display'
                     }),
@@ -227,7 +229,7 @@ class Scratch3PrimeBlocks {
                     arguments: {
                         MATRIX: {
                             type: ArgumentType.MATRIX,
-                            defaultValue: '0010100111101110111001010'
+                            defaultValue: PrimeMatrixCat
                         }
                     }
                 },
@@ -1019,12 +1021,14 @@ class Scratch3PrimeBlocks {
         });
     }
 
-    // todo: because the input is droppable, this function should:
-    // - strip out any whitespace (e.g. spaces added by the list reporter)
-    // - make sure we give the display a string of digits
-    // - make sure the string of numbers is the correct length
-    displaySymbol (args) {
-        this._peripheral.display(args.MATRIX);
+    displayMatrix (args) {
+        let matrix = Cast.toString(args.MATRIX);
+        matrix = matrix.replace(/\s/g, ''); // remove whitespace
+        matrix = matrix.replace(/\D/g, ''); // remove non-digits
+        const matrixLength = 25;
+        matrix = matrix.padEnd(matrixLength, '0'); // pad with zeroes if it's too short
+        matrix = matrix.slice(0, matrixLength); // slice if it's too long
+        this._peripheral.display(matrix);
         return this.promiseToWait();
     }
 }
