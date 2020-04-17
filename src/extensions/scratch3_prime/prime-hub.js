@@ -23,6 +23,14 @@ const PrimeBT = {
 const PrimePingInterval = 5000;
 
 /**
+ * A time interval to wait (in milliseconds) before requesting that the hub
+ * enter "play" or streaming mode. The delay allows the hub's connecting
+ * animation to complete before starting the play mode animation.
+ * @type {number}
+ */
+const PrimePlayModeDelay = 1000;
+
+/**
  * Enum for Prime sensor and output types.
  * @readonly
  * @enum {number}
@@ -119,6 +127,7 @@ class PrimeHub {
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._requestFirmwareInfo = this._requestFirmwareInfo.bind(this);
+        this._requestPlayMode = this._requestPlayMode.bind(this);
 
         this._pingIntervalId = null;
     }
@@ -364,6 +373,18 @@ class PrimeHub {
 
     _onConnect () {
         this._pingIntervalId = window.setInterval(this._requestFirmwareInfo, PrimePingInterval);
+
+        window.setTimeout(this._requestPlayMode, PrimePlayModeDelay);
+    }
+
+    _requestPlayMode () {
+        const cmd = {
+            m: 'program_modechange',
+            p: {
+                mode: 'play'
+            }
+        };
+        this.send(cmd);
     }
 
     _requestFirmwareInfo () {
