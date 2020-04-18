@@ -16,17 +16,8 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACgAAAAoCAYA
 
 const MESH_HOST_PERIPHERAL_ID = 'mesh_host';
 const MESH_WSS_URL = 'wss://api.smalruby.jp/mesh-signaling';
-const ICE_SERVERS = [
-    {
-        urls: [
-            "stun:stun.l.google.com:19302",
-            "stun:stun1.l.google.com:19302",
-            "stun:stun2.l.google.com:19302",
-            "stun:stun3.l.google.com:19302",
-            "stun:stun4.l.google.com:19302"
-        ]
-    }
-];
+const ICE_SERVERS = [];
+const CHROME_MESH_EXTENSION_ID = 'ioaoebnfpgnbehdolokpdddomfnhpckn';
 
 /**
  * Host for the Mesh-related blocks
@@ -203,6 +194,8 @@ class Scratch3MeshBlocks {
                     return;
                 }
 
+                this._changeWebRTCIPHandlingPolicy();
+
                 const connection = new RTCPeerConnection({iceServers: ICE_SERVERS});
                 this.rtcConnections.push(connection);
 
@@ -320,6 +313,31 @@ class Scratch3MeshBlocks {
         return meshId.slice(0, 6);
     }
 
+    _sendMessageToChromeMeshExtension (action) {
+        try {
+            log.log(`Send message to Chrome mesh extension: action=<${action}>`);
+
+            chrome.runtime.sendMessage(CHROME_MESH_EXTENSION_ID, {action: action}, null, (response) => {
+                if (chrome.runtime.lastError === undefined) {
+                    log.log(`Succeeded sending message to Chrome mesh extension: response=<${JSON.stringify(response)}>`);
+                } else {
+                    log.error(`Failed to send message to Chrome extension: lastError=<${JSON.stringify(chrome.runtime.lastError)}>`);
+                }
+            });
+        }
+        catch (error) {
+            log.warn(`Failed to send message to Chrome extension: ${error}`);
+        }
+    }
+
+    _changeWebRTCIPHandlingPolicy () {
+        this._sendMessageToChromeMeshExtension('change');
+    }
+
+    _revertWebRTCIPHandlingPolicy () {
+        this._sendMessageToChromeMeshExtension('revert');
+    }
+
     /**
      * @returns {object} metadata for this extension and its blocks.
      */
@@ -392,6 +410,8 @@ class Scratch3MeshBlocks {
         if (this.isHost) {
             this._sendVariablesTo(this.variables, dataChannel);
         }
+
+        this._revertWebRTCIPHandlingPolicy();
     }
 
     _sendVariablesTo (variables, dataChannel) {
@@ -487,6 +507,8 @@ class Scratch3MeshBlocks {
                 log.error(`failed action: action=<${message.action}> reason=<invalid hostMeshId> ` +
                           `actual=<${data.hostMeshId}> expected=<${this.meshId}>`);
             }
+
+            this._changeWebRTCIPHandlingPolicy();
 
             connection = new RTCPeerConnection({iceServers: ICE_SERVERS});
             this.rtcConnections.push(connection);
