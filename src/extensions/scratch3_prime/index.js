@@ -773,6 +773,10 @@ class Scratch3PrimeBlocks {
         const promises = motorsConnected.map(motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
+                // Resolve pending promise from an existing motor command
+                if (motor.pendingPromiseFunction) {
+                    motor.pendingPromiseFunction();
+                }
                 // to avoid a hanging block if power is 0, return an immediately resolving promise.
                 if (motor.power === 0) return Promise.resolve();
                 return new Promise(resolve => {
