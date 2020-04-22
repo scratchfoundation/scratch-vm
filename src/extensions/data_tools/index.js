@@ -742,10 +742,19 @@ class DataTools {
         }
     }
 
-    saveFunctionData(args) {
+    saveFunctionData(args, util) {
         if(args.FUNCTION) {
             let oldName = args.FUNCTION;
             let file = this._files[oldName];
+
+            if(!this._helper.checkDeleteSaveData(util)) {
+                let check = this._helper.checkDataset(args, util);
+                if(check) {
+                    return args.NAME;
+                }
+    
+                this._helper.saveDataset(args, util);
+            }
 
             this._hiddenFiles = this._hiddenFiles.filter(file => file !== oldName);
 
@@ -791,7 +800,7 @@ class DataTools {
      */
     map(args, util) {
         //Initialization
-        if(typeof args.NAME === 'undefined') return "";
+        if(typeof args.NAME === 'undefined' || args.NAME === "") return "";
 
         //If we're trying to run in the toolbar, don't
         if(this._helper.checkRunningInToolbar(util.thread.peekStack())) return;
