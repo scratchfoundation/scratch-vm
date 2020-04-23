@@ -6,7 +6,7 @@ const Variable = require('../../engine/variable');
 
 const DEBUG = true;
 const CHROME_MESH_EXTENSION_ID = 'ioaoebnfpgnbehdolokpdddomfnhpckn';
-const MESH_WSS_URL = 'wss://api.smalruby.jp/mesh-signaling';
+const MESH_WSS_URL = 'wss://api.smalruby.app/mesh-signaling';
 
 class MeshService {
     constructor (blocks, meshId, webSocket) {
