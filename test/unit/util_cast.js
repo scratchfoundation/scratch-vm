@@ -88,6 +88,7 @@ test('toRgbColorList', t => {
     // Malformed
     t.deepEqual(cast.toRgbColorList('ffffff'), [0, 0, 0]);
     t.deepEqual(cast.toRgbColorList('foobar'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#nothex'), [0, 0, 0]);
     t.end();
 });
 
