@@ -690,6 +690,46 @@ class Scratch3SmalrubotS1Blocks {
         ];
     }
 
+    /**
+     * @return {array} - text and values for each sensor positions menu element
+     */
+    get SENSOR_POSITIONS_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.left',
+                    default: 'left',
+                    description: 'label for "left" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'left'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.right',
+                    default: 'right',
+                    description: 'label for "right" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'right'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.touch',
+                    default: 'touch',
+                    description: 'label for "touch" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'touch'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.light',
+                    default: 'light',
+                    description: 'label for "light" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'light'
+            }
+        ];
+    }
+
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -762,12 +802,32 @@ class Scratch3SmalrubotS1Blocks {
                         }
                     }
 
+                },
+                {
+                    opcode: 'getSensorValue',
+                    text: formatMessage({
+                        id: 'smalrubotS1.getSensorValue',
+                        default: '[POSITION] sensor value',
+                        description: 'getSnsorValue block text'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'sensorPositions',
+                            defaultValue: this.SENSOR_POSITIONS_MENU[0].value
+                        }
+                    }
                 }
             ],
             menus: {
                 positions: {
                     acceptReporters: true,
                     items: this.POSITIONS_MENU
+                },
+                sensorPositions: {
+                    acceptReporters: true,
+                    items: this.SENSOR_POSITIONS_MENU
                 }
             }
         };
@@ -799,6 +859,21 @@ class Scratch3SmalrubotS1Blocks {
         } catch (error) {
             log.error(error);
         }
+    }
+
+    getSensorValue (args) {
+        try {
+            debug(() => `getSensorValue: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return 0;
+            }
+
+            return this.smalrubot.getSensorValue(args.POSITION);
+        } catch (error) {
+            log.error(error);
+        }
+        return 0;
     }
 
     isConnected () {
