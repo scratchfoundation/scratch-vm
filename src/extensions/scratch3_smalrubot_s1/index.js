@@ -1,3 +1,4 @@
+const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const formatMessage = require('format-message');
@@ -659,6 +660,30 @@ class Scratch3SmalrubotS1Blocks {
         return 'smalrubotS1';
     }
 
+    /**
+     * @return {array} - text and values for each positions menu element
+     */
+    get POSITIONS_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.left',
+                    default: 'left',
+                    description: 'label for "left" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'left'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.positionsMenu.right',
+                    default: 'right',
+                    description: 'label for "right" element in position picker for Smalrubot S1 extension'
+                }),
+                value: 'right'
+            }
+        ];
+    }
+
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -699,16 +724,75 @@ class Scratch3SmalrubotS1Blocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'hello',
-                    text: 'Hello',
-                    blockType: BlockType.COMMAND
+                    opcode: 'turnLedOn',
+                    text: formatMessage({
+                        id: 'smalrubotS1.turnLedOn',
+                        default: 'turn [POSITION] LED on',
+                        description: 'turnLedOn block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        }
+                    }
+
+                },
+                {
+                    opcode: 'turnLedOff',
+                    text: formatMessage({
+                        id: 'smalrubotS1.turnLedOff',
+                        default: 'turn [POSITION] LED off',
+                        description: 'turnLedOff block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        }
+                    }
+
                 }
-            ]
+            ],
+            menus: {
+                positions: {
+                    acceptReporters: true,
+                    items: this.POSITIONS_MENU
+                }
+            }
         };
     }
 
-    hello () {
-        log.log('Hello');
+    turnLedOn (args) {
+        try {
+            debug(() => `turnLedOn: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return;
+            }
+
+            this.smalrubot.led(args.POSITION, true);
+        } catch (error) {
+            log.error(error);
+        }
+    }
+
+    turnLedOff (args) {
+        try {
+            debug(() => `turnLedOff: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return;
+            }
+
+            this.smalrubot.led(args.POSITION, false);
+        } catch (error) {
+            log.error(error);
+        }
     }
 
     isConnected () {
