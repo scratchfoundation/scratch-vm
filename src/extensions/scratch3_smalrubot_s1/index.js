@@ -184,16 +184,22 @@ class Smalrubot {
                 let promise = Promise.resolve();
                 if (this.connectionState !== 'disconnected') {
                     if (this.reader) {
-                        promise = promise.then(() => this.reader.cancel());
+                        promise = promise
+                            .then(() => this.reader.cancel())
+                            .catch(error => log.error(error));
                     }
 
                     if (this.writer) {
-                        promise = promise.then(() => this.writer.close());
+                        promise = promise
+                            .then(() => this.writer.close())
+                            .catch(error => log.error(error));
                     }
 
                     promise = promise
                         .then(() => this.serialPort.close())
                         .then(() => {
+                            this.reader = null;
+                            this.writer = null;
                             this.serialPort = null;
                             this.setConnectionState('disconnected');
                         });
