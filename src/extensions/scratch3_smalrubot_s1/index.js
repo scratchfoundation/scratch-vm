@@ -519,7 +519,7 @@ class SmalrubotS1 extends Smalrubot {
     getMotorSpeed (position) {
         debug(() => `getMotorSpeed: position=<${position}>`);
 
-        return this.dcMotorPowerRations[position];
+        return this.dcMotorPowerRatios[position];
     }
 
     setMotorSpeed (position, speedRatio) {
@@ -667,6 +667,54 @@ class Scratch3SmalrubotS1Blocks {
     }
 
     /**
+     * @return {array} - text and values for each actions menu element
+     */
+    get ACTIONS_MENU () {
+        return [
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.actionMenu.forward',
+                    default: 'forward',
+                    description: 'label for "forward" element in action picker for Smalrubot S1 extension'
+                }),
+                value: 'forward'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.actionMenu.backward',
+                    default: 'backward',
+                    description: 'label for "backward" element in action picker for Smalrubot S1 extension'
+                }),
+                value: 'backward'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.actionMenu.turnLeft',
+                    default: 'turn left',
+                    description: 'label for "turn left" element in action picker for Smalrubot S1 extension'
+                }),
+                value: 'left'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.actionMenu.turnRight',
+                    default: 'turn right',
+                    description: 'label for "turn right" element in action picker for Smalrubot S1 extension'
+                }),
+                value: 'right'
+            },
+            {
+                text: formatMessage({
+                    id: 'smalrubotS1.actionMenu.stop',
+                    default: 'stop',
+                    description: 'label for "stop" element in action picker for Smalrubot S1 extension'
+                }),
+                value: 'stop'
+            }
+        ];
+    }
+
+    /**
      * @return {array} - text and values for each positions menu element
      */
     get POSITIONS_MENU () {
@@ -770,38 +818,40 @@ class Scratch3SmalrubotS1Blocks {
             showStatusButton: true,
             blocks: [
                 {
-                    opcode: 'turnLedOn',
+                    opcode: 'action',
                     text: formatMessage({
-                        id: 'smalrubotS1.turnLedOn',
-                        default: 'turn [POSITION] LED on',
-                        description: 'turnLedOn block text'
+                        id: 'smalrubotS1.action',
+                        default: '[ACTION]',
+                        description: 'action block text'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        POSITION: {
+                        ACTION: {
                             type: ArgumentType.STRING,
-                            menu: 'positions',
-                            defaultValue: this.POSITIONS_MENU[0].value
+                            menu: 'actions',
+                            defaultValue: this.ACTIONS_MENU[0].value
                         }
                     }
-
                 },
                 {
-                    opcode: 'turnLedOff',
+                    opcode: 'actionAndStopAfter',
                     text: formatMessage({
-                        id: 'smalrubotS1.turnLedOff',
-                        default: 'turn [POSITION] LED off',
-                        description: 'turnLedOff block text'
+                        id: 'smalrubotS1.actionAndStopAfter',
+                        default: '[ACTION] for [SEC] seconds',
+                        description: 'actionAndStopAfter block text'
                     }),
                     blockType: BlockType.COMMAND,
                     arguments: {
-                        POSITION: {
+                        ACTION: {
                             type: ArgumentType.STRING,
-                            menu: 'positions',
-                            defaultValue: this.POSITIONS_MENU[0].value
+                            menu: 'actions',
+                            defaultValue: this.ACTIONS_MENU[0].value
+                        },
+                        SEC: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 0.5
                         }
                     }
-
                 },
                 {
                     opcode: 'getSensorValue',
@@ -818,47 +868,121 @@ class Scratch3SmalrubotS1Blocks {
                             defaultValue: this.SENSOR_POSITIONS_MENU[0].value
                         }
                     }
+                },
+                {
+                    opcode: 'turnLedOn',
+                    text: formatMessage({
+                        id: 'smalrubotS1.turnLedOn',
+                        default: 'turn [POSITION] LED on',
+                        description: 'turnLedOn block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'turnLedOff',
+                    text: formatMessage({
+                        id: 'smalrubotS1.turnLedOff',
+                        default: 'turn [POSITION] LED off',
+                        description: 'turnLedOff block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'getMotorSpeed',
+                    text: formatMessage({
+                        id: 'smalrubotS1.getMotorSpeed',
+                        default: '[POSITION] DC motor speed (%)',
+                        description: 'getMotorSpeed block text'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        }
+                    }
+                },
+                {
+                    opcode: 'setMotorSpeed',
+                    text: formatMessage({
+                        id: 'smalrubotS1.setMotorSpeed',
+                        default: 'set [POSITION] DC motor speed [SPEED] (%)',
+                        description: 'setMotorSpeed block text'
+                    }),
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        POSITION: {
+                            type: ArgumentType.STRING,
+                            menu: 'positions',
+                            defaultValue: this.POSITIONS_MENU[0].value
+                        },
+                        SPEED: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 100
+                        }
+                    }
                 }
             ],
             menus: {
-                positions: {
+                actions: {
                     acceptReporters: true,
-                    items: this.POSITIONS_MENU
+                    items: this.ACTIONS_MENU
                 },
                 sensorPositions: {
                     acceptReporters: true,
                     items: this.SENSOR_POSITIONS_MENU
+                },
+                positions: {
+                    acceptReporters: true,
+                    items: this.POSITIONS_MENU
                 }
             }
         };
     }
 
-    turnLedOn (args) {
+    action (args) {
         try {
-            debug(() => `turnLedOn: args=<${JSON.stringify(args, null, 2)}>`);
+            debug(() => `action: args=<${JSON.stringify(args, null, 2)}>`);
 
             if (!this.smalrubot) {
-                return;
+                return Promise.resolve();
             }
 
-            this.smalrubot.led(args.POSITION, true);
+            return this.smalrubot.action(args.ACTION);
         } catch (error) {
             log.error(error);
         }
+        return Promise.resolve();
     }
 
-    turnLedOff (args) {
+    actionAndStopAfter (args) {
         try {
-            debug(() => `turnLedOff: args=<${JSON.stringify(args, null, 2)}>`);
+            debug(() => `actionAndStopAfter: args=<${JSON.stringify(args, null, 2)}>`);
 
             if (!this.smalrubot) {
-                return;
+                return Promise.resolve();
             }
 
-            this.smalrubot.led(args.POSITION, false);
+            return this.smalrubot.actionAndStopAfter(args.ACTION, args.SEC);
         } catch (error) {
             log.error(error);
         }
+        return Promise.resolve();
     }
 
     getSensorValue (args) {
@@ -866,14 +990,73 @@ class Scratch3SmalrubotS1Blocks {
             debug(() => `getSensorValue: args=<${JSON.stringify(args, null, 2)}>`);
 
             if (!this.smalrubot) {
-                return 0;
+                return Promise.resolve(0);
             }
 
             return this.smalrubot.getSensorValue(args.POSITION);
         } catch (error) {
             log.error(error);
         }
+        return Promise.resolve(0);
+    }
+
+    turnLedOn (args) {
+        try {
+            debug(() => `turnLedOn: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return Promise.resolve();
+            }
+
+            return this.smalrubot.led(args.POSITION, true);
+        } catch (error) {
+            log.error(error);
+        }
+        return Promise.resolve();
+    }
+
+    turnLedOff (args) {
+        try {
+            debug(() => `turnLedOff: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return Promise.resolve();
+            }
+
+            return this.smalrubot.led(args.POSITION, false);
+        } catch (error) {
+            log.error(error);
+        }
+        return Promise.resolve();
+    }
+
+    getMotorSpeed (args) {
+        try {
+            debug(() => `getMotorSpeed: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return 0;
+            }
+
+            return this.smalrubot.getMotorSpeed(args.POSITION);
+        } catch (error) {
+            log.error(error);
+        }
         return 0;
+    }
+
+    setMotorSpeed (args) {
+        try {
+            debug(() => `setMotorSpeed: args=<${JSON.stringify(args, null, 2)}>`);
+
+            if (!this.smalrubot) {
+                return;
+            }
+
+            this.smalrubot.setMotorSpeed(args.POSITION, args.SPEED);
+        } catch (error) {
+            log.error(error);
+        }
     }
 
     isConnected () {
