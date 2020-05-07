@@ -2,6 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
 const formatMessage = require('format-message');
+const Cast = require('../../util/cast');
 
 const DEBUG = true;
 
@@ -133,14 +134,12 @@ class Smalrubot {
         this.connectionState = 'disconnected';
 
         this.encoder = new TextEncoder();
+        this.writer = null;
+        this.writeQueue = [];
 
         this.decoder = new TextDecoder();
-
-        this.readBuffer = '';
-
-        this.writer = null;
-
         this.reader = null;
+        this.readBuffer = '';
     }
 
     scan () {
@@ -238,16 +237,38 @@ class Smalrubot {
 
         debug(() => `write: message=<${message}> length=<${bytes.length}> wrap=<${wrap}>`);
 
-        this.writer = this.serialPort.writable.getWriter();
+        this.writeQueue.push(bytes);
+
+        try {
+            this.writer = this.serialPort.writable.getWriter();
+        } catch (e) {
+            log.info(e);
+            return Promise.resolve();
+        }
+
+        const writeLoop = () => {
+            const bytes = this.writeQueue.shift();
+            if (bytes) {
+                return this.writer.write(bytes).then(() => writeLoop());
+            }
+            this.writer.releaseLock();
+            this.writer = null;
+            return Promise.resolve();
+        };
         const dispose = () => {
             this.writer.releaseLock();
             this.writer = null;
         };
-        return this.writer.write(bytes)
-            .then(() => dispose(),
-                  error => dispose().then(() => {
-                      throw error;
-                  }));
+        return writeLoop()
+            .catch(error => {
+                try {
+                    this.writer.releaseLock();
+                    this.writer = null;
+                } catch (e) {
+                    log.error(e);
+                }
+                throw error;
+            });
     }
 
     flushRead (timeoutSeconds = 1) {
@@ -572,19 +593,6 @@ class SmalrubotS1 extends Smalrubot {
             })
             .then(() => this.writeCommand('dc_motor_control', PORT_M1, leftValue))
             .then(() => this.writeCommand('dc_motor_control', PORT_M2, rightValue));
-    }
-
-    actionAndStopAfter (direction, seconds) {
-        debug(() => `actionAndStopAfter: direction=<${direction}> stop after=<${seconds} sec>`);
-
-        return this.action(direction)
-            .then(() => this.sleep(seconds))
-            .then(() => {
-                if (direction !== 'stop') {
-                    return this.action('stop');
-                }
-                return Promise.resolve();
-            });
     }
 
     getSensorValue (position) {
@@ -960,29 +968,41 @@ class Scratch3SmalrubotS1Blocks {
             debug(() => `action: args=<${JSON.stringify(args, null, 2)}>`);
 
             if (!this.smalrubot) {
-                return Promise.resolve();
+                return;
             }
 
-            return this.smalrubot.action(args.ACTION);
+            this.smalrubot.action(args.ACTION);
         } catch (error) {
             log.error(error);
         }
-        return Promise.resolve();
     }
 
-    actionAndStopAfter (args) {
+    actionAndStopAfter (args, util) {
         try {
-            debug(() => `actionAndStopAfter: args=<${JSON.stringify(args, null, 2)}>`);
-
             if (!this.smalrubot) {
-                return Promise.resolve();
+                return;
             }
 
-            return this.smalrubot.actionAndStopAfter(args.ACTION, args.SEC);
+            if (util.stackTimerNeedsInit()) {
+                debug(() => `actionAndStopAfter: args=<${JSON.stringify(args, null, 2)}>`);
+
+                const duration = Math.max(0, 1000 * Cast.toNumber(args.SEC));
+                util.startStackTimer(duration);
+                this.runtime.requestRedraw();
+
+                this.smalrubot.action(args.ACTION);
+
+                util.yield();
+            } else if (util.stackTimerFinished()) {
+                if (args.ACTION !== 'stop') {
+                    this.smalrubot.action('stop');
+                }
+            } else {
+                util.yield();
+            }
         } catch (error) {
             log.error(error);
         }
-        return Promise.resolve();
     }
 
     getSensorValue (args) {
@@ -1053,7 +1073,7 @@ class Scratch3SmalrubotS1Blocks {
                 return;
             }
 
-            this.smalrubot.setMotorSpeed(args.POSITION, args.SPEED);
+            this.smalrubot.setMotorSpeed(args.POSITION, Cast.toNumber(args.SPEED));
         } catch (error) {
             log.error(error);
         }
