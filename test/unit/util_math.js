@@ -63,6 +63,6 @@ test('inclusiveRandIntWithout', t => {
     t.strictEqual(withRandomValue(1 / 6, 0, 6, 2), 1);
     t.strictEqual(withRandomValue(1.9 / 6, 0, 6, 2), 1);
 
-    t.strictEqual(withRandomValue(3 / 4, 10, 14, 10), 13);
+    t.strictEqual(withRandomValue(3 / 4, 10, 14, 10), 14);
     t.strictEqual(withRandomValue(0 / 4, 10, 14, 10), 11);
 });
