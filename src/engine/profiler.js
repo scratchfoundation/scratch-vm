@@ -106,6 +106,12 @@ class ProfilerFrame {
          * @type {number}
          */
         this.depth = depth;
+
+        /**
+         * A summarized count of the number of calls to this frame.
+         * @type {number}
+         */
+        this.count = 0;
     }
 }
 
@@ -125,6 +131,27 @@ class Profiler {
          * @type {Array.<*>}
          */
         this.records = [];
+
+        /**
+         * An array of frames incremented on demand instead as part of start
+         * and stop.
+         * @type {Array.<ProfilerFrame>}
+         */
+        this.increments = [];
+
+        /**
+         * An array of profiler frames separated by counter argument. Generally
+         * for Scratch these frames are separated by block function opcode.
+         * This tracks each time an opcode is called.
+         * @type {Array.<ProfilerFrame>}
+         */
+        this.counters = [];
+
+        /**
+         * A frame with no id or argument.
+         * @type {ProfilerFrame}
+         */
+        this.nullFrame = new ProfilerFrame(-1);
 
         /**
          * A cache of ProfilerFrames to reuse when reporting the recorded
@@ -168,6 +195,41 @@ class Profiler {
      */
     stop () {
         this.records.push(STOP, performance.now());
+    }
+
+    /**
+     * Increment the number of times this symbol is called.
+     * @param {number} id The id returned by idByName for a name symbol.
+     */
+    increment (id) {
+        if (!this.increments[id]) {
+            this.increments[id] = new ProfilerFrame(-1);
+            this.increments[id].id = id;
+        }
+        this.increments[id].count += 1;
+    }
+
+    /**
+     * Find or create a ProfilerFrame-like object whose counter can be
+     * incremented outside of the Profiler.
+     * @param {number} id The id returned by idByName for a name symbol.
+     * @param {*} arg The argument for a frame that identifies it in addition
+     *   to the id.
+     * @return {{count: number}} A ProfilerFrame-like whose count should be
+     *   incremented for each call.
+     */
+    frame (id, arg) {
+        for (let i = 0; i < this.counters.length; i++) {
+            if (this.counters[i].id === id && this.counters[i].arg === arg) {
+                return this.counters[i];
+            }
+        }
+
+        const newCounter = new ProfilerFrame(-1);
+        newCounter.id = id;
+        newCounter.arg = arg;
+        this.counters.push(newCounter);
+        return newCounter;
     }
 
     /**
@@ -226,12 +288,29 @@ class Profiler {
                 // Remove this frames totalTime from the parent's selfTime.
                 stack[depth - 1].selfTime -= frame.totalTime;
 
+                // This frame occured once.
+                frame.count = 1;
+
                 this.onFrame(frame);
 
                 i += STOP_SIZE;
             } else {
                 this.records.length = 0;
                 throw new Error('Unable to decode Profiler records.');
+            }
+        }
+
+        for (let j = 0; j < this.increments.length; j++) {
+            if (this.increments[j] && this.increments[j].count > 0) {
+                this.onFrame(this.increments[j]);
+                this.increments[j].count = 0;
+            }
+        }
+
+        for (let k = 0; k < this.counters.length; k++) {
+            if (this.counters[k].count > 0) {
+                this.onFrame(this.counters[k]);
+                this.counters[k].count = 0;
             }
         }
 

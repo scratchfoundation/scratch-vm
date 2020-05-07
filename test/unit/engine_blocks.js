@@ -25,7 +25,7 @@ test('spec', t => {
     t.type(b.getNextBlock, 'function');
     t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
-
+    t.type(b.mutationToXML, 'function');
 
     t.end();
 });
@@ -239,6 +239,25 @@ test('getOpcode', t => {
     t.end();
 });
 
+test('mutationToXML', t => {
+    const b = new Blocks(new Runtime());
+    const testStringRaw = '"arbitrary" & \'complicated\' test string';
+    const testStringEscaped = '\\&quot;arbitrary\\&quot; &amp; &apos;complicated&apos; test string';
+    const mutation = {
+        tagName: 'mutation',
+        children: [],
+        blockInfo: {
+            text: testStringRaw
+        }
+    };
+    const xml = b.mutationToXML(mutation);
+    t.equals(
+        xml,
+        `<mutation blockInfo="{&quot;text&quot;:&quot;${testStringEscaped}&quot;}"></mutation>`
+    );
+    t.end();
+});
+
 // Block events tests
 test('create', t => {
     const b = new Blocks(new Runtime());
@@ -355,6 +374,43 @@ test('move no obscure shadow', t => {
     });
     t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
     t.equal(b._blocks.foo.inputs.fooInput.shadow, 'y');
+    t.end();
+});
+
+test('move - attaching new shadow', t => {
+    const b = new Blocks(new Runtime());
+    // Block/shadow are null to mimic state right after a procedure_call block
+    // is mutated by adding an input. The "move" will attach the new shadow.
+    b.createBlock({
+        id: 'foo',
+        opcode: 'TEST_BLOCK',
+        next: null,
+        fields: {},
+        inputs: {
+            fooInput: {
+                name: 'fooInput',
+                block: null,
+                shadow: null
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'bar',
+        opcode: 'TEST_BLOCK',
+        shadow: true,
+        next: null,
+        fields: {},
+        inputs: {},
+        topLevel: true
+    });
+    b.moveBlock({
+        id: 'bar',
+        newInput: 'fooInput',
+        newParent: 'foo'
+    });
+    t.equal(b._blocks.foo.inputs.fooInput.block, 'bar');
+    t.equal(b._blocks.foo.inputs.fooInput.shadow, 'bar');
     t.end();
 });
 

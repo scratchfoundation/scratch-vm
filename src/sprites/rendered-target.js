@@ -1,6 +1,7 @@
 const log = require('../util/log');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
+const Cast = require('../util/cast');
 const Clone = require('../util/clone');
 const Target = require('../engine/target');
 const StageLayering = require('../engine/stage-layering');
@@ -273,9 +274,7 @@ class RenderedTarget extends Target {
             this.x = position[0];
             this.y = position[1];
 
-            this.renderer.updateDrawableProperties(this.drawableID, {
-                position: position
-            });
+            this.renderer.updateDrawablePosition(this.drawableID, position);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -322,11 +321,8 @@ class RenderedTarget extends Target {
         // Keep direction between -179 and +180.
         this.direction = MathUtil.wrapClamp(direction, -179, 180);
         if (this.renderer) {
-            const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
-                direction: renderedDirectionScale.direction,
-                scale: renderedDirectionScale.scale
-            });
+            const {direction: renderedDirection, scale} = this._getRenderedDirectionAndScale();
+            this.renderer.updateDrawableDirectionScale(this.drawableID, renderedDirection, scale);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -372,9 +368,7 @@ class RenderedTarget extends Target {
         }
         this.visible = !!visible;
         if (this.renderer) {
-            this.renderer.updateDrawableProperties(this.drawableID, {
-                visible: this.visible
-            });
+            this.renderer.updateDrawableVisible(this.drawableID, this.visible);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -403,11 +397,8 @@ class RenderedTarget extends Target {
                 (1.5 * this.runtime.constructor.STAGE_HEIGHT) / origH
             );
             this.size = MathUtil.clamp(size / 100, minScale, maxScale) * 100;
-            const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
-                direction: renderedDirectionScale.direction,
-                scale: renderedDirectionScale.scale
-            });
+            const {direction, scale} = this._getRenderedDirectionAndScale();
+            this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -425,9 +416,7 @@ class RenderedTarget extends Target {
         if (!this.effects.hasOwnProperty(effectName)) return;
         this.effects[effectName] = value;
         if (this.renderer) {
-            const props = {};
-            props[effectName] = this.effects[effectName];
-            this.renderer.updateDrawableProperties(this.drawableID, props);
+            this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -444,7 +433,10 @@ class RenderedTarget extends Target {
             this.effects[effectName] = 0;
         }
         if (this.renderer) {
-            this.renderer.updateDrawableProperties(this.drawableID, this.effects);
+            for (const effectName in this.effects) {
+                if (!this.effects.hasOwnProperty(effectName)) continue;
+                this.renderer.updateDrawableEffect(this.drawableID, effectName, 0);
+            }
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -466,21 +458,8 @@ class RenderedTarget extends Target {
         );
         if (this.renderer) {
             const costume = this.getCostumes()[this.currentCostume];
-            const drawableProperties = {
-                skinId: costume.skinId,
-                costumeResolution: costume.bitmapResolution
-            };
-            if (
-                typeof costume.rotationCenterX !== 'undefined' &&
-                typeof costume.rotationCenterY !== 'undefined'
-            ) {
-                const scale = costume.bitmapResolution || 2;
-                drawableProperties.rotationCenter = [
-                    costume.rotationCenterX / scale,
-                    costume.rotationCenterY / scale
-                ];
-            }
-            this.renderer.updateDrawableProperties(this.drawableID, drawableProperties);
+            this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
+
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -617,11 +596,8 @@ class RenderedTarget extends Target {
             this.rotationStyle = RenderedTarget.ROTATION_STYLE_LEFT_RIGHT;
         }
         if (this.renderer) {
-            const renderedDirectionScale = this._getRenderedDirectionAndScale();
-            this.renderer.updateDrawableProperties(this.drawableID, {
-                direction: renderedDirectionScale.direction,
-                scale: renderedDirectionScale.scale
-            });
+            const {direction, scale} = this._getRenderedDirectionAndScale();
+            this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -715,27 +691,19 @@ class RenderedTarget extends Target {
      */
     updateAllDrawableProperties () {
         if (this.renderer) {
-            const renderedDirectionScale = this._getRenderedDirectionAndScale();
+            const {direction, scale} = this._getRenderedDirectionAndScale();
+            this.renderer.updateDrawablePosition(this.drawableID, [this.x, this.y]);
+            this.renderer.updateDrawableDirectionScale(this.drawableID, direction, scale);
+            this.renderer.updateDrawableVisible(this.drawableID, this.visible);
+
             const costume = this.getCostumes()[this.currentCostume];
-            const bitmapResolution = costume.bitmapResolution || 2;
-            const props = {
-                position: [this.x, this.y],
-                direction: renderedDirectionScale.direction,
-                draggable: this.draggable,
-                scale: renderedDirectionScale.scale,
-                visible: this.visible,
-                skinId: costume.skinId,
-                costumeResolution: bitmapResolution,
-                rotationCenter: [
-                    costume.rotationCenterX / bitmapResolution,
-                    costume.rotationCenterY / bitmapResolution
-                ]
-            };
+            this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
+
             for (const effectName in this.effects) {
                 if (!this.effects.hasOwnProperty(effectName)) continue;
-                props[effectName] = this.effects[effectName];
+                this.renderer.updateDrawableEffect(this.drawableID, effectName, this.effects[effectName]);
             }
-            this.renderer.updateDrawableProperties(this.drawableID, props);
+
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
                 this.runtime.requestRedraw();
@@ -840,6 +808,7 @@ class RenderedTarget extends Target {
      * @return {boolean} True iff touching a clone of the sprite.
      */
     isTouchingSprite (spriteName) {
+        spriteName = Cast.toString(spriteName);
         const firstClone = this.runtime.getSpriteTargetByName(spriteName);
         if (!firstClone || !this.renderer) {
             return false;

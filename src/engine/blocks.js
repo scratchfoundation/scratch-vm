@@ -5,6 +5,7 @@ const MonitorRecord = require('./monitor-record');
 const Clone = require('../util/clone');
 const {Map} = require('immutable');
 const BlocksExecuteCache = require('./blocks-execute-cache');
+const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const log = require('../util/log');
 const Variable = require('./variable');
 const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
@@ -74,7 +75,13 @@ class Blocks {
              * actively monitored.
              * @type {Array<{blockId: string, target: Target}>}
              */
-            _monitored: null
+            _monitored: null,
+
+            /**
+             * A cache of hat opcodes to collection of theads to execute.
+             * @type {object.<string, object>}
+             */
+            scripts: {}
         };
 
         /**
@@ -509,6 +516,7 @@ class Blocks {
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
         this._cache._monitored = null;
+        this._cache.scripts = {};
     }
 
     /**
@@ -735,6 +743,12 @@ class Blocks {
                 if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
                     oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
                 }
+
+                // If the block being attached is itself a shadow, make sure to set
+                // both block and shadow to that blocks ID. This happens when adding
+                // inputs to a custom procedure.
+                if (this._blocks[e.id].shadow) oldShadow = e.id;
+
                 this._blocks[e.newParent].inputs[e.newInput] = {
                     name: e.newInput,
                     block: e.id,
@@ -1102,8 +1116,14 @@ class Blocks {
         let mutationString = `<${mutation.tagName}`;
         for (const prop in mutation) {
             if (prop === 'children' || prop === 'tagName') continue;
-            const mutationValue = (typeof mutation[prop] === 'string') ?
+            let mutationValue = (typeof mutation[prop] === 'string') ?
                 xmlEscape(mutation[prop]) : mutation[prop];
+
+            // Handle dynamic extension blocks
+            if (prop === 'blockInfo') {
+                mutationValue = xmlEscape(JSON.stringify(mutation[prop]));
+            }
+
             mutationString += ` ${prop}="${mutationValue}"`;
         }
         mutationString += '>';
@@ -1207,6 +1227,37 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;
+};
+
+/**
+ * Cache class constructor for runtime. Used to consider what threads should
+ * start based on hat data.
+ * @type {function}
+ */
+const RuntimeScriptCache = BlocksRuntimeCache._RuntimeScriptCache;
+
+/**
+ * Get an array of scripts from a block container prefiltered to match opcode.
+ * @param {Blocks} blocks - Container of blocks
+ * @param {string} opcode - Opcode to filter top blocks by
+ * @returns {Array.<RuntimeScriptCache>} - Array of RuntimeScriptCache cache
+ *   objects
+ */
+BlocksRuntimeCache.getScripts = function (blocks, opcode) {
+    let scripts = blocks._cache.scripts[opcode];
+    if (!scripts) {
+        scripts = blocks._cache.scripts[opcode] = [];
+
+        const allScripts = blocks._scripts;
+        for (let i = 0; i < allScripts.length; i++) {
+            const topBlockId = allScripts[i];
+            const block = blocks.getBlock(topBlockId);
+            if (block.opcode === opcode) {
+                scripts.push(new RuntimeScriptCache(blocks, topBlockId));
+            }
+        }
+    }
+    return scripts;
 };
 
 module.exports = Blocks;

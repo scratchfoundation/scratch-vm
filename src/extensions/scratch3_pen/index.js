@@ -477,7 +477,10 @@ class Scratch3PenBlocks {
                 }
             ],
             menus: {
-                colorParam: this._initColorParam()
+                colorParam: {
+                    acceptReporters: true,
+                    items: this._initColorParam()
+                }
             }
         };
     }

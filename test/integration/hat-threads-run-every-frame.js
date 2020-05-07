@@ -7,7 +7,7 @@ const Thread = require('../../src/engine/thread');
 const Runtime = require('../../src/engine/runtime');
 const execute = require('../../src/engine/execute.js');
 
-const projectUri = path.resolve(__dirname, '../fixtures/loudness-hat-block.sb2');
+const projectUri = path.resolve(__dirname, '../fixtures/timer-greater-than-hat.sb2');
 const project = readFileToBuffer(projectUri);
 
 const checkIsHatThread = (t, vm, hatThread) => {
@@ -24,8 +24,8 @@ const checkIsStackClickThread = (t, vm, stackClickThread) => {
 };
 
 /**
- * loudness-hat-block.sb2 contains a single stack
- *     when loudness > 10
+ * timer-greater-than-hat.sb2 contains a single stack
+ *     when timer > -1
  *         change color effect by 25
  * The intention is to make sure that the hat block condition is evaluated
  * on each frame.
@@ -59,6 +59,52 @@ test('edge activated hat thread runs once every frame', t => {
             t.equal(threads.length, 1);
             checkIsHatThread(t, vm, threads[0]);
             t.assert(threads[0].status === Thread.STATUS_DONE);
+            t.end();
+        });
+    });
+});
+
+/**
+ * When a hat is added it should run in the next frame. Any block related
+ * caching should be reset.
+ */
+test('edge activated hat thread runs after being added to previously executed target', t => {
+    const vm = new VirtualMachine();
+    vm.attachStorage(makeTestStorage());
+
+    // Start VM, load project, and run
+    t.doesNotThrow(() => {
+        // Note: don't run vm.start(), we handle calling _step() manually in this test
+        vm.runtime.currentStepTime = Runtime.THREAD_STEP_INTERVAL;
+        vm.clear();
+        vm.setCompatibilityMode(false);
+        vm.setTurboMode(false);
+
+        vm.loadProject(project).then(() => {
+            t.equal(vm.runtime.threads.length, 0);
+
+            vm.runtime._step();
+            let threads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(threads.length, 1);
+            checkIsHatThread(t, vm, threads[0]);
+            t.assert(threads[0].status === Thread.STATUS_DONE);
+
+            // Add a second hat that should create a second thread
+            const hatBlock = threads[0].target.blocks.getBlock(threads[0].topBlock);
+            threads[0].target.blocks.createBlock(Object.assign(
+                {}, hatBlock, {id: 'hatblock2', next: null}
+            ));
+
+            // Check that the hat thread is added again when another step is taken
+            vm.runtime._step();
+            threads = vm.runtime._lastStepDoneThreads;
+            t.equal(vm.runtime.threads.length, 0);
+            t.equal(threads.length, 2);
+            checkIsHatThread(t, vm, threads[0]);
+            checkIsHatThread(t, vm, threads[1]);
+            t.assert(threads[0].status === Thread.STATUS_DONE);
+            t.assert(threads[1].status === Thread.STATUS_DONE);
             t.end();
         });
     });
@@ -111,7 +157,7 @@ test('edge activated hat thread not added twice', t => {
  */
 test('edge activated hat should trigger for both sprites when sprite is duplicated', t => {
 
-    // Project that is similar to loudness-hat-block.sb2, but has code on the sprite so that
+    // Project that is similar to timer-greater-than-hat.sb2, but has code on the sprite so that
     // the sprite can be duplicated
     const projectWithSpriteUri = path.resolve(__dirname, '../fixtures/edge-triggered-hat.sb3');
     const projectWithSprite = readFileToBuffer(projectWithSpriteUri);
@@ -134,9 +180,6 @@ test('edge activated hat should trigger for both sprites when sprite is duplicat
             t.equal(vm.runtime.threads.length, 1);
             checkIsHatThread(t, vm, vm.runtime.threads[0]);
             t.assert(vm.runtime.threads[0].status === Thread.STATUS_RUNNING);
-            // Run execute on the thread to populate the runtime's
-            // _edgeActivatedHatValues object
-            execute(vm.runtime.sequencer, vm.runtime.threads[0]);
             let numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
                 val + Object.keys(target._edgeActivatedHatValues).length, 0);
             t.equal(numTargetEdgeHats, 1);
@@ -145,7 +188,6 @@ test('edge activated hat should trigger for both sprites when sprite is duplicat
                 vm.runtime._step();
                 // Check that the runtime's _edgeActivatedHatValues object has two separate keys
                 // after execute is run on each thread
-                vm.runtime.threads.forEach(thread => execute(vm.runtime.sequencer, thread));
                 numTargetEdgeHats = vm.runtime.targets.reduce((val, target) =>
                     val + Object.keys(target._edgeActivatedHatValues).length, 0);
                 t.equal(numTargetEdgeHats, 2);

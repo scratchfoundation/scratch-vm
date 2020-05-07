@@ -146,7 +146,10 @@ class Scratch3TranslateBlocks {
                 }
             ],
             menus: {
-                languages: this._supportedLanguages
+                languages: {
+                    acceptReporters: true,
+                    items: this._supportedLanguages
+                }
             }
         };
     }
@@ -171,7 +174,15 @@ class Scratch3TranslateBlocks {
     getViewerLanguage () {
         this._viewerLanguageCode = this.getViewerLanguageCode();
         const names = languageNames.menuMap[this._viewerLanguageCode];
-        const langNameObj = names.find(obj => obj.code === this._viewerLanguageCode);
+        let langNameObj = names.find(obj => obj.code === this._viewerLanguageCode);
+
+        // If we don't have a name entry yet, try looking it up via the Google langauge
+        // code instead of Scratch's (e.g. for es-419 we look up es to get espanol)
+        if (!langNameObj && languageNames.scratchToGoogleMap[this._viewerLanguageCode]) {
+            const lookupCode = languageNames.scratchToGoogleMap[this._viewerLanguageCode];
+            langNameObj = names.find(obj => obj.code === lookupCode);
+        }
+
         let langName = this._viewerLanguageCode;
         if (langNameObj) {
             langName = langNameObj.name;
@@ -193,12 +204,13 @@ class Scratch3TranslateBlocks {
             if (acc) {
                 return acc;
             }
-            if (languageKeys.indexOf(lang) > -1) {
+            if (languageKeys.indexOf(lang.toLowerCase()) > -1) {
                 return lang;
             }
             return acc;
         }, '') || 'en';
-        return languageCode;
+
+        return languageCode.toLowerCase();
     }
 
     /**
@@ -216,6 +228,14 @@ class Scratch3TranslateBlocks {
         // Check for a dropped-in language name, and convert to a language code.
         if (languageNames.nameMap.hasOwnProperty(languageArg)) {
             return languageNames.nameMap[languageArg];
+        }
+
+        // There are some languages we launched in the language menu that Scratch did not
+        // end up launching in. In order to keep projects that may have had that menu item
+        // working, check for those language codes and let them through.
+        // Examples: 'ab', 'hi'.
+        if (languageNames.previouslySupported.indexOf(languageArg) !== -1) {
+            return languageArg;
         }
         // Default to English.
         return 'en';

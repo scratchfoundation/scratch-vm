@@ -1,8 +1,6 @@
-const JSONRPCWebSocket = require('../util/jsonrpc-web-socket');
-const ScratchLinkWebSocket = 'wss://device-manager.scratch.mit.edu:20110/scratch/bt';
-// const log = require('../util/log');
+const JSONRPC = require('../util/jsonrpc');
 
-class BT extends JSONRPCWebSocket {
+class BT extends JSONRPC {
 
     /**
      * A BT peripheral socket object.  It handles connecting, over web sockets, to
@@ -11,28 +9,32 @@ class BT extends JSONRPCWebSocket {
      * @param {string} extensionId - the id of the extension using this socket.
      * @param {object} peripheralOptions - the list of options for peripheral discovery.
      * @param {object} connectCallback - a callback for connection.
-     * @param {object} disconnectCallback - a callback for disconnection.
+     * @param {object} resetCallback - a callback for resetting extension state.
      * @param {object} messageCallback - a callback for message sending.
      */
-    constructor (runtime, extensionId, peripheralOptions, connectCallback, disconnectCallback = null, messageCallback) {
-        const ws = new WebSocket(ScratchLinkWebSocket);
-        super(ws);
+    constructor (runtime, extensionId, peripheralOptions, connectCallback, resetCallback = null, messageCallback) {
+        super();
 
-        this._ws = ws;
-        this._ws.onopen = this.requestPeripheral.bind(this); // only call request peripheral after socket opens
-        this._ws.onerror = this._handleRequestError.bind(this, 'ws onerror');
-        this._ws.onclose = this.handleDisconnectError.bind(this, 'ws onclose');
+        this._socket = runtime.getScratchLinkSocket('BT');
+        this._socket.setOnOpen(this.requestPeripheral.bind(this));
+        this._socket.setOnError(this._handleRequestError.bind(this));
+        this._socket.setOnClose(this.handleDisconnectError.bind(this));
+        this._socket.setHandleMessage(this._handleMessage.bind(this));
+
+        this._sendMessage = this._socket.sendMessage.bind(this._socket);
 
         this._availablePeripherals = {};
         this._connectCallback = connectCallback;
         this._connected = false;
         this._characteristicDidChangeCallback = null;
-        this._disconnectCallback = disconnectCallback;
+        this._resetCallback = resetCallback;
         this._discoverTimeoutID = null;
         this._extensionId = extensionId;
         this._peripheralOptions = peripheralOptions;
         this._messageCallback = messageCallback;
         this._runtime = runtime;
+
+        this._socket.open();
     }
 
     /**
@@ -40,27 +42,29 @@ class BT extends JSONRPCWebSocket {
      * If the web socket is not yet open, request when the socket promise resolves.
      */
     requestPeripheral () {
-        if (this._ws.readyState === 1) { // is this needed since it's only called on ws.onopen?
-            this._availablePeripherals = {};
-            if (this._discoverTimeoutID) {
-                window.clearTimeout(this._discoverTimeoutID);
-            }
-            this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
-            this.sendRemoteRequest('discover', this._peripheralOptions)
-                .catch(
-                    e => this._handleRequestError(e)
-                );
+        this._availablePeripherals = {};
+        if (this._discoverTimeoutID) {
+            window.clearTimeout(this._discoverTimeoutID);
         }
-        // TODO: else?
+        this._discoverTimeoutID = window.setTimeout(this._handleDiscoverTimeout.bind(this), 15000);
+        this.sendRemoteRequest('discover', this._peripheralOptions)
+            .catch(
+                e => this._handleRequestError(e)
+            );
     }
 
     /**
      * Try connecting to the input peripheral id, and then call the connect
      * callback if connection is successful.
      * @param {number} id - the id of the peripheral to connect to
+     * @param {string} pin - an optional pin for pairing
      */
-    connectPeripheral (id) {
-        this.sendRemoteRequest('connect', {peripheralId: id})
+    connectPeripheral (id, pin = null) {
+        const params = {peripheralId: id};
+        if (pin) {
+            params.pin = pin;
+        }
+        this.sendRemoteRequest('connect', params)
             .then(() => {
                 this._connected = true;
                 this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTED);
@@ -75,14 +79,19 @@ class BT extends JSONRPCWebSocket {
      * Close the websocket.
      */
     disconnect () {
-        if (!this._connected) return;
+        if (this._connected) {
+            this._connected = false;
+        }
 
-        this._ws.close();
-        this._connected = false;
+        if (this._socket.isOpen()) {
+            this._socket.close();
+        }
+
         if (this._discoverTimeoutID) {
             window.clearTimeout(this._discoverTimeoutID);
         }
 
+        // Sets connection status icon to orange
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_DISCONNECTED);
     }
 
@@ -136,18 +145,17 @@ class BT extends JSONRPCWebSocket {
      * - being powered down
      *
      * Disconnect the socket, and if the extension using this socket has a
-     * disconnect callback, call it. Finally, emit an error to the runtime.
+     * reset callback, call it. Finally, emit an error to the runtime.
      */
     handleDisconnectError (/* e */) {
         // log.error(`BT error: ${JSON.stringify(e)}`);
 
         if (!this._connected) return;
 
-        // TODO: Fix branching by splitting up cleanup/disconnect in extension
-        if (this._disconnectCallback) {
-            this._disconnectCallback(); // must call disconnect()
-        } else {
-            this.disconnect();
+        this.disconnect();
+
+        if (this._resetCallback) {
+            this._resetCallback();
         }
 
         this._runtime.emit(this._runtime.constructor.PERIPHERAL_CONNECTION_LOST_ERROR, {

@@ -6,6 +6,7 @@ const uid = require('../../util/uid');
 const BT = require('../../io/bt');
 const Base64Util = require('../../util/base64-util');
 const MathUtil = require('../../util/math-util');
+const RateLimiter = require('../../util/rateLimiter.js');
 const log = require('../../util/log');
 
 /**
@@ -14,6 +15,39 @@ const log = require('../../util/log');
  */
 // eslint-disable-next-line max-len
 const blockIconURI = 'data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4KPHN2ZyB3aWR0aD0iNDBweCIgaGVpZ2h0PSI0MHB4IiB2aWV3Qm94PSIwIDAgNDAgNDAiIHZlcnNpb249IjEuMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayI+CiAgICA8IS0tIEdlbmVyYXRvcjogU2tldGNoIDUwLjIgKDU1MDQ3KSAtIGh0dHA6Ly93d3cuYm9oZW1pYW5jb2RpbmcuY29tL3NrZXRjaCAtLT4KICAgIDx0aXRsZT5ldjMtYmxvY2staWNvbjwvdGl0bGU+CiAgICA8ZGVzYz5DcmVhdGVkIHdpdGggU2tldGNoLjwvZGVzYz4KICAgIDxkZWZzPjwvZGVmcz4KICAgIDxnIGlkPSJldjMtYmxvY2staWNvbiIgc3Ryb2tlPSJub25lIiBzdHJva2Utd2lkdGg9IjEiIGZpbGw9Im5vbmUiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPGcgaWQ9ImV2MyIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNS41MDAwMDAsIDMuNTAwMDAwKSIgZmlsbC1ydWxlPSJub256ZXJvIj4KICAgICAgICAgICAgPHJlY3QgaWQ9IlJlY3RhbmdsZS1wYXRoIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNGRkZGRkYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgeD0iMC41IiB5PSIzLjU5IiB3aWR0aD0iMjgiIGhlaWdodD0iMjUuODEiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRTZFN0U4IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMC41IiB3aWR0aD0iMjQiIGhlaWdodD0iMzIiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgc3Ryb2tlPSIjN0M4N0E1IiBmaWxsPSIjRkZGRkZGIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHg9IjIuNSIgeT0iMTQuNSIgd2lkdGg9IjI0IiBoZWlnaHQ9IjEzIj48L3JlY3Q+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik0xNC41LDEwLjUgTDE0LjUsMTQuNSIgaWQ9IlNoYXBlIiBzdHJva2U9IiM3Qzg3QTUiIGZpbGw9IiNFNkU3RTgiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PC9wYXRoPgogICAgICAgICAgICA8cmVjdCBpZD0iUmVjdGFuZ2xlLXBhdGgiIGZpbGw9IiM0MTQ3NTciIHg9IjQuNSIgeT0iMi41IiB3aWR0aD0iMjAiIGhlaWdodD0iMTAiIHJ4PSIxIj48L3JlY3Q+CiAgICAgICAgICAgIDxyZWN0IGlkPSJSZWN0YW5nbGUtcGF0aCIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB4PSIxMy41IiB5PSIyMC4xMyIgd2lkdGg9IjIiIGhlaWdodD0iMiIgcng9IjAuNSI+PC9yZWN0PgogICAgICAgICAgICA8cGF0aCBkPSJNOS4wNiwyMC4xMyBMMTAuNTYsMjAuMTMgQzEwLjgzNjE0MjQsMjAuMTMgMTEuMDYsMjAuMzUzODU3NiAxMS4wNiwyMC42MyBMMTEuMDYsMjEuNjMgQzExLjA2LDIxLjkwNjE0MjQgMTAuODM2MTQyNCwyMi4xMyAxMC41NiwyMi4xMyBMOS4wNiwyMi4xMyBDOC41MDc3MTUyNSwyMi4xMyA4LjA2LDIxLjY4MjI4NDcgOC4wNiwyMS4xMyBDOC4wNiwyMC41Nzc3MTUzIDguNTA3NzE1MjUsMjAuMTMgOS4wNiwyMC4xMyBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTguOTEsMjAuMTMgTDIwLjQyLDIwLjEzIEMyMC42OTYxNDI0LDIwLjEzIDIwLjkyLDIwLjM1Mzg1NzYgMjAuOTIsMjAuNjMgTDIwLjkyLDIxLjYzIEMyMC45MiwyMS45MDYxNDI0IDIwLjY5NjE0MjQsMjIuMTMgMjAuNDIsMjIuMTMgTDE4LjkyLDIyLjEzIEMxOC4zNjc3MTUzLDIyLjEzIDE3LjkyLDIxLjY4MjI4NDcgMTcuOTIsMjEuMTMgQzE3LjkxOTk3MjYsMjAuNTgxNTk3IDE4LjM2MTYyNDUsMjAuMTM1NDg0IDE4LjkxLDIwLjEzIFoiIGlkPSJTaGFwZSIgZmlsbD0iIzdDODdBNSIgb3BhY2l0eT0iMC41IiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxOS40MjAwMDAsIDIxLjEzMDAwMCkgcm90YXRlKC0xODAuMDAwMDAwKSB0cmFuc2xhdGUoLTE5LjQyMDAwMCwgLTIxLjEzMDAwMCkgIj48L3BhdGg+CiAgICAgICAgICAgIDxwYXRoIGQ9Ik04LjIzLDE3LjUgTDUsMTcuNSBDNC43MjM4NTc2MywxNy41IDQuNSwxNy4yNzYxNDI0IDQuNSwxNyBMNC41LDE0LjUgTDEwLjUsMTQuNSBMOC42NSwxNy4yOCBDOC41NTQ2Njk2MSwxNy40MTc5MDgyIDguMzk3NjUwMDYsMTcuNTAwMTU2NiA4LjIzLDE3LjUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTE4LjE1LDE4Ljg1IEwxNy42NSwxOS4zNSBDMTcuNTUyMzQxNiwxOS40NDQwNzU2IDE3LjQ5ODAzMzksMTkuNTc0NDE0MiAxNy41LDE5LjcxIEwxNy41LDIwIEMxNy41LDIwLjI3NjE0MjQgMTcuMjc2MTQyNCwyMC41IDE3LDIwLjUgTDE2LjUsMjAuNSBDMTYuMjIzODU3NiwyMC41IDE2LDIwLjI3NjE0MjQgMTYsMjAgQzE2LDE5LjcyMzg1NzYgMTUuNzc2MTQyNCwxOS41IDE1LjUsMTkuNSBMMTMuNSwxOS41IEMxMy4yMjM4NTc2LDE5LjUgMTMsMTkuNzIzODU3NiAxMywyMCBDMTMsMjAuMjc2MTQyNCAxMi43NzYxNDI0LDIwLjUgMTIuNSwyMC41IEwxMiwyMC41IEMxMS43MjM4NTc2LDIwLjUgMTEuNSwyMC4yNzYxNDI0IDExLjUsMjAgTDExLjUsMTkuNzEgQzExLjUwMTk2NjEsMTkuNTc0NDE0MiAxMS40NDc2NTg0LDE5LjQ0NDA3NTYgMTEuMzUsMTkuMzUgTDEwLjg1LDE4Ljg1IEMxMC42NTgyMTY3LDE4LjY1MjE4NjMgMTAuNjU4MjE2NywxOC4zMzc4MTM3IDEwLjg1LDE4LjE0IEwxMi4zNiwxNi42NSBDMTIuNDUwMjgwMywxNi41NTI4NjE3IDEyLjU3NzM5NjEsMTYuNDk4MzgzNSAxMi43MSwxNi41IEwxNi4yOSwxNi41IEMxNi40MjI2MDM5LDE2LjQ5ODM4MzUgMTYuNTQ5NzE5NywxNi41NTI4NjE3IDE2LjY0LDE2LjY1IEwxOC4xNSwxOC4xNCBDMTguMzQxNzgzMywxOC4zMzc4MTM3IDE4LjM0MTc4MzMsMTguNjUyMTg2MyAxOC4xNSwxOC44NSBaIiBpZD0iU2hhcGUiIGZpbGw9IiM3Qzg3QTUiIG9wYWNpdHk9IjAuNSI+PC9wYXRoPgogICAgICAgICAgICA8cGF0aCBkPSJNMTAuODUsMjMuNDUgTDExLjM1LDIyLjk1IEMxMS40NDc2NTg0LDIyLjg1NTkyNDQgMTEuNTAxOTY2MSwyMi43MjU1ODU4IDExLjUsMjIuNTkgTDExLjUsMjIuMyBDMTEuNSwyMi4wMjM4NTc2IDExLjcyMzg1NzYsMjEuOCAxMiwyMS44IEwxMi41LDIxLjggQzEyLjc3NjE0MjQsMjEuOCAxMywyMi4wMjM4NTc2IDEzLDIyLjMgQzEzLDIyLjU3NjE0MjQgMTMuMjIzODU3NiwyMi44IDEzLjUsMjIuOCBMMTUuNSwyMi44IEMxNS43NzYxNDI0LDIyLjggMTYsMjIuNTc2MTQyNCAxNiwyMi4zIEMxNiwyMi4wMjM4NTc2IDE2LjIyMzg1NzYsMjEuOCAxNi41LDIxLjggTDE3LDIxLjggQzE3LjI3NjE0MjQsMjEuOCAxNy41LDIyLjAyMzg1NzYgMTcuNSwyMi4zIEwxNy41LDIyLjU5IEMxNy40OTgwMzM5LDIyLjcyNTU4NTggMTcuNTUyMzQxNiwyMi44NTU5MjQ0IDE3LjY1LDIyLjk1IEwxOC4xNSwyMy40NSBDMTguMzQwNTcxNCwyMy42NDQ0MjE4IDE4LjM0MDU3MTQsMjMuOTU1NTc4MiAxOC4xNSwyNC4xNSBMMTYuNjQsMjUuNjUgQzE2LjU0OTcxOTcsMjUuNzQ3MTM4MyAxNi40MjI2MDM5LDI1LjgwMTYxNjUgMTYuMjksMjUuOCBMMTIuNzEsMjUuOCBDMTIuNTc3Mzk2MSwyNS44MDE2MTY1IDEyLjQ1MDI4MDMsMjUuNzQ3MTM4MyAxMi4zNiwyNS42NSBMMTAuODUsMjQuMTUgQzEwLjY1OTQyODYsMjMuOTU1NTc4MiAxMC42NTk0Mjg2LDIzLjY0NDQyMTggMTAuODUsMjMuNDUgWiIgaWQ9IlNoYXBlIiBmaWxsPSIjN0M4N0E1IiBvcGFjaXR5PSIwLjUiPjwvcGF0aD4KICAgICAgICAgICAgPHBhdGggZD0iTTIxLjUsMjcuNSBMMjYuNSwyNy41IEwyNi41LDMxLjUgQzI2LjUsMzIuMDUyMjg0NyAyNi4wNTIyODQ3LDMyLjUgMjUuNSwzMi41IEwyMS41LDMyLjUgTDIxLjUsMjcuNSBaIiBpZD0iU2hhcGUiIHN0cm9rZT0iI0NDNEMyMyIgZmlsbD0iI0YxNUEyOSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48L3BhdGg+CiAgICAgICAgPC9nPgogICAgPC9nPgo8L3N2Zz4=';
+
+/**
+ * String with Ev3 expected pairing pin.
+ * @readonly
+ */
+const Ev3PairingPin = '1234';
+
+/**
+ * A maximum number of BT message sends per second, to be enforced by the rate limiter.
+ * @type {number}
+ */
+const BTSendRateMax = 40;
+
+/**
+ * Enum for Ev3 parameter encodings of various argument and return values.
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 9, at
+ * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
+ *
+ * The format for these values is:
+ * 0xxxxxxx for Short Format
+ * 1ttt-bbb for Long Format
+ *
+ * @readonly
+ * @enum {number}
+ */
+const Ev3Encoding = {
+    ONE_BYTE: 0x81, // = 0b1000-001, "1 byte to follow"
+    TWO_BYTES: 0x82, // = 0b1000-010, "2 bytes to follow"
+    FOUR_BYTES: 0x83, // = 0b1000-011, "4 bytes to follow"
+    GLOBAL_VARIABLE_ONE_BYTE: 0xE1, // = 0b1110-001, "1 byte to follow"
+    GLOBAL_CONSTANT_INDEX_0: 0x20, // = 0b00100000
+    GLOBAL_VARIABLE_INDEX_0: 0x60 // = 0b01100000
+};
 
 /**
  * Enum for Ev3 direct command types.
@@ -52,20 +86,18 @@ const Ev3Opcode = {
 
 /**
  * Enum for Ev3 values used as arguments to various opcodes.
- * Found in the 'EV3 Firmware Developer Kit', section4, page 10, at
+ * Found in the 'EV3 Firmware Developer Kit', section4, page 10-onwards, at
  * https://education.lego.com/en-us/support/mindstorms-ev3/developer-kits.
  * @readonly
- * @enum {string}
+ * @enum {number}
  */
-const Ev3Value = {
-    LAYER: 0x00, // always 0, chained EV3s not supported
-    NUM8: 0x81, // "1 byte to follow"
-    NUM16: 0x82, // "2 bytes to follow"
-    NUM32: 0x83, // "4 bytes to follow"
-    COAST: 0x00,
-    BRAKE: 0x01,
-    LONG_RAMP: 50,
-    DO_NOT_CHANGE_TYPE: 0
+const Ev3Args = {
+    LAYER: 0, // always 0, chained EV3s not supported
+    COAST: 0,
+    BRAKE: 1,
+    RAMP: 50, // time in milliseconds
+    DO_NOT_CHANGE_TYPE: 0,
+    MAX_DEVICES: 32 // 'Normally 32' from pg. 46
 };
 
 /**
@@ -105,7 +137,7 @@ const Ev3Mode = {
  * @readonly
  * @enum {string}
  */
-const Ev3Label = { // TODO: rename?
+const Ev3Label = {
     touch: 'button',
     color: 'brightness',
     ultrasonic: 'distance'
@@ -271,7 +303,7 @@ class EV3Motor {
         const port = this._portMask(this._index);
         let n = milliseconds;
         let speed = this._power * this._direction;
-        const ramp = Ev3Value.LONG_RAMP;
+        const ramp = Ev3Args.RAMP;
 
         let byteCommand = [];
         byteCommand[0] = Ev3Opcode.OPOUTPUT_TIME_SPEED;
@@ -297,16 +329,16 @@ class EV3Motor {
         // Generate motor command values
         const runcmd = this._runValues(run);
         byteCommand = byteCommand.concat([
-            Ev3Value.LAYER,
+            Ev3Args.LAYER,
             port,
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             dir & 0xff,
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             rampup
         ]).concat(runcmd.concat([
-            Ev3Value.NUM8,
+            Ev3Encoding.ONE_BYTE,
             rampdown,
-            Ev3Value.BRAKE
+            Ev3Args.BRAKE
         ]));
 
         const cmd = this._parent.generateCommand(
@@ -321,7 +353,6 @@ class EV3Motor {
 
     /**
      * Set the motor to coast after a specified amount of time.
-     * TODO: rename this startBraking?
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
@@ -351,13 +382,13 @@ class EV3Motor {
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPOUTPUT_STOP,
-                Ev3Value.LAYER,
+                Ev3Args.LAYER,
                 this._portMask(this._index), // port output bit field
-                Ev3Value.COAST
+                Ev3Args.COAST
             ]
         );
 
-        this._parent.send(cmd);
+        this._parent.send(cmd, false); // don't use rate limiter to ensure motor stops
     }
 
     /**
@@ -369,7 +400,7 @@ class EV3Motor {
         // If run duration is less than max 16-bit integer
         if (run < 0x7fff) {
             return [
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 run & 0xff,
                 (run >> 8) & 0xff
             ];
@@ -377,7 +408,7 @@ class EV3Motor {
 
         // Run forever
         return [
-            Ev3Value.NUM32,
+            Ev3Encoding.FOUR_BYTES,
             run & 0xff,
             (run >> 8) & 0xff,
             (run >> 16) & 0xff,
@@ -476,7 +507,15 @@ class EV3 {
         this._bt = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
-        this.disconnect = this.disconnect.bind(this);
+        /**
+         * A rate limiter utility, to help limit the rate at which we send BT messages
+         * over the socket to Scratch Link to a maximum number of sends per second.
+         * @type {RateLimiter}
+         * @private
+         */
+        this._rateLimiter = new RateLimiter(BTSendRateMax);
+
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._pollValues = this._pollValues.bind(this);
@@ -513,12 +552,12 @@ class EV3 {
             [
                 Ev3Opcode.OPSOUND,
                 Ev3Opcode.OPSOUND_CMD_TONE,
-                Ev3Value.NUM8,
+                Ev3Encoding.ONE_BYTE,
                 2,
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 freq,
                 freq >> 8,
-                Ev3Value.NUM16,
+                Ev3Encoding.TWO_BYTES,
                 time,
                 time >> 8
             ]
@@ -541,7 +580,7 @@ class EV3 {
             ]
         );
 
-        this.send(cmd);
+        this.send(cmd, false); // don't use rate limiter to ensure sound stops
     }
 
     stopAllMotors () {
@@ -562,7 +601,7 @@ class EV3 {
         this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onConnect, this.disconnect, this._onMessage);
+        }, this._onConnect, this.reset, this._onMessage);
     }
 
     /**
@@ -571,7 +610,7 @@ class EV3 {
      */
     connect (id) {
         if (this._bt) {
-            this._bt.connectPeripheral(id);
+            this._bt.connectPeripheral(id, Ev3PairingPin);
         }
     }
 
@@ -579,12 +618,29 @@ class EV3 {
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
     disconnect () {
-        this._clearSensorsAndMotors();
-        window.clearInterval(this._pollingIntervalID);
-        this._pollingIntervalID = null;
-
         if (this._bt) {
             this._bt.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        this._sensorPorts = [];
+        this._motorPorts = [];
+        this._sensors = {
+            distance: 0,
+            brightness: 0,
+            buttons: [0, 0, 0, 0]
+        };
+        this._motors = [null, null, null, null];
+
+        if (this._pollingIntervalID) {
+            window.clearInterval(this._pollingIntervalID);
+            this._pollingIntervalID = null;
         }
     }
 
@@ -603,11 +659,15 @@ class EV3 {
     /**
      * Send a message to the peripheral BT socket.
      * @param {Uint8Array} message - the message to send.
+     * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      * @return {Promise} - a promise result of the send operation.
      */
-    send (message) {
-        // TODO: add rate limiting?
+    send (message, useLimiter = true) {
         if (!this.isConnected()) return Promise.resolve();
+
+        if (useLimiter) {
+            if (!this._rateLimiter.okayToSend()) return Promise.resolve();
+        }
 
         return this._bt.sendMessage({
             message: Base64Util.uint8ArrayToBase64(message),
@@ -686,63 +746,50 @@ class EV3 {
             return;
         }
 
-        const byteCommands = []; // a compound command
+        const cmds = []; // compound command
         let allocation = 0;
-
         let sensorCount = 0;
 
-        // For the command to send, either request device list or request sensor data
-        // based on the polling counter value.  (i.e., reset the list of devices every
-        // 20 counts).
-
+        // Reset the list of devices every 20 counts
         if (this._pollingCounter % 20 === 0) {
             // GET DEVICE LIST
-            byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
-            byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: document
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: document
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
+            cmds[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
+            cmds[1] = Ev3Encoding.ONE_BYTE;
+            cmds[2] = Ev3Args.MAX_DEVICES;
+            cmds[3] = Ev3Encoding.GLOBAL_VARIABLE_INDEX_0;
+            cmds[4] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+            cmds[5] = Ev3Encoding.GLOBAL_CONSTANT_INDEX_0;
 
             // Command and payload lengths
             allocation = 33;
 
             this._updateDevices = true;
-
-            // TODO: need to clar sensor data?
-
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
-            // eslint-disable-next-line no-undefined
-            if (!this._sensorPorts.includes(undefined)) { // TODO: why is this needed?
-                for (let i = 0; i < 4; i++) {
-                    if (this._sensorPorts[i] !== 'none') {
-                        byteCommands[index + 0] = Ev3Opcode.OPINPUT_READSI;
-                        byteCommands[index + 1] = Ev3Value.LAYER;
-                        byteCommands[index + 2] = i; // PORT
-                        byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
-                        byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
-                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: document
-                        index += 7;
-                    }
-                    sensorCount++;
+            for (let i = 0; i < 4; i++) {
+                if (this._sensorPorts[i] !== 'none') {
+                    cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
+                    cmds[index + 1] = Ev3Args.LAYER;
+                    cmds[index + 2] = i; // PORT
+                    cmds[index + 3] = Ev3Args.DO_NOT_CHANGE_TYPE;
+                    cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
+                    cmds[index + 5] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+                    cmds[index + 6] = sensorCount * 4; // GLOBAL INDEX
+                    index += 7;
                 }
+                sensorCount++;
             }
 
             // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // eslint-disable-next-line no-undefined
-            if (!this._motorPorts.includes(undefined)) {
-                for (let i = 0; i < 4; i++) {
-                    byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
-                    byteCommands[index + 1] = Ev3Value.LAYER;
-                    byteCommands[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
-                    byteCommands[index + 3] = 225; // 0xE1 byte following TODO: document
-                    byteCommands[index + 4] = sensorCount * 4; // global index TODO: document
-                    index += 5;
-                    sensorCount++;
-                }
+            for (let i = 0; i < 4; i++) {
+                cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
+                cmds[index + 1] = Ev3Args.LAYER;
+                cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
+                cmds[index + 3] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
+                cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
+                index += 5;
+                sensorCount++;
             }
 
             // Command and payload lengths
@@ -751,7 +798,7 @@ class EV3 {
 
         const cmd = this.generateCommand(
             Ev3Command.DIRECT_COMMAND_REPLY,
-            byteCommands,
+            cmds,
             allocation
         );
 
@@ -786,26 +833,24 @@ class EV3 {
     _onMessage (params) {
         const message = params.message;
         const data = Base64Util.base64ToUint8Array(message);
-        // log.info(`received array: ${array}`);
 
-        // TODO: Is this the correct check?
         if (data[4] !== Ev3Command.DIRECT_REPLY) {
             return;
         }
 
         if (this._updateDevices) {
-            // *****************
+
             // PARSE DEVICE LIST
-            // *****************
-            // TODO: put these in for loop?
-            this._sensorPorts[0] = Ev3Device[data[5]] ? Ev3Device[data[5]] : 'none';
-            this._sensorPorts[1] = Ev3Device[data[6]] ? Ev3Device[data[6]] : 'none';
-            this._sensorPorts[2] = Ev3Device[data[7]] ? Ev3Device[data[7]] : 'none';
-            this._sensorPorts[3] = Ev3Device[data[8]] ? Ev3Device[data[8]] : 'none';
-            this._motorPorts[0] = Ev3Device[data[21]] ? Ev3Device[data[21]] : 'none';
-            this._motorPorts[1] = Ev3Device[data[22]] ? Ev3Device[data[22]] : 'none';
-            this._motorPorts[2] = Ev3Device[data[23]] ? Ev3Device[data[23]] : 'none';
-            this._motorPorts[3] = Ev3Device[data[24]] ? Ev3Device[data[24]] : 'none';
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 5]];
+                // if returned device type is null, use 'none'
+                this._sensorPorts[i] = deviceType ? deviceType : 'none';
+            }
+            for (let i = 0; i < 4; i++) {
+                const deviceType = Ev3Device[data[i + 21]];
+                // if returned device type is null, use 'none'
+                this._motorPorts[i] = deviceType ? deviceType : 'none';
+            }
             for (let m = 0; m < 4; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
@@ -818,11 +863,11 @@ class EV3 {
                 }
             }
             this._updateDevices = false;
-            // eslint-disable-next-line no-undefined
+
+        // eslint-disable-next-line no-undefined
         } else if (!this._sensorPorts.includes(undefined) && !this._motorPorts.includes(undefined)) {
-            // *******************
+
             // PARSE SENSOR VALUES
-            // *******************
             let offset = 5; // start reading sensor values at byte 5
             for (let i = 0; i < 4; i++) {
                 // array 2 float
@@ -844,9 +889,8 @@ class EV3 {
                 }
                 offset += 4;
             }
-            // *****************************************************
+
             // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            // *****************************************************
             for (let i = 0; i < 4; i++) {
                 const positionArray = [
                     data[offset],
@@ -859,24 +903,9 @@ class EV3 {
                 }
                 offset += 4;
             }
+
         }
     }
-
-    /**
-     * Clear all the senor port and motor names, and their values.
-     * @private
-     */
-    _clearSensorsAndMotors () {
-        this._sensorPorts = [];
-        this._motorPorts = [];
-        this._sensors = {
-            distance: 0,
-            brightness: 0,
-            buttons: [0, 0, 0, 0]
-        };
-        this._motors = [null, null, null, null];
-    }
-
 }
 
 /**
@@ -1112,8 +1141,14 @@ class Scratch3Ev3Blocks {
                 }
             ],
             menus: {
-                motorPorts: this._formatMenu(Ev3MotorMenu),
-                sensorPorts: this._formatMenu(Ev3SensorMenu)
+                motorPorts: {
+                    acceptReporters: true,
+                    items: this._formatMenu(Ev3MotorMenu)
+                },
+                sensorPorts: {
+                    acceptReporters: true,
+                    items: this._formatMenu(Ev3SensorMenu)
+                }
             }
         };
     }
@@ -1253,11 +1288,14 @@ class Scratch3Ev3Blocks {
 
     /**
      * Call a callback for each motor indexed by the provided motor ID.
+     *
+     * Note: This way of looping through motors is currently unnecessary, but could be
+     * useful if an 'all motors' option is added in the future (see WeDo2 extension).
+     *
      * @param {MotorID} motorID - the ID specifier.
      * @param {Function} callback - the function to call with the numeric motor index for each motor.
      * @private
      */
-    // TODO: unnecessary, but could be useful if 'all motors' is added (see WeDo2 extension)
     _forEachMotor (motorID, callback) {
         let motors;
         switch (motorID) {

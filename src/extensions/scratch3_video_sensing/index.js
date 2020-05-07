@@ -488,9 +488,18 @@ class Scratch3VideoSensingBlocks {
                 }
             ],
             menus: {
-                ATTRIBUTE: this._buildMenu(this.ATTRIBUTE_INFO),
-                SUBJECT: this._buildMenu(this.SUBJECT_INFO),
-                VIDEO_STATE: this._buildMenu(this.VIDEO_STATE_INFO)
+                ATTRIBUTE: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.ATTRIBUTE_INFO)
+                },
+                SUBJECT: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.SUBJECT_INFO)
+                },
+                VIDEO_STATE: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.VIDEO_STATE_INFO)
+                }
             }
         };
     }

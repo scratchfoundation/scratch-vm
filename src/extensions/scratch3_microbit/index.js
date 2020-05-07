@@ -144,7 +144,7 @@ class MicroBit {
          */
         this._busyTimeoutID = null;
 
-        this.disconnect = this.disconnect.bind(this);
+        this.reset = this.reset.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
     }
@@ -222,7 +222,7 @@ class MicroBit {
             filters: [
                 {services: [BLEUUID.service]}
             ]
-        }, this._onConnect, this.disconnect);
+        }, this._onConnect, this.reset);
     }
 
     /**
@@ -239,9 +239,20 @@ class MicroBit {
      * Disconnect from the micro:bit.
      */
     disconnect () {
-        window.clearInterval(this._timeoutID);
         if (this._ble) {
             this._ble.disconnect();
+        }
+
+        this.reset();
+    }
+
+    /**
+     * Reset all the state and timeout/interval ids.
+     */
+    reset () {
+        if (this._timeoutID) {
+            window.clearTimeout(this._timeoutID);
+            this._timeoutID = null;
         }
     }
 
@@ -299,7 +310,7 @@ class MicroBit {
      */
     _onConnect () {
         this._ble.read(BLEUUID.service, BLEUUID.rxChar, true, this._onMessage);
-        this._timeoutID = window.setInterval(
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
@@ -329,8 +340,8 @@ class MicroBit {
         this._sensors.gestureState = data[9];
 
         // cancel disconnect timeout and start a new one
-        window.clearInterval(this._timeoutID);
-        this._timeoutID = window.setInterval(
+        window.clearTimeout(this._timeoutID);
+        this._timeoutID = window.setTimeout(
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
@@ -746,12 +757,30 @@ class Scratch3MicroBitBlocks {
                 }
             ],
             menus: {
-                buttons: this.BUTTONS_MENU,
-                gestures: this.GESTURES_MENU,
-                pinState: this.PIN_STATE_MENU,
-                tiltDirection: this.TILT_DIRECTION_MENU,
-                tiltDirectionAny: this.TILT_DIRECTION_ANY_MENU,
-                touchPins: ['0', '1', '2']
+                buttons: {
+                    acceptReporters: true,
+                    items: this.BUTTONS_MENU
+                },
+                gestures: {
+                    acceptReporters: true,
+                    items: this.GESTURES_MENU
+                },
+                pinState: {
+                    acceptReporters: true,
+                    items: this.PIN_STATE_MENU
+                },
+                tiltDirection: {
+                    acceptReporters: true,
+                    items: this.TILT_DIRECTION_MENU
+                },
+                tiltDirectionAny: {
+                    acceptReporters: true,
+                    items: this.TILT_DIRECTION_ANY_MENU
+                },
+                touchPins: {
+                    acceptReporters: true,
+                    items: ['0', '1', '2']
+                }
             }
         };
     }

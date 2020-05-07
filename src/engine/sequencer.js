@@ -51,6 +51,8 @@ class Sequencer {
          * @type {!Runtime}
          */
         this.runtime = runtime;
+
+        this.activeThread = null;
     }
 
     /**
@@ -97,8 +99,9 @@ class Sequencer {
             numActiveThreads = 0;
             let stoppedThread = false;
             // Attempt to run each thread one time.
-            for (let i = 0; i < this.runtime.threads.length; i++) {
-                const activeThread = this.runtime.threads[i];
+            const threads = this.runtime.threads;
+            for (let i = 0; i < threads.length; i++) {
+                const activeThread = this.activeThread = threads[i];
                 // Check if the thread is done so it is not executed.
                 if (activeThread.stack.length === 0 ||
                     activeThread.status === Thread.STATUS_DONE) {
@@ -118,12 +121,11 @@ class Sequencer {
                         if (stepThreadProfilerId === -1) {
                             stepThreadProfilerId = this.runtime.profiler.idByName(stepThreadProfilerFrame);
                         }
-                        this.runtime.profiler.start(stepThreadProfilerId);
+
+                        // Increment the number of times stepThread is called.
+                        this.runtime.profiler.increment(stepThreadProfilerId);
                     }
                     this.stepThread(activeThread);
-                    if (this.runtime.profiler !== null) {
-                        this.runtime.profiler.stop();
-                    }
                     activeThread.warpTimer = null;
                     if (activeThread.isKilled) {
                         i--; // if the thread is removed from the list (killed), do not increase index
@@ -138,7 +140,6 @@ class Sequencer {
                     activeThread.status === Thread.STATUS_DONE) {
                     // Finished with this thread.
                     stoppedThread = true;
-                    this.runtime.updateCurrentMSecs();
                 }
             }
             // We successfully ticked once. Prevents running STATUS_YIELD_TICK
@@ -166,6 +167,8 @@ class Sequencer {
             }
         }
 
+        this.activeThread = null;
+
         return doneThreads;
     }
 
@@ -178,6 +181,12 @@ class Sequencer {
         if (!currentBlockId) {
             // A "null block" - empty branch.
             thread.popStack();
+
+            // Did the null follow a hat block?
+            if (thread.stack.length === 0) {
+                thread.status = Thread.STATUS_DONE;
+                return;
+            }
         }
         // Save the current block ID to notice if we did control flow.
         while ((currentBlockId = thread.peekStack())) {
@@ -193,22 +202,14 @@ class Sequencer {
                 if (executeProfilerId === -1) {
                     executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
                 }
-                // The method commented below has its code inlined underneath to
-                // reduce the bias recorded for the profiler's calls in this
-                // time sensitive stepThread method.
-                //
-                // this.runtime.profiler.start(executeProfilerId, null);
-                this.runtime.profiler.records.push(
-                    this.runtime.profiler.START, executeProfilerId, null, 0);
+
+                // Increment the number of times execute is called.
+                this.runtime.profiler.increment(executeProfilerId);
             }
             if (thread.target === null) {
                 this.retireThread(thread);
             } else {
                 execute(this, thread);
-            }
-            if (this.runtime.profiler !== null) {
-                // this.runtime.profiler.stop();
-                this.runtime.profiler.records.push(this.runtime.profiler.STOP, 0);
             }
             thread.blockGlowInFrame = currentBlockId;
             // If the thread has yielded or is waiting, yield to other threads.
