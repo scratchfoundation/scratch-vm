@@ -792,6 +792,7 @@ class Scratch3SmalrubotS1Blocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+        this.runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         this.runtime.registerPeripheralExtension(Scratch3SmalrubotS1Blocks.EXTENSION_ID, this);
 
@@ -1132,6 +1133,10 @@ class Scratch3SmalrubotS1Blocks {
         debug(() => `emitRuntime: eventName=<${eventName}> args=<${JSON.stringify(...args)}>`);
 
         return new Promise(() => this.runtime.emit(this.runtime.constructor[eventName], ...args));
+    }
+
+    stopAll () {
+        this.action({ACTION: 'stop'});
     }
 }
 
