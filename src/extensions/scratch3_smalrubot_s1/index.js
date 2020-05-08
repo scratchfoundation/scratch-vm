@@ -340,11 +340,13 @@ class Smalrubot {
             return Promise.resolve('');
         }
 
-        this.reader = this.serialPort.readable.getReader();
+        if (!this.reader) {
+            this.reader = this.serialPort.readable.getReader();
+        }
         let timeoutId = setTimeout(() => {
             if (this.reader) {
                 debug(() => `Timeouted reading`);
-                this.reader.cancel();
+                //this.reader.cancel();
             }
         }, timeoutSeconds * 1000);
 
@@ -370,13 +372,10 @@ class Smalrubot {
 
         let promise = readLineLoop()
             .then(() => {
-
                 clearTimeout(timeoutId);
 
-                return this.reader.releaseLock();
-            })
-            .then(() => {
-                this.reader = null;
+                //this.reader.releaseLock();
+                //this.reader = null;
 
                 debug(() => `After read loop: readBuffer=<${this.lineToString(this.readBuffer)}>`);
                 const position = this.readBuffer.indexOf('\r\n');
@@ -397,11 +396,10 @@ class Smalrubot {
 
                 clearTimeout(timeoutId);
 
-                return this.reader.releaseLock()
-                    .then(() => {
-                        this.reader = null;
-                        return '';
-                    });
+                this.reader.releaseLock();
+                this.reader = null;
+
+                return '';
             });
 
         return promise;
@@ -495,6 +493,7 @@ class SmalrubotS1 extends Smalrubot {
               .then(data => {
                   if (data && data.pin && data.value === 'S1') {
                       this.analogZero = data.pin;
+                      return Promise.resolve();
                       return this.flushRead(0.25);
                   }
                   if (i <= 1) {
