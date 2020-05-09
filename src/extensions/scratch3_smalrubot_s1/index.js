@@ -79,9 +79,7 @@ class Smalrubot {
             dc_motor_power: '42',
             dc_motor_control: '43',
 
-            led: '51',
-
-            reset_v2: '91'
+            led: '51'
         };
     }
 
@@ -92,7 +90,9 @@ class Smalrubot {
 
             get_touch_sensor_value: '61',
             get_light_sensor_value: '62',
-            get_ir_photoreflector_value: '64'
+            get_ir_photoreflector_value: '64',
+
+            reset_v2: '91'
         };
     }
 
@@ -262,138 +262,37 @@ class Smalrubot {
             });
     }
 
-    flushRead (timeoutSeconds = 1) {
-        debug(() => `flushRead: timeout=<${timeoutSeconds} sec>`);
-
-        const flushReadLoop = () => this.readLine(timeoutSeconds)
-              .then(line => {
-                  if (line.length > 0) {
-                      return flushReadLoop();
-                  }
-                  return Promise.resolve();
-              });
-
-        return flushReadLoop();
-    }
-
     readCommand (commandName, pin) {
         const command = Smalrubot.READ_COMMANDS[commandName];
 
         debug(() => `readCommand: command=<${commandName} (${command})> pin=<${pin}>`);
 
+        if (!this.sensorValues[pin]) {
+            throw `Failed readCommand: reason=<Unknown pin> command=<${commandName} (${command})> pin=<${pin}>`;
+        }
+
+        const nowMilliseconds = Number(new Date());
+
         let promise = this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(0)}`);
 
-        const readCommandLoop = (retryCount) => this.read(0.100)
-              .then(data => {
-                  if (data && data.pin && data.value) {
-                      if (data.pin === pin) {
-                          return Promise.resolve(Number(data.value));
-                      } else {
-                          log.info(`Detected noise: read=<${JSON.stringify(data, null, 2)}>`);
-                      }
-                  } else {
-                      retryCount--;
-                  }
-                  if (retryCount <= 1) {
-                      return Promise.resolve(0);
-                  }
-                  return readCommandLoop(retryCount - 1);
-              });
+        const readCommandLoop = retryCount => {
+            debug(() => `readCommandLoop: retryCount=<${retryCount}>`);
+
+            return this.sleep(0.050).then(() => {
+                if (this.sensorValues[pin].updatedAt >= nowMilliseconds) {
+                    return Promise.resolve(this.sensorValues[pin].value);
+                }
+                retryCount--;
+                if (retryCount <= 0) {
+                    return Promise.resolve('0');
+                }
+
+                return readCommandLoop(retryCount);
+            });
+        };
 
         return promise
-            .then(() => readCommandLoop(3));
-    }
-
-    read (timeoutSeconds = 1) {
-        this.throwIfClosed();
-
-        debug(() => `read: timeout=<${timeoutSeconds} sec>`);
-
-        return this.readLine(timeoutSeconds)
-            .then(line => {
-                if (line.length > 0 && line.match(/^\d+:/)) {
-                    const data = line.split(/:/);
-                    return {
-                        pin: Number(data[0]),
-                        value: data[1]
-                    };
-                }
-                return null;
-            });
-    }
-
-    readLine (timeoutSeconds = 1) {
-        this.throwIfClosed();
-
-        debug(() => `readLine: timeout=<${timeoutSeconds} sec>`);
-
-        if (!this.serialPort.readable) {
-            return Promise.resolve('');
-        }
-
-        if (!this.reader) {
-            this.reader = this.serialPort.readable.getReader();
-        }
-        let timeoutId = setTimeout(() => {
-            if (this.reader) {
-                debug(() => `Timeouted reading`);
-                //this.reader.cancel();
-            }
-        }, timeoutSeconds * 1000);
-
-        const readLineLoop = () => this.reader.read()
-              .then(data => {
-                  const { value, done } = data;
-                  if (value) {
-                      const s = this.decoder.decode(value);
-                      debug(() => `reader.read: value=<${JSON.stringify(value, null, 2)}> decoded=<${this.lineToString(s)}> done=<${done}>`);
-                      this.readBuffer += s;
-                  } else {
-                      debug(() => `reader.read: value=<> decoded=<> done=<${done}>`);
-                  }
-                  if (done) {
-                      debug(() => `Canceled reading`);
-                      return Promise.resolve();
-                  }
-                  if (this.readBuffer.includes('\r\n')) {
-                      return Promise.resolve();
-                  }
-                  return readLineLoop();
-              });
-
-        let promise = readLineLoop()
-            .then(() => {
-                clearTimeout(timeoutId);
-
-                //this.reader.releaseLock();
-                //this.reader = null;
-
-                debug(() => `After read loop: readBuffer=<${this.lineToString(this.readBuffer)}>`);
-                const position = this.readBuffer.indexOf('\r\n');
-                if (position === -1) {
-                    return '';
-                }
-
-                const line = this.readBuffer.substring(0, position);
-                this.readBuffer = this.readBuffer.substring(position + '\r\n'.length);
-                debug(() => `Got line from readBuffer: line=<${this.lineToString(line)}> readBuffer=<${this.lineToString(this.readBuffer)}>`);
-
-                return line;
-            });
-
-        promise = promise
-            .catch(error => {
-                log.error(`Error in readLine: ${e}`);
-
-                clearTimeout(timeoutId);
-
-                this.reader.releaseLock();
-                this.reader = null;
-
-                return '';
-            });
-
-        return promise;
+            .then(() => readCommandLoop(10));
     }
 
     setConnectionState (connectionState) {
@@ -460,6 +359,87 @@ class SmalrubotS1 extends Smalrubot {
             left: DEFAULT_DC_MOTOR_POWER_RATIO,
             right: DEFAULT_DC_MOTOR_POWER_RATIO
         };
+
+        this.resetSensorValues();
+    }
+
+    resetSensorValues () {
+        const nowMilliseconds = Number(new Date());
+        this.sensorValues = {
+            // HACK: for reset_v2
+            0: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            },
+            [PORT_A2]: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            },
+            [PORT_A3]: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            },
+            [PORT_A4]: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            },
+            [PORT_A5]: {
+                value: '0',
+                updatedAt: nowMilliseconds
+            }
+        };
+    }
+
+    updateSensorValues () {
+        debug(() => `updateSensorValues`);
+
+        const decoder = new TextDecoder();
+        let readBuffer = '';
+
+        const updateSensorValuesLoop = () => this.reader.read()
+              .then(data => {
+                  const now = new Date();
+                  const {value, done} = data;
+                  if (done) {
+                      debug(() => `Canceled reading`);
+                      return Promise.resolve();
+                  }
+
+                  if (value) {
+                      const s = decoder.decode(value);
+                      debug(() => `reader.read: value=<${JSON.stringify(value, null, 2)}>` +
+                            ` decoded=<${this.lineToString(s)}> done=<${done}>`);
+                      readBuffer += s;
+                  } else {
+                      debug(() => `reader.read: value=<> decoded=<> done=<${done}>`);
+                  }
+                  debug(() => `readBuffer=<${this.lineToString(readBuffer)}>`);
+
+                  while (readBuffer.includes('\r\n')) {
+                      const position = readBuffer.indexOf('\r\n');
+                      const line = readBuffer.substring(0, position);
+                      readBuffer = readBuffer.substring(position + '\r\n'.length);
+                      debug(() => `Got line from readBuffer: line=<${this.lineToString(line)}>` +
+                            ` readBuffer=<${this.lineToString(readBuffer)}>`);
+
+                      if (line.length > 0 && line.match(/^\d+:/)) {
+                          const pinAndValue = line.split(/:/);
+                          const pin = Number(pinAndValue[0]);
+                          if (this.sensorValues[pin]) {
+                              this.sensorValues[pin].value = pinAndValue[1];
+                              this.sensorValues[pin].updatedAt = Number(now);
+                              debug(() => `Updated sensor value: pin=<${pin}>` +
+                                    ` value=<${pinAndValue[1]}> updateAt=<${now.toLocaleString()}>`);
+                          } else {
+                              log.warn(`Could not update sensor value: reason=<Unknown pin>` +
+                                       ` pin=<${pin}> value=<${pinAndValue[1]}>`);
+                          }
+                      }
+                  }
+                  return updateSensorValuesLoop();
+              });
+
+        return updateSensorValuesLoop();
     }
 
     connect () {
@@ -475,26 +455,22 @@ class SmalrubotS1 extends Smalrubot {
             .then(() => {
                 this.setConnectionState('connecting');
 
+                //this.writer = this.serialPort.writable.getWriter();
+                this.reader = this.serialPort.readable.getReader();
+
+                this.updateSensorValues();
+
                 return this.sleep(2);
-            });
-
-        let found = false;
-        const resetV2Loop = (i) => this.writeCommand('reset_v2', 0)
-              .then(() => this.read(1))
-              .then(data => {
-                  if (data && data.pin && data.value === 'S1') {
-                      this.analogZero = data.pin;
-                      return Promise.resolve();
-                      return this.flushRead(0.25);
-                  }
-                  if (i <= 1) {
-                      throw new SmalrubotError('Smalrubot S1 not found.');
-                  }
-                  return resetV2Loop(i - 1);
-              });
-
-        promise = promise
-            .then(() => resetV2Loop(5))
+            })
+            .then(() => this.readCommand('reset_v2', 0))
+            .then(value => {
+                const versionAndAnalogZero = value.split(',');
+                if (versionAndAnalogZero[0] === 'S1') {
+                    this.analogZero = Number(versionAndAnalogZero[1]);
+                } else {
+                    throw new SmalrubotError('Smalrubot S1 not found.');
+                }
+            })
             .then(() => this.initDcMotorPort(PORT_M1, 0))
             .then(() => this.initDcMotorPort(PORT_M2, 0))
             .then(() => this.initSensorPort(PORT_A0, PIDLED))
@@ -609,7 +585,8 @@ class SmalrubotS1 extends Smalrubot {
             break;
         }
 
-        return this.readCommand(commandName, pin);
+        return this.readCommand(commandName, pin)
+            .then(value => Number(value));
     }
 
     initDcMotorPort (port) {
