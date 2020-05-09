@@ -10,7 +10,7 @@ const formatMessage = require('format-message');
  */
 const maybeFormatMessage = function (maybeMessage, args, locale) {
     if (maybeMessage && maybeMessage.id && maybeMessage.default) {
-        return formatMessage(maybeMessage, args, locale);
+        return formatMessage(maybeMessage, args, locale); // eslint-disable-line format-message
     }
     return maybeMessage;
 };

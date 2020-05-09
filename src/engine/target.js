@@ -306,6 +306,20 @@ class Target extends EventEmitter {
     }
 
     /**
+     * Sets the variable value with the given id to newValue.
+     * @param {string} id Id of variable to set value.
+     * @param {object} newValue New value for the variable.
+     */
+    setVariableValue (id, newValue) {
+        if (this.variables.hasOwnProperty(id)) {
+            const variable = this.variables[id];
+            if (variable.id === id) {
+                variable.value = newValue;
+            }
+        }
+    }
+
+    /**
      * Renames the variable with the given id to newName.
      * @param {string} id Id of variable to rename.
      * @param {string} newName New name for the variable.
