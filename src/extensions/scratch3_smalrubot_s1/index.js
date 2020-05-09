@@ -1,10 +1,10 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const log = require('../../util/log');
+const debugLogger = require('../../util/debug-logger');
+const debug = debugLogger(true);
 const formatMessage = require('format-message');
 const Cast = require('../../util/cast');
-
-const DEBUG = true;
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -44,15 +44,6 @@ const ON = 1;
 const OFF = 0;
 
 const DEFAULT_DC_MOTOR_POWER_RATIO = 50;
-
-const debug = (func) => {
-    if (DEBUG) {
-        const message = func();
-        if (message) {
-            log.debug(message);
-        }
-    }
-};
 
 class SmalrubotError extends Error {
     constructor(message) {
@@ -1135,6 +1126,8 @@ class Scratch3SmalrubotS1Blocks {
     }
 
     stopAll () {
+        this.turnLedOff({POSITION: 'left'});
+        this.turnLedOff({POSITION: 'right'});
         this.action({ACTION: 'stop'});
     }
 }
