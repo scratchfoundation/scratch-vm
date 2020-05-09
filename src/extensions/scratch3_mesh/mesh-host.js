@@ -5,7 +5,7 @@ const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(true);
 
-const HEATBEAT_MINUTES = 6;
+const HEATBEAT_MINUTES = 4;
 
 class MeshHost extends MeshService {
     constructor (blocks, meshId, webSocket) {
