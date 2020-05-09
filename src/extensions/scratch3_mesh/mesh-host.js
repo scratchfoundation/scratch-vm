@@ -1,6 +1,12 @@
 const MeshService = require('./mesh-service');
 const MeshPeer = require('./mesh-peer');
 
+const log = require('../../util/log');
+const debugLogger = require('../../util/debug-logger');
+const debug = debugLogger(true);
+
+const HEATBEAT_MINUTES = 5;
+
 class MeshHost extends MeshService {
     constructor (blocks, meshId, webSocket) {
         super(blocks, meshId, webSocket);
@@ -14,11 +20,11 @@ class MeshHost extends MeshService {
 
     connect () {
         if (this.connectionState === 'connected') {
-            this.infoLog('Already connected');
+            log.info('Already connected');
             return;
         }
         if (this.connectionState === 'connecting') {
-            this.infoLog('Now connecting, please wait to connect.');
+            log.info('Now connecting, please wait to connect.');
             return;
         }
 
@@ -39,22 +45,50 @@ class MeshHost extends MeshService {
         }
     }
 
+    restartHeatbeat () {
+        debug(() => {
+            const at = new Date();
+            at.setSeconds(at.getSeconds() + HEATBEAT_MINUTES * 60);
+            return `Heatbeat: at=<${at.toLocaleString()}>`;
+        });
+
+        clearTimeout(this.restartHeatbeatTimeoutId);
+        this.restartHeatbeatTimeoutId = setTimeout(() => {
+            if (this.connectionState === 'connected') {
+                this.sendWebSocketMessage('heartbeat', {});
+
+                this.restartHeatbeat();
+            }
+        }, HEATBEAT_MINUTES * 60 * 1000);
+    }
+
     onWebSocketClose () {
-        this.setConnectionState('disconnected');
+        debug(() => 'WebSocket closed.');
+
+        clearTimeout(this.restartHeatbeatTimeoutId);
+        this.restartHeatbeatTimeoutId = null;
+
+        if (this.connectionState !== 'disconnected') {
+            this.disconnect();
+        }
     }
 
     registerWebSocketAction (result, data) {
         if (!result) {
             this.setConnectionState('request_error');
-            this.errorLog(`Failed to register: reason=<${data.error}>`);
+            log.error(`Failed to register: reason=<${data.error}>`);
             return;
         }
 
         this.setConnectionState('connected');
-        this.infoLog('Connected as Mesh Host.');
+        log.info('Connected as Mesh Host.');
+
+        this.restartHeatbeat();
     }
 
     offerWebSocketAction (result, data) {
+        this.restartHeatbeat();
+
         const peerMeshId = data.meshId;
         if (data.hostMeshId !== this.meshId) {
             this.logError(`Invalid Mesh ID in offer from peer:` +
@@ -67,45 +101,45 @@ class MeshHost extends MeshService {
             return;
         }
 
-        this.changeWebRTCIPHandlingPolicy();
+        this.changeWebRTCIPHandlingPolicy().then(() => {
+            const connection = this.openRTCPeerConnection(peerMeshId);
 
-        const connection = this.openRTCPeerConnection(peerMeshId);
+            connection.onconnectionstatechange = () => {
+                this.onRTCConnectionStateChange(connection, peerMeshId);
+            };
+            connection.onicecandidate = event => {
+                this.onRTCICECandidate(connection, peerMeshId, event, description => {
+                    debug(() => `Answer to Peer: peer=<${peerMeshId}> description=<\n` +
+                          `${JSON.stringify(description, null, 2)}\n` +
+                          `>`);
 
-        connection.onconnectionstatechange = () => {
-            this.onRTCConnectionStateChange(connection, peerMeshId);
-        };
-        connection.onicecandidate = event => {
-            this.onRTCICECandidate(connection, peerMeshId, event, description => {
-                this.debugLog(`Answer to Peer: peer=<${peerMeshId}> description=<\n` +
-                              `${JSON.stringify(description, null, 2)}\n` +
-                              `>`);
-
-                this.sendWebSocketMessage('answer', {
-                    meshId: this.meshId,
-                    clientMeshId: peerMeshId,
-                    hostDescription: description
+                    this.sendWebSocketMessage('answer', {
+                        meshId: this.meshId,
+                        clientMeshId: peerMeshId,
+                        hostDescription: description
+                    });
                 });
-            });
-        };
-        connection.ondatachannel = event => {
-            this.onRTCDataChannel(connection, peerMeshId, event);
-        };
+            };
+            connection.ondatachannel = event => {
+                this.onRTCDataChannel(connection, peerMeshId, event);
+            };
 
-        connection.setRemoteDescription(new RTCSessionDescription(data.clientDescription));
+            connection.setRemoteDescription(new RTCSessionDescription(data.clientDescription));
 
-        connection.createAnswer().then(
-            desc => {
-                connection.setLocalDescription(desc);
-            },
-            error => {
-                this.errorLog(`Failed createAnswer: peer=<${peerMeshId}> reason=<${error}>`);
-                this.closeRTCPeerConnection(peerMeshId);
-            }
-        );
+            connection.createAnswer().then(
+                desc => {
+                    connection.setLocalDescription(desc);
+                },
+                error => {
+                    log.error(`Failed createAnswer: peer=<${peerMeshId}> reason=<${error}>`);
+                    this.closeRTCPeerConnection(peerMeshId);
+                }
+            );
+        });
     }
 
     onRTCDataChannel (connection, peerMeshId, event) {
-        this.debugLog(`WebRTC data channel by remote peer: peer=<${peerMeshId}>`);
+        debug(() => `WebRTC data channel by remote peer: peer=<${peerMeshId}>`);
 
         const dataChannel = event.channel;
 
@@ -126,13 +160,21 @@ class MeshHost extends MeshService {
     }
 
     answerWebSocketAction (result, data) {
+        this.restartHeatbeat();
+
         if (!result) {
             this.closeRTCPeerConnection(data.clientMeshId);
-            this.errorLog(`Failed to answer: reason=<${data.error}>`);
+            log.error(`Failed to answer: reason=<${data.error}>`);
             return;
         }
 
-        this.infoLog(`Answered to peer: peer=<${data.clientMeshId}>`);
+        log.info(`Answered to peer: peer=<${data.clientMeshId}>`);
+    }
+
+    heartbeatWebSocketAction (result, data) {
+        this.restartHeatbeat();
+
+        log.info(`Heartbeat: result=<${result ? 'OK' : 'NG'}>`);
     }
 
     broadcastRTCAction (peerMeshId, message) {

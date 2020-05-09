@@ -132,7 +132,7 @@ class Scratch3MeshBlocks {
      * Disconnect from the Mesh.
      */
     disconnect () {
-        this.meshService.disconnect();
+        this.meshService.requestDisconnect();
     }
 
     /**

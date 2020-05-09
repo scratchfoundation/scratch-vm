@@ -1,6 +1,10 @@
 const MeshService = require('./mesh-service');
 const BlockUtility = require('../../engine/block-utility.js');
 
+const log = require('../../util/log');
+const debugLogger = require('../../util/debug-logger');
+const debug = debugLogger(true);
+
 class MeshPeer extends MeshService {
     get logPrefix () {
         return 'Mesh Peer';
@@ -8,18 +12,18 @@ class MeshPeer extends MeshService {
 
     connect (hostMeshId) {
         if (this.connectionState === 'connected') {
-            this.infoLog('Already connected');
+            log.info('Already connected');
             return;
         }
         if (this.connectionState === 'connecting') {
-            this.infoLog('Now connecting, please wait to connect.');
+            log.info('Now connecting, please wait to connect.');
             return;
         }
 
         if (!hostMeshId || hostMeshId.trim() === '') {
             this.setConnectionState('request_error');
 
-            this.errorLog('Not select Host Mesh ID');
+            log.error('Not select Host Mesh ID');
             return;
         }
 
@@ -27,50 +31,50 @@ class MeshPeer extends MeshService {
 
         this.setConnectionState('connecting');
 
-        this.changeWebRTCIPHandlingPolicy();
+        this.changeWebRTCIPHandlingPolicy().then(() => {
+            const connection = this.openRTCPeerConnection(hostMeshId);
 
-        const connection = this.openRTCPeerConnection(hostMeshId);
+            connection.onconnectionstatechange = () => {
+                this.onRTCConnectionStateChange(connection, hostMeshId);
+            };
+            connection.onicecandidate = event => {
+                this.onRTCICECandidate(connection, hostMeshId, event, description => {
+                    debug(() => `Offer to Host: host=<${hostMeshId}> description=<\n` +
+                          `${JSON.stringify(description, null, 2)}\n` +
+                          `>`);
 
-        connection.onconnectionstatechange = () => {
-            this.onRTCConnectionStateChange(connection, hostMeshId);
-        };
-        connection.onicecandidate = event => {
-            this.onRTCICECandidate(connection, hostMeshId, event, description => {
-                this.debugLog(`Offer to Host: host=<${hostMeshId}> description=<\n` +
-                              `${JSON.stringify(description, null, 2)}\n` +
-                              `>`);
-
-                this.sendWebSocketMessage('offer', {
-                    meshId: this.meshId,
-                    hostMeshId: hostMeshId,
-                    clientDescription: description
+                    this.sendWebSocketMessage('offer', {
+                        meshId: this.meshId,
+                        hostMeshId: hostMeshId,
+                        clientDescription: description
+                    });
                 });
-            });
-        };
+            };
 
-        const dataChannel = connection.createDataChannel('dataChannel');
-        dataChannel.onopen = () => {
-            this.onRTCDataChannelOpen(connection, dataChannel, hostMeshId);
-        };
-        dataChannel.onmessage = e => {
-            this.onRTCDataChannelMessage(connection, dataChannel, hostMeshId, e);
-        };
-        dataChannel.onclose = () => {
-            this.onRTCDataChannelClose(connection, dataChannel, hostMeshId);
-        };
+            const dataChannel = connection.createDataChannel('dataChannel');
+            dataChannel.onopen = () => {
+                this.onRTCDataChannelOpen(connection, dataChannel, hostMeshId);
+            };
+            dataChannel.onmessage = e => {
+                this.onRTCDataChannelMessage(connection, dataChannel, hostMeshId, e);
+            };
+            dataChannel.onclose = () => {
+                this.onRTCDataChannelClose(connection, dataChannel, hostMeshId);
+            };
 
-        connection.createOffer().then(
-            desc => {
-                connection.setLocalDescription(desc);
-            },
-            error => {
-                this.setConnectionState('request_error');
-                this.errorLog(`Failed createOffer: host=<${hostMeshId}> reason=<${error}>`);
-            }
-        );
+            connection.createOffer().then(
+                desc => {
+                    connection.setLocalDescription(desc);
+                },
+                error => {
+                    this.setConnectionState('request_error');
+                    log.error(`Failed createOffer: host=<${hostMeshId}> reason=<${error}>`);
+                }
+            );
 
-        this.connectTimeoutId =
-            setTimeout(this.onConnectTimeout.bind(this), this.connectTimeoutSeconds * 1000);
+            this.connectTimeoutId =
+                setTimeout(this.onConnectTimeout.bind(this), this.connectTimeoutSeconds * 1000);
+        });
     }
 
     onConnectTimeout () {
@@ -87,38 +91,40 @@ class MeshPeer extends MeshService {
     }
 
     onWebSocketClose () {
-        this.debugLog('WebSocket closed.');
+        debug(() => 'WebSocket closed.');
     }
 
     offerWebSocketAction (result, data) {
         if (!result) {
             this.setConnectionState('request_error');
 
-            this.errorLog(`Failed to offer: reason=<${data.error}>`);
+            log.error(`Failed to offer: reason=<${data.error}>`);
             return;
         }
 
-        this.infoLog(`Offered to host: host=<${data.hostMeshId}>`);
+        log.info(`Offered to host: host=<${data.hostMeshId}>`);
     }
 
     answerWebSocketAction (result, data) {
         const hostMeshId = data.meshId;
 
         if (this.connectionState !== 'connecting') {
-            this.logError(`Received answer, but WebRTC not connecting: host=<${hostMeshId}>`);
+            log.error(`Received answer, but WebRTC not connecting: host=<${hostMeshId}>`);
             return;
         }
 
         if (data.clientMeshId !== this.meshId) {
-            this.setConnectionState('request_error');
+            this.disconnect();
 
-            this.logError(`Invalid Mesh ID in answer from host:` +
-                          ` host=<${hostMeshId}> received=<${data.clientMeshId}> own=<${this.meshId}>`);
+            log.error(`Invalid Mesh ID in answer from host:` +
+                      ` host=<${hostMeshId}> received=<${data.clientMeshId}> own=<${this.meshId}>`);
             return;
         }
 
         const connection = this.rtcConnections[hostMeshId];
         connection.setRemoteDescription(new RTCSessionDescription(data.hostDescription));
+
+        log.info(`Received answer and set host description: host=<${hostMeshId}>`);
     }
 
     onRTCDataChannelOpen (connection, dataChannel, peerMeshId) {
@@ -130,18 +136,20 @@ class MeshPeer extends MeshService {
     onRTCDataChannelClose (connection, dataChannel, peerMeshId) {
         MeshService.prototype.onRTCDataChannelClose.call(this, connection, dataChannel, peerMeshId);
 
-        this.setConnectionState('disconnected');
+        if (this.connectState !== 'disconnected') {
+            this.disconnect();
+        }
     }
 
     broadcastRTCAction (peerMeshId, message) {
         const broadcast = message.data;
 
         if (this.meshId === message.owner) {
-            this.debugLog(`Ignore broadcast: reason=<own broadcast> ${JSON.stringify(broadcast)}`);
+            debug(() => `Ignore broadcast: reason=<own broadcast> ${JSON.stringify(broadcast)}`);
             return;
         }
 
-        this.debugLog(`Process broadcast: name=<${broadcast.name}>`);
+        debug(() => `Process broadcast: name=<${broadcast.name}>`);
 
         const args = {
             BROADCAST_OPTION: {
@@ -160,7 +168,7 @@ class MeshPeer extends MeshService {
         const variable = message.data;
 
         if (this.meshId === message.owner) {
-            this.debugLog(`Ignore variable: reason=<own variable> ${JSON.stringify(variable)}`);
+            debug(() => `Ignore variable: reason=<own variable> ${JSON.stringify(variable)}`);
             return;
         }
 
