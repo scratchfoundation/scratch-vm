@@ -5,7 +5,7 @@ const log = require('../../util/log');
 const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(true);
 
-const HEATBEAT_MINUTES = 5;
+const HEATBEAT_MINUTES = 6;
 
 class MeshHost extends MeshService {
     constructor (blocks, meshId, webSocket) {
@@ -55,7 +55,9 @@ class MeshHost extends MeshService {
         clearTimeout(this.restartHeatbeatTimeoutId);
         this.restartHeatbeatTimeoutId = setTimeout(() => {
             if (this.connectionState === 'connected') {
-                this.sendWebSocketMessage('heartbeat', {});
+                this.sendWebSocketMessage('heartbeat', {
+                    meshId: this.meshId
+                });
 
                 this.restartHeatbeat();
             }
@@ -87,12 +89,10 @@ class MeshHost extends MeshService {
     }
 
     offerWebSocketAction (result, data) {
-        this.restartHeatbeat();
-
         const peerMeshId = data.meshId;
         if (data.hostMeshId !== this.meshId) {
-            this.logError(`Invalid Mesh ID in offer from peer:` +
-                          ` peer=<${peerMeshId}> received=<${data.hostMeshId}> own=<${this.meshId}>`);
+            log.error(`Invalid Mesh ID in offer from peer:` +
+                      ` peer=<${peerMeshId}> received=<${data.hostMeshId}> own=<${this.meshId}>`);
 
             this.sendWebSocketMessage('answer', {
                 meshId: this.meshId,
@@ -174,7 +174,13 @@ class MeshHost extends MeshService {
     heartbeatWebSocketAction (result, data) {
         this.restartHeatbeat();
 
-        log.info(`Heartbeat: result=<${result ? 'OK' : 'NG'}>`);
+        debug(() => `Heartbeat: result=<${result ? 'OK' : 'NG'}>`);
+
+        if (!result) {
+            log.error('Failed Heartbeat: reason=<Already expired>');
+
+            this.webSocket.close();
+        }
     }
 
     broadcastRTCAction (peerMeshId, message) {

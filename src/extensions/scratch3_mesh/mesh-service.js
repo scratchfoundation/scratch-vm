@@ -8,8 +8,7 @@ const debugLogger = require('../../util/debug-logger');
 const debug = debugLogger(true);
 
 const CHROME_MESH_EXTENSION_ID = 'ioaoebnfpgnbehdolokpdddomfnhpckn';
-//const MESH_WSS_URL = 'wss://api.smalruby.app/mesh-signaling';
-const MESH_WSS_URL = 'ws://localhost:8080';
+const MESH_WSS_URL = 'wss://api.smalruby.app/mesh-signaling';
 
 class MeshService {
     constructor (blocks, meshId, webSocket) {
