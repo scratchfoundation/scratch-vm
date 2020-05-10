@@ -130,9 +130,9 @@ class MeshService {
     }
 
     setConnectionState (connectionState) {
-        debug(() => `set connection state: from=<${this.connectionState}> to=<${connectionState}>`);
-
         const prevConnectionState = this.connectionState;
+
+        debug(() => `set connection state: from=<${prevConnectionState}> to=<${connectionState}>`);
 
         this.connectionState = connectionState;
 
