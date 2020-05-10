@@ -45,6 +45,8 @@ const OFF = 0;
 
 const DEFAULT_DC_MOTOR_POWER_RATIO = 50;
 
+const FPS = 30;
+
 class SmalrubotError extends Error {
     constructor(message) {
         super(message);
@@ -275,23 +277,31 @@ class Smalrubot {
 
         let promise = this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(0)}`);
 
+        const sleepSeconds = Math.round(1000 / FPS) / 1000;
+
         const readCommandLoop = retryCount => {
             debug(() => `readCommandLoop: retryCount=<${retryCount}>`);
 
-            return this.sleep(0.050).then(() => {
-                if (this.sensorValues[pin].updatedAt >= nowMilliseconds) {
-                    return Promise.resolve(this.sensorValues[pin].value);
-                }
-                retryCount--;
-                if (retryCount <= 0) {
-                    return Promise.resolve('0');
-                }
+            const updatedAt = this.sensorValues[pin].updatedAt;
+            const value = this.sensorValues[pin].value;
+            if (updatedAt >= nowMilliseconds) {
+                log.info(`Read sensor value: value=<${value}>` +
+                         ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
+                return Promise.resolve(value);
+            }
+            retryCount--;
+            if (retryCount <= 0) {
+                log.warn(`Timeouted reading sensor value, so return 0: old sensor value=<${value}>` +
+                         ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
+                return Promise.resolve('0');
+            }
 
-                return readCommandLoop(retryCount);
-            });
+            return this.sleep(sleepSeconds)
+                .then(() => readCommandLoop(retryCount));
         };
 
         return promise
+            .then(() => this.sleep(sleepSeconds))
             .then(() => readCommandLoop(10));
     }
 
