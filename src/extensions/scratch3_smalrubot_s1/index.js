@@ -98,10 +98,16 @@ class Smalrubot {
         };
     }
 
-    constructor () {
+    constructor (runtime) {
+        this.runtime = runtime;
+
         if ('serial' in navigator) {
             this.serial = navigator.serial;
         } else {
+            this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
+                extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
+            });
+
             throw new SmalrubotError('Web Serial API is not supported.');
         }
 
@@ -133,8 +139,20 @@ class Smalrubot {
         this.reader = null;
     }
 
+    emitRuntime(eventName, ...args) {
+        debug(() => {
+            let s = `emitRuntime: eventName=<${eventName}>`;
+            if (args.length > 0) {
+                s += ` args=<${JSON.stringify(...args)}>`;
+            }
+            return s;
+        });
+
+        return new Promise(() => this.runtime.emit(this.runtime.constructor[eventName], ...args));
+    }
+
     scan () {
-        debug(() => 'scan');
+        debug(() => 'Smalrubot.scan');
 
         return Promise.resolve()
             .then(() => {
@@ -149,20 +167,43 @@ class Smalrubot {
             }))
             .then(serialPort => {
                 this.serialPort = serialPort;
+
+                this.setConnectionState('scanned');
+            })
+            .catch(error => {
+                log.error(error);
+
+                this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
+                    extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
+                });
             });
     }
 
+    requestDisconnect () {
+        debug(() => 'Smalrubot.requestDisconnect');
+
+        this.setConnectionState('disconnecting');
+        this.disconnect();
+    }
+
     disconnect () {
-        debug(() => 'disconnect');
+        debug(() => 'Smalrubot.disconnect');
+
+        if (this.connectionState === 'disconnected') {
+            log.info('Already disconnected.');
+            return Promise.resolve();
+        }
 
         if (!this.serialPort) {
+            log.info('Already disconnected.');
+            this.setConnectionState('disconnected');
             return Promise.resolve();
         }
 
         return Promise.resolve()
             .then(() => {
                 if (this.connectionState === 'connected') {
-                    return this.action('stop');
+                    return this.stopAll();
                 }
                 return Promise.resolve();
             })
@@ -172,29 +213,32 @@ class Smalrubot {
             })
             .then(() => {
                 let promise = Promise.resolve();
-                if (this.connectionState !== 'disconnected') {
-                    if (this.reader) {
-                        promise = promise
-                            .then(() => this.reader.cancel())
-                            .catch(error => log.error(error));
-                    }
-
-                    if (this.writer) {
-                        promise = promise
-                            .then(() => this.writer.close())
-                            .catch(error => log.error(error));
-                    }
-
+                if (this.reader) {
                     promise = promise
-                        .then(() => this.serialPort.close())
+                        .then(() => this.reader.cancel())
+                        .then(() => {
+                            this.reader = null;
+                        })
+                        .catch(error => log.error(error));
+                }
+
+                if (this.writer) {
+                    promise = promise
+                        .then(() => this.writer.close())
                         .then(() => {
                             this.writer = null;
-                            this.reader = null;
-                            this.serialPort = null;
-
-                            this.setConnectionState('disconnected');
-                        });
+                        })
+                        .catch(error => log.error(error));
                 }
+
+                promise = promise
+                    .then(() => this.serialPort.close())
+                    .then(() => {
+                        this.serialPort = null;
+
+                        this.setConnectionState('disconnected');
+                    });
+
                 return promise;
             })
             .catch(error => {
@@ -212,16 +256,22 @@ class Smalrubot {
 
         debug(() => `writeCommand: command=<${commandName} (${command})> pin=<${pin}> value=<${value}>`);
 
-        return this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(value)}`);
+        try {
+            this.throwIfClosed();
+
+            return this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(value)}`).
+                catch(error => {
+                    log.error(`Error writing command: reason=<${error}>` +
+                              ` command=<${commandName} (${command})> pin=<${pin}>`);
+                });
+        } catch (error) {
+            log.error(`Error writing command: reason=<${error}>` +
+                      ` command=<${commandName} (${command})> pin=<${pin}>`);
+        }
+        return Promise.resolve();
     }
 
     write (message, wrap = true) {
-        this.throwIfClosed();
-
-        if (!this.serialPort.writable) {
-            return Promise.resolve();
-        }
-
         if (wrap) {
             message = `!${message}.`;
         }
@@ -260,46 +310,90 @@ class Smalrubot {
 
         debug(() => `readCommand: command=<${commandName} (${command})> pin=<${pin}>`);
 
-        if (!this.sensorValues[pin]) {
-            throw `Failed readCommand: reason=<Unknown pin> command=<${commandName} (${command})> pin=<${pin}>`;
+        try {
+            this.throwIfClosed();
+
+            if (!this.sensorValues[pin]) {
+                throw 'Unknown pin';
+            }
+
+            const nowMilliseconds = Number(new Date());
+
+            let promise =
+                this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(0)}`);
+
+            const sleepSeconds = Math.round(1000 / FPS) / 1000;
+
+            const readCommandLoop = retryRemaining => {
+                debug(() => `readCommandLoop: retry remaining=<${retryRemaining}>`);
+
+                const updatedAt = this.sensorValues[pin].updatedAt;
+                const value = this.sensorValues[pin].value;
+                if (updatedAt >= nowMilliseconds) {
+                    log.info(`Read sensor value: value=<${value}>` +
+                             ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
+                    return Promise.resolve(value);
+                }
+                retryRemaining--;
+                if (retryRemaining <= 0) {
+                    throw 'timeouted';
+                }
+
+                return this.sleep(sleepSeconds)
+                    .then(() => readCommandLoop(retryRemaining));
+            };
+
+            return promise
+                .then(() => this.sleep(sleepSeconds))
+                .then(() => readCommandLoop(10))
+                .catch(error => {
+                    const value = this.sensorValues[pin].value;
+                    const updatedAt = this.sensorValues[pin].updatedAt;
+                    log.error(`Error reading sensor value, so return 0: reason=<${error}>` +
+                              ` current sensor value=<${value}> updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
+
+                    return Promise.resolve('0');
+                });
+        } catch (error) {
+            log.error(`Error reading sensor value, so return 0: reason=<${error}>` +
+                      ` command=<${commandName} (${command})> pin=<${pin}>`);
+            return Promise.resolve('0');
         }
-
-        const nowMilliseconds = Number(new Date());
-
-        let promise = this.write(`${this.normalizeCommand(command)}${this.normalizePin(pin)}${this.normalizeValue(0)}`);
-
-        const sleepSeconds = Math.round(1000 / FPS) / 1000;
-
-        const readCommandLoop = retryRemaining => {
-            debug(() => `readCommandLoop: retry remaining=<${retryRemaining}>`);
-
-            const updatedAt = this.sensorValues[pin].updatedAt;
-            const value = this.sensorValues[pin].value;
-            if (updatedAt >= nowMilliseconds) {
-                log.info(`Read sensor value: value=<${value}>` +
-                         ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
-                return Promise.resolve(value);
-            }
-            retryRemaining--;
-            if (retryRemaining <= 0) {
-                log.warn(`Timeouted reading sensor value, so return 0: old sensor value=<${value}>` +
-                         ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
-                return Promise.resolve('0');
-            }
-
-            return this.sleep(sleepSeconds)
-                .then(() => readCommandLoop(retryRemaining));
-        };
-
-        return promise
-            .then(() => this.sleep(sleepSeconds))
-            .then(() => readCommandLoop(10));
     }
 
     setConnectionState (connectionState) {
-        debug(() => `Set connection state: from=<${this.connectionState}> to=<${connectionState}>`);
+        const prevConnectionState = this.connectionState;
+
+        debug(() => `Set connection state: from=<${prevConnectionState}> to=<${connectionState}>`);
 
         this.connectionState = connectionState;
+
+        switch (this.connectionState) {
+        case 'scanned':
+            this.emitRuntime('PERIPHERAL_LIST_UPDATE', {0: {peripheralId: 0}});
+            break;
+        case 'connected':
+            this.emitRuntime('PERIPHERAL_CONNECTED');
+            break;
+        case 'disconnected':
+            if (prevConnectionState === 'connecting') {
+                this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
+                    extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
+                });
+            } else if (prevConnectionState !== 'disconnecting' && prevConnectionState !== 'disconnected') {
+                this.emitRuntime('PERIPHERAL_CONNECTION_LOST_ERROR', {
+                    extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
+                });
+            }
+            this.emitRuntime('PERIPHERAL_DISCONNECTED');
+            break;
+        }
+    }
+
+    stopAll () {
+        debug(() => 'Smalrubot.stopAll');
+
+        return Promise.resolve();
     }
 
     sleep (seconds) {
@@ -309,7 +403,7 @@ class Smalrubot {
     }
 
     throwIfClosed () {
-        if (!this.serialPort) {
+        if (this.connectionState !== 'connecting' && this.connectionState !== 'connected') {
             throw new SmalrubotError('Serial port closed');
         }
     }
@@ -353,8 +447,8 @@ class Smalrubot {
 }
 
 class SmalrubotS1 extends Smalrubot {
-    constructor () {
-        super();
+    constructor (runtime) {
+        super(runtime);
 
         this.dcMotorPowerRatios = {
             left: DEFAULT_DC_MOTOR_POWER_RATIO,
@@ -429,15 +523,24 @@ class SmalrubotS1 extends Smalrubot {
                           if (this.sensorValues[pin]) {
                               this.sensorValues[pin].value = pinAndValue[1];
                               this.sensorValues[pin].updatedAt = Number(now);
+
                               debug(() => `Updated sensor value: pin=<${pin}>` +
                                     ` value=<${pinAndValue[1]}> updateAt=<${now.toLocaleString()}>`);
                           } else {
                               log.warn(`Could not update sensor value: reason=<Unknown pin>` +
                                        ` pin=<${pin}> value=<${pinAndValue[1]}>`);
                           }
+                      } else {
+                          log.warn(`Could not update sensor value: reason=<Invalid format>` +
+                                   ` line=<${this.lineToString(line)}>`);
                       }
                   }
                   return updateSensorValuesLoop();
+              }).
+              catch(error => {
+                  log.error(`Error reading from Smalrubot: reason=<${error}>`);
+
+                  this.disconnect();
               });
 
         return updateSensorValuesLoop();
@@ -446,7 +549,7 @@ class SmalrubotS1 extends Smalrubot {
     connect () {
         debug(() => 'connect');
 
-        if (!this.serialPort) {
+        if (this.connectionState !== 'scanned') {
             return Promise.reject('Failed to connect: reason=<Not scan>');
         }
 
@@ -482,7 +585,6 @@ class SmalrubotS1 extends Smalrubot {
             .then(() => this.initSensorPort(PORT_A5, PIDIRPHOTOREFLECTOR))
             .then(() => {
                 this.setConnectionState('connected');
-                return Promise.resolve();
             });
 
         promise = promise
@@ -619,6 +721,14 @@ class SmalrubotS1 extends Smalrubot {
         }
 
         return this.writeCommand('dc_motor_power', pin, power);
+    }
+
+    stopAll () {
+        debug(() => 'SmalrubotS1.stopAll');
+
+        return this.led('left', false)
+            .then(() => this.led('right', false))
+            .then(() => this.action('stop'));
     }
 }
 
@@ -770,18 +880,12 @@ class Scratch3SmalrubotS1Blocks {
     get smalrubot () {
         try {
             if (!this._smalrubot) {
-                this._smalrubot = new SmalrubotS1();
-                this._smalrubot.debugMode = true;
+                this._smalrubot = new SmalrubotS1(this.runtime);
             }
-            return this._smalrubot;
         } catch (e) {
             log.error(e);
-
-            this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
-                extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
-            });
         }
-        return null;
+        return this._smalrubot;
     }
 
     /**
@@ -1058,55 +1162,38 @@ class Scratch3SmalrubotS1Blocks {
         debug(() => 'scan');
 
         if (!this.smalrubot) {
-            this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
-                extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
-            });
             return;
         }
 
-        this.smalrubot.scan()
-            .then(() => this.emitRuntime('PERIPHERAL_LIST_UPDATE', {0: {peripheralId: 0}}))
-            .catch(error => this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
-                extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
-            }));
+        this.smalrubot.scan();
     }
 
     connect (id) {
         debug(() => `connect: id=<${id}>`);
 
         if (!this.smalrubot) {
-            this.emitRuntime('PERIPHERAL_REQUEST_ERROR', {
-                extensionId: Scratch3SmalrubotS1Blocks.EXTENSION_ID
-            });
             return;
         }
 
-        this.smalrubot.connect()
-            .then(() => this.emitRuntime('PERIPHERAL_CONNECTED'));
+        this.smalrubot.connect();
     }
 
     disconnect () {
         debug(() => 'disconnect');
 
         if (!this.smalrubot) {
-            this.emitRuntime('PERIPHERAL_DISCONNECTED');
             return;
         }
 
-        this.smalrubot.disconnect()
-            .then(() => this.emitRuntime('PERIPHERAL_DISCONNECTED'));
-    }
-
-    emitRuntime(eventName, ...args) {
-        debug(() => `emitRuntime: eventName=<${eventName}> args=<${JSON.stringify(...args)}>`);
-
-        return new Promise(() => this.runtime.emit(this.runtime.constructor[eventName], ...args));
+        this.smalrubot.requestDisconnect();
     }
 
     stopAll () {
-        this.turnLedOff({POSITION: 'left'});
-        this.turnLedOff({POSITION: 'right'});
-        this.action({ACTION: 'stop'});
+        if (!this.smalrubot) {
+            return;
+        }
+
+        this.smalrubot.stopAll();
     }
 }
 
