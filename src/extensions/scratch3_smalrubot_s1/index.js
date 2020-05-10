@@ -944,7 +944,7 @@ class Scratch3SmalrubotS1Blocks {
                     opcode: 'actionAndStopAfter',
                     text: formatMessage({
                         id: 'smalrubotS1.actionAndStopAfter',
-                        default: '[ACTION] for [SEC] seconds',
+                        default: '[ACTION] for [SECS] seconds',
                         description: 'actionAndStopAfter block text'
                     }),
                     blockType: BlockType.COMMAND,
@@ -954,7 +954,7 @@ class Scratch3SmalrubotS1Blocks {
                             menu: 'actions',
                             defaultValue: this.ACTIONS_MENU[0].value
                         },
-                        SEC: {
+                        SECS: {
                             type: ArgumentType.NUMBER,
                             defaultValue: 0.5
                         }
@@ -1066,15 +1066,15 @@ class Scratch3SmalrubotS1Blocks {
             ],
             menus: {
                 actions: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.ACTIONS_MENU
                 },
                 sensorPositions: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.SENSOR_POSITIONS_MENU
                 },
                 positions: {
-                    acceptReporters: true,
+                    acceptReporters: false,
                     items: this.POSITIONS_MENU
                 }
             }
@@ -1104,7 +1104,7 @@ class Scratch3SmalrubotS1Blocks {
             if (util.stackTimerNeedsInit()) {
                 debug(() => `actionAndStopAfter: args=<${JSON.stringify(args, null, 2)}>`);
 
-                const duration = Math.max(0, 1000 * Cast.toNumber(args.SEC));
+                const duration = Math.max(0, 1000 * Cast.toNumber(args.SECS));
                 util.startStackTimer(duration);
                 this.runtime.requestRedraw();
 
