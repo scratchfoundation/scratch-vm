@@ -55,7 +55,7 @@ const OFF = 0;
 
 const DEFAULT_DC_MOTOR_POWER_RATIO = 50;
 
-const SERVO_MOTOR_PORT = PORT_D2;
+const SERVO_MOTOR_PORT = PORT_D10;
 
 const FPS = 30;
 
