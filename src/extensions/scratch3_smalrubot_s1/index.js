@@ -126,13 +126,11 @@ class Smalrubot {
 
         this.connectionState = 'disconnected';
 
-        this.encoder = new TextEncoder();
         this.writer = null;
         this.writeQueue = [];
+        this.encoder = new TextEncoder();
 
-        this.decoder = new TextDecoder();
         this.reader = null;
-        this.readBuffer = '';
     }
 
     scan () {
@@ -190,9 +188,10 @@ class Smalrubot {
                     promise = promise
                         .then(() => this.serialPort.close())
                         .then(() => {
-                            this.reader = null;
                             this.writer = null;
+                            this.reader = null;
                             this.serialPort = null;
+
                             this.setConnectionState('disconnected');
                         });
                 }
@@ -232,34 +231,26 @@ class Smalrubot {
 
         this.writeQueue.push(bytes);
 
-        try {
-            this.writer = this.serialPort.writable.getWriter();
-        } catch (e) {
-            log.info(e);
+        if (this.writing) {
+            debug(() => `Now writing, so only add queue: message=<${message}>`);
             return Promise.resolve();
         }
+
+        this.writing = true;
 
         const writeLoop = () => {
             const bytes = this.writeQueue.shift();
             if (bytes) {
-                return this.writer.write(bytes).then(() => writeLoop());
+                return this.writer.write(bytes)
+                    .then(() => writeLoop());
             }
-            this.writer.releaseLock();
-            this.writer = null;
+            this.writing = false;
             return Promise.resolve();
-        };
-        const dispose = () => {
-            this.writer.releaseLock();
-            this.writer = null;
         };
         return writeLoop()
             .catch(error => {
-                try {
-                    this.writer.releaseLock();
-                    this.writer = null;
-                } catch (e) {
-                    log.error(e);
-                }
+                this.writing = false;
+
                 throw error;
             });
     }
@@ -279,8 +270,8 @@ class Smalrubot {
 
         const sleepSeconds = Math.round(1000 / FPS) / 1000;
 
-        const readCommandLoop = retryCount => {
-            debug(() => `readCommandLoop: retryCount=<${retryCount}>`);
+        const readCommandLoop = retryRemaining => {
+            debug(() => `readCommandLoop: retry remaining=<${retryRemaining}>`);
 
             const updatedAt = this.sensorValues[pin].updatedAt;
             const value = this.sensorValues[pin].value;
@@ -289,15 +280,15 @@ class Smalrubot {
                          ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
                 return Promise.resolve(value);
             }
-            retryCount--;
-            if (retryCount <= 0) {
+            retryRemaining--;
+            if (retryRemaining <= 0) {
                 log.warn(`Timeouted reading sensor value, so return 0: old sensor value=<${value}>` +
                          ` updatedAt=<${new Date(updatedAt).toLocaleString()}>`);
                 return Promise.resolve('0');
             }
 
             return this.sleep(sleepSeconds)
-                .then(() => readCommandLoop(retryCount));
+                .then(() => readCommandLoop(retryRemaining));
         };
 
         return promise
@@ -465,7 +456,7 @@ class SmalrubotS1 extends Smalrubot {
             .then(() => {
                 this.setConnectionState('connecting');
 
-                //this.writer = this.serialPort.writable.getWriter();
+                this.writer = this.serialPort.writable.getWriter();
                 this.reader = this.serialPort.readable.getReader();
 
                 this.updateSensorValues();
