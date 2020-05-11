@@ -147,6 +147,7 @@ class Smalrubot {
         this.connectionState = 'disconnected';
 
         this.writer = null;
+        this.writing = false;
         this.writeQueue = [];
         this.encoder = new TextEncoder();
 
@@ -232,6 +233,8 @@ class Smalrubot {
                         .then(() => this.writer.close())
                         .then(() => {
                             this.writer = null;
+                            this.writing = false;
+                            this.writeQueue = [];
                         })
                         .catch(error => log.error(error));
                 }
@@ -561,6 +564,9 @@ class SmalrubotS1 extends Smalrubot {
                 this.setConnectionState('connecting');
 
                 this.writer = this.serialPort.writable.getWriter();
+                this.writing = false;
+                this.writeQueue = [];
+
                 this.reader = this.serialPort.readable.getReader();
 
                 this.armDegree = 90;
