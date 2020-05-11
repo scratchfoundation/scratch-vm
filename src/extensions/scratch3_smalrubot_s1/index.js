@@ -197,7 +197,7 @@ class Smalrubot {
         debug(() => 'Smalrubot.requestDisconnect');
 
         this.setConnectionState('disconnecting');
-        this.disconnect();
+        return this.disconnect();
     }
 
     disconnect () {
@@ -214,17 +214,8 @@ class Smalrubot {
             return Promise.resolve();
         }
 
-        return Promise.resolve()
-            .then(() => {
-                if (this.connectionState === 'connected') {
-                    return this.stopAll();
-                }
-                return Promise.resolve();
-            })
-            .catch(error => {
-                log.error(error);
-                return Promise.resolve();
-            })
+        return this.stopAll()
+            .catch(error => log.error(error))
             .then(() => {
                 let promise = Promise.resolve();
                 if (this.reader) {
@@ -417,7 +408,7 @@ class Smalrubot {
     }
 
     throwIfClosed () {
-        if (this.connectionState !== 'connecting' && this.connectionState !== 'connected') {
+        if (this.connectionState === 'disconnected') {
             throw new SmalrubotError('Serial port closed');
         }
     }
@@ -1126,7 +1117,7 @@ class Scratch3SmalrubotS1Blocks {
     bendArm (args, util) {
         try {
             if (util.stackFrame.timer) {
-                if (!this.smalrubot) {
+                if (!this.smalrubot || !this.isConnected()) {
                     return;
                 }
 
@@ -1142,7 +1133,7 @@ class Scratch3SmalrubotS1Blocks {
             } else {
                 debug(() => `bendArm: args=<${JSON.stringify(args, null, 2)}>`);
 
-                if (!this.smalrubot) {
+                if (!this.smalrubot || !this.isConnected()) {
                     return;
                 }
 
