@@ -47,16 +47,12 @@ const KEY_ID_UP = 'UP';
  */
 const KEY_ID_DOWN = 'DOWN';
 
-/**
- * Names used by keyboard io for keys used in scratch.
- * @enum {string}
- */
-const SCRATCH_KEY_NAME = {
-    [KEY_ID_SPACE]: 'space',
-    [KEY_ID_LEFT]: 'left arrow',
-    [KEY_ID_UP]: 'up arrow',
-    [KEY_ID_RIGHT]: 'right arrow',
-    [KEY_ID_DOWN]: 'down arrow'
+const SCRATCH_KEY_TO_KEY_ID = {
+    'space': KEY_ID_SPACE,
+    'left arrow': KEY_ID_LEFT,
+    'up arrow': KEY_ID_UP,
+    'right arrow': KEY_ID_RIGHT,
+    'down arrow': KEY_ID_DOWN
 };
 
 /**
@@ -85,6 +81,24 @@ class Scratch3MakeyMakeyBlocks {
 
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
+
+        this.runtime.on('KEY_PRESSED', key => {
+            // the key arriving here is from the keyboard io module
+            // it is a 'scratch key' string such as "up arrow"
+            // the start hats function tries to match this to the value of the
+            // menu input on the block. these menu values are IDs used only here
+            // inside the extension, such as "UP".
+            let menuValue = SCRATCH_KEY_TO_KEY_ID[key];
+            if (!menuValue) {
+                menuValue = Cast.toString(key).toUpperCase();
+                if (menuValue.length > 1) {
+                    menuValue = menuValue[0];
+                }
+            }
+            this.runtime.startHats('makeymakey_whenMakeyKeyPressed', {
+                KEY: menuValue
+            });
+        });
 
         this._clearkeyPressBuffer = this._clearkeyPressBuffer.bind(this);
         this.runtime.on('PROJECT_STOP_ALL', this._clearkeyPressBuffer);
@@ -180,7 +194,8 @@ class Scratch3MakeyMakeyBlocks {
                         default: 'when [KEY] key pressed',
                         description: 'when a keyboard key is pressed'
                     }),
-                    blockType: BlockType.HAT,
+                    blockType: BlockType.EVENT,
+                    isEdgeActivated: false,
                     arguments: {
                         KEY: {
                             type: ArgumentType.STRING,
@@ -289,25 +304,6 @@ class Scratch3MakeyMakeyBlocks {
             text: sequenceArray.join(' '),
             value: sequenceString
         };
-    }
-
-    /*
-     * Check whether a keyboard key is currently pressed.
-     * Also, toggle the results of the test on alternate frames, so that the
-     * hat block fires repeatedly.
-     * @param {object} args - the block arguments.
-     * @property {number} KEY - a key code.
-     * @param {object} util - utility object provided by the runtime.
-     */
-    whenMakeyKeyPressed (args, util) {
-        let key = args.KEY;
-        // Convert the key arg, if it is a KEY_ID, to the key name used by
-        // the Keyboard io module.
-        if (SCRATCH_KEY_NAME[args.KEY]) {
-            key = SCRATCH_KEY_NAME[args.KEY];
-        }
-        const isDown = util.ioQuery('keyboard', 'getKeyIsDown', [key]);
-        return (isDown && this.frameToggle);
     }
 
     /*
