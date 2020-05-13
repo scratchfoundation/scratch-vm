@@ -866,13 +866,10 @@ class VirtualMachine extends EventEmitter {
         costume.rotationCenterX = rotationCenterX;
         costume.rotationCenterY = rotationCenterY;
 
-        // If the bitmap originally had a zero width or height, use that value
-        const bitmapWidth = bitmap.sourceWidth === 0 ? 0 : bitmap.width;
-        const bitmapHeight = bitmap.sourceHeight === 0 ? 0 : bitmap.height;
         // @todo: updateBitmapSkin does not take ImageData
         const canvas = document.createElement('canvas');
-        canvas.width = bitmapWidth;
-        canvas.height = bitmapHeight;
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
         const context = canvas.getContext('2d');
         context.putImageData(bitmap, 0, 0);
 
@@ -892,7 +889,7 @@ class VirtualMachine extends EventEmitter {
                 const storage = this.runtime.storage;
                 costume.dataFormat = storage.DataFormat.PNG;
                 costume.bitmapResolution = bitmapResolution;
-                costume.size = [bitmapWidth, bitmapHeight];
+                costume.size = [bitmap.width, bitmap.height];
                 costume.asset = storage.createAsset(
                     storage.AssetType.ImageBitmap,
                     costume.dataFormat,
@@ -904,10 +901,7 @@ class VirtualMachine extends EventEmitter {
                 costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
                 this.emitTargetsUpdate();
             });
-            // Bitmaps with a zero width or height return null for their blob
-            if (blob){
-                reader.readAsArrayBuffer(blob);
-            }
+            reader.readAsArrayBuffer(blob);
         });
     }
 
