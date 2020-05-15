@@ -92,10 +92,14 @@ class Scratch3EventBlocks {
     broadcastAndWait (args, util) {
         const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
             args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-        if (broadcastVar) {
-            const broadcastOption = broadcastVar.name;
+        // True if the block is waiting for the threads to finish
+        const isWaiting = util.stackFrame.startedThreads && util.stackFrame.startedThreads.length > 0;
+        // args may change during execution, making broadcastVar null
+        // However, we're still wating for the threads to finish.
+        if (broadcastVar || isWaiting) {
             // Have we run before, starting threads?
-            if (!util.stackFrame.startedThreads) {
+            if (!isWaiting) {
+                const broadcastOption = broadcastVar.name;
                 // No - start hats for this broadcast.
                 util.stackFrame.startedThreads = util.startHats(
                     'event_whenbroadcastreceived', {
@@ -127,6 +131,9 @@ class Scratch3EventBlocks {
                 } else {
                     util.yield();
                 }
+            } else {
+                // The threads are all finished. Clear the thread list and return.
+                delete util.stackFrame.startedThreads;
             }
         }
     }
