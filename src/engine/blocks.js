@@ -728,7 +728,12 @@ class Blocks {
 
         // Is this block a top-level block?
         if (typeof e.newParent === 'undefined') {
-            this._addScript(e.id);
+            // When you plug a block into a shadowed input, Blockly will move the shadow block into the top level before
+            // deleting it. Because we don't delete shadows here, instead keeping them on our blocks, the corresponding
+            // "delete" event will be ignored and the shadow would otherwise be added into the top level.
+            // TODO: Blockly inputs' connections keep their own copies of shadow blocks stashed away too.
+            // We should probably use those instead of duplicating the shadow-saving behavior.
+            if (!this._blocks[e.id].shadow) this._addScript(e.id);
         } else {
             // Remove script, if one exists.
             this._deleteScript(e.id);
