@@ -599,6 +599,98 @@ test('delete inputs', t => {
     t.end();
 });
 
+test('drop block into shadowed input', t => {
+    const b = new Blocks(new Runtime());
+    b.createBlock({
+        id: 'foo',
+        opcode: 'motion_movesteps',
+        inputs: {
+            STEPS: {
+                name: 'STEPS',
+                block: 'shadow',
+                shadow: 'shadow'
+            }
+        },
+        topLevel: true
+    });
+    b.createBlock({
+        id: 'shadow',
+        opcode: 'math_number',
+        inputs: {},
+        fields: {
+            NUM: {
+                name: 'NUM',
+                value: '25'
+            }
+        },
+        shadow: true,
+        topLevel: false
+    });
+
+    b.createBlock({
+        id: 'reporter',
+        opcode: 'looks_size',
+        inputs: {},
+        fields: {},
+        topLevel: true
+    });
+
+    // Mimic the series of events emitted by Blockly when you move a block into a shadowed input
+
+    // 1. Move the shadow block to the top level
+    b.moveBlock({
+        id: 'shadow',
+        oldParent: 'foo',
+        newParent: undefined
+    });
+
+    // 2: Delete the shadow block
+    b.deleteBlock('shadow');
+
+    // 3: Move the new block into the input
+    b.moveBlock({
+        id: 'reporter',
+        newParent: 'foo'
+    });
+
+    t.equals(b._scripts.indexOf('shadow'), -1, 'replaced shadow blocks should not be moved to the top level');
+    t.equals(b._scripts.length, 1);
+
+    // Now mimic the series of events when you move the block out of the shadowed input
+
+    // 1. Move the block back out of the shadowed input
+    b.moveBlock({
+        id: 'reporter',
+        oldParent: 'foo',
+        newParent: undefined
+    });
+
+    // 2. Re-create the shadow block
+    b.createBlock({
+        id: 'shadow',
+        opcode: 'math_number',
+        inputs: {},
+        fields: {
+            NUM: {
+                name: 'NUM',
+                value: '25'
+            }
+        },
+        shadow: true,
+        topLevel: false
+    });
+
+    // 3. Move the shadow block into the input
+    b.moveBlock({
+        id: 'shadow',
+        newParent: 'foo'
+    });
+
+    t.equals(b._scripts.indexOf('shadow'), -1, 're-created shadow blocks should not be moved to the top level');
+    t.equals(b._scripts.length, 2);
+    t.end();
+});
+
 test('updateAssetName function updates name in sound field', t => {
     const b = new Blocks(new Runtime());
     b.createBlock({
