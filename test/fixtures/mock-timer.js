@@ -79,15 +79,6 @@ class MockTimer {
     }
 
     /**
-     * Returns a time accurate relative to other times produced by this function.
-     * @returns {number} ms-scale accurate time relative to other relative times.
-     * @memberof MockTimer
-     */
-    relativeTime () {
-        return this._mockTime;
-    }
-
-    /**
      * Start a timer for measuring elapsed time.
      * @memberof MockTimer
      */
