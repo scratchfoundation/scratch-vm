@@ -16,6 +16,7 @@ const builtinExtensions = {
     pen: () => require('../extensions/scratch3_pen'),
     dssama: () => require('../extensions/scratch3_dssama'),
     weather: () => require('../extensions/scratch3_weatherforecast'),
+    gender: () => require('../extensions/scratch3_genderofpeople'),
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
     microbit: () => require('../extensions/scratch3_microbit'),

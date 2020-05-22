@@ -43,7 +43,7 @@ const ColorParam = {
  * @param {Runtime} runtime - the runtime instantiating this block package.
  * @constructor
  */
-class Scratch3DssamaBlocks {
+class Scratch3GenderOfPeopleBlocks {
     constructor(runtime) {
         /**
          * The runtime instantiating this block package.
@@ -119,8 +119,8 @@ class Scratch3DssamaBlocks {
     _clampPenSize(requestedSize) {
         return MathUtil.clamp(
             requestedSize,
-            Scratch3DssamaBlocks.PEN_SIZE_RANGE.min,
-            Scratch3DssamaBlocks.PEN_SIZE_RANGE.max
+            Scratch3GenderOfPeopleBlocks.PEN_SIZE_RANGE.min,
+            Scratch3GenderOfPeopleBlocks.PEN_SIZE_RANGE.max
         );
     }
 
@@ -145,10 +145,10 @@ class Scratch3DssamaBlocks {
      * @private
      */
     _getPenState(target) {
-        let penState = target.getCustomState(Scratch3DssamaBlocks.STATE_KEY);
+        let penState = target.getCustomState(Scratch3GenderOfPeopleBlocks.STATE_KEY);
         if (!penState) {
-            penState = Clone.simple(Scratch3DssamaBlocks.DEFAULT_PEN_STATE);
-            target.setCustomState(Scratch3DssamaBlocks.STATE_KEY, penState);
+            penState = Clone.simple(Scratch3GenderOfPeopleBlocks.DEFAULT_PEN_STATE);
+            target.setCustomState(Scratch3GenderOfPeopleBlocks.STATE_KEY, penState);
         }
         return penState;
     }
@@ -162,9 +162,9 @@ class Scratch3DssamaBlocks {
      */
     _onTargetCreated(newTarget, sourceTarget) {
         if (sourceTarget) {
-            const penState = sourceTarget.getCustomState(Scratch3DssamaBlocks.STATE_KEY);
+            const penState = sourceTarget.getCustomState(Scratch3GenderOfPeopleBlocks.STATE_KEY);
             if (penState) {
-                newTarget.setCustomState(Scratch3DssamaBlocks.STATE_KEY, Clone.simple(penState));
+                newTarget.setCustomState(Scratch3GenderOfPeopleBlocks.STATE_KEY, Clone.simple(penState));
                 if (penState.penDown) {
                     newTarget.addListener(RenderedTarget.EVENT_TARGET_MOVED, this._onTargetMoved);
                 }
@@ -284,11 +284,11 @@ class Scratch3DssamaBlocks {
      */
     getInfo() {
         return {
-            id: 'dssama',
+            id: 'gender',
             name: formatMessage({
-                id: 'dssama.categoryName',
-                default: 'Dssama',
-                description: 'Ingest some Data'
+                id: 'gender.categoryName',
+                default: 'Gender Of People',
+                description: 'Ingest some gender information'
             }),
             blockIconURI: blockIconURI,
             blocks: [
@@ -296,197 +296,21 @@ class Scratch3DssamaBlocks {
                     opcode: 'getClass',
                     blockType: BlockType.REPORTER,
                     text: formatMessage({
-                        id: 'dssama.ingest',
-                        default: 'Enter Model ID: [FLOW_ID] and your question: [QUEST]',
+                        id: 'gender.ingest',
+                        default: 'Enter Model ID: [FLOW_ID] and your gender information: [INFO]',
                         description: 'ingest data here'
                     }),
                     arguments: {
-                        QUEST: {
+                        INFO: {
                             type: ArgumentType.STRING,
-                            defaultValue: '[Question]'
+                            defaultValue: '[Information]'
                         },
                         FLOW_ID: {
                             type: ArgumentType.STRING,
                             defaultValue: '[FlowID]'
                         }
                     }
-                },
-                // {
-                //     opcode: 'stamp',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.stamp',
-                //         default: 'stamp',
-                //         description: 'render current costume on the background'
-                //     })
-                // },
-                // {
-                //     opcode: 'penDown',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.penDown',
-                //         default: 'pen down',
-                //         description: 'start leaving a trail when the sprite moves'
-                //     })
-                // },
-                // {
-                //     opcode: 'penUp',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.penUp',
-                //         default: 'pen up',
-                //         description: 'stop leaving a trail behind the sprite'
-                //     })
-                // },
-                // {
-                //     opcode: 'setPenColorToColor',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.setColor',
-                //         default: 'set pen color to [COLOR]',
-                //         description: 'set the pen color to a particular (RGB) value'
-                //     }),
-                //     arguments: {
-                //         COLOR: {
-                //             type: ArgumentType.COLOR
-                //         }
-                //     }
-                // },
-                // {
-                //     opcode: 'changePenColorParamBy',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.changeColorParam',
-                //         default: 'change pen [COLOR_PARAM] by [VALUE]',
-                //         description: 'change the state of a pen color parameter'
-                //     }),
-                //     arguments: {
-                //         COLOR_PARAM: {
-                //             type: ArgumentType.STRING,
-                //             menu: 'colorParam',
-                //             defaultValue: ColorParam.COLOR
-                //         },
-                //         VALUE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 10
-                //         }
-                //     }
-                // },
-                // {
-                //     opcode: 'setPenColorParamTo',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.setColorParam',
-                //         default: 'set pen [COLOR_PARAM] to [VALUE]',
-                //         description: 'set the state for a pen color parameter e.g. saturation'
-                //     }),
-                //     arguments: {
-                //         COLOR_PARAM: {
-                //             type: ArgumentType.STRING,
-                //             menu: 'colorParam',
-                //             defaultValue: ColorParam.COLOR
-                //         },
-                //         VALUE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 50
-                //         }
-                //     }
-                // },
-                // {
-                //     opcode: 'changePenSizeBy',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.changeSize',
-                //         default: 'change pen size by [SIZE]',
-                //         description: 'change the diameter of the trail left by a sprite'
-                //     }),
-                //     arguments: {
-                //         SIZE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     }
-                // },
-                // {
-                //     opcode: 'setPenSizeTo',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.setSize',
-                //         default: 'set pen size to [SIZE]',
-                //         description: 'set the diameter of a trail left by a sprite'
-                //     }),
-                //     arguments: {
-                //         SIZE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     }
-                // },
-                // /* Legacy blocks, should not be shown in flyout */
-                // {
-                //     opcode: 'setPenShadeToNumber',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.setShade',
-                //         default: 'set pen shade to [SHADE]',
-                //         description: 'legacy pen blocks - set pen shade'
-                //     }),
-                //     arguments: {
-                //         SHADE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     },
-                //     hideFromPalette: true
-                // },
-                // {
-                //     opcode: 'changePenShadeBy',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.changeShade',
-                //         default: 'change pen shade by [SHADE]',
-                //         description: 'legacy pen blocks - change pen shade'
-                //     }),
-                //     arguments: {
-                //         SHADE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     },
-                //     hideFromPalette: true
-                // },
-                // {
-                //     opcode: 'setPenHueToNumber',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.setHue',
-                //         default: 'set pen color to [HUE]',
-                //         description: 'legacy pen blocks - set pen color to number'
-                //     }),
-                //     arguments: {
-                //         HUE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     },
-                //     hideFromPalette: true
-                // },
-                // {
-                //     opcode: 'changePenHueBy',
-                //     blockType: BlockType.COMMAND,
-                //     text: formatMessage({
-                //         id: 'pen.changeHue',
-                //         default: 'change pen color by [HUE]',
-                //         description: 'legacy pen blocks - change pen color'
-                //     }),
-                //     arguments: {
-                //         HUE: {
-                //             type: ArgumentType.NUMBER,
-                //             defaultValue: 1
-                //         }
-                //     },
-                //     hideFromPalette: true
-                // }
+                }
             ],
             menus: {
                 colorParam: {
@@ -498,20 +322,24 @@ class Scratch3DssamaBlocks {
     }
 
     getClass(args) {
-        if (args.FLOW_ID && args.FLOW_ID != '[FlowID]' && args.QUEST && args.QUEST !== '[Question]') {
+        if (args.FLOW_ID && args.FLOW_ID != '[FlowID]' && args.INFO && args.INFO !== '[Information]') {
             try {
+                var res = args.INFO.split(",");
+                var array = Array.from(res)
                 const reqData = {
                     "datasets": [
                         {
                             "inputStageId": "",
-                            "idCol": "Id",
-                            "labelCol": "Class",
-                            "dataType": "text",
+                            "idCol": "id",
+                            "labelCol": "gender",
+                            "dataType": "tabular",
                             "data": [
                                 {
-                                    "Id": 1,
-                                    "Quest": args.QUEST,
-                                    "Class": ""
+                                    "id": 1,
+                                    "hobby": array[0],
+                                    "clothes_color": array[1],
+                                    "job": array[2],
+                                    "gender": ""
                                 }
                             ]
                         }
@@ -790,4 +618,4 @@ class Scratch3DssamaBlocks {
     }
 }
 
-module.exports = Scratch3DssamaBlocks;
+module.exports = Scratch3GenderOfPeopleBlocks;
