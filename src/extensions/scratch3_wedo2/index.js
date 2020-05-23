@@ -1543,10 +1543,10 @@ class Scratch3WeDo2Blocks {
     _isTilted (direction) {
         switch (direction) {
         case WeDo2TiltDirection.ANY:
-            return (this._peripheral.tiltX > 45 ? 256 - this._peripheral.tiltX : this._peripheral.tiltX) >=
-                Scratch3WeDo2Blocks.TILT_THRESHOLD ||
-                (this._peripheral.tiltY > 45 ? 256 - this._peripheral.tiltY : this._peripheral.tiltY) >=
-                Scratch3WeDo2Blocks.TILT_THRESHOLD;
+            return this._getTiltAngle(WeDo2TiltDirection.UP) >= Scratch3WeDo2Blocks.TILT_THRESHOLD ||
+                this._getTiltAngle(WeDo2TiltDirection.DOWN) >= Scratch3WeDo2Blocks.TILT_THRESHOLD ||
+                this._getTiltAngle(WeDo2TiltDirection.LEFT) >= Scratch3WeDo2Blocks.TILT_THRESHOLD ||
+                this._getTiltAngle(WeDo2TiltDirection.RIGHT) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
         default:
             return this._getTiltAngle(direction) >= Scratch3WeDo2Blocks.TILT_THRESHOLD;
         }
