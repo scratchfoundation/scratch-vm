@@ -330,7 +330,7 @@ class Target extends EventEmitter {
                             blockUpdated = t.blocks.updateSensingOfReference(
                                 oldName,
                                 newName,
-                                this.isStage ? '__stage__' : this.getName()
+                                this.isStage ? '_stage_' : this.getName()
                             ) || blockUpdated;
                         });
                         // Request workspace change only if sensing_of blocks were actually updated.
