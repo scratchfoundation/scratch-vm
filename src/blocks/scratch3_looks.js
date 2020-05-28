@@ -509,6 +509,8 @@ class Scratch3LooksBlocks {
                 Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.min,
                 Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.max);
             break;
+        default:
+            clampedValue = isFinite(clampedValue) ? clampedValue : 0;
         }
         return clampedValue;
     }
