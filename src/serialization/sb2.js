@@ -684,7 +684,9 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
         target.y = object.scratchY;
     }
     if (object.hasOwnProperty('direction')) {
-        target.direction = object.direction;
+        // Sometimes the direction can be outside of the range: LLK/scratch-gui#5806
+        // wrapClamp it (like we do on RenderedTarget.setDirection)
+        target.direction = MathUtil.wrapClamp(object.direction, -179, 180);
     }
     if (object.hasOwnProperty('isDraggable')) {
         target.draggable = object.isDraggable;
