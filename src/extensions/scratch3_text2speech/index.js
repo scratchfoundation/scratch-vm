@@ -648,7 +648,7 @@ class Scratch3Text2SpeechBlocks {
     setVoice (args, util) {
         const state = this._getState(util.target);
 
-        let voice = args.VOICE;
+        let voice = args.VOICE.toUpperCase();
 
         // If the arg is a dropped number, treat it as a voice index
         let voiceNum = parseInt(voice, 10);
