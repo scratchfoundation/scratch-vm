@@ -62,7 +62,7 @@
     "expose-loader": "0.7.5",
     "file-loader": "^2.0.0",
     "format-message-cli": "6.2.0",
-    "gh-pages": "^1.2.0",
+    "gh-pages": "^3.0.0",
     "in-publish": "^2.0.0",
     "jsdoc": "^3.5.5",
     "json": "^9.0.4",
