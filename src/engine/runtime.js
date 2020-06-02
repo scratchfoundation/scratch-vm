@@ -1383,6 +1383,7 @@ class Runtime extends EventEmitter {
                         target.isStage ? TargetType.STAGE : TargetType.SPRITE
                     );
                 }
+                // If the block info's `hideFromPalette` is true, then filter out this block
                 return blockFilterIncludesTarget && !block.info.hideFromPalette;
             });
 
