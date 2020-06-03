@@ -1,5 +1,6 @@
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
+const TargetType = require('../../extension-support/target-type');
 const Cast = require('../../util/cast');
 const Clone = require('../../util/clone');
 const Color = require('../../util/color');
@@ -306,7 +307,8 @@ class Scratch3PenBlocks {
                         id: 'pen.stamp',
                         default: 'stamp',
                         description: 'render current costume on the background'
-                    })
+                    }),
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'penDown',
@@ -315,7 +317,8 @@ class Scratch3PenBlocks {
                         id: 'pen.penDown',
                         default: 'pen down',
                         description: 'start leaving a trail when the sprite moves'
-                    })
+                    }),
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'penUp',
@@ -324,7 +327,8 @@ class Scratch3PenBlocks {
                         id: 'pen.penUp',
                         default: 'pen up',
                         description: 'stop leaving a trail behind the sprite'
-                    })
+                    }),
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'setPenColorToColor',
@@ -338,7 +342,8 @@ class Scratch3PenBlocks {
                         COLOR: {
                             type: ArgumentType.COLOR
                         }
-                    }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'changePenColorParamBy',
@@ -358,7 +363,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 10
                         }
-                    }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'setPenColorParamTo',
@@ -378,7 +384,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 50
                         }
-                    }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'changePenSizeBy',
@@ -393,7 +400,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 {
                     opcode: 'setPenSizeTo',
@@ -408,7 +416,8 @@ class Scratch3PenBlocks {
                             type: ArgumentType.NUMBER,
                             defaultValue: 1
                         }
-                    }
+                    },
+                    filter: [TargetType.SPRITE]
                 },
                 /* Legacy blocks, should not be shown in flyout */
                 {
