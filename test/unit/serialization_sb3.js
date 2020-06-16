@@ -290,6 +290,9 @@ test('getExtensionIdForOpcode', t => {
     // does not return anything for opcodes with no extension
     t.false(sb3.getExtensionIdForOpcode('hello'));
 
+    // forbidden characters must be replaced with '-'
+    t.equal(sb3.getExtensionIdForOpcode('hi:there/happy_people'), 'hi-there-happy');
+
     t.end();
 });
 
