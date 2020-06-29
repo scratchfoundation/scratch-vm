@@ -302,9 +302,12 @@ test('isTouchingMouse', t => {
     r.attachRenderer(renderer);
     const a = new RenderedTarget(s, r);
     a.renderer = renderer;
+    // (0, 0) is the top left, and (canvasWidth, canvasHeight) is the bottom right
     r.ioDevices.mouse.postData({
-        x: 0,
-        y: 0
+        canvasHeight: 360,
+        canvasWidth: 480,
+        x: 240,
+        y: 180
     });
     t.equals(a.isTouchingObject('__mouse__'), true);
     t.end();
