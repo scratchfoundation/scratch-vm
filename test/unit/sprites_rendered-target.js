@@ -291,7 +291,7 @@ test('isTouchingObjectOutsideStage', t => {
         x: 1000,
         y: -300
     });
-    t.equals(a.isTouchingObject('__mouse__'), false);
+    t.equals(a.isTouchingObject('_mouse_'), false);
     t.end();
 });
 
@@ -309,7 +309,7 @@ test('isTouchingMouse', t => {
         x: 240,
         y: 180
     });
-    t.equals(a.isTouchingObject('__mouse__'), true);
+    t.equals(a.isTouchingObject('_mouse_'), true);
     t.end();
 });
 
