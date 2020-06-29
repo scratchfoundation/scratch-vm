@@ -57,9 +57,6 @@ class Scratch3MeshBlocks {
          */
         this.meshService = new MeshService(this, this.meshId, null);
 
-        this.setOpcodeFunctionHOC();
-        this.setVariableFunctionHOC();
-
         this.runtime.registerPeripheralExtension(Scratch3MeshBlocks.EXTENSION_ID, this);
     }
 
@@ -119,6 +116,9 @@ class Scratch3MeshBlocks {
      * @param {string} meshId - the Mesh ID of the peripheral to connect to.
      */
     connect (meshId) {
+        this.setOpcodeFunctionHOC();
+        this.setVariableFunctionHOC();
+
         if (meshId === MESH_HOST_PERIPHERAL_ID) {
             this.meshService = new MeshHost(this, this.meshId, this.meshService.webSocket);
             this.meshService.connect();
@@ -170,6 +170,10 @@ class Scratch3MeshBlocks {
     }
 
     setOpcodeFunctionHOC () {
+        if (this.opcodeFunctions) {
+            return;
+        }
+
         this.opcodeFunctions = {
             event_broadcast: this.runtime.getOpcodeFunction('event_broadcast'),
             event_broadcastandwait: this.runtime.getOpcodeFunction('event_broadcastandwait'),
@@ -244,7 +248,18 @@ class Scratch3MeshBlocks {
     }
 
     setVariableFunctionHOC () {
+        if (this.variableFunctions) {
+            return;
+        }
+
         const stage = this.runtime.getTargetForStage();
+        if (stage) {
+            log.log('foo');
+        }
+        else {
+            log.log('bar');
+            return;
+        }
         this.variableFunctions = {
             runtime: {
                 createNewGlobalVariable: this.runtime.createNewGlobalVariable.bind(this.runtime)
