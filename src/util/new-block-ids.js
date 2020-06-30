@@ -4,6 +4,7 @@ const uid = require('./uid');
  * Mutate the given blocks to have new IDs and update all internal ID references.
  * Does not return anything to make it clear that the blocks are updated in-place.
  * @param {array} blocks - blocks to be mutated.
+ * @returns {object.<string, string>} - mapping of old block ID to new block ID
  */
 module.exports = blocks => {
     const oldToNew = {};
@@ -30,4 +31,6 @@ module.exports = blocks => {
             blocks[i].next = oldToNew[blocks[i].next];
         }
     }
+
+    return oldToNew;
 };

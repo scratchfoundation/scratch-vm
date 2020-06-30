@@ -15,7 +15,7 @@ class RenderedTarget extends Target {
      * @constructor
      */
     constructor (sprite, runtime) {
-        super(runtime, sprite.blocks);
+        super(runtime, sprite.blocks, sprite.comments);
 
         /**
          * Reference to the sprite that this is a render of.

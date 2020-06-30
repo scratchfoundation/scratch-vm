@@ -20,9 +20,10 @@ class Target extends EventEmitter {
     /**
      * @param {Runtime} runtime Reference to the runtime.
      * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
+     * @param {?Object.<string, *>} comments Array of comments owned by this target.
      * @constructor
      */
-    constructor (runtime, blocks) {
+    constructor (runtime, blocks, comments) {
         super();
 
         if (!blocks) {
@@ -55,7 +56,7 @@ class Target extends EventEmitter {
          * Key is the comment id.
          * @type {Object.<string,*>}
          */
-        this.comments = {};
+        this.comments = comments || {};
         /**
          * Dictionary of custom state for this target.
          * This can be used to store target-specific custom state for blocks which need it.
