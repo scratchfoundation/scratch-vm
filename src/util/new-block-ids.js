@@ -32,5 +32,6 @@ module.exports = blocks => {
         }
     }
 
+    // There are other things that need this mapping e.g. comments
     return oldToNew;
 };
