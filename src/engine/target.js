@@ -20,7 +20,7 @@ class Target extends EventEmitter {
     /**
      * @param {Runtime} runtime Reference to the runtime.
      * @param {?Blocks} blocks Blocks instance for the blocks owned by this target.
-     * @param {?Object.<string, *>} comments Array of comments owned by this target.
+     * @param {?Object.<string, Comment>} comments Array of comments owned by this target.
      * @constructor
      */
     constructor (runtime, blocks, comments) {

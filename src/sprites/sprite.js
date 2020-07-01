@@ -60,7 +60,7 @@ class Sprite {
         /**
          * Dictionary of comments for this target.
          * Key is the comment id.
-         * @type {Object.<string,*>}
+         * @type {Object.<string, Comment>}
          */
         this.comments = {};
     }
@@ -157,7 +157,7 @@ class Sprite {
         Object.keys(this.comments).forEach(commentId => {
             const comment = this.comments[commentId];
             const newComment = new Comment(
-                null, // use new comment id
+                null, // generate new comment id
                 comment.text,
                 comment.x,
                 comment.y,
@@ -165,6 +165,9 @@ class Sprite {
                 comment.height,
                 comment.minimized
             );
+            // If the comment is attached to a block, it has a blockId property for the block it's attached to.
+            // Because we generate new block IDs for all the duplicated blocks, change all the comments' attached-block
+            // IDs from the old block IDs to the new ones.
             if (comment.blockId) {
                 const newBlockId = oldToNew[comment.blockId];
                 if (newBlockId) {
@@ -173,10 +176,14 @@ class Sprite {
                     if (newBlock) {
                         newBlock.comment = newComment.id;
                     } else {
-                        log.warn(`Could not find block with id ${newBlockId
-                        } associated with comment ${newComment.id}`);
+                        log.warn(`Could not find block with id ${newBlockId} associated with comment ${newComment.id}`);
                     }
                 } else {
+                    // Comments did not get deleted when the block got deleted
+                    // Such comments have blockId, but because the block is deleted
+                    // oldToNew mapping does not include that blockId
+                    // Handle it as workspace comment
+                    // TODO do not load such comments when deserializing
                     log.warn(`Could not find block with id ${comment.blockId
                     } associated with comment ${comment.id} in the block ID mapping`);
                 }
