@@ -17,7 +17,8 @@ const MonitorRecord = Record({
     y: null,
     width: 0,
     height: 0,
-    visible: true
+    visible: true,
+    highlightItem: null // do not highlight anything (only applicable to list monitors)
 });
 
 module.exports = MonitorRecord;

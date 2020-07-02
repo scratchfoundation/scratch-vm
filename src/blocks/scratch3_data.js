@@ -128,6 +128,7 @@ class Scratch3DataBlocks {
             args.LIST.id, args.LIST.name);
         if (list.value.length < Scratch3DataBlocks.LIST_ITEM_LIMIT) {
             list.value.push(args.ITEM);
+            util.highlightListItem(list, list.value.length - 1);
             list._monitorUpToDate = false;
         }
     }
@@ -143,6 +144,7 @@ class Scratch3DataBlocks {
             return;
         }
         list.value.splice(index - 1, 1);
+        util.highlightListItem(list, index - 1);
         list._monitorUpToDate = false;
     }
 
@@ -169,6 +171,7 @@ class Scratch3DataBlocks {
             // remove the last element in the list
             list.value.pop();
         }
+        util.highlightListItem(list, index - 1);
         list._monitorUpToDate = false;
     }
 
@@ -181,6 +184,7 @@ class Scratch3DataBlocks {
             return;
         }
         list.value[index - 1] = item;
+        util.highlightListItem(list, index - 1);
         list._monitorUpToDate = false;
     }
 
@@ -191,6 +195,7 @@ class Scratch3DataBlocks {
         if (index === Cast.LIST_INVALID) {
             return '';
         }
+        util.highlightListItem(list, index - 1);
         return list.value[index - 1];
     }
 

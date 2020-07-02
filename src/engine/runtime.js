@@ -351,6 +351,11 @@ class Runtime extends EventEmitter {
         this.peripheralExtensions = {};
 
         /**
+         * An object used to store list highlight information
+        */
+        this._highlightItems = {};
+
+        /**
          * A runtime profiler that records timed events for later playback to
          * diagnose Scratch performance.
          * @type {Profiler}
@@ -2038,6 +2043,8 @@ class Runtime extends EventEmitter {
         }
         this.redrawRequested = false;
         this._pushMonitors();
+        this._highlightItems = {};
+
         if (this.profiler !== null) {
             if (stepThreadsProfilerId === -1) {
                 stepThreadsProfilerId = this.profiler.idByName('Sequencer.stepThreads');
@@ -2075,6 +2082,13 @@ class Runtime extends EventEmitter {
             this.emit(Runtime.TARGETS_UPDATE, false /* Don't emit project changed */);
             this._refreshTargets = false;
         }
+
+        // These are all highlights requested in this tick
+        // Add it to highlight pending list
+        Object.keys(this._highlightItems).forEach(id => this.requestUpdateMonitor(new Map([
+            ['id', id],
+            ['highlightItem', this._highlightItems[id]]
+        ])));
 
         if (!this._prevMonitorState.equals(this._monitorState)) {
             this.emit(Runtime.MONITORS_UPDATE, this._monitorState);
@@ -2518,6 +2532,19 @@ class Runtime extends EventEmitter {
         const stage = this.getTargetForStage();
         stage.variables[variable.id] = variable;
         return variable;
+    }
+
+    /**
+     * Request an item to be highlighted on the list monitor.
+     * Only one item will be highlighted per tick.
+     * Index can be -1 to remove highlighting.
+     * @param {string} listId ID of the list.
+     * @param {number} index the index to highlight.
+    */
+    highlightListItem (listId, index) {
+        // in case index clamps to -1
+        if (index === -1) index = null;
+        this._highlightItems[listId] = index;
     }
 
     /**

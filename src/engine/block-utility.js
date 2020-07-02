@@ -1,5 +1,6 @@
 const Thread = require('./thread');
 const Timer = require('../util/timer');
+const MathUtil = require('../util/math-util');
 
 /**
  * @fileoverview
@@ -234,6 +235,21 @@ class BlockUtility {
             const devObject = this.sequencer.runtime.ioDevices[device];
             return devObject[func].apply(devObject, args);
         }
+    }
+
+    /**
+     * Highlight list item.
+     * @param {Variable} list The list variable.
+     * @param {number} index The index to highlight.
+    */
+    highlightListItem (list, index) {
+        if (list.type !== 'list') return;
+        const listId = list.id;
+        const monitorBlock = this.sequencer.runtime.monitorBlocks.getBlock(listId);
+        // we do not need to highlight
+        if (!monitorBlock || !monitorBlock.isMonitored) return;
+        index = MathUtil.clamp(index, -1, list.value.length - 1);
+        this.sequencer.runtime.highlightListItem(listId, index);
     }
 }
 
