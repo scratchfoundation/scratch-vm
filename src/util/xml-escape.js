@@ -1,4 +1,4 @@
-const log = require('./log');
+import log from './log';
 
 /**
  * Escape a string to be safe to use in XML content.
@@ -30,4 +30,4 @@ const xmlEscape = function (unsafe) {
     });
 };
 
-module.exports = xmlEscape;
+export default xmlEscape;

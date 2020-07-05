@@ -81,4 +81,4 @@ class ScratchLinkWebSocket {
     }
 }
 
-module.exports = ScratchLinkWebSocket;
+export default ScratchLinkWebSocket;

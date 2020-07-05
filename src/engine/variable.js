@@ -3,8 +3,9 @@
  * Object representing a Scratch variable.
  */
 
-const uid = require('../util/uid');
-const xmlEscape = require('../util/xml-escape');
+import uid from '../util/uid';
+
+import xmlEscape from '../util/xml-escape';
 
 class Variable {
     /**
@@ -67,4 +68,4 @@ class Variable {
     }
 }
 
-module.exports = Variable;
+export default Variable;

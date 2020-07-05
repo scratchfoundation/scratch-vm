@@ -1,6 +1,6 @@
-const MathUtil = require('../util/math-util');
-const Cast = require('../util/cast');
-const Clone = require('../util/clone');
+import MathUtil from '../util/math-util';
+import Cast from '../util/cast';
+import Clone from '../util/clone';
 
 /**
  * Occluded boolean value to make its use more understandable.
@@ -347,4 +347,4 @@ class Scratch3SoundBlocks {
     }
 }
 
-module.exports = Scratch3SoundBlocks;
+export default Scratch3SoundBlocks;

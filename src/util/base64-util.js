@@ -1,5 +1,5 @@
-const atob = require('atob');
-const btoa = require('btoa');
+import atob from 'atob';
+import btoa from 'btoa';
 
 class Base64Util {
 
@@ -45,4 +45,4 @@ class Base64Util {
 
 }
 
-module.exports = Base64Util;
+export default Base64Util;

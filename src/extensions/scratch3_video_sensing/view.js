@@ -1,4 +1,4 @@
-const {motionVector} = require('./math');
+import { motionVector } from './math';
 
 const WIDTH = 480;
 const HEIGHT = 360;
@@ -506,4 +506,4 @@ class VideoMotionView {
     }
 }
 
-module.exports = VideoMotionView;
+export default VideoMotionView;

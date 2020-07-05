@@ -25,4 +25,4 @@ class MouseWheel {
     }
 }
 
-module.exports = MouseWheel;
+export default MouseWheel;

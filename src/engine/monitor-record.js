@@ -1,4 +1,4 @@
-const {Record} = require('immutable');
+import { Record } from 'immutable';
 
 const MonitorRecord = Record({
     id: null, // Block Id
@@ -20,4 +20,4 @@ const MonitorRecord = Record({
     visible: true
 });
 
-module.exports = MonitorRecord;
+export default MonitorRecord;

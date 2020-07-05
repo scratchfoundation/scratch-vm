@@ -5,23 +5,23 @@
  * scratch-vm runtime structures.
  */
 
-const Blocks = require('../engine/blocks');
-const RenderedTarget = require('../sprites/rendered-target');
-const Sprite = require('../sprites/sprite');
-const Color = require('../util/color');
-const log = require('../util/log');
-const uid = require('../util/uid');
-const StringUtil = require('../util/string-util');
-const MathUtil = require('../util/math-util');
-const specMap = require('./sb2_specmap');
-const Comment = require('../engine/comment');
-const Variable = require('../engine/variable');
-const MonitorRecord = require('../engine/monitor-record');
-const StageLayering = require('../engine/stage-layering');
+import Blocks from '../engine/blocks';
 
-const {loadCostume} = require('../import/load-costume.js');
-const {loadSound} = require('../import/load-sound.js');
-const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
+import RenderedTarget from '../sprites/rendered-target';
+import Sprite from '../sprites/sprite';
+import Color from '../util/color';
+import log from '../util/log';
+import uid from '../util/uid';
+import StringUtil from '../util/string-util';
+import MathUtil from '../util/math-util';
+import specMap from './sb2_specmap';
+import Comment from '../engine/comment';
+import Variable from '../engine/variable';
+import MonitorRecord from '../engine/monitor-record';
+import StageLayering from '../engine/stage-layering';
+import { loadCostume } from '../import/load-costume.js';
+import { loadSound } from '../import/load-sound.js';
+import { deserializeCostume, deserializeSound } from './deserialize-assets.js';
 
 // Constants used during deserialization of an SB2 file
 const CORE_EXTENSIONS = [
@@ -1288,6 +1288,6 @@ const parseBlock = function (sb2block, addBroadcastMsg, getVariableId, extension
     return [activeBlock, commentIndex];
 };
 
-module.exports = {
+export default {
     deserialize: sb2import
 };

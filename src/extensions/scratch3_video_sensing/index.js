@@ -1,13 +1,11 @@
-const Runtime = require('../../engine/runtime');
-
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Clone = require('../../util/clone');
-const Cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const Video = require('../../io/video');
-
-const VideoMotion = require('./library');
+import Runtime from '../../engine/runtime';
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Clone from '../../util/clone';
+import Cast from '../../util/cast';
+import formatMessage from 'format-message';
+import Video from '../../io/video';
+import VideoMotion from './library';
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -585,4 +583,4 @@ class Scratch3VideoSensingBlocks {
     }
 }
 
-module.exports = Scratch3VideoSensingBlocks;
+export default Scratch3VideoSensingBlocks;

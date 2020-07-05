@@ -3,8 +3,9 @@
  * Object representing a Scratch Comment (block or workspace).
  */
 
-const uid = require('../util/uid');
-const xmlEscape = require('../util/xml-escape');
+import uid from '../util/uid';
+
+import xmlEscape from '../util/xml-escape';
 
 class Comment {
     /**
@@ -53,4 +54,4 @@ class Comment {
 
 }
 
-module.exports = Comment;
+export default Comment;

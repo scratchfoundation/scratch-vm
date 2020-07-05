@@ -1,11 +1,11 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const log = require('../../util/log');
-const formatMessage = require('format-message');
-const MathUtil = require('../../util/math-util');
-const BLE = require('../../io/ble');
-const godirect = require('@vernier/godirect/dist/godirect.min.umd.js');
-const ScratchLinkDeviceAdapter = require('./scratch-link-device-adapter');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import log from '../../util/log';
+import formatMessage from 'format-message';
+import MathUtil from '../../util/math-util';
+import BLE from '../../io/ble';
+import godirect from '@vernier/godirect/dist/godirect.min.umd.js';
+import ScratchLinkDeviceAdapter from './scratch-link-device-adapter';
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -978,4 +978,4 @@ class Scratch3GdxForBlocks {
     }
 }
 
-module.exports = Scratch3GdxForBlocks;
+export default Scratch3GdxForBlocks;

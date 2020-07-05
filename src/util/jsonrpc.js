@@ -111,4 +111,4 @@ class JSONRPC {
     }
 }
 
-module.exports = JSONRPC;
+export default JSONRPC;

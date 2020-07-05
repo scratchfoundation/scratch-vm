@@ -1,4 +1,4 @@
-const Timer = require('../util/timer');
+import Timer from '../util/timer';
 
 class Clock {
     constructor (runtime) {
@@ -36,4 +36,4 @@ class Clock {
     }
 }
 
-module.exports = Clock;
+export default Clock;

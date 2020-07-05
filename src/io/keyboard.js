@@ -1,4 +1,4 @@
-const Cast = require('../util/cast');
+import Cast from '../util/cast';
 
 /**
  * Names used internally for keys used in scratch, also known as "scratch keys".
@@ -143,4 +143,4 @@ class Keyboard {
     }
 }
 
-module.exports = Keyboard;
+export default Keyboard;

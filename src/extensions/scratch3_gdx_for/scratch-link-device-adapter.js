@@ -1,4 +1,4 @@
-const Base64Util = require('../../util/base64-util');
+import Base64Util from '../../util/base64-util';
 
 /**
  * Adapter class
@@ -41,4 +41,4 @@ class ScratchLinkDeviceAdapter {
     }
 }
 
-module.exports = ScratchLinkDeviceAdapter;
+export default ScratchLinkDeviceAdapter;

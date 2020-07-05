@@ -1,13 +1,13 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const color = require('../../util/color');
-const BLE = require('../../io/ble');
-const Base64Util = require('../../util/base64-util');
-const MathUtil = require('../../util/math-util');
-const RateLimiter = require('../../util/rateLimiter.js');
-const log = require('../../util/log');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Cast from '../../util/cast';
+import formatMessage from 'format-message';
+import color from '../../util/color';
+import BLE from '../../io/ble';
+import Base64Util from '../../util/base64-util';
+import MathUtil from '../../util/math-util';
+import RateLimiter from '../../util/rateLimiter.js';
+import log from '../../util/log';
 
 /**
  * The LEGO Wireless Protocol documentation used to create this extension can be found at:
@@ -1030,7 +1030,7 @@ class Boost {
         const portID = data[3];
 
         switch (messageType) {
-        
+
         case BoostMessage.HUB_PROPERTIES: {
             const property = data[3];
             switch (property) {
@@ -2110,4 +2110,4 @@ class Scratch3BoostBlocks {
     }
 }
 
-module.exports = Scratch3BoostBlocks;
+export default Scratch3BoostBlocks;

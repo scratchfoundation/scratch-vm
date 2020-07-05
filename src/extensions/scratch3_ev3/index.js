@@ -1,13 +1,13 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const uid = require('../../util/uid');
-const BT = require('../../io/bt');
-const Base64Util = require('../../util/base64-util');
-const MathUtil = require('../../util/math-util');
-const RateLimiter = require('../../util/rateLimiter.js');
-const log = require('../../util/log');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Cast from '../../util/cast';
+import formatMessage from 'format-message';
+import uid from '../../util/uid';
+import BT from '../../io/bt';
+import Base64Util from '../../util/base64-util';
+import MathUtil from '../../util/math-util';
+import RateLimiter from '../../util/rateLimiter.js';
+import log from '../../util/log';
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -1352,4 +1352,4 @@ class Scratch3Ev3Blocks {
     }
 }
 
-module.exports = Scratch3Ev3Blocks;
+export default Scratch3Ev3Blocks;

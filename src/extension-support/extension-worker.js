@@ -1,9 +1,10 @@
 /* eslint-env worker */
 
-const ArgumentType = require('../extension-support/argument-type');
-const BlockType = require('../extension-support/block-type');
-const dispatch = require('../dispatch/worker-dispatch');
-const TargetType = require('../extension-support/target-type');
+import ArgumentType from '../extension-support/argument-type';
+
+import BlockType from '../extension-support/block-type';
+import dispatch from '../dispatch/worker-dispatch';
+import TargetType from '../extension-support/target-type';
 
 class ExtensionWorker {
     constructor () {

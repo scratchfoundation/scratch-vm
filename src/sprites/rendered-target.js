@@ -1,9 +1,9 @@
-const MathUtil = require('../util/math-util');
-const StringUtil = require('../util/string-util');
-const Cast = require('../util/cast');
-const Clone = require('../util/clone');
-const Target = require('../engine/target');
-const StageLayering = require('../engine/stage-layering');
+import MathUtil from '../util/math-util';
+import StringUtil from '../util/string-util';
+import Cast from '../util/cast';
+import Clone from '../util/clone';
+import Target from '../engine/target';
+import StageLayering from '../engine/stage-layering';
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -1112,4 +1112,4 @@ class RenderedTarget extends Target {
     }
 }
 
-module.exports = RenderedTarget;
+export default RenderedTarget;

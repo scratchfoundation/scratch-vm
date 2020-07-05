@@ -22,7 +22,7 @@ const _motionVectorOut = {u: 0, v: 0};
  * @param {UV} out - optional object to store return UV info in
  * @returns {UV} a uv vector representing the motion for the given input
  */
-const motionVector = function (A2, A1B2, B1, C2, C1, out = _motionVectorOut) {
+export const motionVector = function (A2, A1B2, B1, C2, C1, out = _motionVectorOut) {
     // Compare sums of X * Y and sums of X squared and Y squared.
     const delta = ((A1B2 * A1B2) - (A2 * B1));
     if (delta) {
@@ -54,7 +54,7 @@ const motionVector = function (A2, A1B2, B1, C2, C1, out = _motionVectorOut) {
  * @param {number} degrees - angle in range -180 to 180
  * @returns {number} angle from Scratch's reference angle
  */
-const scratchDegrees = function (degrees) {
+export const scratchDegrees = function (degrees) {
     return ((degrees + 270) % 360) - 180;
 };
 
@@ -65,11 +65,11 @@ const scratchDegrees = function (degrees) {
  * @param {number} x - the x component of a 2d vector
  * @returns {number} angle in degrees in Scratch's coordinate plane
  */
-const scratchAtan2 = function (y, x) {
+export const scratchAtan2 = function (y, x) {
     return scratchDegrees(Math.atan2(y, x) * TO_DEGREE);
 };
 
-module.exports = {
+export default {
     motionVector,
     scratchDegrees,
     scratchAtan2

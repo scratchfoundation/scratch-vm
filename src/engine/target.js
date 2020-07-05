@@ -1,13 +1,12 @@
-const EventEmitter = require('events');
-
-const Blocks = require('./blocks');
-const Variable = require('../engine/variable');
-const Comment = require('../engine/comment');
-const uid = require('../util/uid');
-const {Map} = require('immutable');
-const log = require('../util/log');
-const StringUtil = require('../util/string-util');
-const VariableUtil = require('../util/variable-util');
+import EventEmitter from 'events';
+import Blocks from './blocks';
+import Variable from '../engine/variable';
+import Comment from '../engine/comment';
+import uid from '../util/uid';
+import { Map } from 'immutable';
+import log from '../util/log';
+import StringUtil from '../util/string-util';
+import VariableUtil from '../util/variable-util';
 
 /**
  * @fileoverview
@@ -796,4 +795,4 @@ class Target extends EventEmitter {
 
 }
 
-module.exports = Target;
+export default Target;

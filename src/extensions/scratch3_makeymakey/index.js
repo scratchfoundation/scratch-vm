@@ -1,7 +1,7 @@
-const formatMessage = require('format-message');
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Cast = require('../../util/cast');
+import formatMessage from 'format-message';
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Cast from '../../util/cast';
 
 /**
  * Icon svg to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -393,4 +393,4 @@ class Scratch3MakeyMakeyBlocks {
         return this.sequences[sequenceString].completed;
     }
 }
-module.exports = Scratch3MakeyMakeyBlocks;
+export default Scratch3MakeyMakeyBlocks;

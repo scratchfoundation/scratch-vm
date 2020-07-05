@@ -1,45 +1,53 @@
-const EventEmitter = require('events');
-const {OrderedMap} = require('immutable');
-
-const ArgumentType = require('../extension-support/argument-type');
-const Blocks = require('./blocks');
-const BlocksRuntimeCache = require('./blocks-runtime-cache');
-const BlockType = require('../extension-support/block-type');
-const Profiler = require('./profiler');
-const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
-const ScratchBlocksConstants = require('./scratch-blocks-constants');
-const TargetType = require('../extension-support/target-type');
-const Thread = require('./thread');
-const log = require('../util/log');
-const maybeFormatMessage = require('../util/maybe-format-message');
-const StageLayering = require('./stage-layering');
-const Variable = require('./variable');
-const xmlEscape = require('../util/xml-escape');
-const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
+import EventEmitter from 'events';
+import { OrderedMap } from 'immutable';
+import ArgumentType from '../extension-support/argument-type';
+import Blocks from './blocks';
+import BlocksRuntimeCache from './blocks-runtime-cache';
+import BlockType from '../extension-support/block-type';
+import Profiler from './profiler';
+import Sequencer from './sequencer';
+import execute from './execute.js';
+import ScratchBlocksConstants from './scratch-blocks-constants';
+import TargetType from '../extension-support/target-type';
+import Thread from './thread';
+import log from '../util/log';
+import maybeFormatMessage from '../util/maybe-format-message';
+import StageLayering from './stage-layering';
+import Variable from './variable';
+import xmlEscape from '../util/xml-escape';
+import ScratchLinkWebSocket from '../util/scratch-link-websocket';
 
 // Virtual I/O devices.
-const Clock = require('../io/clock');
-const Cloud = require('../io/cloud');
-const Keyboard = require('../io/keyboard');
-const Mouse = require('../io/mouse');
-const MouseWheel = require('../io/mouseWheel');
-const UserData = require('../io/userData');
-const Video = require('../io/video');
+import Clock from '../io/clock';
 
-const StringUtil = require('../util/string-util');
-const uid = require('../util/uid');
+import Cloud from '../io/cloud';
+import Keyboard from '../io/keyboard';
+import Mouse from '../io/mouse';
+import MouseWheel from '../io/mouseWheel';
+import UserData from '../io/userData';
+import Video from '../io/video';
+import StringUtil from '../util/string-util';
+import uid from '../util/uid';
+import scratch3_control from '../blocks/scratch3_control';
+import scratch3_event from '../blocks/scratch3_event';
+import scratch3_looks from '../blocks/scratch3_looks';
+import scratch3_motion from '../blocks/scratch3_motion';
+import scratch3_operators from '../blocks/scratch3_operators';
+import scratch3_sound from '../blocks/scratch3_sound';
+import scratch3_sensing from '../blocks/scratch3_sensing';
+import scratch3_data from '../blocks/scratch3_data';
+import scratch3_procedures from '../blocks/scratch3_procedures';
 
 const defaultBlockPackages = {
-    scratch3_control: require('../blocks/scratch3_control'),
-    scratch3_event: require('../blocks/scratch3_event'),
-    scratch3_looks: require('../blocks/scratch3_looks'),
-    scratch3_motion: require('../blocks/scratch3_motion'),
-    scratch3_operators: require('../blocks/scratch3_operators'),
-    scratch3_sound: require('../blocks/scratch3_sound'),
-    scratch3_sensing: require('../blocks/scratch3_sensing'),
-    scratch3_data: require('../blocks/scratch3_data'),
-    scratch3_procedures: require('../blocks/scratch3_procedures')
+    scratch3_control,
+    scratch3_event,
+    scratch3_looks,
+    scratch3_motion,
+    scratch3_operators,
+    scratch3_sound,
+    scratch3_sensing,
+    scratch3_data,
+    scratch3_procedures
 };
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
@@ -2606,4 +2614,4 @@ class Runtime extends EventEmitter {
  * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
  */
 
-module.exports = Runtime;
+export default Runtime;

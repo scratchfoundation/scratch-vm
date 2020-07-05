@@ -1,4 +1,4 @@
-const JSONRPC = require('../util/jsonrpc');
+import JSONRPC from '../util/jsonrpc';
 
 class BLE extends JSONRPC {
 
@@ -235,4 +235,4 @@ class BLE extends JSONRPC {
     }
 }
 
-module.exports = BLE;
+export default BLE;

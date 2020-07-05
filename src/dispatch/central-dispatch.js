@@ -1,6 +1,5 @@
-const SharedDispatch = require('./shared-dispatch');
-
-const log = require('../util/log');
+import SharedDispatch from './shared-dispatch';
+import log from '../util/log';
 
 /**
  * This class serves as the central broker for message dispatch. It expects to operate on the main thread / Window and
@@ -138,4 +137,4 @@ class CentralDispatch extends SharedDispatch {
     }
 }
 
-module.exports = new CentralDispatch();
+export default new CentralDispatch();

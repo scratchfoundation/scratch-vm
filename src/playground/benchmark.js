@@ -35,21 +35,20 @@ class LoadingMiddleware {
     }
 }
 
-const importLoadCostume = require('../import/load-costume');
+import importLoadCostume from '../import/load-costume';
 const costumeMiddleware = new LoadingMiddleware();
 importLoadCostume.loadCostume = costumeMiddleware.install(importLoadCostume, importLoadCostume.loadCostume);
 
-const importLoadSound = require('../import/load-sound');
+import importLoadSound from '../import/load-sound';
 const soundMiddleware = new LoadingMiddleware();
 importLoadSound.loadSound = soundMiddleware.install(importLoadSound, importLoadSound.loadSound);
 
-const ScratchStorage = require('scratch-storage');
-const VirtualMachine = require('..');
-const Runtime = require('../engine/runtime');
-
-const ScratchRender = require('scratch-render');
-const AudioEngine = require('scratch-audio');
-const ScratchSVGRenderer = require('scratch-svg-renderer');
+import ScratchStorage from 'scratch-storage';
+import VirtualMachine from '..';
+import Runtime from '../engine/runtime';
+import ScratchRender from 'scratch-render';
+import AudioEngine from 'scratch-audio';
+import ScratchSVGRenderer from 'scratch-svg-renderer';
 
 const Scratch = window.Scratch = window.Scratch || {};
 

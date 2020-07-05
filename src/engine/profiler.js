@@ -387,4 +387,4 @@ Profiler.START = START;
  */
 Profiler.STOP = STOP;
 
-module.exports = Profiler;
+export default Profiler;

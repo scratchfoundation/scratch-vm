@@ -1,10 +1,10 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Clone = require('../../util/clone');
-const Cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const MathUtil = require('../../util/math-util');
-const Timer = require('../../util/timer');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import Clone from '../../util/clone';
+import Cast from '../../util/cast';
+import formatMessage from 'format-message';
+import MathUtil from '../../util/math-util';
+import Timer from '../../util/timer';
 
 /**
  * The instrument and drum sounds, loaded as static assets.
@@ -1330,4 +1330,4 @@ class Scratch3MusicBlocks {
     }
 }
 
-module.exports = Scratch3MusicBlocks;
+export default Scratch3MusicBlocks;

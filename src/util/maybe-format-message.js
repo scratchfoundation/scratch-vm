@@ -1,4 +1,4 @@
-const formatMessage = require('format-message');
+import formatMessage from 'format-message';
 
 /**
  * Check if `maybeMessage` looks like a message object, and if so pass it to `formatMessage`.
@@ -15,4 +15,4 @@ const maybeFormatMessage = function (maybeMessage, args, locale) {
     return maybeMessage;
 };
 
-module.exports = maybeFormatMessage;
+export default maybeFormatMessage;

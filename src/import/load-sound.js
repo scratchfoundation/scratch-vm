@@ -1,5 +1,5 @@
-const StringUtil = require('../util/string-util');
-const log = require('../util/log');
+import StringUtil from '../util/string-util';
+import log from '../util/log';
 
 /**
  * Initialize a sound from an asset asynchronously.
@@ -11,7 +11,7 @@ const log = require('../util/log');
  * @param {SoundBank} soundBank - Scratch Audio SoundBank to add sounds to.
  * @returns {!Promise} - a promise which will resolve to the sound when ready.
  */
-const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
+export const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
     sound.assetId = soundAsset.assetId;
     if (!runtime.audioEngine) {
         log.error('No audio engine present; cannot load sound asset: ', sound.md5);
@@ -47,7 +47,7 @@ const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
  * @param {SoundBank} soundBank - Scratch Audio SoundBank to add sounds to.
  * @returns {!Promise} - a promise which will resolve to the sound when ready.
  */
-const loadSound = function (sound, runtime, soundBank) {
+export const loadSound = function (sound, runtime, soundBank) {
     if (!runtime.storage) {
         log.error('No storage module present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
@@ -65,7 +65,7 @@ const loadSound = function (sound, runtime, soundBank) {
     });
 };
 
-module.exports = {
+export default {
     loadSound,
     loadSoundFromAsset
 };

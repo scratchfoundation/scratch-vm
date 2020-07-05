@@ -1,5 +1,5 @@
-const Thread = require('./thread');
-const Timer = require('../util/timer');
+import Thread from './thread';
+import Timer from '../util/timer';
 
 /**
  * @fileoverview
@@ -237,4 +237,4 @@ class BlockUtility {
     }
 }
 
-module.exports = BlockUtility;
+export default BlockUtility;

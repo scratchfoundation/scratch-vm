@@ -1,6 +1,6 @@
-const mutationAdapter = require('./mutation-adapter');
-const html = require('htmlparser2');
-const uid = require('../util/uid');
+import mutationAdapter from './mutation-adapter';
+import html from 'htmlparser2';
+import uid from '../util/uid';
 
 /**
  * Convert and an individual block DOM to the representation tree.
@@ -173,4 +173,4 @@ const adapter = function (e) {
     return domToBlocks(html.parseDOM(e.xml.outerHTML, {decodeEntities: true}));
 };
 
-module.exports = adapter;
+export default adapter;

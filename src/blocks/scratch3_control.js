@@ -1,4 +1,4 @@
-const Cast = require('../util/cast');
+import Cast from '../util/cast';
 
 class Scratch3ControlBlocks {
     constructor (runtime) {
@@ -203,4 +203,4 @@ class Scratch3ControlBlocks {
     }
 }
 
-module.exports = Scratch3ControlBlocks;
+export default Scratch3ControlBlocks;

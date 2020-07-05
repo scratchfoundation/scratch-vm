@@ -34,7 +34,7 @@ const serializeAssets = function (runtime, assetType, optTargetId) {
  * @param {string=} optTargetId Optional targetid for serializing sounds of a single target
  * @returns {Array<object>} An array of file descriptors for each sound
  */
-const serializeSounds = function (runtime, optTargetId) {
+export const serializeSounds = function (runtime, optTargetId) {
     return serializeAssets(runtime, 'sounds', optTargetId);
 };
 
@@ -46,11 +46,11 @@ const serializeSounds = function (runtime, optTargetId) {
  * @param {string} optTargetId Optional targetid for serializing costumes of a single target
  * @returns {Array<object>} An array of file descriptors for each costume
  */
-const serializeCostumes = function (runtime, optTargetId) {
+export const serializeCostumes = function (runtime, optTargetId) {
     return serializeAssets(runtime, 'costumes', optTargetId);
 };
 
-module.exports = {
+export default {
     serializeSounds,
     serializeCostumes
 };

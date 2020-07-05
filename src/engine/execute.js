@@ -1,9 +1,9 @@
-const BlockUtility = require('./block-utility');
-const BlocksExecuteCache = require('./blocks-execute-cache');
-const log = require('../util/log');
-const Thread = require('./thread');
-const {Map} = require('immutable');
-const cast = require('../util/cast');
+import BlockUtility from './block-utility';
+import BlocksExecuteCache from './blocks-execute-cache';
+import log from '../util/log';
+import Thread from './thread';
+import { Map } from 'immutable';
+import cast from '../util/cast';
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -577,4 +577,4 @@ const execute = function (sequencer, thread) {
     }
 };
 
-module.exports = execute;
+export default execute;

@@ -1,6 +1,6 @@
-const Timer = require('../util/timer');
-const Thread = require('./thread');
-const execute = require('./execute.js');
+import Timer from '../util/timer';
+import Thread from './thread';
+import execute from './execute.js';
 
 /**
  * Profiler frame name for stepping a single thread.
@@ -358,4 +358,4 @@ class Sequencer {
     }
 }
 
-module.exports = Sequencer;
+export default Sequencer;

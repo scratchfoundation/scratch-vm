@@ -7,7 +7,7 @@
  * Video motion sensing primitives.
  */
 
-const {motionVector, scratchAtan2} = require('./math');
+import { motionVector, scratchAtan2 } from './math';
 
 /**
  * The width of the intended resolution to analyze for motion.
@@ -382,4 +382,4 @@ class VideoMotion {
     }
 }
 
-module.exports = VideoMotion;
+export default VideoMotion;

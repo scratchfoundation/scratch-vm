@@ -11,9 +11,11 @@
  * @param {Blocks} blocks Blocks containing the expected blockId
  * @param {string} blockId blockId for the desired execute cache
  */
-exports.getCached = function () {
+function getCached() {
     throw new Error('blocks.js has not initialized BlocksExecuteCache');
-};
+}
+
+export default {getCached};
 
 // Call after the default throwing getCached is assigned for Blocks to replace.
-require('./blocks');
+import './blocks';

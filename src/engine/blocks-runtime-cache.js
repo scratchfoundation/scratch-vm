@@ -65,14 +65,10 @@ class RuntimeScriptCache {
  * @param {Blocks} container - Container of blocks
  * @param {string} opcode - Opcode to filter top blocks by
  */
-exports.getScripts = function () {
+function getScripts() {
     throw new Error('blocks.js has not initialized BlocksRuntimeCache');
-};
+}
 
-/**
- * Exposed RuntimeScriptCache class used by integration in blocks.js.
- * @private
- */
-exports._RuntimeScriptCache = RuntimeScriptCache;
+export default {getScripts, _RuntimeScriptCache: RuntimeScriptCache};
 
-require('./blocks');
+import './blocks';

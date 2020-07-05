@@ -1,5 +1,5 @@
-const Cast = require('../util/cast.js');
-const MathUtil = require('../util/math-util.js');
+import Cast from '../util/cast.js';
+import MathUtil from '../util/math-util.js';
 
 class Scratch3OperatorsBlocks {
     constructor (runtime) {
@@ -151,4 +151,4 @@ class Scratch3OperatorsBlocks {
     }
 }
 
-module.exports = Scratch3OperatorsBlocks;
+export default Scratch3OperatorsBlocks;

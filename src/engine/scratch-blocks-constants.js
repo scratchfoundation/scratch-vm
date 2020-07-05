@@ -24,4 +24,4 @@ const ScratchBlocksConstants = {
     OUTPUT_SHAPE_SQUARE: 3
 };
 
-module.exports = ScratchBlocksConstants;
+export default ScratchBlocksConstants;

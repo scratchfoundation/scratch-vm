@@ -22,7 +22,7 @@
  * Finally, I filled in the expected arguments as below.
  */
 
-const Variable = require('../engine/variable');
+import Variable from '../engine/variable';
 
 /**
  * @typedef {object} SB2SpecMap_blockInfo
@@ -1815,4 +1815,4 @@ addExtensionOp(weDo2, 'getTilt', {
     ]
 });
 
-module.exports = specMap;
+export default specMap;

@@ -1,10 +1,10 @@
-const Cast = require('../util/cast');
-const Clone = require('../util/clone');
-const RenderedTarget = require('../sprites/rendered-target');
-const uid = require('../util/uid');
-const StageLayering = require('../engine/stage-layering');
-const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
-const MathUtil = require('../util/math-util');
+import Cast from '../util/cast';
+import Clone from '../util/clone';
+import RenderedTarget from '../sprites/rendered-target';
+import uid from '../util/uid';
+import StageLayering from '../engine/stage-layering';
+import getMonitorIdForBlockWithArgs from '../util/get-monitor-id';
+import MathUtil from '../util/math-util';
 
 /**
  * @typedef {object} BubbleState - the bubble state associated with a particular target.
@@ -613,4 +613,4 @@ class Scratch3LooksBlocks {
     }
 }
 
-module.exports = Scratch3LooksBlocks;
+export default Scratch3LooksBlocks;

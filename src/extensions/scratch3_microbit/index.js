@@ -1,10 +1,10 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const log = require('../../util/log');
-const cast = require('../../util/cast');
-const formatMessage = require('format-message');
-const BLE = require('../../io/ble');
-const Base64Util = require('../../util/base64-util');
+import ArgumentType from '../../extension-support/argument-type';
+import BlockType from '../../extension-support/block-type';
+import log from '../../util/log';
+import cast from '../../util/cast';
+import formatMessage from 'format-message';
+import BLE from '../../io/ble';
+import Base64Util from '../../util/base64-util';
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -981,4 +981,4 @@ class Scratch3MicroBitBlocks {
     }
 }
 
-module.exports = Scratch3MicroBitBlocks;
+export default Scratch3MicroBitBlocks;

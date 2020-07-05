@@ -1,9 +1,9 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const Cast = require('../../util/cast');
-const BlockType = require('../../extension-support/block-type');
-const formatMessage = require('format-message');
-const log = require('../../util/log');
-const DiffMatchPatch = require('diff-match-patch');
+import ArgumentType from '../../extension-support/argument-type';
+import Cast from '../../util/cast';
+import BlockType from '../../extension-support/block-type';
+import formatMessage from 'format-message';
+import log from '../../util/log';
+import DiffMatchPatch from 'diff-match-patch';
 
 
 /**
@@ -697,4 +697,4 @@ class Scratch3Speech2TextBlocks {
         return this._currentUtterance;
     }
 }
-module.exports = Scratch3Speech2TextBlocks;
+export default Scratch3Speech2TextBlocks;

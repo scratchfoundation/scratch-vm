@@ -1,14 +1,14 @@
-const adapter = require('./adapter');
-const mutationAdapter = require('./mutation-adapter');
-const xmlEscape = require('../util/xml-escape');
-const MonitorRecord = require('./monitor-record');
-const Clone = require('../util/clone');
-const {Map} = require('immutable');
-const BlocksExecuteCache = require('./blocks-execute-cache');
-const BlocksRuntimeCache = require('./blocks-runtime-cache');
-const log = require('../util/log');
-const Variable = require('./variable');
-const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
+import adapter from './adapter';
+import mutationAdapter from './mutation-adapter';
+import xmlEscape from '../util/xml-escape';
+import MonitorRecord from './monitor-record';
+import Clone from '../util/clone';
+import { Map } from 'immutable';
+import BlocksExecuteCache from './blocks-execute-cache';
+import BlocksRuntimeCache from './blocks-runtime-cache';
+import log from '../util/log';
+import Variable from './variable';
+import getMonitorIdForBlockWithArgs from '../util/get-monitor-id';
 
 /**
  * @fileoverview
@@ -1225,6 +1225,7 @@ class Blocks {
  * @param {function} CacheType constructor for cached block information
  * @return {object} execute cache object
  */
+
 BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     let cached = blocks._cache._executeCached[blockId];
     if (typeof cached !== 'undefined') {
@@ -1287,4 +1288,4 @@ BlocksRuntimeCache.getScripts = function (blocks, opcode) {
     return scripts;
 };
 
-module.exports = Blocks;
+export default Blocks;

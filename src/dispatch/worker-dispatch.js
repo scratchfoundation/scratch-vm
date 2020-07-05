@@ -1,6 +1,5 @@
-const SharedDispatch = require('./shared-dispatch');
-
-const log = require('../util/log');
+import SharedDispatch from './shared-dispatch';
+import log from '../util/log';
 
 /**
  * This class provides a Worker with the means to participate in the message dispatch system managed by CentralDispatch.
@@ -107,4 +106,4 @@ class WorkerDispatch extends SharedDispatch {
     }
 }
 
-module.exports = new WorkerDispatch();
+export default new WorkerDispatch();

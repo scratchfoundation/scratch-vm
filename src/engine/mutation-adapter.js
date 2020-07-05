@@ -1,5 +1,5 @@
-const html = require('htmlparser2');
-const decodeHtml = require('decode-html');
+import html from 'htmlparser2';
+import decodeHtml from 'decode-html';
 
 /**
  * Convert a part of a mutation DOM to a mutation VM object, recursively.
@@ -45,4 +45,4 @@ const mutationAdpater = function (mutation) {
     return mutatorTagToObject(mutationParsed);
 };
 
-module.exports = mutationAdpater;
+export default mutationAdpater;

@@ -1,5 +1,5 @@
-const StringUtil = require('../util/string-util');
-const log = require('../util/log');
+import StringUtil from '../util/string-util';
+import log from '../util/log';
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
@@ -256,7 +256,7 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
  *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostumeFromAsset = function (costume, runtime, optVersion) {
+export const loadCostumeFromAsset = function (costume, runtime, optVersion) {
     costume.assetId = costume.asset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
@@ -299,7 +299,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
  *     to 2, scratch 3 will perform an upgrade step to handle quirks in SVGs from Scratch 2.0.
  * @returns {?Promise} - a promise which will resolve after skinId is set, or null on error.
  */
-const loadCostume = function (md5ext, costume, runtime, optVersion) {
+export const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const idParts = StringUtil.splitFirst(md5ext, '.');
     const md5 = idParts[0];
     const ext = idParts[1].toLowerCase();
@@ -346,7 +346,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     });
 };
 
-module.exports = {
+export default {
     loadCostume,
     loadCostumeFromAsset
 };

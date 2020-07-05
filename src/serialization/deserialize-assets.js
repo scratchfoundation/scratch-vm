@@ -1,5 +1,5 @@
-const JSZip = require('jszip');
-const log = require('../util/log');
+import JSZip from 'jszip';
+import log from '../util/log';
 
 /**
  * Deserializes sound from file into storage cache so that it can
@@ -172,7 +172,7 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
     ]);
 };
 
-module.exports = {
+export {
     deserializeSound,
     deserializeCostume
 };

@@ -1,3 +1,3 @@
-const VirtualMachine = require('./virtual-machine');
+import VirtualMachine from './virtual-machine';
 
-module.exports = VirtualMachine;
+export default VirtualMachine;

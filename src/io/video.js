@@ -1,4 +1,4 @@
-const StageLayering = require('../engine/stage-layering');
+import StageLayering from '../engine/stage-layering';
 
 class Video {
     constructor (runtime) {
@@ -209,4 +209,4 @@ class Video {
 }
 
 
-module.exports = Video;
+export default Video;

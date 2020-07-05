@@ -111,4 +111,4 @@ class Timer {
     }
 }
 
-module.exports = Timer;
+export default Timer;

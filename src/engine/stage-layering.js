@@ -26,4 +26,4 @@ class StageLayering {
     }
 }
 
-module.exports = StageLayering;
+export default StageLayering;

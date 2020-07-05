@@ -1,29 +1,38 @@
-const dispatch = require('../dispatch/central-dispatch');
-const log = require('../util/log');
-const maybeFormatMessage = require('../util/maybe-format-message');
-
-const BlockType = require('./block-type');
+import dispatch from '../dispatch/central-dispatch';
+import log from '../util/log';
+import maybeFormatMessage from '../util/maybe-format-message';
+import BlockType from './block-type';
 
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 
+import coreExample from '../blocks/scratch3_core_example';
+import pen from '../extensions/scratch3_pen';
+import wedo2 from '../extensions/scratch3_wedo2';
+import music from '../extensions/scratch3_music';
+import microbit from '../extensions/scratch3_microbit';
+import text2speech from '../extensions/scratch3_text2speech';
+import translate from '../extensions/scratch3_translate';
+import videoSensing from '../extensions/scratch3_video_sensing';
+import ev3 from '../extensions/scratch3_ev3';
+import makeymakey from '../extensions/scratch3_makeymakey';
+import boost from '../extensions/scratch3_boost';
+import gdxfor from '../extensions/scratch3_gdx_for';
+
 const builtinExtensions = {
-    // This is an example that isn't loaded with the other core blocks,
-    // but serves as a reference for loading core blocks as extensions.
-    coreExample: () => require('../blocks/scratch3_core_example'),
-    // These are the non-core built-in extensions.
-    pen: () => require('../extensions/scratch3_pen'),
-    wedo2: () => require('../extensions/scratch3_wedo2'),
-    music: () => require('../extensions/scratch3_music'),
-    microbit: () => require('../extensions/scratch3_microbit'),
-    text2speech: () => require('../extensions/scratch3_text2speech'),
-    translate: () => require('../extensions/scratch3_translate'),
-    videoSensing: () => require('../extensions/scratch3_video_sensing'),
-    ev3: () => require('../extensions/scratch3_ev3'),
-    makeymakey: () => require('../extensions/scratch3_makeymakey'),
-    boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for')
+    coreExample: () => coreExample,
+    pen: () => pen,
+    wedo2: () => wedo2,
+    music: () => music,
+    microbit: () => microbit,
+    text2speech: () => text2speech,
+    translate: () => translate,
+    videoSensing: () => videoSensing,
+    ev3: () => ev3,
+    makeymakey: () => makeymakey,
+    boost: () => boost,
+    gdxfor: () => gdxfor,
 };
 
 /**
@@ -437,4 +446,4 @@ class ExtensionManager {
     }
 }
 
-module.exports = ExtensionManager;
+export default ExtensionManager;

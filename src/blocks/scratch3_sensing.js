@@ -1,6 +1,6 @@
-const Cast = require('../util/cast');
-const Timer = require('../util/timer');
-const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
+import Cast from '../util/cast';
+import Timer from '../util/timer';
+import getMonitorIdForBlockWithArgs from '../util/get-monitor-id';
 
 class Scratch3SensingBlocks {
     constructor (runtime) {
@@ -333,4 +333,4 @@ class Scratch3SensingBlocks {
     }
 }
 
-module.exports = Scratch3SensingBlocks;
+export default Scratch3SensingBlocks;

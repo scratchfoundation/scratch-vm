@@ -1,4 +1,4 @@
-const Timer = require('../util/timer');
+import Timer from '../util/timer';
 
 class RateLimiter {
     /**
@@ -70,4 +70,4 @@ class RateLimiter {
     }
 }
 
-module.exports = RateLimiter;
+export default RateLimiter;
