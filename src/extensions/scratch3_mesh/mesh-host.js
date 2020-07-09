@@ -101,7 +101,7 @@ class MeshHost extends MeshService {
             return;
         }
 
-        this.changeWebRTCIPHandlingPolicy().then(() => {
+        this.changeWebRTCIPHandlingPolicy().then(() => this.sleep(3)).then(() => {
             const connection = this.openRTCPeerConnection(peerMeshId);
 
             connection.onconnectionstatechange = () => {
