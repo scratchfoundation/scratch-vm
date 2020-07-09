@@ -501,6 +501,12 @@ class MeshService {
             channel.send(JSON.stringify(message));
         });
     }
+
+    sleep (seconds) {
+        debug(() => `Sleep: senconds=<${seconds}>`);
+
+        return new Promise(resolve => setTimeout(resolve, seconds * 1000));
+    }
 }
 
 module.exports = MeshService;

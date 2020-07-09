@@ -31,7 +31,7 @@ class MeshPeer extends MeshService {
 
         this.setConnectionState('connecting');
 
-        this.changeWebRTCIPHandlingPolicy().then(() => {
+        this.changeWebRTCIPHandlingPolicy().then(() => this.sleep(3)).then(() => {
             const connection = this.openRTCPeerConnection(hostMeshId);
 
             connection.onconnectionstatechange = () => {
