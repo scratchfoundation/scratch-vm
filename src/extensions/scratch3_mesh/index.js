@@ -253,13 +253,6 @@ class Scratch3MeshBlocks {
         }
 
         const stage = this.runtime.getTargetForStage();
-        if (stage) {
-            log.log('foo');
-        }
-        else {
-            log.log('bar');
-            return;
-        }
         this.variableFunctions = {
             runtime: {
                 createNewGlobalVariable: this.runtime.createNewGlobalVariable.bind(this.runtime)
