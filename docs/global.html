@@ -23168,7 +23168,9 @@ reset.</p>
 
 
 <div class="description">
-    <p>Get non-core extension ID for a given sb3 opcode.</p>
+    <p>Get sanitized non-core extension ID for a given sb3 opcode.
+Note that this should never return a URL. If in the future the SB3 loader supports loading extensions by URL, this
+ID should be used to (for example) look up the extension's full URL from a table in the SB3's JSON.</p>
 </div>
 
 
