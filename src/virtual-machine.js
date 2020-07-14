@@ -1121,7 +1121,13 @@ class VirtualMachine extends EventEmitter {
      */
     setLocale (locale, messages) {
         if (locale !== formatMessage.setup().locale) {
-            formatMessage.setup({locale: locale, translations: {[locale]: messages}});
+            formatMessage.setup({
+                locale: locale,
+                translations: {
+                    [locale]: messages
+                },
+                missingTranslation: 'ignore' // Do not console.warn() missing translations (#2270)
+            });
         }
         return this.extensionManager.refreshBlocks();
     }
