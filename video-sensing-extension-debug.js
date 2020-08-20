@@ -1124,8 +1124,7 @@ function () {
             curr = this._curr; // The public APIs for Renderer#isTouching manage keeping the matrix and
         // silhouette up-to-date, which is needed for drawable#isTouching to work (used below)
 
-        drawable.updateMatrix();
-        if (drawable.skin) drawable.skin.updateSilhouette(); // Restrict the region the amount and direction are built from to
+        drawable.updateCPURenderAttributes(); // Restrict the region the amount and direction are built from to
         // the area of the current frame overlapped by the given drawable's
         // bounding box.
 
