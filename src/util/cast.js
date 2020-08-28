@@ -71,7 +71,7 @@ class Cast {
      * @return {string} The Scratch-casted string value.
      */
     static toString (value) {
-        return String(value);
+        return typeof value === 'string' ? value : String(value);
     }
 
     /**
@@ -116,8 +116,18 @@ class Cast {
      * @returns {number} Negative number if v1 < v2; 0 if equal; positive otherwise.
      */
     static compare (v1, v2) {
+        // If v1 === v2 (on JS), v1 = v2 (on Scratch), so early-return for performance
+        // The opposite (v1 !== v2) is incorrect, though
+        if (v1 === v2) return 0;
         let n1 = Number(v1);
         let n2 = Number(v2);
+        // Handle the special case of Infinity
+        if (
+            (n1 === Infinity && n2 === Infinity) ||
+            (n1 === -Infinity && n2 === -Infinity)
+        ) {
+            return 0;
+        }
         if (n1 === 0 && Cast.isWhiteSpace(v1)) {
             n1 = NaN;
         } else if (n2 === 0 && Cast.isWhiteSpace(v2)) {
@@ -135,13 +145,6 @@ class Cast {
             }
             return 0;
         }
-        // Handle the special case of Infinity
-        if (
-            (n1 === Infinity && n2 === Infinity) ||
-            (n1 === -Infinity && n2 === -Infinity)
-        ) {
-            return 0;
-        }
         // Compare as numbers.
         return n1 - n2;
     }
@@ -157,8 +160,9 @@ class Cast {
             if (isNaN(val)) { // NaN is considered an integer.
                 return true;
             }
-            // True if it's "round" (e.g., 2.0 and 2).
-            return val === parseInt(val, 10);
+            // Integers modulo 1 is always 0.
+            // Invert to make it return true for 0.
+            return !(val % 1);
         } else if (typeof val === 'boolean') {
             // `True` and `false` always represent integer after Scratch cast.
             return true;
