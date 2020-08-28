@@ -87,7 +87,7 @@ const isNearAngle = (actual, expect, optMargin = 10) => (
 // A fake scratch-render drawable that will be used by VideoMotion to restrain
 // the area considered for motion detection in VideoMotion.getLocalMotion
 const fakeDrawable = {
-    updateMatrix () {}, // no-op, since isTouching always returns true
+    updateCPURenderAttributes () {}, // no-op, since isTouching always returns true
 
     getFastBounds () {
         return {

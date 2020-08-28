@@ -153,6 +153,23 @@ test('ask and answer with a visible target', t => {
     s.askAndWait({QUESTION: expectedQuestion}, util);
 });
 
+test('answer gets reset when runtime is disposed', t => {
+    const rt = new Runtime();
+    const s = new Sensing(rt);
+    const util = {target: {visible: false}};
+    const expectedAnswer = 'the answer';
+
+    rt.addListener('QUESTION', () => rt.emit('ANSWER', expectedAnswer));
+    const promise = s.askAndWait({QUESTION: ''}, util);
+
+    promise.then(() => t.strictEqual(s.getAnswer(), expectedAnswer))
+        .then(() => rt.dispose())
+        .then(() => {
+            t.strictEqual(s.getAnswer(), '');
+            t.end();
+        });
+});
+
 test('set drag mode', t => {
     const runtime = new Runtime();
     runtime.requestTargetsUpdate = () => {}; // noop for testing

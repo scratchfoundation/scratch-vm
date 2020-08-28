@@ -1,4 +1,3 @@
-const log = require('../util/log');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const Cast = require('../util/cast');
@@ -339,23 +338,6 @@ class RenderedTarget extends Target {
         if (this.isStage) return;
         this.draggable = !!draggable;
         this.runtime.requestTargetsUpdate(this);
-    }
-
-    /**
-     * Set a say bubble.
-     * @param {?string} type Type of say bubble: "say", "think", or null.
-     * @param {?string} message Message to put in say bubble.
-     */
-    setSay (type, message) {
-        if (this.isStage) {
-            return;
-        }
-        // @todo: Render to stage.
-        if (!type || !message) {
-            log.info('Clearing say bubble');
-            return;
-        }
-        log.info('Setting say bubble:', type, message);
     }
 
     /**
