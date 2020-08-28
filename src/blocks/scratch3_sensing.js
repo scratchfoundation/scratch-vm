@@ -44,6 +44,7 @@ class Scratch3SensingBlocks {
         this.runtime.on('PROJECT_START', this._resetAnswer.bind(this));
         this.runtime.on('PROJECT_STOP_ALL', this._clearAllQuestions.bind(this));
         this.runtime.on('STOP_FOR_TARGET', this._clearTargetQuestions.bind(this));
+        this.runtime.on('RUNTIME_DISPOSED', this._resetAnswer.bind(this));
     }
 
     /**

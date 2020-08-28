@@ -947,6 +947,33 @@ class Blocks {
     }
 
     /**
+     * Update sensing_of blocks after a variable gets renamed.
+     * @param {string} oldName The old name of the variable that was renamed.
+     * @param {string} newName The new name of the variable that was renamed.
+     * @param {string} targetName The name of the target the variable belongs to.
+     * @return {boolean} Returns true if any of the blocks were updated.
+     */
+    updateSensingOfReference (oldName, newName, targetName) {
+        const blocks = this._blocks;
+        let blockUpdated = false;
+        for (const blockId in blocks) {
+            const block = blocks[blockId];
+            if (block.opcode === 'sensing_of' &&
+                block.fields.PROPERTY.value === oldName &&
+                // If block and shadow are different, it means a block is inserted to OBJECT, and should be ignored.
+                block.inputs.OBJECT.block === block.inputs.OBJECT.shadow) {
+                const inputBlock = this.getBlock(block.inputs.OBJECT.block);
+                if (inputBlock.fields.OBJECT.value === targetName) {
+                    block.fields.PROPERTY.value = newName;
+                    blockUpdated = true;
+                }
+            }
+        }
+        if (blockUpdated) this.resetCache();
+        return blockUpdated;
+    }
+
+    /**
      * Helper function to retrieve a costume menu field from a block given its id.
      * @param {string} blockId A unique identifier for a block
      * @return {?object} The costume menu field of the block with the given block id.

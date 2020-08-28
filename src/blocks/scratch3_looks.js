@@ -34,7 +34,7 @@ class Scratch3LooksBlocks {
         this.runtime.on('targetWasRemoved', this._onTargetWillExit);
 
         // Enable other blocks to use bubbles like ask/answer
-        this.runtime.on('SAY', this._updateBubble);
+        this.runtime.on(Scratch3LooksBlocks.SAY_OR_THINK, this._updateBubble);
     }
 
     /**
@@ -58,6 +58,16 @@ class Scratch3LooksBlocks {
      */
     static get STATE_KEY () {
         return 'Scratch.looks';
+    }
+
+    /**
+     * Event name for a text bubble being created or updated.
+     * @const {string}
+     */
+    static get SAY_OR_THINK () {
+        // There are currently many places in the codebase which explicitly refer to this event by the string 'SAY',
+        // so keep this as the string 'SAY' for now rather than changing it to 'SAY_OR_THINK' and breaking things.
+        return 'SAY';
     }
 
     /**
@@ -234,6 +244,29 @@ class Scratch3LooksBlocks {
     }
 
     /**
+     * Properly format text for a text bubble.
+     * @param {string} text The text to be formatted
+     * @return {string} The formatted text
+     * @private
+     */
+    _formatBubbleText (text) {
+        if (text === '') return text;
+
+        // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that
+        // rounding would display them as 0.00. This matches 2.0's behavior:
+        // https://github.com/LLK/scratch-flash/blob/2e4a402ceb205a042887f54b26eebe1c2e6da6c0/src/scratch/ScratchSprite.as#L579-L585
+        if (typeof text === 'number' &&
+            Math.abs(text) >= 0.01 && text % 1 !== 0) {
+            text = text.toFixed(2);
+        }
+
+        // Limit the length of the string.
+        text = String(text).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
+
+        return text;
+    }
+
+    /**
      * The entry point for say/think blocks. Clears existing bubble if the text is empty.
      * Set the bubble custom state and then call _renderBubble.
      * @param {!Target} target Target that say/think blocks are being called on.
@@ -244,7 +277,7 @@ class Scratch3LooksBlocks {
     _updateBubble (target, type, text) {
         const bubbleState = this._getBubbleState(target);
         bubbleState.type = type;
-        bubbleState.text = text;
+        bubbleState.text = this._formatBubbleText(text);
         bubbleState.usageId = uid();
         this._renderBubble(target);
     }
@@ -300,12 +333,7 @@ class Scratch3LooksBlocks {
 
     say (args, util) {
         // @TODO in 2.0 calling say/think resets the right/left bias of the bubble
-        let message = args.MESSAGE;
-        if (typeof message === 'number') {
-            message = parseFloat(message.toFixed(2));
-        }
-        message = String(message).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT);
-        this.runtime.emit('SAY', util.target, 'say', message);
+        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'say', args.MESSAGE);
     }
 
     sayforsecs (args, util) {
@@ -325,7 +353,7 @@ class Scratch3LooksBlocks {
     }
 
     think (args, util) {
-        this._updateBubble(util.target, 'think', String(args.MESSAGE).substr(0, Scratch3LooksBlocks.SAY_BUBBLE_LIMIT));
+        this.runtime.emit(Scratch3LooksBlocks.SAY_OR_THINK, util.target, 'think', args.MESSAGE);
     }
 
     thinkforsecs (args, util) {
@@ -411,13 +439,17 @@ class Scratch3LooksBlocks {
             } else if (requestedBackdrop === 'previous backdrop') {
                 stage.setCostume(stage.currentCostume - 1);
             } else if (requestedBackdrop === 'random backdrop') {
-                // Don't pick the current backdrop, so that the block
-                // will always have an observable effect.
                 const numCostumes = stage.getCostumes().length;
                 if (numCostumes > 1) {
-                    let selectedIndex = Math.floor(Math.random() * (numCostumes - 1));
-                    if (selectedIndex === stage.currentCostume) selectedIndex += 1;
-                    stage.setCostume(selectedIndex);
+                    // Don't pick the current backdrop, so that the block
+                    // will always have an observable effect.
+                    const lowerBound = 0;
+                    const upperBound = numCostumes - 1;
+                    const costumeToExclude = stage.currentCostume;
+
+                    const nextCostume = MathUtil.inclusiveRandIntWithout(lowerBound, upperBound, costumeToExclude);
+
+                    stage.setCostume(nextCostume);
                 }
             // Try to cast the string to a number (and treat it as a costume index)
             // Pure whitespace should not be treated as a number
