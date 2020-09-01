@@ -57,7 +57,7 @@
     "callsite": "^1.0.0",
     "copy-webpack-plugin": "^4.5.4",
     "docdash": "^1.0.0",
-    "eslint": "^5.3.0",
+    "eslint": "^7.8.0",
     "eslint-config-scratch": "^5.0.0",
     "expose-loader": "0.7.5",
     "file-loader": "^2.0.0",
