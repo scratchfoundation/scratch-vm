@@ -73,7 +73,7 @@ test('toString', t => {
     t.end();
 });
 
-test('toRbgColorList', t => {
+test('toRgbColorList', t => {
     // Hex (minimal, see "color" util tests)
     t.deepEqual(cast.toRgbColorList('#000'), [0, 0, 0]);
     t.deepEqual(cast.toRgbColorList('#000000'), [0, 0, 0]);
@@ -88,10 +88,11 @@ test('toRbgColorList', t => {
     // Malformed
     t.deepEqual(cast.toRgbColorList('ffffff'), [0, 0, 0]);
     t.deepEqual(cast.toRgbColorList('foobar'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#nothex'), [0, 0, 0]);
     t.end();
 });
 
-test('toRbgColorObject', t => {
+test('toRgbColorObject', t => {
     // Hex (minimal, see "color" util tests)
     t.deepEqual(cast.toRgbColorObject('#000'), {r: 0, g: 0, b: 0});
     t.deepEqual(cast.toRgbColorObject('#000000'), {r: 0, g: 0, b: 0});
@@ -107,6 +108,7 @@ test('toRbgColorObject', t => {
     // Malformed
     t.deepEqual(cast.toRgbColorObject('ffffff'), {a: 255, r: 0, g: 0, b: 0});
     t.deepEqual(cast.toRgbColorObject('foobar'), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#nothex'), {a: 255, r: 0, g: 0, b: 0});
     t.end();
 });
 
