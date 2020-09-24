@@ -207,6 +207,8 @@ class VirtualMachine extends EventEmitter {
      */
     stopAll () {
         this.runtime.stopAll();
+        this.runtime.emit('threadDone');
+        this.runtime._updateGlows();
     }
 
     /**
@@ -267,9 +269,11 @@ class VirtualMachine extends EventEmitter {
      * Connect to the extension's specified peripheral.
      * @param {string} extensionId - the id of the extension.
      * @param {number} peripheralId - the id of the peripheral.
+     * @param {number} userName - the user name for the peripheral, in any.
+     * @param {number} password - the password for the peripheral, if any.
      */
-    connectPeripheral (extensionId, peripheralId) {
-        this.runtime.connectPeripheral(extensionId, peripheralId);
+    connectPeripheral (extensionId, peripheralId, userName, password) {
+        this.runtime.connectPeripheral(extensionId, peripheralId, userName, password);
     }
 
     /**

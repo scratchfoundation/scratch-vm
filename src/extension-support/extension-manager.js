@@ -17,13 +17,17 @@ const builtinExtensions = {
     wedo2: () => require('../extensions/scratch3_wedo2'),
     music: () => require('../extensions/scratch3_music'),
     microbit: () => require('../extensions/scratch3_microbit'),
+    PlaySpots: () => require('../extensions/scratch3_playspot'),
+    PlaySpotsSetup: () => require('../extensions/scratch3_playspotSetup'),
+    playspot_microbit: () => require('../extensions/scratch3_playspot_microbit'),
     text2speech: () => require('../extensions/scratch3_text2speech'),
     translate: () => require('../extensions/scratch3_translate'),
     videoSensing: () => require('../extensions/scratch3_video_sensing'),
     ev3: () => require('../extensions/scratch3_ev3'),
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for')
+    gdxfor: () => require('../extensions/scratch3_gdx_for'),
+    sequence: () => require('../extensions/scratch3_SatelliteSequences')
 };
 
 /**

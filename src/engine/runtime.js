@@ -1473,10 +1473,12 @@ class Runtime extends EventEmitter {
      * Connect to the extension's specified peripheral.
      * @param {string} extensionId - the id of the extension.
      * @param {number} peripheralId - the id of the peripheral.
+     * @param {number} userName - the user name for the peripheral if any.
+     * @param {number} password - the password for the peripheral if any.
      */
-    connectPeripheral (extensionId, peripheralId) {
+    connectPeripheral (extensionId, peripheralId, userName, password) {
         if (this.peripheralExtensions[extensionId]) {
-            this.peripheralExtensions[extensionId].connect(peripheralId);
+            this.peripheralExtensions[extensionId].connect(peripheralId, userName, password);
         }
     }
 

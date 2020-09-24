@@ -1,0 +1,160 @@
+Mqtt documentation:
+
+Notes:
+<id> is the specific satellite id. i.e. 4C2E1DC40A24
+
+--------------------------------------------
+SATELLITE IN MESSAGES
+--------------------------------------------
+TOPIC:	sat/all/in/reboot
+		sat/<id>/in/reboot
+
+		Description:		Reboots the satellite		
+		Payload:			Any, not used
+
+--------------------------------------------
+TOPIC:	sat/all/in/status
+		sat/<id>/in/status
+
+		Description:		Queries the satellite for a status message.
+		Payload:			Any, not used
+
+--------------------------------------------
+TOPIC:	sat/all/in/radar/config
+		sat/<id>/in/radar/config
+
+		Description:		Get or set the radar configuration
+		Payload: (string)	
+							"get"			Queryes the satellite for the current radar-configuration
+							"set short"		Configures the radar for short range
+							"set medium"	Configures the radar for medium range
+							"set long"		Configures the radar for long range
+							"set max"		Configures the radar for max range
+
+--------------------------------------------
+TOPIC:	sat/all/in/bridge
+		sat/<id>/in/bridge
+
+		Description:		Forwards (bridges) the payload-data to the satellite
+							the satellite executes each byte-command sequentially.
+							Used for playing sounds, sequences and setting light.
+							See protocol.xlsx for the full commandlist
+		Payload: (binarry, 1 to 128 bytes)
+			[command1, command2, command3, etc.]
+
+			examples:
+				play sound no 128:
+					[216]
+
+				set every other led green:
+					[31, 22, 25, 33, 35, 37, 39, 41, 43, 45, 47, 19]
+					 +---|---|---|---|---|---|---|---|---|---|---|	led-clear
+						 +---|---|---|---|---|---|---|---|---|---|  intensity-high
+							 +---|---|---|---|---|---|---|---|---|  color-green
+								 +---|---|---|---|---|---|---|---|	led1
+									 +---|---|---|---|---|---|---|	led3
+										 +---|---|---|---|---|---|	led5
+											 +---|---|---|---|---|	led7
+												 +---|---|---|---|	led9
+													 +---|---|---|	led11
+														 +---|---|	led13
+															 +---|	led15
+																 +	execute
+
+			Command-list (not all listed here):
+				...
+				7: volume_0
+				8: volume_5
+				9: volume_10
+				...
+				18: stop_and_clear (stops sound, sequences and clears leds)
+				19: led_execute (also stops any active sequences)
+				20:	led_intensity_low
+				21:	led_intensity_med
+				22:	led_intensity_high
+				23:	led_color_off
+				24:	led_color_red
+				25:	led_color_green
+				26:	led_color_blue
+				27:	led_color_yellow
+				28:	led_color_cyan
+				29:	led_color_purple
+				30:	led_color_white
+				31:	led_clear
+				32:	led_mask_all
+				33:	led_mask_1
+				34:	led_mask_2
+				..
+				47: led_mask_15
+				48: led_mask_16
+				49: sequence_1	FadeBlue.txt
+				50: sequence_2	FadeGreen.txt
+				51: sequence_3	fadeInOut.txt
+				52: sequence_4	FadePurple.txt
+				53: sequence_5	FadeRed.txt
+				54: sequence_6	FadeWhite.txt
+				55: sequence_7	FadeYellow.txt
+				56: sequence_8	GreenFadeOut.txt
+				57: sequence_9	lots_of_colors.txt
+				..
+				87: sequence_39	
+				88: sequence_40	
+				89: sound_1		0.opus
+				90: sound_2		1.opus
+				..
+				236	sound_148	Active1.opus
+				237	sound_149	Applause.opus
+				238: sound_150
+
+--------------------------------------------
+SATELLITE OUT MESSAGES
+--------------------------------------------
+TOPIC:	sat/<id>/out/status
+
+		Description:		Satellite status message
+		Payload: (json string)
+			{
+				"id": "<id>",
+				"version": <fw-version>
+				"ip": "wifi-ip",
+				"gw": "wifi-gateway"
+			}
+
+			example:
+				{"id":"4C2E1DC40A24","version":314,"ip":"192.168.12.158","gw":"192.168.12.1"}"
+
+--------------------------------------------
+TOPIC:	sat/<id>/out/radar/config
+
+		Description:		Reports the current radar configuration
+		Payload: (string)
+			"short"		using radar preset: short
+			"medium"	using radar preset: medium
+			"long"		using radar preset: long
+			"max"		using radar preset: max
+			"custom"	using custom or unknown configuration
+
+--------------------------------------------
+TOPIC:	sat/<id>/out/radar/detection
+
+		Description:		Reports radar detection events
+		Payload: (string)
+			"1"				detection
+			"0"				no detection
+
+--------------------------------------------
+TOPIC:	sat/<id>/out/radar/detection/speed
+
+		Description:		Reports max speed from last detection.
+		Payload: (json-string)
+			{
+				"forward": "10",
+				"backward": "0",
+			}
+			
+TOPIC:	sat/<id>/out/touch
+
+		Description:		Reports satellite touch events
+		Payload: (string)
+			"1"				touched
+			"0"				released
