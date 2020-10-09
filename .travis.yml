@@ -5,6 +5,8 @@ node_js:
 env:
   global:
   - NODE_ENV=production
+  - NPM_TAG=latest
+  - RELEASE_TIMESTAMP="$(date +'%Y%m%d%H%M%S')"
   matrix:
   - NPM_SCRIPT="tap:unit -- --jobs=4"
   - NPM_SCRIPT="tap:integration -- --jobs=4"
@@ -31,17 +33,39 @@ jobs:
       node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
-      - npm --no-git-tag-version version $($(npm bin)/json -f package.json version)-prerelease.$(date +%Y%m%d%H%M%S)
-      - git config --global user.email "$(git log --pretty=format:"%ae" -n1)"
-      - git config --global user.name "$(git log --pretty=format:"%an" -n1)"
+      - >
+        if [ -z "$BEFORE_DEPLOY_RAN" ]; then
+          VPKG=$($(npm bin)/json -f package.json version)
+          export RELEASE_VERSION=${VPKG}-prerelease.${RELEASE_TIMESTAMP}
+          npm --no-git-tag-version version $RELEASE_VERSION
+          if [[ "$TRAVIS_BRANCH" == hotfix/* ]]; then # double brackets are important for matching the wildcard
+            export NPM_TAG=hotfix
+          fi
+          git config --global user.email "$(git log --pretty=format:"%ae" -n1)"
+          git config --global user.name "$(git log --pretty=format:"%an" -n1)"
+          export BEFORE_DEPLOY_RAN=true
+        fi
       deploy:
       - provider: npm
         on:
-          all_branches: true
+          branch:
+          - master
+          - develop
+          - hotfix/*
           condition: $TRAVIS_EVENT_TYPE != cron
         skip_cleanup: true
         email: $NPM_EMAIL
         api_key: $NPM_TOKEN
+        tag: $NPM_TAG
+      - provider: script
+        on:
+          branch:
+          - master
+          - develop
+          - hotfix/*
+          condition: $TRAVIS_EVENT_TYPE != cron
+        skip_cleanup: true
+        script: if npm info | grep -q $RELEASE_VERSION; then git tag $RELEASE_VERSION && git push https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git $RELEASE_VERSION; fi
       - provider: script
         on:
           all_branches: true
