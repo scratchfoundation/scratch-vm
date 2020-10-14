@@ -21,21 +21,22 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
             log.error('No V2 SVG adapter present; SVGs may not render correctly.');
         }
         resolve(svgString); // unmodified
-    }).then(svgString => {
+    }).then(svgString => new Promise(resolve => {
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
-        costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
-        costume.size = runtime.renderer.getSkinSize(costume.skinId);
-        // Now we should have a rotationCenter even if we didn't before
-        if (!rotationCenter) {
-            rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
-            costume.rotationCenterX = rotationCenter[0];
-            costume.rotationCenterY = rotationCenter[1];
-            costume.bitmapResolution = 1;
-        }
+        costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter, () => {
+            costume.size = runtime.renderer.getSkinSize(costume.skinId);
+            // Now we should have a rotationCenter even if we didn't before
+            if (!rotationCenter) {
+                rotationCenter = runtime.renderer.getSkinRotationCenter(costume.skinId);
+                costume.rotationCenterX = rotationCenter[0];
+                costume.rotationCenterY = rotationCenter[1];
+                costume.bitmapResolution = 1;
+            }
 
-        return costume;
-    });
+            resolve(costume);
+        });
+    }));
 };
 
 const canvasPool = (function () {
