@@ -180,6 +180,16 @@ class BLE extends JSONRPC {
                 window.clearTimeout(this._discoverTimeoutID);
             }
             break;
+        case 'userDidPickPeripheral':
+            this._availablePeripherals[params.peripheralId] = params;
+            this._runtime.emit(
+                this._runtime.constructor.USER_PICKED_PERIPHERAL,
+                this._availablePeripherals
+            );
+            if (this._discoverTimeoutID) {
+                window.clearTimeout(this._discoverTimeoutID);
+            }
+            break;
         case 'characteristicDidChange':
             if (this._characteristicDidChangeCallback) {
                 this._characteristicDidChangeCallback(params.message);
