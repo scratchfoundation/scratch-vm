@@ -694,7 +694,8 @@ class Playspot {
      * @return {Promise} - a Promise that resolves when writing to peripheral.
      */
     displayLightSequenceByName (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/cmd/fx`;
         const string = [this._sequencesByName[args.SEQUENCENAME]];
         const utf8Encode = new TextEncoder();
         const arr = utf8Encode.encode(string);
@@ -707,7 +708,8 @@ class Playspot {
      * @return {Promise} - a Promise that resolves when writing to peripheral.
      */
     playSound (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/cmd/fx`;
         const string = [this._soundsByName[args.SOUND]];
         const utf8Encode = new TextEncoder();
         const arr = utf8Encode.encode(string);
@@ -720,7 +722,8 @@ class Playspot {
      * @return {Promise} - a Promise that resolves when writing to peripheral.
      */
     playSoundByName (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/cmd/fx`;
         const string = [this._soundsByName[args.SOUNDNAME]];
         const utf8Encode = new TextEncoder();
         const arr = utf8Encode.encode(string);
@@ -873,7 +876,8 @@ class Playspot {
      * @return {Promise} - a Promise that resolves when writing to peripheral.
      */
     setVolume (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/cmd/fx`;
         const string = `AS: vol ${[_volumes[args.VOLUME]]}`;
         const utf8Encode = new TextEncoder();
         const arr = utf8Encode.encode(string);
@@ -885,7 +889,8 @@ class Playspot {
      * @param {object} args - the satellite to display on and the sensitivity to use
      */
     setRadarSensitivity (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/in/radar/config`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/in/radar/config`;
         this._client.publish(outboundTopic, _sensitivities[args.SENSITIVITY]);
     }
 
@@ -893,7 +898,8 @@ class Playspot {
      * @param {object} args - the satellite to reboot
      */
     rebootSatellite (args) {
-        const outboundTopic = `sat/${args.SATELLITE}/cmd/reboot`;
+        const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${satellite}/cmd/reboot`;
         this._client.publish(outboundTopic, [0x1]);
     }
 
@@ -903,13 +909,14 @@ class Playspot {
      * @return {boolean} - whether the satelliate is being touched.
      */
     isTouched (satellite) {
-        return satellite &&
-        satellite !== NOT_FOUND &&
+        const sat = this.findSatelliteSerial(satellite);
+        return sat &&
+        sat !== NOT_FOUND &&
         this._satellites &&
         this._satellites !== NOT_FOUND &&
-        this._satellites[satellite] &&
-        this._satellites[satellite] !== NOT_FOUND &&
-        this._satellites[satellite].isTouched;
+        this._satellites[sat] &&
+        this._satellites[sat] !== NOT_FOUND &&
+        this._satellites[sat].isTouched;
     }
 
     /**
@@ -918,13 +925,14 @@ class Playspot {
      * @return {boolean} - whether the satellite is detecting presence.
      */
     hasPresence (satellite) {
-        return satellite &&
-        satellite !== NOT_FOUND &&
+        const sat = this.findSatelliteSerial(satellite);
+        return sat &&
+        sat !== NOT_FOUND &&
         this._satellites &&
         this._satellites !== NOT_FOUND &&
-        this._satellites[satellite] &&
-        this._satellites[satellite] !== NOT_FOUND &&
-        this._satellites[satellite].hasPresence;
+        this._satellites[sat] &&
+        this._satellites[sat] !== NOT_FOUND &&
+        this._satellites[sat].hasPresence;
     }
 
     /**
@@ -933,6 +941,7 @@ class Playspot {
      * @return {boolean} - whether the satellite is detecting presence.
      */
     isGameModeEqual (mode) {
+        console.log(mode, 'mode');
         return this._app &&
         this._app !== NOT_FOUND &&
         this._app.mode &&
@@ -953,7 +962,7 @@ class Scratch3PlayspotBlocks {
      * @return {string} - the ID of this extension.
      */
     static get EXTENSION_ID () {
-        return 'PlaySpots';
+        return 'playspot';
     }
 
     get MODES () {
@@ -1130,6 +1139,29 @@ class Scratch3PlayspotBlocks {
                         SATELLITES: {
                             type: ArgumentType.STRING,
                             defaultValue: defaultSatellite
+                        }
+                    }
+                },
+                {
+                    opcode: 'whenGameModeEquals',
+                    text: 'When game mode changes to: [MODE]',
+                    blockType: BlockType.HAT,
+                    arguments: {
+                        MODE: {
+                            type: ArgumentType.STRING,
+                            menu: 'modes',
+                            defaultValue: 'Unknown'
+                        }
+                    }
+                }, {
+                    opcode: 'isGameModeEqual',
+                    text: 'When the game mode equals: [MODE]',
+                    blockType: BlockType.BOOLEAN,
+                    arguments: {
+                        MODE: {
+                            type: ArgumentType.STRING,
+                            menu: 'modes',
+                            defaultValue: 'Unknown'
                         }
                     }
                 },

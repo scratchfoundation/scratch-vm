@@ -63,6 +63,8 @@ class VirtualMachine extends EventEmitter {
          */
         this.editingTarget = null;
 
+        this.workspace = {};
+        
         /**
          * The currently dragging target, for redirecting IO data.
          * @type {Target}
@@ -1136,6 +1138,10 @@ class VirtualMachine extends EventEmitter {
      */
     getLocale () {
         return formatMessage.setup().locale;
+    }
+
+    addWorkspace (workspace) {
+        this.workspace = workspace;
     }
 
     /**
