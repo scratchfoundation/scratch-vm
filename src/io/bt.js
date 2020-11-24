@@ -128,9 +128,17 @@ class BT extends JSONRPC {
                 window.clearTimeout(this._discoverTimeoutID);
             }
             break;
-        //TODO why isn't 'user did pick peripheral' here?
+        case 'userDidPickPeripheral':
+            this._availablePeripherals[params.peripheralId] = params;
+            this._runtime.emit(
+                this._runtime.constructor.USER_PICKED_PERIPHERAL,
+                this._availablePeripherals
+            );
+            if (this._discoverTimeoutID) {
+                window.clearTimeout(this._discoverTimeoutID);
+            }
+            break;
         case 'userDidNotPickPeripheral':
-            // this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
                 this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT
             );
