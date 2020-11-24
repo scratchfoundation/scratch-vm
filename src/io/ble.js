@@ -191,7 +191,6 @@ class BLE extends JSONRPC {
             }
             break;
         case 'userDidNotPickPeripheral':
-            // this._availablePeripherals[params.peripheralId] = params;
             this._runtime.emit(
                 this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT
             );
