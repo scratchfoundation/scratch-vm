@@ -8,8 +8,7 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
         if (optVersion && optVersion === 2 && !runtime.v2SvgAdapter) {
             log.error('No V2 SVG adapter present; SVGs may not render correctly.');
         } else if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
-            runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
-            svgString = runtime.v2SvgAdapter.toString();
+            svgString = runtime.v2SvgAdapter(svgString);
             // Put back into storage
             const storage = runtime.storage;
             costume.asset.encodeTextData(svgString, storage.DataFormat.SVG, true);
