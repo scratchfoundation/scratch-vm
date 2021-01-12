@@ -3,6 +3,7 @@ require('regenerator-runtime/runtime');
 
 const BlockType = require('../../extension-support/block-type');
 
+const KIWRIOUS_RX_LENGTH = 26;
 const filters = [
     {usbVendorId: 0x04d8, usbProductId: 0xec19},
 ];
@@ -11,6 +12,7 @@ let isRunning = false;
 let isConnected = false;
 
 let port;
+let sensorData;
 
 class Scratch3Kiwrious {
     constructor (runtime) {
@@ -32,6 +34,14 @@ class Scratch3Kiwrious {
                 {
                     opcode: 'Read',
                     blockType: BlockType.COMMAND
+                },
+                {
+                    opcode: 'Humidity',
+                    blockType: BlockType.REPORTER
+                },
+                {
+                    opcode: 'Temperature',
+                    blockType: BlockType.REPORTER
                 }
             ],
             menus: {
@@ -70,17 +80,33 @@ class Scratch3Kiwrious {
                 reader.releaseLock();
                 break;
             }
-            if (value.length === 26) {
-                console.log(value);
+            if (value.length === KIWRIOUS_RX_LENGTH) {
+                sensorData = new Uint8Array(value);
             }
         }
 
         await reader.cancel();
     }
 
+    Humidity () {
+        if (!sensorData) {
+            return 0;
+        }
+        const humidity = sensorData[8] | (sensorData[9] << 8);
+        return humidity / 100;
+    }
+
+    Temperature () {
+        if (!sensorData) {
+            return 0;
+        }
+        const temperature = sensorData[6] | (sensorData[7] << 8);
+        return temperature / 100;
+    }
+
     _disconnectListener () {
         if ('serial' in navigator) {
-            navigator.serial.addEventListener('disconnect', (event) => {
+            navigator.serial.addEventListener('disconnect', () => {
                 isConnected = false;
                 isRunning = false;
             });
