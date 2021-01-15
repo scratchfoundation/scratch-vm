@@ -369,9 +369,7 @@ var _videoMotionViewComponentsTmp = {
  * @constructor
  */
 
-var VideoMotionView =
-/*#__PURE__*/
-function () {
+var VideoMotionView = /*#__PURE__*/function () {
   function VideoMotionView(motion) {
     var output = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : OUTPUT.XYT;
 
@@ -905,9 +903,7 @@ var LOCAL_THRESHOLD = THRESHOLD / 3;
  * @constructor
  */
 
-var VideoMotion =
-/*#__PURE__*/
-function () {
+var VideoMotion = /*#__PURE__*/function () {
   function VideoMotion() {
     _classCallCheck(this, VideoMotion);
 
