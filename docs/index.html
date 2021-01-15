@@ -50,24 +50,42 @@
 
 
     <section class="readme">
-        <article><h2>scratch-vm</h2><h4>Scratch VM is a library for representing, running, and maintaining the state of computer programs written using <a href="https://github.com/LLK/scratch-blocks">Scratch Blocks</a>.</h4><p><a href="https://travis-ci.org/LLK/scratch-vm"><img src="https://travis-ci.org/LLK/scratch-vm.svg?branch=develop" alt="Build Status"></a>
+        <article><h2>scratch-vm</h2>
+<h4>Scratch VM is a library for representing, running, and maintaining the state of computer programs written using <a href="https://github.com/LLK/scratch-blocks">Scratch Blocks</a>.</h4>
+<p><a href="https://travis-ci.org/LLK/scratch-vm"><img src="https://travis-ci.org/LLK/scratch-vm.svg?branch=develop" alt="Build Status"></a>
 <a href="https://coveralls.io/github/LLK/scratch-vm?branch=develop"><img src="https://coveralls.io/repos/github/LLK/scratch-vm/badge.svg?branch=develop" alt="Coverage Status"></a>
 <a href="https://greenkeeper.io/"><img src="https://badges.greenkeeper.io/LLK/scratch-vm.svg" alt="Greenkeeper badge"></a></p>
-<h2>Installation</h2><p>This requires you to have Git and Node.js installed.</p>
+<h2>Installation</h2>
+<p>This requires you to have Git and Node.js installed.</p>
 <p>To install as a dependency for your own application:</p>
-<pre class="prettyprint source lang-bash"><code>npm install scratch-vm</code></pre><p>To set up a development environment to edit scratch-vm yourself:</p>
+<pre class="prettyprint source lang-bash"><code>npm install scratch-vm
+</code></pre>
+<p>To set up a development environment to edit scratch-vm yourself:</p>
 <pre class="prettyprint source lang-bash"><code>git clone https://github.com/LLK/scratch-vm.git
 cd scratch-vm
-npm install</code></pre><h2>Development Server</h2><p>This requires Node.js to be installed.</p>
+npm install
+</code></pre>
+<h2>Development Server</h2>
+<p>This requires Node.js to be installed.</p>
 <p>For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server). If you would like to use your modified VM with the full Scratch 3.0 GUI, <a href="https://github.com/LLK/scratch-gui/wiki/Getting-Started">follow the instructions to link the VM to the GUI</a>.</p>
-<h2>Running the Development Server</h2><p>Open a Command Prompt or Terminal in the repository and run:</p>
-<pre class="prettyprint source lang-bash"><code>npm start</code></pre><h2>Playground</h2><p>To view the Playground, make sure the dev server's running and go to <a href="http://localhost:8073/playground/">http://localhost:8073/playground/</a> - you will be directed to the playground, which demonstrates various tools and internal state.</p>
+<h2>Running the Development Server</h2>
+<p>Open a Command Prompt or Terminal in the repository and run:</p>
+<pre class="prettyprint source lang-bash"><code>npm start
+</code></pre>
+<h2>Playground</h2>
+<p>To view the Playground, make sure the dev server's running and go to <a href="http://localhost:8073/playground/">http://localhost:8073/playground/</a> - you will be directed to the playground, which demonstrates various tools and internal state.</p>
 <p><img src="https://i.imgur.com/nOCNqEc.gif" alt="VM Playground Screenshot"></p>
-<h2>Standalone Build</h2><pre class="prettyprint source lang-bash"><code>npm run build</code></pre><pre class="prettyprint source lang-html"><code>&lt;script src=&quot;/path/to/dist/web/scratch-vm.js&quot;>&lt;/script>
+<h2>Standalone Build</h2>
+<pre class="prettyprint source lang-bash"><code>npm run build
+</code></pre>
+<pre class="prettyprint source lang-html"><code>&lt;script src=&quot;/path/to/dist/web/scratch-vm.js&quot;>&lt;/script>
 &lt;script>
     var vm = new window.VirtualMachine();
     // do things
-&lt;/script></code></pre><h2>How to include in a Node.js App</h2><p>For an extended setup example, check out the /src/playground directory, which includes a fully running VM instance.</p>
+&lt;/script>
+</code></pre>
+<h2>How to include in a Node.js App</h2>
+<p>For an extended setup example, check out the /src/playground directory, which includes a fully running VM instance.</p>
 <pre class="prettyprint source lang-js"><code>var VirtualMachine = require('scratch-vm');
 var vm = new VirtualMachine();
 
@@ -75,8 +93,13 @@ var vm = new VirtualMachine();
 Scratch.workspace.addChangeListener(vm.blockListener);
 
 // Run threads
-vm.start();</code></pre><h2>Abstract Syntax Tree</h2><h4>Overview</h4><p>The Virtual Machine constructs and maintains the state of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree</a> (AST) by listening to events emitted by the <a href="https://github.com/LLK/scratch-blocks">scratch-blocks</a> workspace via the <code>blockListener</code>. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the <code>vm.runtime.targets[...].blocks</code> object.</p>
-<h4>Anatomy of a Block</h4><p>The VM's block representation contains all the important information for execution and storage. Here's an example representing the &quot;when key pressed&quot; script on a workspace:</p>
+vm.start();
+</code></pre>
+<h2>Abstract Syntax Tree</h2>
+<h4>Overview</h4>
+<p>The Virtual Machine constructs and maintains the state of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree</a> (AST) by listening to events emitted by the <a href="https://github.com/LLK/scratch-blocks">scratch-blocks</a> workspace via the <code>blockListener</code>. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the <code>vm.runtime.targets[...].blocks</code> object.</p>
+<h4>Anatomy of a Block</h4>
+<p>The VM's block representation contains all the important information for execution and storage. Here's an example representing the &quot;when key pressed&quot; script on a workspace:</p>
 <pre class="prettyprint source lang-json"><code>{
   &quot;_blocks&quot;: {
     &quot;Q]PK~yJ@BTV8Y~FfISeo&quot;: {
@@ -101,10 +124,23 @@ vm.start();</code></pre><h2>Abstract Syntax Tree</h2><h4>Overview</h4><p>The Vir
   &quot;_scripts&quot;: [
     &quot;Q]PK~yJ@BTV8Y~FfISeo&quot;
   ]
-}</code></pre><h2>Testing</h2><pre class="prettyprint source lang-bash"><code>npm test</code></pre><pre class="prettyprint source lang-bash"><code>npm run coverage</code></pre><h2>Publishing to GitHub Pages</h2><pre class="prettyprint source lang-bash"><code>npm run deploy</code></pre><p>This will push the currently built playground to the gh-pages branch of the
+}
+</code></pre>
+<h2>Testing</h2>
+<pre class="prettyprint source lang-bash"><code>npm test
+</code></pre>
+<pre class="prettyprint source lang-bash"><code>npm run coverage
+</code></pre>
+<h2>Publishing to GitHub Pages</h2>
+<pre class="prettyprint source lang-bash"><code>npm run deploy
+</code></pre>
+<p>This will push the currently built playground to the gh-pages branch of the
 currently tracked remote.  If you would like to change where to push to, add
 a repo url argument:</p>
-<pre class="prettyprint source lang-bash"><code>npm run deploy -- -r &lt;your repo url></code></pre><h2>Donate</h2><p>We provide <a href="https://scratch.mit.edu">Scratch</a> free of charge, and want to keep it that way! Please consider making a <a href="https://secure.donationpay.org/scratchfoundation/">donation</a> to support our continued engineering, design, community, and resource development efforts. Donations of any size are appreciated. Thank you!</p></article>
+<pre class="prettyprint source lang-bash"><code>npm run deploy -- -r &lt;your repo url>
+</code></pre>
+<h2>Donate</h2>
+<p>We provide <a href="https://scratch.mit.edu">Scratch</a> free of charge, and want to keep it that way! Please consider making a <a href="https://secure.donationpay.org/scratchfoundation/">donation</a> to support our continued engineering, design, community, and resource development efforts. Donations of any size are appreciated. Thank you!</p></article>
     </section>
 
 
@@ -1495,11 +1531,13 @@ Use when coercing a value before computation.</p></div>
 
 
             
-                <div class="description"><p>A utility for accurately measuring time.</p>
-<h2>To use:</h2><p>var timer = new Timer();
+                <div class="description"><h2>A utility for accurately measuring time.
+To use:</h2>
+<h2>var timer = new Timer();
 timer.start();
-... pass some time ...</p>
-<h2>var timeDifference = timer.timeElapsed();</h2><p>Or, you can use the <code>time</code> and <code>relativeTime</code>
+... pass some time ...
+var timeDifference = timer.timeElapsed();</h2>
+<p>Or, you can use the <code>time</code> and <code>relativeTime</code>
 to do some measurement yourself.</p></div>
             
 
@@ -1630,7 +1668,7 @@ to do some measurement yourself.</p></div>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>

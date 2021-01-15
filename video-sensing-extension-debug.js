@@ -82,12 +82,40 @@ var VirtualMachine =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 496);
+/******/ 	return __webpack_require__(__webpack_require__.s = 488);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 48:
+/***/ 488:
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(489);
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5)))
+
+/***/ }),
+
+/***/ 489:
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * A debug "index" module exporting VideoMotion and VideoMotionView to debug
+ * VideoMotion directly.
+ * @file debug.js
+ */
+
+const VideoMotion = __webpack_require__(65);
+const VideoMotionView = __webpack_require__(490);
+
+module.exports = {
+    VideoMotion,
+    VideoMotionView
+};
+
+
+/***/ }),
+
+/***/ 49:
 /***/ (function(module, exports) {
 
 /**
@@ -178,35 +206,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 496:
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(497);
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5)))
-
-/***/ }),
-
-/***/ 497:
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * A debug "index" module exporting VideoMotion and VideoMotionView to debug
- * VideoMotion directly.
- * @file debug.js
- */
-
-const VideoMotion = __webpack_require__(65);
-const VideoMotionView = __webpack_require__(498);
-
-module.exports = {
-    VideoMotion,
-    VideoMotionView
-};
-
-
-/***/ }),
-
-/***/ 498:
+/***/ 490:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -215,7 +215,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(48),
+var _require = __webpack_require__(49),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -800,7 +800,7 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
+	g = g || new Function("return this")();
 } catch (e) {
 	// This works if the window reference is available
 	if (typeof window === "object") g = window;
@@ -832,7 +832,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * Video motion sensing primitives.
  */
-var _require = __webpack_require__(48),
+var _require = __webpack_require__(49),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 /**
