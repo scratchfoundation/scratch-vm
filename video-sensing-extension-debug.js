@@ -82,111 +82,20 @@ var VirtualMachine =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 490);
+/******/ 	return __webpack_require__(__webpack_require__.s = 495);
 /******/ })
 /************************************************************************/
 /******/ ({
 
-/***/ 48:
-/***/ (function(module, exports) {
-
-/**
- * A constant value helping to transform a value in radians to degrees.
- * @type {number}
- */
-var TO_DEGREE = 180 / Math.PI;
-/**
- * A object reused to save on memory allocation returning u and v vector from
- * motionVector.
- * @type {UV}
- */
-
-var _motionVectorOut = {
-  u: 0,
-  v: 0
-};
-/**
- * Determine a motion vector combinations of the color component difference on
- * the x axis, y axis, and temporal axis.
- * @param {number} A2 - a sum of x axis squared
- * @param {number} A1B2 - a sum of x axis times y axis
- * @param {number} B1 - a sum of y axis squared
- * @param {number} C2 - a sum of x axis times temporal axis
- * @param {number} C1 - a sum of y axis times temporal axis
- * @param {UV} out - optional object to store return UV info in
- * @returns {UV} a uv vector representing the motion for the given input
- */
-
-var motionVector = function motionVector(A2, A1B2, B1, C2, C1) {
-  var out = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : _motionVectorOut;
-  // Compare sums of X * Y and sums of X squared and Y squared.
-  var delta = A1B2 * A1B2 - A2 * B1;
-
-  if (delta) {
-    // System is not singular - solving by Kramer method.
-    var deltaX = -(C1 * A1B2 - C2 * B1);
-    var deltaY = -(A1B2 * C2 - A2 * C1);
-    var Idelta = 8 / delta;
-    out.u = deltaX * Idelta;
-    out.v = deltaY * Idelta;
-  } else {
-    // Singular system - find optical flow in gradient direction.
-    var Norm = (A1B2 + A2) * (A1B2 + A2) + (B1 + A1B2) * (B1 + A1B2);
-
-    if (Norm) {
-      var IGradNorm = 8 / Norm;
-      var temp = -(C1 + C2) * IGradNorm;
-      out.u = (A1B2 + A2) * temp;
-      out.v = (B1 + A1B2) * temp;
-    } else {
-      out.u = 0;
-      out.v = 0;
-    }
-  }
-
-  return out;
-};
-/**
- * Translate an angle in degrees with the range -180 to 180 rotated to
- * Scratch's reference angle.
- * @param {number} degrees - angle in range -180 to 180
- * @returns {number} angle from Scratch's reference angle
- */
-
-
-var scratchDegrees = function scratchDegrees(degrees) {
-  return (degrees + 270) % 360 - 180;
-};
-/**
- * Get the angle of the y and x component of a 2d vector in degrees in
- * Scratch's coordinate plane.
- * @param {number} y - the y component of a 2d vector
- * @param {number} x - the x component of a 2d vector
- * @returns {number} angle in degrees in Scratch's coordinate plane
- */
-
-
-var scratchAtan2 = function scratchAtan2(y, x) {
-  return scratchDegrees(Math.atan2(y, x) * TO_DEGREE);
-};
-
-module.exports = {
-  motionVector: motionVector,
-  scratchDegrees: scratchDegrees,
-  scratchAtan2: scratchAtan2
-};
-
-/***/ }),
-
-/***/ 490:
+/***/ 495:
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(491);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(496);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5)))
 
 /***/ }),
 
-/***/ 491:
+/***/ 496:
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -196,7 +105,7 @@ module.exports = {
  */
 
 const VideoMotion = __webpack_require__(74);
-const VideoMotionView = __webpack_require__(492);
+const VideoMotionView = __webpack_require__(497);
 
 module.exports = {
     VideoMotion,
@@ -206,7 +115,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 492:
+/***/ 497:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -215,7 +124,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var _require = __webpack_require__(48),
+var _require = __webpack_require__(50),
     motionVector = _require.motionVector;
 
 var WIDTH = 480;
@@ -815,6 +724,97 @@ module.exports = g;
 
 /***/ }),
 
+/***/ 50:
+/***/ (function(module, exports) {
+
+/**
+ * A constant value helping to transform a value in radians to degrees.
+ * @type {number}
+ */
+var TO_DEGREE = 180 / Math.PI;
+/**
+ * A object reused to save on memory allocation returning u and v vector from
+ * motionVector.
+ * @type {UV}
+ */
+
+var _motionVectorOut = {
+  u: 0,
+  v: 0
+};
+/**
+ * Determine a motion vector combinations of the color component difference on
+ * the x axis, y axis, and temporal axis.
+ * @param {number} A2 - a sum of x axis squared
+ * @param {number} A1B2 - a sum of x axis times y axis
+ * @param {number} B1 - a sum of y axis squared
+ * @param {number} C2 - a sum of x axis times temporal axis
+ * @param {number} C1 - a sum of y axis times temporal axis
+ * @param {UV} out - optional object to store return UV info in
+ * @returns {UV} a uv vector representing the motion for the given input
+ */
+
+var motionVector = function motionVector(A2, A1B2, B1, C2, C1) {
+  var out = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : _motionVectorOut;
+  // Compare sums of X * Y and sums of X squared and Y squared.
+  var delta = A1B2 * A1B2 - A2 * B1;
+
+  if (delta) {
+    // System is not singular - solving by Kramer method.
+    var deltaX = -(C1 * A1B2 - C2 * B1);
+    var deltaY = -(A1B2 * C2 - A2 * C1);
+    var Idelta = 8 / delta;
+    out.u = deltaX * Idelta;
+    out.v = deltaY * Idelta;
+  } else {
+    // Singular system - find optical flow in gradient direction.
+    var Norm = (A1B2 + A2) * (A1B2 + A2) + (B1 + A1B2) * (B1 + A1B2);
+
+    if (Norm) {
+      var IGradNorm = 8 / Norm;
+      var temp = -(C1 + C2) * IGradNorm;
+      out.u = (A1B2 + A2) * temp;
+      out.v = (B1 + A1B2) * temp;
+    } else {
+      out.u = 0;
+      out.v = 0;
+    }
+  }
+
+  return out;
+};
+/**
+ * Translate an angle in degrees with the range -180 to 180 rotated to
+ * Scratch's reference angle.
+ * @param {number} degrees - angle in range -180 to 180
+ * @returns {number} angle from Scratch's reference angle
+ */
+
+
+var scratchDegrees = function scratchDegrees(degrees) {
+  return (degrees + 270) % 360 - 180;
+};
+/**
+ * Get the angle of the y and x component of a 2d vector in degrees in
+ * Scratch's coordinate plane.
+ * @param {number} y - the y component of a 2d vector
+ * @param {number} x - the x component of a 2d vector
+ * @returns {number} angle in degrees in Scratch's coordinate plane
+ */
+
+
+var scratchAtan2 = function scratchAtan2(y, x) {
+  return scratchDegrees(Math.atan2(y, x) * TO_DEGREE);
+};
+
+module.exports = {
+  motionVector: motionVector,
+  scratchDegrees: scratchDegrees,
+  scratchAtan2: scratchAtan2
+};
+
+/***/ }),
+
 /***/ 74:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -832,7 +832,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  *
  * Video motion sensing primitives.
  */
-var _require = __webpack_require__(48),
+var _require = __webpack_require__(50),
     motionVector = _require.motionVector,
     scratchAtan2 = _require.scratchAtan2;
 /**

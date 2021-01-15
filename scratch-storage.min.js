@@ -329,7 +329,7 @@ function fromByteArray (uint8) {
 /* WEBPACK VAR INJECTION */(function(global) {/*!
  * The buffer module from node.js, for the browser.
  *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @author   Feross Aboukhadijeh <http://feross.org>
  * @license  MIT
  */
 /* eslint-disable no-proto */
@@ -2120,80 +2120,6 @@ function isnan (val) {
 
 /***/ }),
 
-/***/ "./node_modules/for-each/index.js":
-/*!****************************************!*\
-  !*** ./node_modules/for-each/index.js ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var isCallable = __webpack_require__(/*! is-callable */ "./node_modules/is-callable/index.js");
-
-var toStr = Object.prototype.toString;
-var hasOwnProperty = Object.prototype.hasOwnProperty;
-
-var forEachArray = function forEachArray(array, iterator, receiver) {
-    for (var i = 0, len = array.length; i < len; i++) {
-        if (hasOwnProperty.call(array, i)) {
-            if (receiver == null) {
-                iterator(array[i], i, array);
-            } else {
-                iterator.call(receiver, array[i], i, array);
-            }
-        }
-    }
-};
-
-var forEachString = function forEachString(string, iterator, receiver) {
-    for (var i = 0, len = string.length; i < len; i++) {
-        // no such thing as a sparse string.
-        if (receiver == null) {
-            iterator(string.charAt(i), i, string);
-        } else {
-            iterator.call(receiver, string.charAt(i), i, string);
-        }
-    }
-};
-
-var forEachObject = function forEachObject(object, iterator, receiver) {
-    for (var k in object) {
-        if (hasOwnProperty.call(object, k)) {
-            if (receiver == null) {
-                iterator(object[k], k, object);
-            } else {
-                iterator.call(receiver, object[k], k, object);
-            }
-        }
-    }
-};
-
-var forEach = function forEach(list, iterator, thisArg) {
-    if (!isCallable(iterator)) {
-        throw new TypeError('iterator must be a function');
-    }
-
-    var receiver;
-    if (arguments.length >= 3) {
-        receiver = thisArg;
-    }
-
-    if (toStr.call(list) === '[object Array]') {
-        forEachArray(list, iterator, receiver);
-    } else if (typeof list === 'string') {
-        forEachString(list, iterator, receiver);
-    } else {
-        forEachObject(list, iterator, receiver);
-    }
-};
-
-module.exports = forEach;
-
-
-/***/ }),
-
 /***/ "./node_modules/global/window.js":
 /*!***************************************!*\
   !*** ./node_modules/global/window.js ***!
@@ -2314,55 +2240,6 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 /***/ }),
 
-/***/ "./node_modules/is-callable/index.js":
-/*!*******************************************!*\
-  !*** ./node_modules/is-callable/index.js ***!
-  \*******************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var fnToStr = Function.prototype.toString;
-
-var constructorRegex = /^\s*class\b/;
-var isES6ClassFn = function isES6ClassFunction(value) {
-	try {
-		var fnStr = fnToStr.call(value);
-		return constructorRegex.test(fnStr);
-	} catch (e) {
-		return false; // not a function
-	}
-};
-
-var tryFunctionObject = function tryFunctionToStr(value) {
-	try {
-		if (isES6ClassFn(value)) { return false; }
-		fnToStr.call(value);
-		return true;
-	} catch (e) {
-		return false;
-	}
-};
-var toStr = Object.prototype.toString;
-var fnClass = '[object Function]';
-var genClass = '[object GeneratorFunction]';
-var hasToStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol';
-
-module.exports = function isCallable(value) {
-	if (!value) { return false; }
-	if (typeof value !== 'function' && typeof value !== 'object') { return false; }
-	if (typeof value === 'function' && !value.prototype) { return true; }
-	if (hasToStringTag) { return tryFunctionObject(value); }
-	if (isES6ClassFn(value)) { return false; }
-	var strClass = toStr.call(value);
-	return strClass === fnClass || strClass === genClass;
-};
-
-
-/***/ }),
-
 /***/ "./node_modules/is-function/index.js":
 /*!*******************************************!*\
   !*** ./node_modules/is-function/index.js ***!
@@ -2375,6 +2252,9 @@ module.exports = isFunction
 var toString = Object.prototype.toString
 
 function isFunction (fn) {
+  if (!fn) {
+    return false
+  }
   var string = toString.call(fn)
   return string === '[object Function]' ||
     (typeof fn === 'function' && string !== '[object RegExp]') ||
@@ -2438,7 +2318,7 @@ module.exports = Array.isArray || function (arr) {
     root = self;
   }
   var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
-  var AMD = true && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
+  var AMD =  true && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
   var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
   var HEX_CHARS = '0123456789abcdef'.split('');
   var EXTRA = [128, 32768, 8388608, -2147483648];
@@ -3932,10 +3812,11 @@ process.umask = function() { return 0; };
   !*** ./node_modules/parse-headers/parse-headers.js ***!
   \*****************************************************/
 /*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-var trim = __webpack_require__(/*! trim */ "./node_modules/trim/index.js")
-  , forEach = __webpack_require__(/*! for-each */ "./node_modules/for-each/index.js")
+var trim = function(string) {
+  return string.replace(/^\s+|\s+$/g, '');
+}
   , isArray = function(arg) {
       return Object.prototype.toString.call(arg) === '[object Array]';
     }
@@ -3946,25 +3827,26 @@ module.exports = function (headers) {
 
   var result = {}
 
-  forEach(
-      trim(headers).split('\n')
-    , function (row) {
-        var index = row.indexOf(':')
-          , key = trim(row.slice(0, index)).toLowerCase()
-          , value = trim(row.slice(index + 1))
+  var headersArr = trim(headers).split('\n')
 
-        if (typeof(result[key]) === 'undefined') {
-          result[key] = value
-        } else if (isArray(result[key])) {
-          result[key].push(value)
-        } else {
-          result[key] = [ result[key], value ]
-        }
-      }
-  )
+  for (var i = 0; i < headersArr.length; i++) {
+    var row = headersArr[i]
+    var index = row.indexOf(':')
+    , key = trim(row.slice(0, index)).toLowerCase()
+    , value = trim(row.slice(index + 1))
+
+    if (typeof(result[key]) === 'undefined') {
+      result[key] = value
+    } else if (isArray(result[key])) {
+      result[key].push(value)
+    } else {
+      result[key] = [ result[key], value ]
+    }
+  }
 
   return result
 }
+
 
 /***/ }),
 
@@ -3998,7 +3880,7 @@ module.exports = {
 (function(global) {
   'use strict';
 
-  if (true && module.exports) {
+  if ( true && module.exports) {
     module.exports = global;
   }
 
@@ -4063,7 +3945,7 @@ module.exports = {
   'use strict';
 
   // If we're in node require encoding-indexes and attach it to the global.
-  if (true && module.exports &&
+  if ( true && module.exports &&
     !global["encoding-indexes"]) {
     global["encoding-indexes"] =
       __webpack_require__(/*! ./encoding-indexes.js */ "./node_modules/text-encoding/lib/encoding-indexes.js")["encoding-indexes"];
@@ -7354,7 +7236,7 @@ module.exports = {
   if (!global['TextDecoder'])
     global['TextDecoder'] = TextDecoder;
 
-  if (true && module.exports) {
+  if ( true && module.exports) {
     module.exports = {
       TextEncoder: global['TextEncoder'],
       TextDecoder: global['TextDecoder'],
@@ -7365,31 +7247,6 @@ module.exports = {
 // For strict environments where `this` inside the global scope
 // is `undefined`, take a pure object instead
 }(this || {}));
-
-/***/ }),
-
-/***/ "./node_modules/trim/index.js":
-/*!************************************!*\
-  !*** ./node_modules/trim/index.js ***!
-  \************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-
-exports = module.exports = trim;
-
-function trim(str){
-  return str.replace(/^\s*|\s*$/g, '');
-}
-
-exports.left = function(str){
-  return str.replace(/^\s*/, '');
-};
-
-exports.right = function(str){
-  return str.replace(/\s*$/, '');
-};
-
 
 /***/ }),
 
@@ -7423,7 +7280,7 @@ g = (function() {
 
 try {
 	// This works if eval is allowed (see CSP)
-	g = g || Function("return this")() || (1, eval)("this");
+	g = g || new Function("return this")();
 } catch (e) {
 	// This works if the window reference is available
 	if (typeof window === "object") g = window;
@@ -7435,6 +7292,67 @@ try {
 
 module.exports = g;
 
+
+/***/ }),
+
+/***/ "./node_modules/worker-loader/dist/cjs.js?{\"inline\":true,\"fallback\":true}!./src/FetchWorkerTool.worker.js":
+/*!****************************************************************************************************************!*\
+  !*** ./node_modules/worker-loader/dist/cjs.js?{"inline":true,"fallback":true}!./src/FetchWorkerTool.worker.js ***!
+  \****************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = function() {
+  return __webpack_require__(/*! !./node_modules/worker-loader/dist/workers/InlineWorker.js */ "./node_modules/worker-loader/dist/workers/InlineWorker.js")("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId]) {\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/ \t\t}\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\ti: moduleId,\n/******/ \t\t\tl: false,\n/******/ \t\t\texports: {}\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.l = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// define getter function for harmony exports\n/******/ \t__webpack_require__.d = function(exports, name, getter) {\n/******/ \t\tif(!__webpack_require__.o(exports, name)) {\n/******/ \t\t\tObject.defineProperty(exports, name, { enumerable: true, get: getter });\n/******/ \t\t}\n/******/ \t};\n/******/\n/******/ \t// define __esModule on exports\n/******/ \t__webpack_require__.r = function(exports) {\n/******/ \t\tif(typeof Symbol !== 'undefined' && Symbol.toStringTag) {\n/******/ \t\t\tObject.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });\n/******/ \t\t}\n/******/ \t\tObject.defineProperty(exports, '__esModule', { value: true });\n/******/ \t};\n/******/\n/******/ \t// create a fake namespace object\n/******/ \t// mode & 1: value is a module id, require it\n/******/ \t// mode & 2: merge all properties of value into the ns\n/******/ \t// mode & 4: return value when already ns object\n/******/ \t// mode & 8|1: behave like require\n/******/ \t__webpack_require__.t = function(value, mode) {\n/******/ \t\tif(mode & 1) value = __webpack_require__(value);\n/******/ \t\tif(mode & 8) return value;\n/******/ \t\tif((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;\n/******/ \t\tvar ns = Object.create(null);\n/******/ \t\t__webpack_require__.r(ns);\n/******/ \t\tObject.defineProperty(ns, 'default', { enumerable: true, value: value });\n/******/ \t\tif(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));\n/******/ \t\treturn ns;\n/******/ \t};\n/******/\n/******/ \t// getDefaultExport function for compatibility with non-harmony modules\n/******/ \t__webpack_require__.n = function(module) {\n/******/ \t\tvar getter = module && module.__esModule ?\n/******/ \t\t\tfunction getDefault() { return module['default']; } :\n/******/ \t\t\tfunction getModuleExports() { return module; };\n/******/ \t\t__webpack_require__.d(getter, 'a', getter);\n/******/ \t\treturn getter;\n/******/ \t};\n/******/\n/******/ \t// Object.prototype.hasOwnProperty.call\n/******/ \t__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(__webpack_require__.s = \"./node_modules/babel-loader/lib/index.js?!./src/FetchWorkerTool.worker.js\");\n/******/ })\n/************************************************************************/\n/******/ ({\n\n/***/ \"./node_modules/babel-loader/lib/index.js?!./src/FetchWorkerTool.worker.js\":\n/*!*******************************************************************************!*\\\n  !*** ./node_modules/babel-loader/lib??ref--4!./src/FetchWorkerTool.worker.js ***!\n  \\*******************************************************************************/\n/*! no static exports found */\n/***/ (function(module, exports) {\n\n/* eslint-env worker */\nvar jobsActive = 0;\nvar complete = [];\nvar intervalId = null;\n/**\n * Register a step function.\n *\n * Step checks if there are completed jobs and if there are sends them to the\n * parent. Then it checks the jobs count. If there are no further jobs, clear\n * the step.\n */\n\nvar registerStep = function registerStep() {\n  intervalId = setInterval(function () {\n    if (complete.length) {\n      // Send our chunk of completed requests and instruct postMessage to\n      // transfer the buffers instead of copying them.\n      postMessage(complete.slice(), // Instruct postMessage that these buffers in the sent message\n      // should use their Transferable trait. After the postMessage\n      // call the \"buffers\" will still be in complete if you looked,\n      // but they will all be length 0 as the data they reference has\n      // been sent to the window. This lets us send a lot of data\n      // without the normal postMessage behaviour of making a copy of\n      // all of the data for the window.\n      complete.map(function (response) {\n        return response.buffer;\n      }).filter(Boolean));\n      complete.length = 0;\n    }\n\n    if (jobsActive === 0) {\n      clearInterval(intervalId);\n      intervalId = null;\n    }\n  }, 1);\n};\n/**\n * Receive a job from the parent and fetch the requested data.\n * @param {object} options.job A job id, url, and options descriptor to perform.\n */\n\n\nvar onMessage = function onMessage(_ref) {\n  var job = _ref.data;\n\n  if (jobsActive === 0 && !intervalId) {\n    registerStep();\n  }\n\n  jobsActive++;\n  fetch(job.url, job.options).then(function (response) {\n    return response.arrayBuffer();\n  }).then(function (buffer) {\n    return complete.push({\n      id: job.id,\n      buffer: buffer\n    });\n  }).catch(function (error) {\n    return complete.push({\n      id: job.id,\n      error: error\n    });\n  }).then(function () {\n    return jobsActive--;\n  });\n};\n\nif (self.fetch) {\n  postMessage({\n    support: {\n      fetch: true\n    }\n  });\n  self.addEventListener('message', onMessage);\n} else {\n  postMessage({\n    support: {\n      fetch: false\n    }\n  });\n  self.addEventListener('message', function (_ref2) {\n    var job = _ref2.data;\n    postMessage([{\n      id: job.id,\n      error: new Error('fetch is unavailable')\n    }]);\n  });\n}\n\n/***/ })\n\n/******/ });\n//# sourceMappingURL=3325b91e8645157f8dc6.worker.js.map", __webpack_require__.p + "3325b91e8645157f8dc6.worker.js");
+};
+
+/***/ }),
+
+/***/ "./node_modules/worker-loader/dist/workers/InlineWorker.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/worker-loader/dist/workers/InlineWorker.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// http://stackoverflow.com/questions/10343913/how-to-create-a-web-worker-from-a-string
+
+var URL = window.URL || window.webkitURL;
+
+module.exports = function (content, url) {
+  try {
+    try {
+      var blob;
+
+      try {
+        // BlobBuilder = Deprecated, but widely implemented
+        var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+
+        blob = new BlobBuilder();
+
+        blob.append(content);
+
+        blob = blob.getBlob();
+      } catch (e) {
+        // The proposed API
+        blob = new Blob([content]);
+      }
+
+      return new Worker(URL.createObjectURL(blob));
+    } catch (e) {
+      return new Worker('data:application/javascript,' + encodeURIComponent(content));
+    }
+  } catch (e) {
+    if (!url) {
+      throw Error('Inline worker is not supported');
+    }
+
+    return new Worker(url);
+  }
+};
 
 /***/ }),
 
@@ -7746,9 +7664,13 @@ var _TextDecoder;
 
 var _TextEncoder;
 
-var encoding = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js");
-
 if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
+  // Wait to require text-encoding until we _know_ its needed. This will save
+  // evaluating ~500kb of encoding indices that we do not need to evaluate if
+  // the browser provides TextDecoder and TextEncoder.
+  // eslint-disable-next-line global-require
+  var encoding = __webpack_require__(/*! text-encoding */ "./node_modules/text-encoding/index.js");
+
   _TextDecoder = encoding.TextDecoder;
   _TextEncoder = encoding.TextEncoder;
 } else {
@@ -7757,24 +7679,76 @@ if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
   _TextEncoder = TextEncoder;
 }
 
-var base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
-
 var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
 
 var memoizedToString = function () {
+  /**
+   * The maximum length of a chunk before encoding it into base64.
+   *
+   * 32766 is a multiple of 3 so btoa does not need to use padding characters
+   * except for the final chunk where that is fine. 32766 is also close to
+   * 32768 so it is close to a size an memory allocator would prefer.
+   * @const {number}
+   */
+  var BTOA_CHUNK_MAX_LENGTH = 32766;
+  /**
+   * An array cache of bytes to characters.
+   * @const {?Array.<string>}
+   */
+
+  var fromCharCode = null;
   var strings = {};
   return function (assetId, data) {
     if (!strings.hasOwnProperty(assetId)) {
-      strings[assetId] = base64js.fromByteArray(data);
+      if (typeof btoa === 'undefined') {
+        // Use a library that does not need btoa to run.
+
+        /* eslint-disable-next-line global-require */
+        var base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
+
+        strings[assetId] = base64js.fromByteArray(data);
+      } else {
+        // Native btoa is faster than javascript translation. Use js to
+        // create a "binary" string and btoa to encode it.
+        if (fromCharCode === null) {
+          // Cache the first 256 characters for input byte values.
+          fromCharCode = new Array(256);
+
+          for (var i = 0; i < 256; i++) {
+            fromCharCode[i] = String.fromCharCode(i);
+          }
+        }
+
+        var length = data.length;
+        var s = ''; // Iterate over chunks of the binary data.
+
+        for (var _i = 0, e = 0; _i < length; _i = e) {
+          // Create small chunks to cause more small allocations and
+          // less large allocations.
+          e = Math.min(e + BTOA_CHUNK_MAX_LENGTH, length);
+          var s_ = '';
+
+          for (var j = _i; j < e; j += 1) {
+            s_ += fromCharCode[data[j]];
+          } // Encode the latest chunk so the we create one big output
+          // string instead of creating a big input string and then
+          // one big output string.
+
+          /* global btoa */
+
+
+          s += btoa(s_);
+        }
+
+        strings[assetId] = s;
+      }
     }
 
     return strings[assetId];
   };
 }();
 
-var Asset =
-/*#__PURE__*/
-function () {
+var Asset = /*#__PURE__*/function () {
   /**
    * Construct an Asset.
    * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
@@ -7810,7 +7784,10 @@ function () {
       /** @type {Buffer} */
 
       this.data = data;
-      if (generateId) this.assetId = md5(data);
+      if (generateId) this.assetId = md5(data); // Mark as clean only if set is being called without generateId
+      // If a new id is being generated, mark this asset as not clean
+
+      this.clean = !generateId;
     }
     /**
      * @returns {string} - This asset's data, decoded as text.
@@ -7918,7 +7895,7 @@ module.exports = AssetType;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(Buffer) {function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+/* WEBPACK VAR INJECTION */(function(Buffer) {function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -7926,15 +7903,19 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function () { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
 function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
-
-function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
 
@@ -7985,17 +7966,17 @@ var DefaultAssets = [{
 
 var BuiltinAssets = DefaultAssets.concat([]);
 
-var BuiltinHelper =
-/*#__PURE__*/
-function (_Helper) {
+var BuiltinHelper = /*#__PURE__*/function (_Helper) {
   _inherits(BuiltinHelper, _Helper);
+
+  var _super = _createSuper(BuiltinHelper);
 
   function BuiltinHelper(parent) {
     var _this;
 
     _classCallCheck(this, BuiltinHelper);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(BuiltinHelper).call(this, parent));
+    _this = _super.call(this, parent);
     /**
      * In-memory storage for all built-in assets.
      * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
@@ -8108,12 +8089,18 @@ function (_Helper) {
      * Fetch an asset but don't process dependencies.
      * @param {AssetType} assetType - The type of asset to fetch.
      * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @return {Promise.<Asset>} A promise for the contents of the asset.
+     * @return {?Promise.<Asset>} A promise for the contents of the asset.
      */
 
   }, {
     key: "load",
     value: function load(assetType, assetId) {
+      if (!this.get(assetId)) {
+        // Return null immediately so Storage can quickly move to trying the
+        // next helper.
+        return null;
+      }
+
       return Promise.resolve(this.get(assetId));
     }
   }]);
@@ -8151,6 +8138,362 @@ module.exports = DataFormat;
 
 /***/ }),
 
+/***/ "./src/FetchTool.js":
+/*!**************************!*\
+  !*** ./src/FetchTool.js ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+/* eslint-env browser */
+
+/**
+ * Get and send assets with the fetch standard web api.
+ */
+var FetchTool = /*#__PURE__*/function () {
+  function FetchTool() {
+    _classCallCheck(this, FetchTool);
+  }
+
+  _createClass(FetchTool, [{
+    key: "get",
+
+    /**
+     * Request data from a server with fetch.
+     * @param {{url:string}} reqConfig - Request configuration for data to get.
+     * @param {{method:string}} options - Additional options to configure fetch.
+     * @returns {Promise.<Uint8Array>} Resolve to Buffer of data from server.
+     */
+    value: function get(_ref) {
+      var url = _ref.url,
+          options = _objectWithoutProperties(_ref, ["url"]);
+
+      return fetch(url, Object.assign({
+        method: 'GET'
+      }, options)).then(function (result) {
+        return result.arrayBuffer();
+      }).then(function (body) {
+        return new Uint8Array(body);
+      });
+    }
+    /**
+     * Is sending supported? false if the environment does not support sending
+     * with fetch.
+     * @returns {boolean} Is sending supported?
+     */
+
+  }, {
+    key: "send",
+
+    /**
+     * Send data to a server with fetch.
+     * @param {Request} reqConfig - Request configuration for data to send.
+     * @returns {Promise.<string>} Server returned metadata.
+     */
+    value: function send(_ref2) {
+      var url = _ref2.url,
+          _ref2$withCredentials = _ref2.withCredentials,
+          withCredentials = _ref2$withCredentials === void 0 ? false : _ref2$withCredentials,
+          options = _objectWithoutProperties(_ref2, ["url", "withCredentials"]);
+
+      return fetch(url, Object.assign({
+        credentials: withCredentials ? 'include' : 'omit'
+      }, options)).then(function (response) {
+        if (response.ok) return response.text();
+        return Promise.reject(response.status);
+      });
+    }
+  }, {
+    key: "isGetSupported",
+
+    /**
+     * Is get supported? false if the environment does not support fetch.
+     * @returns {boolean} Is get supported?
+     */
+    get: function get() {
+      return typeof fetch !== 'undefined';
+    }
+  }, {
+    key: "isSendSupported",
+    get: function get() {
+      return typeof fetch !== 'undefined';
+    }
+  }]);
+
+  return FetchTool;
+}();
+
+module.exports = FetchTool;
+
+/***/ }),
+
+/***/ "./src/FetchWorkerTool.js":
+/*!********************************!*\
+  !*** ./src/FetchWorkerTool.js ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+function _objectWithoutProperties(source, excluded) { if (source == null) return {}; var target = _objectWithoutPropertiesLoose(source, excluded); var key, i; if (Object.getOwnPropertySymbols) { var sourceSymbolKeys = Object.getOwnPropertySymbols(source); for (i = 0; i < sourceSymbolKeys.length; i++) { key = sourceSymbolKeys[i]; if (excluded.indexOf(key) >= 0) continue; if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue; target[key] = source[key]; } } return target; }
+
+function _objectWithoutPropertiesLoose(source, excluded) { if (source == null) return {}; var target = {}; var sourceKeys = Object.keys(source); var key, i; for (i = 0; i < sourceKeys.length; i++) { key = sourceKeys[i]; if (excluded.indexOf(key) >= 0) continue; target[key] = source[key]; } return target; }
+
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+/**
+ * Get and send assets with a worker that uses fetch.
+ */
+var PrivateFetchWorkerTool = /*#__PURE__*/function () {
+  function PrivateFetchWorkerTool() {
+    var _this = this;
+
+    _classCallCheck(this, PrivateFetchWorkerTool);
+
+    /**
+     * What does the worker support of the APIs we need?
+     * @type {{fetch:boolean}}
+     */
+    this._workerSupport = {
+      fetch: typeof fetch !== 'undefined'
+    };
+    /**
+     * A possible error occurred standing up the worker.
+     * @type {!Error}
+     */
+
+    this._supportError = null;
+    /**
+     * The worker that runs fetch and returns data for us.
+     * @type {!Worker}
+     */
+
+    this.worker = null;
+    /**
+     * A map of ids to fetch job objects.
+     * @type {object}
+     */
+
+    this.jobs = {};
+
+    try {
+      if (this.isGetSupported) {
+        // eslint-disable-next-line global-require
+        var FetchWorker = __webpack_require__(/*! worker-loader?{"inline":true,"fallback":true}!./FetchWorkerTool.worker */ "./node_modules/worker-loader/dist/cjs.js?{\"inline\":true,\"fallback\":true}!./src/FetchWorkerTool.worker.js");
+
+        this.worker = new FetchWorker();
+        this.worker.addEventListener('message', function (_ref) {
+          var data = _ref.data;
+
+          if (data.support) {
+            _this._workerSupport = data.support;
+            return;
+          }
+
+          var _iterator = _createForOfIteratorHelper(data),
+              _step;
+
+          try {
+            for (_iterator.s(); !(_step = _iterator.n()).done;) {
+              var message = _step.value;
+
+              if (_this.jobs[message.id]) {
+                if (message.error) {
+                  _this.jobs[message.id].reject(message.error);
+                } else {
+                  _this.jobs[message.id].resolve(message.buffer);
+                }
+
+                delete _this.jobs[message.id];
+              }
+            }
+          } catch (err) {
+            _iterator.e(err);
+          } finally {
+            _iterator.f();
+          }
+        });
+      }
+    } catch (error) {
+      this._supportError = error;
+    }
+  }
+  /**
+   * Is get supported?
+   *
+   * false if the environment does not workers, fetch, or fetch from inside a
+   * worker. Finding out the worker supports fetch is asynchronous and will
+   * guess that it does if the window does until the worker can inform us.
+   * @returns {boolean} Is get supported?
+   */
+
+
+  _createClass(PrivateFetchWorkerTool, [{
+    key: "get",
+
+    /**
+     * Request data from a server with a worker using fetch.
+     * @param {{url:string}} reqConfig - Request configuration for data to get.
+     * @param {{method:string}} options - Additional options to configure fetch.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
+     */
+    value: function get(_ref2) {
+      var _this2 = this;
+
+      var url = _ref2.url,
+          options = _objectWithoutProperties(_ref2, ["url"]);
+
+      return new Promise(function (resolve, reject) {
+        // TODO: Use a Scratch standard ID generator ...
+        var id = Math.random().toString(16).substring(2);
+
+        _this2.worker.postMessage({
+          id: id,
+          url: url,
+          options: Object.assign({
+            method: 'GET'
+          }, options)
+        });
+
+        _this2.jobs[id] = {
+          id: id,
+          resolve: resolve,
+          reject: reject
+        };
+      }).then(function (body) {
+        return new Uint8Array(body);
+      });
+    }
+    /**
+     * Is sending supported? always false for FetchWorkerTool.
+     * @returns {boolean} Is sending supported?
+     */
+
+  }, {
+    key: "send",
+
+    /**
+     * Send data to a server with nets.
+     * @throws {Error} A not implemented error.
+     */
+    value: function send() {
+      throw new Error('Not implemented.');
+    }
+    /**
+     * Return a static PrivateFetchWorkerTool instance on demand.
+     * @returns {PrivateFetchWorkerTool} A static PrivateFetchWorkerTool
+     *   instance
+     */
+
+  }, {
+    key: "isGetSupported",
+    get: function get() {
+      return typeof Worker !== 'undefined' && this._workerSupport.fetch && !this._supportError;
+    }
+  }, {
+    key: "isSendSupported",
+    get: function get() {
+      return false;
+    }
+  }], [{
+    key: "instance",
+    get: function get() {
+      if (!this._instance) {
+        this._instance = new PrivateFetchWorkerTool();
+      }
+
+      return this._instance;
+    }
+  }]);
+
+  return PrivateFetchWorkerTool;
+}();
+/**
+ * Get and send assets with a worker that uses fetch.
+ */
+
+
+var PublicFetchWorkerTool = /*#__PURE__*/function () {
+  function PublicFetchWorkerTool() {
+    _classCallCheck(this, PublicFetchWorkerTool);
+
+    /**
+     * Shared instance of an internal worker. PublicFetchWorkerTool proxies
+     * it.
+     * @type {PrivateFetchWorkerTool}
+     */
+    this.inner = PrivateFetchWorkerTool.instance;
+  }
+  /**
+   * Is get supported?
+   * @returns {boolean} Is get supported?
+   */
+
+
+  _createClass(PublicFetchWorkerTool, [{
+    key: "get",
+
+    /**
+     * Request data from a server with a worker that uses fetch.
+     * @param {{url:string}} reqConfig - Request configuration for data to get.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
+     */
+    value: function get(reqConfig) {
+      return this.inner.get(reqConfig);
+    }
+    /**
+     * Is sending supported?
+     * @returns {boolean} Is sending supported?
+     */
+
+  }, {
+    key: "send",
+
+    /**
+     * Send data to a server with a worker that uses fetch.
+     * @throws {Error} A not implemented error.
+     */
+    value: function send() {
+      throw new Error('Not implemented.');
+    }
+  }, {
+    key: "isGetSupported",
+    get: function get() {
+      return this.inner.isGetSupported;
+    }
+  }, {
+    key: "isSendSupported",
+    get: function get() {
+      return false;
+    }
+  }]);
+
+  return PublicFetchWorkerTool;
+}();
+
+module.exports = PublicFetchWorkerTool;
+
+/***/ }),
+
 /***/ "./src/Helper.js":
 /*!***********************!*\
   !*** ./src/Helper.js ***!
@@ -8168,9 +8511,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * Base class for asset load/save helpers.
  * @abstract
  */
-var Helper =
-/*#__PURE__*/
-function () {
+var Helper = /*#__PURE__*/function () {
   function Helper(parent) {
     _classCallCheck(this, Helper);
 
@@ -8199,6 +8540,271 @@ module.exports = Helper;
 
 /***/ }),
 
+/***/ "./src/NetsTool.js":
+/*!*************************!*\
+  !*** ./src/NetsTool.js ***!
+  \*************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+/**
+ * Get and send assets with the npm nets package.
+ */
+var NetsTool = /*#__PURE__*/function () {
+  function NetsTool() {
+    _classCallCheck(this, NetsTool);
+  }
+
+  _createClass(NetsTool, [{
+    key: "get",
+
+    /**
+     * Request data from a server with nets.
+     * @param {{url:string}} reqConfig - Request configuration for data to get.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
+     */
+    value: function get(reqConfig) {
+      return new Promise(function (resolve, reject) {
+        /* eslint global-require:0 */
+        // Wait to evaluate nets and its dependencies until we know we need
+        // it as NetsTool may never be used if fetch is available.
+        var nets = __webpack_require__(/*! nets */ "./node_modules/nets/index.js");
+
+        nets(Object.assign({
+          method: 'get'
+        }, reqConfig), function (err, resp, body) {
+          // body is a Buffer
+          if (err || Math.floor(resp.statusCode / 100) !== 2) {
+            reject(err || resp.statusCode);
+          } else {
+            resolve(body);
+          }
+        });
+      });
+    }
+    /**
+     * Is sending supported? false if the environment does not support sending
+     * with nets.
+     * @returns {boolean} Is sending supported?
+     */
+
+  }, {
+    key: "send",
+
+    /**
+     * Send data to a server with nets.
+     * @param {Request} reqConfig - Request configuration for data to send.
+     * @returns {Promise.<Buffer|string|object>} Server returned metadata.
+     */
+    value: function send(reqConfig) {
+      return new Promise(function (resolve, reject) {
+        // eslint-disable-next-lint global-require
+        // Wait to evaluate nets and its dependencies until we know we need
+        // it as NetsTool may never be used if fetch is available.
+        var nets = __webpack_require__(/*! nets */ "./node_modules/nets/index.js");
+
+        nets(Object.assign({
+          encoding: undefined // eslint-disable-line no-undefined
+
+        }, reqConfig), function (err, resp, body) {
+          if (err || Math.floor(resp.statusCode / 100) !== 2) {
+            reject(err || resp.statusCode);
+          } else {
+            resolve(body);
+          }
+        });
+      });
+    }
+  }, {
+    key: "isGetSupported",
+
+    /**
+     * Is get supported? false if the environment does not support nets.
+     * @returns {boolean} Is get supported?
+     */
+    get: function get() {
+      return true;
+    }
+  }, {
+    key: "isSendSupported",
+    get: function get() {
+      return true;
+    }
+  }]);
+
+  return NetsTool;
+}();
+
+module.exports = NetsTool;
+
+/***/ }),
+
+/***/ "./src/ProxyTool.js":
+/*!**************************!*\
+  !*** ./src/ProxyTool.js ***!
+  \**************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var FetchWorkerTool = __webpack_require__(/*! ./FetchWorkerTool */ "./src/FetchWorkerTool.js");
+
+var FetchTool = __webpack_require__(/*! ./FetchTool */ "./src/FetchTool.js");
+
+var NetsTool = __webpack_require__(/*! ./NetsTool */ "./src/NetsTool.js");
+/**
+ * @typedef {object} Request
+ * @property {string} url
+ * @property {*} body
+ * @property {string} method
+ * @property {boolean} withCredentials
+ */
+
+/**
+ * Get and send assets with other tools in sequence.
+ */
+
+
+var ProxyTool = /*#__PURE__*/function () {
+  function ProxyTool() {
+    var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ProxyTool.TOOL_FILTER.ALL;
+
+    _classCallCheck(this, ProxyTool);
+
+    var tools;
+
+    if (filter === ProxyTool.TOOL_FILTER.READY) {
+      tools = [new FetchTool(), new NetsTool()];
+    } else {
+      tools = [new FetchWorkerTool(), new FetchTool(), new NetsTool()];
+    }
+    /**
+     * Sequence of tools to proxy.
+     * @type {Array.<Tool>}
+     */
+
+
+    this.tools = tools;
+  }
+  /**
+   * Is get supported? false if all proxied tool return false.
+   * @returns {boolean} Is get supported?
+   */
+
+
+  _createClass(ProxyTool, [{
+    key: "get",
+
+    /**
+     * Request data from with one of the proxied tools.
+     * @param {Request} reqConfig - Request configuration for data to get.
+     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
+     */
+    value: function get(reqConfig) {
+      var _this = this;
+
+      var toolIndex = 0;
+
+      var nextTool = function nextTool(err) {
+        var tool = _this.tools[toolIndex++];
+
+        if (!tool) {
+          throw err;
+        }
+
+        if (!tool.isGetSupported) {
+          return nextTool(err);
+        }
+
+        return tool.get(reqConfig).catch(nextTool);
+      };
+
+      return nextTool();
+    }
+    /**
+     * Is sending supported? false if all proxied tool return false.
+     * @returns {boolean} Is sending supported?
+     */
+
+  }, {
+    key: "send",
+
+    /**
+     * Send data to a server with one of the proxied tools.
+     * @param {Request} reqConfig - Request configuration for data to send.
+     * @returns {Promise.<Buffer|string|object>} Server returned metadata.
+     */
+    value: function send(reqConfig) {
+      var _this2 = this;
+
+      var toolIndex = 0;
+
+      var nextTool = function nextTool(err) {
+        var tool = _this2.tools[toolIndex++];
+
+        if (!tool) {
+          throw err;
+        }
+
+        if (!tool.isSendSupported) {
+          return nextTool(err);
+        }
+
+        return tool.send(reqConfig).catch(nextTool);
+      };
+
+      return nextTool();
+    }
+  }, {
+    key: "isGetSupported",
+    get: function get() {
+      return this.tools.some(function (tool) {
+        return tool.isGetSupported;
+      });
+    }
+  }, {
+    key: "isSendSupported",
+    get: function get() {
+      return this.tools.some(function (tool) {
+        return tool.isSendSupported;
+      });
+    }
+  }]);
+
+  return ProxyTool;
+}();
+/**
+ * Constant values that filter the set of tools in a ProxyTool instance.
+ * @enum {string}
+ */
+
+
+ProxyTool.TOOL_FILTER = {
+  /**
+   * Use all tools.
+   */
+  ALL: 'all',
+
+  /**
+   * Use tools that are ready right now.
+   */
+  READY: 'ready'
+};
+module.exports = ProxyTool;
+
+/***/ }),
+
 /***/ "./src/ScratchStorage.js":
 /*!*******************************!*\
   !*** ./src/ScratchStorage.js ***!
@@ -8224,9 +8830,7 @@ var _AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
 
 var _DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
 
-var ScratchStorage =
-/*#__PURE__*/
-function () {
+var ScratchStorage = /*#__PURE__*/function () {
   function ScratchStorage() {
     _classCallCheck(this, ScratchStorage);
 
@@ -8234,6 +8838,13 @@ function () {
     this.builtinHelper = new BuiltinHelper(this);
     this.webHelper = new WebHelper(this);
     this.builtinHelper.registerDefaultAssets(this);
+    this._helpers = [{
+      helper: this.builtinHelper,
+      priority: 100
+    }, {
+      helper: this.webHelper,
+      priority: -100
+    }];
   }
   /**
    * @return {Asset} - the `Asset` class constructor.
@@ -8242,13 +8853,35 @@ function () {
 
 
   _createClass(ScratchStorage, [{
-    key: "get",
+    key: "addHelper",
 
+    /**
+     * Add a storage helper to this manager. Helpers with a higher priority number will be checked first when loading
+     * or storing assets. For comparison, the helper for built-in assets has `priority=100` and the default web helper
+     * has `priority=-100`. The relative order of helpers with equal priorities is undefined.
+     * @param {Helper} helper - the helper to be added.
+     * @param {number} [priority] - the priority for this new helper (default: 0).
+     */
+    value: function addHelper(helper) {
+      var priority = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+
+      this._helpers.push({
+        helper: helper,
+        priority: priority
+      });
+
+      this._helpers.sort(function (a, b) {
+        return b.priority - a.priority;
+      });
+    }
     /**
      * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
      * @param {string} assetId - The id of the asset to fetch.
      * @returns {?Asset} The asset, if it exists.
      */
+
+  }, {
+    key: "get",
     value: function get(assetId) {
       return this.builtinHelper.get(assetId);
     }
@@ -8351,45 +8984,44 @@ function () {
   }, {
     key: "load",
     value: function load(assetType, assetId, dataFormat) {
-      var _this = this;
-
       /** @type {Helper[]} */
-      var helpers = [this.builtinHelper, this.webHelper];
-      var errors = [];
-      var helperIndex = 0;
-      dataFormat = dataFormat || assetType.runtimeFormat;
-      return new Promise(function (resolve, reject) {
-        var tryNextHelper = function tryNextHelper() {
-          if (helperIndex < helpers.length) {
-            var helper = helpers[helperIndex++];
-            helper.load(assetType, assetId, dataFormat).then(function (asset) {
-              if (asset === null) {
-                tryNextHelper();
-              } else {
-                // TODO? this.localHelper.cache(assetType, assetId, asset);
-                if (helper !== _this.builtinHelper && assetType.immutable) {
-                  asset.assetId = _this.builtinHelper._store(assetType, asset.dataFormat, asset.data, assetId);
-                } // Note that other attempts may have caused errors, effectively suppressed here.
-
-
-                resolve(asset);
-              }
-            }, function (error) {
-              errors.push(error); // TODO: maybe some types of error should prevent trying the next helper?
-
-              tryNextHelper();
-            });
-          } else if (errors.length === 0) {
-            // Nothing went wrong but we couldn't find the asset.
-            resolve(null);
-          } else {
-            // At least one thing went wrong and also we couldn't find the asset.
-            reject(errors);
-          }
-        };
-
-        tryNextHelper();
+      var helpers = this._helpers.map(function (x) {
+        return x.helper;
       });
+
+      var errors = [];
+      dataFormat = dataFormat || assetType.runtimeFormat;
+      var helperIndex = 0;
+      var helper;
+
+      var tryNextHelper = function tryNextHelper(err) {
+        if (err) {
+          errors.push(err);
+        }
+
+        helper = helpers[helperIndex++];
+
+        if (helper) {
+          var loading = helper.load(assetType, assetId, dataFormat);
+
+          if (loading === null) {
+            return tryNextHelper();
+          } // Note that other attempts may have logged errors; if this succeeds they will be suppressed.
+
+
+          return loading // TODO: maybe some types of error should prevent trying the next helper?
+          .catch(tryNextHelper);
+        } else if (errors.length > 0) {
+          // At least one thing went wrong and also we couldn't find the
+          // asset.
+          return Promise.reject(errors);
+        } // Nothing went wrong but we couldn't find the asset.
+
+
+        return Promise.resolve(null);
+      };
+
+      return tryNextHelper();
     }
     /**
      * Store an asset by type & ID.
@@ -8403,12 +9035,12 @@ function () {
   }, {
     key: "store",
     value: function store(assetType, dataFormat, data, assetId) {
-      var _this2 = this;
+      var _this = this;
 
       dataFormat = dataFormat || assetType.runtimeFormat;
       return new Promise(function (resolve, reject) {
-        return _this2.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
-          _this2.builtinHelper._store(assetType, dataFormat, data, body.id);
+        return _this.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
+          _this.builtinHelper._store(assetType, dataFormat, data, body.id);
 
           return resolve(body);
         }).catch(function (error) {
@@ -8479,7 +9111,7 @@ module.exports = ScratchStorage;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -8487,23 +9119,37 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
-
-function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
-
-function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
-
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
-var nets = __webpack_require__(/*! nets */ "./node_modules/nets/index.js");
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function () { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
 var log = __webpack_require__(/*! ./log */ "./src/log.js");
 
 var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
 
 var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
+
+var ProxyTool = __webpack_require__(/*! ./ProxyTool */ "./src/ProxyTool.js");
+
+var ensureRequestConfig = function ensureRequestConfig(reqConfig) {
+  if (typeof reqConfig === 'string') {
+    return {
+      url: reqConfig
+    };
+  }
+
+  return reqConfig;
+};
 /**
  * @typedef {function} UrlFunction - A function which computes a URL from asset information.
  * @param {Asset} - The asset for which the URL should be computed.
@@ -8512,17 +9158,17 @@ var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
  */
 
 
-var WebHelper =
-/*#__PURE__*/
-function (_Helper) {
+var WebHelper = /*#__PURE__*/function (_Helper) {
   _inherits(WebHelper, _Helper);
+
+  var _super = _createSuper(WebHelper);
 
   function WebHelper(parent) {
     var _this;
 
     _classCallCheck(this, WebHelper);
 
-    _this = _possibleConstructorReturn(this, _getPrototypeOf(WebHelper).call(this, parent));
+    _this = _super.call(this, parent);
     /**
      * @type {Array.<StoreRecord>}
      * @typedef {object} StoreRecord
@@ -8533,6 +9179,21 @@ function (_Helper) {
      */
 
     _this.stores = [];
+    /**
+     * Set of tools to best load many assets in parallel. If one tool
+     * cannot be used, it will use the next.
+     * @type {ProxyTool}
+     */
+
+    _this.assetTool = new ProxyTool();
+    /**
+     * Set of tools to best load project data in parallel with assets. This
+     * tool set prefers tools that are immediately ready. Some tools have
+     * to initialize before they can load files.
+     * @type {ProxyTool}
+     */
+
+    _this.projectTool = new ProxyTool(ProxyTool.TOOL_FILTER.READY);
     return _this;
   }
   /**
@@ -8582,57 +9243,44 @@ function (_Helper) {
     value: function load(assetType, assetId, dataFormat) {
       /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
       var errors = [];
-      var stores = this.stores.slice();
+      var stores = this.stores.slice().filter(function (store) {
+        return store.types.indexOf(assetType.name) >= 0;
+      });
       var asset = new Asset(assetType, assetId, dataFormat);
+      var tool = this.assetTool;
+
+      if (assetType.name === 'Project') {
+        tool = this.projectTool;
+      }
+
       var storeIndex = 0;
-      return new Promise(function (resolve, reject) {
-        var tryNextSource = function tryNextSource() {
-          /** @type {UrlFunction} */
-          var reqConfigFunction;
 
-          while (storeIndex < stores.length) {
-            var store = stores[storeIndex];
-            ++storeIndex;
+      var tryNextSource = function tryNextSource() {
+        var store = stores[storeIndex++];
+        /** @type {UrlFunction} */
 
-            if (store.types.indexOf(assetType.name) >= 0) {
-              reqConfigFunction = store.get;
-              break;
-            }
+        var reqConfigFunction = store.get;
+
+        if (reqConfigFunction) {
+          var reqConfig = ensureRequestConfig(reqConfigFunction(asset));
+
+          if (reqConfig === false) {
+            return tryNextSource();
           }
 
-          if (reqConfigFunction) {
-            var reqConfig = reqConfigFunction(asset);
+          return tool.get(reqConfig).then(function (body) {
+            return asset.setData(body, dataFormat);
+          }).catch(tryNextSource);
+        } else if (errors.length > 0) {
+          return Promise.reject(errors);
+        } // no stores matching asset
 
-            if (reqConfig === false) {
-              tryNextSource();
-              return;
-            }
 
-            if (typeof reqConfig === 'string') {
-              reqConfig = {
-                url: reqConfig
-              };
-            }
+        return Promise.resolve(null);
+      };
 
-            nets(Object.assign({
-              method: 'get'
-            }, reqConfig), function (err, resp, body) {
-              // body is a Buffer
-              if (err || Math.floor(resp.statusCode / 100) !== 2) {
-                tryNextSource();
-              } else {
-                asset.setData(body, dataFormat);
-                resolve(asset);
-              }
-            });
-          } else if (errors.length > 0) {
-            reject(errors);
-          } else {
-            resolve(null); // no stores matching asset
-          }
-        };
-
-        tryNextSource();
+      return tryNextSource().then(function () {
+        return asset;
       });
     }
     /**
@@ -8659,42 +9307,35 @@ function (_Helper) {
         );
       })[0];
       var method = create ? 'post' : 'put';
-      return new Promise(function (resolve, reject) {
-        if (!store) return reject('No appropriate stores');
-        var reqConfig = create ? store.create(asset) : store.update(asset);
+      if (!store) return Promise.reject('No appropriate stores');
+      var tool = this.assetTool;
 
-        if (typeof reqConfig === 'string') {
-          reqConfig = {
-            url: reqConfig
-          };
+      if (assetType.name === 'Project') {
+        tool = this.projectTool;
+      }
+
+      var reqConfig = ensureRequestConfig(create ? store.create(asset) : store.update(asset));
+      var reqBodyConfig = Object.assign({
+        body: data,
+        method: method
+      }, reqConfig);
+      return tool.send(reqBodyConfig).then(function (body) {
+        // xhr makes it difficult to both send FormData and
+        // automatically parse a JSON response. So try to parse
+        // everything as JSON.
+        if (typeof body === 'string') {
+          try {
+            body = JSON.parse(body);
+          } catch (parseError) {
+            // If it's not parseable, then we can't add the id even
+            // if we want to, so stop here
+            return body;
+          }
         }
 
-        return nets(Object.assign({
-          body: data,
-          method: method,
-          encoding: undefined // eslint-disable-line no-undefined
-
-        }, reqConfig), function (err, resp, body) {
-          if (err || Math.floor(resp.statusCode / 100) !== 2) {
-            return reject(err || resp.statusCode);
-          } // xhr makes it difficult to both send FormData and automatically
-          // parse a JSON response. So try to parse everything as JSON.
-
-
-          if (typeof body === 'string') {
-            try {
-              body = JSON.parse(body);
-            } catch (parseError) {
-              // If it's not parseable, then we can't add the id even
-              // if we want to, so stop here
-              return resolve(body);
-            }
-          }
-
-          return resolve(Object.assign({
-            id: body['content-name'] || assetId
-          }, body));
-        });
+        return Object.assign({
+          id: body['content-name'] || assetId
+        }, body);
       });
     }
   }]);
