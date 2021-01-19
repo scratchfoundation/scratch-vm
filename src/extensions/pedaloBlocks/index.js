@@ -33,7 +33,7 @@ class PedaloBlocks {
                 {
                     opcode: 'myReporter', // becomes 'PedaloBlocks.myReporter'
                     text: formatMessage({
-                        id: 'PedaloBlocks.myReporter',
+                        id: 'pedaloBlocks.myReporter',
                         default: 'This will return a string',
                         description: 'The first block to be created'
                     }),
