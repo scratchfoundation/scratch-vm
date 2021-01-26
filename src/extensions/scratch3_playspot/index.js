@@ -1426,9 +1426,12 @@ class Scratch3PlayspotBlocks {
         if (this._peripheral.isConnected && args.SATELLITES) {
             const sats = args.SATELLITES.split(' ');
             for (let i = 0; i < sats.length; i++) {
-                return this._peripheral.isTouched(sats[i]);
+                if (this._peripheral.isTouched(sats[i])) {
+                    return true;
+                }
             }
         }
+        return false;
     }
 
     /**
@@ -1503,9 +1506,13 @@ class Scratch3PlayspotBlocks {
         if (this._peripheral.isConnected && args.SATELLITES) {
             const sats = args.SATELLITES.split(' ');
             for (let i = 0; i < sats.length; i++) {
-                return this._peripheral.hasPresence(sats[i]);
+                if (this._peripheral.hasPresence(sats[i])) {
+                    return true;
+                }
+                // return this._peripheral.hasPresence(sats[i]);
             }
         }
+        return false;
     }
 
     /**
