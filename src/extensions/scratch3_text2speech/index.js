@@ -725,7 +725,8 @@ class Scratch3Text2SpeechBlocks {
         return new Promise(resolve => {
             nets({
                 url: path,
-                timeout: SERVER_TIMEOUT
+                timeout: SERVER_TIMEOUT,
+                responseType: "arraybuffer"
             }, (err, res, body) => {
                 if (err) {
                     log.warn(err);
@@ -740,7 +741,7 @@ class Scratch3Text2SpeechBlocks {
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: body.buffer
+                        buffer: body
                     }
                 };
                 this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
