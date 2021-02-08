@@ -1,3 +1,5 @@
+/* eslint-disable no-lonely-if */
+/* eslint-disable no-negated-condition */
 /* eslint-disable no-else-return */
 const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
@@ -948,6 +950,34 @@ class Playspot {
         this._app.mode !== NOT_FOUND &&
         this._app.mode === mode;
     }
+
+    broadcast (topic, value) {
+        console.log(topic, value, 'topicValue');
+        const outboundTopic = topic;
+        const topicValue = value;
+        const utf8Encode = new TextEncoder();
+        const val = utf8Encode.encode(topicValue);
+        this._client.publish(outboundTopic, val);
+        return Promise.resolve();
+    }
+
+    setSubscriptionBroadcast (topic, value) {
+        console.log(topic, value, 'topicValue');
+        const outboundTopic = topic;
+        // const utf8Encode = new TextEncoder();
+        // this._client.publish(outboundTopic, val);
+        this._client.subscribe(outboundTopic);
+        this._client.on('message', (messageTopic, messagePayload) => {
+            if (messageTopic === outboundTopic) {
+                const decoder = new TextDecoder();
+                const message = decoder.decode(messagePayload);
+                this._runtime.emit('BROADCAST_RECEIVED', {
+                    topic: messageTopic,
+                    message: message
+                });
+            }
+        });
+    }
 }
 
 class Scratch3PlayspotBlocks {
@@ -1077,12 +1107,44 @@ class Scratch3PlayspotBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+        this.actions = [];
 
         /**
          * The Playspot handler.
          * @type {Playspot}
          */
         this._peripheral = new Playspot(this.runtime, Scratch3PlayspotBlocks.EXTENSION_ID);
+
+        this.runtime.on('BROADCAST_RECEIVED', data => {
+            console.log(this.actions.length, 'length');
+            console.log(data, 'data');
+            const topic = data.topic.split('/');
+            const last = topic.length - 1;
+            const action = topic[last];
+            for (let i = 0; i < this.actions.length; i++) {
+                console.log(Object.keys(this.actions[i]), 'actions');
+                const keys = Object.keys(this.actions[i]);
+                console.log(keys[0], 'keys');
+                console.log(action, 'message');
+                if (action === keys[0]) {
+                    this.actions[i] = {[`${action}`]: true};
+                    break;
+                }
+            }
+            console.log(this.actions, 'actions');
+        });
+
+        this.runtime.on('RESET_GAME_STARTED', data => {
+            for (let i = 0; i < this.actions.length; i++) {
+                console.log(Object.keys(this.actions[i]), 'actions');
+                const keys = Object.keys(this.actions[i]);
+                console.log(keys[0], 'keys');
+                if (data.action === keys[0]) {
+                    this.actions[i] = {[`${data.action}`]: false};
+                    break;
+                }
+            }
+        });
     }
 
     /**
@@ -1359,6 +1421,43 @@ class Scratch3PlayspotBlocks {
                             defaultValue: defaultSatellite
                         }
                     }
+                },
+                {
+                    opcode: 'sendBroadcastMQTT',
+                    text: 'Send broadcast with value [VALUE] to topic [TOPIC]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        VALUE: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'value'
+                        },
+                        TOPIC: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'topic'
+                        }
+                    }
+                },
+                {
+                    opcode: 'listenForMQTTTopic',
+                    text: 'Listen for broadcast message on topic [TOPIC]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TOPIC: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'topic'
+                        }
+                    }
+                },
+                {
+                    opcode: 'receiveBroadcastMQTT',
+                    text: 'Receive broadcast topic [TOPIC]',
+                    blockType: BlockType.COMMAND,
+                    arguments: {
+                        TOPIC: {
+                            type: ArgumentType.STRING,
+                            defaultValue: 'topic'
+                        }
+                    }
                 }
             ],
             menus: {
@@ -1389,6 +1488,77 @@ class Scratch3PlayspotBlocks {
             return false;
         }
     }
+
+    sendBroadcastMQTT (args, util) {
+        if (args.TOPIC === '' ||
+            args.TOPIC === 'topic' ||
+            args.VALUE === '' ||
+            args.VALUE === 'value') {
+            return;
+        }
+        const topic = args.TOPIC;
+        const value = args.VALUE;
+        
+        this._peripheral.broadcast(topic, value);
+    }
+
+    listenForMQTTTopic (args, util) {
+        if (args.TOPIC === '' ||
+            args.TOPIC === 'topic') {
+            return;
+        }
+        let stringActions = '';
+        const topic = args.TOPIC;
+        const splitTopic = args.TOPIC.split('/');
+        const value = args.VALUE;
+        const last = splitTopic.length - 1;
+        const action = splitTopic[last];
+
+        if (this.actions.length === 0) {
+            const add = {[`${action}`]: false};
+            this.actions.push(add);
+        } else {
+            stringActions = JSON.stringify(this.actions);
+            if (stringActions.includes(action)) {
+                this.actions.length = 0;
+                const add = {[`${action}`]: false};
+                this.actions.push(add);
+            } else {
+                const add = {[`${action}`]: false};
+                this.actions.push(add);
+            }
+        }
+        console.log(this.actions, 'actions');
+        this._peripheral.setSubscriptionBroadcast(topic, value);
+    }
+
+    receiveBroadcastMQTT (args, util) {
+        let timeoutNum = 0;
+        if (timeoutNum === 0) {
+            timeoutNum++;
+            const topic = args.TOPIC.split('/');
+            const last = topic.length - 1;
+            const action = topic[last];
+            let condition = '';
+    
+            for (let i = 0; i < this.actions.length; i++) {
+                const keys = Object.keys(this.actions[i]);
+                if (action === keys[0]) {
+                    condition = Object.values(this.actions[i])[0];
+                }
+            }
+    
+            if (!condition) {
+                util.yield();
+            } else {
+                setTimeout(() => {
+                    this.runtime.emit('RESET_GAME_STARTED', {condition: condition, action: action});
+                }, 2000);
+                return;
+            }
+        }
+    }
+
 
     /**
      * Notification when satellite is touched
