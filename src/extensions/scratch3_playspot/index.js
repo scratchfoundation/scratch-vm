@@ -943,7 +943,6 @@ class Playspot {
      * @return {boolean} - whether the satellite is detecting presence.
      */
     isGameModeEqual (mode) {
-        console.log(mode, 'mode');
         return this._app &&
         this._app !== NOT_FOUND &&
         this._app.mode &&
@@ -952,7 +951,6 @@ class Playspot {
     }
 
     broadcast (topic, value) {
-        console.log(topic, value, 'topicValue');
         const outboundTopic = topic;
         const topicValue = value;
         const utf8Encode = new TextEncoder();
@@ -961,8 +959,7 @@ class Playspot {
         return Promise.resolve();
     }
 
-    setSubscriptionBroadcast (topic, value) {
-        console.log(topic, value, 'topicValue');
+    setSubscriptionBroadcast (topic) {
         const outboundTopic = topic;
         // const utf8Encode = new TextEncoder();
         // this._client.publish(outboundTopic, val);
@@ -1116,33 +1113,22 @@ class Scratch3PlayspotBlocks {
         this._peripheral = new Playspot(this.runtime, Scratch3PlayspotBlocks.EXTENSION_ID);
 
         this.runtime.on('BROADCAST_RECEIVED', data => {
-            console.log(this.actions.length, 'length');
-            console.log(data, 'data');
             const topic = data.topic.split('/');
             const last = topic.length - 1;
             const action = topic[last];
             for (let i = 0; i < this.actions.length; i++) {
-                console.log(Object.keys(this.actions[i]), 'actions');
                 const keys = Object.keys(this.actions[i]);
-                console.log(keys[0], 'keys');
-                console.log(action, 'message');
                 if (action === keys[0]) {
                     this.actions[i] = {[`${action}`]: true};
                     break;
                 }
             }
-            console.log(this.actions, 'actions');
         });
 
-        this.runtime.on('RESET_GAME_STARTED', data => {
+        this.runtime.on('RESET_GAME', () => {
             for (let i = 0; i < this.actions.length; i++) {
-                console.log(Object.keys(this.actions[i]), 'actions');
                 const keys = Object.keys(this.actions[i]);
-                console.log(keys[0], 'keys');
-                if (data.action === keys[0]) {
-                    this.actions[i] = {[`${data.action}`]: false};
-                    break;
-                }
+                this.actions[i] = {[`${keys[0]}`]: false};
             }
         });
     }
@@ -1458,6 +1444,11 @@ class Scratch3PlayspotBlocks {
                             defaultValue: 'topic'
                         }
                     }
+                },
+                {
+                    opcode: 'resetGame',
+                    text: 'Game Finished',
+                    blockType: BlockType.COMMAND
                 }
             ],
             menus: {
@@ -1510,7 +1501,6 @@ class Scratch3PlayspotBlocks {
         let stringActions = '';
         const topic = args.TOPIC;
         const splitTopic = args.TOPIC.split('/');
-        const value = args.VALUE;
         const last = splitTopic.length - 1;
         const action = splitTopic[last];
 
@@ -1528,8 +1518,7 @@ class Scratch3PlayspotBlocks {
                 this.actions.push(add);
             }
         }
-        console.log(this.actions, 'actions');
-        this._peripheral.setSubscriptionBroadcast(topic, value);
+        this._peripheral.setSubscriptionBroadcast(topic);
     }
 
     receiveBroadcastMQTT (args, util) {
@@ -1551,12 +1540,14 @@ class Scratch3PlayspotBlocks {
             if (!condition) {
                 util.yield();
             } else {
-                setTimeout(() => {
-                    this.runtime.emit('RESET_GAME_STARTED', {condition: condition, action: action});
-                }, 2000);
                 return;
             }
         }
+    }
+
+    resetGame () {
+        this.runtime.emit('RESET_GAME');
+        this.runtime.gameGreenFlag();
     }
 
 
