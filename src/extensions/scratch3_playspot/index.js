@@ -950,12 +950,13 @@ class Playspot {
         this._app.mode === mode;
     }
 
-    broadcast (topic, value) {
+    broadcast (topic, value, action) {
         const outboundTopic = topic;
-        const topicValue = value;
+        const bracketValue = {action: action, value: value};
+        const fullValue = JSON.stringify(bracketValue);
         const utf8Encode = new TextEncoder();
-        const val = utf8Encode.encode(topicValue);
-        this._client.publish(outboundTopic, val);
+        const message = utf8Encode.encode(fullValue);
+        this._client.publish(outboundTopic, message);
         return Promise.resolve();
     }
 
@@ -1487,10 +1488,13 @@ class Scratch3PlayspotBlocks {
             args.VALUE === 'value') {
             return;
         }
-        const topic = args.TOPIC;
+        const topic = args.TOPIC.split('/');
         const value = args.VALUE;
+        const last = topic.length - 1;
+        const action = topic[last];
+        const fullTopic = args.TOPIC;
         
-        this._peripheral.broadcast(topic, value);
+        this._peripheral.broadcast(fullTopic, value, action);
     }
 
     listenForMQTTTopic (args, util) {
