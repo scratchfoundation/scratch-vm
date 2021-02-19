@@ -415,7 +415,7 @@ var VideoMotionView = /*#__PURE__*/function () {
 
   _createClass(VideoMotionView, [{
     key: "_eachAddress",
-
+    value:
     /**
      * Iterate each pixel address location and call a function with that address.
      * @param {number} xStart - start location on the x axis of the output pixel buffer
@@ -424,7 +424,7 @@ var VideoMotionView = /*#__PURE__*/function () {
      * @param {number} yStop - location to stop at on the y axis
      * @param {function} fn - handle to call with each iterated address
      */
-    value: function _eachAddress(xStart, yStart, xStop, yStop, fn) {
+    function _eachAddress(xStart, yStart, xStop, yStop, fn) {
       for (var i = yStart; i < yStop; i++) {
         for (var j = xStart; j < xStop; j++) {
           var address = i * WIDTH + j;
