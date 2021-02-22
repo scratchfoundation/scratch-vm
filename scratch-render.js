@@ -17516,10 +17516,41 @@ class SvgRenderer {
      * @constructor
      */
     constructor (canvas) {
+        /**
+         * The canvas that this SVG renderer will render to.
+         * @type {HTMLCanvasElement}
+         * @private
+         */
         this._canvas = canvas || document.createElement('canvas');
         this._context = this._canvas.getContext('2d');
+
+        /**
+         * A measured SVG "viewbox"
+         * @typedef {object} SvgRenderer#SvgMeasurements
+         * @property {number} x - The left edge of the SVG viewbox.
+         * @property {number} y - The top edge of the SVG viewbox.
+         * @property {number} width - The width of the SVG viewbox.
+         * @property {number} height - The height of the SVG viewbox.
+         */
+
+        /**
+         * The measurement box of the currently loaded SVG.
+         * @type {SvgRenderer#SvgMeasurements}
+         * @private
+         */
         this._measurements = {x: 0, y: 0, width: 0, height: 0};
+
+        /**
+         * The `<img>` element with the contents of the currently loaded SVG.
+         * @type {?HTMLImageElement}
+         * @private
+         */
         this._cachedImage = null;
+
+        /**
+         * True if this renderer's current SVG is loaded and can be rendered to the canvas.
+         * @type {boolean}
+         */
         this.loaded = false;
     }
 
@@ -17528,22 +17559,6 @@ class SvgRenderer {
      */
     get canvas () {
         return this._canvas;
-    }
-
-    /**
-     * Load an SVG from a string and draw it.
-     * This will be parsed and transformed, and finally drawn.
-     * When drawing is finished, the `onFinish` callback is called.
-     * @param {string} svgString String of SVG data to draw in quirks-mode.
-     * @param {number} [scale] - Optionally, also scale the image by this factor.
-     * @param {Function} [onFinish] Optional callback for when drawing finished.
-     * @deprecated Use the `loadSVG` method and public `draw` method instead.
-     */
-    fromString (svgString, scale, onFinish) {
-        this.loadSVG(svgString, false, () => {
-            this.draw(scale);
-            if (onFinish) onFinish();
-        });
     }
 
     /**
@@ -17939,25 +17954,6 @@ class SvgRenderer {
     }
 
     /**
-     * Asynchronously draw the (possibly non-loaded) SVG to a canvas.
-     * @param {number} [scale] - Optionally, also scale the image by this factor.
-     * @param {Function} [onFinish] - An optional callback to call when the draw operation is complete.
-     * @deprecated Use the `loadSVG` and public `draw` method instead.
-     */
-    _draw (scale, onFinish) {
-        // Convert the SVG text to an Image, and then draw it to the canvas.
-        if (this._cachedImage === null) {
-            this._createSVGImage(() => {
-                this._drawFromImage(scale);
-                onFinish();
-            });
-        } else {
-            this._drawFromImage(scale);
-            onFinish();
-        }
-    }
-
-    /**
      * Draw to the canvas from a loaded image element.
      * @param {number} [scale] - Optionally, also scale the image by this factor.
      **/
@@ -17978,13 +17974,8 @@ class SvgRenderer {
             this._cachedImage.naturalHeight <= 0
         ) return;
         this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-        this._context.scale(ratio, ratio);
+        this._context.setTransform(ratio, 0, 0, ratio, 0, 0);
         this._context.drawImage(this._cachedImage, 0, 0);
-        // Reset the canvas transform after drawing.
-        this._context.setTransform(1, 0, 0, 1, 0, 0);
-        // Set the CSS style of the canvas to the actual measurements.
-        this._canvas.style.width = bbox.width;
-        this._canvas.style.height = bbox.height;
     }
 }
 
