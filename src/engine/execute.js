@@ -201,7 +201,7 @@ class BlockCached {
          * Is this block a block with no function but a static value to return.
          * @type {boolean}
          */
-        this._isShadowBlock = false;
+        this._isShadowBlock = block.shadow;
 
         /**
          * The static value of this block if it is a shadow block.
@@ -244,9 +244,6 @@ class BlockCached {
         const {runtime} = blockUtility.sequencer;
 
         const {opcode, fields} = block;
-        // NOTE: because we modify `inputs` in-place, this relies on getNonBranchInputs returning a new object each
-        // time it's called.
-        const inputs = blockContainer.getNonBranchInputs(block);
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
@@ -254,11 +251,6 @@ class BlockCached {
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
-        this._isShadowBlock = (
-            !this._definedBlockFunction &&
-            fieldKeys.length === 1 &&
-            Object.keys(inputs).length === 0
-        );
         this._shadowValue = this._isShadowBlock && fields[fieldKeys[0]].value;
 
         // Store the static fields onto _argValues.
@@ -277,6 +269,9 @@ class BlockCached {
             }
         }
 
+        // NOTE: because we modify `inputs` in-place, this relies on getNonBranchInputs returning a new object each
+        // time it's called.
+        const inputs = blockContainer.getNonBranchInputs(block);
         // Remove custom_block. It is not part of block execution.
         delete inputs.custom_block;
 
