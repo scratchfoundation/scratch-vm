@@ -174,22 +174,10 @@ class BlockCached {
         this.opcode = cached.opcode;
 
         /**
-         * Original block object containing argument values for static fields.
-         * @type {object}
-         */
-        this.fields = cached.fields;
-
-        /**
          * Original block object containing argument values for executable inputs.
          * @type {object}
          */
         this.inputs = cached.inputs;
-
-        /**
-         * Procedure mutation.
-         * @type {?object}
-         */
-        this.mutation = cached.mutation;
 
         /**
          * The profiler the block is configured with.
@@ -239,7 +227,7 @@ class BlockCached {
          * @type {object}
          */
         this._argValues = {
-            mutation: this.mutation
+            mutation: cached.mutation
         };
 
         /**
@@ -267,7 +255,8 @@ class BlockCached {
 
         const {runtime} = blockUtility.sequencer;
 
-        const {opcode, fields, inputs} = this;
+        const {opcode, inputs} = this;
+        const {fields} = cached;
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
