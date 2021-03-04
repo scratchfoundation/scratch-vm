@@ -176,7 +176,7 @@ class Blocks {
      * @param {?object} block the block to query.
      * @return {?Array.<object>} All non-branch inputs and their associated blocks.
      */
-    getInputs (block) {
+    getNonBranchInputs (block) {
         if (typeof block === 'undefined') return null;
         let inputs = this._cache.inputs[block.id];
         if (typeof inputs !== 'undefined') {
@@ -1238,7 +1238,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
         id: blockId,
         opcode: blocks.getOpcode(block),
         fields: blocks.getFields(block),
-        inputs: blocks.getInputs(block),
+        inputs: blocks.getNonBranchInputs(block),
         mutation: blocks.getMutation(block)
     });
 
