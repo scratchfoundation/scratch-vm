@@ -1223,13 +1223,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     const block = blocks.getBlock(blockId);
     if (typeof block === 'undefined') return null;
 
-    cached = new CacheType(blocks, {
-        id: blockId,
-        opcode: blocks.getOpcode(block),
-        fields: blocks.getFields(block),
-        inputs: blocks.getNonBranchInputs(block),
-        mutation: blocks.getMutation(block)
-    });
+    cached = new CacheType(blocks, block);
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;
