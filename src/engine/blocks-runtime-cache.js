@@ -30,8 +30,7 @@ class RuntimeScriptCache {
         const fields = container.getFields(block);
 
         /**
-         * Formatted fields or fields of input blocks ready for comparison in
-         * runtime.
+         * Formatted fields ready for comparison in runtime.
          *
          * This is a clone of parts of the targeted blocks. Changes to these
          * clones are limited to copies under RuntimeScriptCache and will not
@@ -41,16 +40,6 @@ class RuntimeScriptCache {
          * @type {object}
          */
         this.fieldsOfInputs = Object.assign({}, fields);
-        if (Object.keys(fields).length === 0) {
-            const inputs = container.getInputs(block);
-            for (const input in inputs) {
-                if (!inputs.hasOwnProperty(input)) continue;
-                const id = inputs[input].block;
-                const inputBlock = container.getBlock(id);
-                const inputFields = container.getFields(inputBlock);
-                Object.assign(this.fieldsOfInputs, inputFields);
-            }
-        }
         for (const key in this.fieldsOfInputs) {
             const field = this.fieldsOfInputs[key] = Object.assign({}, this.fieldsOfInputs[key]);
             if (field.value.toUpperCase) {
