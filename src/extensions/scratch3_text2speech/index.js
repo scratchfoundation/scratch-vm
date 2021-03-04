@@ -734,7 +734,7 @@ class Scratch3Text2SpeechBlocks {
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: buffer
+                        buffer
                     }
                 };
                 return this.runtime.audioEngine.decodeSoundPlayer(sound);
@@ -760,7 +760,6 @@ class Scratch3Text2SpeechBlocks {
             })
             .catch(err => {
                 log.warn(err);
-                return;
             });
     }
 }
