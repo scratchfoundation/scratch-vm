@@ -157,21 +157,21 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
  * in the editor.
  *
  * @param {Blocks} blockContainer the related Blocks instance
- * @param {object} cached default set of cached values
+ * @param {object} block the block information to cache
  */
 class BlockCached {
-    constructor (blockContainer, cached) {
+    constructor (blockContainer, block) {
         /**
          * Block id in its parent set of blocks.
          * @type {string}
          */
-        this.id = cached.id;
+        this.id = block.id;
 
         /**
          * Block operation code for this block.
          * @type {string}
          */
-        this.opcode = cached.opcode;
+        this.opcode = block.opcode;
 
         /**
          * The profiler the block is configured with.
@@ -215,7 +215,7 @@ class BlockCached {
          * @type {object}
          */
         this._argValues = {
-            mutation: cached.mutation
+            mutation: block.mutation
         };
 
         /**
@@ -243,7 +243,10 @@ class BlockCached {
 
         const {runtime} = blockUtility.sequencer;
 
-        const {opcode, inputs, fields} = cached;
+        const {opcode, fields} = block;
+        // NOTE: because we modify `inputs` in-place, this relies on getNonBranchInputs returning a new object each
+        // time it's called.
+        const inputs = blockContainer.getNonBranchInputs(block);
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
