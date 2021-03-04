@@ -174,12 +174,6 @@ class BlockCached {
         this.opcode = cached.opcode;
 
         /**
-         * Original block object containing argument values for executable inputs.
-         * @type {object}
-         */
-        this.inputs = cached.inputs;
-
-        /**
          * The profiler the block is configured with.
          * @type {?Profiler}
          */
@@ -216,12 +210,6 @@ class BlockCached {
         this._shadowValue = null;
 
         /**
-         * A copy of the block's inputs that may be modified.
-         * @type {object}
-         */
-        this._inputs = Object.assign({}, this.inputs);
-
-        /**
          * An arguments object for block implementations. All executions of this
          * specific block will use this objecct.
          * @type {object}
@@ -255,8 +243,7 @@ class BlockCached {
 
         const {runtime} = blockUtility.sequencer;
 
-        const {opcode, inputs} = this;
-        const {fields} = cached;
+        const {opcode, inputs, fields} = cached;
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
@@ -288,9 +275,9 @@ class BlockCached {
         }
 
         // Remove custom_block. It is not part of block execution.
-        delete this._inputs.custom_block;
+        delete inputs.custom_block;
 
-        if ('BROADCAST_INPUT' in this._inputs) {
+        if ('BROADCAST_INPUT' in inputs) {
             // BROADCAST_INPUT is called BROADCAST_OPTION in the args and is an
             // object with an unchanging shape.
             this._argValues.BROADCAST_OPTION = {
@@ -300,7 +287,7 @@ class BlockCached {
 
             // We can go ahead and compute BROADCAST_INPUT if it is a shadow
             // value.
-            const broadcastInput = this._inputs.BROADCAST_INPUT;
+            const broadcastInput = inputs.BROADCAST_INPUT;
             if (broadcastInput.block === broadcastInput.shadow) {
                 // Shadow dropdown menu is being used.
                 // Get the appropriate information out of it.
@@ -311,16 +298,16 @@ class BlockCached {
 
                 // Evaluating BROADCAST_INPUT here we do not need to do so
                 // later.
-                delete this._inputs.BROADCAST_INPUT;
+                delete inputs.BROADCAST_INPUT;
             }
         }
 
         // Cache all input children blocks in the operation lists. The
         // operations can later be run in the order they appear in correctly
         // executing the operations quickly in a flat loop instead of needing to
-        // recursivly iterate them.
-        for (const inputName in this._inputs) {
-            const input = this._inputs[inputName];
+        // recursively iterate them.
+        for (const inputName in inputs) {
+            const input = inputs[inputName];
             if (input.block) {
                 const inputCached = BlocksExecuteCache.getCached(blockContainer, input.block, BlockCached);
 
