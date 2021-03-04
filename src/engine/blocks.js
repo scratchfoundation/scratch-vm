@@ -48,11 +48,6 @@ class Blocks {
         Object.defineProperty(this, '_cache', {writable: true, enumerable: false});
         this._cache = {
             /**
-             * Cache block inputs by block id
-             * @type {object.<string, !Array.<object>>}
-             */
-            inputs: {},
-            /**
              * Cache procedure Param Names by block id
              * @type {object.<string, ?Array.<string>>}
              */
@@ -178,12 +173,8 @@ class Blocks {
      */
     getNonBranchInputs (block) {
         if (typeof block === 'undefined') return null;
-        let inputs = this._cache.inputs[block.id];
-        if (typeof inputs !== 'undefined') {
-            return inputs;
-        }
 
-        inputs = {};
+        const inputs = {};
         for (const input in block.inputs) {
             // Ignore blocks prefixed with branch prefix.
             if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
@@ -192,7 +183,6 @@ class Blocks {
             }
         }
 
-        this._cache.inputs[block.id] = inputs;
         return inputs;
     }
 
@@ -511,7 +501,6 @@ class Blocks {
      * Reset all runtime caches.
      */
     resetCache () {
-        this._cache.inputs = {};
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
