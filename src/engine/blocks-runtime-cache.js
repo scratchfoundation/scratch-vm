@@ -26,9 +26,6 @@ class RuntimeScriptCache {
          */
         this.blockId = blockId;
 
-        const block = container.getBlock(blockId);
-        const fields = container.getFields(block);
-
         /**
          * Formatted fields ready for comparison in runtime.
          *
@@ -39,12 +36,19 @@ class RuntimeScriptCache {
          * values will be compared later by the VM.
          * @type {object}
          */
-        this.fields = Object.assign({}, fields);
-        for (const key in this.fields) {
-            const field = this.fields[key] = Object.assign({}, this.fields[key]);
-            if (field.value.toUpperCase) {
+        this.fields = {};
+
+        const block = container.getBlock(blockId);
+        const fields = container.getFields(block);
+
+        for (const key in fields) {
+            // Clone the field
+            const field = Object.assign({}, fields[key]);
+            // Uppercase the field value (if it exists)
+            if (typeof field.value === 'string') {
                 field.value = field.value.toUpperCase();
             }
+            this.fields[key] = field;
         }
     }
 }
