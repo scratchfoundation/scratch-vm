@@ -216,12 +216,6 @@ class BlockCached {
         this._blockFunction = null;
 
         /**
-         * Is the block function defined for this opcode?
-         * @type {boolean}
-         */
-        this._definedBlockFunction = false;
-
-        /**
          * Is this block a block with no function but a static value to return.
          * @type {boolean}
          */
@@ -278,7 +272,6 @@ class BlockCached {
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
-        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
@@ -360,7 +353,7 @@ class BlockCached {
 
         // The final operation is this block itself. At the top most block is a
         // command block or a block that is being run as a monitor.
-        if (this._definedBlockFunction) {
+        if (typeof this._blockFunction !== 'undefined') {
             this._ops.push(this);
         }
     }
