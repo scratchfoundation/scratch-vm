@@ -1234,23 +1234,13 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     const block = blocks.getBlock(blockId);
     if (typeof block === 'undefined') return null;
 
-    if (typeof CacheType === 'undefined') {
-        cached = {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        };
-    } else {
-        cached = new CacheType(blocks, {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        });
-    }
+    cached = new CacheType(blocks, {
+        id: blockId,
+        opcode: blocks.getOpcode(block),
+        fields: blocks.getFields(block),
+        inputs: blocks.getInputs(block),
+        mutation: blocks.getMutation(block)
+    });
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;
