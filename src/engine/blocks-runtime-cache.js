@@ -39,9 +39,9 @@ class RuntimeScriptCache {
          * values will be compared later by the VM.
          * @type {object}
          */
-        this.fieldsOfInputs = Object.assign({}, fields);
-        for (const key in this.fieldsOfInputs) {
-            const field = this.fieldsOfInputs[key] = Object.assign({}, this.fieldsOfInputs[key]);
+        this.fields = Object.assign({}, fields);
+        for (const key in this.fields) {
+            const field = this.fields[key] = Object.assign({}, this.fields[key]);
             if (field.value.toUpperCase) {
                 field.value = field.value.toUpperCase();
             }
