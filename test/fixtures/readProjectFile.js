@@ -3,7 +3,7 @@ const fs = require('fs');
 
 module.exports = {
     readFileToBuffer: function (path) {
-        return new Buffer(fs.readFileSync(path));
+        return Buffer.from(fs.readFileSync(path));
     },
     extractProjectJson: function (path) {
         const zip = new AdmZip(path);
