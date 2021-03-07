@@ -592,8 +592,8 @@ const runBenchmark = function () {
 
     const storage = new ScratchStorage();
     const AssetType = storage.AssetType;
-    storage.addWebSource([AssetType.Project], getProjectUrl);
-    storage.addWebSource([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
+    storage.addWebStore([AssetType.Project], getProjectUrl);
+    storage.addWebStore([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
     vm.attachStorage(storage);
 
     new LoadingProgress(progress => {
