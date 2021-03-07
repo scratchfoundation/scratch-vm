@@ -1120,7 +1120,10 @@ class VirtualMachine extends EventEmitter {
      *     updated for a new locale (or empty if locale hasn't changed.)
      */
     setLocale (locale, messages) {
-        if (locale !== formatMessage.setup().locale) {
+        const {locale: currentLocale, translations} = formatMessage.setup();
+        // The initial locale is English, but at first it does not contain any messages.  When we're first passed
+        // English messages, make sure we re-setup with them by checking if the messages have changed.
+        if (locale !== currentLocale || translations[locale] !== messages) {
             formatMessage.setup({locale: locale, translations: {[locale]: messages}});
         }
         return this.extensionManager.refreshBlocks();
