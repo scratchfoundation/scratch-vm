@@ -59,7 +59,7 @@ const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
 const executeDir = path.resolve(__dirname, '../fixtures/execute');
 
 fs.readdirSync(executeDir)
-    .filter(uri => uri.endsWith('.sb2'))
+    .filter(uri => uri.endsWith('.sb2') || uri.endsWith('sb3'))
     .forEach(uri => {
         test(uri, t => {
             // Disable logging during this test.
