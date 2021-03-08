@@ -47,14 +47,6 @@ const KEY_ID_UP = 'UP';
  */
 const KEY_ID_DOWN = 'DOWN';
 
-const SCRATCH_KEY_TO_KEY_ID = {
-    'space': KEY_ID_SPACE,
-    'left arrow': KEY_ID_LEFT,
-    'up arrow': KEY_ID_UP,
-    'right arrow': KEY_ID_RIGHT,
-    'down arrow': KEY_ID_DOWN
-};
-
 /**
  * Class for the makey makey blocks in Scratch 3.0
  * @constructor
@@ -67,36 +59,12 @@ class Scratch3MakeyMakeyBlocks {
          */
         this.runtime = runtime;
 
-        /**
-         * A toggle that alternates true and false each frame, so that an
-         * edge-triggered hat can trigger on every other frame.
-         * @type {boolean}
-         */
-        this.frameToggle = false;
-
-        // Set an interval that toggles the frameToggle every frame.
-        setInterval(() => {
-            this.frameToggle = !this.frameToggle;
-        }, this.runtime.currentStepTime);
-
         this.keyPressed = this.keyPressed.bind(this);
         this.runtime.on('KEY_PRESSED', this.keyPressed);
 
         this.runtime.on('KEY_PRESSED', key => {
-            // the key arriving here is from the keyboard io module
-            // it is a 'scratch key' string such as "up arrow"
-            // the start hats function tries to match this to the value of the
-            // menu input on the block. these menu values are IDs used only here
-            // inside the extension, such as "UP".
-            let menuValue = SCRATCH_KEY_TO_KEY_ID[key];
-            if (!menuValue) {
-                menuValue = Cast.toString(key).toUpperCase();
-                if (menuValue.length > 1) {
-                    menuValue = menuValue[0];
-                }
-            }
             this.runtime.startHats('makeymakey_whenMakeyKeyPressed', {
-                KEY: menuValue
+                KEY: key
             });
         });
 
