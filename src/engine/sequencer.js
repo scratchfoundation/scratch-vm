@@ -262,12 +262,6 @@ class Sequencer {
                     // Don't go to the next block for this level of the stack,
                     // since loops need to be re-executed.
                     continue;
-
-                } else if (stackFrame.waitingReporter) {
-                    // This level of the stack was waiting for a value.
-                    // This means a reporter has just returned - so don't go
-                    // to the next block for this level of the stack.
-                    return;
                 }
                 // Get next block of existing block on the stack.
                 thread.goToNextBlock();
