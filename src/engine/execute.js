@@ -145,6 +145,22 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
 };
 
 /**
+ * Test whether the passed argument values match others.
+ * @param {object} argValues Argument values to test against
+ * @param {object} [match] Expected argument values. If argValues has entries that do not exist here, they will be
+ * ignored. If this is not passed, the function will always return true.
+ * @returns {boolean} Whether the arguments match or not.
+ */
+const matchArgs = (argValues, match) => {
+    for (const argName in match) {
+        if (!Object.prototype.hasOwnProperty.call(match, argName)) continue;
+        // startHats uppercases the values in `match` for us, so we don't need to do so here
+        if (typeof argValues[argName] === 'string' && argValues[argName].toUpperCase() !== match[argName]) return false;
+    }
+    return true;
+};
+
+/**
  * A execute.js internal representation of a block to reduce the time spent in
  * execute as the same blocks are called the most.
  *
@@ -323,6 +339,13 @@ class BlockCached {
                     this._argValues[inputName] = inputCached._shadowValue;
                 }
             }
+        }
+
+        // Test hat block inputs against those stored in the thread. This allows us to use the same interface for
+        // "filtering" hat blocks by arguments for both hat blocks with only fields (via the RuntimeScriptCache)
+        // and hat blocks with some dynamic inputs (done here).
+        if (this._isHat && typeof this._blockFunction === 'undefined' && Object.keys(inputs).length > 0) {
+            this._blockFunction = (args, util) => matchArgs(args, util.thread.hatMatchArgs);
         }
 
         // The final operation is this block itself. At the top most block is a

@@ -187,6 +187,12 @@ class Thread {
         this.warpTimer = null;
 
         this.justReported = null;
+
+        /**
+         * Hat block arguments to be matched against by the top block's evaluated operands.
+         * @type {?object}
+         */
+        this.hatMatchArgs = null;
     }
 
     /**

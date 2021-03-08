@@ -601,7 +601,7 @@ class Runtime extends EventEmitter {
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
     }
-    
+
     /**
      * Event name for when the user picks a bluetooth device to connect to
      * via Companion Device Manager (CDM)
@@ -1801,6 +1801,7 @@ class Runtime extends EventEmitter {
             // (i.e., before the predicate can be run) because "broadcast and wait"
             // needs to have a precise collection of started threads.
             for (const matchField in optMatchFields) {
+                if (!Object.prototype.hasOwnProperty.call(hatFields, matchField)) continue;
                 if (hatFields[matchField].value !== optMatchFields[matchField]) {
                     // Field mismatch.
                     return;
@@ -1836,11 +1837,19 @@ class Runtime extends EventEmitter {
             // Start the thread with this top block.
             newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
-        // For compatibility with Scratch 2, edge triggered hats need to be processed before
-        // threads are stepped. See ScratchRuntime.as for original implementation
         newThreads.forEach(thread => {
+            // Store hat block fields that must match on the thread, so they can be accessed at any time, even after
+            // e.g. we've waited on a promise from an asynchronous reporter. When the hat block's inputs are interpreted
+            // they will be compared to these values.
+            if (optMatchFields) thread.hatMatchArgs = optMatchFields;
             execute(this.sequencer, thread);
-            thread.goToNextBlock();
+
+            // For compatibility with Scratch 2, edge triggered hats need to be processed before
+            // threads are stepped. See ScratchRuntime.as for original implementation
+            const topBlock = thread.blockContainer.getBlock(thread.topBlock);
+            if (this.getIsEdgeActivatedHat(topBlock.opcode)) {
+                thread.goToNextBlock();
+            }
         });
         return newThreads;
     }
