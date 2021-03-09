@@ -1,6 +1,6 @@
 let _TextEncoder;
 if (typeof TextEncoder === 'undefined') {
-    _TextEncoder = require('text-encoding').TextEncoder;
+    _TextEncoder = require('fastestsmallesttextencoderdecoder').TextEncoder;
 } else {
     /* global TextEncoder */
     _TextEncoder = TextEncoder;

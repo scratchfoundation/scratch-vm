@@ -78,8 +78,7 @@ module.exports = [
             'jszip': true,
             'minilog': true,
             'scratch-parser': true,
-            'socket.io-client': true,
-            'text-encoding': true
+            'socket.io-client': true
         }
     }),
     // Playground
