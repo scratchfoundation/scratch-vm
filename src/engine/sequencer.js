@@ -195,7 +195,7 @@ class Sequencer {
             const stackFrame = thread.peekStackFrame();
             if (stackFrame === null) {
                 // No more stack to run!
-                this.retireThread(thread);
+                thread.status = Thread.STATUS_DONE;
             } else if (stackFrame.isLoop) {
                 // The current level of the stack is marked as a loop. Yield
                 // this thread so the next thread may run.
