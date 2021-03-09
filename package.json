@@ -38,7 +38,7 @@
     "diff-match-patch": "1.0.4",
     "format-message": "6.2.1",
     "htmlparser2": "3.10.0",
-    "immutable": "3.8.1",
+    "immutable": "3.8.2",
     "jszip": "^3.1.5",
     "minilog": "3.1.0",
     "scratch-parser": "5.0.0",
