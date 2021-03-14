@@ -1085,6 +1085,12 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
 };
 
 const deserializeMonitor = function (monitorData, runtime, targets, extensions) {
+    // Do not add hidden monitors from extensions.
+    // Extension monitors do not have state except positions,
+    // and if it's hidden, the positions should not matter.
+    const extensionID = getExtensionIdForOpcode(monitorData.opcode);
+    if (extensionID && !monitorData.visible) return;
+
     // If the serialized monitor has spriteName defined, look up the sprite
     // by name in the given list of targets and update the monitor's targetId
     // to match the sprite's id.
@@ -1183,7 +1189,6 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
         runtime.monitorBlocks.createBlock(monitorBlock);
 
         // If the block is from an extension, record it.
-        const extensionID = getExtensionIdForOpcode(monitorBlock.opcode);
         if (extensionID) {
             extensions.extensionIDs.add(extensionID);
         }
