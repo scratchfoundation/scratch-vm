@@ -48,6 +48,9 @@
     "text-encoding": "0.7.0",
     "worker-loader": "^1.1.1"
   },
+  "peerDependencies": {
+    "scratch-svg-renderer": "^0.2.0-prerelease"
+  },
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
@@ -73,7 +76,6 @@
     "scratch-l10n": "^3.1.20181129221712",
     "scratch-render": "latest",
     "scratch-storage": "^1.1.0",
-    "scratch-svg-renderer": "latest",
     "script-loader": "0.7.2",
     "stats.js": "^0.17.0",
     "tap": "^12.0.1",
