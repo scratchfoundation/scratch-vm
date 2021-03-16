@@ -4,22 +4,22 @@ const {loadSvgString, serializeSvgToString} = require('scratch-svg-renderer');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
-        let svgString = costume.asset.decodeText();
+        const svgString = costume.asset.decodeText();
         // scratch-svg-renderer fixes syntax that causes loading issues,
         // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
-        const svgText = serializeSvgToString(loadSvgString(svgString, optVersion === 2/* fromVersion2 */));
+        const fixedSvgString = serializeSvgToString(loadSvgString(svgString, optVersion === 2/* fromVersion2 */));
         
         // If the string changed, put back into storage
-        if (svgString !== svgText) {
+        if (svgString !== fixedSvgString) {
             const storage = runtime.storage;
-            costume.asset.encodeTextData(svgText, storage.DataFormat.SVG, true);
+            costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
             costume.assetId = costume.asset.assetId;
             costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
         }
 
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
-        costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
+        costume.skinId = runtime.renderer.createSVGSkin(fixedSvgString, rotationCenter);
         costume.size = runtime.renderer.getSkinSize(costume.skinId);
         // Now we should have a rotationCenter even if we didn't before
         if (!rotationCenter) {
