@@ -82,7 +82,7 @@ var VirtualMachine =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 494);
+/******/ 	return __webpack_require__(__webpack_require__.s = 482);
 /******/ })
 /************************************************************************/
 /******/ ({
@@ -178,15 +178,15 @@ module.exports = {
 
 /***/ }),
 
-/***/ 494:
+/***/ 482:
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(495);
+/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(483);
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(5)))
 
 /***/ }),
 
-/***/ 495:
+/***/ 483:
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -196,7 +196,7 @@ module.exports = {
  */
 
 const VideoMotion = __webpack_require__(64);
-const VideoMotionView = __webpack_require__(496);
+const VideoMotionView = __webpack_require__(484);
 
 module.exports = {
     VideoMotion,
@@ -206,7 +206,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 496:
+/***/ 484:
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
