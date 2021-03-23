@@ -27,7 +27,8 @@ const builtinExtensions = {
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
-    sequence: () => require('../extensions/scratch3_SatelliteSequences')
+    sequence: () => require('../extensions/scratch3_SatelliteSequences'),
+    countdown: () => require('../blocks/scratch3_countdown')
 };
 
 /**

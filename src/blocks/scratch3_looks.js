@@ -188,23 +188,21 @@ class Scratch3LooksBlocks {
             bubbleState.onSpriteRight = true;
             this._renderBubble(target);
         } else {
-            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                position: [
-                    bubbleState.onSpriteRight ? (
-                        Math.max(
-                            stageBounds.left, // Bubble should not extend past left edge of stage
-                            Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
-                        )
-                    ) : (
-                        Math.min(
-                            stageBounds.right - bubbleWidth, // Bubble should not extend past right edge of stage
-                            Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
-                        )
-                    ),
-                    // Bubble should not extend past the top of the stage
-                    Math.min(stageBounds.top, targetBounds.bottom + bubbleHeight)
-                ]
-            });
+            this.runtime.renderer.updateDrawablePosition(bubbleState.drawableId, [
+                bubbleState.onSpriteRight ? (
+                    Math.max(
+                        stageBounds.left, // Bubble should not extend past left edge of stage
+                        Math.min(stageBounds.right - bubbleWidth, targetBounds.right)
+                    )
+                ) : (
+                    Math.min(
+                        stageBounds.right - bubbleWidth, // Bubble should not extend past right edge of stage
+                        Math.max(stageBounds.left, targetBounds.left - bubbleWidth)
+                    )
+                ),
+                // Bubble should not extend past the top of the stage
+                Math.min(stageBounds.top, targetBounds.bottom + bubbleHeight)
+            ]);
             this.runtime.requestRedraw();
         }
     }
@@ -235,9 +233,7 @@ class Scratch3LooksBlocks {
             target.addListener(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this._onTargetChanged);
             bubbleState.drawableId = this.runtime.renderer.createDrawable(StageLayering.SPRITE_LAYER);
             bubbleState.skinId = this.runtime.renderer.createTextSkin(type, text, bubbleState.onSpriteRight, [0, 0]);
-            this.runtime.renderer.updateDrawableProperties(bubbleState.drawableId, {
-                skinId: bubbleState.skinId
-            });
+            this.runtime.renderer.updateDrawableSkinId(bubbleState.drawableId, bubbleState.skinId);
         }
 
         this._positionBubble(target);

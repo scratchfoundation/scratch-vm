@@ -129,6 +129,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
             this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
         });
+        this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
+            this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
+        });
         this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
             this.emit(Runtime.PERIPHERAL_CONNECTED)
         );
@@ -152,6 +155,21 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
+        });
+        this.runtime.on('SEND_SOUND', data => {
+            this.emit('SEND_SOUND', data);
+        });
+        this.runtime.on('PLAY_SOUND_MQTT', data => {
+            this.emit('PLAY_SOUND_MQTT', data);
+        });
+        this.runtime.on('SET_VOLUME', data => {
+            if (this.client) {
+                const outboundTopic = `sat/${data.SATELLITE}/cmd/fx`;
+                const string = `AS: vol ${[data.VALUE]}`;
+                const utf8Encode = new TextEncoder();
+                const arr = utf8Encode.encode(string);
+                this.client.publish(outboundTopic, arr);
+            }
         });
 
         this.extensionManager = new ExtensionManager(this.runtime);
