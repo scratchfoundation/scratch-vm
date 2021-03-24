@@ -16,6 +16,7 @@ const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
+const MqttConnect = require('./util/mqttConnect');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
@@ -62,6 +63,10 @@ class VirtualMachine extends EventEmitter {
          * @type {Target}
          */
         this.editingTarget = null;
+
+        this.client = null;
+
+        this.satellites = {};
 
         this.workspace = {};
         
@@ -112,6 +117,7 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.BLOCK_DRAG_END, blocks, topBlockId);
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
+            console.log('extension added');
             this.emit(Runtime.EXTENSION_ADDED, categoryInfo);
         });
         this.runtime.on(Runtime.EXTENSION_FIELD_ADDED, (fieldName, fieldImplementation) => {
@@ -132,8 +138,10 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
             this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
         });
-        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
-            this.emit(Runtime.PERIPHERAL_CONNECTED)
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () => {
+            console.log('peripheral connected');
+            this.emit(Runtime.PERIPHERAL_CONNECTED);
+        }
         );
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
@@ -183,6 +191,15 @@ class VirtualMachine extends EventEmitter {
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
+    }
+
+    setClient (client) {
+        this.client = client;
+    }
+
+    setSatellites (satellites) {
+        this.satellites = satellites;
+        console.log(this.satellites, 'satellites');
     }
 
     /**
@@ -293,6 +310,9 @@ class VirtualMachine extends EventEmitter {
      * @param {number} password - the password for the peripheral, if any.
      */
     connectPeripheral (extensionId, peripheralId, userName, password) {
+        const client = MqttConnect.connect(peripheralId, userName, password)
+        console.log(client, 'client from mqttconnect');
+        (console.log(extensionId, peripheralId, userName, password, 'from connect'));
         this.runtime.connectPeripheral(extensionId, peripheralId, userName, password);
     }
 

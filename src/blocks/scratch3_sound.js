@@ -141,13 +141,13 @@ class Scratch3SoundBlocks {
             sound_changevolumeby: this.changeVolume,
             sound_volume: this.getVolume,
             sound_playSound: this.playSatSound,
-            sound_setVolume: this.setVolume,
+            sound_setVolume: this.setSatVolume,
             sound_playSoundFromMQTT: this.playSoundMQTT
         };
     }
 
-    playSatSound (args) {
-        this.runtime.emit('SEND_SOUND', args.SOUND);
+    playSatSound (args, util) {
+        this._playSound(args, util);
     }
 
     playSoundMQTT (args) {
@@ -158,7 +158,7 @@ class Scratch3SoundBlocks {
         });
     }
 
-    setVolume (args) {
+    setSatVolume (args) {
         this.runtime.emit('SET_VOLUME', args);
     }
 
