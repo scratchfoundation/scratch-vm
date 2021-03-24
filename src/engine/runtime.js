@@ -612,6 +612,14 @@ class Runtime extends EventEmitter {
         return 'USER_PICKED_PERIPHERAL';
     }
 
+    static get CLIENT_CONNECTED () {
+        return 'CLIENT_CONNECTED';
+    }
+
+    static get CLIENT_DISCONNECTED () {
+        return 'CLIENT_DISCONNECTED';
+    }
+
     /**
      * Event name for reporting that a peripheral has connected.
      * This causes the status button in the blocks menu to indicate 'connected'.
@@ -1466,7 +1474,6 @@ class Runtime extends EventEmitter {
      * @param {object} extension - the extension to register.
      */
     registerPeripheralExtension (extensionId, extension) {
-        console.log(extensionId, extension, 'extensions from register');
         this.peripheralExtensions[extensionId] = extension;
     }
 
@@ -1488,7 +1495,6 @@ class Runtime extends EventEmitter {
      * @param {number} password - the password for the peripheral if any.
      */
     connectPeripheral (extensionId, peripheralId, userName, password) {
-        console.log(this.peripheralExtensions, 'extensions');
         if (this.peripheralExtensions[extensionId]) {
             this.peripheralExtensions[extensionId].connect(peripheralId, userName, password);
         }

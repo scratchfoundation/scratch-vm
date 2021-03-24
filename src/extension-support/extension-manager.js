@@ -28,7 +28,8 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     sequence: () => require('../extensions/scratch3_SatelliteSequences'),
-    countdown: () => require('../blocks/scratch3_countdown')
+    countdown: () => require('../blocks/scratch3_countdown'),
+    mqttConnect: () => require('../engine/mqttConnect')
 };
 
 /**

@@ -16,7 +16,7 @@ const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
-const MqttConnect = require('./util/mqttConnect');
+const MqttConnect = require('./engine/mqttConnect');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
@@ -141,8 +141,11 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () => {
             console.log('peripheral connected');
             this.emit(Runtime.PERIPHERAL_CONNECTED);
-        }
-        );
+        });
+        this.runtime.on(Runtime.CLIENT_CONNECTED, () => {
+            console.log('client connected');
+            this.emit(Runtime.CLIENT_CONNECTED);
+        });
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
         );
@@ -195,6 +198,10 @@ class VirtualMachine extends EventEmitter {
 
     setClient (client) {
         this.client = client;
+    }
+
+    getClient () {
+        return this.client;
     }
 
     setSatellites (satellites) {
@@ -310,10 +317,16 @@ class VirtualMachine extends EventEmitter {
      * @param {number} password - the password for the peripheral, if any.
      */
     connectPeripheral (extensionId, peripheralId, userName, password) {
-        const client = MqttConnect.connect(peripheralId, userName, password)
-        console.log(client, 'client from mqttconnect');
-        (console.log(extensionId, peripheralId, userName, password, 'from connect'));
+        const client = MqttConnect.connect(peripheralId, userName, password, this.runtime);
+        this.setClient(client);
+        (console.log(extensionId, peripheralId, userName, password, 'from connectPeripheral'));
         this.runtime.connectPeripheral(extensionId, peripheralId, userName, password);
+    }
+
+    connectMqtt (extensionId, peripheralId, userName, password) {
+        const client = MqttConnect.connect(peripheralId, userName, password, this.runtime);
+        this.setClient(client);
+        (console.log(extensionId, peripheralId, userName, password, 'from connectMqtt'));
     }
 
     /**

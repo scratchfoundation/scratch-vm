@@ -1,17 +1,21 @@
 /* eslint-disable linebreak-style */
 const mqtt = require('mqtt');
+const EventEmitter = require('events');
 
-class MqttConnect {
-    constructor (runtime) {
-        this.runtime = runtime;
+class MqttConnect extends EventEmitter {
+    constructor () {
+        super();
         this.broker = null;
         this.username = null;
         this.password = null;
         this._client = null;
+        this.runtime = null;
     }
 
-    static connect (host, username, password) {
+    static connect (host, username, password, runtime) {
         console.log(`connected fired with url = ${host}`);
+        this.runtime = runtime;
+        console.log(this.runtime, 'runtime from connect');
         if (host && !username) this.broker = `ws://${host}:3000`;
         if (host && username) this.broker = `wss://${host}:3000`;
         if (username) this.username = username;
@@ -71,8 +75,9 @@ class MqttConnect {
         if (!this._client) this._onError();
 
         if (this._client) {
-            console.log(this._client, 'client');
+            console.log(this._client, 'client from mqttCOnnect');
             console.log(`Connected to ${this.broker}`);
+            this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
             return this._client;
             // this.props.setFirstSatName(this.username);
             // this.props.setMQTTStatus(true);
@@ -109,6 +114,7 @@ class MqttConnect {
             this._client.subscribe('sat/+/ev/touch');
             this._client.subscribe('+/sat/+/ev/touch');
             this._client.subscribe('app/menu/mode');
+            // this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
         }
         // Give everyone 5 seconds to report again
         // this._fetchSatellitesTimeout = setTimeout(this._onStatusTimer, 5000);
