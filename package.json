@@ -47,6 +47,7 @@
     "minilog": "3.1.0",
     "mqtt": "^4.2.6",
     "nets": "3.2.0",
+    "react-redux": "^7.2.3",
     "scratch-parser": "5.0.0",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",

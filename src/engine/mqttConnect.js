@@ -1,6 +1,7 @@
 /* eslint-disable linebreak-style */
 const mqtt = require('mqtt');
 const EventEmitter = require('events');
+const MqttControl = require('./mqttControl');
 
 class MqttConnect extends EventEmitter {
     constructor () {
@@ -37,7 +38,7 @@ class MqttConnect extends EventEmitter {
         return null;
     }
 
-    _onError (error) {
+    static onError (error) {
         console.log(`onError fired with: ${error}`);
         // this.props.vm.setClient(null);
         // this.props.setMQTTStatus(false);
@@ -78,17 +79,16 @@ class MqttConnect extends EventEmitter {
             console.log(this._client, 'client from mqttCOnnect');
             console.log(`Connected to ${this.broker}`);
             this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
-            return this._client;
             // this.props.setFirstSatName(this.username);
             // this.props.setMQTTStatus(true);
         }
 
         // bind the event handlers
-        this._client.on('connect', () => this._onConnect());
-        this._client.on('close', () => this._onClose());
-        this._client.on('error', error => this._onError(error));
-        this._client.on('reconnect', () => this._onReconnect());
-        this._client.on('message', (topic, payload) => this.runtime.emit('SEND_MESSAGE', (topic, payload)));
+        this._client.on('connect', () => this.onConnect());
+        this._client.on('close', () => this.onClose());
+        this._client.on('error', error => this.onError(error));
+        this._client.on('reconnect', () => this.onReconnect());
+        this._client.on('message', (topic, payload) => MqttControl.onMessage(topic, payload));
       
 
         // this._onStatusTimer = this._onStatusTimer.bind(this);
@@ -97,7 +97,7 @@ class MqttConnect extends EventEmitter {
         // this._performConnectTimeout = setTimeout(this._onConnectTimer, 10000);
     }
 
-    _onConnect () {
+    static onConnect () {
         console.log(`onConnect fired`);
         // subscribe to all status, radar detection and touch events
         if (this._client) {
@@ -114,17 +114,19 @@ class MqttConnect extends EventEmitter {
             this._client.subscribe('sat/+/ev/touch');
             this._client.subscribe('+/sat/+/ev/touch');
             this._client.subscribe('app/menu/mode');
-            // this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
+            this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
         }
+
+        return this._client;
         // Give everyone 5 seconds to report again
         // this._fetchSatellitesTimeout = setTimeout(this._onStatusTimer, 5000);
     }
 
-    _onReconnect () {
+    static onReconnect () {
         console.log(`onReconnect fired`);
     }
 
-    _onClose () {
+    static onClose () {
         console.log(`onClose fired`);
         this._connected = false;
         // this.props.setFirstSatName('');
@@ -143,7 +145,8 @@ class MqttConnect extends EventEmitter {
             this._client.removeListener('error', this._onError);
             this._client = null;
         });
-        // this._runtime.emit(this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT);
+
+        this.runtime.emit(this.runtime.constructor.CLIENT_DISCONNECTED);
     }
 
 }

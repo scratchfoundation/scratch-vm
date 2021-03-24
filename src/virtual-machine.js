@@ -146,6 +146,9 @@ class VirtualMachine extends EventEmitter {
             console.log('client connected');
             this.emit(Runtime.CLIENT_CONNECTED);
         });
+        this.runtime.on(Runtime.CLIENT_DISCONNECTED, () => {
+            this.emit(Runtime.CLIENT_DISCONNECTED);
+        });
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
         );
