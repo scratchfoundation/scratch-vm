@@ -147,6 +147,7 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.CLIENT_CONNECTED);
         });
         this.runtime.on(Runtime.CLIENT_DISCONNECTED, () => {
+            this.setClient(null);
             this.emit(Runtime.CLIENT_DISCONNECTED);
         });
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
@@ -185,6 +186,18 @@ class VirtualMachine extends EventEmitter {
                 this.client.publish(outboundTopic, arr);
             }
         });
+        this.runtime.on('SET_SATELLITES', data => {
+            this.setSatellites(data);
+            this.emit('SET_SATELLITES', data);
+        });
+        this.runtime.on('SET_SATELLITE_VARS', data => {
+            this.createSatelliteVariables(data);
+            this.emit('SET_SATELLITE_VARS', data);
+        });
+        this.runtime.on('SET_SOUND_VARS', data => {
+            this.setUpSoundVars(data);
+            this.emit('SET_SOUND_VARS', data);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
@@ -207,9 +220,39 @@ class VirtualMachine extends EventEmitter {
         return this.client;
     }
 
+    getSatellites () {
+        return this.satellites;
+    }
+
     setSatellites (satellites) {
         this.satellites = satellites;
-        console.log(this.satellites, 'satellites');
+    }
+
+    setUpSoundVars (wavs) {
+        const stage = this.runtime.getTargetForStage();
+        let allSounds = stage.lookupVariableByNameAndType('All_Sounds', 'list');
+        if (!allSounds) {
+            allSounds = this.workspace.createVariable('All_Sounds', 'list', false, false);
+            console.log(allSounds, 'allSounds');
+        }
+        setTimeout(() => {
+            stage.variables[allSounds.id_].value = wavs.map(currentValue => currentValue.replace('.wav', ''));
+        },5000);
+    }
+
+    createSatelliteVariables (data) {
+        const stage = this.runtime.getTargetForStage();
+        let singleSat = stage.lookupVariableByNameAndType(`${data}`, '');
+        let allSats = stage.lookupVariableByNameAndType('All_Satellites', 'list');
+        if (!allSats) {
+            allSats = this.workspace.createVariable(`All_Satellites`, 'list', false, false);
+            singleSat = this.workspace.createVariable(`${data}`, '', false, false);
+        }
+        setTimeout(() => {
+            stage.variables[allSats.id_].value = Object.keys(this.satellites);
+            stage.variables[singleSat.id_].value = `${data}`;
+        }, 5000);
+        this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
     }
 
     /**

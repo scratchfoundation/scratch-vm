@@ -78,7 +78,6 @@ class MqttConnect extends EventEmitter {
         if (this._client) {
             console.log(this._client, 'client from mqttCOnnect');
             console.log(`Connected to ${this.broker}`);
-            this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
             // this.props.setFirstSatName(this.username);
             // this.props.setMQTTStatus(true);
         }
@@ -88,7 +87,7 @@ class MqttConnect extends EventEmitter {
         this._client.on('close', () => this.onClose());
         this._client.on('error', error => this.onError(error));
         this._client.on('reconnect', () => this.onReconnect());
-        this._client.on('message', (topic, payload) => MqttControl.onMessage(topic, payload));
+        this._client.on('message', (topic, payload) => MqttControl.onMessage(topic, payload, this.runtime));
       
 
         // this._onStatusTimer = this._onStatusTimer.bind(this);
@@ -137,12 +136,12 @@ class MqttConnect extends EventEmitter {
         console.log('closeConnection fired');
         if (this._client === null) return;
         this._client.end(true, () => {
-            this.props.setClient(null);
-            this._client.removeListener('connect', this._onConnect);
-            this._client.removeListener('reconnect', this._onReconnect);
-            this._client.removeListener('message', this._onMessage);
-            this._client.removeListener('close', this._onClose);
-            this._client.removeListener('error', this._onError);
+            this.runtime.emit(this.runtime.constructor.CLIENT_DISCONNECTED);
+            this._client.removeListener('connect', this.onConnect);
+            this._client.removeListener('reconnect', this.onReconnect);
+            this._client.removeListener('message', (topic, payload) => MqttControl.onMessage(topic, payload, this.runtime));
+            this._client.removeListener('close', this.onClose);
+            this._client.removeListener('error', this.onError);
             this._client = null;
         });
 
