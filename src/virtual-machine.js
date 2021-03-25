@@ -198,6 +198,9 @@ class VirtualMachine extends EventEmitter {
             this.setUpSoundVars(data);
             this.emit('SET_SOUND_VARS', data);
         });
+        this.runtime.on('PUBLISH_TO_CLIENT', data => {
+            this.publishToClient(data);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
@@ -228,6 +231,12 @@ class VirtualMachine extends EventEmitter {
         this.satellites = satellites;
     }
 
+    publishToClient (data) {
+        console.log('publish', data);
+        this.client.publish(data.topic, data.message);
+        return Promise.resolve();
+    }
+
     setUpSoundVars (wavs) {
         const stage = this.runtime.getTargetForStage();
         let allSounds = stage.lookupVariableByNameAndType('All_Sounds', 'list');
@@ -237,7 +246,7 @@ class VirtualMachine extends EventEmitter {
         }
         setTimeout(() => {
             stage.variables[allSounds.id_].value = wavs.map(currentValue => currentValue.replace('.wav', ''));
-        },5000);
+        }, 5000);
     }
 
     createSatelliteVariables (data) {

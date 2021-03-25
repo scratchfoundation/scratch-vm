@@ -43,6 +43,9 @@ class MqttControl extends EventEmitter{
         this.runtime.on('STOP_SEQUENCE_4', () => {
             this.stopSequences1();
         });
+        this.runtime.on('SEND_SOUND', data => {
+            this.playSound(data);
+        });
 
     }
     
@@ -271,6 +274,37 @@ class MqttControl extends EventEmitter{
         this.satellites[sat] &&
         this.satellites[sat] !== this.NOT_FOUND &&
         this.satellites[sat].hasPresence;
+    }
+
+    static playSoundMQTT (args, runtime) {
+        this.runtime = runtime;
+        // const satellite = this.findSatelliteSerial(args.satellite);
+        console.log('PlaySoundMQTT', args);
+        const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        const string = [this._soundsByName[args.SOUND]];
+        const utf8Encode = new TextEncoder();
+        const arr = utf8Encode.encode(string);
+        const data = {
+            topic: outboundTopic,
+            message: arr
+        };
+        this.runtime.emit('PUBLISH_TO_CLIENT', data);
+        // this._client.publish(outboundTopic, arr);
+        return Promise.resolve();
+    }
+
+    static playSound (args) {
+        console.log(args, 'args');
+        // const satellite = this.findSatelliteSerial(args.SATELLITE);
+        const outboundTopic = `sat/${args.satellite}/cmd/fx`;
+        console.log(outboundTopic, 'topic');
+        const sounds = SoundFiles.sounds;
+        const ext = sounds.find((x) => x.name === args.sound);
+        const audio = `AS: 1,${ext.md5ext}`;
+        const utf8Encode = new TextEncoder();
+        const arr = utf8Encode.encode(audio);
+        this.props.vm.client.publish(outboundTopic, arr);
+        return Promise.resolve();
     }
 
 }

@@ -1,6 +1,7 @@
 const MathUtil = require('../util/math-util');
 const Cast = require('../util/cast');
 const Clone = require('../util/clone');
+const MqttControl = require('../engine/mqttControl');
 
 /**
  * Occluded boolean value to make its use more understandable.
@@ -147,15 +148,16 @@ class Scratch3SoundBlocks {
     }
 
     playSatSound (args, util) {
-        this._playSound(args, util);
+        this.runtime.emit('SEND_SOUND', args.SOUND);
     }
 
     playSoundMQTT (args) {
         // const satellite = this.findSatelliteSerial(args.SATELLITE);
-        this.runtime.emit('PLAY_SOUND_MQTT', {
-            satellite: args.SATELLITE,
-            sound: args.SOUND
-        });
+        // this.runtime.emit('PLAY_SOUND_MQTT', {
+        //     satellite: args.SATELLITE,
+        //     sound: args.SOUND
+        // });
+        MqttControl.playSoundMQTT(args, this.runtime);
     }
 
     setSatVolume (args) {
