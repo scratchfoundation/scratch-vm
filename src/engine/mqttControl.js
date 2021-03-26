@@ -2,6 +2,7 @@
 const decoder = new TextDecoder();
 const EventEmitter = require('events');
 const satellites = {};
+let _sequencesByName = {};
 // import SoundFiles from '../lib/soundFiles';
 
 class MqttControl extends EventEmitter{
@@ -46,7 +47,9 @@ class MqttControl extends EventEmitter{
         this.runtime.on('SEND_SOUND', data => {
             this.playSound(data);
         });
-
+        this.runtime.on('SEQUENCE_STARTED', data => {
+            this.playLightSequence(data);
+        });
     }
     
 
@@ -215,7 +218,7 @@ class MqttControl extends EventEmitter{
         const json = JSON.parse(payload);
         const files = json.files;
         this.setupSoundVar(files);
-        // this._setupLightVar(files);
+        this.setupLightVar(files);
         // this._runtime.emit(this._runtime.constructor.PERIPHERAL_LIST_UPDATE, this._satellites);
     }
 
@@ -236,7 +239,7 @@ class MqttControl extends EventEmitter{
         if (!sender.includes('BC')) {
             return;
         }
-        this.satellites[sender].isTouched = payload[0] === 0x31;
+        satellites[sender].isTouched = payload[0] === 0x31;
         console.log(payload, 'TOUCHpayload');
         if (payload === '1') {
             this.runtime.emit('IS_TOUCHED', {
@@ -307,6 +310,42 @@ class MqttControl extends EventEmitter{
         return Promise.resolve();
     }
 
+    static setupLightVar (names) {
+        const stage = this.runtime.getTargetForStage();
+        const txts = names.filter(currentValue => (currentValue.includes('.txt')));
+        const sequencesByName = {
+            'Clear': 'LS: CLEAR',
+            'Pause': 'LS: PAUSE',
+            'Stop': 'LS: STOP',
+            'Stop and Clear': 'LS: STOPCLEAR'
+        };
+        txts.forEach(currentValue => {
+            const val = currentValue.replace('.txt', '');
+            sequencesByName[val] = `LS: -1,${currentValue}`;
+        });
+        _sequencesByName = Object.freeze(sequencesByName);
+
+        // Setup the variable
+        this.runtime.emit('SET_LIGHTS', txts);
+        console.log(_sequencesByName, 'sequences');
+    }
+
+    static playLightSequence (args) {
+        // const satellite = this.findSatelliteSerial(args.satellite);
+        console.log('PlayLights', args);
+        // const outboundTopic = `sat/${args.SATELLITE}/cmd/fx`;
+        // const string = [this._sequencesByName[args.SOUND]];
+        // const utf8Encode = new TextEncoder();
+        // const arr = utf8Encode.encode(string);
+        // const data = {
+        //     topic: outboundTopic,
+        //     message: arr
+        // };
+        // this.runtime.emit('PUBLISH_TO_CLIENT', data);
+        // // this._client.publish(outboundTopic, arr);
+        // return Promise.resolve();
+    }
+    
 }
 
 module.exports = MqttControl;

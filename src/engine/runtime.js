@@ -40,7 +40,12 @@ const defaultBlockPackages = {
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
     scratch3_procedures: require('../blocks/scratch3_procedures'),
-    scratch3_countdown: require('../blocks/scratch3_countdown')
+    scratch3_countdown: require('../blocks/scratch3_countdown'),
+    scratch3_display: require('../blocks/scratch3_display'),
+    scratch3_movement: require('../blocks/scratch3_movement'),
+    scratch3_virtualSat: require('../blocks/scratch3_virtualSat'),
+    scratch3_touch: require('../blocks/scratch3_touch'),
+    scratch3_lights: require('../blocks/scratch3_lights')
 };
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];

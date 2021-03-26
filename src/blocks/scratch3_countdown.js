@@ -139,7 +139,7 @@ class Scratch3Countdown {
     }
 
     gameMode (args, util) {
-        this.runtime.emit(args);
+        this.runtime.emit('CHECK_MODE', args);
         const condition = this.mode_match;
       
         if (!condition) {
@@ -148,7 +148,7 @@ class Scratch3Countdown {
     }
 
     gameModeCheck (args) {
-        this.runtime.emit(args);
+        this.runtime.emit('CHECK_MODE', args);
         if (this.mode_match) {
             return true;
         }

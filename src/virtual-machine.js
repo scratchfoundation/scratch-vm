@@ -69,6 +69,10 @@ class VirtualMachine extends EventEmitter {
         this.satellites = {};
 
         this.workspace = {};
+
+        this.app = {
+            mode: 0
+        };
         
         /**
          * The currently dragging target, for redirecting IO data.
@@ -171,6 +175,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on('RESET_GAME', data => {
+            this.emit('RESET_GAME', data);
+        });
         this.runtime.on('SEND_SOUND', data => {
             this.emit('SEND_SOUND', data);
         });
@@ -198,8 +205,95 @@ class VirtualMachine extends EventEmitter {
             this.setUpSoundVars(data);
             this.emit('SET_SOUND_VARS', data);
         });
+        this.runtime.on('SET_LIGHTS', data => {
+            this.createLightVariables(data);
+            this.emit('SET_LIGHTS', data);
+        });
         this.runtime.on('PUBLISH_TO_CLIENT', data => {
             this.publishToClient(data);
+        });
+        this.runtime.on('SET_VOLUME', data => {
+            if (this.client) {
+                const outboundTopic = `sat/${data.SATELLITE}/cmd/fx`;
+                const string = `AS: vol ${[data.VALUE]}`;
+                const utf8Encode = new TextEncoder();
+                const arr = utf8Encode.encode(string);
+                this.client.publish(outboundTopic, arr);
+            }
+        });
+        this.runtime.on('CHECK_MODE', args => {
+            if (this.client) {
+                if (args.MODE === this._app.mode) {
+                    this.runtime.emit('MODE_CHECKED_TRUE');
+                } else {
+                    this.runtime.emit('MODE_CHECKED_FALSE');
+                }
+            }
+        });
+        this.runtime.on('DISPLAY_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('ANIMATE_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('FILL_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('DISPLAY_HISTOGRAM', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('HAS_PRESENCE', data => {
+            this.emit('HAS_PRESENCE', data);
+        });
+        this.runtime.on('SET_RADAR', data => {
+            if (this.client) {
+                const outboundTopic = `sat/${data.SATELLITE}/in/radar/config`;
+                this.client.publish(outboundTopic, data.SENSITIVITY);
+            }
+        });
+        this.runtime.on('STOP_EVENT', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+            }
+        });
+        this.runtime.on('CYCLE_POWER', () => {
+            // This function is untested and copied directly from old scratch VM
+            if (this.client) {
+                const outboundTopic = `relay`;
+                const string = '';
+                const utf8Encode = new TextEncoder();
+                const arr = utf8Encode.encode(string);
+                this.client.publish(outboundTopic, arr);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('REBOOT_SATELLITE', args => {
+            if (this.client) {
+                const outboundTopic = `sat/${args.SATELLITE}/cmd/reboot`;
+                this.client.publish(outboundTopic, '[0x1]');
+            }
+        });
+        this.runtime.on('SEND_BROADCAST', data => {
+            if (this.client) {
+                const topic = data.topic;
+                const bracketValue = {action: data.action, value: data.value};
+                const value = JSON.stringify(bracketValue);
+                const utf8Encode = new TextEncoder();
+                const message = utf8Encode.encode(value);
+                this.client.publish(topic, message);
+            }
         });
 
         this.extensionManager = new ExtensionManager(this.runtime);
@@ -249,6 +343,18 @@ class VirtualMachine extends EventEmitter {
         }, 5000);
     }
 
+    createLightVariables (data) {
+        const stage = this.runtime.getTargetForStage();
+        let allLights = stage.lookupVariableByNameAndType('All_Lights', 'list');
+        if (!allLights) {
+            allLights = this.workspace.createVariable('All_Lights', 'list', false, false);
+        }
+        setTimeout(() => {
+            stage.variables[allLights.id_].value = data.map(currentValue => currentValue.replace('.txt', ''));
+        }, 5000);
+        this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
+    }
+
     createSatelliteVariables (data) {
         const stage = this.runtime.getTargetForStage();
         let singleSat = stage.lookupVariableByNameAndType(`${data}`, '');
@@ -261,7 +367,6 @@ class VirtualMachine extends EventEmitter {
             stage.variables[allSats.id_].value = Object.keys(this.satellites);
             stage.variables[singleSat.id_].value = `${data}`;
         }, 5000);
-        this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
     }
 
     /**
