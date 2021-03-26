@@ -80,12 +80,10 @@ class LightBlocks {
     startSequence (args) {
         const value = args.value;
         const satellite = args.satellite;
-        console.log(args, 'args from startSequence');
         if (this.props.vm.client !== null) {
             if (value.includes('LS')) {
                 const topic = `sat/${satellite}/cmd/fx`;
                 const message = args.value;
-                console.log(topic, message, 'topic and message from startSequence');
             } else {
                 const topic = `sat/${satellite}/sound/fx`;
                 const message = value;
