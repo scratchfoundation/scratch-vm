@@ -1090,6 +1090,10 @@ class VirtualMachine extends EventEmitter {
         return this.runtime && this.runtime.renderer;
     }
 
+    // @deprecated
+    attachV2SVGAdapter () {
+    }
+
     /**
      * Set the bitmap adapter for the VM/runtime, which converts scratch 2
      * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
