@@ -13,15 +13,9 @@ env:
 cache:
   directories:
   - "$HOME/.npm"
-before_install:
-# package-lock.json was introduced in npm@5
-- '[[ $(node -v) =~ ^v9.*$ ]] || npm install -g npm@latest' # skipped when using node 9
-- npm install -g greenkeeper-lockfile
 install:
-- if [[ ${TRAVIS_BRANCH:0:11} = greenkeeper ]]; then npm install --production=false; else npm ci --production=false; fi
-before_script: greenkeeper-lockfile-update
+- npm ci --production=false
 script: npm run $NPM_SCRIPT
-after_script: greenkeeper-lockfile-upload
 jobs:
     include:
     - env: NPM_SCRIPT=lint
