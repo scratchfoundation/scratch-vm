@@ -5,16 +5,23 @@ const {loadSvgString, serializeSvgToString} = require('scratch-svg-renderer');
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
         const svgString = costume.asset.decodeText();
-        // scratch-svg-renderer fixes syntax that causes loading issues,
-        // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
-        const fixedSvgString = serializeSvgToString(loadSvgString(svgString, optVersion === 2/* fromVersion2 */));
-        
-        // If the string changed, put back into storage
-        if (svgString !== fixedSvgString) {
-            const storage = runtime.storage;
-            costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
-            costume.assetId = costume.asset.assetId;
-            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+
+        let fixedSvgString;
+        try {
+            // scratch-svg-renderer fixes syntax that causes loading issues,
+            // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
+            fixedSvgString = serializeSvgToString(loadSvgString(svgString, optVersion === 2/* fromVersion2 */));
+            // If the string changed, put back into storage
+            if (svgString !== fixedSvgString) {
+                const storage = runtime.storage;
+                costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
+                costume.assetId = costume.asset.assetId;
+                costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+            }
+        } catch (error) {
+            log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
+            const asset = runtime.storage.get(runtime.storage.defaultAssetId.ImageVector);
+            fixedSvgString = asset.decodeText();
         }
 
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
@@ -273,15 +280,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
         rotationCenter = [costume.rotationCenterX, costume.rotationCenterY];
     }
     if (costume.asset.assetType.runtimeFormat === AssetType.ImageVector.runtimeFormat) {
-        return loadVector_(costume, runtime, rotationCenter, optVersion)
-            .catch(error => {
-                log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
-                // Use default asset if original fails to load
-                costume.assetId = runtime.storage.defaultAssetId.ImageVector;
-                costume.asset = runtime.storage.get(costume.assetId);
-                costume.md5 = `${costume.assetId}.${AssetType.ImageVector.runtimeFormat}`;
-                return loadVector_(costume, runtime);
-            });
+        return loadVector_(costume, runtime, rotationCenter, optVersion);
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion);
 };
