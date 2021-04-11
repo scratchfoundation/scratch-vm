@@ -4,22 +4,26 @@ const {loadSvgString, serializeSvgToString} = require('scratch-svg-renderer');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
-        const svgString = costume.asset.decodeText();
-        // scratch-svg-renderer fixes syntax that causes loading issues,
-        // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
-        const fixedSvgString = serializeSvgToString(loadSvgString(svgString, optVersion === 2/* fromVersion2 */));
+        let svgString = costume.asset.decodeText();
+        // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
+        if (optVersion && optVersion === 2) {
+            // scratch-svg-renderer fixes syntax that causes loading issues,
+            // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
+            const fixedSvgString = serializeSvgToString(loadSvgString(svgString, true /* fromVersion2 */));
         
-        // If the string changed, put back into storage
-        if (svgString !== fixedSvgString) {
-            const storage = runtime.storage;
-            costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
-            costume.assetId = costume.asset.assetId;
-            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+            // If the string changed, put back into storage
+            if (svgString !== fixedSvgString) {
+                svgString = fixedSvgString;
+                const storage = runtime.storage;
+                costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
+                costume.assetId = costume.asset.assetId;
+                costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+            }
         }
 
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
-        costume.skinId = runtime.renderer.createSVGSkin(fixedSvgString, rotationCenter);
+        costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
         costume.size = runtime.renderer.getSkinSize(costume.skinId);
         // Now we should have a rotationCenter even if we didn't before
         if (!rotationCenter) {
