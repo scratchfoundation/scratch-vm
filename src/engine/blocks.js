@@ -728,7 +728,9 @@ class Blocks {
 
         // Is this block a top-level block?
         if (typeof e.newParent === 'undefined') {
-            this._addScript(e.id);
+            if (!this._blocks[e.id].shadow) {
+                this._addScript(e.id);
+            }
         } else {
             // Remove script, if one exists.
             this._deleteScript(e.id);
