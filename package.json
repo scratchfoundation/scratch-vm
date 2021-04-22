@@ -79,7 +79,7 @@
     "scratch-svg-renderer": "^0.2.0-prerelease.20210325225314",
     "script-loader": "0.7.2",
     "stats.js": "^0.17.0",
-    "tap": "^12.0.1",
+    "tap": "^15.0.4",
     "tiny-worker": "^2.1.1",
     "uglifyjs-webpack-plugin": "1.2.7",
     "webpack": "^4.16.5",
