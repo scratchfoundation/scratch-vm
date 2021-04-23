@@ -500,7 +500,6 @@ const serializeMonitors = function (monitors) {
             opcode: monitorData.opcode,
             params: monitorData.params,
             spriteName: monitorData.spriteName,
-            value: monitorData.value,
             width: monitorData.width,
             height: monitorData.height,
             x: monitorData.x,
@@ -1188,6 +1187,11 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
             extensions.extensionIDs.add(extensionID);
         }
     }
+
+    // Don't load potentially stale monitor data
+    // e.g. loudness, answer, timer, and other blocks which depend on global or external state,
+    // as well as values which were updated whilst the monitor was hidden
+    monitorData.value = null;
 
     runtime.requestAddMonitor(MonitorRecord(monitorData));
 };
