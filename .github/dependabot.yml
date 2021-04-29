@@ -1,0 +1,128 @@
+version: 2
+updates:
+- package-ecosystem: npm
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 99
+  versioning-strategy: increase-if-necessary
+  ignore:
+  - dependency-name: scratch-l10n
+    versions:
+    - 3.11.20210202031504
+    - 3.11.20210203031454
+    - 3.11.20210204031607
+    - 3.11.20210205031546
+    - 3.11.20210208031546
+    - 3.11.20210209031515
+    - 3.11.20210210031517
+    - 3.11.20210211031450
+    - 3.11.20210212031452
+    - 3.11.20210224031506
+    - 3.11.20210301031451
+    - 3.11.20210325031604
+    - 3.11.20210326031542
+    - 3.11.20210329031438
+    - 3.11.20210330031505
+    - 3.11.20210331031557
+    - 3.11.20210401031526
+    - 3.11.20210402031543
+    - 3.11.20210405031550
+    - 3.11.20210409031547
+    - 3.11.20210412031607
+    - 3.11.20210413031556
+    - 3.11.20210415031450
+    - 3.11.20210420031536
+    - 3.11.20210421031523
+    - 3.11.20210423031623
+    - 3.11.20210425031513
+    - 3.11.20210428031542
+  - dependency-name: scratch-blocks
+    versions:
+    - 0.1.0-prerelease.20210202033410
+    - 0.1.0-prerelease.20210203092419
+    - 0.1.0-prerelease.20210204034503
+    - 0.1.0-prerelease.20210205033912
+    - 0.1.0-prerelease.20210208034746
+    - 0.1.0-prerelease.20210209033901
+    - 0.1.0-prerelease.20210210034743
+    - 0.1.0-prerelease.20210211033945
+    - 0.1.0-prerelease.20210212033611
+    - 0.1.0-prerelease.20210301035002
+    - 0.1.0-prerelease.20210303033814
+    - 0.1.0-prerelease.20210310033635
+    - 0.1.0-prerelease.20210311034726
+    - 0.1.0-prerelease.20210325033451
+    - 0.1.0-prerelease.20210326032644
+    - 0.1.0-prerelease.20210329040105
+    - 0.1.0-prerelease.20210330034520
+    - 0.1.0-prerelease.20210331033330
+    - 0.1.0-prerelease.20210402033224
+    - 0.1.0-prerelease.20210405060703
+    - 0.1.0-prerelease.20210409033040
+    - 0.1.0-prerelease.20210412035144
+    - 0.1.0-prerelease.20210413034423
+    - 0.1.0-prerelease.20210413185056
+    - 0.1.0-prerelease.20210415062829
+    - 0.1.0-prerelease.20210423033557
+    - 0.1.0-prerelease.20210425032411
+    - 0.1.0-prerelease.20210426223625
+    - 0.1.0-prerelease.20210428101244
+  - dependency-name: tap
+    versions:
+    - 14.11.0
+    - 15.0.0
+    - 15.0.1
+    - 15.0.2
+    - 15.0.3
+    - 15.0.4
+  - dependency-name: eslint
+    versions:
+    - 7.18.0
+    - 7.19.0
+    - 7.20.0
+    - 7.21.0
+    - 7.22.0
+    - 7.23.0
+    - 7.24.0
+  - dependency-name: "@babel/core"
+    versions:
+    - 7.12.13
+    - 7.12.16
+    - 7.13.13
+    - 7.13.14
+    - 7.13.15
+    - 7.13.8
+  - dependency-name: scratch-render
+    versions:
+    - 0.1.0-prerelease.20210325231800
+  - dependency-name: scratch-svg-renderer
+    versions:
+    - 0.2.0-prerelease.20210325225314
+  - dependency-name: webpack-cli
+    versions:
+    - 4.4.0
+    - 4.5.0
+  - dependency-name: htmlparser2
+    versions:
+    - 6.0.0
+    - 6.0.1
+  - dependency-name: adm-zip
+    versions:
+    - 0.5.2
+    - 0.5.3
+    - 0.5.4
+  - dependency-name: eslint-config-scratch
+    versions:
+    - 6.0.0
+  - dependency-name: "@babel/preset-env"
+    versions:
+    - 7.12.13
+    - 7.12.16
+  - dependency-name: worker-loader
+    versions:
+    - 3.0.7
+  - dependency-name: json
+    versions:
+    - 10.0.0
