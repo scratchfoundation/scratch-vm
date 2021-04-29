@@ -561,7 +561,7 @@ const serialize = function (runtime, targetId) {
     const meta = Object.create(null);
     meta.semver = '3.0.0';
     meta.vm = vmPackage.version;
-    if (runtime.origin) { 
+    if (runtime.origin) {
         meta.origin = runtime.origin;
     }
 
