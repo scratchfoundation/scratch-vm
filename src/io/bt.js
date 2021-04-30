@@ -128,6 +128,24 @@ class BT extends JSONRPC {
                 window.clearTimeout(this._discoverTimeoutID);
             }
             break;
+        case 'userDidPickPeripheral':
+            this._availablePeripherals[params.peripheralId] = params;
+            this._runtime.emit(
+                this._runtime.constructor.USER_PICKED_PERIPHERAL,
+                this._availablePeripherals
+            );
+            if (this._discoverTimeoutID) {
+                window.clearTimeout(this._discoverTimeoutID);
+            }
+            break;
+        case 'userDidNotPickPeripheral':
+            this._runtime.emit(
+                this._runtime.constructor.PERIPHERAL_SCAN_TIMEOUT
+            );
+            if (this._discoverTimeoutID) {
+                window.clearTimeout(this._discoverTimeoutID);
+            }
+            break;
         case 'didReceiveMessage':
             this._messageCallback(params); // TODO: refine?
             break;

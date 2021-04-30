@@ -1,5 +1,4 @@
 const formatMessage = require('format-message');
-const nets = require('nets');
 const languageNames = require('scratch-translate-extension-languages');
 
 const ArgumentType = require('../../extension-support/argument-type');
@@ -8,6 +7,7 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
+const fetchWithTimeout = require('../../util/fetch-with-timeout');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -722,46 +722,45 @@ class Scratch3Text2SpeechBlocks {
         path += `&text=${encodeURIComponent(words.substring(0, 128))}`;
 
         // Perform HTTP request to get audio file
-        return new Promise(resolve => {
-            nets({
-                url: path,
-                timeout: SERVER_TIMEOUT
-            }, (err, res, body) => {
-                if (err) {
-                    log.warn(err);
-                    return resolve();
+        return fetchWithTimeout(path, {}, SERVER_TIMEOUT)
+            .then(res => {
+                if (res.status !== 200) {
+                    throw new Error(`HTTP ${res.status} error reaching translation service`);
                 }
 
-                if (res.statusCode !== 200) {
-                    log.warn(res.statusCode);
-                    return resolve();
-                }
-
+                return res.arrayBuffer();
+            })
+            .then(buffer => {
                 // Play the sound
                 const sound = {
                     data: {
-                        buffer: body.buffer
+                        buffer
                     }
                 };
-                this.runtime.audioEngine.decodeSoundPlayer(sound).then(soundPlayer => {
-                    this._soundPlayers.set(soundPlayer.id, soundPlayer);
+                return this.runtime.audioEngine.decodeSoundPlayer(sound);
+            })
+            .then(soundPlayer => {
+                this._soundPlayers.set(soundPlayer.id, soundPlayer);
 
-                    soundPlayer.setPlaybackRate(playbackRate);
+                soundPlayer.setPlaybackRate(playbackRate);
 
-                    // Increase the volume
-                    const engine = this.runtime.audioEngine;
-                    const chain = engine.createEffectChain();
-                    chain.set('volume', SPEECH_VOLUME);
-                    soundPlayer.connect(chain);
+                // Increase the volume
+                const engine = this.runtime.audioEngine;
+                const chain = engine.createEffectChain();
+                chain.set('volume', SPEECH_VOLUME);
+                soundPlayer.connect(chain);
 
-                    soundPlayer.play();
+                soundPlayer.play();
+                return new Promise(resolve => {
                     soundPlayer.on('stop', () => {
                         this._soundPlayers.delete(soundPlayer.id);
                         resolve();
                     });
                 });
+            })
+            .catch(err => {
+                log.warn(err);
             });
-        });
     }
 }
 module.exports = Scratch3Text2SpeechBlocks;

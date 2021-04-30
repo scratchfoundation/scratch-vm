@@ -146,7 +146,7 @@ return {
     blocks: [
         {
             //...
-            arguments {
+            arguments: {
                 MY_IMAGE: {
                     type: ArgumentType.IMAGE,
                     dataURI: 'myImageData',

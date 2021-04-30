@@ -77,7 +77,6 @@ module.exports = [
             'immutable': true,
             'jszip': true,
             'minilog': true,
-            'nets': true,
             'scratch-parser': true,
             'socket.io-client': true,
             'text-encoding': true
