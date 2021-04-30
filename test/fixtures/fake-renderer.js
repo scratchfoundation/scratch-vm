@@ -31,10 +31,6 @@ FakeRenderer.prototype.updateDrawableVisible = function (d, visible) { // eslint
 FakeRenderer.prototype.updateDrawableEffect = function (d, effectName, value) { // eslint-disable-line no-unused-vars
 };
 
-FakeRenderer.prototype.updateDrawableProperties = function (d, p) { // eslint-disable-line no-unused-vars
-    throw new Error('updateDrawableProperties is deprecated');
-};
-
 FakeRenderer.prototype.getCurrentSkinSize = function (d) { // eslint-disable-line no-unused-vars
     return [0, 0];
 };
