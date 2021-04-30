@@ -211,7 +211,7 @@ class MbitMore {
 
         /**
          * The most recently received events for each pin.
-         * @type {Object.<number>} - Store of pins which has events.
+         * @type {Object.<number>}
          * @private
          */
         this._events = {};
@@ -1519,7 +1519,7 @@ class MbitMoreBlocks {
 
         /**
          * Event holder of pin events.
-         * @type {object.<number>} - list of pins which has events.
+         * @type {object.<number>}
          */
         this.lastEvents = {};
     }
