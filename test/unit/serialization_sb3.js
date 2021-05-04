@@ -11,6 +11,8 @@ const commentsSB3NoDupeIds = path.resolve(__dirname, '../fixtures/comments_no_du
 const variableReporterSB2ProjectPath = path.resolve(__dirname, '../fixtures/top-level-variable-reporter.sb2');
 const topLevelReportersProjectPath = path.resolve(__dirname, '../fixtures/top-level-reporters.sb3');
 const draggableSB3ProjectPath = path.resolve(__dirname, '../fixtures/draggable.sb3');
+const originSB3ProjectPath = path.resolve(__dirname, '../fixtures/origin.sb3');
+const originAbsentSB3ProjectPath = path.resolve(__dirname, '../fixtures/origin-absent.sb3');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
 test('serialize', t => {
@@ -321,6 +323,21 @@ test('(#1850) sprite draggability state read when loading SB3 file', t => {
             const sprite1Obj = vm.runtime.targets.find(target => target.sprite.name === 'Sprite1');
             // Sprite1 in project should have draggable set to true
             t.equal(sprite1Obj.draggable, true);
+            t.end();
+        });
+});
+
+test('load origin value from SB3 file json metadata', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(originSB3ProjectPath))
+        .then(() => {
+            t.type(vm.runtime.origin, 'string');
+        })
+        .then(() => vm.loadProject(readFileToBuffer(originAbsentSB3ProjectPath)))
+        .then(() => {
+            // After loading a project with an origin, then loading one without an origin,
+            // origin value should no longer be set.
+            t.equal(vm.runtime.origin, null);
             t.end();
         });
 });
