@@ -341,3 +341,13 @@ test('load origin value from SB3 file json metadata', t => {
             t.end();
         });
 });
+
+test('serialize origin value if it is present', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(originSB3ProjectPath))
+        .then(() => {
+            const result = sb3.serialize(vm.runtime);
+            t.type(result.meta.origin, 'string');
+            t.end();
+        });
+});
