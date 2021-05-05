@@ -351,3 +351,13 @@ test('serialize origin value if it is present', t => {
             t.end();
         });
 });
+
+test('do not serialize origin value if it is not present', t => {
+    const vm = new VirtualMachine();
+    vm.loadProject(readFileToBuffer(originAbsentSB3ProjectPath))
+        .then(() => {
+            const result = sb3.serialize(vm.runtime);
+            t.equal(result.meta.origin, undefined);
+            t.end();
+        });
+});
