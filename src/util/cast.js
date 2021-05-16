@@ -91,7 +91,7 @@ class Cast {
      */
     static toRgbColorObject (value) {
         let color;
-        if (typeof value === 'string' && value.substring(0, 1) === '#') {
+        if (typeof value === 'string' && (value.length === 7 && value.length === 4 /*"#" takes up one character*/) && value.charAt(0) === '#') {
             color = Color.hexToRgb(value);
 
             // If the color wasn't *actually* a hex color, cast to black
