@@ -311,7 +311,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     costume.dataFormat = ext;
 
     if (costume.asset) {
-        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or file
+        // Costume comes with asset. It could be coming from image upload, drag and drop, or file
         return loadCostumeFromAsset(costume, runtime, optVersion);
     }
 
