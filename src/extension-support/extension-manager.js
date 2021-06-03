@@ -23,7 +23,15 @@ const builtinExtensions = {
     ev3: () => require('../extensions/scratch3_ev3'),
     makeymakey: () => require('../extensions/scratch3_makeymakey'),
     boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for')
+    gdxfor: () => require('../extensions/scratch3_gdx_for'),
+    sequence: () => require('../extensions/scratch3_SatelliteSequences'),
+    messages: () => require('../blocks/scratch3_countdown'),
+    mqttConnect: () => require('../engine/mqttConnect'),
+    playspotDisplay: () => require('../blocks/scratch3_display'),
+    movement: () => require('../blocks/scratch3_movement'),
+    virtualsat: () => require('../blocks/scratch3_virtualSat'),
+    touch: () => require('../blocks/scratch3_touch'),
+    lights: () => require('../blocks/scratch3_lights')
 };
 
 /**

@@ -16,6 +16,8 @@ const MathUtil = require('./util/math-util');
 const Runtime = require('./engine/runtime');
 const StringUtil = require('./util/string-util');
 const formatMessage = require('format-message');
+const MqttConnect = require('./engine/mqttConnect');
+const MqttControl = require('./engine/mqttControl');
 
 const Variable = require('./engine/variable');
 const newBlockIds = require('./util/new-block-ids');
@@ -62,6 +64,18 @@ class VirtualMachine extends EventEmitter {
          * @type {Target}
          */
         this.editingTarget = null;
+
+        this.client = null;
+
+        this.satellites = {};
+
+        this.workspace = {};
+
+        this.app = {
+            mode: 0
+        };
+
+        this.userSubscriptions = [];
 
         /**
          * The currently dragging target, for redirecting IO data.
@@ -110,6 +124,7 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.BLOCK_DRAG_END, blocks, topBlockId);
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
+            console.log('extension added');
             this.emit(Runtime.EXTENSION_ADDED, categoryInfo);
         });
         this.runtime.on(Runtime.EXTENSION_FIELD_ADDED, (fieldName, fieldImplementation) => {
@@ -130,9 +145,18 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
             this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
         });
-        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
-            this.emit(Runtime.PERIPHERAL_CONNECTED)
-        );
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () => {
+            console.log('peripheral connected');
+            this.emit(Runtime.PERIPHERAL_CONNECTED);
+        });
+        this.runtime.on(Runtime.CLIENT_CONNECTED, () => {
+            console.log('client connected');
+            this.emit(Runtime.CLIENT_CONNECTED);
+        });
+        this.runtime.on(Runtime.CLIENT_DISCONNECTED, () => {
+            this.setClient(null);
+            this.emit(Runtime.CLIENT_DISCONNECTED);
+        });
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
         );
@@ -154,6 +178,179 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on('ADD_SUB_MQTTCONTROL', topic => {
+            this.emit('ADD_SUB_MQTTCONTROL', topic);
+        });
+        this.runtime.on('RESET_GAME', data => {
+            this.emit('RESET_GAME', data);
+        });
+        this.runtime.on('SEND_SOUND', data => {
+            this.emit('SEND_SOUND', data);
+        });
+        this.runtime.on('PLAY_SOUND_MQTT', data => {
+            this.emit('PLAY_SOUND_MQTT', data);
+        });
+        this.runtime.on('SET_ALL_SATELLITES', data => {
+            this.setAllSatellites(data);
+        });
+        this.runtime.on('SET_SATELLITE_VARS', data => {
+            this.createSatelliteVariable(data);
+            this.emit('SET_SATELLITE_VARS', data);
+        });
+        this.runtime.on('SET_SOUND_VARS', data => {
+            this.setUpSoundVars(data);
+            this.emit('SET_SOUND_VARS', data);
+        });
+        this.runtime.on('SET_LIGHTS', data => {
+            this.createLightVariables(data);
+            this.emit('SET_LIGHTS', data);
+        });
+        this.runtime.on('CLEAR_ALL_SCRATCH_VARS', () => {
+            this.clearAllScratchVariables();
+        });
+        this.runtime.on('PUBLISH_TO_CLIENT', data => {
+            this.publishToClient(data);
+        });
+        this.runtime.on('SET_VOLUME', data => {
+            if (this.client && data.SATELLITE && data.VALUE) {
+                const satList = data.SATELLITE.split(' ');
+                for (let i = 0; i < satList.length; i++) {
+                    const outboundTopic = `sat/${satList[i]}/cmd/fx`;
+                    const string = `AS: vol ${[data.VALUE]}`;
+                    const utf8Encode = new TextEncoder();
+                    const arr = utf8Encode.encode(string);
+                    this.client.publish(outboundTopic, arr);
+                }
+            }
+        });
+        this.runtime.on('CHECK_MODE', args => {
+            if (this.client) {
+                if (args.MODE === this._app.mode) {
+                    this.runtime.emit('MODE_CHECKED_TRUE');
+                } else {
+                    this.runtime.emit('MODE_CHECKED_FALSE');
+                }
+            }
+        });
+        this.runtime.on('DISPLAY_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('ANIMATE_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('FILL_IMAGE', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('DISPLAY_HISTOGRAM', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('HAS_PRESENCE', data => {
+            this.emit('HAS_PRESENCE', data);
+        });
+        this.runtime.on('SET_RADAR', data => {
+            if (data.SATELLITE !== 'satellite') {
+                const satList = data.SATELLITE.split(' ');
+                for (let i = 0; i < satList.length; i++) {
+                    const utf8Encode = new TextEncoder();
+                    const options = {qos: 0, retain: true};
+                    const fSpeedTopic = `sat/${satList[i]}/cfg/radar/fSpeed`;
+                    const bSpeedTopic = `sat/${satList[i]}/cfg/radar/bSpeed`;
+                    const fMagTopic = `sat/${satList[i]}/cfg/radar/fMag`;
+                    const bMagTopic = `sat/${satList[i]}/cfg/radar/bMag`;
+                    const detEnTopic = `sat/${satList[i]}/cfg/radar/detEn`;
+                    if (this.client && this.client != undefined) {
+                        if (data.SENSITIVITY == "off") {
+                            this.client.publish(detEnTopic, utf8Encode.encode('0'), options);
+                        } else {
+                            this.client.publish(detEnTopic, utf8Encode.encode('1'), options);
+                            this.client.publish(fSpeedTopic, utf8Encode.encode('2'), options);
+                            this.client.publish(bSpeedTopic, utf8Encode.encode('2'), options);
+                            this.client.publish(fMagTopic, utf8Encode.encode('5'), options);
+                            this.client.publish(bMagTopic, utf8Encode.encode('5'), options);
+                        }
+                    }
+                }
+            }
+        });
+        this.runtime.on('STOP_EVENT', data => {
+            if (this.client) {
+                this.client.publish(data.topic, data.message);
+            }
+        });
+        this.runtime.on('CYCLE_POWER', () => {
+            // This function is untested and copied directly from old scratch VM
+            if (this.client) {
+                const outboundTopic = `relay`;
+                const string = '';
+                const utf8Encode = new TextEncoder();
+                const arr = utf8Encode.encode(string);
+                this.client.publish(outboundTopic, arr);
+                return Promise.resolve();
+            }
+        });
+        this.runtime.on('REBOOT_SATELLITE', args => {
+            if (this.client) {
+                const satList = args.SATELLITE.split(' ');
+                for (let i = 0; i < satList.length; i++) {
+                    const outboundTopic = `sat/${satList[i]}/cmd/reboot`;
+                    this.client.publish(outboundTopic, '[0x1]');
+                }
+            }
+        });
+        this.runtime.on('SEND_BROADCAST', data => {
+            if (this.client) {
+                const topic = data.topic;
+                const bracketValue = {action: data.action, value: data.value};
+                const value = JSON.stringify(bracketValue);
+                const utf8Encode = new TextEncoder();
+                const message = utf8Encode.encode(value);
+                this.client.publish(topic, message);
+            }
+        });
+
+        this.runtime.on('ADD_MQTT_SUBSCRIPTION', topic => {
+            this.addSubscriptions(topic);
+        });
+
+        this.runtime.on('USER_SUB_MQTT_PUB', data => {
+            this.translatePublications(data);
+        });
+
+        this.runtime.on('DELETE_ALL_USER_MQTT_SUBSCRIPTIONS', () => {
+            this.deleteSubscriptions();
+        });
+
+        this.runtime.on('SET_TOUCH_VARS', touchedSatVars => {
+            this.setTouchVariables(touchedSatVars);
+        });
+        
+        this.runtime.on('SET_RADAR_VARS', radarSatVars => {
+            this.setRadarVariables(radarSatVars);
+        });
+        
+        this.runtime.on('DISCONNECT_FROM_MQTT', () => {
+            this.DisconnectMqtt();
+        });
+        
+        this.runtime.on('SET_ALIAS_VARS', data => {
+            this.setAliasVariables(data);
+        });
+        
+        this.runtime.on('SET_GROUP_VARS', data => {
+            this.setGroupVariables(data);
+        });
 
         this.extensionManager = new ExtensionManager(this.runtime);
 
@@ -166,6 +363,228 @@ class VirtualMachine extends EventEmitter {
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
+    }
+
+    setClient (client) {
+        this.client = client;
+    }
+
+    getClient () {
+        return this.client;
+    }
+
+    getSatellites () {
+        return this.satellites;
+    }
+
+    addSubscriptions (topic) {
+        if (this.client && topic !== 'topic') {
+            this.client.subscribe(topic);
+            if (!this.userSubscriptions.includes(topic)) {
+                this.userSubscriptions.push(topic);
+            }
+            console.log(`Current user subscriptions: ${this.userSubscriptions}`)
+        }
+        MqttControl.addUserSub(topic);
+    }
+
+    translatePublications (data) {
+        const target = this.runtime.getTargetForStage();
+        const broadcastVar = target.lookupBroadcastMsg('', data.topic);
+        if (broadcastVar) {
+            this.runtime.emit('MQTT_PUB_TO_BROADCAST_MSG', broadcastVar, data);
+        }
+    }
+
+    deleteSubscriptions () {
+        if (this.client) {
+            const subsToDelete = this.userSubscriptions;
+            for (let i = 0; i < subsToDelete.length; i++) {
+                const subTopic = subsToDelete[i];
+                this.client.unsubscribe(subTopic);
+            }
+        }
+        this.userSubscriptions.length = 0;
+    }
+
+    publishToClient (data) {
+        console.log('publish', data);
+        this.client.publish(data.topic, data.message);
+        return Promise.resolve();
+    }
+
+    setUpSoundVars (wavs) {
+        const stage = this.runtime.getTargetForStage();
+        let allSounds = stage.lookupVariableByNameAndType('All_Sounds', 'list');
+        if (!allSounds) {
+            allSounds = this.workspace.createVariable('All_Sounds', 'list', false, false);
+            console.log(allSounds, 'allSounds');
+        }
+        setTimeout(() => {
+            if (stage.variables[allSounds.id_]) {
+                stage.variables[allSounds.id_].value = wavs.map(currentValue => currentValue.replace('.wav', ''));
+            }
+        }, 100);
+    }
+
+    createLightVariables (data) {
+        const stage = this.runtime.getTargetForStage();
+        let allLights = stage.lookupVariableByNameAndType('All_Lights', 'list');
+        if (!allLights) {
+            allLights = this.workspace.createVariable('All_Lights', 'list', false, false);
+        }
+        setTimeout(() => {
+            if (stage.variables[allLights.id_]  !== undefined) {
+                stage.variables[allLights.id_].value = data.map(currentValue => currentValue.replace('.txt', ''));
+                this.runtime.emit(this.runtime.constructor.CLIENT_CONNECTED);
+            }
+        }, 100);
+    }
+
+    setAllSatellites (satellites) {
+        this.satellites = satellites;
+        const stage = this.runtime.getTargetForStage();
+        let allSats = stage.lookupVariableByNameAndType('All_Satellites', 'list');
+        if (!allSats) {
+            allSats = this.workspace.createVariable(`All_Satellites`, 'list', false, false);
+        }
+        setTimeout(() => {
+            if (stage.variables[allSats.id_] !== undefined) {
+                stage.variables[allSats.id_].value = Object.keys(this.satellites);
+            }
+        }, 100);
+    }
+
+    createSatelliteVariable (data) {
+        const stage = this.runtime.getTargetForStage();
+        let singleSat = stage.lookupVariableByNameAndType(`${data}`, '');
+        if (!singleSat) {
+            singleSat = this.workspace.createVariable(`${data}`, '', false, false);
+        }
+        setTimeout(() => {
+            if (stage.variables[singleSat.id_] !== undefined) {
+                stage.variables[singleSat.id_].value = `${data}`;
+            }
+        }, 100);
+    }
+
+    setTouchVariables (touchedSatVars) {
+        const stage = this.runtime.getTargetForStage();
+        
+        let allSatTouchSatIdVar = stage.lookupVariableByNameAndType('ALL_SAT_TOUCH_SATID', '');
+        if (!allSatTouchSatIdVar) {
+            allSatTouchSatIdVar = this.workspace.createVariable('ALL_SAT_TOUCH_SATID', '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[allSatTouchSatIdVar.id_].value = `${touchedSatVars.ALL_SAT_TOUCH_SATID}`;
+            }, 100);
+        }
+        if (allSatTouchSatIdVar) {
+            allSatTouchSatIdVar.value = touchedSatVars.ALL_SAT_TOUCH_SATID;
+        }
+
+        let allSatTouchValue = stage.lookupVariableByNameAndType('ALL_SAT_TOUCH_VALUE', '');
+        if (!allSatTouchValue) {
+            allSatTouchValue = this.workspace.createVariable('ALL_SAT_TOUCH_VALUE', '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[allSatTouchValue.id_].value = `${touchedSatVars.ALL_SAT_TOUCH_VALUE}`;
+            }, 100);
+        }
+        if (allSatTouchValue) {
+            allSatTouchValue.value = touchedSatVars.ALL_SAT_TOUCH_VALUE;
+        }
+
+        let singleSatTouchValue = stage.lookupVariableByNameAndType(`${touchedSatVars.ALL_SAT_TOUCH_SATID}_TOUCH_VALUE`, '');
+        if (!singleSatTouchValue && touchedSatVars.ALL_SAT_TOUCH_SATID !== '') {
+            singleSatTouchValue = this.workspace.createVariable(`${touchedSatVars.ALL_SAT_TOUCH_SATID}_TOUCH_VALUE`, '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[singleSatTouchValue.id_].value = `${touchedSatVars.ALL_SAT_TOUCH_VALUE}`;
+            }, 100);
+        }
+        if (singleSatTouchValue) {
+            singleSatTouchValue.value = touchedSatVars.ALL_SAT_TOUCH_VALUE;
+        }
+    }
+
+    setRadarVariables (radarSatVars) {
+        const stage = this.runtime.getTargetForStage();
+        
+        let allSatRadarSatIdVar = stage.lookupVariableByNameAndType('ALL_SAT_RADAR_SATID', '');
+        if (!allSatRadarSatIdVar) {
+            allSatRadarSatIdVar = this.workspace.createVariable('ALL_SAT_RADAR_SATID', '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[allSatRadarSatIdVar.id_].value = `${radarSatVars.ALL_SAT_RADAR_SATID}`;
+            }, 100);
+        }
+        if (allSatRadarSatIdVar) {
+            allSatRadarSatIdVar.value = radarSatVars.ALL_SAT_RADAR_SATID;
+        }
+
+        let allSatRadarValue = stage.lookupVariableByNameAndType('ALL_SAT_RADAR_VALUE', '');
+        if (!allSatRadarValue) {
+            allSatRadarValue = this.workspace.createVariable('ALL_SAT_RADAR_VALUE', '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[allSatRadarValue.id_].value = `${radarSatVars.ALL_SAT_RADAR_VALUE}`;
+            }, 100);
+        }
+        if (allSatRadarValue) {
+            allSatRadarValue.value = radarSatVars.ALL_SAT_RADAR_VALUE;
+        }
+
+        let singleSatRadarValue = stage.lookupVariableByNameAndType(`${radarSatVars.ALL_SAT_RADAR_SATID}_RADAR_VALUE`, '');
+        if (!singleSatRadarValue && radarSatVars.ALL_SAT_RADAR_SATID !== '') {
+            singleSatRadarValue = this.workspace.createVariable(`${radarSatVars.ALL_SAT_RADAR_SATID}_RADAR_VALUE`, '', false, false);
+            
+            setTimeout(() => {
+                stage.variables[singleSatRadarValue.id_].value = `${radarSatVars.ALL_SAT_RADAR_VALUE}`;
+            }, 100);
+        }
+        if (singleSatRadarValue) {
+            singleSatRadarValue.value = radarSatVars.ALL_SAT_RADAR_VALUE;
+        }
+    }
+
+    setAliasVariables (data) {
+        if (typeof data.payload === 'string' && data.payload !== '') {
+            const stage = this.runtime.getTargetForStage();
+            let aliasVariable = stage.lookupVariableByNameAndType(`${data.alias}`, '');
+            if (!aliasVariable) {
+                aliasVariable = this.workspace.createVariable(`${data.alias}`, '', false, false);
+                console.log(aliasVariable, 'alias variable');
+            }
+            setTimeout(() => {
+                if (stage.variables[aliasVariable.id_] !== undefined) {
+                    stage.variables[aliasVariable.id_].value = data.payload;
+                }
+            }, 100);
+        }
+    }
+
+    setGroupVariables (data) {
+        if (Array.isArray(data.payload) && data.payload !== []) {
+            const stage = this.runtime.getTargetForStage();
+            let groupVariable = stage.lookupVariableByNameAndType(`${data.group}`, 'list');
+            if (!groupVariable) {
+                groupVariable = this.workspace.createVariable(`${data.group}`, 'list', false, false);
+                console.log(groupVariable, 'group variable');
+            }
+            setTimeout(() => {
+                if (stage.variables[groupVariable.id_] !== undefined) {
+                    stage.variables[groupVariable.id_].value = data.payload;
+                }
+            }, 100);
+        }
+    }
+
+    clearAllScratchVariables () {
+        const variableIds = Object.keys(this.runtime.getTargetForStage().variables);
+        for (let i = 0; i < variableIds.length; i++) {
+            this.workspace.deleteVariableById(variableIds[i]);
+        }
     }
 
     /**
@@ -210,6 +629,8 @@ class VirtualMachine extends EventEmitter {
      */
     stopAll () {
         this.runtime.stopAll();
+        this.runtime.emit('threadDone');
+        this.runtime._updateGlows();
     }
 
     /**
@@ -270,9 +691,26 @@ class VirtualMachine extends EventEmitter {
      * Connect to the extension's specified peripheral.
      * @param {string} extensionId - the id of the extension.
      * @param {number} peripheralId - the id of the peripheral.
+     * @param {number} userName - the user name for the peripheral, in any.
+     * @param {number} password - the password for the peripheral, if any.
      */
-    connectPeripheral (extensionId, peripheralId) {
-        this.runtime.connectPeripheral(extensionId, peripheralId);
+    connectPeripheral (extensionId, peripheralId, userName, password) {
+        const client = MqttConnect.connect(peripheralId, userName, password, this.runtime);
+        this.setClient(client);
+        (console.log(extensionId, peripheralId, userName, password, 'from connectPeripheral'));
+        this.runtime.connectPeripheral(extensionId, peripheralId, userName, password);
+    }
+
+    connectMqtt (extensionId, peripheralId, port, userName, password) {
+        const client = MqttConnect.connect(peripheralId, port, userName, password, this.runtime);
+        this.setClient(client);
+        (console.log(extensionId, peripheralId, userName, password, 'from connectMqtt'));
+    }
+
+    DisconnectMqtt () {
+        const client = MqttConnect.closeConnection();
+        this.setClient(client);
+        this.runtime.emit('CLEAR_ALL_SCRATCH_VARS');
     }
 
     /**
@@ -374,6 +812,7 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
+        
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
         const projectJson = this.toJSON();
@@ -505,7 +944,6 @@ class VirtualMachine extends EventEmitter {
      */
     installTargets (targets, extensions, wholeProject) {
         const extensionPromises = [];
-
         extensions.extensionIDs.forEach(extensionID => {
             if (!this.extensionManager.isExtensionLoaded(extensionID)) {
                 const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
@@ -1131,6 +1569,10 @@ class VirtualMachine extends EventEmitter {
      */
     getLocale () {
         return formatMessage.setup().locale;
+    }
+
+    addWorkspace (workspace) {
+        this.workspace = workspace;
     }
 
     /**
