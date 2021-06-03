@@ -333,7 +333,6 @@ class Scratch3LooksBlocks {
     }
 
     sayforsecs (args, util) {
-        // debugger
         this.say(args, util);
         const target = util.target;
         const usageId = this._getBubbleState(target).usageId;

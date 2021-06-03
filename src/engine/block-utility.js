@@ -125,15 +125,6 @@ class BlockUtility {
     }
 
     /**
-     * For sending the computational thread to the topblock, testing as of 5/6/21
-     * @param {number} branchNum Which branch to step to (i.e., 1, 2).
-     * @param {boolean} isLoop Whether this block is a loop.
-     */
-    startBranchFromTopBlock (branchNum, isLoop) {
-        this.sequencer.stepToTopBlock(this.thread, branchNum, isLoop);
-    }
-
-    /**
      * Stop all threads.
      */
     stopAll () {

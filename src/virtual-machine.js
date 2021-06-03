@@ -124,7 +124,6 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.BLOCK_DRAG_END, blocks, topBlockId);
         });
         this.runtime.on(Runtime.EXTENSION_ADDED, categoryInfo => {
-            console.log('extension added');
             this.emit(Runtime.EXTENSION_ADDED, categoryInfo);
         });
         this.runtime.on(Runtime.EXTENSION_FIELD_ADDED, (fieldName, fieldImplementation) => {
@@ -144,18 +143,6 @@ class VirtualMachine extends EventEmitter {
         });
         this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
             this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
-        });
-        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () => {
-            console.log('peripheral connected');
-            this.emit(Runtime.PERIPHERAL_CONNECTED);
-        });
-        this.runtime.on(Runtime.CLIENT_CONNECTED, () => {
-            console.log('client connected');
-            this.emit(Runtime.CLIENT_CONNECTED);
-        });
-        this.runtime.on(Runtime.CLIENT_DISCONNECTED, () => {
-            this.setClient(null);
-            this.emit(Runtime.CLIENT_DISCONNECTED);
         });
         this.runtime.on(Runtime.PERIPHERAL_REQUEST_ERROR, () =>
             this.emit(Runtime.PERIPHERAL_REQUEST_ERROR)
@@ -178,11 +165,20 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData => {
             this.emit(Runtime.HAS_CLOUD_DATA_UPDATE, hasCloudData);
         });
+        this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () => {
+            console.log('peripheral connected');
+            this.emit(Runtime.PERIPHERAL_CONNECTED);
+        });
+        this.runtime.on(Runtime.CLIENT_CONNECTED, () => {
+            console.log('client connected');
+            this.emit(Runtime.CLIENT_CONNECTED);
+        });
+        this.runtime.on(Runtime.CLIENT_DISCONNECTED, () => {
+            this.setClient(null);
+            this.emit(Runtime.CLIENT_DISCONNECTED);
+        });
         this.runtime.on('ADD_SUB_MQTTCONTROL', topic => {
             this.emit('ADD_SUB_MQTTCONTROL', topic);
-        });
-        this.runtime.on('RESET_GAME', data => {
-            this.emit('RESET_GAME', data);
         });
         this.runtime.on('SEND_SOUND', data => {
             this.emit('SEND_SOUND', data);
@@ -220,15 +216,6 @@ class VirtualMachine extends EventEmitter {
                     const utf8Encode = new TextEncoder();
                     const arr = utf8Encode.encode(string);
                     this.client.publish(outboundTopic, arr);
-                }
-            }
-        });
-        this.runtime.on('CHECK_MODE', args => {
-            if (this.client) {
-                if (args.MODE === this._app.mode) {
-                    this.runtime.emit('MODE_CHECKED_TRUE');
-                } else {
-                    this.runtime.emit('MODE_CHECKED_FALSE');
                 }
             }
         });
@@ -812,7 +799,6 @@ class VirtualMachine extends EventEmitter {
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
     saveProjectSb3 () {
-        
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
         const projectJson = this.toJSON();

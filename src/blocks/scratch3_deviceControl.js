@@ -2,10 +2,9 @@ const Cast = require('../util/cast');
 const convert = require('../engine/parseSequence');
 const convertBase = new convert();
 const Color = require('../util/color');
-const SoundData = require('../import/SoundFiles/soundData');
 const Timer = require('../util/timer');
 
-class VirtualSatBlocks {
+class DeviceControlBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -45,11 +44,11 @@ class VirtualSatBlocks {
      */
     getPrimitives () {
         return {
-            virtualsat_stopEvent: this.stopEvent,
-            virtualsat_addNewVirtualSat: this.addNewSat,
-            virtualsat_setRadarSensitivities: this.setRadarSensitivity,
-            virtualsat_cycleSatellitePower: this.cycleSatellitePower,
-            virtualsat_rebootSatellite: this.rebootSatellite
+            devicecontrol_stopEvent: this.stopEvent,
+            devicecontrol_addNewVirtualSat: this.addNewSat,
+            devicecontrol_setRadarSensitivities: this.setRadarSensitivity,
+            devicecontrol_cycleSatellitePower: this.cycleSatellitePower,
+            devicecontrol_rebootSatellite: this.rebootSatellite
         };
     }
 
@@ -121,4 +120,4 @@ class VirtualSatBlocks {
 
 }
 
-module.exports = VirtualSatBlocks;
+module.exports = DeviceControlBlocks;

@@ -2,7 +2,6 @@ const Cast = require('../util/cast');
 const convert = require('../engine/parseSequence');
 const convertBase = new convert();
 const Color = require('../util/color');
-const SoundData = require('../import/SoundFiles/soundData');
 const Timer = require('../util/timer');
 
 class MovementBlocks {

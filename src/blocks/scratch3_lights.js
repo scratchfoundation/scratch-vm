@@ -1,6 +1,7 @@
 /* eslint-disable linebreak-style */
 const Cast = require('../util/cast');
 const Color = require('../util/color');
+const MqttControl = require('../engine/mqttControl');
 
 class LightBlocks {
     constructor (runtime) {
@@ -39,8 +40,30 @@ class LightBlocks {
     getPrimitives () {
         return {
             lights_startsequence: this.startSequence,
-            lights_sendSequence: this.mqttSendSequence
+            lights_sendSequence: this.mqttSendSequence,
+            sound_playSound: this.playSatSound,
+            sound_setVolume: this.setSatVolume,
+            sound_playSoundFromMQTT: this.playSoundMQTT
         };
+    }
+
+
+    playSatSound (args, util) {
+        this.runtime.emit('SEND_SOUND', args.SOUND);
+    }
+
+    playSoundMQTT (args) {
+        if (args.SATELLITE && args.SOUND) {
+            const satList = args.SATELLITE.split(' ');
+            for (let i = 0; i < satList.length; i++) {
+                args.SATELLITE = satList[i];
+                MqttControl.playSoundMQTT(args, this.runtime);
+            }
+        }
+    }
+
+    setSatVolume (args) {
+        this.runtime.emit('SET_VOLUME', args);
     }
 
     convertHSVBrightness (hex) {

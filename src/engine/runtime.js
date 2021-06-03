@@ -40,10 +40,10 @@ const defaultBlockPackages = {
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
     scratch3_procedures: require('../blocks/scratch3_procedures'),
-    scratch3_countdown: require('../blocks/scratch3_countdown'),
+    scratch3_mqttMessages: require('../blocks/scratch3_mqttMessages'),
     scratch3_display: require('../blocks/scratch3_display'),
     scratch3_movement: require('../blocks/scratch3_movement'),
-    scratch3_virtualSat: require('../blocks/scratch3_virtualSat'),
+    scratch3_deviceControl: require('../blocks/scratch3_deviceControl'),
     scratch3_touch: require('../blocks/scratch3_touch'),
     scratch3_lights: require('../blocks/scratch3_lights')
 };
@@ -772,7 +772,6 @@ class Runtime extends EventEmitter {
      */
     _registerBlockPackages () {
         for (const packageName in defaultBlockPackages) {
-            // debugger
             if (defaultBlockPackages.hasOwnProperty(packageName)) {
                 // @todo pass a different runtime depending on package privilege?
                 const packageObject = new (defaultBlockPackages[packageName])(this);

@@ -55,11 +55,11 @@ const CORE_EXTENSIONS = [
     'procedures',
     'sensing',
     'sound',
-    'virtualsat',
+    'deviceControl',
     'lights',
     'movement',
     'touch',
-    'messages',
+    'mqttMessages',
     'playspotDisplay'
 ];
 
@@ -485,6 +485,7 @@ const serializeTarget = function (target, extensions) {
         obj.draggable = target.draggable;
         obj.rotationStyle = target.rotationStyle;
     }
+
     // Add found extensions to the extensions object
     targetExtensions.forEach(extensionId => {
         extensions.add(extensionId);
@@ -548,7 +549,7 @@ const serialize = function (runtime, targetId) {
             t.layerOrder = layerOrdering[index];
         });
     }
-    
+
     const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
 
     if (targetId) {

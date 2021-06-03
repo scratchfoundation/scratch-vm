@@ -300,22 +300,6 @@ class Sequencer {
     }
 
     /**
-     * For sending the computational thread to the topblock, May 2021
-     */
-    stepToTopBlock (thread, branchNum, isLoop) {
-        if (!branchNum) {
-            branchNum = 1;
-        }
-        const topBlockId = thread.topBlock;
-        thread.peekStackFrame().isLoop = isLoop;
-        if (topBlockId) {
-            thread.pushStack(topBlockId);
-        } else {
-            thread.pushStack(null);
-        }
-    }
-
-    /**
      * Step a procedure.
      * @param {!Thread} thread Thread object to step to procedure.
      * @param {!string} procedureCode Procedure code of procedure to step to.
