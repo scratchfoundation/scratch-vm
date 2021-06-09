@@ -177,6 +177,12 @@ let rendererDrawProfilerId = -1;
 class Runtime extends EventEmitter {
     constructor () {
         super();
+        
+        /**
+         * Queue for hat blocks to add on next iteration
+         * @type {Array<Object>}
+         */
+        this.hatQueue = [];
 
         /**
          * Target management and storage.
@@ -1761,6 +1767,16 @@ class Runtime extends EventEmitter {
             for (let j = 0; j < scripts.length; j++) {
                 f(scripts[j], target);
             }
+        }
+    }
+    
+    addHatToQueue (requestedHatOpcode, optMatchFields, optTarget) {
+        this.hatQueue.push({requestedHatOpcode, optMatchFields, optTarget});
+    }
+    
+    addHatsFromQueue () {
+        for(let item of this.hatQueue) {
+            this.startHats(item.requestedHatOpcode, item.optMatchFields, item.optTarget);
         }
     }
 
