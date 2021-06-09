@@ -1775,7 +1775,7 @@ class Runtime extends EventEmitter {
     }
     
     addHatsFromQueue () {
-        for(let item of this.hatQueue) {
+        for (const item of this.hatQueue) {
             this.startHats(item.requestedHatOpcode, item.optMatchFields, item.optTarget);
         }
         
@@ -1996,9 +1996,7 @@ class Runtime extends EventEmitter {
             }
         }
         
-        this.hatQueue = this.hatQueue.filter(item => {
-            return item.optTarget != target
-        });
+        this.hatQueue = this.hatQueue.filter(item => item.optTarget !== target);
     }
 
     /**
