@@ -22,12 +22,6 @@ class Video {
         this._skinId = -1;
 
         /**
-         * The Scratch Renderer Skin object.
-         * @type {Skin}
-         */
-        this._skin = null;
-
-        /**
          * Id for a drawable using the video's skin that will render as a video
          * preview.
          * @type {Drawable}
@@ -134,16 +128,18 @@ class Video {
         this._ghost = ghost;
         // Confirm that the default value has been changed to a valid id for the drawable
         if (this._drawable !== -1) {
-            this.runtime.renderer.updateDrawableProperties(this._drawable, {
-                ghost: this._forceTransparentPreview ? 100 : ghost
-            });
+            this.runtime.renderer.updateDrawableEffect(
+                this._drawable,
+                'ghost',
+                this._forceTransparentPreview ? 100 : ghost
+            );
         }
     }
 
     _disablePreview () {
-        if (this._skin) {
-            this._skin.clear();
-            this.runtime.renderer.updateDrawableProperties(this._drawable, {visible: false});
+        if (this._skinId !== -1) {
+            this.runtime.renderer.updateBitmapSkin(this._skinId, new ImageData(...Video.DIMENSIONS), 1);
+            this.runtime.renderer.updateDrawableVisible(this._drawable, false);
         }
         this._renderPreviewFrame = null;
     }
@@ -152,21 +148,16 @@ class Video {
         const {renderer} = this.runtime;
         if (!renderer) return;
 
-        if (this._skinId === -1 && this._skin === null && this._drawable === -1) {
-            this._skinId = renderer.createPenSkin();
-            this._skin = renderer._allSkins[this._skinId];
+        if (this._skinId === -1 && this._drawable === -1) {
+            this._skinId = renderer.createBitmapSkin(new ImageData(...Video.DIMENSIONS), 1);
             this._drawable = renderer.createDrawable(StageLayering.VIDEO_LAYER);
-            renderer.updateDrawableProperties(this._drawable, {
-                skinId: this._skinId
-            });
+            renderer.updateDrawableSkinId(this._drawable, this._skinId);
         }
 
         // if we haven't already created and started a preview frame render loop, do so
         if (!this._renderPreviewFrame) {
-            renderer.updateDrawableProperties(this._drawable, {
-                ghost: this._forceTransparentPreview ? 100 : this._ghost,
-                visible: true
-            });
+            renderer.updateDrawableEffect(this._drawable, 'ghost', this._forceTransparentPreview ? 100 : this._ghost);
+            renderer.updateDrawableVisible(this._drawable, true);
 
             this._renderPreviewFrame = () => {
                 clearTimeout(this._renderPreviewTimeout);
@@ -176,16 +167,17 @@ class Video {
 
                 this._renderPreviewTimeout = setTimeout(this._renderPreviewFrame, this.runtime.currentStepTime);
 
-                const canvas = this.getFrame({format: Video.FORMAT_CANVAS});
+                const imageData = this.getFrame({
+                    format: Video.FORMAT_IMAGE_DATA,
+                    cacheTimeout: this.runtime.currentStepTime
+                });
 
-                if (!canvas) {
-                    this._skin.clear();
+                if (!imageData) {
+                    renderer.updateBitmapSkin(this._skinId, new ImageData(...Video.DIMENSIONS), 1);
                     return;
                 }
 
-                const xOffset = Video.DIMENSIONS[0] / -2;
-                const yOffset = Video.DIMENSIONS[1] / 2;
-                this._skin.drawStamp(canvas, xOffset, yOffset);
+                renderer.updateBitmapSkin(this._skinId, imageData, 1);
                 this.runtime.requestRedraw();
             };
 

@@ -273,13 +273,17 @@ const compressInputTree = function (block, blocks) {
 };
 
 /**
- * Get non-core extension ID for a given sb3 opcode.
+ * Get sanitized non-core extension ID for a given sb3 opcode.
+ * Note that this should never return a URL. If in the future the SB3 loader supports loading extensions by URL, this
+ * ID should be used to (for example) look up the extension's full URL from a table in the SB3's JSON.
  * @param {!string} opcode The opcode to examine for extension.
  * @return {?string} The extension ID, if it exists and is not a core extension.
  */
 const getExtensionIdForOpcode = function (opcode) {
+    // Allowed ID characters are those matching the regular expression [\w-]: A-Z, a-z, 0-9, and hyphen ("-").
     const index = opcode.indexOf('_');
-    const prefix = opcode.substring(0, index);
+    const forbiddenSymbols = /[^\w-]/g;
+    const prefix = opcode.substring(0, index).replace(forbiddenSymbols, '-');
     if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
         if (prefix !== '') return prefix;
     }
@@ -557,6 +561,9 @@ const serialize = function (runtime, targetId) {
     const meta = Object.create(null);
     meta.semver = '3.0.0';
     meta.vm = vmPackage.version;
+    if (runtime.origin) {
+        meta.origin = runtime.origin;
+    }
 
     // Attach full user agent string to metadata if available
     meta.agent = 'none';
@@ -1098,6 +1105,20 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // This will be undefined for extension blocks
     const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
 
+    // Due to a bug (see https://github.com/LLK/scratch-vm/pull/2322), renamed list monitors may have been serialized
+    // with an outdated/incorrect LIST parameter. Fix it up to use the current name of the actual corresponding list.
+    if (monitorData.opcode === 'data_listcontents') {
+        const listTarget = monitorData.targetId ?
+            targets.find(t => t.id === monitorData.targetId) :
+            targets.find(t => t.isStage);
+        if (
+            listTarget &&
+            Object.prototype.hasOwnProperty.call(listTarget.variables, monitorData.id)
+        ) {
+            monitorData.params.LIST = listTarget.variables[monitorData.id].name;
+        }
+    }
+
     // Convert the serialized monitorData params into the block fields structure
     const fields = {};
     for (const paramKey in monitorData.params) {
@@ -1216,6 +1237,13 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
+
+    // Store the origin field (e.g. project originated at CSFirst) so that we can save it again.
+    if (json.meta && json.meta.origin) {
+        runtime.origin = json.meta.origin;
+    } else {
+        runtime.origin = null;
+    }
 
     // First keep track of the current target order in the json,
     // then sort by the layer order property before parsing the targets

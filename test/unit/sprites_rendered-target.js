@@ -56,17 +56,6 @@ test('direction', t => {
     t.end();
 });
 
-test('setSay', t => {
-    const r = new Runtime();
-    const s = new Sprite(null, r);
-    const a = new RenderedTarget(s, r);
-    const renderer = new FakeRenderer();
-    a.renderer = renderer;
-    a.setSay();
-    a.setSay('types not specified', 'message');
-    t.end();
-});
-
 test('setVisible', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);

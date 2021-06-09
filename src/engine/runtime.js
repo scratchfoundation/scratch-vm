@@ -51,30 +51,55 @@ const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
 const ArgumentTypeMap = (() => {
     const map = {};
     map[ArgumentType.ANGLE] = {
-        shadowType: 'math_angle',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_angle',
+            // We specify fieldNames here so that we can pick
+            // create and populate a field with the defaultValue
+            // specified in the extension.
+            // When the `fieldName` property is not specified,
+            // the <field></field> will be left out of the XML and
+            // the scratch-blocks defaults for that field will be
+            // used instead (e.g. default of 0 for number fields)
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.COLOR] = {
-        shadowType: 'colour_picker'
+        shadow: {
+            type: 'colour_picker',
+            fieldName: 'COLOUR'
+        }
     };
     map[ArgumentType.NUMBER] = {
-        shadowType: 'math_number',
-        fieldType: 'NUM'
+        shadow: {
+            type: 'math_number',
+            fieldName: 'NUM'
+        }
     };
     map[ArgumentType.STRING] = {
-        shadowType: 'text',
-        fieldType: 'TEXT'
+        shadow: {
+            type: 'text',
+            fieldName: 'TEXT'
+        }
     };
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
     map[ArgumentType.MATRIX] = {
-        shadowType: 'matrix',
-        fieldType: 'MATRIX'
+        shadow: {
+            type: 'matrix',
+            fieldName: 'MATRIX'
+        }
     };
     map[ArgumentType.NOTE] = {
-        shadowType: 'note',
-        fieldType: 'NOTE'
+        shadow: {
+            type: 'note',
+            fieldName: 'NOTE'
+        }
+    };
+    map[ArgumentType.IMAGE] = {
+        // Inline images are weird because they're not actually "arguments".
+        // They are more analagous to the label on a block.
+        fieldType: 'field_image'
     };
     return map;
 })();
@@ -367,6 +392,13 @@ class Runtime extends EventEmitter {
          * @type {function}
          */
         this.removeCloudVariable = this._initializeRemoveCloudVariable(newCloudDataManager);
+
+        /**
+         * A string representing the origin of the current project from outside of the
+         * Scratch community, such as CSFirst.
+         * @type {?string}
+         */
+        this.origin = null;
     }
 
     /**
@@ -575,6 +607,15 @@ class Runtime extends EventEmitter {
      */
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
+    }
+    
+    /**
+     * Event name for when the user picks a bluetooth device to connect to
+     * via Companion Device Manager (CDM)
+     * @const {string}
+     */
+    static get USER_PICKED_PERIPHERAL () {
+        return 'USER_PICKED_PERIPHERAL';
     }
 
     /**
@@ -956,8 +997,10 @@ class Runtime extends EventEmitter {
             fieldName: fieldName,
             extendedName: extendedName,
             argumentTypeInfo: {
-                shadowType: extendedName,
-                fieldType: `field_${extendedName}`
+                shadow: {
+                    type: extendedName,
+                    fieldName: `field_${extendedName}`
+                }
             },
             scratchBlocksDefinition: this._buildCustomFieldTypeForScratchBlocks(
                 extendedName,
@@ -1152,7 +1195,7 @@ class Runtime extends EventEmitter {
                 src: './static/blocks-media/repeat.svg', // TODO: use a constant or make this configurable?
                 width: 24,
                 height: 24,
-                alt: '*',
+                alt: '*', // TODO remove this since we don't use collapsed blocks in scratch
                 flip_rtl: true
             }];
             ++outLineNum;
@@ -1207,6 +1250,29 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Helper for _convertPlaceholdes which handles inline images which are a specialized case of block "arguments".
+     * @param {object} argInfo Metadata about the inline image as specified by the extension
+     * @return {object} JSON blob for a scratch-blocks image field.
+     * @private
+     */
+    _constructInlineImageJson (argInfo) {
+        if (!argInfo.dataURI) {
+            log.warn('Missing data URI in extension block with argument type IMAGE');
+        }
+        return {
+            type: 'field_image',
+            src: argInfo.dataURI || '',
+            // TODO these probably shouldn't be hardcoded...?
+            width: 24,
+            height: 24,
+            // Whether or not the inline image should be flipped horizontally
+            // in RTL languages. Defaults to false, indicating that the
+            // image will not be flipped.
+            flip_rtl: argInfo.flipRTL || false
+        };
+    }
+
+    /**
      * Helper for _convertForScratchBlocks which handles linearization of argument placeholders. Called as a callback
      * from string#replace. In addition to the return value the JSON and XML items in the context will be filled.
      * @param {object} context - information shared with _convertForScratchBlocks about the block, etc.
@@ -1219,11 +1285,7 @@ class Runtime extends EventEmitter {
         // Sanitize the placeholder to ensure valid XML
         placeholder = placeholder.replace(/[<"&]/, '_');
 
-        const argJSON = {
-            type: 'input_value',
-            name: placeholder
-        };
-
+        // Determine whether the argument type is one of the known standard field types
         const argInfo = context.blockInfo.arguments[placeholder] || {};
         let argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
 
@@ -1232,63 +1294,85 @@ class Runtime extends EventEmitter {
             argTypeInfo = context.categoryInfo.customFieldTypes[argInfo.type].argumentTypeInfo;
         }
 
-        const defaultValue =
-            typeof argInfo.defaultValue === 'undefined' ? '' :
-                xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
+        // Start to construct the scratch-blocks style JSON defining how the block should be
+        // laid out
+        let argJSON;
 
-        if (argTypeInfo.check) {
-            argJSON.check = argTypeInfo.check;
-        }
-
-        let valueName;
-        let shadowType;
-        let fieldName;
-        if (argInfo.menu) {
-            const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
-            if (menuInfo.acceptReporters) {
-                valueName = placeholder;
-                shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
-                fieldName = argInfo.menu;
-            } else {
-                argJSON.type = 'field_dropdown';
-                argJSON.options = this._convertMenuItems(menuInfo.items);
-                valueName = null;
-                shadowType = null;
-                fieldName = placeholder;
-            }
+        // Most field types are inputs (slots on the block that can have other blocks plugged into them)
+        // check if this is not one of those cases. E.g. an inline image on a block.
+        if (argTypeInfo.fieldType === 'field_image') {
+            argJSON = this._constructInlineImageJson(argInfo);
         } else {
-            valueName = placeholder;
-            shadowType = argTypeInfo.shadowType;
-            fieldName = argTypeInfo.fieldType;
-        }
+            // Construct input value
 
-        // <value> is the ScratchBlocks name for a block input.
-        if (valueName) {
-            context.inputList.push(`<value name="${placeholder}">`);
-        }
+            // Layout a block argument (e.g. an input slot on the block)
+            argJSON = {
+                type: 'input_value',
+                name: placeholder
+            };
 
-        // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-        // Boolean inputs don't need to specify a shadow in the XML.
-        if (shadowType) {
-            context.inputList.push(`<shadow type="${shadowType}">`);
-        }
+            const defaultValue =
+                typeof argInfo.defaultValue === 'undefined' ? '' :
+                    xmlEscape(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString());
 
-        // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
-        if (fieldName) {
-            context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
-        }
+            if (argTypeInfo.check) {
+                // Right now the only type of 'check' we have specifies that the
+                // input slot on the block accepts Boolean reporters, so it should be
+                // shaped like a hexagon
+                argJSON.check = argTypeInfo.check;
+            }
 
-        if (shadowType) {
-            context.inputList.push('</shadow>');
-        }
+            let valueName;
+            let shadowType;
+            let fieldName;
+            if (argInfo.menu) {
+                const menuInfo = context.categoryInfo.menuInfo[argInfo.menu];
+                if (menuInfo.acceptReporters) {
+                    valueName = placeholder;
+                    shadowType = this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id);
+                    fieldName = argInfo.menu;
+                } else {
+                    argJSON.type = 'field_dropdown';
+                    argJSON.options = this._convertMenuItems(menuInfo.items);
+                    valueName = null;
+                    shadowType = null;
+                    fieldName = placeholder;
+                }
+            } else {
+                valueName = placeholder;
+                shadowType = (argTypeInfo.shadow && argTypeInfo.shadow.type) || null;
+                fieldName = (argTypeInfo.shadow && argTypeInfo.shadow.fieldName) || null;
+            }
 
-        if (valueName) {
-            context.inputList.push('</value>');
+            // <value> is the ScratchBlocks name for a block input.
+            if (valueName) {
+                context.inputList.push(`<value name="${placeholder}">`);
+            }
+
+            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+            // Boolean inputs don't need to specify a shadow in the XML.
+            if (shadowType) {
+                context.inputList.push(`<shadow type="${shadowType}">`);
+            }
+
+            // A <field> displays a dynamic value: a user-editable text field, a drop-down menu, etc.
+            // Leave out the field if defaultValue or fieldName are not specified
+            if (defaultValue && fieldName) {
+                context.inputList.push(`<field name="${fieldName}">${defaultValue}</field>`);
+            }
+
+            if (shadowType) {
+                context.inputList.push('</shadow>');
+            }
+
+            if (valueName) {
+                context.inputList.push('</value>');
+            }
         }
 
         const argsName = `args${context.outLineNum}`;
         const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);
-        blockArgs.push(argJSON);
+        if (argJSON) blockArgs.push(argJSON);
         const argNum = blockArgs.length;
         context.argsMap[placeholder] = argNum;
 
@@ -1297,13 +1381,28 @@ class Runtime extends EventEmitter {
 
     /**
      * @returns {Array.<object>} scratch-blocks XML for each category of extension blocks, in category order.
+     * @param {?Target} [target] - the active editing target (optional)
      * @property {string} id - the category / extension ID
      * @property {string} xml - the XML text for this category, starting with `<category>` and ending with `</category>`
      */
-    getBlocksXML () {
+    getBlocksXML (target) {
         return this._blockInfo.map(categoryInfo => {
             const {name, color1, color2} = categoryInfo;
-            const paletteBlocks = categoryInfo.blocks.filter(block => !block.info.hideFromPalette);
+            // Filter out blocks that aren't supposed to be shown on this target, as determined by the block info's
+            // `hideFromPalette` and `filter` properties.
+            const paletteBlocks = categoryInfo.blocks.filter(block => {
+                let blockFilterIncludesTarget = true;
+                // If an editing target is not passed, include all blocks
+                // If the block info doesn't include a `filter` property, always include it
+                if (target && block.info.filter) {
+                    blockFilterIncludesTarget = block.info.filter.includes(
+                        target.isStage ? TargetType.STAGE : TargetType.SPRITE
+                    );
+                }
+                // If the block info's `hideFromPalette` is true, then filter out this block
+                return blockFilterIncludesTarget && !block.info.hideFromPalette;
+            });
+
             const colorXML = `colour="${color1}" secondaryColour="${color2}"`;
 
             // Use a menu icon if there is one. Otherwise, use the block icon. If there's no icon,
@@ -1472,14 +1571,6 @@ class Runtime extends EventEmitter {
     attachRenderer (renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
-    }
-
-    /**
-     * Set the svg adapter, which converts scratch 2 svgs to scratch 3 svgs
-     * @param {!SvgRenderer} svgAdapter The adapter to attach
-     */
-    attachV2SVGAdapter (svgAdapter) {
-        this.v2SvgAdapter = svgAdapter;
     }
 
     /**
@@ -1767,6 +1858,7 @@ class Runtime extends EventEmitter {
         this.targets.map(this.disposeTarget, this);
         this._monitorState = OrderedMap({});
         this.emit(Runtime.RUNTIME_DISPOSED);
+        this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
 
         // *********** Cloud *******************

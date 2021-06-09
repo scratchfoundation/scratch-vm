@@ -127,6 +127,9 @@ class VirtualMachine extends EventEmitter {
         this.runtime.on(Runtime.PERIPHERAL_LIST_UPDATE, info => {
             this.emit(Runtime.PERIPHERAL_LIST_UPDATE, info);
         });
+        this.runtime.on(Runtime.USER_PICKED_PERIPHERAL, info => {
+            this.emit(Runtime.USER_PICKED_PERIPHERAL, info);
+        });
         this.runtime.on(Runtime.PERIPHERAL_CONNECTED, () =>
             this.emit(Runtime.PERIPHERAL_CONNECTED)
         );
@@ -1087,12 +1090,8 @@ class VirtualMachine extends EventEmitter {
         return this.runtime && this.runtime.renderer;
     }
 
-    /**
-     * Set the svg adapter for the VM/runtime, which converts scratch 2 svgs to scratch 3 svgs
-     * @param {!SvgRenderer} svgAdapter The adapter to attach
-     */
-    attachV2SVGAdapter (svgAdapter) {
-        this.runtime.attachV2SVGAdapter(svgAdapter);
+    // @deprecated
+    attachV2SVGAdapter () {
     }
 
     /**

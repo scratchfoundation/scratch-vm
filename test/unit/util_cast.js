@@ -73,7 +73,7 @@ test('toString', t => {
     t.end();
 });
 
-test('toRbgColorList', t => {
+test('toRgbColorList', t => {
     // Hex (minimal, see "color" util tests)
     t.deepEqual(cast.toRgbColorList('#000'), [0, 0, 0]);
     t.deepEqual(cast.toRgbColorList('#000000'), [0, 0, 0]);
@@ -88,10 +88,11 @@ test('toRbgColorList', t => {
     // Malformed
     t.deepEqual(cast.toRgbColorList('ffffff'), [0, 0, 0]);
     t.deepEqual(cast.toRgbColorList('foobar'), [0, 0, 0]);
+    t.deepEqual(cast.toRgbColorList('#nothex'), [0, 0, 0]);
     t.end();
 });
 
-test('toRbgColorObject', t => {
+test('toRgbColorObject', t => {
     // Hex (minimal, see "color" util tests)
     t.deepEqual(cast.toRgbColorObject('#000'), {r: 0, g: 0, b: 0});
     t.deepEqual(cast.toRgbColorObject('#000000'), {r: 0, g: 0, b: 0});
@@ -107,6 +108,7 @@ test('toRbgColorObject', t => {
     // Malformed
     t.deepEqual(cast.toRgbColorObject('ffffff'), {a: 255, r: 0, g: 0, b: 0});
     t.deepEqual(cast.toRgbColorObject('foobar'), {a: 255, r: 0, g: 0, b: 0});
+    t.deepEqual(cast.toRgbColorObject('#nothex'), {a: 255, r: 0, g: 0, b: 0});
     t.end();
 });
 
@@ -167,32 +169,33 @@ test('toListIndex', t => {
     const empty = [];
 
     // Valid
-    t.strictEqual(cast.toListIndex(1, list.length), 1);
-    t.strictEqual(cast.toListIndex(6, list.length), 6);
+    t.strictEqual(cast.toListIndex(1, list.length, false), 1);
+    t.strictEqual(cast.toListIndex(6, list.length, false), 6);
 
     // Invalid
-    t.strictEqual(cast.toListIndex(-1, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(0.1, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(0, list.length), cast.LIST_INVALID);
-    t.strictEqual(cast.toListIndex(7, list.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(-1, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0.1, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(0, list.length, false), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex(7, list.length, false), cast.LIST_INVALID);
 
     // "all"
-    t.strictEqual(cast.toListIndex('all', list.length), cast.LIST_ALL);
+    t.strictEqual(cast.toListIndex('all', list.length, true), cast.LIST_ALL);
+    t.strictEqual(cast.toListIndex('all', list.length, false), cast.LIST_INVALID);
 
     // "last"
-    t.strictEqual(cast.toListIndex('last', list.length), list.length);
-    t.strictEqual(cast.toListIndex('last', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('last', list.length, false), list.length);
+    t.strictEqual(cast.toListIndex('last', empty.length, false), cast.LIST_INVALID);
 
     // "random"
-    const random = cast.toListIndex('random', list.length);
+    const random = cast.toListIndex('random', list.length, false);
     t.ok(random <= list.length);
     t.ok(random > 0);
-    t.strictEqual(cast.toListIndex('random', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('random', empty.length, false), cast.LIST_INVALID);
 
     // "any" (alias for "random")
-    const any = cast.toListIndex('any', list.length);
+    const any = cast.toListIndex('any', list.length, false);
     t.ok(any <= list.length);
     t.ok(any > 0);
-    t.strictEqual(cast.toListIndex('any', empty.length), cast.LIST_INVALID);
+    t.strictEqual(cast.toListIndex('any', empty.length, false), cast.LIST_INVALID);
     t.end();
 });

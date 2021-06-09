@@ -1,21 +1,26 @@
 const StringUtil = require('../util/string-util');
 const log = require('../util/log');
+const {loadSvgString, serializeSvgToString} = require('scratch-svg-renderer');
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
         let svgString = costume.asset.decodeText();
         // SVG Renderer load fixes "quirks" associated with Scratch 2 projects
-        if (optVersion && optVersion === 2 && !runtime.v2SvgAdapter) {
-            log.error('No V2 SVG adapter present; SVGs may not render correctly.');
-        } else if (optVersion && optVersion === 2 && runtime.v2SvgAdapter) {
-            runtime.v2SvgAdapter.loadString(svgString, true /* fromVersion2 */);
-            svgString = runtime.v2SvgAdapter.toString();
-            // Put back into storage
-            const storage = runtime.storage;
-            costume.asset.encodeTextData(svgString, storage.DataFormat.SVG, true);
-            costume.assetId = costume.asset.assetId;
-            costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+        if (optVersion && optVersion === 2) {
+            // scratch-svg-renderer fixes syntax that causes loading issues,
+            // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
+            const fixedSvgString = serializeSvgToString(loadSvgString(svgString, true /* fromVersion2 */));
+        
+            // If the string changed, put back into storage
+            if (svgString !== fixedSvgString) {
+                svgString = fixedSvgString;
+                const storage = runtime.storage;
+                costume.asset.encodeTextData(fixedSvgString, storage.DataFormat.SVG, true);
+                costume.assetId = costume.asset.assetId;
+                costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+            }
         }
+
         // createSVGSkin does the right thing if rotationCenter isn't provided, so it's okay if it's
         // undefined here
         costume.skinId = runtime.renderer.createSVGSkin(svgString, rotationCenter);
@@ -171,8 +176,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
                 assetMatchesBase: scale === 1 && !textImageElement
             };
         })
-        .catch(error => {
-            log.warn(`${error.name}: ${error.message}`);
+        .catch(() => {
             // Clean up the text layer properties if it fails to load
             delete costume.textLayerMD5;
             delete costume.textLayerAsset;
@@ -213,8 +217,21 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
             return fetched;
         })
         .then(({canvas, mergeCanvas, rotationCenter}) => {
-            // createBitmapSkin does the right thing if costume.bitmapResolution or rotationCenter are undefined...
-            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, rotationCenter);
+            // createBitmapSkin does the right thing if costume.rotationCenter is undefined.
+            // That will be the case if you upload a bitmap asset or create one by taking a photo.
+            let center;
+            if (rotationCenter) {
+                // fetchBitmapCanvas will ensure that the costume's bitmap resolution is 2 and its rotation center is
+                // scaled to match, so it's okay to always divide by 2.
+                center = [
+                    rotationCenter[0] / 2,
+                    rotationCenter[1] / 2
+                ];
+            }
+
+            // TODO: costume.bitmapResolution will always be 2 at this point because of fetchBitmapCanvas_, so we don't
+            // need to pass it in here.
+            costume.skinId = runtime.renderer.createBitmapSkin(canvas, costume.bitmapResolution, center);
             canvasPool.release(mergeCanvas);
             const renderSize = runtime.renderer.getSkinSize(costume.skinId);
             costume.size = [renderSize[0] * 2, renderSize[1] * 2]; // Actual size, since all bitmaps are resolution 2
@@ -261,7 +278,8 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
     }
     if (costume.asset.assetType.runtimeFormat === AssetType.ImageVector.runtimeFormat) {
         return loadVector_(costume, runtime, rotationCenter, optVersion)
-            .catch(() => {
+            .catch(error => {
+                log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
                 // Use default asset if original fails to load
                 costume.assetId = runtime.storage.defaultAssetId.ImageVector;
                 costume.asset = runtime.storage.get(costume.assetId);
@@ -293,7 +311,7 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     costume.dataFormat = ext;
 
     if (costume.asset) {
-        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or file
+        // Costume comes with asset. It could be coming from image upload, drag and drop, or file
         return loadCostumeFromAsset(costume, runtime, optVersion);
     }
 

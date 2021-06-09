@@ -250,3 +250,24 @@ test('Disposing the runtime emits an event', t => {
     t.equal(disposed, true);
     t.end();
 });
+
+test('Clock is reset on runtime dispose', t => {
+    const rt = new Runtime();
+    const c = rt.ioDevices.clock;
+    let simulatedTime = 0;
+
+    c._projectTimer = {
+        timeElapsed: () => simulatedTime,
+        start: () => {
+            simulatedTime = 0;
+        }
+    };
+
+    t.ok(c.projectTimer() === 0);
+    simulatedTime += 1000;
+    t.ok(c.projectTimer() === 1);
+    rt.dispose();
+    // When the runtime is disposed, the clock should be reset
+    t.ok(c.projectTimer() === 0);
+    t.end();
+});

@@ -13,6 +13,8 @@ class Scratch3ControlBlocks {
          * @type {number}
          */
         this._counter = 0;
+
+        this.runtime.on('RUNTIME_DISPOSED', this.clearCounter.bind(this));
     }
 
     /**

@@ -322,11 +322,26 @@ class Target extends EventEmitter {
                         this.runtime.ioDevices.cloud.requestRenameVariable(oldName, newName);
                     }
 
+                    if (variable.type === Variable.SCALAR_TYPE) {
+                        // sensing__of may be referencing to this variable.
+                        // Change the reference.
+                        let blockUpdated = false;
+                        this.runtime.targets.forEach(t => {
+                            blockUpdated = t.blocks.updateSensingOfReference(
+                                oldName,
+                                newName,
+                                this.isStage ? '_stage_' : this.getName()
+                            ) || blockUpdated;
+                        });
+                        // Request workspace change only if sensing_of blocks were actually updated.
+                        if (blockUpdated) this.runtime.requestBlocksUpdate();
+                    }
+
                     const blocks = this.runtime.monitorBlocks;
                     blocks.changeBlock({
                         id: id,
                         element: 'field',
-                        name: 'VARIABLE',
+                        name: variable.type === Variable.LIST_TYPE ? 'LIST' : 'VARIABLE',
                         value: id
                     }, this.runtime);
                     const monitorBlock = blocks.getBlock(variable.id);

@@ -90,10 +90,12 @@ class Scratch3EventBlocks {
     }
 
     broadcastAndWait (args, util) {
-        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
-            args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-        if (broadcastVar) {
-            const broadcastOption = broadcastVar.name;
+        if (!util.stackFrame.broadcastVar) {
+            util.stackFrame.broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(
+                args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
+        }
+        if (util.stackFrame.broadcastVar) {
+            const broadcastOption = util.stackFrame.broadcastVar.name;
             // Have we run before, starting threads?
             if (!util.stackFrame.startedThreads) {
                 // No - start hats for this broadcast.
