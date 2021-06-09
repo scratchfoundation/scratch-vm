@@ -1778,6 +1778,8 @@ class Runtime extends EventEmitter {
         for(let item of this.hatQueue) {
             this.startHats(item.requestedHatOpcode, item.optMatchFields, item.optTarget);
         }
+        
+        this.hatQueue = [];
     }
 
     /**
