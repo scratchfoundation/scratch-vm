@@ -167,7 +167,7 @@ class Sequencer {
             }
         }
         
-        if(this.runtime.hatQueue.length > 0) {
+        if (this.runtime.hatQueue.length > 0) {
             this.runtime.addHatsFromQueue();
         }
 
