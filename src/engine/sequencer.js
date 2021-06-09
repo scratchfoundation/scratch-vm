@@ -166,6 +166,10 @@ class Sequencer {
                 this.runtime.threads.length = nextActiveThread;
             }
         }
+        
+        if(this.runtime.hatQueue.length > 0) {
+            this.runtime.addHatsFromQueue();
+        }
 
         this.activeThread = null;
 
