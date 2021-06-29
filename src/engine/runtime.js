@@ -39,7 +39,13 @@ const defaultBlockPackages = {
     scratch3_sound: require('../blocks/scratch3_sound'),
     scratch3_sensing: require('../blocks/scratch3_sensing'),
     scratch3_data: require('../blocks/scratch3_data'),
-    scratch3_procedures: require('../blocks/scratch3_procedures')
+    scratch3_procedures: require('../blocks/scratch3_procedures'),
+    scratch3_countdown: require('../blocks/scratch3_countdown'),
+    scratch3_display: require('../blocks/scratch3_display'),
+    scratch3_movement: require('../blocks/scratch3_movement'),
+    scratch3_virtualSat: require('../blocks/scratch3_virtualSat'),
+    scratch3_touch: require('../blocks/scratch3_touch'),
+    scratch3_lights: require('../blocks/scratch3_lights')
 };
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];
@@ -616,6 +622,14 @@ class Runtime extends EventEmitter {
      */
     static get USER_PICKED_PERIPHERAL () {
         return 'USER_PICKED_PERIPHERAL';
+    }
+
+    static get CLIENT_CONNECTED () {
+        return 'CLIENT_CONNECTED';
+    }
+
+    static get CLIENT_DISCONNECTED () {
+        return 'CLIENT_DISCONNECTED';
     }
 
     /**
@@ -1489,10 +1503,12 @@ class Runtime extends EventEmitter {
      * Connect to the extension's specified peripheral.
      * @param {string} extensionId - the id of the extension.
      * @param {number} peripheralId - the id of the peripheral.
+     * @param {number} userName - the user name for the peripheral if any.
+     * @param {number} password - the password for the peripheral if any.
      */
-    connectPeripheral (extensionId, peripheralId) {
+    connectPeripheral (extensionId, peripheralId, userName, password) {
         if (this.peripheralExtensions[extensionId]) {
-            this.peripheralExtensions[extensionId].connect(peripheralId);
+            this.peripheralExtensions[extensionId].connect(peripheralId, userName, password);
         }
     }
 
@@ -1994,6 +2010,17 @@ class Runtime extends EventEmitter {
         this.startHats('event_whenflagclicked');
     }
 
+    gameGreenFlag () {
+        this.emit(Runtime.PROJECT_START);
+        this.ioDevices.clock.resetProjectTimer();
+        this.targets.forEach(target => target.clearEdgeActivatedValues());
+        // Inform all targets of the green flag.
+        for (let i = 0; i < this.targets.length; i++) {
+            this.targets[i].onGreenFlag();
+        }
+        this.startHats('event_whenflagclicked');
+    }
+ 
     /**
      * Stop "everything."
      */
