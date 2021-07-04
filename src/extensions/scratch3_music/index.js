@@ -539,6 +539,33 @@ class Scratch3MusicBlocks {
     }
 
     /**
+     * An array of info about each chord.
+     * @type {object[]}
+     * @param {string} name - the translatable name to display in the chords menu.
+     * @param {int[]} notes - the notes of the chord.
+     */
+    get CHORD_INFO () {
+        return [
+            {
+                name: formatMessage({
+                    id: 'music.chordMajor',
+                    default: '(1) Major',
+                    description: 'Major chord'
+                }),
+                notes: [0, 4, 7]
+            },
+            {
+                name: formatMessage({
+                    id: 'music.chordMinor',
+                    default: '(2) Minor',
+                    description: 'Minor chord'
+                }),
+                notes: [0, 3, 7]
+            }
+        ];
+    }
+
+    /**
      * An array that is a mapping from MIDI instrument numbers to Scratch instrument numbers.
      * @type {number[]}
      */
@@ -839,6 +866,30 @@ class Scratch3MusicBlocks {
                     }
                 },
                 {
+                    opcode: 'playChordForBeats',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'music.playChordForBeats',
+                        default: 'play chord [NOTE] [CHORD] for [BEATS] beats',
+                        description: 'play a chord for a number of beats'
+                    }),
+                    arguments: {
+                        NOTE: {
+                            type: ArgumentType.NOTE,
+                            defaultValue: 60
+                        },
+                        CHORD: {
+                            type: ArgumentType.NUMBER,
+                            menu: 'CHORD',
+                            defaultValue: 1
+                        },
+                        BEATS: {
+                            type: ArgumentType.NUMBER,
+                            defaultValue: 1
+                        }
+                    }
+                },
+                {
                     opcode: 'setInstrument',
                     blockType: BlockType.COMMAND,
                     text: formatMessage({
@@ -918,6 +969,10 @@ class Scratch3MusicBlocks {
                 INSTRUMENT: {
                     acceptReporters: true,
                     items: this._buildMenu(this.INSTRUMENT_INFO)
+                },
+                CHORD: {
+                    acceptReporters: true,
+                    items: this._buildMenu(this.CHORD_INFO)
                 }
             }
         };
@@ -1056,6 +1111,38 @@ class Scratch3MusicBlocks {
             const durationSec = this._beatsToSec(beats);
 
             this._playNote(util, note, durationSec);
+
+            this._startStackTimer(util, durationSec);
+        } else {
+            this._checkStackTimer(util);
+        }
+    }
+
+    /**
+     * Play a chord using the current musical instrument for some number of beats.
+     * This function processes the arguments, and handles the timing of the block's execution.
+     * @param {object} args - the block arguments.
+     * @param {object} util - utility object provided by the runtime.
+     * @property {number} NOTE - the pitch of the base note of the chord to play, interpreted as a MIDI note number.
+     * @property {number} CHORD - the type of chord (major, minor...).
+     * @property {number} BEATS - the duration in beats of the note.
+     */
+    playChordForBeats (args, util) {
+        if (this._stackTimerNeedsInit(util)) {
+            let note = Cast.toNumber(args.NOTE);
+            note = MathUtil.clamp(note,
+                Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
+            let beats = Cast.toNumber(args.BEATS);
+            beats = this._clampBeats(beats);
+            // If the duration is 0, do not play the chord. In Scratch 2.0, "play drum for 0 beats" plays the drum,
+            // but "play note for 0 beats" is silent.
+            if (beats === 0) return;
+
+            const durationSec = this._beatsToSec(beats);
+
+            this.CHORD_INFO[args.CHORD - 1].notes.forEach(n => {
+                this._playNote(util, note + n, durationSec);
+            })
 
             this._startStackTimer(util, durationSec);
         } else {
