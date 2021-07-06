@@ -12509,7 +12509,7 @@ module.exports = serializeSvgToString;
 /**
  * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
  */
-const {FONTS} = __webpack_require__(48);
+const getFonts = __webpack_require__(48);
 
 /**
  * Given SVG data, inline the fonts. This allows them to be rendered correctly when set
@@ -12526,6 +12526,7 @@ const {FONTS} = __webpack_require__(48);
  * @return {string} The svg with any needed fonts inlined
  */
 const inlineSvgFonts = function (svgString) {
+    const FONTS = getFonts();
     // Make it clear that this function only operates on strings.
     // If we don't explicitly throw this here, the function silently fails.
     if (typeof svgString !== 'string') {
@@ -12543,7 +12544,7 @@ const inlineSvgFonts = function (svgString) {
     if (fontsNeeded.size > 0) {
         let str = '<defs><style>';
         for (const font of fontsNeeded) {
-            if (FONTS.hasOwnProperty(font)) {
+            if (Object.prototype.hasOwnProperty.call(FONTS, font)) {
                 str += `${FONTS[font]}`;
             }
         }
@@ -13434,7 +13435,10 @@ var RenderWebGL = function (_EventEmitter) {
             gl.clearColor.apply(gl, _toConsumableArray(this._backgroundColor4f));
             gl.clear(gl.COLOR_BUFFER_BIT);
 
-            this._drawThese(this._drawList, ShaderManager.DRAW_MODE.default, this._projection);
+            this._drawThese(this._drawList, ShaderManager.DRAW_MODE.default, this._projection, {
+                framebufferWidth: gl.canvas.width,
+                framebufferHeight: gl.canvas.height
+            });
             if (this._snapshotCallbacks.length > 0) {
                 var snapshot = gl.canvas.toDataURL();
                 this._snapshotCallbacks.forEach(function (cb) {
@@ -13946,110 +13950,6 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * @typedef DrawableExtractionOld
-         * @property {Uint8Array} data Raw pixel data for the drawable
-         * @property {int} width Drawable bounding box width
-         * @property {int} height Drawable bounding box height
-         * @property {Array<number>} scratchOffset [x, y] offset in Scratch coordinates
-         * from the drawable position to the client x, y coordinate
-         * @property {int} x The x coordinate relative to drawable bounding box
-         * @property {int} y The y coordinate relative to drawable bounding box
-         */
-
-        /**
-         * Return drawable pixel data and picking coordinates relative to the drawable bounds
-         * @param {int} drawableID The ID of the drawable to get pixel data for
-         * @param {int} x The client x coordinate of the picking location.
-         * @param {int} y The client y coordinate of the picking location.
-         * @return {?DrawableExtractionOld} Data about the picked drawable
-         * @deprecated Use {@link extractDrawableScreenSpace} instead.
-         */
-
-    }, {
-        key: 'extractDrawable',
-        value: function extractDrawable(drawableID, x, y) {
-            this._doExitDrawRegion();
-
-            var drawable = this._allDrawables[drawableID];
-            if (!drawable) return null;
-
-            // Convert client coordinates into absolute scratch units
-            var scratchX = this._nativeSize[0] * (x / this._gl.canvas.clientWidth - 0.5);
-            var scratchY = this._nativeSize[1] * (y / this._gl.canvas.clientHeight - 0.5);
-
-            var gl = this._gl;
-
-            var bounds = drawable.getFastBounds();
-            bounds.snapToInt();
-
-            // Set a reasonable max limit width and height for the bufferInfo bounds
-            var maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE);
-            var clampedWidth = Math.min(2048, bounds.width, maxTextureSize);
-            var clampedHeight = Math.min(2048, bounds.height, maxTextureSize);
-
-            // Make a new bufferInfo since this._queryBufferInfo is limited to 480x360
-            var attachments = [{ format: gl.RGBA }, { format: gl.DEPTH_STENCIL }];
-            var bufferInfo = twgl.createFramebufferInfo(gl, attachments, clampedWidth, clampedHeight);
-
-            try {
-                // If the new bufferInfo is invalid, fall back to using the smaller _queryBufferInfo
-                twgl.bindFramebufferInfo(gl, bufferInfo);
-                if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-                    twgl.bindFramebufferInfo(gl, this._queryBufferInfo);
-                }
-
-                // Translate to scratch units relative to the drawable
-                var pickX = scratchX - bounds.left;
-                var pickY = scratchY + bounds.top;
-
-                // Limit size of viewport to the bounds around the target Drawable,
-                // and create the projection matrix for the draw.
-                gl.viewport(0, 0, bounds.width, bounds.height);
-                var projection = twgl.m4.ortho(bounds.left, bounds.right, bounds.top, bounds.bottom, -1, 1);
-
-                gl.clearColor(0, 0, 0, 0);
-                gl.clear(gl.COLOR_BUFFER_BIT);
-                try {
-                    gl.disable(gl.BLEND);
-                    // ImageData objects store alpha un-premultiplied, so draw with the `straightAlpha` draw mode.
-                    this._drawThese([drawableID], ShaderManager.DRAW_MODE.straightAlpha, projection, { effectMask: ~ShaderManager.EFFECT_INFO.ghost.mask });
-                } finally {
-                    gl.enable(gl.BLEND);
-                }
-
-                var data = new Uint8Array(Math.floor(bounds.width * bounds.height * 4));
-                gl.readPixels(0, 0, bounds.width, bounds.height, gl.RGBA, gl.UNSIGNED_BYTE, data);
-
-                if (this._debugCanvas) {
-                    this._debugCanvas.width = bounds.width;
-                    this._debugCanvas.height = bounds.height;
-                    var ctx = this._debugCanvas.getContext('2d');
-                    var imageData = ctx.createImageData(bounds.width, bounds.height);
-                    imageData.data.set(data);
-                    ctx.putImageData(imageData, 0, 0);
-                    ctx.beginPath();
-                    ctx.arc(pickX, pickY, 3, 0, 2 * Math.PI, false);
-                    ctx.fillStyle = 'white';
-                    ctx.fill();
-                    ctx.lineWidth = 1;
-                    ctx.strokeStyle = 'black';
-                    ctx.stroke();
-                }
-
-                return {
-                    data: data,
-                    width: bounds.width,
-                    height: bounds.height,
-                    scratchOffset: [-scratchX + drawable._position[0], -scratchY - drawable._position[1]],
-                    x: pickX,
-                    y: pickY
-                };
-            } finally {
-                gl.deleteFramebuffer(bufferInfo.framebuffer);
-            }
-        }
-
-        /**
          * @typedef DrawableExtraction
          * @property {ImageData} data Raw pixel data for the drawable
          * @property {number} x The x coordinate of the drawable's bounding box's top-left corner, in 'CSS pixels'
@@ -14114,8 +14014,14 @@ var RenderWebGL = function (_EventEmitter) {
 
                 gl.clearColor(0, 0, 0, 0);
                 gl.clear(gl.COLOR_BUFFER_BIT);
-                // Don't apply the ghost effect. TODO: is this an intentional design decision?
-                this._drawThese([drawableID], ShaderManager.DRAW_MODE.straightAlpha, projection, { effectMask: ~ShaderManager.EFFECT_INFO.ghost.mask });
+                this._drawThese([drawableID], ShaderManager.DRAW_MODE.straightAlpha, projection, {
+                    // Don't apply the ghost effect. TODO: is this an intentional design decision?
+                    effectMask: ~ShaderManager.EFFECT_INFO.ghost.mask,
+                    // We're doing this in screen-space, so the framebuffer dimensions should be those of the canvas in
+                    // screen-space. This is used to ensure SVG skins are rendered at the proper resolution.
+                    framebufferWidth: canvas.width,
+                    framebufferHeight: canvas.height
+                });
 
                 var data = new Uint8Array(Math.floor(clampedWidth * clampedHeight * 4));
                 gl.readPixels(0, 0, clampedWidth, clampedHeight, gl.RGBA, gl.UNSIGNED_BYTE, data);
@@ -14666,18 +14572,6 @@ var RenderWebGL = function (_EventEmitter) {
         }
 
         /**
-         * Get the screen-space scale of a drawable, as percentages of the drawable's "normal" size.
-         * @param {Drawable} drawable The drawable whose screen-space scale we're fetching.
-         * @returns {Array<number>} The screen-space X and Y dimensions of the drawable's scale, as percentages.
-         */
-
-    }, {
-        key: '_getDrawableScreenSpaceScale',
-        value: function _getDrawableScreenSpaceScale(drawable) {
-            return [drawable.scale[0] * this._gl.canvas.width / this._nativeSize[0], drawable.scale[1] * this._gl.canvas.height / this._nativeSize[1]];
-        }
-
-        /**
          * Draw a set of Drawables, by drawable ID
          * @param {Array<int>} drawables The Drawable IDs to draw, possibly this._drawList.
          * @param {ShaderManager.DRAW_MODE} drawMode Draw normally, silhouette, etc.
@@ -14687,6 +14581,8 @@ var RenderWebGL = function (_EventEmitter) {
          * @param {object.<string,*>} opts.extraUniforms Extra uniforms for the shaders.
          * @param {int} opts.effectMask Bitmask for effects to allow
          * @param {boolean} opts.ignoreVisibility Draw all, despite visibility (e.g. stamping, touching color)
+         * @param {int} opts.framebufferWidth The width of the framebuffer being drawn onto. Defaults to "native" width
+         * @param {int} opts.framebufferHeight The height of the framebuffer being drawn onto. Defaults to "native" height
          * @private
          */
 
@@ -14698,6 +14594,8 @@ var RenderWebGL = function (_EventEmitter) {
 
             var gl = this._gl;
             var currentShader = null;
+
+            var framebufferSpaceScaleDiffers = 'framebufferWidth' in opts && 'framebufferHeight' in opts && opts.framebufferWidth !== this._nativeSize[0] && opts.framebufferHeight !== this._nativeSize[1];
 
             var numDrawables = drawables.length;
             for (var drawableIndex = 0; drawableIndex < numDrawables; ++drawableIndex) {
@@ -14713,8 +14611,10 @@ var RenderWebGL = function (_EventEmitter) {
                 // the ignoreVisibility flag is used (e.g. for stamping or touchingColor).
                 if (!drawable.getVisible() && !opts.ignoreVisibility) continue;
 
-                // Combine drawable scale with the native vs. backing pixel ratio
-                var drawableScale = this._getDrawableScreenSpaceScale(drawable);
+                // drawableScale is the "framebuffer-pixel-space" scale of the drawable, as percentages of the drawable's
+                // "native size" (so 100 = same as skin's "native size", 200 = twice "native size").
+                // If the framebuffer dimensions are the same as the stage's "native" size, there's no need to calculate it.
+                var drawableScale = framebufferSpaceScaleDiffers ? [drawable.scale[0] * opts.framebufferWidth / this._nativeSize[0], drawable.scale[1] * opts.framebufferHeight / this._nativeSize[1]] : drawable.scale;
 
                 // If the skin or texture isn't ready yet, skip it.
                 if (!drawable.skin || !drawable.skin.getTexture(drawableScale)) continue;
@@ -14984,7 +14884,7 @@ var RenderWebGL = function (_EventEmitter) {
 // :3
 
 
-RenderWebGL.prototype.canHazPixels = RenderWebGL.prototype.extractDrawable;
+RenderWebGL.prototype.canHazPixels = RenderWebGL.prototype.extractDrawableScreenSpace;
 
 /**
  * Values for setUseGPU()
@@ -17629,6 +17529,8 @@ module.exports = PenSkin;
 "use strict";
 
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
@@ -17642,7 +17544,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var twgl = __webpack_require__(0);
 
 var Skin = __webpack_require__(2);
-var SvgRenderer = __webpack_require__(41).SVGRenderer;
+
+var _require = __webpack_require__(41),
+    loadSvgString = _require.loadSvgString,
+    serializeSvgToString = _require.serializeSvgToString;
+
 var ShaderManager = __webpack_require__(3);
 
 var MAX_TEXTURE_DIMENSION = 2048;
@@ -17673,8 +17579,20 @@ var SVGSkin = function (_Skin) {
 
         _this._renderer = renderer;
 
-        /** @type {SvgRenderer} */
-        _this._svgRenderer = new SvgRenderer();
+        /** @type {HTMLImageElement} */
+        _this._svgImage = document.createElement('img');
+
+        /** @type {boolean} */
+        _this._svgImageLoaded = false;
+
+        /** @type {Array<number>} */
+        _this._size = [0, 0];
+
+        /** @type {HTMLCanvasElement} */
+        _this._canvas = document.createElement('canvas');
+
+        /** @type {CanvasRenderingContext2D} */
+        _this._context = _this._canvas.getContext('2d');
 
         /** @type {Array<WebGLTexture>} */
         _this._scaledMIPs = [];
@@ -17740,18 +17658,26 @@ var SVGSkin = function (_Skin) {
     }, {
         key: 'createMIP',
         value: function createMIP(scale) {
-            this._svgRenderer.draw(scale);
+            var _size = _slicedToArray(this._size, 2),
+                width = _size[0],
+                height = _size[1];
+
+            this._canvas.width = width * scale;
+            this._canvas.height = height * scale;
+            if (this._canvas.width <= 0 || this._canvas.height <= 0 ||
+            // Even if the canvas at the current scale has a nonzero size, the image's dimensions are floored
+            // pre-scaling; e.g. if an image has a width of 0.4 and is being rendered at 3x scale, the canvas will have
+            // a width of 1, but the image's width will be rounded down to 0 on some browsers (Firefox) prior to being
+            // drawn at that scale, resulting in an IndexSizeError if we attempt to draw it.
+            this._svgImage.naturalWidth <= 0 || this._svgImage.naturalHeight <= 0) return _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
+            this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+            this._context.setTransform(scale, 0, 0, scale, 0, 0);
+            this._context.drawImage(this._svgImage, 0, 0);
 
             // Pull out the ImageData from the canvas. ImageData speeds up
             // updating Silhouette and is better handled by more browsers in
             // regards to memory.
-            var canvas = this._svgRenderer.canvas;
-            // If one of the canvas dimensions is 0, set this MIP to an empty image texture.
-            // This avoids an IndexSizeError from attempting to getImageData when one of the dimensions is 0.
-            if (canvas.width === 0 || canvas.height === 0) return _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'getTexture', this).call(this);
-
-            var context = canvas.getContext('2d');
-            var textureData = context.getImageData(0, 0, canvas.width, canvas.height);
+            var textureData = this._context.getImageData(0, 0, this._canvas.width, this._canvas.height);
 
             var textureOptions = {
                 auto: false,
@@ -17799,7 +17725,7 @@ var SVGSkin = function (_Skin) {
             // Can't use bitwise stuff here because we need to handle negative exponents
             var mipScale = Math.pow(2, mipLevel - INDEX_OFFSET);
 
-            if (this._svgRenderer.loaded && !this._scaledMIPs[mipLevel]) {
+            if (this._svgImageLoaded && !this._scaledMIPs[mipLevel]) {
                 this._scaledMIPs[mipLevel] = this.createMIP(mipScale);
             }
 
@@ -17835,14 +17761,27 @@ var SVGSkin = function (_Skin) {
         value: function setSVG(svgData, rotationCenter) {
             var _this3 = this;
 
-            this._svgRenderer.loadSVG(svgData, false, function () {
-                var svgSize = _this3._svgRenderer.size;
-                if (svgSize[0] === 0 || svgSize[1] === 0) {
+            var svgTag = loadSvgString(svgData);
+            var svgText = serializeSvgToString(svgTag, true /* shouldInjectFonts */);
+            this._svgImageLoaded = false;
+
+            // If there is another load already in progress, replace the old onload to effectively cancel the old load
+            this._svgImage.onload = function () {
+                var _svgTag$viewBox$baseV = svgTag.viewBox.baseVal,
+                    x = _svgTag$viewBox$baseV.x,
+                    y = _svgTag$viewBox$baseV.y,
+                    width = _svgTag$viewBox$baseV.width,
+                    height = _svgTag$viewBox$baseV.height;
+
+                _this3._size[0] = width;
+                _this3._size[1] = height;
+
+                if (width === 0 || height === 0) {
                     _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setEmptyImageData', _this3).call(_this3);
                     return;
                 }
 
-                var maxDimension = Math.ceil(Math.max(_this3.size[0], _this3.size[1]));
+                var maxDimension = Math.ceil(Math.max(width, height));
                 var testScale = 2;
                 for (testScale; maxDimension * testScale <= MAX_TEXTURE_DIMENSION; testScale *= 2) {
                     _this3._maxTextureScale = testScale;
@@ -17851,17 +17790,22 @@ var SVGSkin = function (_Skin) {
                 _this3.resetMIPs();
 
                 if (typeof rotationCenter === 'undefined') rotationCenter = _this3.calculateRotationCenter();
-                var viewOffset = _this3._svgRenderer.viewOffset;
-                _this3._rotationCenter[0] = rotationCenter[0] - viewOffset[0];
-                _this3._rotationCenter[1] = rotationCenter[1] - viewOffset[1];
+                // Compensate for viewbox offset.
+                // See https://github.com/LLK/scratch-render/pull/90.
+                _this3._rotationCenter[0] = rotationCenter[0] - x;
+                _this3._rotationCenter[1] = rotationCenter[1] - y;
+
+                _this3._svgImageLoaded = true;
 
                 _this3.emit(Skin.Events.WasAltered);
-            });
+            };
+
+            this._svgImage.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(svgText);
         }
     }, {
         key: 'size',
         get: function get() {
-            return this._svgRenderer.size;
+            return [this._size[0], this._size[1]];
         }
     }]);
 
@@ -18075,7 +18019,7 @@ module.exports = SvgRenderer;
 /* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/*! @license DOMPurify | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/2.0.8/LICENSE */
+/*! @license DOMPurify | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/2.2.2/LICENSE */
 
 (function (global, factory) {
    true ? module.exports = factory() :
@@ -18086,7 +18030,9 @@ module.exports = SvgRenderer;
 
   var hasOwnProperty = Object.hasOwnProperty,
       setPrototypeOf = Object.setPrototypeOf,
-      isFrozen = Object.isFrozen;
+      isFrozen = Object.isFrozen,
+      getPrototypeOf = Object.getPrototypeOf,
+      getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
   var freeze = Object.freeze,
       seal = Object.seal,
       create = Object.create; // eslint-disable-line import/no-mutable-exports
@@ -18197,14 +18143,52 @@ module.exports = SvgRenderer;
     return newObject;
   }
 
-  var html = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
+  /* IE10 doesn't support __lookupGetter__ so lets'
+   * simulate it. It also automatically checks
+   * if the prop is function or getter and behaves
+   * accordingly. */
+  function lookupGetter(object, prop) {
+    while (object !== null) {
+      var desc = getOwnPropertyDescriptor(object, prop);
+      if (desc) {
+        if (desc.get) {
+          return unapply(desc.get);
+        }
+
+        if (typeof desc.value === 'function') {
+          return unapply(desc.value);
+        }
+      }
+
+      object = getPrototypeOf(object);
+    }
+
+    function fallbackValue(element) {
+      console.warn('fallback value for', element);
+      return null;
+    }
+
+    return fallbackValue;
+  }
+
+  var html = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
 
   // SVG
-  var svg = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'audio', 'canvas', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'video', 'view', 'vkern']);
+  var svg = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
 
   var svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
 
+  // List of SVG elements that are disallowed by default.
+  // We still need to know them so that we can do namespace
+  // checks properly in case one wants to add them to
+  // allow-list.
+  var svgDisallowed = freeze(['animate', 'color-profile', 'cursor', 'discard', 'fedropshadow', 'feimage', 'font-face', 'font-face-format', 'font-face-name', 'font-face-src', 'font-face-uri', 'foreignobject', 'hatch', 'hatchpath', 'mesh', 'meshgradient', 'meshpatch', 'meshrow', 'missing-glyph', 'script', 'set', 'solidcolor', 'unknown', 'use']);
+
   var mathMl = freeze(['math', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover']);
+
+  // Similarly to SVG, we want to know all MathML elements,
+  // even those that we disallow by default.
+  var mathMlDisallowed = freeze(['maction', 'maligngroup', 'malignmark', 'mlongdiv', 'mscarries', 'mscarry', 'msgroup', 'mstack', 'msline', 'msrow', 'semantics', 'annotation', 'annotation-xml', 'mprescripts', 'none']);
 
   var text = freeze(['#text']);
 
@@ -18285,7 +18269,7 @@ module.exports = SvgRenderer;
      * Version label, exposed for easier checks
      * if DOMPurify is up to date or not
      */
-    DOMPurify.version = '2.1.1';
+    DOMPurify.version = '2.2.7';
 
     /**
      * Array of elements that DOMPurify removed during sanitation.
@@ -18307,6 +18291,7 @@ module.exports = SvgRenderer;
     var DocumentFragment = window.DocumentFragment,
         HTMLTemplateElement = window.HTMLTemplateElement,
         Node = window.Node,
+        Element = window.Element,
         NodeFilter = window.NodeFilter,
         _window$NamedNodeMap = window.NamedNodeMap,
         NamedNodeMap = _window$NamedNodeMap === undefined ? window.NamedNodeMap || window.MozNamedAttrMap : _window$NamedNodeMap,
@@ -18315,13 +18300,20 @@ module.exports = SvgRenderer;
         DOMParser = window.DOMParser,
         trustedTypes = window.trustedTypes;
 
+
+    var ElementPrototype = Element.prototype;
+
+    var cloneNode = lookupGetter(ElementPrototype, 'cloneNode');
+    var getNextSibling = lookupGetter(ElementPrototype, 'nextSibling');
+    var getChildNodes = lookupGetter(ElementPrototype, 'childNodes');
+    var getParentNode = lookupGetter(ElementPrototype, 'parentNode');
+
     // As per issue #47, the web-components registry is inherited by a
     // new document created via createHTMLDocument. As per the spec
     // (http://w3c.github.io/webcomponents/spec/custom/#creating-and-passing-registries)
     // a new empty registry is used when creating a template contents owner
     // document, so we use that as our parent document to ensure nothing
     // is inherited.
-
     if (typeof HTMLTemplateElement === 'function') {
       var template = document.createElement('template');
       if (template.content && template.content.ownerDocument) {
@@ -18350,7 +18342,7 @@ module.exports = SvgRenderer;
     /**
      * Expose whether this browser supports running the full DOMPurify.
      */
-    DOMPurify.isSupported = implementation && typeof implementation.createHTMLDocument !== 'undefined' && documentMode !== 9;
+    DOMPurify.isSupported = typeof getParentNode === 'function' && implementation && typeof implementation.createHTMLDocument !== 'undefined' && documentMode !== 9;
 
     var MUSTACHE_EXPR$$1 = MUSTACHE_EXPR,
         ERB_EXPR$$1 = ERB_EXPR,
@@ -18417,8 +18409,13 @@ module.exports = SvgRenderer;
     /* If `RETURN_DOM` or `RETURN_DOM_FRAGMENT` is enabled, decide if the returned DOM
      * `Node` is imported into the current `Document`. If this flag is not enabled the
      * `Node` will belong (its ownerDocument) to a fresh `HTMLDocument`, created by
-     * DOMPurify. */
-    var RETURN_DOM_IMPORT = false;
+     * DOMPurify.
+     *
+     * This defaults to `true` starting DOMPurify 2.2.0. Note that setting it to `false`
+     * might cause XSS from attacks hidden in closed shadowroots in case the browser
+     * supports Declarative Shadow: DOM https://web.dev/declarative-shadow-dom/
+     */
+    var RETURN_DOM_IMPORT = true;
 
     /* Try to return a Trusted Type object instead of a string, return a string in
      * case Trusted Types are not supported  */
@@ -18438,7 +18435,7 @@ module.exports = SvgRenderer;
     var USE_PROFILES = {};
 
     /* Tags to ignore content of when KEEP_CONTENT is true */
-    var FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
+    var FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'noscript', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
 
     /* Tags that are safe for data: URIs */
     var DATA_URI_TAGS = null;
@@ -18490,7 +18487,7 @@ module.exports = SvgRenderer;
       WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false; // Default false
       RETURN_DOM = cfg.RETURN_DOM || false; // Default false
       RETURN_DOM_FRAGMENT = cfg.RETURN_DOM_FRAGMENT || false; // Default false
-      RETURN_DOM_IMPORT = cfg.RETURN_DOM_IMPORT || false; // Default false
+      RETURN_DOM_IMPORT = cfg.RETURN_DOM_IMPORT !== false; // Default true
       RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false; // Default false
       FORCE_BODY = cfg.FORCE_BODY || false; // Default false
       SANITIZE_DOM = cfg.SANITIZE_DOM !== false; // Default true
@@ -18579,6 +18576,115 @@ module.exports = SvgRenderer;
       CONFIG = cfg;
     };
 
+    var MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ['mi', 'mo', 'mn', 'ms', 'mtext']);
+
+    var HTML_INTEGRATION_POINTS = addToSet({}, ['foreignobject', 'desc', 'title', 'annotation-xml']);
+
+    /* Keep track of all possible SVG and MathML tags
+     * so that we can perform the namespace checks
+     * correctly. */
+    var ALL_SVG_TAGS = addToSet({}, svg);
+    addToSet(ALL_SVG_TAGS, svgFilters);
+    addToSet(ALL_SVG_TAGS, svgDisallowed);
+
+    var ALL_MATHML_TAGS = addToSet({}, mathMl);
+    addToSet(ALL_MATHML_TAGS, mathMlDisallowed);
+
+    var MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
+    var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+    var HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
+
+    /**
+     *
+     *
+     * @param  {Element} element a DOM element whose namespace is being checked
+     * @returns {boolean} Return false if the element has a
+     *  namespace that a spec-compliant parser would never
+     *  return. Return true otherwise.
+     */
+    var _checkValidNamespace = function _checkValidNamespace(element) {
+      var parent = getParentNode(element);
+
+      // In JSDOM, if we're inside shadow DOM, then parentNode
+      // can be null. We just simulate parent in this case.
+      if (!parent || !parent.tagName) {
+        parent = {
+          namespaceURI: HTML_NAMESPACE,
+          tagName: 'template'
+        };
+      }
+
+      var tagName = stringToLowerCase(element.tagName);
+      var parentTagName = stringToLowerCase(parent.tagName);
+
+      if (element.namespaceURI === SVG_NAMESPACE) {
+        // The only way to switch from HTML namespace to SVG
+        // is via <svg>. If it happens via any other tag, then
+        // it should be killed.
+        if (parent.namespaceURI === HTML_NAMESPACE) {
+          return tagName === 'svg';
+        }
+
+        // The only way to switch from MathML to SVG is via
+        // svg if parent is either <annotation-xml> or MathML
+        // text integration points.
+        if (parent.namespaceURI === MATHML_NAMESPACE) {
+          return tagName === 'svg' && (parentTagName === 'annotation-xml' || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
+        }
+
+        // We only allow elements that are defined in SVG
+        // spec. All others are disallowed in SVG namespace.
+        return Boolean(ALL_SVG_TAGS[tagName]);
+      }
+
+      if (element.namespaceURI === MATHML_NAMESPACE) {
+        // The only way to switch from HTML namespace to MathML
+        // is via <math>. If it happens via any other tag, then
+        // it should be killed.
+        if (parent.namespaceURI === HTML_NAMESPACE) {
+          return tagName === 'math';
+        }
+
+        // The only way to switch from SVG to MathML is via
+        // <math> and HTML integration points
+        if (parent.namespaceURI === SVG_NAMESPACE) {
+          return tagName === 'math' && HTML_INTEGRATION_POINTS[parentTagName];
+        }
+
+        // We only allow elements that are defined in MathML
+        // spec. All others are disallowed in MathML namespace.
+        return Boolean(ALL_MATHML_TAGS[tagName]);
+      }
+
+      if (element.namespaceURI === HTML_NAMESPACE) {
+        // The only way to switch from SVG to HTML is via
+        // HTML integration points, and from MathML to HTML
+        // is via MathML text integration points
+        if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
+          return false;
+        }
+
+        if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
+          return false;
+        }
+
+        // Certain elements are allowed in both SVG and HTML
+        // namespace. We need to specify them explicitly
+        // so that they don't get erronously deleted from
+        // HTML namespace.
+        var commonSvgAndHTMLElements = addToSet({}, ['title', 'style', 'font', 'a', 'script']);
+
+        // We disallow tags that are specific for MathML
+        // or SVG and should never appear in HTML namespace
+        return !ALL_MATHML_TAGS[tagName] && (commonSvgAndHTMLElements[tagName] || !ALL_SVG_TAGS[tagName]);
+      }
+
+      // The code should never reach this place (this means
+      // that the element somehow got namespace that is not
+      // HTML, SVG or MathML). Return false just in case.
+      return false;
+    };
+
     /**
      * _forceRemove
      *
@@ -18589,7 +18695,11 @@ module.exports = SvgRenderer;
       try {
         node.parentNode.removeChild(node);
       } catch (_) {
-        node.outerHTML = emptyHTML;
+        try {
+          node.outerHTML = emptyHTML;
+        } catch (_) {
+          node.remove();
+        }
       }
     };
 
@@ -18613,6 +18723,19 @@ module.exports = SvgRenderer;
       }
 
       node.removeAttribute(name);
+
+      // We void attribute values for unremovable "is"" attributes
+      if (name === 'is' && !ALLOWED_ATTR[name]) {
+        if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
+          try {
+            _forceRemove(node);
+          } catch (_) {}
+        } else {
+          try {
+            node.setAttribute(name, '');
+          } catch (_) {}
+        }
+      }
     };
 
     /**
@@ -18681,7 +18804,7 @@ module.exports = SvgRenderer;
         return false;
       }
 
-      if (typeof elm.nodeName !== 'string' || typeof elm.textContent !== 'string' || typeof elm.removeChild !== 'function' || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== 'function' || typeof elm.setAttribute !== 'function' || typeof elm.namespaceURI !== 'string') {
+      if (typeof elm.nodeName !== 'string' || typeof elm.textContent !== 'string' || typeof elm.removeChild !== 'function' || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== 'function' || typeof elm.setAttribute !== 'function' || typeof elm.namespaceURI !== 'string' || typeof elm.insertBefore !== 'function') {
         return true;
       }
 
@@ -18753,14 +18876,8 @@ module.exports = SvgRenderer;
         allowedTags: ALLOWED_TAGS
       });
 
-      /* Take care of an mXSS pattern using p, br inside svg, math */
-      if ((tagName === 'svg' || tagName === 'math') && currentNode.querySelectorAll('p, br').length !== 0) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
       /* Detect mXSS attempts abusing namespace confusion */
-      if (!_isNode(currentNode.firstElementChild) && (!_isNode(currentNode.content) || !_isNode(currentNode.content.firstElementChild)) && regExpTest(/<[!/\w]/g, currentNode.innerHTML) && regExpTest(/<[!/\w]/g, currentNode.textContent)) {
+      if (!_isNode(currentNode.firstElementChild) && (!_isNode(currentNode.content) || !_isNode(currentNode.content.firstElementChild)) && regExpTest(/<[/\w]/g, currentNode.innerHTML) && regExpTest(/<[/\w]/g, currentNode.textContent)) {
         _forceRemove(currentNode);
         return true;
       }
@@ -18768,18 +18885,29 @@ module.exports = SvgRenderer;
       /* Remove element if anything forbids its presence */
       if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
         /* Keep content except for bad-listed elements */
-        if (KEEP_CONTENT && !FORBID_CONTENTS[tagName] && typeof currentNode.insertAdjacentHTML === 'function') {
-          try {
-            var htmlToInsert = currentNode.innerHTML;
-            currentNode.insertAdjacentHTML('AfterEnd', trustedTypesPolicy ? trustedTypesPolicy.createHTML(htmlToInsert) : htmlToInsert);
-          } catch (_) {}
+        if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
+          var parentNode = getParentNode(currentNode);
+          var childNodes = getChildNodes(currentNode);
+
+          if (childNodes && parentNode) {
+            var childCount = childNodes.length;
+
+            for (var i = childCount - 1; i >= 0; --i) {
+              parentNode.insertBefore(cloneNode(childNodes[i], true), getNextSibling(currentNode));
+            }
+          }
         }
 
         _forceRemove(currentNode);
         return true;
       }
 
-      /* Remove in case a noscript/noembed XSS is suspected */
+      /* Check whether element has a valid namespace */
+      if (currentNode instanceof Element && !_checkValidNamespace(currentNode)) {
+        _forceRemove(currentNode);
+        return true;
+      }
+
       if ((tagName === 'noscript' || tagName === 'noembed') && regExpTest(/<\/no(script|embed)/i, currentNode.innerHTML)) {
         _forceRemove(currentNode);
         return true;
@@ -19962,40 +20090,45 @@ module.exports = minilog('scratch-svg-render');
 
 // Synchronously load TTF fonts.
 // First, have Webpack load their data as Base 64 strings.
-/* eslint-disable global-require */
-const FONTS = {
-    'Sans Serif': __webpack_require__(49),
-    'Serif': __webpack_require__(50),
-    'Handwriting': __webpack_require__(51),
-    'Marker': __webpack_require__(52),
-    'Curly': __webpack_require__(53),
-    'Pixel': __webpack_require__(54),
-    'Scratch': __webpack_require__(55)
-};
-/* eslint-enable global-require */
+let FONTS;
 
-// For each Base 64 string,
-// 1. Replace each with a usable @font-face tag that points to a Data URI.
-// 2. Inject the font into a style on `document.body`, so measurements
-//    can be accurately taken in SvgRenderer._transformMeasurements.
-for (const fontName in FONTS) {
-    const fontData = FONTS[fontName];
-    FONTS[fontName] = '@font-face {' +
-        `font-family: "${fontName}";src: url("data:application/x-font-ttf;charset=utf-8;base64,${fontData}");}`;
+const getFonts = function () {
+    if (FONTS) return FONTS;
+    /* eslint-disable global-require */
+    FONTS = {
+        'Sans Serif': __webpack_require__(49),
+        'Serif': __webpack_require__(50),
+        'Handwriting': __webpack_require__(51),
+        'Marker': __webpack_require__(52),
+        'Curly': __webpack_require__(53),
+        'Pixel': __webpack_require__(54),
+        'Scratch': __webpack_require__(55)
+    };
+    /* eslint-enable global-require */
+
+    // For each Base 64 string,
+    // 1. Replace each with a usable @font-face tag that points to a Data URI.
+    // 2. Inject the font into a style on `document.body`, so measurements
+    //    can be accurately taken in SvgRenderer._transformMeasurements.
+    for (const fontName in FONTS) {
+        const fontData = FONTS[fontName];
+        FONTS[fontName] = '@font-face {' +
+            `font-family: "${fontName}";src: url("data:application/x-font-ttf;charset=utf-8;base64,${fontData}");}`;
+    }
+
+    if (!document.getElementById('scratch-font-styles')) {
+    	const documentStyleTag = document.createElement('style');
+    	documentStyleTag.id = 'scratch-font-styles';
+    	for (const fontName in FONTS) {
+    	    documentStyleTag.textContent += FONTS[fontName];
+    	}
+    	document.body.insertBefore(documentStyleTag, document.body.firstChild);
+    }
+
+    return FONTS;
 }
 
-if (!document.getElementById('scratch-font-styles')) {
-	const documentStyleTag = document.createElement('style');
-	documentStyleTag.id = 'scratch-font-styles';
-	for (const fontName in FONTS) {
-	    documentStyleTag.textContent += FONTS[fontName];
-	}
-	document.body.insertBefore(documentStyleTag, document.body.firstChild);
-}
-
-module.exports = {
-	FONTS: FONTS
-};
+module.exports = getFonts;
 
 
 /***/ }),
