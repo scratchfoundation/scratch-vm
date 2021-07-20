@@ -92,7 +92,6 @@ const Ev3Opcode = {
  * @enum {number}
  */
 const Ev3Args = {
-    LAYER: 0, // always 0, chained EV3s not supported
     COAST: 0,
     BRAKE: 1,
     RAMP: 50, // time in milliseconds
@@ -300,7 +299,9 @@ class EV3Motor {
     turnOnFor (milliseconds) {
         if (this._power === 0) return;
 
-        const port = this._portMask(this._index);
+        const port = this._portMask(this._index % 4);
+        const layer = Math.floor(this._index / 4);
+
         let n = milliseconds;
         let speed = this._power * this._direction;
         const ramp = Ev3Args.RAMP;
@@ -329,7 +330,7 @@ class EV3Motor {
         // Generate motor command values
         const runcmd = this._runValues(run);
         byteCommand = byteCommand.concat([
-            Ev3Args.LAYER,
+            layer,
             port,
             Ev3Encoding.ONE_BYTE,
             dir & 0xff,
@@ -382,8 +383,8 @@ class EV3Motor {
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
                 Ev3Opcode.OPOUTPUT_STOP,
-                Ev3Args.LAYER,
-                this._portMask(this._index), // port output bit field
+                Math.floor(this._index % 4),
+                this._portMask(this._index / 4), // port output bit field
                 Ev3Args.COAST
             ]
         );
@@ -476,7 +477,7 @@ class EV3 {
          * @type {string[]}
          * @private
          */
-        this._motors = [null, null, null, null];
+        this._motors = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
 
         /**
          * The polling interval, in milliseconds.
@@ -636,7 +637,7 @@ class EV3 {
             brightness: 0,
             buttons: [0, 0, 0, 0]
         };
-        this._motors = [null, null, null, null];
+        this._motors = [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null];
 
         if (this._pollingIntervalID) {
             window.clearInterval(this._pollingIntervalID);
@@ -767,11 +768,11 @@ class EV3 {
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
             let index = 0;
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 if (this._sensorPorts[i] !== 'none') {
                     cmds[index + 0] = Ev3Opcode.OPINPUT_READSI;
-                    cmds[index + 1] = Ev3Args.LAYER;
-                    cmds[index + 2] = i; // PORT
+                    cmds[index + 1] = Math.floor(i / 4);
+                    cmds[index + 2] = i % 4; // PORT
                     cmds[index + 3] = Ev3Args.DO_NOT_CHANGE_TYPE;
                     cmds[index + 4] = Ev3Mode[this._sensorPorts[i]];
                     cmds[index + 5] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
@@ -782,10 +783,10 @@ class EV3 {
             }
 
             // GET MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 cmds[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
-                cmds[index + 1] = Ev3Args.LAYER;
-                cmds[index + 2] = i; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
+                cmds[index + 1] = Math.floor(i / 4);
+                cmds[index + 2] = i % 4; // PORT (incorrectly specified as 'Output bit field' in LEGO docs)
                 cmds[index + 3] = Ev3Encoding.GLOBAL_VARIABLE_ONE_BYTE;
                 cmds[index + 4] = sensorCount * 4; // GLOBAL INDEX
                 index += 5;
@@ -841,17 +842,17 @@ class EV3 {
         if (this._updateDevices) {
 
             // PARSE DEVICE LIST
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 const deviceType = Ev3Device[data[i + 5]];
                 // if returned device type is null, use 'none'
                 this._sensorPorts[i] = deviceType ? deviceType : 'none';
             }
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 const deviceType = Ev3Device[data[i + 21]];
                 // if returned device type is null, use 'none'
                 this._motorPorts[i] = deviceType ? deviceType : 'none';
             }
-            for (let m = 0; m < 4; m++) {
+            for (let m = 0; m < 16; m++) {
                 const type = this._motorPorts[m];
                 if (type !== 'none' && !this._motors[m]) {
                     // add new motor if don't already have one
@@ -869,7 +870,7 @@ class EV3 {
 
             // PARSE SENSOR VALUES
             let offset = 5; // start reading sensor values at byte 5
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 // array 2 float
                 const buffer = new Uint8Array([
                     data[offset],
@@ -891,7 +892,7 @@ class EV3 {
             }
 
             // PARSE MOTOR POSITION VALUES, EVEN IF NO MOTOR PRESENT
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 16; i++) {
                 const positionArray = [
                     data[offset],
                     data[offset + 1],
@@ -923,6 +924,14 @@ const Ev3MotorMenu = ['A', 'B', 'C', 'D'];
  * @enum {string}
  */
 const Ev3SensorMenu = ['1', '2', '3', '4'];
+
+/**
+ * Enum for layer names.
+ * Note: if changed, will break compatibility with previously saved projects.
+ * @readonly
+ * @enum {string}
+ */
+const Ev3LayersMenu = ['1', '2', '3', '4'];
 
 class Scratch3Ev3Blocks {
 
@@ -1138,6 +1147,27 @@ class Scratch3Ev3Blocks {
                             defaultValue: 0.5
                         }
                     }
+                },
+                {
+                    opcode: 'getMotorOfLayer',
+                    text: formatMessage({
+                        id: 'ev3.getMotorOfLayer',
+                        default: 'motor of layer [LAYER] and port [PORT]',
+                        description: 'gets a motor from a specific layer'
+                    }),
+                    blockType: BlockType.REPORTER,
+                    arguments: {
+                        LAYER: {
+                            type: ArgumentType.STRING,
+                            menu: 'layers',
+                            defaultValue: 0
+                        },
+                        PORT: {
+                            type: ArgumentType.STRING,
+                            menu: 'motorPorts',
+                            defaultValue: 0
+                        }
+                    }
                 }
             ],
             menus: {
@@ -1148,6 +1178,10 @@ class Scratch3Ev3Blocks {
                 sensorPorts: {
                     acceptReporters: true,
                     items: this._formatMenu(Ev3SensorMenu)
+                },
+                layers: {
+                    acceptReporters: true,
+                    items: this._formatMenu(Ev3LayersMenu)
                 }
             }
         };
@@ -1286,6 +1320,17 @@ class Scratch3Ev3Blocks {
         });
     }
 
+    getMotorOfLayer (args) {
+        const layer = Cast.toNumber(args.LAYER);
+        const port = Cast.toNumber(args.PORT);
+
+        if (layer < 0 || layer > 3 || port < 0 || port > 3) {
+            return;
+        }
+
+        return (layer * 4) + port;
+    }
+
     /**
      * Call a callback for each motor indexed by the provided motor ID.
      *
@@ -1298,23 +1343,11 @@ class Scratch3Ev3Blocks {
      */
     _forEachMotor (motorID, callback) {
         let motors;
-        switch (motorID) {
-        case 0:
-            motors = [0];
-            break;
-        case 1:
-            motors = [1];
-            break;
-        case 2:
-            motors = [2];
-            break;
-        case 3:
-            motors = [3];
-            break;
-        default:
+        if (motorID >= 0 && motorID < 16) {
+            motors = [motorID];
+        } else {
             log.warn(`Invalid motor ID: ${motorID}`);
             motors = [];
-            break;
         }
         for (const index of motors) {
             callback(index);
