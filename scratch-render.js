@@ -17765,17 +17765,22 @@ var SVGSkin = function (_Skin) {
             var svgText = serializeSvgToString(svgTag, true /* shouldInjectFonts */);
             this._svgImageLoaded = false;
 
+            var _svgTag$viewBox$baseV = svgTag.viewBox.baseVal,
+                x = _svgTag$viewBox$baseV.x,
+                y = _svgTag$viewBox$baseV.y,
+                width = _svgTag$viewBox$baseV.width,
+                height = _svgTag$viewBox$baseV.height;
+            // While we're setting the size before the image is loaded, this doesn't cause the skin to appear with the wrong
+            // size for a few frames while the new image is loading, because we don't emit the `WasAltered` event, telling
+            // drawables using this skin to update, until the image is loaded.
+            // We need to do this because the VM reads the skin's `size` directly after calling `setSVG`.
+            // TODO: return a Promise so that the VM can read the skin's `size` after the image is loaded.
+
+            this._size[0] = width;
+            this._size[1] = height;
+
             // If there is another load already in progress, replace the old onload to effectively cancel the old load
             this._svgImage.onload = function () {
-                var _svgTag$viewBox$baseV = svgTag.viewBox.baseVal,
-                    x = _svgTag$viewBox$baseV.x,
-                    y = _svgTag$viewBox$baseV.y,
-                    width = _svgTag$viewBox$baseV.width,
-                    height = _svgTag$viewBox$baseV.height;
-
-                _this3._size[0] = width;
-                _this3._size[1] = height;
-
                 if (width === 0 || height === 0) {
                     _get(SVGSkin.prototype.__proto__ || Object.getPrototypeOf(SVGSkin.prototype), 'setEmptyImageData', _this3).call(_this3);
                     return;
