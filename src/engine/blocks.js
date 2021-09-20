@@ -322,6 +322,8 @@ class Blocks {
             for (let i = 0; i < newBlocks.length; i++) {
                 this.createBlock(newBlocks[i]);
             }
+            this.logicommonCreateNotifi(e, editingTarget);
+
             break;
         }
         case 'change':
@@ -331,6 +333,9 @@ class Blocks {
                 name: e.name,
                 value: e.newValue
             });
+
+            this.logicommonChangeNotifi(e, editingTarget);
+
             break;
         case 'move':
             this.moveBlock({
@@ -353,6 +358,9 @@ class Blocks {
                 const newBlocks = adapter(e);
                 this.runtime.emitBlockEndDrag(newBlocks, e.blockId);
             }
+
+            this.logicommonEnddragNotifi(e, editingTarget);
+
             break;
         case 'delete':
             // Don't accept delete events for missing blocks,
@@ -365,6 +373,9 @@ class Blocks {
             if (this._blocks[e.blockId].topLevel) {
                 this.runtime.quietGlow(e.blockId);
             }
+
+            this.logicommonDeleteNotifi(e, editingTarget);
+
             this.deleteBlock(e.blockId);
             break;
         case 'var_create':
@@ -395,6 +406,9 @@ class Blocks {
                 stage.createVariable(e.varId, e.varName, e.varType, e.isCloud);
                 this.emitProjectChanged();
             }
+
+            this.logicommonVarCreateNotifi(e,editingTarget);
+
             break;
         case 'var_rename':
             if (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) {
@@ -414,12 +428,18 @@ class Blocks {
                 }
             }
             this.emitProjectChanged();
+
+            this.logicommonVarRenameNotifi(e,editingTarget);
+
             break;
         case 'var_delete': {
             const target = (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) ?
                 editingTarget : stage;
             target.deleteVariable(e.varId);
             this.emitProjectChanged();
+
+            this.logicommonVarDeleteNotifi(e,editingTarget);
+
             break;
         }
         case 'comment_create':
@@ -505,6 +525,609 @@ class Blocks {
         }
     }
 
+    logicommonCreateNotifi(e, editingTarget){
+
+        if(!editingTarget) return;
+
+        const blockid = e.blockId;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        //console.log("作成:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonChangeNotifi(e, editingTarget){
+
+        if(!editingTarget) return;
+
+        const blockid = e.blockId;
+
+        if(!['glide', 'move', 'set'].flatMap(prefix => [`${prefix}x`,`${prefix}y`] ).includes(blockid)){
+            const myblock = this._blocks[blockid];
+            const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+            const targetId = editingTarget.id;
+
+            var varName = null;
+            if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+                varName = myblock.fields.VARIABLE.value;
+            }
+
+            var listName = null;
+            if("LIST" in myblock.fields){
+                listName = myblock.fields.LIST.value;
+            }
+
+            console.log("action=変更/opcode=" + myblock.opcode + "/id=" + blockid + "/old=" + e.oldValue + "/new" + e.newValue + "/target=" + targetName + "/targetId=" + targetId + "/varName=" + varName + "/listName=" + listName);
+        }
+    }
+
+    logicommonEnddragNotifi(e, editingTarget){
+
+        if(!editingTarget) return;
+
+        const blockid = e.blockId;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        console.log(window.location.href);
+        console.log("ドラッグ:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonConnectNotifi(e, editingTarget){
+        const blockid = e.id;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+        const newParent = e.newParent;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        console.log("接続:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/newParent=" + newParent + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonDisconnectNotifi(e, editingTarget){
+        const blockid = e.id;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+        const oldParent = e.oldParent;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        console.log("切断:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/oldParent=" + oldParent + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonIncludeNotifi(e, editingTarget){
+        const blockid = e.id;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+        const newParent = e.newParent;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        console.log("内包:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/newParent=" + newParent + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonDisincludeNotifi(e, editingTarget){
+        const blockid = e.id;
+        const myblock = this._blocks[blockid];
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+        const oldParent = e.oldParent;
+        var varName = null;
+
+        var varName = null;
+        if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+            varName = myblock.fields.VARIABLE.value;
+        }
+
+        var listName = null;
+        if("LIST" in myblock.fields){
+            listName = myblock.fields.LIST.value;
+        }
+
+        console.log("内包解除:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/oldParent=" + oldParent + "/varName=" + varName + "/listName=" + listName);
+    }
+
+    logicommonVarCreateNotifi(e, editingTarget){
+        const blockid = e.id;
+
+        const variableId = e.varId;
+        const variableName = e.varName;
+        const variableType = e.varType;
+
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        console.log("変数作成:variableId=" + variableId + "/variableName=" + variableName + "/variableType=" + variableType);
+    }
+
+    logicommonVarDeleteNotifi(e, editingTarget){
+        const blockid = e.id;
+
+        const variableId = e.varId;
+        const variableName = e.varName;
+        const variableType = e.varType;
+
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        console.log("変数作h序:variableId=" + variableId + "/variableName=" + variableName + "/variableType=" + variableType);
+    }
+
+    logicommonVarRenameNotifi(e, editingTarget){
+        const blockid = e.id;
+
+        const variableId = e.varId;
+        const variableName = e.varName;
+        const variableType = e.varType;
+
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        console.log("変数名変更:variableId=" + variableId + "/variableName=" + variableName + "/variableType=" + variableType);
+    }
+
+    logicommonDeleteNotifi(e, editingTarget){
+        let toolblock = [
+            'control_forever',
+            'control_repeat',
+            'control_if',
+            'control_else',
+            'control_stop',
+            'control_stop_all',
+            'control_stop_this',
+            'control_stop_other',
+            'control_wait',
+            'control_waituntil',
+            'control_repeatuntil',
+            'control_while',
+            'control_foreach',
+            'control_startasclone',
+            'control_createcloneof',
+            'control_createcloneof_myself',
+            'control_deletethisclone',
+            'control_counter',
+            'control_incrcounter',
+            'control_clearcounter',
+            'control_allatonce',
+            'data_setvariableto',
+            'data_changevariableby',
+            'data_showvariable',
+            'data_hidevariable',
+            'data_addtolist',
+            'data_deleteoflist',
+            'data_deletealloflist',
+            'data_insertatlist',
+            'data_replaceitemoflist',
+            'data_itemoflist',
+            'data_itemnumoflist',
+            'data_lengthoflist',
+            'data_listcontainsitem',
+            'data_showlist',
+            'data_hidelist',
+            'data_index_all',
+            'data_index_last',
+            'data_index_random',
+            'event_whenflagclicked',
+            'event_whenthisspriteclicked',
+            'event_whenstageclicked',
+            'event_whentouchingobject',
+            'event_whenbroadcastreceived',
+            'event_whenbackdropswitchesto',
+            'event_whengreaterthan',
+            'event_whengreaterthan_timer',
+            'event_whengreaterthan_loudness',
+            'event_broadcast',
+            'event_broadcastandwait',
+            'event_whenkeypressed',
+            'event_whenkeypressed_space',
+            'event_whenkeypressed_left',
+            'event_whenkeypressed_right',
+            'event_whenkeypressed_down',
+            'event_whenkeypressed_up',
+            'event_whenkeypressed_any',
+            'looks_sayforsecs',
+            'looks_say',
+            'looks_hello',
+            'looks_thinkforsecs',
+            'looks_think',
+            'looks_hmm',
+            'looks_show',
+            'looks_hide',
+            'looks_hideallsprites',
+            'looks_effect_color',
+            'looks_effect_fisheye',
+            'looks_effect_whirl',
+            'looks_effect_pixelate',
+            'looks_effect_mosaic',
+            'looks_effect_brightness',
+            'looks_effect_ghost',
+            'looks_changeeffectby',
+            'looks_seteffectto',
+            'looks_cleargraphiceffects',
+            'looks_changesizeby',
+            'looks_setsizeto',
+            'looks_size',
+            'looks_changestretchby',
+            'looks_setstretchto',
+            'looks_switchcostumeto',
+            'looks_nextcostume',
+            'looks_switchbackdropto',
+            'looks_gotofrontback',
+            'looks_gotofrontback_front',
+            'looks_gotofrontback_back',
+            'looks_goforwardbackwardlayers',
+            'looks_goforwardbackwardlayers_forward',
+            'looks_goforwardbackwardlayers_backward',
+            'looks_backdropnumbername',
+            'looks_costumenumbername',
+            'looks_numbername_number',
+            'looks_numbername_name',
+            'looks_switchbackdroptoandwait',
+            'looks_nextbackdrop_block',
+            'looks_nextbackdrop',
+            'looks_previousbackdrop',
+            'looks_randombackdrop',
+            'motion_movesteps',
+            'motion_turnleft',
+            'motion_turnright',
+            'motion_pointindirection',
+            'motion_pointtowards',
+            'motion_pointtowards_pointer',
+            'motion_pointtowards_random',
+            'motion_goto',
+            'motion_goto_pointer',
+            'motion_goto_random',
+            'motion_gotoxy',
+            'motion_glidesecstoxy',
+            'motion_glideto',
+            'motion_glideto_pointer',
+            'motion_glideto_random',
+            'motion_changexby',
+            'motion_setx',
+            'motion_changeyby',
+            'motion_sety',
+            'motion_ifonedgebounce',
+            'motion_setrotationstyle',
+            'motion_setrotationstyle_leftright',
+            'motion_setrotationstyle_dontrotate',
+            'motion_setrotationstyle_allaround',
+            'motion_xposition',
+            'motion_yposition',
+            'motion_direction',
+            'motion_scrollright',
+            'motion_scrollup',
+            'motion_alignscene',
+            'motion_alignscene_bottomleft',
+            'motion_alignscene_bottomright',
+            'motion_alignscene_middle',
+            'motion_alignscene_topleft',
+            'motion_alignscene_topright',
+            'motion_xscroll',
+            'motion_yscroll',
+            'motion_stage_selected',
+            'operators_add',
+            'operators_subtract',
+            'operators_multiply',
+            'operators_divide',
+            'operators_random',
+            'operators_gt',
+            'operators_lt',
+            'operators_equals',
+            'operators_and',
+            'operators_or',
+            'operators_not',
+            'operators_join',
+            'operators_join_apple',
+            'operators_join_banana',
+            'operators_letterof',
+            'operators_letterof_apple',
+            'operators_length',
+            'operators_contains',
+            'operators_mod',
+            'operators_round',
+            'operators_mathop',
+            'operators_mathop_abs',
+            'operators_mathop_floor',
+            'operators_mathop_ceiling',
+            'operators_mathop_sqrt',
+            'operators_mathop_sin',
+            'operators_mathop_cos',
+            'operators_mathop_tan',
+            'operators_mathop_asin',
+            'operators_mathop_acos',
+            'operators_mathop_atan',
+            'operators_mathop_ln',
+            'operators_mathop_log',
+            'operators_mathop_eexp',
+            'operators_mathop_10exp',
+            'procedures_definition',
+            'sensing_touchingobject',
+            'sensing_touchingobject_pointer',
+            'sensing_touchingobject_edge',
+            'sensing_touchingcolor',
+            'sensing_coloristouchingcolor',
+            'sensing_distanceto',
+            'sensing_distanceto_pointer',
+            'sensing_askandwait',
+            'sensing_ask_text',
+            'sensing_answer',
+            'sensing_keypressed',
+            'sensing_mousedown',
+            'sensing_mousex',
+            'sensing_mousey',
+            'sensing_setdragmode',
+            'sensing_setdragmode_draggable',
+            'sensing_setdragmode_notdraggable',
+            'sensing_loudness',
+            'sensing_loud',
+            'sensing_timer',
+            'sensing_resettimer',
+            'sensing_of',
+            'sensing_of_xposition',
+            'sensing_of_yposition',
+            'sensing_of_direction',
+            'sensing_of_costumenumber',
+            'sensing_of_costumename',
+            'sensing_of_size',
+            'sensing_of_volume',
+            'sensing_of_backdropnumber',
+            'sensing_of_backdropname',
+            'sensing_of_stage',
+            'sensing_current',
+            'sensing_current_year',
+            'sensing_current_month',
+            'sensing_current_date',
+            'sensing_current_dayofweek',
+            'sensing_current_hour',
+            'sensing_current_minute',
+            'sensing_current_second',
+            'sensing_dayssince2000',
+            'sensing_username',
+            'sensing_userid',
+            'sound_play',
+            'sound_playuntildone',
+            'sound_stopallsounds',
+            'sound_seteffecto',
+            'sound_changeeffectby',
+            'sound_cleareffects',
+            'sound_effects_pitch',
+            'sound_effects_pan',
+            'sound_changevolumeby',
+            'sound_setvolumeto',
+            'sound_volume',
+            'sound_record',
+            'category_motion',
+            'category_looks',
+            'category_sound',
+            'category_events',
+            'category_control',
+            'category_sensing',
+            'category_operators',
+            'category_variables',
+            'category_myblocks',
+            'duplicate',
+            'delete',
+            'add_comment',
+            'remove_comment',
+            'delete_block',
+            'delete_x_blocks',
+            'delete_all_blocks',
+            'clean_up',
+            'help',
+            'undo',
+            'redo',
+            'edit_procedure',
+            'show_procedure_definition',
+            'workspace_comment_default_text',
+            'colour_hue_label',
+            'colour_saturation_label',
+            'colour_brightness_label',
+            'change_value_title',
+            'rename_variable',
+            'rename_variable_title',
+            'rename_variable_modal_title',
+            'new_variable',
+            'new_variable_title',
+            'variable_modal_title',
+            'variable_already_exists',
+            'variable_already_exists_for_another_type',
+            'delete_variable_confirmation',
+            'cannot_delete_variable_procedure',
+            'delete_variable',
+            'new_procedure',
+            'procedure_already_exists',
+            'procedure_default_name',
+            'procedure_used',
+            'new_list',
+            'new_list_title',
+            'list_modal_title',
+            'list_already_exists',
+            'rename_list_title',
+            'rename_list_modal_title',
+            'default_list_item',
+            'delete_list',
+            'rename_list',
+            'new_broadcast_message',
+            'new_broadcast_message_title',
+            'broadcast_modal_title',
+            'default_broadcast_message_name',
+            'looks_switchbackdropto',
+            'looks_switchbackdroptoandwait',
+            'looks_nextbackdrop',
+            'looks_changeeffectby',
+            'looks_seteffectto',
+            'looks_cleargraphiceffects',
+            'backdropnumbername',
+            'undefined_sound_playuntildone',
+            'undefined_sound_play',
+            'sound_stopallsounds',
+            'sound_changeeffectby',
+            'sound_seteffectto',
+            'sound_cleareffects',
+            'sound_changevolumeby',
+            'sound_setvolumeto',
+            'undefined_volume',
+            'event_whenflagclicked',
+            'event_whenkeypressed',
+            'event_whenstageclicked',
+            'event_whenbackdropswitchesto',
+            'event_whengreaterthan',
+            'event_whenbroadcastreceived',
+            'event_broadcast',
+            'event_broadcastandwait',
+            'control_wait',
+            'control_repeat',
+            'forever',
+            'control_if',
+            'control_if_else',
+            'wait_until',
+            'repeat_until',
+            'control_stop',
+            'control_create_clone_of',
+            'answer',
+            'sensing_keypressed',
+            'sensing_mousedown',
+            'sensing_mousex',
+            'sensing_mousey',
+            'loudness',
+            'timer',
+            'sensing_resettimer',
+            'of',
+            'current',
+            'sensing_dayssince2000',
+            'sensing_username',
+            'operator_add',
+            'operator_subtract',
+            'operator_multiply',
+            'operator_divide',
+            'operator_random',
+            'operator_gt',
+            'operator_lt',
+            'operator_equals',
+            'operator_and',
+            'operator_or',
+            'operator_not',
+            'operator_mod',
+            'operator_round',
+            'operator_mathop',
+            'motion_movesteps',
+            'motion_turnright',
+            'motion_turnleft',
+            'motion_goto',
+            'motion_gotoxy',
+            'motion_glideto',
+            'motion_glidesecstoxy',
+            'motion_pointindirection',
+            'motion_pointtowards',
+            'motion_changexby',
+            'motion_setx',
+            'motion_changeyby',
+            'motion_sety',
+            'motion_ifonedgebounce',
+            'motion_setrotationstyle',
+            'looks_sayforsecs',
+            'looks_say',
+            'looks_thinkforsecs',
+            'looks_think',
+            'looks_nextcostume',
+            'looks_changesizeby',
+            'looks_setsizeto',
+            'looks_show',
+            'looks_hide',
+            'looks_gotofrontback',
+            'looks_goforwardbackwardlayers',
+            'event_whenthisspriteclicked',
+            'control_start_as_clone',
+            'control_delete_this_clone',
+            'sensing_touchingobject',
+            'sensing_touchingcolor',
+            'sensing_coloristouchingcolor',
+            'sensing_distanceto',
+            'askandwait',
+            'sensing_setdragmode',
+            'operator_join',
+            'operator_letter_of',
+            'operator_length',
+            'operator_contains',
+            'data_setvariableto',
+            'data_changevariableby',
+            'data_showvariable',
+            'data_hidevariable',
+            'sound_playuntildone',
+            'sound_play',
+            'sound_volume',
+            'sensing_of',
+            'data_variable'
+        ]
+
+        if(!toolblock.includes(e.blockId)){
+            const blockid = e.blockId;
+            const myblock = this._blocks[blockid];
+            const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+            const targetId = editingTarget.id;
+
+            var varName = null;
+            if("VARIABLE" in myblock.fields && myblock.opcode == "data_variable"){
+                varName = myblock.fields.VARIABLE.value;
+            }
+
+            var listName = null;
+            if("LIST" in myblock.fields){
+                listName = myblock.fields.LIST.value;
+            }
+
+            console.log("削除:" + myblock.opcode + ":" + blockid + "/target=" + targetName + "/targetId=" + targetId + "/varName=" + varName + "/listName=" + listName);
+        }
+    }
     // ---------------------------------------------------------------------
 
     /**
@@ -716,9 +1339,17 @@ class Blocks {
             const oldParent = this._blocks[e.oldParent];
             if (typeof e.oldInput !== 'undefined' &&
                 oldParent.inputs[e.oldInput].block === e.id) {
+
+                if(!['math_number','text'].includes(block.opcode)){
+                    this.logicommonDisincludeNotifi(e, this.runtime.getEditingTarget());
+                }
+
                 // This block was connected to the old parent's input.
                 oldParent.inputs[e.oldInput].block = null;
             } else if (oldParent.next === e.id) {
+
+                this.logicommonDisconnectNotifi(e, this.runtime.getEditingTarget());
+
                 // This block was connected to the old parent's next connection.
                 oldParent.next = null;
             }
@@ -734,9 +1365,19 @@ class Blocks {
             this._deleteScript(e.id);
             // Otherwise, try to connect it in its new place.
             if (typeof e.newInput === 'undefined') {
+
+                this.logicommonConnectNotifi(e, this.runtime.getEditingTarget());
+
                 // Moved to the new parent's next connection.
                 this._blocks[e.newParent].next = e.id;
             } else {
+
+
+                if(!['math_number','text'].includes(block.opcode)){
+                    this.logicommonIncludeNotifi(e, this.runtime.getEditingTarget());
+                }
+
+
                 // Moved to the new parent's input.
                 // Don't obscure the shadow block.
                 let oldShadow = null;

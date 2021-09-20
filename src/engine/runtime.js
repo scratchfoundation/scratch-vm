@@ -1992,6 +1992,16 @@ class Runtime extends EventEmitter {
             this.targets[i].onGreenFlag();
         }
         this.startHats('event_whenflagclicked');
+
+        this.logicommonGreenflgNotifi();
+    }
+
+    logicommonGreenflgNotifi(){
+        console.log("緑の畑");
+    }
+
+    logicommonRunNotifi(){
+        console.log("実行");
     }
 
     /**
@@ -2129,8 +2139,19 @@ class Runtime extends EventEmitter {
 
         if (oldEditingTarget !== this._editingTarget) {
             this.requestToolboxExtensionsUpdate();
+
+            this.logicommonChangeEditingTargetNotifi(this._editingTarget);
+
         }
     }
+
+    logicommonChangeEditingTargetNotifi(editingTarget){
+        const targetName = editingTarget.sprite.name ? editingTarget.sprite.name : null;
+        const targetId = editingTarget.id;
+
+        console.log("editingTarget変更//target=" + targetName + "/targetId=" + targetId);
+    }
+
 
     /**
      * Set whether we are in 30 TPS compatibility mode.
@@ -2211,6 +2232,7 @@ class Runtime extends EventEmitter {
     _emitProjectRunStatus (nonMonitorThreadCount) {
         if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
             this.emit(Runtime.PROJECT_RUN_START);
+            this.logicommonRunNotifi();
         }
         if (this._nonMonitorThreadCount > 0 && nonMonitorThreadCount === 0) {
             this.emit(Runtime.PROJECT_RUN_STOP);
@@ -2426,6 +2448,12 @@ class Runtime extends EventEmitter {
      */
     emitProjectLoaded () {
         this.emit(Runtime.PROJECT_LOADED);
+        this.logicommonProjectLoadNotifi();
+    }
+
+
+    logicommonProjectLoadNotifi(){
+        console.log("プロジェクト開始");
     }
 
     /**
