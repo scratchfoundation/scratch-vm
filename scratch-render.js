@@ -12806,7 +12806,11 @@ var RenderWebGL = function (_EventEmitter) {
     }, {
         key: '_getContext',
         value: function _getContext(canvas) {
-            return twgl.getWebGLContext(canvas, { alpha: false, stencil: true, antialias: false });
+            var contextAttribs = { alpha: false, stencil: true, antialias: false };
+            // getWebGLContext = try WebGL 1.0 only
+            // getContext = try WebGL 2.0 and if that doesn't work, try WebGL 1.0
+            // getWebGLContext || getContext = try WebGL 1.0 and if that doesn't work, try WebGL 2.0
+            return twgl.getWebGLContext(canvas, contextAttribs) || twgl.getContext(canvas, contextAttribs);
         }
 
         /**
