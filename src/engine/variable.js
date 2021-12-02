@@ -59,7 +59,7 @@ class Variable {
     }
 
     /**
-     * Type representation for list variables.
+     * Type representation for broadcast message variables.
      * @const {string}
      */
     static get BROADCAST_MESSAGE_TYPE () {
