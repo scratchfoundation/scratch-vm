@@ -197,6 +197,20 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Set whether the VM is in "world stage mode."
+     * @param {boolean} worldStageModeOn Whether turbo mode should be set.
+     */
+    setWorldStageMode (worldStageModeOn) {
+        this.runtime.worldStage = !!worldStageModeOn;
+        if (this.runtime.worldStage) {
+            document.addEventListener('click', this.runtime.getTargetForStage().stopIfEffectsActive);
+        } else {
+            document.documentElement.style = null;
+            document.removeEventListener('click', this.runtime.getTargetForStage().stopIfEffectsActive);
+        }
+    }
+
+    /**
      * Set whether the VM is in 2.0 "compatibility mode."
      * When true, ticks go at 2.0 speed (30 TPS).
      * @param {boolean} compatibilityModeOn Whether compatibility mode is set.

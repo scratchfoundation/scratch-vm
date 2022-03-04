@@ -162,16 +162,9 @@ class RenderedTarget extends Target {
          */
         this.textToSpeechLanguage = null;
 
-        this.worldStage = false;
+        this.stopIfEffectsActive = this.stopIfEffectsActive.bind(this);
+
         this.stageEffects = ['color', 'ghost', 'brightness', 'pixelate', 'whirl', 'fisheye'];
-        try {
-            if (window.localStorage && localStorage.getItem && localStorage.getItem('worldStage') === 'true') {
-                this.worldStage = true;
-                document.addEventListener('click', this.stopIfEffectsActive.bind(this));
-            }
-        } catch (e) {
-            // Local Storage is unavailable
-        }
     }
 
     /**
@@ -410,12 +403,14 @@ class RenderedTarget extends Target {
         this.effects[effectName] = value;
         if (
             this.isStage &&
-            this.worldStage &&
+            this.runtime.worldStage &&
             this.stageEffects.indexOf(effectName) !== -1
         ) {
             this.oldDraw = this.oldDraw || this.renderer.draw.bind(this.renderer);
             this.draw = () => {
-                this.setWorldEffects();
+                if (this.runtime.worldStage) {
+                    this.setWorldEffects();
+                }
                 this.oldDraw();
             };
             this.renderer.draw = this.draw;
@@ -438,8 +433,7 @@ class RenderedTarget extends Target {
             this.effects[effectName] = 0;
         }
         if (
-            this.isStage &&
-            this.worldStage
+            this.isStage
         ) {
             document.documentElement.style = null;
         }
@@ -1334,7 +1328,7 @@ class RenderedTarget extends Target {
     }
 
     stopIfEffectsActive () {
-        if (!this.worldStage) return;
+        if (!this.runtime.worldStage) return;
         if (!this.isStage) return;
         if (
             this.effects.fisheye === 0 &&

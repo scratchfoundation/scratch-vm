@@ -297,6 +297,12 @@ class Runtime extends EventEmitter {
         this.turboMode = false;
 
         /**
+         * Whether the project is in "world stage mode."
+         * @type {Boolean}
+         */
+        this.worldStage = false;
+
+        /**
          * Whether the project is in "compatibility mode" (30 TPS).
          * @type {Boolean}
          */
