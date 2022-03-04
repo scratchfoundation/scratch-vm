@@ -163,7 +163,7 @@ class RenderedTarget extends Target {
         this.textToSpeechLanguage = null;
 
         this.worldStage = false;
-        this.stageEffects = ['color', 'ghost', 'brightness'];
+        this.stageEffects = ['color', 'ghost', 'brightness', 'pixelate', 'whirl', 'fisheye'];
         try {
             if (window.localStorage && localStorage.getItem && localStorage.getItem('worldStage') === 'true') {
                 this.worldStage = true;
@@ -1145,6 +1145,32 @@ class RenderedTarget extends Target {
             filters: []
         };
 
+        if (
+            !this.svgcontainer && (
+                this.effects.pixelate !== 0 ||
+                this.effects.whirl !== 0 ||
+                this.effects.fisheye !== 0
+            )
+        ) {
+            this.svgcontainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            this.svgcontainer.setAttribute('id', 'filtersvg');
+            this.svgcontainer.style.display = 'none';
+            document.body.appendChild(this.svgcontainer);
+        }
+
+        if (
+            (this.effects.whirl !== 0 || this.effects.fisheye !== 0) &&
+            (!this.worldWidth || !this.worldHeight || !this.imageData || !this.displacementMapCanvas)
+        ) {
+            this.worldWidth = window.innerWidth;
+            this.worldHeight = window.innerHeight;
+            this.displacementMapCanvas = document.createElement('canvas');
+            this.displacementMapCanvas.setAttribute('width', this.worldWidth);
+            this.displacementMapCanvas.setAttribute('height', this.worldHeight);
+            this.ctx = this.displacementMapCanvas.getContext('2d', {alpha: false});
+            this.imageData = this.ctx.getImageData(0, 0, this.worldWidth, this.worldHeight);
+        }
+
         if (this.effects.color !== 0) {
             styles.filters.push(`hue-rotate(${this.effects.color % 360}deg)`);
         }
@@ -1157,6 +1183,150 @@ class RenderedTarget extends Target {
             styles.filters.push(`brightness(${1 + (this.effects.brightness / 100)})`);
         }
 
+        if (this.effects.pixelate !== 0) {
+            if (this.effects.pixelate !== this.prevPixelate) {
+                const radius = Math.abs(this.effects.pixelate) / 10;
+                const floodSize = radius > 1 ? Math.floor(radius - 1) : 1;
+                const pixelateEffect = `
+                    <feFlood x="${floodSize}" y="${floodSize}" height="${(floodSize) / 2}" width="${(floodSize) / 2}" />
+                    <feComposite width="${radius * 2}" height="${radius * 2}" />
+                    <feTile result="a" />
+                    <feComposite in="SourceGraphic" in2="a" operator="in" />
+                    <feMorphology operator="dilate" radius="${radius}" />
+                `;
+                if (!this.pixelfilter) {
+                    this.pixelfilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                    this.pixelfilter.setAttribute('x', 0);
+                    this.pixelfilter.setAttribute('y', 0);
+                    this.pixelfilter.setAttribute('class', 'pixelate-filter');
+                    this.svgcontainer.appendChild(this.pixelfilter);
+                }
+                this.pixelfilter.innerHTML = pixelateEffect;
+                this.pixelfilter.setAttribute('id', `pixelate-${this.effects.pixelate}`);
+                this.prevPixelate = this.effects.pixelate;
+            }
+            styles.filters.push(`url(#pixelate-${this.effects.pixelate})`);
+        }
+        if (this.effects.whirl !== 0 || this.effects.fisheye !== 0) {
+            if (this.effects.whirl !== this.prevWhirl || this.effects.fisheye !== this.prevFisheye) {
+                const data = this.imageData.data;
+
+                const tSize = Math.max(this.worldWidth, this.worldHeight);
+                const centerX = this.worldWidth / 2;
+                const centerY = this.worldHeight / 2;
+                const tCenterX = centerX / tSize;
+                const tCenterY = centerY / tSize;
+                const whirlValue = -this.effects.whirl * Math.PI / 180;
+                const fisheyeValue = Math.max(0, (this.effects.fisheye + 100) / 100);
+                // const float kRadius = 0.5;
+                const RADIUS = 0.5;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    const x = (i / 4) % this.worldWidth;
+                    const y = Math.floor((i / 4) / this.worldWidth);
+                    let pixelX = x;
+                    let pixelY = y;
+                    let xC = 0;
+                    let yC = 0;
+
+                    if (this.effects.whirl !== 0) {
+                        const tX = x / tSize;
+                        const tY = y / tSize;
+                        // vec2 offset = texcoord0 - kCenter;
+                        const offsetX = tX - tCenterX;
+                        const offsetY = tY - tCenterY;
+                        // float offsetMagnitude = length(offset);
+                        const offsetMagnitude = Math.sqrt((offsetX * offsetX) + (offsetY * offsetY));
+                        // float whirlFactor = max(1.0 - (offsetMagnitude / kRadius), 0.0);
+                        const whirlFactor = Math.max(1.0 - (offsetMagnitude / RADIUS), 0.0);
+                        // float whirlActual = u_whirl * whirlFactor * whirlFactor;
+                        const whirlActual = whirlValue * whirlFactor * whirlFactor;
+                        // float sinWhirl = sin(whirlActual);
+                        const sinWhirl = Math.sin(whirlActual);
+                        // float cosWhirl = cos(whirlActual);
+                        const cosWhirl = Math.cos(whirlActual);
+                        // mat2 rotationMatrix = mat2(
+                        //     cosWhirl, -sinWhirl,
+                        //     sinWhirl, cosWhirl
+                        // );
+                        const rot1 = cosWhirl;
+                        const rot2 = -sinWhirl;
+                        const rot3 = sinWhirl;
+                        const rot4 = cosWhirl;
+
+                        // texcoord0 = rotationMatrix * offset + kCenter;
+                        pixelX = ((rot1 * offsetX) + (rot3 * offsetY) + tCenterX) * tSize;
+                        pixelY = ((rot2 * offsetX) + (rot4 * offsetY) + tCenterY) * tSize;
+                        xC += ((pixelX - x) / this.worldWidth / 2);
+                        yC += ((pixelY - y) / this.worldHeight / 2);
+                    }
+
+                    if (this.effects.fisheye !== 0) {
+                        // // vec2 vec = (texcoord0 - kCenter) / kCenter;
+                        // const vX = (dst[0] - CENTER_X) / CENTER_X;
+                        // const vY = (dst[1] - CENTER_Y) / CENTER_Y;
+                        const vecX = (x - centerX) / centerX;
+                        const vecY = (y - centerY) / centerY;
+                        // // float vecLength = length(vec);
+                        // const vLength = Math.sqrt((vX * vX) + (vY * vY));
+                        const vecLength = Math.sqrt((vecX * vecX) + (vecY * vecY));
+                        // // float r = pow(min(vecLength, 1.0), u_fisheye) * max(1.0, vecLength);
+                        // const r = Math.pow(Math.min(vLength, 1), uniforms.u_fisheye) * Math.max(1, vLength);
+                        const r = Math.pow(Math.min(vecLength, 1), fisheyeValue) * Math.max(1, vecLength);
+                        // // vec2 unit = vec / vecLength;
+                        // const unitX = vX / vLength;
+                        // const unitY = vY / vLength;
+                        const unitX = vecX / vecLength;
+                        const unitY = vecY / vecLength;
+                        // // texcoord0 = kCenter + r * unit * kCenter;
+                        // dst[0] = CENTER_X + (r * unitX * CENTER_X);
+                        // dst[1] = CENTER_Y + (r * unitY * CENTER_Y);
+                        pixelX = centerX + (r * unitX * centerX);
+                        pixelY = centerY + (r * unitY * centerY);
+                        xC += ((pixelX - x) / centerX);
+                        yC += ((pixelY - y) / centerY);
+                    }
+                    data[i + 0] = 128 + (xC * 128);
+                    data[i + 1] = 128 + (yC * 128);
+                }
+
+                this.ctx.putImageData(this.imageData, 0, 0);
+                const imageDataURL = this.displacementMapCanvas.toDataURL();
+
+                if (!this.whirleyeFilter) {
+                    this.whirleyeFilter = document.createElementNS('http://www.w3.org/2000/svg', 'filter');
+                    this.whirleyeFilter.setAttribute('filterUnits', 'objectBoundingBox');
+                    this.whirleyeFilter.setAttribute('primitiveUnits', 'userSpaceOnUse');
+                    this.whirleyeFilter.setAttribute('color-interpolation-filters', 'sRGB');
+                    this.whirleyeFilter.setAttribute('class', `whirleye-filter`);
+                    this.svgcontainer.appendChild(this.whirleyeFilter);
+                }
+                this.whirleyeFilter.innerHTML = `
+                    <feImage
+                        xlink:href="${imageDataURL}"
+                        x="0" y="0"
+                        width="${this.worldWidth}" height="${this.worldHeight}"
+                        result="image"
+                    />
+                    <feDisplacementMap
+                        id="wdpm"
+                        in="SourceGraphic"
+                        in2="image"
+                        scale="${tSize}"
+                        xChannelSelector="R"
+                        yChannelSelector="G"
+                        x="0" y="0"
+                        width="${this.worldWidth}" height="${this.worldHeight}"
+                        result="map"
+                    />
+                `;
+                this.whirleyeFilter.setAttribute('id', `whirl-filter-${this.effects.whirl}-${this.effects.fisheye}`);
+            }
+            styles.filters.push(`url(#whirl-filter-${this.effects.whirl}-${this.effects.fisheye})`);
+            this.prevWhirl = this.effects.whirl;
+            this.prevFisheye = this.effects.fisheye;
+        }
+
         document.documentElement.style.filter = styles.filters.join(' ');
         if (typeof styles.opacity !== 'undefined') {
             document.documentElement.style.opacity = styles.opacity;
@@ -1167,6 +1337,9 @@ class RenderedTarget extends Target {
         if (!this.worldStage) return;
         if (!this.isStage) return;
         if (
+            this.effects.fisheye === 0 &&
+            this.effects.whirl === 0 &&
+            this.effects.pixelate === 0 &&
             this.effects.brightness === 0 &&
             this.effects.ghost === 0
         ) {
