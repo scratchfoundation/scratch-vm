@@ -280,11 +280,25 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
         return loadVector_(costume, runtime, rotationCenter, optVersion)
             .catch(error => {
                 log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
+                
+                // Keep track of the old assetId until we're done loading the default costume
+                const oldAssetId = costume.assetId;
+                const oldRotationX = costume.rotationCenterX;
+                const oldRotationY = costume.rotationCenterY;
+                
                 // Use default asset if original fails to load
                 costume.assetId = runtime.storage.defaultAssetId.ImageVector;
                 costume.asset = runtime.storage.get(costume.assetId);
                 costume.md5 = `${costume.assetId}.${AssetType.ImageVector.runtimeFormat}`;
-                return loadVector_(costume, runtime);
+                return loadVector_(costume, runtime).then(loadedCostume => {
+                    loadedCostume.broken = {};
+                    loadedCostume.broken.assetId = oldAssetId;
+                    loadedCostume.broken.md5 = `${oldAssetId}.${AssetType.ImageVector.runtimeFormat}`;
+                    loadedCostume.broken.asset = runtime.storage.get(oldAssetId);
+                    loadedCostume.broken.rotationCenterX = oldRotationX;
+                    loadedCostume.broken.rotationCenterY = oldRotationY;
+                    return loadedCostume;
+                });
             });
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion);

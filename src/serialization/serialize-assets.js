@@ -16,10 +16,18 @@ const serializeAssets = function (runtime, assetType, optTargetId) {
         const currAssets = currTarget.sprite[assetType];
         for (let j = 0; j < currAssets.length; j++) {
             const currAsset = currAssets[j];
-            const asset = currAsset.asset;
+            let asset = currAsset.asset;
+            if (currAsset.broken) {
+                if (currAsset.broken.asset) {
+                    asset = currAsset.broken.asset;
+                } else {
+                    continue;
+                }
+            }
             assetDescs.push({
                 fileName: `${asset.assetId}.${asset.dataFormat}`,
-                fileContent: asset.data});
+                fileContent: asset.data
+            });
         }
     }
     return assetDescs;

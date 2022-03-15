@@ -345,7 +345,7 @@ const serializeBlocks = function (blocks) {
  */
 const serializeCostume = function (costume) {
     const obj = Object.create(null);
-    obj.assetId = costume.assetId;
+    obj.assetId = (costume.broken && costume.broken.assetId) || costume.assetId;
     obj.name = costume.name;
     obj.bitmapResolution = costume.bitmapResolution;
     // serialize this property with the name 'md5ext' because that's
@@ -353,10 +353,11 @@ const serializeCostume = function (costume) {
     // updated to actually refer to this as 'md5ext' instead of 'md5'
     // but that change should be made carefully since it is very
     // pervasive
-    obj.md5ext = costume.md5;
+    obj.md5ext = (costume.broken && costume.broken.md5) || costume.md5;
     obj.dataFormat = costume.dataFormat.toLowerCase();
-    obj.rotationCenterX = costume.rotationCenterX;
-    obj.rotationCenterY = costume.rotationCenterY;
+    // TODO: WATCH OUT FOR ZEROs HERE
+    obj.rotationCenterX = (costume.broken && costume.broken.rotationCenterX) || costume.rotationCenterX;
+    obj.rotationCenterY = (costume.broken && costume.broken.rotationCenterY) || costume.rotationCenterY;
     return obj;
 };
 
