@@ -55,7 +55,6 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
     const opcode = blockCached.opcode;
     const isHat = blockCached._isHat;
 
-    thread.pushReportedValue(resolvedValue);
     if (isHat) {
         // Hat predicate was evaluated.
         if (sequencer.runtime.getIsEdgeActivatedHat(opcode)) {
@@ -119,6 +118,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
             return '';
         }).then(resolvedValue => {
             if (thread.status === Thread.STATUS_DONE) return;
+            thread.pushReportedValue(resolvedValue);
             handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
             // If it's a command block or a top level reporter in a stackClick.
             if (lastOperation) thread.goToNextBlock();
