@@ -378,8 +378,8 @@ const execute = function (sequencer, thread) {
     if (thread.reported !== null) {
         const reported = thread.reported;
         // Reinstate all the previous values.
-        for (; i < reported.length; i++) {
-            const {opCached: oldOpCached, inputValue} = reported[i];
+        for (let j = 0; j < reported.length; j++) {
+            const {opCached: oldOpCached, inputValue} = reported[j];
 
             const opCached = ops.find(op => op.id === oldOpCached);
 
@@ -406,8 +406,6 @@ const execute = function (sequencer, thread) {
             const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.opCached));
             if (lastExisting) {
                 i = ops.findIndex(opCached => opCached.id === lastExisting.opCached) + 1;
-            } else {
-                i = 0;
             }
         }
 
