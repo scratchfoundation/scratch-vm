@@ -110,18 +110,19 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
         thread.status = Thread.STATUS_PROMISE_WAIT;
     }
     // Promise handlers
-    primitiveReportedValue.then(resolvedValue => {
-        if (thread.status === Thread.STATUS_DONE) return;
-        handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
-        // If it's a command block or a top level reporter in a stackClick.
-        if (lastOperation) thread.goToNextBlock();
-    }, rejectionReason => {
-        // Promise rejected: the primitive had some error.
-        // Log it and proceed.
-        log.warn('Primitive rejected promise: ', rejectionReason);
-        thread.status = Thread.STATUS_RUNNING;
-        thread.popStack();
-    });
+    primitiveReportedValue
+        .catch(rejectionReason => {
+            // Promise rejected: the primitive had some error.
+            // Log it and proceed.
+            log.warn('Primitive rejected promise: ', rejectionReason);
+            // Return an empty string
+            return '';
+        }).then(resolvedValue => {
+            if (thread.status === Thread.STATUS_DONE) return;
+            handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
+            // If it's a command block or a top level reporter in a stackClick.
+            if (lastOperation) thread.goToNextBlock();
+        });
 };
 
 /**
