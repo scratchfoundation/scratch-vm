@@ -379,9 +379,9 @@ const execute = function (sequencer, thread) {
         const reported = thread.reported;
         // Reinstate all the previous values.
         for (let j = 0; j < reported.length; j++) {
-            const {opCached: oldOpCached, inputValue} = reported[j];
+            const {oldOpID, inputValue} = reported[j];
 
-            const opCached = ops.find(op => op.id === oldOpCached);
+            const opCached = ops.find(op => op.id === oldOpID);
 
             if (opCached) {
                 const inputName = opCached._parentKey;
@@ -403,9 +403,9 @@ const execute = function (sequencer, thread) {
         // candidate. If an earlier block that was performed was removed then
         // we'll find the index where the last operation is now.
         if (reported.length > 0) {
-            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.opCached));
+            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.oldOpID));
             if (lastExisting) {
-                i = ops.findIndex(opCached => opCached.id === lastExisting.opCached) + 1;
+                i = ops.findIndex(opCached => opCached.id === lastExisting.oldOpID) + 1;
             }
         }
 
@@ -468,12 +468,12 @@ const execute = function (sequencer, thread) {
 
                 if (inputName === 'BROADCAST_INPUT') {
                     return {
-                        opCached: reportedCached.id,
+                        oldOpID: reportedCached.id,
                         inputValue: reportedValues[inputName].BROADCAST_OPTION.name
                     };
                 }
                 return {
-                    opCached: reportedCached.id,
+                    oldOpID: reportedCached.id,
                     inputValue: reportedValues[inputName]
                 };
             });
