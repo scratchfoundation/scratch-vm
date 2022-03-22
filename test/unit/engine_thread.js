@@ -17,7 +17,7 @@ test('spec', t => {
     t.type(th.peekStack, 'function');
     t.type(th.peekStackFrame, 'function');
     t.type(th.peekParentStackFrame, 'function');
-    t.type(th.pushReportedValue, 'function');
+    t.type(th.setResolvedValue, 'function');
     t.type(th.initParams, 'function');
     t.type(th.pushParam, 'function');
     t.type(th.peekStack, 'function');
@@ -86,12 +86,13 @@ test('peekParentStackFrame', t => {
     t.end();
 });
 
-test('pushReportedValue', t => {
+test('setResolvedValue', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
-    th.pushReportedValue('value');
-    t.strictEquals(th.justReported, 'value');
+    th.setResolvedValue('value');
+    t.strictEquals(th.justResolved, true);
+    t.strictEquals(th.resolvedValue, 'value');
 
     t.end();
 });
