@@ -99,7 +99,7 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
     }
 };
 
-const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, lastOperation) => {
+const handlePromise = (primitiveReportedValue, thread) => {
     if (thread.status === Thread.STATUS_RUNNING) {
         // Primitive returned a promise; automatically yield thread.
         thread.status = Thread.STATUS_PROMISE_WAIT;
@@ -114,13 +114,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
             return '';
         }).then(resolvedValue => {
             if (thread.status === Thread.STATUS_DONE) return;
-            // If it's a command block or a top level reporter in a stackClick.
-            if (lastOperation) {
-                handleReport(resolvedValue, sequencer, thread, blockCached);
-                thread.goToNextBlock();
-            } else {
-                thread.setResolvedValue(resolvedValue);
-            }
+            thread.setResolvedValue(resolvedValue);
             // Finished any yields.
             thread.status = Thread.STATUS_RUNNING;
         });
@@ -376,7 +370,9 @@ const execute = function (sequencer, thread) {
     const length = ops.length;
     let i = 0;
 
-    if (thread.reported !== null) {
+    // Just resolved a promise on this thread.
+    if (thread.justResolved) {
+        // Even if there were no reported values, thread.reported still exists, it's just empty
         const reported = thread.reported;
         // Reinstate all the previous values.
         for (let j = 0; j < reported.length; j++) {
@@ -410,28 +406,39 @@ const execute = function (sequencer, thread) {
             }
         }
 
+        const lastOperation = i === length - 1;
         // The reporting block must exist and must be the next one in the sequence of operations.
-        if (thread.justResolved && ops[i] && ops[i].id === thread.reportingBlockId) {
-            const opCached = ops[i];
+        if (ops[i] && ops[i].id === thread.reportingBlockId) {
             const inputValue = thread.resolvedValue;
+            const opCached = ops[i];
 
             thread.clearResolvedValue();
 
-            const inputName = opCached._parentKey;
-            const argValues = opCached._parentValues;
-
-            if (inputName === 'BROADCAST_INPUT') {
-                // Something is plugged into the broadcast input.
-                // Cast it to a string. We don't need an id here.
-                argValues.BROADCAST_OPTION.id = null;
-                argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
+            if (lastOperation) {
+                handleReport(inputValue, sequencer, thread, opCached);
             } else {
-                argValues[inputName] = inputValue;
+                const inputName = opCached._parentKey;
+                const argValues = opCached._parentValues;
+
+                if (inputName === 'BROADCAST_INPUT') {
+                    // Something is plugged into the broadcast input.
+                    // Cast it to a string. We don't need an id here.
+                    argValues.BROADCAST_OPTION.id = null;
+                    argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
+                } else {
+                    argValues[inputName] = inputValue;
+                }
             }
 
+            // If this is the last operation, this sets i to the length of `ops`. This means that the below loop will
+            // not execute, and we won't re-execute this block.
             i += 1;
+        } else if (lastOperation) {
+            throw new Error('Promise block seems to be missing its own op');
         }
 
+        // We'll later set these again if we didn't finish. It's fine to assume earlier that thread.reported is not
+        // null, because if it is, that's a logic bug.
         thread.reportingBlockId = null;
         thread.reported = null;
     }
@@ -455,7 +462,7 @@ const execute = function (sequencer, thread) {
 
         // If it's a promise, wait until promise resolves.
         if (isPromise(primitiveReportedValue)) {
-            handlePromise(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+            handlePromise(primitiveReportedValue, thread);
 
             // Store the already reported values. They will be thawed into the
             // future versions of the same operations by block id. The reporting
