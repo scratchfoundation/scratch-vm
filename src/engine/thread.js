@@ -185,10 +185,15 @@ class Thread {
         this.warpTimer = null;
 
         /**
-         * The value just reported by a promise.
-         * @type {*}
+         * Whether a promise just resolved on this thread and is waiting for its value to be used.
+         * @type {boolean}
          */
-        this.justReported = null;
+        this.justResolved = false;
+
+        /**
+         * The value just reported by a promise.
+         */
+        this.resolvedValue = null;
 
         /**
          * The id of the block that we will report the promise resolved value
@@ -347,11 +352,20 @@ class Thread {
     }
 
     /**
-     * Push a reported value to the parent of the current stack frame.
+     * Store a just-promise-resolved value on the thread.
      * @param {*} value Reported value to push.
      */
-    pushReportedValue (value) {
-        this.justReported = typeof value === 'undefined' ? null : value;
+    setResolvedValue (value) {
+        this.justResolved = true;
+        this.resolvedValue = typeof value === 'undefined' ? null : value;
+    }
+
+    /**
+     * Clear the value previously set by a resolved promise.
+     */
+    clearResolvedValue () {
+        this.justResolved = false;
+        this.resolvedValue = null;
     }
 
     /**
