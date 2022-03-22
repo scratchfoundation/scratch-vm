@@ -78,7 +78,7 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
             // if predicate was false.
             sequencer.retireThread(thread);
         }
-    } else if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+    } else if (typeof resolvedValue !== 'undefined' && resolvedValue !== null && thread.atStackTop()) {
         // In a non-hat, report the value visually if necessary if
         // at the top of the thread stack.
         if (thread.stackClick) {
@@ -119,7 +119,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
                 handleReport(resolvedValue, sequencer, thread, blockCached);
                 thread.goToNextBlock();
             } else {
-                thread.pushReportedValue(resolvedValue);
+                thread.setResolvedValue(resolvedValue);
             }
             // Finished any yields.
             thread.status = Thread.STATUS_RUNNING;
@@ -411,11 +411,11 @@ const execute = function (sequencer, thread) {
         }
 
         // The reporting block must exist and must be the next one in the sequence of operations.
-        if (thread.justReported !== null && ops[i] && ops[i].id === thread.reportingBlockId) {
+        if (thread.justResolved && ops[i] && ops[i].id === thread.reportingBlockId) {
             const opCached = ops[i];
-            const inputValue = thread.justReported;
+            const inputValue = thread.resolvedValue;
 
-            thread.justReported = null;
+            thread.clearResolvedValue();
 
             const inputName = opCached._parentKey;
             const argValues = opCached._parentValues;
@@ -461,7 +461,7 @@ const execute = function (sequencer, thread) {
             // future versions of the same operations by block id. The reporting
             // operation if it is promise waiting will set its parent value at
             // that time.
-            thread.justReported = null;
+            thread.clearResolvedValue();
             thread.reportingBlockId = ops[i].id;
             thread.reported = ops.slice(0, i).map(reportedCached => {
                 const inputName = reportedCached._parentKey;
