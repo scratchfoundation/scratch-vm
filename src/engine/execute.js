@@ -50,7 +50,7 @@ const isPromise = function (value) {
  */
 // @todo move this to callback attached to the thread when we have performance
 // metrics (dd)
-const handleReport = function (resolvedValue, sequencer, thread, blockCached, lastOperation) {
+const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
     const currentBlockId = blockCached.id;
     const opcode = blockCached.opcode;
     const isHat = blockCached._isHat;
@@ -78,28 +78,24 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
             // if predicate was false.
             sequencer.retireThread(thread);
         }
-    } else {
+    } else if (typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
         // In a non-hat, report the value visually if necessary if
         // at the top of the thread stack.
-        if (lastOperation && typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
-            if (thread.stackClick) {
-                sequencer.runtime.visualReport(currentBlockId, resolvedValue);
-            }
-            if (thread.updateMonitor) {
-                const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
-                if (targetId && !sequencer.runtime.getTargetById(targetId)) {
-                    // Target no longer exists
-                    return;
-                }
-                sequencer.runtime.requestUpdateMonitor(Map({
-                    id: currentBlockId,
-                    spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
-                    value: resolvedValue
-                }));
-            }
+        if (thread.stackClick) {
+            sequencer.runtime.visualReport(currentBlockId, resolvedValue);
         }
-        // Finished any yields.
-        thread.status = Thread.STATUS_RUNNING;
+        if (thread.updateMonitor) {
+            const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
+            if (targetId && !sequencer.runtime.getTargetById(targetId)) {
+                // Target no longer exists
+                return;
+            }
+            sequencer.runtime.requestUpdateMonitor(Map({
+                id: currentBlockId,
+                spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
+                value: resolvedValue
+            }));
+        }
     }
 };
 
@@ -118,10 +114,15 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
             return '';
         }).then(resolvedValue => {
             if (thread.status === Thread.STATUS_DONE) return;
-            thread.pushReportedValue(resolvedValue);
-            handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
             // If it's a command block or a top level reporter in a stackClick.
-            if (lastOperation) thread.goToNextBlock();
+            if (lastOperation) {
+                handleReport(resolvedValue, sequencer, thread, blockCached);
+                thread.goToNextBlock();
+            } else {
+                thread.pushReportedValue(resolvedValue);
+            }
+            // Finished any yields.
+            thread.status = Thread.STATUS_RUNNING;
         });
 };
 
@@ -483,7 +484,7 @@ const execute = function (sequencer, thread) {
             break;
         } else if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {
-                handleReport(primitiveReportedValue, sequencer, thread, opCached, lastOperation);
+                handleReport(primitiveReportedValue, sequencer, thread, opCached);
             } else {
                 // By definition a block that is not last in the list has a
                 // parent.
