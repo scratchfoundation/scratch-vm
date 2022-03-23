@@ -180,9 +180,9 @@ class Sequencer {
         execute(this, thread);
         if (thread.status === Thread.STATUS_RUNNING) {
             thread.goToNextBlock();
-            // TODO: is this necessary?
-            if (thread.stackFrame === null) {
-                this.sequencer.retireThread(thread);
+            if (thread.peekStack() === null) {
+                // Necessary to maintain the invariant that STATUS_RUNNING threads always have a next block
+                this.unwrapStack(thread);
             }
         }
     }
