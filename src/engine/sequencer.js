@@ -227,18 +227,6 @@ class Sequencer {
             thread.warpTimer = new Timer();
             thread.warpTimer.start();
         }
-        // The thread entered a null block while outside of stepThreads during a
-        // stepHat or promise resolution. We can't unwrap during stepHat or
-        // promise resolution if we need to change the thread status.
-        if (thread.peekStack() === null) {
-            // Unwrap the stack until we find a loop block, a non-null
-            // block, or the top of the stack.
-            this.unwrapStack(thread);
-            // If we unwrapped into a loop block, execute it immediately.
-            if (thread.status === Thread.STATUS_YIELD) {
-                thread.status = Thread.STATUS_RUNNING;
-            }
-        }
         while (thread.status === Thread.STATUS_RUNNING) {
             // Save the current block ID to notice if we did control flow.
             const currentBlockId = thread.peekStack();
