@@ -1651,6 +1651,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Stop a thread if a running script is removed from or attached to another script.
+     * @param {!string} destBlockId ID of block that starts the destination script.
+     * @param {!string} originBlockId ID of block that starts the original script.
+     */
+    stopMovingThread (destBlockId, originBlockId) {
+        if (destBlockId !== originBlockId) {
+            for (let i = 0; i < this.threads.length; i++) {
+                if (this.threads[i].topBlock === destBlockId ||
+                        this.threads[i].topBlock === originBlockId) {
+                    this._stopThread(this.threads[i]);
+                }
+            }
+        }
+    }
+
+    /**
      * Return whether a thread is currently active/running.
      * @param {?Thread} thread Thread object to check.
      * @return {boolean} True if the thread is active/running.

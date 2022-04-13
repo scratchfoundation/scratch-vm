@@ -213,7 +213,7 @@ class Blocks {
     getTopLevelScript (id) {
         let block = this._blocks[id];
         if (typeof block === 'undefined') return null;
-        while (block.parent !== null) {
+        while (block.parent !== null && typeof this._blocks[block.parent] !== 'undefined') {
             block = this._blocks[block.parent];
         }
         return block.id;
@@ -710,6 +710,11 @@ class Blocks {
             block.x = e.newCoordinate.x;
             block.y = e.newCoordinate.y;
         }
+
+        // Stops a thread if a running script is removed from or attached to another script
+        const destBlockId = (typeof e.newParent === 'undefined') ? e.id : this.getTopLevelScript(e.newParent);
+        const originBlockId = (typeof e.oldParent === 'undefined') ? e.id : this.getTopLevelScript(e.oldParent);
+        this.runtime.stopMovingThread(destBlockId, originBlockId);
 
         // Remove from any old parent.
         if (typeof e.oldParent !== 'undefined') {
