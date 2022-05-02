@@ -247,6 +247,37 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
         });
 };
 
+// Handle all manner of costume errors with a Gray Question Mark (default costume)
+// and preserve as much of the original costume data as possible
+// Returns a promise of a costume
+const handleCostumeLoadError = function (costume, runtime) {       
+    // Keep track of the old assetId until we're done loading the default costume
+    // const oldAsset = costume.asset; // could be null
+    const oldAssetId = costume.assetId;
+    const oldRotationX = costume.rotationCenterX;
+    const oldRotationY = costume.rotationCenterY;
+                
+    // Use default asset if original fails to load
+    costume.assetId = runtime.storage.defaultAssetId.ImageVector;
+    costume.asset = runtime.storage.get(costume.assetId);
+    costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+
+    const AssetType = runtime.storage.AssetType;
+    const defaultCostumePromise = (costume.dataFormat === AssetType.ImageVector.runtimeFormat) ?
+        loadVector_(costume, runtime) : loadBitmap_(costume, runtime);
+
+    return defaultCostumePromise.then(loadedCostume => {
+        loadedCostume.broken = {};
+        loadedCostume.broken.assetId = oldAssetId;
+        loadedCostume.broken.md5 = `${oldAssetId}.${costume.dataFormat}`;
+        // Should be null if we got here because the costume was missing
+        loadedCostume.broken.asset = runtime.storage.get(oldAssetId);
+        loadedCostume.broken.rotationCenterX = oldRotationX;
+        loadedCostume.broken.rotationCenterY = oldRotationY;
+        return loadedCostume;
+    });
+};
+
 /**
  * Initialize a costume from an asset asynchronously.
  * Do not call this unless there is a renderer attached.
@@ -280,29 +311,13 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
         return loadVector_(costume, runtime, rotationCenter, optVersion)
             .catch(error => {
                 log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
+                return handleCostumeLoadError(costume, runtime);
                 
-                // Keep track of the old assetId until we're done loading the default costume
-                const oldAssetId = costume.assetId;
-                const oldRotationX = costume.rotationCenterX;
-                const oldRotationY = costume.rotationCenterY;
-                
-                // Use default asset if original fails to load
-                costume.assetId = runtime.storage.defaultAssetId.ImageVector;
-                costume.asset = runtime.storage.get(costume.assetId);
-                costume.md5 = `${costume.assetId}.${AssetType.ImageVector.runtimeFormat}`;
-                return loadVector_(costume, runtime).then(loadedCostume => {
-                    loadedCostume.broken = {};
-                    loadedCostume.broken.assetId = oldAssetId;
-                    loadedCostume.broken.md5 = `${oldAssetId}.${AssetType.ImageVector.runtimeFormat}`;
-                    loadedCostume.broken.asset = runtime.storage.get(oldAssetId);
-                    loadedCostume.broken.rotationCenterX = oldRotationX;
-                    loadedCostume.broken.rotationCenterY = oldRotationY;
-                    return loadedCostume;
-                });
             });
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion);
 };
+
 
 /**
  * Load a costume's asset into memory asynchronously.
@@ -344,10 +359,6 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
     const costumePromise = runtime.storage.load(assetType, md5, ext);
-    if (!costumePromise) {
-        log.error(`Couldn't fetch costume asset: ${md5ext}`);
-        return;
-    }
 
     let textLayerPromise;
     if (costume.textLayerMD5) {
@@ -357,7 +368,12 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     }
 
     return Promise.all([costumePromise, textLayerPromise]).then(assetArray => {
-        costume.asset = assetArray[0];
+        if (assetArray[0]) {
+            costume.asset = assetArray[0];
+        } else {
+            return handleCostumeLoadError(costume, runtime);
+        }
+
         if (assetArray[1]) {
             costume.textLayerAsset = assetArray[1];
         }
