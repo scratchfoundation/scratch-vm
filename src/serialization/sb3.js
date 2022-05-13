@@ -355,9 +355,13 @@ const serializeCostume = function (costume) {
     // pervasive
     obj.md5ext = (costume.broken && costume.broken.md5) || costume.md5;
     obj.dataFormat = costume.dataFormat.toLowerCase();
-    // TODO: WATCH OUT FOR ZEROs HERE
-    obj.rotationCenterX = (costume.broken && costume.broken.rotationCenterX) || costume.rotationCenterX;
-    obj.rotationCenterY = (costume.broken && costume.broken.rotationCenterY) || costume.rotationCenterY;
+    if (costume.broken) {
+        obj.rotationCenterX = costume.broken.rotationCenterX;
+        obj.rotationCenterY = costume.broken.rotationCenterY;
+    } else {
+        obj.rotationCenterX = costume.rotationCenterX;
+        obj.rotationCenterY = costume.rotationCenterY;
+    }
     return obj;
 };
 
