@@ -12,5 +12,10 @@ module.exports = {
             return JSON.parse(zip.readAsText(projectEntry.entryName, 'utf8'));
         }
         return null;
+    },
+    extractAsset: function (path, assetFileName) {
+        const zip = new AdmZip(path);
+        const assetEntry = zip.getEntries().filter(item => item.entryName.match(assetFileName))[0];
+        return assetEntry.getData();
     }
 };

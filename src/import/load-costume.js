@@ -250,9 +250,9 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
 // Handle all manner of costume errors with a Gray Question Mark (default costume)
 // and preserve as much of the original costume data as possible
 // Returns a promise of a costume
-const handleCostumeLoadError = function (costume, runtime) {       
-    // Keep track of the old assetId until we're done loading the default costume
-    // const oldAsset = costume.asset; // could be null
+const handleCostumeLoadError = function (costume, runtime) {
+    // Keep track of the old asset information until we're done loading the default costume
+    const oldAsset = costume.asset; // could be null
     const oldAssetId = costume.assetId;
     const oldRotationX = costume.rotationCenterX;
     const oldRotationY = costume.rotationCenterY;
@@ -270,8 +270,10 @@ const handleCostumeLoadError = function (costume, runtime) {
         loadedCostume.broken = {};
         loadedCostume.broken.assetId = oldAssetId;
         loadedCostume.broken.md5 = `${oldAssetId}.${costume.dataFormat}`;
+
         // Should be null if we got here because the costume was missing
-        loadedCostume.broken.asset = runtime.storage.get(oldAssetId);
+        loadedCostume.broken.asset = oldAsset;
+        
         loadedCostume.broken.rotationCenterX = oldRotationX;
         loadedCostume.broken.rotationCenterY = oldRotationY;
         return loadedCostume;
@@ -310,7 +312,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
     if (costume.asset.assetType.runtimeFormat === AssetType.ImageVector.runtimeFormat) {
         return loadVector_(costume, runtime, rotationCenter, optVersion)
             .catch(error => {
-                log.warn(`Error loading vector image: ${error.name}: ${error.message}`);
+                log.warn(`Error loading vector image: ${error}`);
                 return handleCostumeLoadError(costume, runtime);
                 
             });
