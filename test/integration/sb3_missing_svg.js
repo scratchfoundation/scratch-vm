@@ -12,6 +12,7 @@ const makeTestStorage = require('../fixtures/make-test-storage');
 const FakeRenderer = require('../fixtures/fake-renderer');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
+const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
 const projectUri = path.resolve(__dirname, '../fixtures/missing_svg.sb3');
 const project = readFileToBuffer(projectUri);
@@ -81,6 +82,15 @@ test('load and then save sb3 project with missing costume file', t => {
     t.equal(missingCostume.dataFormat, 'svg');
     // Test that we didn't save any data about the costume being broken
     t.notOk(missingCostume.broken);
+
+    t.end();
+});
+
+test('serializeCostume does not save data for missing costume', t => {
+    const costumeDescs = serializeCostumes(vm.runtime);
+    t.equal(costumeDescs.length, 1); // Should only have one costume, the backdrop
+
+    t.not(costumeDescs[0].fileName, `${missingCostumeAssetId}.svg`);
 
     t.end();
     process.nextTick(process.exit);

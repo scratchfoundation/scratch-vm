@@ -12,6 +12,7 @@ const makeTestStorage = require('../fixtures/make-test-storage');
 const FakeRenderer = require('../fixtures/fake-renderer');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
+const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
 // The particular project that we're loading doesn't matter for this test
 const projectUri = path.resolve(__dirname, '../fixtures/default.sb3');
@@ -80,6 +81,13 @@ test('load and then save sprite3 with missing vector costume file', t => {
     // Test that we didn't save any data about the costume being broken
     t.notOk(missingCostume.broken);
 
+    t.end();
+});
+
+test('serializeCostume does not save data for missing costume', t => {
+    const costumeDescs = serializeCostumes(vm.runtime, vm.runtime.targets[2].id);
+    t.equal(costumeDescs.length, 0);
+    
     t.end();
     process.nextTick(process.exit);
 });
