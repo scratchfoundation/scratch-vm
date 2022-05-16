@@ -256,14 +256,18 @@ const handleCostumeLoadError = function (costume, runtime) {
     const oldAssetId = costume.assetId;
     const oldRotationX = costume.rotationCenterX;
     const oldRotationY = costume.rotationCenterY;
-                
-    // Use default asset if original fails to load
-    costume.assetId = runtime.storage.defaultAssetId.ImageVector;
-    costume.asset = runtime.storage.get(costume.assetId);
-    costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
 
     const AssetType = runtime.storage.AssetType;
-    const defaultCostumePromise = (costume.dataFormat === AssetType.ImageVector.runtimeFormat) ?
+    const isVector = costume.dataFormat === AssetType.ImageVector.runtimeFormat;
+                
+    // Use default asset if original fails to load
+    costume.assetId = isVector ?
+        runtime.storage.defaultAssetId.ImageVector :
+        runtime.storage.defaultAssetId.ImageBitmap;
+    costume.asset = runtime.storage.get(costume.assetId);
+    costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+    
+    const defaultCostumePromise = (isVector) ?
         loadVector_(costume, runtime) : loadBitmap_(costume, runtime);
 
     return defaultCostumePromise.then(loadedCostume => {
