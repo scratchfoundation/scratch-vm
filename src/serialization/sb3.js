@@ -345,20 +345,27 @@ const serializeBlocks = function (blocks) {
  */
 const serializeCostume = function (costume) {
     const obj = Object.create(null);
-    obj.assetId = (costume.broken && costume.broken.assetId) || costume.assetId;
     obj.name = costume.name;
     obj.bitmapResolution = costume.bitmapResolution;
-    // serialize this property with the name 'md5ext' because that's
-    // what it's actually referring to. TODO runtime objects need to be
-    // updated to actually refer to this as 'md5ext' instead of 'md5'
-    // but that change should be made carefully since it is very
-    // pervasive
-    obj.md5ext = (costume.broken && costume.broken.md5) || costume.md5;
     obj.dataFormat = costume.dataFormat.toLowerCase();
     if (costume.broken) {
+        obj.assetId = costume.broken.assetId;
+        
+        // serialize this property with the name 'md5ext' because that's
+        // what it's actually referring to. TODO runtime objects need to be
+        // updated to actually refer to this as 'md5ext' instead of 'md5'
+        // but that change should be made carefully since it is very
+        // pervasive
+        obj.md5ext = (costume.broken.md5);
+        
         obj.rotationCenterX = costume.broken.rotationCenterX;
         obj.rotationCenterY = costume.broken.rotationCenterY;
     } else {
+        obj.assetId = costume.assetId;
+        
+        // See related comment above
+        obj.md5ext = costume.md5;
+        
         obj.rotationCenterX = costume.rotationCenterX;
         obj.rotationCenterY = costume.rotationCenterY;
     }
