@@ -16,7 +16,7 @@ const serializeAssets = function (runtime, assetType, optTargetId) {
         const currAssets = currTarget.sprite[assetType];
         for (let j = 0; j < currAssets.length; j++) {
             const currAsset = currAssets[j];
-            const asset = currAsset.broken ? curAsset.broken.asset : currAsset.asset;
+            const asset = currAsset.broken ? currAsset.broken.asset : currAsset.asset;
             if (!asset) {
                 continue;
             }
