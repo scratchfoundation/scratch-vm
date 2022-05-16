@@ -15,7 +15,7 @@ module.exports = {
     },
     extractAsset: function (path, assetFileName) {
         const zip = new AdmZip(path);
-        const assetEntry = zip.getEntries().filter(item => item.entryName.match(assetFileName))[0];
+        const assetEntry = zip.getEntries().find(item => item.entryName.match(assetFileName));
         return assetEntry.getData();
     }
 };

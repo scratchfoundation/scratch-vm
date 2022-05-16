@@ -931,7 +931,7 @@ class VirtualMachine extends EventEmitter {
      */
     updateSvg (costumeIndex, svg, rotationCenterX, rotationCenterY) {
         const costume = this.editingTarget.getCostumes()[costumeIndex];
-        if (costume && costume.broken) costume.broken = null;
+        if (costume && costume.broken) delete costume.broken;
         if (costume && this.runtime && this.runtime.renderer) {
             costume.rotationCenterX = rotationCenterX;
             costume.rotationCenterY = rotationCenterY;

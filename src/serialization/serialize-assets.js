@@ -16,13 +16,9 @@ const serializeAssets = function (runtime, assetType, optTargetId) {
         const currAssets = currTarget.sprite[assetType];
         for (let j = 0; j < currAssets.length; j++) {
             const currAsset = currAssets[j];
-            let asset = currAsset.asset;
-            if (currAsset.broken) {
-                if (currAsset.broken.asset) {
-                    asset = currAsset.broken.asset;
-                } else {
-                    continue;
-                }
+            const asset = currAsset.broken ? curAsset.broken.asset : currAsset.asset;
+            if (!asset) {
+                continue;
             }
             assetDescs.push({
                 fileName: `${asset.assetId}.${asset.dataFormat}`,
