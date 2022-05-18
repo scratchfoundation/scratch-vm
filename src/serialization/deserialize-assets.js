@@ -18,7 +18,7 @@ const deserializeSound = function (sound, runtime, zip, assetFileName) {
     const fileName = assetFileName ? assetFileName : sound.md5;
     const storage = runtime.storage;
     if (!storage) {
-        log.error('No storage module present; cannot load sound asset: ', fileName);
+        log.warn('No storage module present; cannot load sound asset: ', fileName);
         return Promise.resolve(null);
     }
 
@@ -81,7 +81,7 @@ const deserializeCostume = function (costume, runtime, zip, assetFileName, textL
         `${assetId}.${costume.dataFormat}`;
 
     if (!storage) {
-        log.error('No storage module present; cannot load costume asset: ', fileName);
+        log.warn('No storage module present; cannot load costume asset: ', fileName);
         return Promise.resolve(null);
     }
 

@@ -23,13 +23,6 @@ let vm;
 
 tap.beforeEach(() => {
     const storage = makeTestStorage();
-    
-    // This line removes the webhelper from the list of available helpers.
-    // W/o the following line, this fails because storage doesn't handle the case
-    // where none of the tools have isGetSupported: true
-    // TODO: Remove this line when the related storage bug is resolved so that
-    // storage gracefully handles non-browser situations where assets are missing.
-    storage._helpers = [storage._helpers[0]];
 
     vm = new VirtualMachine();
     vm.attachStorage(storage);
@@ -88,8 +81,8 @@ test('load and then save sb3 project with missing costume file', t => {
 
 test('serializeCostume does not save data for missing costume', t => {
     const costumeDescs = serializeCostumes(vm.runtime);
+    
     t.equal(costumeDescs.length, 1); // Should only have one costume, the backdrop
-
     t.not(costumeDescs[0].fileName, `${missingCostumeAssetId}.svg`);
 
     t.end();

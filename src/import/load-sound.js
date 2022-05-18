@@ -14,7 +14,7 @@ const log = require('../util/log');
 const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
     sound.assetId = soundAsset.assetId;
     if (!runtime.audioEngine) {
-        log.error('No audio engine present; cannot load sound asset: ', sound.md5);
+        log.warn('No audio engine present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
     }
     return runtime.audioEngine.decodeSoundPlayer(Object.assign(
@@ -49,7 +49,7 @@ const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
  */
 const loadSound = function (sound, runtime, soundBank) {
     if (!runtime.storage) {
-        log.error('No storage module present; cannot load sound asset: ', sound.md5);
+        log.warn('No storage module present; cannot load sound asset: ', sound.md5);
         return Promise.resolve(sound);
     }
     const idParts = StringUtil.splitFirst(sound.md5, '.');
@@ -60,6 +60,12 @@ const loadSound = function (sound, runtime, soundBank) {
         (sound.asset && Promise.resolve(sound.asset)) ||
         runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
     ).then(soundAsset => {
+        if (!soundAsset) {
+            log.warn('Failed to find sound data: ', sound);
+            // TODO add missing sound error handling that adds the "gray question sound"
+            return sound;
+        }
+        
         sound.asset = soundAsset;
         return loadSoundFromAsset(sound, soundAsset, runtime, soundBank);
     });
