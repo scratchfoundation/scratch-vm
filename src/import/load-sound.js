@@ -38,6 +38,40 @@ const loadSoundFromAsset = function (sound, soundAsset, runtime, soundBank) {
     });
 };
 
+// Handle sound loading errors by replacing the runtime sound with the
+// default sound from storage, but keeping track of the original sound metadata
+// in a `broken` field
+const handleSoundLoadError = function (sound, runtime, soundBank) {
+    // Keep track of the old asset information until we're done loading the default sound
+    const oldAsset = sound.asset; // could be null
+    const oldAssetId = sound.assetId;
+    const oldSample = sound.sampleCount;
+    const oldRate = sound.rate;
+    const oldFormat = sound.format;
+    const oldDataFormat = sound.dataFormat;
+                
+    // Use default asset if original fails to load
+    sound.assetId = runtime.storage.defaultAssetId.Sound;
+    sound.asset = runtime.storage.get(sound.assetId);
+    sound.md5 = `${sound.assetId}.${sound.asset.dataFormat}`;
+
+    return loadSoundFromAsset(sound, sound.asset, runtime, soundBank).then(loadedSound => {
+        loadedSound.broken = {};
+        loadedSound.broken.assetId = oldAssetId;
+        loadedSound.broken.md5 = `${oldAssetId}.${oldDataFormat}`;
+
+        // Should be null if we got here because the sound was missing
+        loadedSound.broken.asset = oldAsset;
+        
+        loadedSound.broken.sampleCount = oldSample;
+        loadedSound.broken.rate = oldRate;
+        loadedSound.broken.format = oldFormat;
+        loadedSound.broken.dataFormat = oldDataFormat;
+        
+        return loadedSound;
+    });
+};
+
 /**
  * Load a sound's asset into memory asynchronously.
  * @param {!object} sound - the Scratch sound object.
@@ -60,13 +94,13 @@ const loadSound = function (sound, runtime, soundBank) {
         (sound.asset && Promise.resolve(sound.asset)) ||
         runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
     ).then(soundAsset => {
-        if (!soundAsset) {
-            log.warn('Failed to find sound data: ', sound);
-            // TODO add missing sound error handling that adds the "gray question sound"
-            return sound;
-        }
-        
         sound.asset = soundAsset;
+
+        if (!soundAsset) {
+            log.warn('Failed to find sound data: ', sound.md5);
+            return handleSoundLoadError(sound, runtime, soundBank);
+        }
+
         return loadSoundFromAsset(sound, soundAsset, runtime, soundBank);
     });
 };

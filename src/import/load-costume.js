@@ -256,6 +256,8 @@ const handleCostumeLoadError = function (costume, runtime) {
     const oldAssetId = costume.assetId;
     const oldRotationX = costume.rotationCenterX;
     const oldRotationY = costume.rotationCenterY;
+    const oldBitmapResolution = costume.bitmapResolution;
+    const oldDataFormat = costume.dataFormat;
 
     const AssetType = runtime.storage.AssetType;
     const isVector = costume.dataFormat === AssetType.ImageVector.runtimeFormat;
@@ -265,7 +267,7 @@ const handleCostumeLoadError = function (costume, runtime) {
         runtime.storage.defaultAssetId.ImageVector :
         runtime.storage.defaultAssetId.ImageBitmap;
     costume.asset = runtime.storage.get(costume.assetId);
-    costume.md5 = `${costume.assetId}.${costume.dataFormat}`;
+    costume.md5 = `${costume.assetId}.${costume.asset.dataFormat}`;
     
     const defaultCostumePromise = (isVector) ?
         loadVector_(costume, runtime) : loadBitmap_(costume, runtime);
@@ -273,13 +275,15 @@ const handleCostumeLoadError = function (costume, runtime) {
     return defaultCostumePromise.then(loadedCostume => {
         loadedCostume.broken = {};
         loadedCostume.broken.assetId = oldAssetId;
-        loadedCostume.broken.md5 = `${oldAssetId}.${costume.dataFormat}`;
+        loadedCostume.broken.md5 = `${oldAssetId}.${oldDataFormat}`;
 
         // Should be null if we got here because the costume was missing
         loadedCostume.broken.asset = oldAsset;
+        loadedCostume.broken.dataFormat = oldDataFormat;
         
         loadedCostume.broken.rotationCenterX = oldRotationX;
         loadedCostume.broken.rotationCenterY = oldRotationY;
+        loadedCostume.broken.bitmapResolution = oldBitmapResolution;
         return loadedCostume;
     });
 };

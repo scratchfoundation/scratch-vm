@@ -366,9 +366,11 @@ class VirtualMachine extends EventEmitter {
         const vm = this;
         const promise = storage.load(storage.AssetType.Project, id);
         promise.then(projectAsset => {
-            if (projectAsset) {
-                return vm.loadProject(projectAsset.data);
+            if (!projectAsset) {
+                log.error("Failed to fetch project with id: ", id);
+                return null;
             }
+            return vm.loadProject(projectAsset.data);
         });
     }
 

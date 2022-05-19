@@ -346,29 +346,24 @@ const serializeBlocks = function (blocks) {
 const serializeCostume = function (costume) {
     const obj = Object.create(null);
     obj.name = costume.name;
-    obj.bitmapResolution = costume.bitmapResolution;
-    obj.dataFormat = costume.dataFormat.toLowerCase();
-    if (costume.broken) {
-        obj.assetId = costume.broken.assetId;
-        
-        // serialize this property with the name 'md5ext' because that's
-        // what it's actually referring to. TODO runtime objects need to be
-        // updated to actually refer to this as 'md5ext' instead of 'md5'
-        // but that change should be made carefully since it is very
-        // pervasive
-        obj.md5ext = (costume.broken.md5);
-        
-        obj.rotationCenterX = costume.broken.rotationCenterX;
-        obj.rotationCenterY = costume.broken.rotationCenterY;
-    } else {
-        obj.assetId = costume.assetId;
-        
-        // See related comment above
-        obj.md5ext = costume.md5;
-        
-        obj.rotationCenterX = costume.rotationCenterX;
-        obj.rotationCenterY = costume.rotationCenterY;
-    }
+
+    const costumeToSerialize = costume.broken || costume;
+
+    obj.bitmapResolution = costumeToSerialize.bitmapResolution;
+    obj.dataFormat = costumeToSerialize.dataFormat.toLowerCase();
+    
+    obj.assetId = costumeToSerialize.assetId;
+    
+    // serialize this property with the name 'md5ext' because that's
+    // what it's actually referring to. TODO runtime objects need to be
+    // updated to actually refer to this as 'md5ext' instead of 'md5'
+    // but that change should be made carefully since it is very
+    // pervasive
+    obj.md5ext = costumeToSerialize.md5;
+    
+    obj.rotationCenterX = costumeToSerialize.rotationCenterX;
+    obj.rotationCenterY = costumeToSerialize.rotationCenterY;
+
     return obj;
 };
 
@@ -379,18 +374,21 @@ const serializeCostume = function (costume) {
  */
 const serializeSound = function (sound) {
     const obj = Object.create(null);
-    obj.assetId = sound.assetId;
     obj.name = sound.name;
-    obj.dataFormat = sound.dataFormat.toLowerCase();
-    obj.format = sound.format;
-    obj.rate = sound.rate;
-    obj.sampleCount = sound.sampleCount;
+    
+    const soundToSerialize = sound.broken || sound;
+
+    obj.assetId = soundToSerialize.assetId;
+    obj.dataFormat = soundToSerialize.dataFormat.toLowerCase();
+    obj.format = soundToSerialize.format;
+    obj.rate = soundToSerialize.rate;
+    obj.sampleCount = soundToSerialize.sampleCount;
     // serialize this property with the name 'md5ext' because that's
     // what it's actually referring to. TODO runtime objects need to be
     // updated to actually refer to this as 'md5ext' instead of 'md5'
     // but that change should be made carefully since it is very
     // pervasive
-    obj.md5ext = sound.md5;
+    obj.md5ext = soundToSerialize.md5;
     return obj;
 };
 
