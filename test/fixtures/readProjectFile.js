@@ -7,10 +7,15 @@ module.exports = {
     },
     extractProjectJson: function (path) {
         const zip = new AdmZip(path);
-        const projectEntry = zip.getEntries().filter(item => item.entryName.match(/project\.json/))[0];
+        const projectEntry = zip.getEntries().find(item => item.entryName.match(/project\.json/));
         if (projectEntry) {
             return JSON.parse(zip.readAsText(projectEntry.entryName, 'utf8'));
         }
         return null;
+    },
+    extractAsset: function (path, assetFileName) {
+        const zip = new AdmZip(path);
+        const assetEntry = zip.getEntries().find(item => item.entryName.match(assetFileName));
+        return assetEntry.getData();
     }
 };

@@ -4,6 +4,19 @@ const FakeRenderer = function () {
     this.y = 0;
     this.order = 0;
     this.spriteCount = 5;
+    this._nextSkinId = -1;
+};
+
+FakeRenderer.prototype.createSVGSkin = function () {
+    return this._nextSkinId++;
+};
+
+FakeRenderer.prototype.getSkinSize = function (d) { // eslint-disable-line no-unused-vars
+    return [0, 0];
+};
+
+FakeRenderer.prototype.getSkinRotationCenter = function (d) { // eslint-disable-line no-unused-vars
+    return [0, 0];
 };
 
 FakeRenderer.prototype.createDrawable = function () {
