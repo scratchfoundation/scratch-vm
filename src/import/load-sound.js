@@ -93,16 +93,21 @@ const loadSound = function (sound, runtime, soundBank) {
     return (
         (sound.asset && Promise.resolve(sound.asset)) ||
         runtime.storage.load(runtime.storage.AssetType.Sound, md5, ext)
-    ).then(soundAsset => {
-        sound.asset = soundAsset;
+    )
+        .then(soundAsset => {
+            sound.asset = soundAsset;
 
-        if (!soundAsset) {
-            log.warn('Failed to find sound data: ', sound.md5);
+            if (!soundAsset) {
+                log.warn('Failed to find sound data: ', sound.md5);
+                return handleSoundLoadError(sound, runtime, soundBank);
+            }
+
+            return loadSoundFromAsset(sound, soundAsset, runtime, soundBank);
+        })
+        .catch(e => {
+            log.warn(`Failed to load sound: ${sound.md5} with error: ${e}`);
             return handleSoundLoadError(sound, runtime, soundBank);
-        }
-
-        return loadSoundFromAsset(sound, soundAsset, runtime, soundBank);
-    });
+        });
 };
 
 module.exports = {
