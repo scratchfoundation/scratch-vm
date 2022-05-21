@@ -11,6 +11,10 @@ FakeRenderer.prototype.createSVGSkin = function () {
     return this._nextSkinId++;
 };
 
+FakeRenderer.prototype.createBitmapSkin = function () {
+    return this._nextSkinId++;
+};
+
 FakeRenderer.prototype.getSkinSize = function (d) { // eslint-disable-line no-unused-vars
     return [0, 0];
 };
