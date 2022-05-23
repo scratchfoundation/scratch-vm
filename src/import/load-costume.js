@@ -99,7 +99,7 @@ const canvasPool = (function () {
  *     assetMatchesBase is true if the asset matches the base layer; false if it required adjustment
  */
 const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
-    if (!costume || !costume.asset) {
+    if (!costume || !costume.asset) { // TODO: We can probably remove this check...
         return Promise.reject('Costume load failed. Assets were missing.');
     }
     if (!runtime.v2BitmapAdapter) {
@@ -176,7 +176,7 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
                 assetMatchesBase: scale === 1 && !textImageElement
             };
         })
-        .catch(() => {
+        .finally(() => {
             // Clean up the text layer properties if it fails to load
             delete costume.textLayerMD5;
             delete costume.textLayerAsset;
@@ -325,7 +325,11 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
                 
             });
     }
-    return loadBitmap_(costume, runtime, rotationCenter, optVersion);
+    return loadBitmap_(costume, runtime, rotationCenter, optVersion)
+        .catch(error => {
+            log.warn(`Error loading bitmap image: ${error}`);
+            return handleCostumeLoadError(costume, runtime);
+        });
 };
 
 
@@ -377,18 +381,25 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
         textLayerPromise = Promise.resolve(null);
     }
 
-    return Promise.all([costumePromise, textLayerPromise]).then(assetArray => {
-        if (assetArray[0]) {
-            costume.asset = assetArray[0];
-        } else {
-            return handleCostumeLoadError(costume, runtime);
-        }
+    return Promise.all([costumePromise, textLayerPromise])
+        .then(assetArray => {
+            if (assetArray[0]) {
+                costume.asset = assetArray[0];
+            } else {
+                return handleCostumeLoadError(costume, runtime);
+            }
 
-        if (assetArray[1]) {
-            costume.textLayerAsset = assetArray[1];
-        }
-        return loadCostumeFromAsset(costume, runtime, optVersion);
-    });
+            if (assetArray[1]) {
+                costume.textLayerAsset = assetArray[1];
+            }
+            return loadCostumeFromAsset(costume, runtime, optVersion);
+        })
+        .catch(error => {
+            // Handle case where storage.load rejects with errors
+            // instead of resolving null
+            log.warn('Error loading costume: ', error);
+            return handleCostumeLoadError(costume, runtime);
+        });
 };
 
 module.exports = {

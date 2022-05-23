@@ -1,6 +1,6 @@
 /**
  * This test ensures that the VM gracefully handles an sb2 project with
- * a missing vector costume. The VM should handle this safely by displaying
+ * a missing bitmap costume. The VM should handle this safely by displaying
  * a Gray Question Mark, but keeping track of the original costume data
  * and serializing the original costume data back out. The saved project.json
  * should not reflect that the costume is broken and should therefore re-attempt
@@ -15,10 +15,11 @@ const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer
 const VirtualMachine = require('../../src/index');
 const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
-const projectUri = path.resolve(__dirname, '../fixtures/missing_svg.sb2');
+const projectUri = path.resolve(__dirname, '../fixtures/missing_png.sb2');
 const project = readFileToBuffer(projectUri);
 
-const missingCostumeAssetId = 'beca8009621913e2f5b3111eed2d8210';
+
+const missingCostumeAssetId = 'aadce129bfe4e57f0dd81478f3ed82aa';
 
 global.Image = function () {
     const image = {
@@ -53,22 +54,22 @@ tap.beforeEach(() => {
 
 const test = tap.test;
 
-test('loading sb2 project with missing vector costume file', t => {
+test('loading sb2 project with missing bitmap costume file', t => {
     t.equal(vm.runtime.targets.length, 2);
     
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
-    const blueGuySprite = vm.runtime.targets[1];
-    t.equal(blueGuySprite.getName(), 'Blue Guy');
-    t.equal(blueGuySprite.getCostumes().length, 1);
+    const greenGuySprite = vm.runtime.targets[1];
+    t.equal(greenGuySprite.getName(), 'GreenGuy');
+    t.equal(greenGuySprite.getCostumes().length, 1);
     
-    const missingCostume = blueGuySprite.getCostumes()[0];
-    t.equal(missingCostume.name, 'Blue Guy 2');
+    const missingCostume = greenGuySprite.getCostumes()[0];
+    t.equal(missingCostume.name, 'GreenGuy');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
-    const defaultVectorAssetId = vm.runtime.storage.defaultAssetId.ImageVector;
+    const defaultVectorAssetId = vm.runtime.storage.defaultAssetId.ImageBitmap;
     t.equal(missingCostume.assetId, defaultVectorAssetId);
-    t.equal(missingCostume.dataFormat, 'svg');
+    t.equal(missingCostume.dataFormat, 'png');
     // Runtime should have info about broken asset
     t.ok(missingCostume.broken);
     t.equal(missingCostume.broken.assetId, missingCostumeAssetId);
@@ -84,15 +85,15 @@ test('load and then save sb2 project with missing costume file', t => {
     const stage = resavedProject.targets[0];
     t.ok(stage.isStage);
 
-    const blueGuySprite = resavedProject.targets[1];
-    t.equal(blueGuySprite.name, 'Blue Guy');
-    t.equal(blueGuySprite.costumes.length, 1);
+    const greenGuySprite = resavedProject.targets[1];
+    t.equal(greenGuySprite.name, 'GreenGuy');
+    t.equal(greenGuySprite.costumes.length, 1);
     
-    const missingCostume = blueGuySprite.costumes[0];
-    t.equal(missingCostume.name, 'Blue Guy 2');
+    const missingCostume = greenGuySprite.costumes[0];
+    t.equal(missingCostume.name, 'GreenGuy');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
     t.equal(missingCostume.assetId, missingCostumeAssetId);
-    t.equal(missingCostume.dataFormat, 'svg');
+    t.equal(missingCostume.dataFormat, 'png');
     // Test that we didn't save any data about the costume being broken
     t.notOk(missingCostume.broken);
 
@@ -103,7 +104,7 @@ test('serializeCostume does not save data for missing costume', t => {
     const costumeDescs = serializeCostumes(vm.runtime);
     
     t.equal(costumeDescs.length, 1); // Should only have one costume, the backdrop
-    t.not(costumeDescs[0].fileName, `${missingCostumeAssetId}.svg`);
+    t.not(costumeDescs[0].fileName, `${missingCostumeAssetId}.png`);
 
     t.end();
     process.nextTick(process.exit);
