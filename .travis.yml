@@ -1,7 +1,6 @@
 language: node_js
 node_js:
-- 8
-- 10
+- lts/*
 env:
   global:
   - NODE_ENV=production
@@ -19,12 +18,9 @@ script: npm run $NPM_SCRIPT
 jobs:
     include:
     - env: NPM_SCRIPT=lint
-      node_js: 8
     - env: NPM_SCRIPT=build
-      node_js: 8
       if: not (type != pull_request AND (branch =~ /^(develop|master|hotfix\/)/))
     - stage: release
-      node_js: 8
       env: NPM_SCRIPT=build
       before_deploy:
       - >
