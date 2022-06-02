@@ -1,0 +1,37 @@
+version: 2.1
+orbs:
+  node: circleci/node@5
+jobs:
+  branch-job:
+    executor: node/default # defaults to LTS
+    steps:
+    - checkout
+    - node/install-packages
+    - run: npm test
+    - run: npx commitlint --from=`git merge-base HEAD develop`
+    - run: npm run build
+  release-job:
+    executor: node/default # defaults to LTS
+    steps:
+    - checkout
+    - node/install-packages
+    - run: npm test
+    - run: npx commitlint --from='HEAD~1'
+    - run: npm run build
+    - run: npx semantic-release
+workflows:
+  version: 2
+  branch-workflow:
+    jobs:
+      - branch-job:
+          filters:
+            branches:
+              ignore:
+                - develop
+  release-workflow:
+    jobs:
+      - release-job:
+          filters:
+            branches:
+              only:
+                - develop
