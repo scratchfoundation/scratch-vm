@@ -34,6 +34,12 @@
       "path": "cz-conventional-changelog"
     }
   },
+  "tap": {
+      "branches": 60,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
+  },
   "dependencies": {
     "@vernier/godirect": "1.5.0",
     "arraybuffer-loader": "^1.0.6",
@@ -90,7 +96,7 @@
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
     "stats.js": "0.17.0",
-    "tap": "12.0.1",
+    "tap": "16.2.0",
     "tiny-worker": "2.3.0",
     "uglifyjs-webpack-plugin": "1.2.7",
     "webpack": "4.46.0",
