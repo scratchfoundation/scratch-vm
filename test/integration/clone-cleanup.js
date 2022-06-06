@@ -4,7 +4,7 @@ const makeTestStorage = require('../fixtures/make-test-storage');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
 
-const projectUri = path.resolve(__dirname, '../fixtures/clone-cleanup.sb2');
+const projectUri = path.resolve(__dirname, '../fixtures/clone-cleanup.sb3');
 const project = readFileToBuffer(projectUri);
 
 test('clone-cleanup', t => {
@@ -16,12 +16,6 @@ test('clone-cleanup', t => {
      * @type {number}
      */
     let testStep = -1;
-
-    /**
-     * We test using setInterval; track the interval ID here so we can cancel it.
-     * @type {object}
-     */
-    let testInterval = null;
 
     const verifyCounts = (expectedClones, extraThreads) => {
         // stage plus one sprite, plus clones
@@ -60,15 +54,17 @@ test('clone-cleanup', t => {
             break;
 
         case 3:
-            // The second batch of clones has been created and the main thread has ended
-            verifyCounts(10, 0);
+            // The second batch of clones has been created and the main thread is about to end
+            verifyCounts(10, 1);
+
+            // After the main thread ends, do one last test step
+            setTimeout(() => testNextStep(), 1000);
             break;
 
         case 4:
             // The second batch of clones has deleted themselves; everything is finished
             verifyCounts(0, 0);
 
-            clearInterval(testInterval);
             t.end();
             process.nextTick(process.exit);
             break;
@@ -88,8 +84,8 @@ test('clone-cleanup', t => {
 
             vm.greenFlag();
 
-            // Every second, advance the testing step
-            testInterval = setInterval(testNextStep, 1000);
+            // Let the project control the pace of the tests
+            vm.runtime.on('SAY', () => testNextStep());
         });
     });
 
