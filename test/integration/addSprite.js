@@ -27,8 +27,8 @@ test('default cat', t => {
     vm.on('playgroundData', e => {
         const threads = JSON.parse(e.threads);
         t.ok(threads.length === 0);
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     vm.start();

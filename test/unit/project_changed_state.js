@@ -27,8 +27,6 @@ tap.beforeEach(() => {
     });
 });
 
-tap.tearDown(() => process.nextTick(process.exit));
-
 const test = tap.test;
 
 test('Adding a sprite (from sprite2) should emit a project changed event', t => {

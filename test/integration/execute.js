@@ -66,6 +66,8 @@ fs.readdirSync(executeDir)
             log.suggest.deny('vm', 'error');
             t.tearDown(() => log.suggest.clear());
 
+            const vm = new VirtualMachine();
+
             // Map string messages to tap reporting methods. This will be used
             // with events from scratch's runtime emitted on block instructions.
             let didPlan;
@@ -86,6 +88,7 @@ fs.readdirSync(executeDir)
                 },
                 end () {
                     didEnd = true;
+                    vm.quit();
                     t.end();
                 }
             };
@@ -100,7 +103,6 @@ fs.readdirSync(executeDir)
                 return reporters.comment(text);
             };
 
-            const vm = new VirtualMachine();
             vm.attachStorage(makeTestStorage());
 
             // Start the VM and initialize some vm properties.
@@ -138,6 +140,7 @@ fs.readdirSync(executeDir)
                     // it can be resolved.
                     if (!didEnd) {
                         t.fail('did not say "end"');
+                        vm.quit();
                         t.end();
                     }
                 });

@@ -48,7 +48,7 @@ test('unknown opcode', t => {
         t.true(blocks.getBlock(fourthBlockInputId).shadow);
         t.equal(blocks.getBlock(fourthBlockInputId).opcode, 'sound_sounds_menu');
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 });

@@ -55,14 +55,14 @@ const test = tap.test;
 
 test('loading sb2 project with missing vector costume file', t => {
     t.equal(vm.runtime.targets.length, 2);
-    
+
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
     const blueGuySprite = vm.runtime.targets[1];
     t.equal(blueGuySprite.getName(), 'Blue Guy');
     t.equal(blueGuySprite.getCostumes().length, 1);
-    
+
     const missingCostume = blueGuySprite.getCostumes()[0];
     t.equal(missingCostume.name, 'Blue Guy 2');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
@@ -80,14 +80,14 @@ test('load and then save sb2 project with missing costume file', t => {
     const resavedProject = JSON.parse(vm.toJSON());
 
     t.equal(resavedProject.targets.length, 2);
-    
+
     const stage = resavedProject.targets[0];
     t.ok(stage.isStage);
 
     const blueGuySprite = resavedProject.targets[1];
     t.equal(blueGuySprite.name, 'Blue Guy');
     t.equal(blueGuySprite.costumes.length, 1);
-    
+
     const missingCostume = blueGuySprite.costumes[0];
     t.equal(missingCostume.name, 'Blue Guy 2');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
@@ -101,10 +101,9 @@ test('load and then save sb2 project with missing costume file', t => {
 
 test('serializeCostume does not save data for missing costume', t => {
     const costumeDescs = serializeCostumes(vm.runtime);
-    
+
     t.equal(costumeDescs.length, 1); // Should only have one costume, the backdrop
     t.not(costumeDescs[0].fileName, `${missingCostumeAssetId}.svg`);
 
     t.end();
-    process.nextTick(process.exit);
 });

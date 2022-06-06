@@ -4,8 +4,6 @@ const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer
 const makeTestStorage = require('../fixtures/make-test-storage');
 const VirtualMachine = require('../../src/virtual-machine');
 
-tap.tearDown(() => process.nextTick(process.exit));
-
 const test = tap.test;
 
 // Test that loading a project does not emit a project change

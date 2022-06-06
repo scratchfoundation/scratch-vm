@@ -14,8 +14,8 @@ test('data', t => {
     // Evaluate playground data and exit
     vm.on('playgroundData', () => {
         // @todo Additional tests
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

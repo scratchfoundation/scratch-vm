@@ -49,7 +49,7 @@ test('unknown opcode', t => {
         t.equal(undefinedComment.x, 0);
         t.equal(undefinedComment.y, 0);
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 });

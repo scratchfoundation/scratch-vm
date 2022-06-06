@@ -81,8 +81,8 @@ class ExtensionManager {
         this.pendingWorkers = [];
 
         /**
-         * Set of loaded extension URLs/IDs (equivalent for built-in extensions).
-         * @type {Set.<string>}
+         * Map of loaded extension URLs/IDs (equivalent for built-in extensions) to service name.
+         * @type {Map.<string,string>}
          * @private
          */
         this._loadedExtensions = new Map();

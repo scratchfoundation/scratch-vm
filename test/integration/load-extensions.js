@@ -3,9 +3,19 @@ const tap = require('tap');
 const {test} = tap;
 const fs = require('fs');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
+const dispatch = require('../../src/dispatch/central-dispatch');
 const VirtualMachine = require('../../src/index');
 
-tap.tearDown(() => process.nextTick(process.exit));
+/**
+ * Call _stopLoop() on the Video Sensing extension.
+ * @param {VirtualMachine} vm - a VM instance which has loaded the 'videoSensing' extension.
+ */
+const stopVideoLoop = vm => {
+    // TODO: provide a general way to tell extensions to shut down
+    // Ideally we'd just dispose of the extension's Worker...
+    const serviceName = vm.extensionManager._loadedExtensions.get('videoSensing');
+    dispatch.call(serviceName, '_stopLoop');
+};
 
 test('Load external extensions', async t => {
     const vm = new VirtualMachine();
@@ -25,6 +35,9 @@ test('Load external extensions', async t => {
                 });
         });
     }
+
+    stopVideoLoop(vm);
+    vm.quit();
     t.end();
 });
 
@@ -64,5 +77,7 @@ test('Load video sensing extension and video properties', async t => {
         t.equal(vm.runtime.ioDevices.video._ghost, project.videoTransparency);
     }
 
+    stopVideoLoop(vm);
+    vm.quit();
     t.end();
 });

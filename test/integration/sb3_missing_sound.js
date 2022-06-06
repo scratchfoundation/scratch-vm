@@ -32,13 +32,13 @@ const test = tap.test;
 
 test('loading sb3 project with missing sound file', t => {
     t.equal(vm.runtime.targets.length, 2);
-    
+
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
     const catSprite = vm.runtime.targets[1];
     t.equal(catSprite.getSounds().length, 1);
-    
+
     const missingSound = catSprite.getSounds()[0];
     t.equal(missingSound.name, 'Boop Sound Recording');
     // Sound should have original data but no asset
@@ -57,14 +57,14 @@ test('load and then save sb3 project with missing sound file', t => {
     const resavedProject = JSON.parse(vm.toJSON());
 
     t.equal(resavedProject.targets.length, 2);
-    
+
     const stage = resavedProject.targets[0];
     t.ok(stage.isStage);
 
     const catSprite = resavedProject.targets[1];
     t.equal(catSprite.name, 'Sprite1');
     t.equal(catSprite.sounds.length, 1);
-    
+
     const missingSound = catSprite.sounds[0];
     t.equal(missingSound.name, 'Boop Sound Recording');
     // Costume should have both default sound data (e.g. "Gray Question Sound" ^_^) and original data
@@ -78,10 +78,9 @@ test('load and then save sb3 project with missing sound file', t => {
 
 test('serializeCostume does not save data for missing costume', t => {
     const soundDescs = serializeSounds(vm.runtime);
-    
+
     t.equal(soundDescs.length, 1); // Should only have one sound, the pop sound for the stage
     t.not(soundDescs[0].fileName, `${missingSoundAssetId}.wav`);
 
     t.end();
-    process.nextTick(process.exit);
 });

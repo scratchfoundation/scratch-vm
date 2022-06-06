@@ -32,7 +32,7 @@ const FakeAudioEngine = function () {
             if (soundDataString.includes('here is some')) {
                 return Promise.reject(new Error('mock audio engine broke'));
             }
-            
+
             // Otherwise return fake data
             return Promise.resolve({
                 id: fakeId++,
@@ -65,14 +65,14 @@ const test = tap.test;
 
 test('load sb3 project with corrupted sound file', t => {
     t.equal(vm.runtime.targets.length, 2);
-    
+
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
     const catSprite = vm.runtime.targets[1];
     t.equal(catSprite.getName(), 'Sprite1');
     t.equal(catSprite.getSounds().length, 1);
-    
+
     const corruptedSound = catSprite.getSounds()[0];
     t.equal(corruptedSound.name, 'Boop Sound Recording');
     t.equal(corruptedSound.assetId, defaultSoundAssetId);
@@ -90,14 +90,14 @@ test('load and then save project with corrupted sound file', t => {
     const resavedProject = JSON.parse(vm.toJSON());
 
     t.equal(resavedProject.targets.length, 2);
-    
+
     const stage = resavedProject.targets[0];
     t.ok(stage.isStage);
 
     const catSprite = resavedProject.targets[1];
     t.equal(catSprite.name, 'Sprite1');
     t.equal(catSprite.sounds.length, 1);
-    
+
     const corruptedSound = catSprite.sounds[0];
     t.equal(corruptedSound.name, 'Boop Sound Recording');
     // Resaved project costume should have the metadata that corresponds to the original broken costume
@@ -116,5 +116,4 @@ test('serializeSounds saves orignal broken sound', t => {
     t.equal(sound.fileName, `${brokenSoundMd5}.wav`);
     t.equal(md5(sound.fileContent), brokenSoundMd5);
     t.end();
-    process.nextTick(process.exit);
 });

@@ -140,7 +140,6 @@ test('saving and loading sb2 project with monitors preserves sliderMin and slide
         t.equal(monitorRecord.targetId, null);
 
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

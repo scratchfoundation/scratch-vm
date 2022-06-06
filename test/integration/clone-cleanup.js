@@ -65,8 +65,8 @@ test('clone-cleanup', t => {
             // The second batch of clones has deleted themselves; everything is finished
             verifyCounts(0, 0);
 
+            vm.quit();
             t.end();
-            process.nextTick(process.exit);
             break;
         }
     };

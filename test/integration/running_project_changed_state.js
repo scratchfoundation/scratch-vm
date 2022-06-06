@@ -19,8 +19,8 @@ test('Running project should not emit project changed event', t => {
     // Evaluate playground data and exit
     vm.on('playgroundData', () => {
         t.equal(projectChanged, false);
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run
