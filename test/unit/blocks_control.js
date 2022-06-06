@@ -261,7 +261,8 @@ test('wait', t => {
     const args = {DURATION: .01};
     const waitTime = args.DURATION * 1000;
     const startTest = Date.now();
-    const threshold = 1000 / 60; // 60 hz
+    const thresholdSmall = 1000 / 60; // only allow the wait to end one 60Hz frame early
+    const thresholdLarge = 1000 / 3; // be less picky about when the wait ends, in case CPU load makes the VM run slowly
     let yields = 0;
     const util = new BlockUtility();
     const mockUtil = {
@@ -280,7 +281,7 @@ test('wait', t => {
     while (timeElapsed < waitTime) {
         timeElapsed = mockUtil.stackFrame.timer.timeElapsed();
         // In case util.timer is broken - have our own "exit"
-        if (Date.now() - startTest > timeElapsed + threshold) {
+        if (Date.now() - startTest > timeElapsed + thresholdSmall) {
             break;
         }
     }
@@ -288,7 +289,9 @@ test('wait', t => {
     c.wait(args, mockUtil);
     t.equal(yields, 1, 'Second call after timeElapsed does not yield');
     t.equal(waitTime, mockUtil.stackFrame.duration);
-    t.ok(timeElapsed >= (waitTime - threshold) &&
-         timeElapsed <= (waitTime + threshold));
+    t.ok(timeElapsed >= (waitTime - thresholdSmall),
+        'Wait block ended too early: ${timeElapsed} < ${waitTime} - ${thresholdSmall}');
+    t.ok(timeElapsed <= (waitTime + thresholdLarge),
+        'Wait block ended too late: ${timeElapsed} > ${waitTime} + ${thresholdLarge}');
     t.end();
 });
