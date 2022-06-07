@@ -9,3 +9,7 @@ trim_trailing_whitespace = true
 
 [*.{js,html}]
 indent_style = space
+
+[.circleci/config.yml]
+indent_size = 2
+indent_style = space
