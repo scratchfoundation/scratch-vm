@@ -180,36 +180,33 @@ class Sequencer {
         execute(this, thread);
         if (thread.status === Thread.STATUS_RUNNING) {
             thread.goToNextBlock();
-            if (thread.peekStack() === null) {
-                // Necessary to maintain the invariant that STATUS_RUNNING threads always have a next block
-                this.unwrapStack(thread);
-            }
+            // Necessary to maintain the invariant that STATUS_RUNNING threads always have a next block
+            this.unwrapStack(thread);
         }
     }
 
     /**
-     * Pop the stack as long as it is pointing at null.
+     * Unwrap the stack until we find a loop block, a non-null block, or the top of the stack.
      * @param {!Thread} thread Thread to pop.
      */
     unwrapStack (thread) {
-        while (
-            thread.status === Thread.STATUS_RUNNING &&
-            thread.peekStack() === null
-        ) {
+        while (thread.peekStack() === null) {
             thread.popStack();
 
             const stackFrame = thread.peekStackFrame();
             if (stackFrame === null) {
                 // No more stack to run!
                 thread.status = Thread.STATUS_DONE;
-            } else if (stackFrame.isLoop) {
+                return;
+            }
+            if (stackFrame.isLoop) {
                 // The current level of the stack is marked as a loop. Yield
                 // this thread so the next thread may run.
                 thread.status = Thread.STATUS_YIELD;
-            } else {
-                // Step to the next block.
-                thread.goToNextBlock();
+                return;
             }
+            // Step to the next block.
+            thread.goToNextBlock();
         }
     }
 
@@ -247,13 +244,9 @@ class Sequencer {
                 if (thread.peekStack() === currentBlockId) {
                     thread.goToNextBlock();
                 }
-                // A empty branch was pushed or we stepped out of the last block
-                // in a stack.
-                if (thread.peekStack() === null) {
-                    // Unwrap the stack until we find a loop block, a non-null
-                    // block, or the top of the stack.
-                    this.unwrapStack(thread);
-                }
+
+                // Ensure the stack pointer is pointing to a block (or the thread is done).
+                this.unwrapStack(thread);
             }
 
             if (thread.status === Thread.STATUS_YIELD &&
@@ -291,7 +284,7 @@ class Sequencer {
             stackFrame.isLoop = true;
         }
         // Push branch ID to the thread's stack. Note that the branch ID may be null (empty C-block).
-            thread.pushStack(branchId);
+        thread.pushStack(branchId);
     }
 
     /**
