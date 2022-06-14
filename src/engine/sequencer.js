@@ -280,9 +280,6 @@ class Sequencer {
      * @param {boolean} isLoop Whether this block is a loop.
      */
     stepToBranch (thread, branchNum, isLoop) {
-        if (!branchNum) {
-            branchNum = 1;
-        }
         const currentBlockId = thread.peekStack();
         const branchId = thread.target.blocks.getBranch(
             currentBlockId,
@@ -293,12 +290,8 @@ class Sequencer {
             stackFrame.needsReset = true;
             stackFrame.isLoop = true;
         }
-        if (branchId) {
-            // Push branch ID to the thread's stack.
+        // Push branch ID to the thread's stack. Note that the branch ID may be null (empty C-block).
             thread.pushStack(branchId);
-        } else {
-            thread.pushStack(null);
-        }
     }
 
     /**
