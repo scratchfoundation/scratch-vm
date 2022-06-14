@@ -115,10 +115,10 @@ class Sequencer {
 
                         this.stepThread(activeThread);
                     }
-                } else if (activeThread.status === Thread.STATUS_YIELD || (
+                } else if (
                     activeThread.status === Thread.STATUS_YIELD_TICK &&
                     !ranFirstTick
-                )) {
+                ) {
                     // Clear yield and yield tick on first outer step loop.
                     activeThread.status = Thread.STATUS_RUNNING;
                     // Run this thread again in the loop. (Since most threads
@@ -230,12 +230,9 @@ class Sequencer {
      * @param {!Thread} thread Thread object to step.
      */
     stepThread (thread) {
-        // warpMode may be true when we start stepping a thread or become true
-        // when a procedure is pushed. So we only need to check here and in
-        // stepToProcedure.
+        // warpTimer was unset at the end of a previous stepThread call. Reinitialize it.
+        // This will start counting the thread toward `Sequencer.WARP_TIME`.
         if (thread.peekStackFrame().warpMode && thread.warpTimer === null) {
-            // Initialize warp-mode timer if it hasn't been already. This
-            // will start counting the thread toward `Sequencer.WARP_TIME`.
             thread.warpTimer = new Timer();
             thread.warpTimer.start();
         }

@@ -1881,7 +1881,14 @@ class Runtime extends EventEmitter {
         // Note that *only* edge-activated hats should be stepped--"broadcast and wait", for example, expects empty
         // "when I receive" stacks to take one tick to execute.
         newThreads.forEach(thread => {
-            if (this.getIsEdgeActivatedHat(requestedHatOpcode)) this.sequencer.stepOnce(thread);
+            if (this.getIsEdgeActivatedHat(requestedHatOpcode)) {
+                this.sequencer.stepOnce(thread);
+                // Change YIELD to RUNNING, so that these threads will be run again in stepThreads.
+                // Otherwise, they would be stuck in STATUS_YIELD forever.
+                if (thread.status === Thread.STATUS_YIELD) {
+                    thread.status = Thread.STATUS_RUNNING;
+                }
+            }
         });
         return newThreads;
     }
