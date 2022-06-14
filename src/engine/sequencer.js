@@ -172,41 +172,56 @@ class Sequencer {
     }
 
     /**
-     * Step the requested thread once. The thread must be at a hat block.
+     * Step the requested thread once.
      * @param {!Thread} thread Thread object to step.
-     * @param {object=} optMatchFields Optionally, fields to match on the hat.
      */
-    stepHat (thread) {
-        execute(this, thread);
-        if (thread.status === Thread.STATUS_RUNNING) {
-            thread.goToNextBlock();
-            // Necessary to maintain the invariant that STATUS_RUNNING threads always have a next block
-            this.unwrapStack(thread);
+    stepOnce (thread) {
+        // Save the current block ID to notice if we did control flow.
+        const currentBlockId = thread.peekStack();
+
+        if (this.runtime.profiler !== null) {
+            if (executeProfilerId === -1) {
+                executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
+            }
+            // Increment the number of times execute is called.
+            this.runtime.profiler.increment(executeProfilerId);
         }
-    }
 
-    /**
-     * Unwrap the stack until we find a loop block, a non-null block, or the top of the stack.
-     * @param {!Thread} thread Thread to pop.
-     */
-    unwrapStack (thread) {
-        while (thread.peekStack() === null) {
-            thread.popStack();
+        // Execute the current block.
+        execute(this, thread);
 
-            const stackFrame = thread.peekStackFrame();
-            if (stackFrame === null) {
-                // No more stack to run!
-                thread.status = Thread.STATUS_DONE;
-                return;
+        if (thread.status === Thread.STATUS_RUNNING) {
+            // If no control flow has happened, switch to next block.
+            if (thread.peekStack() === currentBlockId) {
+                thread.goToNextBlock();
             }
-            if (stackFrame.isLoop) {
-                // The current level of the stack is marked as a loop. Yield
-                // this thread so the next thread may run.
-                thread.status = Thread.STATUS_YIELD;
-                return;
+
+            // Unwrap the stack until we find a loop block, a non-null block, or the top of the stack.
+            while (thread.peekStack() === null) {
+                thread.popStack();
+
+                const stackFrame = thread.peekStackFrame();
+                if (stackFrame === null) {
+                    // No more stack to run!
+                    thread.status = Thread.STATUS_DONE;
+                    break;
+                }
+                if (stackFrame.isLoop) {
+                    // The current level of the stack is marked as a loop. Yield
+                    // this thread so the next thread may run.
+                    thread.status = Thread.STATUS_YIELD;
+                    break;
+                }
+                // Step to the next block.
+                thread.goToNextBlock();
             }
-            // Step to the next block.
-            thread.goToNextBlock();
+        }
+
+        if (thread.status === Thread.STATUS_YIELD &&
+            thread.peekStackFrame().warpMode &&
+            thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
+            // In warp mode, yielded blocks are re-executed immediately.
+            thread.status = Thread.STATUS_RUNNING;
         }
     }
 
@@ -225,36 +240,7 @@ class Sequencer {
             thread.warpTimer.start();
         }
         while (thread.status === Thread.STATUS_RUNNING) {
-            // Save the current block ID to notice if we did control flow.
-            const currentBlockId = thread.peekStack();
-
-            if (this.runtime.profiler !== null) {
-                if (executeProfilerId === -1) {
-                    executeProfilerId = this.runtime.profiler.idByName(executeProfilerFrame);
-                }
-                // Increment the number of times execute is called.
-                this.runtime.profiler.increment(executeProfilerId);
-            }
-
-            // Execute the current block.
-            execute(this, thread);
-
-            if (thread.status === Thread.STATUS_RUNNING) {
-                // If no control flow has happened, switch to next block.
-                if (thread.peekStack() === currentBlockId) {
-                    thread.goToNextBlock();
-                }
-
-                // Ensure the stack pointer is pointing to a block (or the thread is done).
-                this.unwrapStack(thread);
-            }
-
-            if (thread.status === Thread.STATUS_YIELD &&
-                thread.peekStackFrame().warpMode &&
-                thread.warpTimer.timeElapsed() <= Sequencer.WARP_TIME) {
-                // In warp mode, yielded blocks are re-executed immediately.
-                thread.status = Thread.STATUS_RUNNING;
-            }
+            this.stepOnce(thread);
         }
         // If we yielded out of the thread, set status to RUNNING so stepThreads
         // can count it as an activeThread and possibly step all threads an
