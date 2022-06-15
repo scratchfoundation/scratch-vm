@@ -124,6 +124,9 @@ class BlockUtility {
      * Stop all threads.
      */
     stopAll () {
+        // Stop the currently running thread without considering any further blocks.
+        this.sequencer.retireThread(this.thread);
+        // Allow remaining threads to execute for one more tick.
         this.sequencer.runtime.stopAll();
     }
 

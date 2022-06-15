@@ -2075,10 +2075,6 @@ class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
-        // Dispose of the active thread.
-        if (this.sequencer.activeThread !== null) {
-            this._stopThread(this.sequencer.activeThread);
-        }
         // Remove all remaining threads from executing in the next tick.
         this.threads = [];
 
