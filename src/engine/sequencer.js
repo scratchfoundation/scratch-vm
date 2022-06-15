@@ -51,8 +51,6 @@ class Sequencer {
          * @type {!Runtime}
          */
         this.runtime = runtime;
-
-        this.activeThread = null;
     }
 
     /**
@@ -101,7 +99,7 @@ class Sequencer {
             // Attempt to run each thread one time.
             const threads = this.runtime.threads;
             for (let i = 0; i < threads.length; i++) {
-                const activeThread = this.activeThread = threads[i];
+                const activeThread = threads[i];
                 if (activeThread.status === Thread.STATUS_RUNNING) {
                     // Normal-mode thread: step.
                     if (this.runtime.profiler === null) {
@@ -165,8 +163,6 @@ class Sequencer {
                 this.runtime.threads.length = nextActiveThread;
             }
         }
-
-        this.activeThread = null;
 
         return doneThreads;
     }
