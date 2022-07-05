@@ -98,7 +98,7 @@ class JSONRPC {
     _handleRequest (json) {
         const {method, params, id} = json;
         const rawResult = this.didReceiveCall(method, params);
-        if (id) {
+        if (id !== null && typeof id !== 'undefined') {
             Promise.resolve(rawResult).then(
                 result => {
                     this._sendResponse(id, result);
