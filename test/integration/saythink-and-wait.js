@@ -29,8 +29,8 @@ test('say/think and wait', t => {
             // The test will fail if the project throws.
             setTimeout(() => {
                 vm.stopAll();
+                vm.quit();
                 t.end();
-                process.nextTick(process.exit);
             }, 2000);
         });
     });

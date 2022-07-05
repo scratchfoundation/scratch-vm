@@ -33,7 +33,7 @@ test('unknown opcode', t => {
         t.equal(blocks.getBlock(secondBlockId).opcode, 'control_forever');
         t.equal(innerBlockId, null);
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 });

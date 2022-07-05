@@ -122,8 +122,8 @@ test('importing sb2 project with monitors', t => {
         t.equal(monitorRecord.spriteName, null);
         t.equal(monitorRecord.targetId, null);
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

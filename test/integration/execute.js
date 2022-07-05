@@ -27,7 +27,7 @@ const VirtualMachine = require('../../src/index');
  * been reached.
  */
 
-const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
+const whenThreadsComplete = (t, vm, uri, timeLimit = 5000) =>
     // When the number of threads reaches 0 the test is expected to be complete.
     new Promise((resolve, reject) => {
         const intervalId = setInterval(() => {
@@ -44,6 +44,7 @@ const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
         }, 50);
 
         const timeoutId = setTimeout(() => {
+            t.fail(`Timeout waiting for threads to complete: ${uri}`);
             reject(new Error('time limit reached'));
         }, timeLimit);
 
@@ -53,8 +54,7 @@ const whenThreadsComplete = (t, vm, timeLimit = 2000) => (
             clearInterval(intervalId);
             clearTimeout(timeoutId);
         });
-    })
-);
+    });
 
 const executeDir = path.resolve(__dirname, '../fixtures/execute');
 
@@ -65,6 +65,8 @@ fs.readdirSync(executeDir)
             // Disable logging during this test.
             log.suggest.deny('vm', 'error');
             t.tearDown(() => log.suggest.clear());
+
+            const vm = new VirtualMachine();
 
             // Map string messages to tap reporting methods. This will be used
             // with events from scratch's runtime emitted on block instructions.
@@ -86,6 +88,7 @@ fs.readdirSync(executeDir)
                 },
                 end () {
                     didEnd = true;
+                    vm.quit();
                     t.end();
                 }
             };
@@ -100,7 +103,6 @@ fs.readdirSync(executeDir)
                 return reporters.comment(text);
             };
 
-            const vm = new VirtualMachine();
             vm.attachStorage(makeTestStorage());
 
             // Start the VM and initialize some vm properties.
@@ -125,7 +127,7 @@ fs.readdirSync(executeDir)
             // the scratch project sent us a "end" message.
             return vm.loadProject(project)
                 .then(() => vm.greenFlag())
-                .then(() => whenThreadsComplete(t, vm))
+                .then(() => whenThreadsComplete(t, vm, uri))
                 .then(() => {
                     // Setting a plan is not required but is a good idea.
                     if (!didPlan) {
@@ -138,6 +140,7 @@ fs.readdirSync(executeDir)
                     // it can be resolved.
                     if (!didEnd) {
                         t.fail('did not say "end"');
+                        vm.quit();
                         t.end();
                     }
                 });

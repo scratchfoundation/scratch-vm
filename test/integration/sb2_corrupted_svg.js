@@ -30,7 +30,7 @@ global.Image = function () {
         width: 1,
         height: 1
     };
-    
+
     setTimeout(() => image.onload(), 1000);
     return image;
 };
@@ -73,14 +73,14 @@ const test = tap.test;
 
 test('load sb2 project with corrupted vector costume file', t => {
     t.equal(vm.runtime.targets.length, 2);
-    
+
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
     const blueGuySprite = vm.runtime.targets[1];
     t.equal(blueGuySprite.getName(), 'Blue Guy');
     t.equal(blueGuySprite.getCostumes().length, 1);
-    
+
     const corruptedCostume = blueGuySprite.getCostumes()[0];
     t.equal(corruptedCostume.name, 'Blue Guy 2');
     t.equal(corruptedCostume.assetId, defaultVectorAssetId);
@@ -98,14 +98,14 @@ test('load and then save project with corrupted vector costume file', t => {
     const resavedProject = JSON.parse(vm.toJSON());
 
     t.equal(resavedProject.targets.length, 2);
-    
+
     const stage = resavedProject.targets[0];
     t.ok(stage.isStage);
 
     const blueGuySprite = resavedProject.targets[1];
     t.equal(blueGuySprite.name, 'Blue Guy');
     t.equal(blueGuySprite.costumes.length, 1);
-    
+
     const corruptedCostume = blueGuySprite.costumes[0];
     t.equal(corruptedCostume.name, 'Blue Guy 2');
     // Resaved project costume should have the metadata that corresponds to the original broken costume
@@ -124,5 +124,4 @@ test('serializeCostume saves orignal broken costume', t => {
     t.equal(costume.fileName, `${brokenCostumeMd5}.svg`);
     t.equal(md5(costume.fileContent), brokenCostumeMd5);
     t.end();
-    process.nextTick(process.exit);
 });

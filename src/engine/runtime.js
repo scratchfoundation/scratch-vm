@@ -608,7 +608,7 @@ class Runtime extends EventEmitter {
     static get PERIPHERAL_LIST_UPDATE () {
         return 'PERIPHERAL_LIST_UPDATE';
     }
-    
+
     /**
      * Event name for when the user picks a bluetooth device to connect to
      * via Companion Device Manager (CDM)
@@ -2576,6 +2576,15 @@ class Runtime extends EventEmitter {
             this._step();
         }, interval);
         this.emit(Runtime.RUNTIME_STARTED);
+    }
+
+    /**
+     * Quit the Runtime, clearing any handles which might keep the process alive.
+     * Do not use the runtime after calling this method. This method is meant for test shutdown.
+     */
+    quit () {
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
     }
 
     /**

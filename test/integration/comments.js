@@ -70,8 +70,8 @@ test('importing sb2 project with comments', t => {
         t.equal(stopAllBlock.comment, blockComments[4].id);
         t.equal(stopAllBlock.opcode, 'control_stop');
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

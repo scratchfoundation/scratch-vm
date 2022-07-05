@@ -59,14 +59,14 @@ const test = tap.test;
 
 test('loading sprite2 with missing vector costume file', t => {
     t.equal(vm.runtime.targets.length, 3);
-    
+
     const stage = vm.runtime.targets[0];
     t.ok(stage.isStage);
 
     const blueGuySprite = vm.runtime.targets[2];
     t.equal(blueGuySprite.getName(), 'Blue Guy');
     t.equal(blueGuySprite.getCostumes().length, 1);
-    
+
     const missingCostume = blueGuySprite.getCostumes()[0];
     t.equal(missingCostume.name, 'Blue Guy 2');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
@@ -85,7 +85,7 @@ test('load and then save sprite2 with missing vector costume file', t => {
 
     t.equal(resavedSprite.name, 'Blue Guy');
     t.equal(resavedSprite.costumes.length, 1);
-    
+
     const missingCostume = resavedSprite.costumes[0];
     t.equal(missingCostume.name, 'Blue Guy 2');
     // Costume should have both default cosutme (e.g. Gray Question Mark) data and original data
@@ -99,9 +99,8 @@ test('load and then save sprite2 with missing vector costume file', t => {
 
 test('serializeCostume does not save data for missing costume', t => {
     const costumeDescs = serializeCostumes(vm.runtime, vm.runtime.targets[2].id);
-   
+
     t.equal(costumeDescs.length, 0);
-    
+
     t.end();
-    process.nextTick(process.exit);
 });

@@ -35,6 +35,7 @@ test('importing an sb3 project with cloud variables', t => {
         t.equal(Number(variable.value), 100);
         t.equal(variable.isCloud, true);
 
+        vm.quit();
         t.end();
     });
 });
@@ -58,6 +59,7 @@ test('importing an sb3 project with cloud variables at the limit for a project',
         // All of the 10 stage variables should be cloud variables
         t.equal(stageVars.filter(v => v.isCloud).length, 10);
 
+        vm.quit();
         t.end();
     });
 });
@@ -83,6 +85,7 @@ test('importing an sb3 project with cloud variables exceeding the limit for a pr
         // Only 8 of the variables should have the isCloud flag set to true
         t.equal(stageVars.filter(v => v.isCloud).length, 10);
 
+        vm.quit();
         t.end();
     });
 });
@@ -111,6 +114,7 @@ test('importing one project after the other resets cloud variable limit', t => {
 
             t.equal(vm.runtime.canAddCloudVariable(), true);
 
+            vm.quit();
             t.end();
         });
     });
@@ -141,8 +145,7 @@ test('local cloud variables get imported as regular variables', t => {
         t.equal(spriteVars.length, 1);
         t.equal(spriteVars[0].isCloud, false);
 
+        vm.quit();
         t.end();
-
-        process.nextTick(process.exit); // This is needed because this is the end of the last test in this file!!!
     });
 });

@@ -8,8 +8,6 @@ const Renderer = require('../fixtures/fake-renderer');
 const Runtime = require('../../src/engine/runtime');
 const RenderedTarget = require('../../src/sprites/rendered-target');
 
-tap.tearDown(() => process.nextTick(process.exit));
-
 const test = tap.test;
 
 test('deleteSound returns function after deleting or null if nothing was deleted', t => {
@@ -1016,6 +1014,7 @@ test('Starting the VM emits an event', t => {
     });
     vm.start();
     t.equal(started, true);
+    vm.quit();
     t.end();
 });
 

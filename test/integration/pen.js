@@ -37,8 +37,8 @@ test('pen', t => {
         t.equal(originalPenState.penAttributes.diameter, 51);
         t.equal(clonePenState.penAttributes.diameter, 42);
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

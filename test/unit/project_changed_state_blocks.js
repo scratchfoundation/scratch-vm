@@ -53,8 +53,6 @@ tap.beforeEach(() => {
     });
 });
 
-tap.tearDown(() => process.nextTick(process.exit));
-
 const test = tap.test;
 
 test('Creating a block should emit a project changed event', t => {

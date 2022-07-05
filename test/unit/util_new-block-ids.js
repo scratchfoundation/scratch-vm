@@ -6,12 +6,11 @@ const test = tap.test;
 let originals;
 let newBlocks;
 
-tap.beforeEach(done => {
+tap.beforeEach(() => {
     originals = simpleStack;
     // Will be mutated so make a copy first
     newBlocks = JSON.parse(JSON.stringify(simpleStack));
     newBlockIds(newBlocks);
-    done();
 });
 
 

@@ -17,12 +17,6 @@ test('clone-cleanup', t => {
      */
     let testStep = -1;
 
-    /**
-     * We test using setInterval; track the interval ID here so we can cancel it.
-     * @type {object}
-     */
-    let testInterval = null;
-
     const verifyCounts = (expectedClones, extraThreads) => {
         // stage plus one sprite, plus clones
         t.strictEqual(vm.runtime.targets.length, 2 + expectedClones,
@@ -60,17 +54,19 @@ test('clone-cleanup', t => {
             break;
 
         case 3:
-            // The second batch of clones has been created and the main thread has ended
-            verifyCounts(10, 0);
+            // The second batch of clones has been created and the main thread is about to end
+            verifyCounts(10, 1);
+
+            // After the main thread ends, do one last test step
+            setTimeout(() => testNextStep(), 1000);
             break;
 
         case 4:
             // The second batch of clones has deleted themselves; everything is finished
             verifyCounts(0, 0);
 
-            clearInterval(testInterval);
+            vm.quit();
             t.end();
-            process.nextTick(process.exit);
             break;
         }
     };
@@ -88,8 +84,8 @@ test('clone-cleanup', t => {
 
             vm.greenFlag();
 
-            // Every second, advance the testing step
-            testInterval = setInterval(testNextStep, 1000);
+            // Let the project control the pace of the tests
+            vm.runtime.on('SAY', () => testNextStep());
         });
     });
 

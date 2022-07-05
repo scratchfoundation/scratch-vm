@@ -62,8 +62,8 @@ test('importing sb2 project with special chars in message names', t => {
         t.equal(catMessageBlocks[0].fields.BROADCAST_OPTION.id, ltPerfectMessageId);
         t.equal(catMessageBlocks[1].fields.BROADCAST_OPTION.id, abMessageId);
 
+        vm.quit();
         t.end();
-        process.nextTick(process.exit);
     });
 
     // Start VM, load project, and run

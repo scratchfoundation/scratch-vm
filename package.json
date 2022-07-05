@@ -7,26 +7,38 @@
   "homepage": "https://github.com/LLK/scratch-vm#readme",
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/LLK/scratch-vm.git"
+    "url": "https://github.com/LLK/scratch-vm.git"
   },
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
   "scripts": {
     "build": "npm run docs && webpack --progress --colors --bail",
     "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log --pretty=format:%H -n1)\"",
+    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log -n1 --pretty=format:\"%h %s\") [skip ci]\"",
     "docs": "jsdoc -c .jsdoc.json",
     "i18n:src": "mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js",
     "i18n:push": "tx-push-src scratch-editor extensions translations/core/en.json",
     "lint": "eslint . && format-message lint src/**/*.js",
+    "prepare": "husky install",
     "prepublish": "in-publish && npm run build || not-in-publish",
     "start": "webpack-dev-server",
     "tap": "tap ./test/{unit,integration}/*.js",
     "tap:unit": "tap ./test/unit/*.js",
     "tap:integration": "tap ./test/integration/*.js",
-    "test": "npm run lint && npm run docs && npm run tap",
+    "test": "npm run lint && npm run tap",
     "watch": "webpack --progress --colors --watch",
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "tap": {
+      "branches": 60,
+      "functions": 70,
+      "lines": 70,
+      "statements": 70
   },
   "dependencies": {
     "@vernier/godirect": "1.5.0",
@@ -53,6 +65,8 @@
   "devDependencies": {
     "@babel/core": "7.13.10",
     "@babel/preset-env": "7.14.8",
+    "@commitlint/cli": "17.0.2",
+    "@commitlint/config-conventional": "17.0.2",
     "adm-zip": "0.4.11",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.2.2",
@@ -65,9 +79,10 @@
     "file-loader": "2.0.0",
     "format-message-cli": "6.2.0",
     "gh-pages": "1.2.0",
+    "husky": "8.0.1",
     "in-publish": "2.0.1",
-    "jsdoc": "3.6.6",
     "js-md5": "0.7.3",
+    "jsdoc": "3.6.6",
     "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.1",
     "pngjs": "3.3.3",
@@ -76,11 +91,12 @@
     "scratch-l10n": "3.14.20220602031631",
     "scratch-render": "0.1.0-prerelease.20211028200436",
     "scratch-render-fonts": "1.0.0-prerelease.20210401210003",
+    "scratch-semantic-release-config": "1.0.2",
     "scratch-storage": "2.0.2",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
     "stats.js": "0.17.0",
-    "tap": "12.0.1",
+    "tap": "16.2.0",
     "tiny-worker": "2.3.0",
     "uglifyjs-webpack-plugin": "1.2.7",
     "webpack": "4.46.0",

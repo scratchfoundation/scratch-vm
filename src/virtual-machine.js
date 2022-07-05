@@ -176,6 +176,14 @@ class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Quit the VM, clearing any handles which might keep the process alive.
+     * Do not use the runtime after calling this method. This method is meant for test shutdown.
+     */
+    quit () {
+        this.runtime.quit();
+    }
+
+    /**
      * "Green flag" handler - start all threads starting with a green flag.
      */
     greenFlag () {
