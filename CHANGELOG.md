@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.0.1](https://github.com/LLK/scratch-vm/compare/v1.0.0...v1.0.1) (2022-07-06)
+
+
+### Bug Fixes
+
+* **JSON-RPC:** rephrase previous commit for semantic-release ([fd6b301](https://github.com/LLK/scratch-vm/commit/fd6b301b5a2c1442004e360d50dc70cb1468119b))
+
 # 1.0.0 (2022-07-05)
 
 
