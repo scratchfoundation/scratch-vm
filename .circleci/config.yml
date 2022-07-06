@@ -60,7 +60,8 @@ workflows:
               only: *release-branches
   update_i18n:
     jobs:
-      - update_i18n
+      - update_i18n:
+          context: transifex
     triggers:
       - schedule:
           cron: 0 0 * * * # daily at midnight UTC = 7-8pm US Eastern
