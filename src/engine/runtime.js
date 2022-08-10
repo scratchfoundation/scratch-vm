@@ -399,6 +399,8 @@ class Runtime extends EventEmitter {
          * @type {?string}
          */
         this.origin = null;
+
+        this._initScratchLink();
     }
 
     /**
@@ -1438,6 +1440,27 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * One-time initialization for Scratch Link support.
+     */
+    _initScratchLink () {
+        /* global globalThis */
+        // Check if we're actually in a browser
+        if (globalThis.document && document.getElementById) {
+            // Create a script tag for the Scratch Link browser extension, unless one already exists
+            const scriptElement = document.getElementById('scratch-link-extension-script');
+            if (!scriptElement) {
+                const script = document.createElement('script');
+                script.id = 'scratch-link-extension-script';
+                document.body.appendChild(script);
+
+                // Tell the browser extension to inject its script.
+                // If the extension isn't present or isn't active, this will do nothing.
+                globalThis.postMessage('inject-scratch-link-script', globalThis.origin);
+            }
+        }
+    }
+
+    /**
      * Get a scratch link socket.
      * @param {string} type Either BLE or BT
      * @returns {ScratchLinkSocket} The scratch link socket.
@@ -1462,7 +1485,11 @@ class Runtime extends EventEmitter {
      * @returns {ScratchLinkSocket} The new scratch link socket (a WebSocket object)
      */
     _defaultScratchLinkSocketFactory (type) {
-        return new ScratchLinkWebSocket(type);
+        const Scratch = self.Scratch;
+        const ScratchLinkSafariSocket = Scratch && Scratch.ScratchLinkSafariSocket;
+        // detect this every time in case the user turns on the extension after loading the page
+        const useSafariSocket = ScratchLinkSafariSocket && ScratchLinkSafariSocket.isSafariHelperCompatible();
+        return useSafariSocket ? new ScratchLinkSafariSocket(type) : new ScratchLinkWebSocket(type);
     }
 
     /**
