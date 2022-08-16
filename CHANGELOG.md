@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.1.0](https://github.com/LLK/scratch-vm/compare/v1.0.10...v1.1.0) (2022-08-16)
+
+
+### Features
+
+* **extensions:** support Scratch Link 2.0 browser extension ([2bdea91](https://github.com/LLK/scratch-vm/commit/2bdea9106d67e08937098988e45595f48c5e6195))
+
 ## [1.0.10](https://github.com/LLK/scratch-vm/compare/v1.0.9...v1.0.10) (2022-08-16)
 
 
