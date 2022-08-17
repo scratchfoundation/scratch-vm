@@ -1444,8 +1444,17 @@ class Runtime extends EventEmitter {
      */
     _initScratchLink () {
         /* global globalThis */
-        // Check if we're actually in a browser
-        if (globalThis.document && document.getElementById) {
+        // Check that we're actually in a real browser, not Node.js or JSDOM, and we have a valid-looking origin.
+        if (globalThis.document &&
+            globalThis.document.getElementById &&
+            globalThis.origin &&
+            globalThis.origin !== 'null' &&
+            globalThis.navigator &&
+            globalThis.navigator.userAgent &&
+            globalThis.navigator.userAgent.includes &&
+            !globalThis.navigator.userAgent.includes('Node.js') &&
+            !globalThis.navigator.userAgent.includes('jsdom')
+        ) {
             // Create a script tag for the Scratch Link browser extension, unless one already exists
             const scriptElement = document.getElementById('scratch-link-extension-script');
             if (!scriptElement) {
