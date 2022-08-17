@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.1.2](https://github.com/LLK/scratch-vm/compare/v1.1.1...v1.1.2) (2022-08-17)
+
+
+### Bug Fixes
+
+* **extensions:** try harder to avoid Scratch Link init in non-browser environments ([56dd49a](https://github.com/LLK/scratch-vm/commit/56dd49aaed6c49402dcc88e6005594a2e4d3ef2c))
+
 ## [1.1.1](https://github.com/LLK/scratch-vm/compare/v1.1.0...v1.1.1) (2022-08-17)
 
 
