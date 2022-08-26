@@ -1,5 +1,6 @@
 version: 2.1
 orbs:
+  commitlint: conventional-changelog/commitlint@1.0.0
   node: circleci/node@5
 aliases:
   - &release-branches
@@ -25,7 +26,6 @@ jobs:
       - checkout
       - node/install-packages
       - run: npm test
-      - run: npx commitlint --from=`git merge-base HEAD develop`
       - run: npm run build
       - deploy_gh_pages
   build_and_release:
@@ -34,10 +34,12 @@ jobs:
       - checkout
       - node/install-packages
       - run: npm test
-      - run: npx commitlint --from='HEAD~1'
       - run: npm run build
       - deploy_gh_pages
-      - run: npx semantic-release
+      - run:
+          command: npx semantic-release
+          environment:
+            HUSKY: 0 # disable Husky hooks so commitlint doesn't block semantic-release
   update_i18n:
     executor: node/default # defaults to LTS
     steps:
@@ -46,6 +48,10 @@ jobs:
       - run: npm run i18n:src && npm run i18n:push
 workflows:
   version: 2
+  commitlint:
+    jobs:
+      - commitlint/lint:
+          target-branch: develop
   build_no_release:
     jobs:
       - build_no_release:
