@@ -36,10 +36,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - deploy_gh_pages
-      - run:
-          command: npx semantic-release
-          environment:
-            HUSKY: 0 # disable Husky hooks so commitlint doesn't block semantic-release
+      - run: npx semantic-release
   update_i18n:
     executor: node/default # defaults to LTS
     steps:
