@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.2.27](https://github.com/LLK/scratch-vm/compare/v1.2.26...v1.2.27) (2022-10-12)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-l10n to v3.15.20221012165310 ([0155d23](https://github.com/LLK/scratch-vm/commit/0155d23fdfa315d52bac5d0136da4a671f699c4a))
+
 ## [1.2.26](https://github.com/LLK/scratch-vm/compare/v1.2.25...v1.2.26) (2022-10-04)
 
 
