@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.2.52](https://github.com/LLK/scratch-vm/compare/v1.2.51...v1.2.52) (2022-10-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-render-fonts to v1.0.0-prerelease.20221024190656 ([9c99264](https://github.com/LLK/scratch-vm/commit/9c9926422150a5f9166a4781ecb210754e8f713e))
+
 ## [1.2.51](https://github.com/LLK/scratch-vm/compare/v1.2.50...v1.2.51) (2022-10-25)
 
 
