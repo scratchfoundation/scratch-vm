@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.3.0](https://github.com/LLK/scratch-vm/compare/v1.2.54...v1.3.0) (2023-01-03)
+
+
+### Features
+
+* ability to clear flyout blocks when language changes ([2581446](https://github.com/LLK/scratch-vm/commit/2581446907168b3c3a127c5a43703ad451a80528))
+* **deps:** update dependency scratch-parser to v5.1.1 ([58cbf2d](https://github.com/LLK/scratch-vm/commit/58cbf2df1a350a2f4367b4b3cff79896ba4f3444))
+
 ## [1.2.54](https://github.com/LLK/scratch-vm/compare/v1.2.53...v1.2.54) (2022-10-27)
 
 
