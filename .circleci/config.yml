@@ -21,7 +21,9 @@ commands:
             fi
 jobs:
   build_no_release:
-    executor: node/default # defaults to LTS
+    executor:
+      name: node/default
+      tag: '16.18'
     steps:
       - checkout
       - node/install-packages
@@ -29,7 +31,9 @@ jobs:
       - run: npm run build
       - deploy_gh_pages
   build_and_release:
-    executor: node/default # defaults to LTS
+    executor:
+      name: node/default
+      tag: '16.18'
     steps:
       - checkout
       - node/install-packages
@@ -38,7 +42,9 @@ jobs:
       - deploy_gh_pages
       - run: npx semantic-release
   update_i18n:
-    executor: node/default # defaults to LTS
+    executor:
+      name: node/default
+      tag: '16.18'
     steps:
       - checkout
       - node/install-packages
