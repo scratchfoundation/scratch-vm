@@ -55,6 +55,9 @@ workflows:
     jobs:
       - commitlint/lint:
           target-branch: develop
+          filters:
+            branches:
+              ignore: *release-branches
   build_no_release:
     jobs:
       - build_no_release:
