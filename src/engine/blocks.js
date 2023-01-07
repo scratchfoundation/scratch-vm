@@ -832,6 +832,14 @@ class Blocks {
     }
 
     /**
+     * Delete all blocks and their associated scripts.
+     */
+    deleteAllBlocks () {
+        const blockIds = Object.keys(this._blocks);
+        blockIds.forEach(blockId => this.deleteBlock(blockId));
+    }
+
+    /**
      * Returns a map of all references to variables or lists from blocks
      * in this block container.
      * @param {Array<object>} optBlocks Optional list of blocks to constrain the search to.

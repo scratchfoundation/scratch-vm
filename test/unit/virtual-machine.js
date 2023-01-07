@@ -1055,3 +1055,16 @@ test('toJSON encodes Infinity/NaN as 0, not null', t => {
 
     t.end();
 });
+
+test('clearFlyoutBlocks removes all of the flyout blocks', t => {
+    const vm = new VirtualMachine();
+    const flyoutBlocks = vm.runtime.flyoutBlocks;
+
+    flyoutBlocks.createBlock(adapter(events.mockVariableBlock)[0]);
+    t.equal(Object.keys(flyoutBlocks._blocks).length, 1);
+
+    vm.clearFlyoutBlocks();
+    t.equal(Object.keys(flyoutBlocks._blocks).length, 0);
+
+    t.end();
+});
