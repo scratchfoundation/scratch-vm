@@ -96,6 +96,7 @@
     "scratch-storage": "2.0.2",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
+    "semantic-release": "19.0.5",
     "stats.js": "0.17.0",
     "tap": "16.2.0",
     "tiny-worker": "2.3.0",

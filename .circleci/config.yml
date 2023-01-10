@@ -30,6 +30,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - deploy_gh_pages
+      - run: npx --no -- semantic-release --dry-run
   build_and_release:
     executor:
       name: node/default
@@ -40,7 +41,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - deploy_gh_pages
-      - run: npx semantic-release
+      - run: npx --no -- semantic-release
   update_i18n:
     executor:
       name: node/default
