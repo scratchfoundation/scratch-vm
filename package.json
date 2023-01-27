@@ -88,7 +88,7 @@
     "lodash.defaultsdeep": "4.6.1",
     "pngjs": "3.3.3",
     "scratch-audio": "0.1.0-prerelease.20221123180128",
-    "scratch-blocks": "0.1.0-prerelease.20230125082641",
+    "scratch-blocks": "0.1.0-prerelease.20230126203238",
     "scratch-l10n": "3.15.20230125032128",
     "scratch-render": "0.1.0-prerelease.20221121051603",
     "scratch-render-fonts": "1.0.0-prerelease.20221102164332",
