@@ -1,8 +1,6 @@
 const RenderedTarget = require('./rendered-target');
-const Blocks = require('../engine/blocks');
 const {loadSoundFromAsset} = require('../import/load-sound');
 const {loadCostumeFromAsset} = require('../import/load-costume');
-const newBlockIds = require('../util/new-block-ids');
 const StringUtil = require('../util/string-util');
 const StageLayering = require('../engine/stage-layering');
 
@@ -11,17 +9,11 @@ class Sprite {
      * Sprite to be used on the Scratch stage.
      * All clones of a sprite have shared blocks, shared costumes, shared variables,
      * shared sounds, etc.
-     * @param {?Blocks} blocks Shared blocks object for all clones of sprite.
      * @param {Runtime} runtime Reference to the runtime.
      * @constructor
      */
-    constructor (blocks, runtime) {
+    constructor ( runtime) {
         this.runtime = runtime;
-        if (!blocks) {
-            // Shared set of blocks for all clones.
-            blocks = new Blocks(runtime);
-        }
-        this.blocks = blocks;
         /**
          * Human-readable name for this sprite (and all clones).
          * @type {string}
@@ -137,14 +129,6 @@ class Sprite {
 
     duplicate () {
         const newSprite = new Sprite(null, this.runtime);
-        const blocksContainer = this.blocks._blocks;
-        const originalBlocks = Object.keys(blocksContainer).map(key => blocksContainer[key]);
-        const copiedBlocks = JSON.parse(JSON.stringify(originalBlocks));
-        newBlockIds(copiedBlocks);
-        copiedBlocks.forEach(block => {
-            newSprite.blocks.createBlock(block);
-        });
-
 
         const allNames = this.runtime.targets.map(t => t.sprite.name);
         newSprite.name = StringUtil.unusedName(this.name, allNames);

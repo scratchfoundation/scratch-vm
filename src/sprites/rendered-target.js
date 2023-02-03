@@ -704,6 +704,14 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Return the id of the for this rendered target, e.g., the sprite's id.
+     * @returns {string} id.
+     */
+    getId () {
+        return this.id;
+    }
+
+    /**
      * Return whether this rendered target is a sprite (not a clone, not the stage).
      * @return {boolean} True if not a clone and not the stage.
      */

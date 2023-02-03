@@ -1,14 +1,14 @@
 {
-  "name": "scratch-vm",
-  "version": "1.2.54",
-  "description": "Virtual Machine for Scratch 3.0",
-  "author": "Massachusetts Institute of Technology",
+  "name": "pyatch-vm",
+  "version": "1.0.0",
+  "description": "Virtual Machine for Pyatch 2.0",
+  "author": "Elliot Roe",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/LLK/scratch-vm#readme",
+  "homepage": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LLK/scratch-vm.git",
-    "sha": "37a019c1fc1e45648419be35980c20daec736fc8"
+    "url": "https://github.com/ElliotRoe/pyatch-vm",
+    "sha": ""
   },
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
@@ -90,7 +90,7 @@
     "scratch-audio": "0.1.0-prerelease.20200528195344",
     "scratch-blocks": "0.1.0-prerelease.20221024060953",
     "scratch-l10n": "3.15.20221027032119",
-    "scratch-render": "0.1.0-prerelease.20221024201900",
+    "scratch-render": "github:LLK/scratch-render",
     "scratch-render-fonts": "1.0.0-prerelease.20221024190656",
     "scratch-semantic-release-config": "1.0.5",
     "scratch-storage": "2.0.2",

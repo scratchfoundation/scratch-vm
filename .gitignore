@@ -1,6 +1,8 @@
 # Mac OS
 .DS_Store
 
+*.icloud
+
 # NPM
 /node_modules
 npm-*
