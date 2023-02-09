@@ -54,7 +54,7 @@ class Scratch3NftBlocks {
         const image = this.runtime.renderer.canvas.toDataURL('image/png');
 
         const tmpLink = document.createElement('a');
-        tmpLink.download = 'image.png';
+        tmpLink.download = 'image-' + Date.now() + '.png';
         tmpLink.href = image;
 
         document.body.appendChild(tmpLink);
