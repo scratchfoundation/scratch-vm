@@ -2151,9 +2151,7 @@ class Runtime extends EventEmitter {
 
             for (let j = 0; j < this.threads.length; j++) {
                 // Don't re-add the script if it's already running
-                if (this.threads[j].topBlock === blockId &&
-                    this.threads[j].status !== Thread.STATUS_DONE &&
-                    this.threads[j].updateMonitor) {
+                if (this.threads[j].topBlock === blockId && this.threads[j].updateMonitor) {
                     continue allMonitors;
                 }
             }
