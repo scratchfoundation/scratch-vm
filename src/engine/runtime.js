@@ -1660,15 +1660,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Stop a thread: stop running it immediately, and remove it from the thread list later.
-     * @param {!Thread} thread Thread object to remove from actives
-     */
-    _stopThread (thread) {
-        // Inform sequencer to stop executing that thread.
-        this.sequencer.retireThread(thread);
-    }
-
-    /**
      * Restart a thread in place, maintaining its position in the list of threads.
      * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
      * Test project: https://scratch.mit.edu/projects/130183108/
@@ -1742,7 +1733,7 @@ class Runtime extends EventEmitter {
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-                this._stopThread(this.threads[i]);
+                this.sequencer.retireThread(this.threads[i]);
                 return;
             }
         }
@@ -2023,7 +2014,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
-                this._stopThread(this.threads[i]);
+                this.sequencer.retireThread(this.threads[i]);
             }
         }
     }
