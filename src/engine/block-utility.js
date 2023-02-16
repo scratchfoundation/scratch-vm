@@ -112,6 +112,26 @@ class BlockUtility {
     }
 
     /**
+     * Yield until the given threads have finished running.
+     * @param {Array<Thread>} threads The threads to wait on.
+     */
+    waitForThreads (threads) {
+        // Scratch 2 considers threads to be waiting if they are still in runtime.threads. Threads that have run all
+        // their blocks, or are marked done but still in runtime.threads, are still considered to be waiting.
+        const waiting = threads.some(thread => this.runtime.threads.indexOf(thread) !== -1);
+        if (waiting) {
+            // If all threads are waiting for the next tick or later, yield for a tick as well. Otherwise, yield until
+            // the next loop over the threads.
+            if (threads.every(thread => this.runtime.isWaitingThread(thread))
+            ) {
+                this.yieldTick();
+            } else {
+                this.yield();
+            }
+        }
+    }
+
+    /**
      * Start a branch in the current block.
      * @param {number} branchNum Which branch to step to (i.e., 1, 2).
      * @param {boolean} isLoop Whether this block is a loop.
