@@ -1,3 +1,5 @@
+const Timer = require('../util/timer');
+
 /**
  * Recycle bin for empty stackFrame objects
  * @type Array<_StackFrame>
@@ -182,7 +184,7 @@ class Thread {
          * Substitutes the sequencer's count toward WORK_TIME on a per-thread basis.
          * @type {?Timer}
          */
-        this.warpTimer = null;
+        this.warpTimer = new Timer();
 
         /**
          * Whether a promise just resolved on this thread and is waiting for its value to be used.

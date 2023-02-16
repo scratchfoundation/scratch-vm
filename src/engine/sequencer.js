@@ -102,16 +102,27 @@ class Sequencer {
                 const activeThread = threads[i];
                 if (activeThread.status === Thread.STATUS_RUNNING) {
                     // Normal-mode thread: step.
-                    if (this.runtime.profiler === null) {
-                        this.stepThread(activeThread);
-                    } else {
+                    if (this.runtime.profiler !== null) {
                         if (stepThreadProfilerId === -1) {
                             stepThreadProfilerId = this.runtime.profiler.idByName(stepThreadProfilerFrame);
                         }
                         // Increment the number of times stepThread is called.
                         this.runtime.profiler.increment(stepThreadProfilerId);
+                    }
 
-                        this.stepThread(activeThread);
+                    // Reset the warp timer for this tick.
+                    // This will start counting the thread toward `Sequencer.WARP_TIME`.
+                    if (activeThread.peekStackFrame().warpMode) {
+                        activeThread.warpTimer.start();
+                    }
+                    // Step the thread until it yields.
+                    while (activeThread.status === Thread.STATUS_RUNNING) {
+                        this.stepOnce(activeThread);
+                    }
+                    // If we yielded out of the thread, set status to RUNNING so we will re-execute the thread during
+                    // the next iteration.
+                    if (activeThread.status === Thread.STATUS_YIELD) {
+                        activeThread.status = Thread.STATUS_RUNNING;
                     }
                 } else if (
                     activeThread.status === Thread.STATUS_YIELD_TICK &&
@@ -222,30 +233,6 @@ class Sequencer {
     }
 
     /**
-     * Step the requested thread for as long as necessary.
-     * @param {!Thread} thread Thread object to step.
-     */
-    stepThread (thread) {
-        // warpTimer was unset at the end of a previous stepThread call. Reinitialize it.
-        // This will start counting the thread toward `Sequencer.WARP_TIME`.
-        if (thread.peekStackFrame().warpMode && thread.warpTimer === null) {
-            thread.warpTimer = new Timer();
-            thread.warpTimer.start();
-        }
-        while (thread.status === Thread.STATUS_RUNNING) {
-            this.stepOnce(thread);
-        }
-        // If we yielded out of the thread, set status to RUNNING so stepThreads
-        // can count it as an activeThread and possibly step all threads an
-        // extra time.
-        if (thread.status === Thread.STATUS_YIELD) {
-            thread.status = Thread.STATUS_RUNNING;
-        }
-        // Unset warpTimer if it was used so it can be set again next time.
-        thread.warpTimer = null;
-    }
-
-    /**
      * Step a thread into a block's branch.
      * @param {!Thread} thread Thread object to step to branch.
      * @param {number} branchNum Which branch to step to (i.e., 1, 2).
@@ -276,48 +263,38 @@ class Sequencer {
         if (!definition) {
             return;
         }
-        // Check if the call is recursive.
-        // If so, set the thread to yield after pushing.
-        const isRecursive = thread.isRecursiveCall(procedureCode);
         // To step to a procedure, we put its definition on the stack.
         // Execution for the thread will proceed through the definition hat
         // and on to the main definition of the procedure.
         // When that set of blocks finishes executing, it will be popped
         // from the stack by the sequencer, returning control to the caller.
         thread.pushStack(definition);
-        // In known warp-mode threads, only yield when time is up.
-        if (thread.peekStackFrame().warpMode &&
-            thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+
+        const parentWarpMode = thread.peekStackFrame().warpMode;
+
+        // Determine whether or not to enter warp-mode and/or yield.
+        if (parentWarpMode && thread.warpTimer.timeElapsed() > Sequencer.WARP_TIME) {
+            // We are already in warp-mode (the stack frame inherited warp-mode from its parent),
+            // and have exceeded the warp timer. Yield.
             thread.status = Thread.STATUS_YIELD;
         } else {
-            // Look for warp-mode flag on definition, and set the thread
-            // to warp-mode if needed.
+            // Look for warp-mode flag on definition, and set the thread to warp-mode if needed.
             const definitionBlock = thread.target.blocks.getBlock(definition);
             const innerBlock = thread.target.blocks.getBlock(
                 definitionBlock.inputs.custom_block.block);
             let doWarp = false;
             if (innerBlock && innerBlock.mutation) {
                 const warp = innerBlock.mutation.warp;
-                if (typeof warp === 'boolean') {
-                    doWarp = warp;
-                } else if (typeof warp === 'string') {
-                    doWarp = JSON.parse(warp);
-                }
+                doWarp = warp === true || warp === 'true';
             }
-            if (doWarp) {
-                // Going from non warpMode to warpMode, enable the warpTimer.
-                if (!thread.peekStackFrame().warpMode &&
-                    thread.warpTimer === null) {
-                    // Initialize warp-mode timer if it hasn't been already.
-                    // This will start counting the thread toward
-                    // `Sequencer.WARP_TIME`.
-                    thread.warpTimer = new Timer();
-                    thread.warpTimer.start();
-                }
-
+            if (doWarp && !parentWarpMode) {
                 thread.peekStackFrame().warpMode = true;
-            } else if (isRecursive) {
-                // In normal-mode threads, yield any time we have a recursive call.
+                // Going from non warpMode to warpMode, enable the warpTimer.
+                // This will start counting the thread toward `Sequencer.WARP_TIME`.
+                thread.warpTimer.start();
+            }
+            if (!doWarp && thread.isRecursiveCall(procedureCode)) {
+                // This procedure is *not* warp-mode and is a recursive call. Yield.
                 thread.status = Thread.STATUS_YIELD;
             }
         }
