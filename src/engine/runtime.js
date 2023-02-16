@@ -1683,17 +1683,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Return whether a thread is currently active/running.
-     * @param {?Thread} thread Thread object to check.
-     * @return {boolean} True if the thread is active/running.
-     */
-    isActiveThread (thread) {
-        return (
-            thread.status !== Thread.STATUS_DONE &&
-            this.threads.indexOf(thread) > -1);
-    }
-
-    /**
      * Return whether a thread is waiting for more information or done.
      * @param {?Thread} thread Thread object to check.
      * @return {boolean} True if the thread is waiting
@@ -1702,7 +1691,7 @@ class Runtime extends EventEmitter {
         return (
             thread.status === Thread.STATUS_PROMISE_WAIT ||
             thread.status === Thread.STATUS_YIELD_TICK ||
-            !this.isActiveThread(thread)
+            thread.status === Thread.STATUS_DONE
         );
     }
 

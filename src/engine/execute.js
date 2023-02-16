@@ -113,6 +113,7 @@ const handlePromise = (primitiveReportedValue, thread) => {
             // Return an empty string
             return '';
         }).then(resolvedValue => {
+            // A thread that is STATUS_DONE must stay STATUS_DONE
             if (thread.status === Thread.STATUS_DONE) return;
             thread.setResolvedValue(resolvedValue);
             // Finished any yields.
