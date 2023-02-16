@@ -753,12 +753,12 @@ class Blocks {
         if (didChange) this.emitProjectChanged();
     }
 
-
     /**
-     * Block management: run all blocks.
-     * @param {!object} runtime Runtime to run all blocks in.
+     * Get all monitored blocks in this container.
+     * @returns {Array<{blockId: string, target: Target}>} A list of monitored blocks and their corresponding targets
+     * (e.g. for monitors of sprite-local variables).
      */
-    runAllMonitored (runtime) {
+    getMonitored () {
         if (this._cache._monitored === null) {
             this._cache._monitored = Object.keys(this._blocks)
                 .filter(blockId => this.getBlock(blockId).isMonitored)
@@ -766,16 +766,11 @@ class Blocks {
                     const targetId = this.getBlock(blockId).targetId;
                     return {
                         blockId,
-                        target: targetId ? runtime.getTargetById(targetId) : null
+                        target: targetId ? this.runtime.getTargetById(targetId) : null
                     };
                 });
         }
-
-        const monitored = this._cache._monitored;
-        for (let i = 0; i < monitored.length; i++) {
-            const {blockId, target} = monitored[i];
-            runtime.addMonitorScript(blockId, target);
-        }
+        return this._cache._monitored;
     }
 
     /**

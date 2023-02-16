@@ -1742,24 +1742,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Enqueue a script that when finished will update the monitor for the block.
-     * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
-     */
-    addMonitorScript (topBlockId, optTarget) {
-        if (!optTarget) optTarget = this._editingTarget;
-        for (let i = 0; i < this.threads.length; i++) {
-            // Don't re-add the script if it's already running
-            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE &&
-                    this.threads[i].updateMonitor) {
-                return;
-            }
-        }
-        // Otherwise add it.
-        this._pushThread(topBlockId, optTarget, {updateMonitor: true});
-    }
-
-    /**
      * Run a function `f` for all scripts in a workspace.
      * `f` will be called with two parameters:
      *  - the top block ID of the script.
@@ -2161,7 +2143,23 @@ class Runtime extends EventEmitter {
      * Queue monitor blocks to sequencer to be run.
      */
     _pushMonitors () {
-        this.monitorBlocks.runAllMonitored(this);
+        const monitored = this.monitorBlocks.getMonitored();
+        allMonitors:
+        for (let i = 0; i < monitored.length; i++) {
+            let {blockId, target} = monitored[i];
+            if (!target) target = this._editingTarget;
+
+            for (let j = 0; j < this.threads.length; j++) {
+                // Don't re-add the script if it's already running
+                if (this.threads[j].topBlock === blockId &&
+                    this.threads[j].status !== Thread.STATUS_DONE &&
+                    this.threads[j].updateMonitor) {
+                    continue allMonitors;
+                }
+            }
+            // Otherwise add it.
+            this._pushThread(blockId, target, {updateMonitor: true});
+        }
     }
 
     /**
