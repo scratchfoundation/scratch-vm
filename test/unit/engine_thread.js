@@ -246,7 +246,7 @@ test('stopThisScript', t => {
     th.pushStack('secondString');
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
-    t.same(th.stack, ['arbitraryString', 'secondString']);
+    t.same(th.stack, ['arbitraryString']);
     t.notEqual(th.peekStackFrame(), null);
 
     while (th.peekStackFrame()) th.popStack();
@@ -256,7 +256,7 @@ test('stopThisScript', t => {
     th.pushStack('thirdString');
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
-    t.same(th.stack, ['arbitraryString', 'secondString']);
+    t.same(th.stack, ['arbitraryString']);
     t.notEqual(th.peekStackFrame(), null);
 
     t.end();
