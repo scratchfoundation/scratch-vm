@@ -1689,9 +1689,7 @@ class Runtime extends EventEmitter {
      */
     isActiveThread (thread) {
         return (
-            (
-                thread.stackFrame !== null &&
-                thread.status !== Thread.STATUS_DONE) &&
+            thread.status !== Thread.STATUS_DONE &&
             this.threads.indexOf(thread) > -1);
     }
 
