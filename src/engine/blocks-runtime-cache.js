@@ -75,4 +75,4 @@ exports.getScripts = function () {
  */
 exports._RuntimeScriptCache = RuntimeScriptCache;
 
-require('./blocks');
+import "./blocks";

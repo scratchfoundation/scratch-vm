@@ -15,5 +15,4 @@ exports.getCached = function () {
     throw new Error('blocks.js has not initialized BlocksExecuteCache');
 };
 
-// Call after the default throwing getCached is assigned for Blocks to replace.
-require('./blocks');
+import "./blocks";

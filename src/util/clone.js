@@ -14,4 +14,4 @@ class Clone {
     }
 }
 
-module.exports = Clone;
+export default Clone;

@@ -45,4 +45,4 @@ class VariableUtil {
     }
 }
 
-module.exports = VariableUtil;
+export default VariableUtil;

@@ -1,5 +1,5 @@
-const StringUtil = require('../util/string-util');
-const log = require('../util/log');
+import StringUtil from "../util/string-util";
+import log from "../util/log";
 
 /**
  * Initialize a sound from an asset asynchronously.
@@ -110,7 +110,4 @@ const loadSound = function (sound, runtime, soundBank) {
         });
 };
 
-module.exports = {
-    loadSound,
-    loadSoundFromAsset
-};
+export { loadSound, loadSoundFromAsset };

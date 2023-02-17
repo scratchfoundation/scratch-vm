@@ -1,6 +1,6 @@
-const StringUtil = require('../util/string-util');
-const log = require('../util/log');
-const {loadSvgString, serializeSvgToString} = require('scratch-svg-renderer');
+import StringUtil from "../util/string-util";
+import log from "../util/log";
+import { loadSvgString, serializeSvgToString } from "scratch-svg-renderer";
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
     return new Promise(resolve => {
@@ -402,7 +402,4 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
         });
 };
 
-module.exports = {
-    loadCostume,
-    loadCostumeFromAsset
-};
+export { loadCostume, loadCostumeFromAsset };

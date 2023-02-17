@@ -1,34 +1,30 @@
-const EventEmitter = require('events');
-const {OrderedMap} = require('immutable');
-
-const ArgumentType = require('../extension-support/argument-type');
-const Blocks = require('./blocks');
-const BlocksRuntimeCache = require('./blocks-runtime-cache');
-const BlockType = require('../extension-support/block-type');
-const Profiler = require('./profiler');
-const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
-const ScratchBlocksConstants = require('./scratch-blocks-constants');
-const TargetType = require('../extension-support/target-type');
-const Thread = require('./thread');
-const log = require('../util/log');
-const maybeFormatMessage = require('../util/maybe-format-message');
-const StageLayering = require('./stage-layering');
-const Variable = require('./variable');
-const xmlEscape = require('../util/xml-escape');
-const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
-
-// Virtual I/O devices.
-const Clock = require('../io/clock');
-const Cloud = require('../io/cloud');
-const Keyboard = require('../io/keyboard');
-const Mouse = require('../io/mouse');
-const MouseWheel = require('../io/mouseWheel');
-const UserData = require('../io/userData');
-const Video = require('../io/video');
-
-const StringUtil = require('../util/string-util');
-const uid = require('../util/uid');
+import EventEmitter from "events";
+import { OrderedMap } from "immutable";
+import ArgumentType from "../extension-support/argument-type";
+import Blocks from "./blocks";
+import BlocksRuntimeCache from "./blocks-runtime-cache";
+import BlockType from "../extension-support/block-type";
+import Profiler from "./profiler";
+import Sequencer from "./sequencer";
+import execute from "./execute.js";
+import ScratchBlocksConstants from "./scratch-blocks-constants";
+import TargetType from "../extension-support/target-type";
+import Thread from "./thread";
+import log from "../util/log";
+import maybeFormatMessage from "../util/maybe-format-message";
+import StageLayering from "./stage-layering";
+import Variable from "./variable";
+import xmlEscape from "../util/xml-escape";
+import ScratchLinkWebSocket from "../util/scratch-link-websocket";
+import Clock from "../io/clock";
+import Cloud from "../io/cloud";
+import Keyboard from "../io/keyboard";
+import Mouse from "../io/mouse";
+import MouseWheel from "../io/mouseWheel";
+import UserData from "../io/userData";
+import Video from "../io/video";
+import StringUtil from "../util/string-util";
+import uid from "../util/uid";
 
 const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
@@ -2651,12 +2647,4 @@ class Runtime extends EventEmitter {
     }
 }
 
-/**
- * Event fired after a new target has been created, possibly by cloning an existing target.
- *
- * @event Runtime#targetWasCreated
- * @param {Target} newTarget - the newly created target.
- * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
- */
-
-module.exports = Runtime;
+export default Runtime;

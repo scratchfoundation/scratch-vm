@@ -1,10 +1,10 @@
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Cast = require('../../util/cast');
-const log = require('../../util/log');
-const fetchWithTimeout = require('../../util/fetch-with-timeout');
-const languageNames = require('scratch-translate-extension-languages');
-const formatMessage = require('format-message');
+import ArgumentType from "../../extension-support/argument-type";
+import BlockType from "../../extension-support/block-type";
+import Cast from "../../util/cast";
+import log from "../../util/log";
+import fetchWithTimeout from "../../util/fetch-with-timeout";
+import languageNames from "scratch-translate-extension-languages";
+import formatMessage from "format-message";
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -283,4 +283,4 @@ class Scratch3TranslateBlocks {
         return translatePromise;
     }
 }
-module.exports = Scratch3TranslateBlocks;
+export default Scratch3TranslateBlocks;

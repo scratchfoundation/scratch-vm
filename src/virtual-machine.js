@@ -5,25 +5,23 @@ if (typeof TextEncoder === 'undefined') {
     /* global TextEncoder */
     _TextEncoder = TextEncoder;
 }
-const EventEmitter = require('events');
-const JSZip = require('jszip');
+import EventEmitter from "events";
+import JSZip from "jszip";
 
 const Buffer = require('buffer').Buffer;
-const centralDispatch = require('./dispatch/central-dispatch');
-const ExtensionManager = require('./extension-support/extension-manager');
-const log = require('./util/log');
-const MathUtil = require('./util/math-util');
-const Runtime = require('./engine/runtime');
-const StringUtil = require('./util/string-util');
-const formatMessage = require('format-message');
-
-const Variable = require('./engine/variable');
-const newBlockIds = require('./util/new-block-ids');
-
-const {loadCostume} = require('./import/load-costume.js');
-const {loadSound} = require('./import/load-sound.js');
-const {serializeSounds, serializeCostumes} = require('./serialization/serialize-assets');
-require('canvas-toBlob');
+import centralDispatch from "./dispatch/central-dispatch";
+import ExtensionManager from "./extension-support/extension-manager";
+import log from "./util/log";
+import MathUtil from "./util/math-util";
+import Runtime from "./engine/runtime";
+import StringUtil from "./util/string-util";
+import formatMessage from "format-message";
+import Variable from "./engine/variable";
+import newBlockIds from "./util/new-block-ids";
+import { loadCostume } from "./import/load-costume.js";
+import { loadSound } from "./import/load-sound.js";
+import { serializeSounds, serializeCostumes } from "./serialization/serialize-assets";
+import "canvas-toBlob";
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -1571,4 +1569,4 @@ class VirtualMachine extends EventEmitter {
     }
 }
 
-module.exports = VirtualMachine;
+export default VirtualMachine;

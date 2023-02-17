@@ -401,4 +401,4 @@ class Thread {
     }
 }
 
-module.exports = Thread;
+export default Thread;
