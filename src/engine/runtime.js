@@ -26,16 +26,26 @@ import Video from "../io/video";
 import StringUtil from "../util/string-util";
 import uid from "../util/uid";
 
+import scratch3_control from "../blocks/scratch3_control";
+import scratch3_event from "../blocks/scratch3_event";
+import scratch3_looks from "../blocks/scratch3_looks";
+import scratch3_motion from "../blocks/scratch3_motion";
+import scratch3_operators from "../blocks/scratch3_operators";
+import scratch3_sound from "../blocks/scratch3_sound";
+import scratch3_sensing from "../blocks/scratch3_sensing";
+import scratch3_data from "../blocks/scratch3_data";
+import scratch3_procedures from "../blocks/scratch3_procedures";
+
 const defaultBlockPackages = {
-    scratch3_control: require('../blocks/scratch3_control'),
-    scratch3_event: require('../blocks/scratch3_event'),
-    scratch3_looks: require('../blocks/scratch3_looks'),
-    scratch3_motion: require('../blocks/scratch3_motion'),
-    scratch3_operators: require('../blocks/scratch3_operators'),
-    scratch3_sound: require('../blocks/scratch3_sound'),
-    scratch3_sensing: require('../blocks/scratch3_sensing'),
-    scratch3_data: require('../blocks/scratch3_data'),
-    scratch3_procedures: require('../blocks/scratch3_procedures')
+    scratch3_control: scratch3_control,
+    scratch3_event: scratch3_event,
+    scratch3_looks: scratch3_looks,
+    scratch3_motion: scratch3_motion,
+    scratch3_operators: scratch3_operators,
+    scratch3_sound: scratch3_sound,
+    scratch3_sensing: scratch3_sensing,
+    scratch3_data: scratch3_data,
+    scratch3_procedures: scratch3_procedures
 };
 
 const defaultExtensionColors = ['#0FBD8C', '#0DA57A', '#0B8E69'];

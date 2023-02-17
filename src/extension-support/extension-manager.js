@@ -7,22 +7,35 @@ import BlockType from "./block-type";
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
 
+import scratch3_core_example from "../blocks/scratch3_core_example";
+import scratch3_pen from "../extensions/scratch3_pen";
+import scratch3_wedo2 from "../extensions/scratch3_wedo2";
+import scratch3_music from "../extensions/scratch3_music";
+import scratch3_microbit from "../extensions/scratch3_microbit";
+import scratch3_text2speech from "../extensions/scratch3_text2speech";
+import scratch3_translate from "../extensions/scratch3_translate";
+import scratch3_video_sensing from "../extensions/scratch3_video_sensing";
+import scratch3_ev3 from "../extensions/scratch3_ev3";
+import scratch3_makeymakey from "../extensions/scratch3_makeymakey";
+import scratch3_boost from "../extensions/scratch3_boost";
+import scratch3_gdx_for from "../extensions/scratch3_gdx_for";
+
 const builtinExtensions = {
     // This is an example that isn't loaded with the other core blocks,
     // but serves as a reference for loading core blocks as extensions.
-    coreExample: () => require('../blocks/scratch3_core_example'),
+    coreExample: () => scratch3_core_example,
     // These are the non-core built-in extensions.
-    pen: () => require('../extensions/scratch3_pen'),
-    wedo2: () => require('../extensions/scratch3_wedo2'),
-    music: () => require('../extensions/scratch3_music'),
-    microbit: () => require('../extensions/scratch3_microbit'),
-    text2speech: () => require('../extensions/scratch3_text2speech'),
-    translate: () => require('../extensions/scratch3_translate'),
-    videoSensing: () => require('../extensions/scratch3_video_sensing'),
-    ev3: () => require('../extensions/scratch3_ev3'),
-    makeymakey: () => require('../extensions/scratch3_makeymakey'),
-    boost: () => require('../extensions/scratch3_boost'),
-    gdxfor: () => require('../extensions/scratch3_gdx_for')
+    pen: () => scratch3_pen,
+    wedo2: () => scratch3_wedo2,
+    music: () => scratch3_music,
+    microbit: () => scratch3_microbit,
+    text2speech: () => scratch3_text2speech,
+    translate: () => scratch3_translate,
+    videoSensing: () => scratch3_video_sensing,
+    ev3: () => scratch3_ev3,
+    makeymakey: () => scratch3_makeymakey,
+    boost: () => scratch3_boost,
+    gdxfor: () => scratch3_gdx_for
 };
 
 /**
