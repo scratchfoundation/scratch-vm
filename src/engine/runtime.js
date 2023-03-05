@@ -241,6 +241,12 @@ class Runtime extends EventEmitter {
         this._hats = {};
 
         /**
+         * List of all edge-activated hats' opcodes.
+         * @type {Array<string>}
+         */
+        this._edgeActivatedHats = [];
+
+        /**
          * A list of script block IDs that were glowing during the previous frame.
          * @type {!Set.<string>}
          */
@@ -753,6 +759,18 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Register a hat block to this runtime.
+     * @param {string} hatOpcode Opcode for the hat block.
+     * @param {{restartExistingThreads: (boolean|undefined), edgeActivated: (boolean|undefined)}} hatMeta Hat metadata.
+     */
+    _addHat (hatOpcode, hatMeta) {
+        this._hats[hatOpcode] = hatMeta;
+        if (hatMeta.edgeActivated) {
+            this._edgeActivatedHats.push(hatOpcode);
+        }
+    }
+
+    /**
      * Register default block packages with this runtime.
      * @todo Prefix opcodes with package name.
      * @private
@@ -777,7 +795,7 @@ class Runtime extends EventEmitter {
                     const packageHats = packageObject.getHats();
                     for (const hatName in packageHats) {
                         if (packageHats.hasOwnProperty(hatName)) {
-                            this._hats[hatName] = packageHats[hatName];
+                            this._addHat(hatName, packageHats[hatName]);
                         }
                     }
                 }
@@ -920,10 +938,10 @@ class Runtime extends EventEmitter {
                         this._primitives[opcode] = convertedBlock.info.func;
                     }
                     if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
-                        this._hats[opcode] = {
+                        this._addHat(opcode, {
                             edgeActivated: blockInfo.isEdgeActivated,
                             restartExistingThreads: blockInfo.shouldRestartExistingThreads
-                        };
+                        });
                     }
                 }
             } catch (e) {
@@ -1998,12 +2016,8 @@ class Runtime extends EventEmitter {
         }
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
-        for (const hatType in this._hats) {
-            if (!this._hats.hasOwnProperty(hatType)) continue;
-            const hat = this._hats[hatType];
-            if (hat.edgeActivated) {
-                this.startHats(hatType);
-            }
+        for (const hatOpcode of this._edgeActivatedHats) {
+            this.startHats(hatOpcode);
         }
         this.redrawRequested = false;
         this._pushMonitors();
