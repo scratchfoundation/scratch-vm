@@ -244,9 +244,9 @@ class Runtime extends EventEmitter {
 
         /**
          * A list of script block IDs that were glowing during the previous frame.
-         * @type {!Array.<!string>}
+         * @type {!Set.<string>}
          */
-        this._scriptGlowsPreviousFrame = [];
+        this._scriptGlowsPreviousFrame = new Set();
 
         /**
          * Whether any non-monitor threads ran during the previous frame.
@@ -2109,7 +2109,7 @@ class Runtime extends EventEmitter {
         const oldEditingTarget = this._editingTarget;
         this._editingTarget = editingTarget;
         // Script glows must be cleared.
-        this._scriptGlowsPreviousFrame = [];
+        this._scriptGlowsPreviousFrame = new Set();
         this._updateGlows();
 
         if (oldEditingTarget !== this._editingTarget) {
@@ -2142,46 +2142,43 @@ class Runtime extends EventEmitter {
             searchThreads.push(...optExtraThreads);
         }
         // Set of scripts that request a glow this frame.
-        const requestedGlowsThisFrame = [];
+        const requestedGlowsThisFrame = new Set();
         // Final set of scripts glowing during this frame.
-        const finalScriptGlows = [];
+        const finalScriptGlows = new Set();
         // Find all scripts that should be glowing.
         for (let i = 0; i < searchThreads.length; i++) {
             const thread = searchThreads[i];
             const target = thread.target;
-            if (target === this._editingTarget) {
-                const blockForThread = thread.blockGlowInFrame;
-                if (thread.requestScriptGlowInFrame || thread.stackClick) {
-                    let script = target.blocks.getTopLevelScript(blockForThread);
-                    if (!script) {
-                        // Attempt to find in flyout blocks.
-                        script = this.flyoutBlocks.getTopLevelScript(
-                            blockForThread
-                        );
-                    }
-                    if (script) {
-                        requestedGlowsThisFrame.push(script);
-                    }
-                }
+            if (target !== this._editingTarget || !(thread.requestScriptGlowInFrame || thread.stackClick)) {
+                continue;
+            }
+            const blockForThread = thread.blockGlowInFrame;
+            let script = target.blocks.getTopLevelScript(blockForThread);
+            if (!script) {
+                // Attempt to find in flyout blocks.
+                script = this.flyoutBlocks.getTopLevelScript(
+                    blockForThread
+                );
+            }
+            if (script) {
+                requestedGlowsThisFrame.add(script);
             }
         }
         // Compare to previous frame.
-        for (let j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
-            const previousFrameGlow = this._scriptGlowsPreviousFrame[j];
-            if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+        for (const previousFrameGlow of this._scriptGlowsPreviousFrame.values()) {
+            if (requestedGlowsThisFrame.has(previousFrameGlow)) {
+                // Still glowing.
+                finalScriptGlows.add(previousFrameGlow);
+            } else {
                 // Glow turned off.
                 this.glowScript(previousFrameGlow, false);
-            } else {
-                // Still glowing.
-                finalScriptGlows.push(previousFrameGlow);
             }
         }
-        for (let k = 0; k < requestedGlowsThisFrame.length; k++) {
-            const currentFrameGlow = requestedGlowsThisFrame[k];
-            if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+        for (const currentFrameGlow of requestedGlowsThisFrame.values()) {
+            if (!this._scriptGlowsPreviousFrame.has(currentFrameGlow)) {
                 // Glow turned on.
                 this.glowScript(currentFrameGlow, true);
-                finalScriptGlows.push(currentFrameGlow);
+                finalScriptGlows.add(currentFrameGlow);
             }
         }
         this._scriptGlowsPreviousFrame = finalScriptGlows;
@@ -2208,10 +2205,7 @@ class Runtime extends EventEmitter {
      * @param {!string} scriptBlockId Id of top-level block in script to quiet.
      */
     quietGlow (scriptBlockId) {
-        const index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
-        if (index > -1) {
-            this._scriptGlowsPreviousFrame.splice(index, 1);
-        }
+        this._scriptGlowsPreviousFrame.delete(scriptBlockId);
     }
 
     /**
