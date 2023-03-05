@@ -207,7 +207,7 @@ class Thread {
         /**
          * The already reported values in a sequence of blocks to restore when
          * the awaited promise resolves.
-         * @type {Array.<*>}
+         * @type {Array.<{oldOpID: string, inputValue: string | number | boolean}>}
          */
         this.reported = null;
     }

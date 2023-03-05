@@ -353,12 +353,13 @@ const execute = function (sequencer, thread) {
     if (thread.justResolved) {
         // Even if there were no reported values, thread.reported still exists, it's just empty
         const reported = thread.reported;
-        // Reinstate all the previous values.
+        // Reinstate all the previously-reported values since the BlockCached may have been re-created.
         for (let j = 0; j < reported.length; j++) {
             const {oldOpID, inputValue} = reported[j];
 
             const opCached = ops.find(op => op.id === oldOpID);
 
+            // Copy the previously-reported values onto the parent block
             if (opCached) {
                 const inputName = opCached._parentKey;
                 const argValues = opCached._parentValues;
@@ -381,6 +382,7 @@ const execute = function (sequencer, thread) {
         if (reported.length > 0) {
             const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.oldOpID));
             if (lastExisting) {
+                // Resume execution after the last reported block
                 i = ops.findIndex(opCached => opCached.id === lastExisting.oldOpID) + 1;
             }
         }
@@ -459,24 +461,23 @@ const execute = function (sequencer, thread) {
                     thread.status = Thread.STATUS_RUNNING;
                 });
 
-            // Store the already reported values. They will be thawed into the
-            // future versions of the same operations by block id. The reporting
-            // operation if it is promise waiting will set its parent value at
-            // that time.
+            // Store the values from the blocks that we *did* run to completion. We store them by block ID because the
+            // blockCached objects will be re-created if the block cache changes. When the promise resolves, we fill in
+            // the parent block's inputs with these values.
             thread.clearResolvedValue();
             thread.reportingBlockId = ops[i].id;
-            thread.reported = ops.slice(0, i).map(reportedCached => {
-                const inputName = reportedCached._parentKey;
-                const reportedValues = reportedCached._parentValues;
+            thread.reported = ops.slice(0, i).map(op => {
+                const inputName = op._parentKey;
+                const reportedValues = op._parentValues;
 
                 if (inputName === 'BROADCAST_INPUT') {
                     return {
-                        oldOpID: reportedCached.id,
+                        oldOpID: op.id,
                         inputValue: reportedValues[inputName].BROADCAST_OPTION.name
                     };
                 }
                 return {
-                    oldOpID: reportedCached.id,
+                    oldOpID: op.id,
                     inputValue: reportedValues[inputName]
                 };
             });
@@ -484,7 +485,9 @@ const execute = function (sequencer, thread) {
             // We are waiting for a promise. Stop running this set of operations
             // and continue them later after thawing the reported values.
             break;
-        } else if (thread.status === Thread.STATUS_RUNNING) {
+        }
+
+        if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {
                 handleReport(primitiveReportedValue, sequencer, thread, opCached);
             } else {
