@@ -276,16 +276,6 @@ class Thread {
     }
 
     /**
-     * Reset the stack frame for use by the next block.
-     * (avoids popping and re-pushing a new stack frame - keeps the warpmode the same
-     * @param {string} blockId Block ID to push to stack.
-     */
-    reuseStackForNextBlock (blockId) {
-        this.pointer = blockId;
-        if (this.stackFrame.needsReset) this.stackFrame.reset();
-    }
-
-    /**
      * Move the instruction pointer to the last value before this stack of
      * blocks was pushed and executed.
      * @return {?string} Block ID popped from the stack.
@@ -449,8 +439,8 @@ class Thread {
      * where execution proceeds from one block to the next.
      */
     goToNextBlock () {
-        const nextBlockId = this.target.blocks.getNextBlock(this.pointer);
-        this.reuseStackForNextBlock(nextBlockId);
+        this.pointer = this.target.blocks.getNextBlock(this.pointer);
+        if (this.stackFrame.needsReset) this.stackFrame.reset();
     }
 
     /**
