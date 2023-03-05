@@ -3,7 +3,6 @@ const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Thread = require('./thread');
 const {Map} = require('immutable');
-const cast = require('../util/cast');
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -231,13 +230,6 @@ class BlockCached {
         delete inputs.custom_block;
 
         if ('BROADCAST_INPUT' in inputs) {
-            // BROADCAST_INPUT is called BROADCAST_OPTION in the args and is an
-            // object with an unchanging shape.
-            this._argValues.BROADCAST_OPTION = {
-                id: null,
-                name: null
-            };
-
             // We can go ahead and compute BROADCAST_INPUT if it is a shadow
             // value.
             const broadcastInput = inputs.BROADCAST_INPUT;
@@ -246,8 +238,10 @@ class BlockCached {
                 // Get the appropriate information out of it.
                 const shadow = blockContainer.getBlock(broadcastInput.shadow);
                 const broadcastField = shadow.fields.BROADCAST_OPTION;
-                this._argValues.BROADCAST_OPTION.id = broadcastField.id;
-                this._argValues.BROADCAST_OPTION.name = broadcastField.value;
+                this._argValues.BROADCAST_INPUT = {
+                    id: broadcastField.id,
+                    name: broadcastField.value
+                };
 
                 // Evaluating BROADCAST_INPUT here we do not need to do so
                 // later.
@@ -362,17 +356,7 @@ const execute = function (sequencer, thread) {
 
             // Copy the previously-reported values onto the parent block
             if (opCached) {
-                const inputName = opCached._parentKey;
-                const argValues = opCached._parentValues;
-
-                if (inputName === 'BROADCAST_INPUT') {
-                    // Something is plugged into the broadcast input.
-                    // Cast it to a string. We don't need an id here.
-                    argValues.BROADCAST_OPTION.id = null;
-                    argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
-                } else {
-                    argValues[inputName] = inputValue;
-                }
+                opCached._parentValues[opCached._parentKey] = inputValue;
             }
         }
 
@@ -398,17 +382,7 @@ const execute = function (sequencer, thread) {
             if (lastOperation) {
                 handleReport(inputValue, sequencer, thread, opCached);
             } else {
-                const inputName = opCached._parentKey;
-                const argValues = opCached._parentValues;
-
-                if (inputName === 'BROADCAST_INPUT') {
-                    // Something is plugged into the broadcast input.
-                    // Cast it to a string. We don't need an id here.
-                    argValues.BROADCAST_OPTION.id = null;
-                    argValues.BROADCAST_OPTION.name = cast.toString(inputValue);
-                } else {
-                    argValues[inputName] = inputValue;
-                }
+                opCached._parentValues[opCached._parentKey] = inputValue;
             }
 
             // If this is the last operation, this sets i to the length of `ops`. This means that the below loop will
@@ -462,12 +436,6 @@ const execute = function (sequencer, thread) {
                 const inputName = op._parentKey;
                 const reportedValues = op._parentValues;
 
-                if (inputName === 'BROADCAST_INPUT') {
-                    return {
-                        oldOpID: op.id,
-                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name
-                    };
-                }
                 return {
                     oldOpID: op.id,
                     inputValue: reportedValues[inputName]
@@ -483,19 +451,7 @@ const execute = function (sequencer, thread) {
             if (lastOperation) {
                 handleReport(primitiveReportedValue, sequencer, thread, opCached);
             } else {
-                // By definition a block that is not last in the list has a
-                // parent.
-                const inputName = opCached._parentKey;
-                const parentValues = opCached._parentValues;
-
-                if (inputName === 'BROADCAST_INPUT') {
-                    // Something is plugged into the broadcast input.
-                    // Cast it to a string. We don't need an id here.
-                    parentValues.BROADCAST_OPTION.id = null;
-                    parentValues.BROADCAST_OPTION.name = cast.toString(primitiveReportedValue);
-                } else {
-                    parentValues[inputName] = primitiveReportedValue;
-                }
+                opCached._parentValues[opCached._parentKey] = primitiveReportedValue;
             }
         }
     }
