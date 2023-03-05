@@ -17,7 +17,9 @@ test('spec', t => {
     t.type(th.peekStack, 'function');
     t.type(th.peekStackFrame, 'function');
     t.type(th.peekParentStackFrame, 'function');
-    t.type(th.setResolvedValue, 'function');
+    t.type(th.pause, 'function');
+    t.type(th.resume, 'function');
+    t.type(th.finishResuming, 'function');
     t.type(th.initParams, 'function');
     t.type(th.pushParam, 'function');
     t.type(th.peekStack, 'function');
@@ -86,13 +88,43 @@ test('peekParentStackFrame', t => {
     t.end();
 });
 
-test('setResolvedValue', t => {
+test('pause', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
-    th.setResolvedValue('value');
-    t.strictEquals(th.justResolved, true);
-    t.strictEquals(th.resolvedValue, 'value');
+    const reported = [];
+    th.pause('reportingBlock', reported);
+    t.equal(th.status, Thread.STATUS_PROMISE_WAIT);
+    t.equal(th.reportingBlockId, 'reportingBlock');
+
+    t.end();
+});
+
+test('resume', t => {
+    const th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    const reported = [];
+    th.pause('reportingBlock', reported);
+    th.resume('reportedValue');
+    t.equal(th.status, Thread.STATUS_RUNNING);
+    t.equal(th.resolvedValue, 'reportedValue');
+
+    t.end();
+});
+
+test('finishResuming', t => {
+    const th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    const reported = [];
+    th.pause('reportingBlock', reported);
+    th.resume('reportedValue');
+    th.finishResuming();
+    t.equal(th.justResolved, false);
+    t.equal(th.resolvedValue, null);
+    t.equal(th.reportingBlockId, null);
+    t.equal(th.reported, null);
 
     t.end();
 });

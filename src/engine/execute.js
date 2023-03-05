@@ -395,8 +395,6 @@ const execute = function (sequencer, thread) {
             const inputValue = thread.resolvedValue;
             const opCached = ops[i];
 
-            thread.clearResolvedValue();
-
             if (lastOperation) {
                 handleReport(inputValue, sequencer, thread, opCached);
             } else {
@@ -420,10 +418,7 @@ const execute = function (sequencer, thread) {
             throw new Error('Promise block seems to be missing its own op');
         }
 
-        // We'll later set these again if we run into another promise-waiting block.
-        // We can assume that if thread.justResolved is true, then these will also be set.
-        thread.reportingBlockId = null;
-        thread.reported = null;
+        thread.finishResuming();
     }
 
     const start = i;
@@ -445,8 +440,6 @@ const execute = function (sequencer, thread) {
 
         // If it's a promise, wait until promise resolves.
         if (isPromise(primitiveReportedValue)) {
-            // Primitive returned a promise; automatically yield thread.
-            thread.status = Thread.STATUS_PROMISE_WAIT;
             // Resume thread after the promise resolves
             primitiveReportedValue
                 .catch(rejectionReason => {
@@ -458,17 +451,14 @@ const execute = function (sequencer, thread) {
                 }).then(resolvedValue => {
                     // A thread that is STATUS_DONE must stay STATUS_DONE
                     if (thread.status === Thread.STATUS_DONE) return;
-                    thread.setResolvedValue(resolvedValue);
-                    // Finished any yields.
-                    thread.status = Thread.STATUS_RUNNING;
+
+                    thread.resume(resolvedValue);
                 });
 
             // Store the values from the blocks that we *did* run to completion. We store them by block ID because the
             // blockCached objects will be re-created if the block cache changes. When the promise resolves, we fill in
             // the parent block's inputs with these values.
-            thread.clearResolvedValue();
-            thread.reportingBlockId = opCached.id;
-            thread.reported = ops.slice(0, i).map(op => {
+            thread.pause(opCached.id, ops.slice(0, i).map(op => {
                 const inputName = op._parentKey;
                 const reportedValues = op._parentValues;
 
@@ -482,7 +472,7 @@ const execute = function (sequencer, thread) {
                     oldOpID: op.id,
                     inputValue: reportedValues[inputName]
                 };
-            });
+            }));
 
             // We are waiting for a promise. Stop running this set of operations
             // and continue them later after thawing the reported values.

@@ -207,7 +207,7 @@ class Thread {
          * All blocks evaluated before a promise-waiting block was evaluated and the thread was paused. Contains all
          * blocks located before the promise-waiting block in the operations list,
          * at the time that the thread was paused.
-         * @type {Array.<{oldOpID: string, inputValue: string | number | boolean}>}
+         * @type {Array.<{oldOpID: string, inputValue: (string | number | boolean)}>}
          */
         this.reported = null;
     }
@@ -349,20 +349,35 @@ class Thread {
     }
 
     /**
-     * Store a just-promise-resolved value on the thread.
-     * @param {*} value Reported value to push.
+     * Pause a thread while waiting on a promise, saving the state needed to resume.
+     * @param {string} reportingBlockId The ID of the block we are waiting on.
+     * @param {Array.<{oldOpID: string, inputValue: (string | number | boolean)}>} reported The results of the
+     * operations executed so far.
      */
-    setResolvedValue (value) {
-        this.justResolved = true;
-        this.resolvedValue = typeof value === 'undefined' ? null : value;
+    pause (reportingBlockId, reported) {
+        this.status = Thread.STATUS_PROMISE_WAIT;
+        this.reportingBlockId = reportingBlockId;
+        this.reported = reported;
     }
 
     /**
-     * Clear the value previously set by a resolved promise.
+     * Resume a thread once a promise resolves, storing the value that it resolved to.
+     * @param {(string | number | boolean)} reportedValue The value returned by the block promise.
      */
-    clearResolvedValue () {
+    resume (reportedValue) {
+        this.status = Thread.STATUS_RUNNING;
+        this.justResolved = true;
+        this.resolvedValue = reportedValue;
+    }
+
+    /**
+     * Reset thread resume state after the resolved promise value is handled.
+     */
+    finishResuming () {
         this.justResolved = false;
         this.resolvedValue = null;
+        this.reportingBlockId = null;
+        this.reported = null;
     }
 
     /**
