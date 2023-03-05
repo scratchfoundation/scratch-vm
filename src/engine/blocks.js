@@ -128,27 +128,6 @@ class Blocks {
     }
 
     /**
-     * Get the branch for a particular C-shaped block.
-     * @param {?string} id ID for block to get the branch for.
-     * @param {?number} branchNum Which branch to select (e.g. for if-else).
-     * @return {?string} ID of block in the branch.
-     */
-    getBranch (id, branchNum) {
-        const block = this._blocks[id];
-        if (typeof block === 'undefined') return null;
-        if (!branchNum) branchNum = 1;
-
-        let inputName = Blocks.BRANCH_INPUT_PREFIX;
-        if (branchNum > 1) {
-            inputName += branchNum;
-        }
-
-        // Empty C-block?
-        const input = block.inputs[inputName];
-        return (typeof input === 'undefined') ? null : input.block;
-    }
-
-    /**
      * Get the opcode for a particular block
      * @param {?object} block The block to query
      * @return {?string} the opcode corresponding to that block
@@ -167,20 +146,16 @@ class Blocks {
     }
 
     /**
-     * Get all non-branch inputs for a block.
+     * Get all inputs for a block.
      * @param {?object} block the block to query.
-     * @return {?Array.<object>} All non-branch inputs and their associated blocks.
+     * @return {?Array.<object>} All inputs and their associated blocks.
      */
-    getNonBranchInputs (block) {
+    getInputs (block) {
         if (typeof block === 'undefined') return null;
 
         const inputs = {};
         for (const input in block.inputs) {
-            // Ignore blocks prefixed with branch prefix.
-            if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
-                Blocks.BRANCH_INPUT_PREFIX) {
-                inputs[input] = block.inputs[input];
-            }
+            inputs[input] = block.inputs[input];
         }
 
         return inputs;

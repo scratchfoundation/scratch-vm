@@ -63,7 +63,7 @@ class Scratch3ControlBlocks {
         util.stackFrame.loopCounter--;
         // If we still have some left, start the branch.
         if (util.stackFrame.loopCounter >= 0) {
-            util.startBranch(1, true);
+            util.startBranch(args.SUBSTACK, true);
         }
     }
 
@@ -71,7 +71,7 @@ class Scratch3ControlBlocks {
         const condition = Cast.toBoolean(args.CONDITION);
         // If the condition is false (repeat UNTIL), start the branch.
         if (!condition) {
-            util.startBranch(1, true);
+            util.startBranch(args.SUBSTACK, true);
         }
     }
 
@@ -79,7 +79,7 @@ class Scratch3ControlBlocks {
         const condition = Cast.toBoolean(args.CONDITION);
         // If the condition is true (repeat WHILE), start the branch.
         if (condition) {
-            util.startBranch(1, true);
+            util.startBranch(args.SUBSTACK, true);
         }
     }
 
@@ -94,7 +94,7 @@ class Scratch3ControlBlocks {
         if (util.stackFrame.index < Number(args.VALUE)) {
             util.stackFrame.index++;
             variable.value = util.stackFrame.index;
-            util.startBranch(1, true);
+            util.startBranch(args.SUBSTACK, true);
         }
     }
 
@@ -106,7 +106,7 @@ class Scratch3ControlBlocks {
     }
 
     forever (args, util) {
-        util.startBranch(1, true);
+        util.startBranch(args.SUBSTACK, true);
     }
 
     wait (args, util) {
@@ -124,16 +124,16 @@ class Scratch3ControlBlocks {
     if (args, util) {
         const condition = Cast.toBoolean(args.CONDITION);
         if (condition) {
-            util.startBranch(1, false);
+            util.startBranch(args.SUBSTACK, false);
         }
     }
 
     ifElse (args, util) {
         const condition = Cast.toBoolean(args.CONDITION);
         if (condition) {
-            util.startBranch(1, false);
+            util.startBranch(args.SUBSTACK, false);
         } else {
-            util.startBranch(2, false);
+            util.startBranch(args.SUBSTACK2, false);
         }
     }
 
@@ -199,7 +199,7 @@ class Scratch3ControlBlocks {
         // (In early versions of Scratch 2.0, it would work the same way as
         // "run without screen refresh" custom blocks do now, but this was
         // removed before the release of 2.0.)
-        util.startBranch(1, false);
+        util.startBranch(args.SUBSTACK, false);
     }
 }
 

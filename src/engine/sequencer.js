@@ -235,22 +235,19 @@ class Sequencer {
     /**
      * Step a thread into a block's branch.
      * @param {!Thread} thread Thread object to step to branch.
-     * @param {number} branchNum Which branch to step to (i.e., 1, 2).
+     * @param {?string} branchID ID of the first block in the branch to step to (or null/undefined if the branch input
+     * is empty).
      * @param {boolean} isLoop Whether this block is a loop.
      */
-    stepToBranch (thread, branchNum, isLoop) {
-        const currentBlockId = thread.peekStack();
-        const branchId = thread.target.blocks.getBranch(
-            currentBlockId,
-            branchNum
-        );
+    stepToBranch (thread, branchID, isLoop) {
         if (isLoop) {
             const stackFrame = thread.peekStackFrame();
             stackFrame.needsReset = true;
             stackFrame.isLoop = true;
         }
         // Push branch ID to the thread's stack. Note that the branch ID may be null (empty C-block).
-        thread.pushStack(branchId);
+        // We need to cast undefined (empty branch input) to null.
+        thread.pushStack(typeof branchID === 'string' ? branchID : null);
     }
 
     /**
