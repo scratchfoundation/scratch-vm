@@ -11,7 +11,6 @@ test('spec', t => {
     t.type(th, 'object');
     t.ok(th instanceof Thread);
     t.type(th.pushStack, 'function');
-    t.type(th.reuseStackForNextBlock, 'function');
     t.type(th.popStack, 'function');
     t.type(th.stopThisScript, 'function');
     t.type(th.peekStack, 'function');
@@ -54,15 +53,6 @@ test('atStackTop', t => {
     t.strictEquals(th.atStackTop(), false);
     th.popStack();
     t.strictEquals(th.atStackTop(), true);
-
-    t.end();
-});
-
-test('reuseStackForNextBlock', t => {
-    const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
-    th.reuseStackForNextBlock('secondString');
-    t.strictEquals(th.popStack(), 'secondString');
 
     t.end();
 });
