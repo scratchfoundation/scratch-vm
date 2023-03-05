@@ -381,6 +381,18 @@ class Thread {
     }
 
     /**
+     * Retire this thread in the middle, without considering further blocks.
+     */
+    retire () {
+        this.stack = [];
+        this.pointer = null;
+        this.stackFrames = [];
+        this.stackFrame = null;
+        this.requestScriptGlowInFrame = false;
+        this.status = Thread.STATUS_DONE;
+    }
+
+    /**
      * Return an execution context for a block to use.
      * @returns {object} the execution context
      */
