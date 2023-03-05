@@ -249,10 +249,10 @@ class Runtime extends EventEmitter {
         this._scriptGlowsPreviousFrame = [];
 
         /**
-         * Number of non-monitor threads running during the previous frame.
-         * @type {number}
+         * Whether any non-monitor threads ran during the previous frame.
+         * @type {boolean}
          */
-        this._nonMonitorThreadCount = 0;
+        this._projectRanLastFrame = false;
 
         /**
          * All threads that finished running and were removed from this.threads
@@ -2041,11 +2041,12 @@ class Runtime extends EventEmitter {
             this.profiler.stop();
         }
         this._updateGlows(doneThreads);
+
+        const threadNonMonitor = thread => !thread.updateMonitor;
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
-        this._emitProjectRunStatus(
-            this.threads.length + doneThreads.length -
-                this._getMonitorThreadCount([...this.threads, ...doneThreads]));
+        const anyNonMonitorThreadsRunning = this.threads.some(threadNonMonitor) || doneThreads.some(threadNonMonitor);
+        this._emitProjectRunStatus(anyNonMonitorThreadsRunning);
         // Store threads that completed this iteration for testing and other
         // internal purposes.
         this._lastStepDoneThreads = doneThreads;
@@ -2077,20 +2078,6 @@ class Runtime extends EventEmitter {
             this.profiler.stop();
             this.profiler.reportFrames();
         }
-    }
-
-    /**
-     * Get the number of threads in the given array that are monitor threads (threads
-     * that update monitor values, and don't count as running a script).
-     * @param {!Array.<Thread>} threads The set of threads to look through.
-     * @return {number} The number of monitor threads in threads.
-     */
-    _getMonitorThreadCount (threads) {
-        let count = 0;
-        threads.forEach(thread => {
-            if (thread.updateMonitor) count++;
-        });
-        return count;
     }
 
     /**
@@ -2201,19 +2188,17 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit run start/stop after each tick. Emits when `this.threads.length` goes
-     * between non-zero and zero
-     *
-     * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
+     * Emit run start/stop after each tick. Emits when `this.threads.length` goes between non-zero and zero
+     * @param {boolean} projectRunning Whether the project is running (threads.length > 0)
      */
-    _emitProjectRunStatus (nonMonitorThreadCount) {
-        if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
+    _emitProjectRunStatus (projectRunning) {
+        if (!this._projectRanLastFrame && projectRunning) {
             this.emit(Runtime.PROJECT_RUN_START);
         }
-        if (this._nonMonitorThreadCount > 0 && nonMonitorThreadCount === 0) {
+        if (this._projectRanLastFrame && !projectRunning) {
             this.emit(Runtime.PROJECT_RUN_STOP);
         }
-        this._nonMonitorThreadCount = nonMonitorThreadCount;
+        this._projectRanLastFrame = projectRunning;
     }
 
     /**
