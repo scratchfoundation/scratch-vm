@@ -99,28 +99,6 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
     }
 };
 
-const handlePromise = (primitiveReportedValue, thread) => {
-    if (thread.status === Thread.STATUS_RUNNING) {
-        // Primitive returned a promise; automatically yield thread.
-        thread.status = Thread.STATUS_PROMISE_WAIT;
-    }
-    // Promise handlers
-    primitiveReportedValue
-        .catch(rejectionReason => {
-            // Promise rejected: the primitive had some error.
-            // Log it and proceed.
-            log.warn('Primitive rejected promise: ', rejectionReason);
-            // Return an empty string
-            return '';
-        }).then(resolvedValue => {
-            // A thread that is STATUS_DONE must stay STATUS_DONE
-            if (thread.status === Thread.STATUS_DONE) return;
-            thread.setResolvedValue(resolvedValue);
-            // Finished any yields.
-            thread.status = Thread.STATUS_RUNNING;
-        });
-};
-
 /**
  * A execute.js internal representation of a block to reduce the time spent in
  * execute as the same blocks are called the most.
@@ -463,7 +441,25 @@ const execute = function (sequencer, thread) {
 
         // If it's a promise, wait until promise resolves.
         if (isPromise(primitiveReportedValue)) {
-            handlePromise(primitiveReportedValue, thread);
+            if (thread.status === Thread.STATUS_RUNNING) {
+                // Primitive returned a promise; automatically yield thread.
+                thread.status = Thread.STATUS_PROMISE_WAIT;
+            }
+            // Promise handlers
+            primitiveReportedValue
+                .catch(rejectionReason => {
+                    // Promise rejected: the primitive had some error.
+                    // Log it and proceed.
+                    log.warn('Primitive rejected promise: ', rejectionReason);
+                    // Return an empty string
+                    return '';
+                }).then(resolvedValue => {
+                    // A thread that is STATUS_DONE must stay STATUS_DONE
+                    if (thread.status === Thread.STATUS_DONE) return;
+                    thread.setResolvedValue(resolvedValue);
+                    // Finished any yields.
+                    thread.status = Thread.STATUS_RUNNING;
+                });
 
             // Store the already reported values. They will be thawed into the
             // future versions of the same operations by block id. The reporting
