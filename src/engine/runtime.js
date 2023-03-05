@@ -1677,13 +1677,8 @@ class Runtime extends EventEmitter {
      */
     _restartThread (threadIndex) {
         const thread = this.threads[threadIndex];
-        const newThread = new Thread(thread.topBlock);
-        newThread.target = thread.target;
-        newThread.stackClick = thread.stackClick;
-        newThread.updateMonitor = thread.updateMonitor;
-        newThread.blockContainer = thread.blockContainer;
-        this.threads[threadIndex] = newThread;
-        return newThread;
+        thread.restart();
+        return thread;
     }
 
     /**

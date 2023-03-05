@@ -150,10 +150,10 @@ class Thread {
         this.stackFrame = _StackFrame.create(initialStackFrame);
 
         /**
-         * Status of the thread, one of three states (below)
+         * Status of the thread, one of five states (below)
          * @type {number}
          */
-        this.status = 0; /* Thread.STATUS_RUNNING */
+        this.status = Thread.STATUS_RUNNING;
 
         /**
          * Target of this thread.
@@ -210,6 +210,13 @@ class Thread {
          * @type {Array.<{oldOpID: string, inputValue: (string | number | boolean)}>}
          */
         this.reported = null;
+
+        /**
+         * Number of times this thread has been restarted. Used to make sure resuming block promises don't do anything
+         * across restarts.
+         * @type {number}
+         */
+        this.generation = 0;
     }
 
     /**
@@ -367,6 +374,23 @@ class Thread {
         this.stackFrame = null;
         this.requestScriptGlowInFrame = false;
         this.status = Thread.STATUS_DONE;
+    }
+
+    /**
+     * Restart this thread from the beginning.
+     */
+    restart () {
+        this.pointer = this.topBlock;
+        this.stack.length = 0;
+        // Release stack frame so we can immediately reuse it
+        if (this.stackFrame) _StackFrame.release(this.stackFrame);
+        this.stackFrame = _StackFrame.create(initialStackFrame);
+        this.stackFrames.length = 0;
+        this.requestScriptGlowInFrame = false;
+        this.blockGlowInFrame = null;
+        this.finishResuming();
+        this.generation++;
+        this.status = Thread.STATUS_RUNNING;
     }
 
     /**
