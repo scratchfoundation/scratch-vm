@@ -1,3 +1,4 @@
+const Blocks = require('./blocks');
 const BlockUtility = require('./block-utility');
 const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
@@ -222,9 +223,9 @@ class BlockCached {
             }
         }
 
-        // NOTE: because we modify `inputs` in-place, this relies on getNonBranchInputs returning a new object each
+        // NOTE: because we modify `inputs` in-place, this relies on getInputs returning a new object each
         // time it's called.
-        const inputs = blockContainer.getNonBranchInputs(block);
+        const inputs = blockContainer.getInputs(block);
         // Remove custom_block. It is not part of block execution.
         delete inputs.custom_block;
 
@@ -254,7 +255,10 @@ class BlockCached {
         // recursively iterate them.
         for (const inputName in inputs) {
             const input = inputs[inputName];
-            if (input.block) {
+            if (inputName.startsWith(Blocks.BRANCH_INPUT_PREFIX)) {
+                // Convert branch inputs to their block IDs
+                this._argValues[inputName] = input.block;
+            } else if (input.block) {
                 const inputCached = BlocksExecuteCache.getCached(blockContainer, input.block, BlockCached);
 
                 if (inputCached._isHat) {

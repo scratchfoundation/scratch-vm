@@ -120,13 +120,13 @@ test('stepToBranch', t => {
     th.goToNextBlock();
     t.strictEquals(th.peekStackFrame().isLoop, false);
     th.popStack();
-    // Push substack 1 (not null).
-    s.stepToBranch(th, 1, false);
+    // Push substack (not null).
+    s.stepToBranch(th, 'sub', false);
     t.notEquals(th.peekStack(), null);
     th.popStack();
     t.strictEquals(th.peekStackFrame().isLoop, false);
     // Push loop substack (not null).
-    s.stepToBranch(th, 1, true);
+    s.stepToBranch(th, 'sub', true);
     t.notEquals(th.peekStack(), null);
     th.popStack();
     t.strictEquals(th.peekStackFrame().isLoop, true);

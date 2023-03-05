@@ -150,15 +150,15 @@ test('forever', t => {
     // Test harness (mocks `util`)
     let i = 0;
     const util = {
-        startBranch: function (branchNum, isLoop) {
+        startBranch: function (branchID, isLoop) {
             i++;
-            t.strictEqual(branchNum, 1);
+            t.strictEqual(branchID, 'substackID');
             t.strictEqual(isLoop, true);
         }
     };
 
     // Execute test
-    c.forever(null, util);
+    c.forever({SUBSTACK: 'substackID'}, util);
     t.strictEqual(i, 1);
     t.end();
 });
@@ -168,22 +168,22 @@ test('if / ifElse', t => {
     const c = new Control(rt);
 
     // Test harness (mocks `util`)
-    let i = 0;
+    let steppedID = null;
     const util = {
-        startBranch: function (branchNum) {
-            i += branchNum;
+        startBranch: function (branchID) {
+            steppedID = branchID;
         }
     };
 
     // Execute test
-    c.if({CONDITION: true}, util);
-    t.strictEqual(i, 1);
-    c.if({CONDITION: false}, util);
-    t.strictEqual(i, 1);
-    c.ifElse({CONDITION: true}, util);
-    t.strictEqual(i, 2);
-    c.ifElse({CONDITION: false}, util);
-    t.strictEqual(i, 4);
+    c.if({CONDITION: true, SUBSTACK: 'sub'}, util);
+    t.equal(steppedID, 'sub');
+    c.if({CONDITION: false, SUBSTACK: 'othersub'}, util);
+    t.equal(steppedID, 'sub');
+    c.ifElse({CONDITION: true, SUBSTACK: 'anothersub'}, util);
+    t.equal(steppedID, 'anothersub');
+    c.ifElse({CONDITION: false, SUBSTACK: 'sub', SUBSTACK2: 'sub2'}, util);
+    t.equal(steppedID, 'sub2');
     t.end();
 });
 
