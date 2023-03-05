@@ -324,6 +324,7 @@ const execute = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
 
     let blockContainer = thread.blockContainer;
+    /** @type {BlockCached} */
     let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
     if (blockCached === null) {
         blockContainer = runtime.flyoutBlocks;
@@ -379,11 +380,12 @@ const execute = function (sequencer, thread) {
         // This way if the last operation was removed, we'll find the next
         // candidate. If an earlier block that was performed was removed then
         // we'll find the index where the last operation is now.
-        if (reported.length > 0) {
-            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.oldOpID));
-            if (lastExisting) {
-                // Resume execution after the last reported block
-                i = ops.findIndex(opCached => opCached.id === lastExisting.oldOpID) + 1;
+        for (let j = reported.length - 1; j >= 0; j--) {
+            // Resume execution after the last reported block
+            const opIndex = ops.findIndex(op => op.id === reported[j].oldOpID);
+            if (opIndex !== -1) {
+                i = opIndex + 1;
+                break;
             }
         }
 
