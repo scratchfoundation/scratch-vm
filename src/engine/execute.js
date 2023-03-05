@@ -391,7 +391,7 @@ const execute = function (sequencer, thread) {
 
         const lastOperation = i === length - 1;
         // The reporting block must exist and must be the next one in the sequence of operations.
-        if (ops[i] && ops[i].id === thread.reportingBlockId) {
+        if (i < length && ops[i].id === thread.reportingBlockId) {
             const inputValue = thread.resolvedValue;
             const opCached = ops[i];
 
@@ -420,8 +420,8 @@ const execute = function (sequencer, thread) {
             throw new Error('Promise block seems to be missing its own op');
         }
 
-        // We'll later set these again if we didn't finish. It's fine to assume earlier that thread.reported is not
-        // null, because if it is, that's a logic bug.
+        // We'll later set these again if we run into another promise-waiting block.
+        // We can assume that if thread.justResolved is true, then these will also be set.
         thread.reportingBlockId = null;
         thread.reported = null;
     }
@@ -467,7 +467,7 @@ const execute = function (sequencer, thread) {
             // blockCached objects will be re-created if the block cache changes. When the promise resolves, we fill in
             // the parent block's inputs with these values.
             thread.clearResolvedValue();
-            thread.reportingBlockId = ops[i].id;
+            thread.reportingBlockId = opCached.id;
             thread.reported = ops.slice(0, i).map(op => {
                 const inputName = op._parentKey;
                 const reportedValues = op._parentValues;
