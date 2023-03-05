@@ -198,15 +198,15 @@ class Thread {
         this.resolvedValue = null;
 
         /**
-         * The id of the block that we will report the promise resolved value
-         * for.
-         * @type {string}
+         * The ID of the block that we're currently promise-waiting on.
+         * @type {?string}
          */
         this.reportingBlockId = null;
 
         /**
-         * The already reported values in a sequence of blocks to restore when
-         * the awaited promise resolves.
+         * All blocks evaluated before a promise-waiting block was evaluated and the thread was paused. Contains all
+         * blocks located before the promise-waiting block in the operations list,
+         * at the time that the thread was paused.
          * @type {Array.<{oldOpID: string, inputValue: string | number | boolean}>}
          */
         this.reported = null;
