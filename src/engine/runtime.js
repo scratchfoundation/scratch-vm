@@ -1727,43 +1727,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Run a function `f` for all scripts in a workspace.
-     * `f` will be called with two parameters:
-     *  - the top block ID of the script.
-     *  - the target that owns the script.
-     * @param {!Function} f Function to call for each script.
-     * @param {Target=} optTarget Optionally, a target to restrict to.
-     */
-    allScriptsDo (f, optTarget) {
-        let targets = this.executableTargets;
-        if (optTarget) {
-            targets = [optTarget];
-        }
-        for (let t = targets.length - 1; t >= 0; t--) {
-            const target = targets[t];
-            const scripts = target.blocks.getScripts();
-            for (let j = 0; j < scripts.length; j++) {
-                const topBlockId = scripts[j];
-                f(topBlockId, target);
-            }
-        }
-    }
-
-    allScriptsByOpcodeDo (opcode, f, optTarget) {
-        let targets = this.executableTargets;
-        if (optTarget) {
-            targets = [optTarget];
-        }
-        for (let t = targets.length - 1; t >= 0; t--) {
-            const target = targets[t];
-            const scripts = BlocksRuntimeCache.getScripts(target.blocks, opcode);
-            for (let j = 0; j < scripts.length; j++) {
-                f(scripts[j], target);
-            }
-        }
-    }
-
-    /**
      * Start all relevant hats.
      * @param {!string} requestedHatOpcode Opcode of hats to start.
      * @param {object=} optMatchFields Optionally, fields to match on the hat.
@@ -1787,67 +1750,77 @@ class Runtime extends EventEmitter {
         }
 
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-        this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
-            const {
-                blockId: topBlockId,
-                fields: hatFields
-            } = script;
-
-            // Match any requested fields.
-            // For example: ensures that broadcasts match.
-            // This needs to happen before the block is evaluated
-            // (i.e., before the predicate can be run) because "broadcast and wait"
-            // needs to have a precise collection of started threads.
-            for (const matchField in optMatchFields) {
-                if (hatFields[matchField].value !== optMatchFields[matchField]) {
-                    // Field mismatch.
-                    return;
-                }
-            }
-
-            if (hatMeta.restartExistingThreads) {
-                // If `restartExistingThreads` is true, we should stop
-                // any existing threads starting with the top block.
-                for (let i = 0; i < this.threads.length; i++) {
-                    if (this.threads[i].target === target &&
-                        this.threads[i].topBlock === topBlockId &&
-                        // stack click threads and hat threads can coexist
-                        !this.threads[i].stackClick) {
-                        newThreads.push(this._restartThread(this.threads[i]));
-                        return;
+        const targets = optTarget ? [optTarget] : this.executableTargets;
+        for (let t = targets.length - 1; t >= 0; t--) {
+            const target = targets[t];
+            const scripts = BlocksRuntimeCache.getScripts(target.blocks, requestedHatOpcode);
+            eachScript:
+            for (let s = 0; s < scripts.length; s++) {
+                const {
+                    blockId: topBlockId,
+                    fields: hatFields
+                } = scripts[s];
+    
+                // Match any requested fields.
+                // For example: ensures that broadcasts match.
+                // This needs to happen before the block is evaluated
+                // (i.e., before the predicate can be run) because "broadcast and wait"
+                // needs to have a precise collection of started threads.
+                for (const matchField in optMatchFields) {
+                    if (hatFields[matchField].value !== optMatchFields[matchField]) {
+                        // Field mismatch.
+                        continue eachScript;
                     }
                 }
-            } else {
-                // If `restartExistingThreads` is false, we should
-                // give up if any threads with the top block are running.
-                for (let j = 0; j < this.threads.length; j++) {
-                    if (this.threads[j].target === target &&
-                        this.threads[j].topBlock === topBlockId &&
-                        // stack click threads and hat threads can coexist
-                        !this.threads[j].stackClick &&
-                        this.threads[j].status !== Thread.STATUS_DONE) {
-                        // Some thread is already running.
-                        return;
+    
+                if (hatMeta.restartExistingThreads) {
+                    // If `restartExistingThreads` is true, we should stop
+                    // any existing threads starting with the top block.
+                    for (let i = 0; i < this.threads.length; i++) {
+                        if (this.threads[i].target === target &&
+                            this.threads[i].topBlock === topBlockId &&
+                            // stack click threads and hat threads can coexist
+                            !this.threads[i].stackClick) {
+                            newThreads.push(this._restartThread(this.threads[i]));
+                            continue eachScript;
+                        }
+                    }
+                } else {
+                    // If `restartExistingThreads` is false, we should
+                    // give up if any threads with the top block are running.
+                    for (let j = 0; j < this.threads.length; j++) {
+                        if (this.threads[j].target === target &&
+                            this.threads[j].topBlock === topBlockId &&
+                            // stack click threads and hat threads can coexist
+                            !this.threads[j].stackClick &&
+                            this.threads[j].status !== Thread.STATUS_DONE) {
+                            // Some thread is already running.
+                            continue eachScript;
+                        }
                     }
                 }
+
+                // Start the thread with this top block.
+                const thread = this._pushThread(topBlockId, target);
+                newThreads.push(thread);
             }
-            // Start the thread with this top block.
-            newThreads.push(this._pushThread(topBlockId, target));
-        }, optTarget);
-        // For compatibility with Scratch 2, edge-activated hats need to be processed before
-        // threads are stepped. See ScratchRuntime.as for original implementation.
-        // Note that *only* edge-activated hats should be stepped--"broadcast and wait", for example, expects empty
-        // "when I receive" stacks to take one tick to execute.
-        newThreads.forEach(thread => {
-            if (this.getIsEdgeActivatedHat(requestedHatOpcode)) {
+        }
+
+        // For compatibility with Scratch 2, edge-activated hats need to be processed before threads are
+        // stepped. See ScratchRuntime.as for original implementation.
+        // Note that *only* edge-activated hats should be stepped--"broadcast and wait", for example, expects
+        // empty "when I receive" stacks to take one tick to execute.
+        if (this.getIsEdgeActivatedHat(requestedHatOpcode)) {
+            newThreads.forEach(thread => {
                 this.sequencer.stepOnce(thread);
                 // Change YIELD to RUNNING, so that these threads will be run again in stepThreads.
                 // Otherwise, they would be stuck in STATUS_YIELD forever.
                 if (thread.status === Thread.STATUS_YIELD) {
                     thread.status = Thread.STATUS_RUNNING;
                 }
-            }
-        });
+            });
+        }
+
         return newThreads;
     }
 
