@@ -17,7 +17,6 @@ test('spec', t => {
     t.type(s.stepThreads, 'function');
     t.type(s.stepToBranch, 'function');
     t.type(s.stepToProcedure, 'function');
-    t.type(s.retireThread, 'function');
 
     t.end();
 });
@@ -134,18 +133,6 @@ test('stepToBranch', t => {
     // isLoop resets when thread goes to next block.
     th.goToNextBlock();
     t.strictEquals(th.peekStackFrame().isLoop, false);
-
-    t.end();
-});
-
-test('retireThread', t => {
-    const r = new Runtime();
-    const s = new Sequencer(r);
-    const th = generateThread(r);
-    t.strictEquals(th.stack.length, 11);
-    s.retireThread(th);
-    t.strictEquals(th.stack.length, 0);
-    t.strictEquals(th.status, Thread.STATUS_DONE);
 
     t.end();
 });

@@ -129,6 +129,19 @@ test('finishResuming', t => {
     t.end();
 });
 
+test('retire', t => {
+    const th = new Thread('arbitraryString');
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    t.equal(th.stack.length, 1);
+    th.retire();
+    t.equal(th.stack.length, 0);
+    t.equal(th.status, Thread.STATUS_DONE);
+    t.equal(th.peekStack(), null);
+
+    t.end();
+});
+
 test('peekStack', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');

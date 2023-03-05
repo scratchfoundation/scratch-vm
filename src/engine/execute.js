@@ -69,13 +69,13 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
 
                 const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && resolvedValue) : resolvedValue;
                 if (!edgeWasActivated) {
-                    sequencer.retireThread(thread);
+                    thread.retire();
                 }
             }
         } else if (!resolvedValue) {
             // Not an edge-activated hat: retire the thread
             // if predicate was false.
-            sequencer.retireThread(thread);
+            thread.retire();
         }
     } else if (typeof resolvedValue !== 'undefined' && resolvedValue !== null && thread.atStackTop()) {
         // In a non-hat, report the value visually if necessary if
@@ -326,7 +326,7 @@ const execute = function (sequencer, thread) {
         // Stop if block or target no longer exists.
         if (blockCached === null) {
             // No block found: stop the thread; script no longer exists.
-            sequencer.retireThread(thread);
+            thread.retire();
             return;
         }
     }

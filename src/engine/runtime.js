@@ -1712,7 +1712,7 @@ class Runtime extends EventEmitter {
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-                this.sequencer.retireThread(this.threads[i]);
+                this.threads[i].retire();
                 return;
             }
         }
@@ -1975,7 +1975,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
-                this.sequencer.retireThread(this.threads[i]);
+                this.threads[i].retire();
             }
         }
     }

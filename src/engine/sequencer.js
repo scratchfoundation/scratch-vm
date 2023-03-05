@@ -299,19 +299,6 @@ class Sequencer {
             }
         }
     }
-
-    /**
-     * Retire a thread in the middle, without considering further blocks.
-     * @param {!Thread} thread Thread object to retire.
-     */
-    retireThread (thread) {
-        thread.stack = [];
-        thread.pointer = null;
-        thread.stackFrames = [];
-        thread.stackFrame = null;
-        thread.requestScriptGlowInFrame = false;
-        thread.status = Thread.STATUS_DONE;
-    }
 }
 
 module.exports = Sequencer;
