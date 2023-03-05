@@ -441,11 +441,9 @@ const execute = function (sequencer, thread) {
 
         // If it's a promise, wait until promise resolves.
         if (isPromise(primitiveReportedValue)) {
-            if (thread.status === Thread.STATUS_RUNNING) {
-                // Primitive returned a promise; automatically yield thread.
-                thread.status = Thread.STATUS_PROMISE_WAIT;
-            }
-            // Promise handlers
+            // Primitive returned a promise; automatically yield thread.
+            thread.status = Thread.STATUS_PROMISE_WAIT;
+            // Resume thread after the promise resolves
             primitiveReportedValue
                 .catch(rejectionReason => {
                     // Promise rejected: the primitive had some error.
