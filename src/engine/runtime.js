@@ -1745,10 +1745,9 @@ class Runtime extends EventEmitter {
             // No known hat with this opcode.
             return;
         }
-        const instance = this;
         const newThreads = [];
         // Look up metadata for the relevant hat.
-        const hatMeta = instance._hats[requestedHatOpcode];
+        const hatMeta = this._hats[requestedHatOpcode];
 
         for (const opts in optMatchFields) {
             if (!optMatchFields.hasOwnProperty(opts)) continue;
