@@ -1191,9 +1191,11 @@ class Blocks {
  * @param {Blocks} blocks Blocks containing the expected blockId
  * @param {string} blockId blockId for the desired execute cache
  * @param {function} CacheType constructor for cached block information
+ * @param {boolean} topLevel True if the block is top-level (not nested in
+ * another block). Defaults to false.
  * @return {object} execute cache object
  */
-BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
+BlocksExecuteCache.getCached = function (blocks, blockId, CacheType, topLevel = false) {
     let cached = blocks._cache._executeCached[blockId];
     if (typeof cached !== 'undefined') {
         return cached;
@@ -1202,7 +1204,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     const block = blocks.getBlock(blockId);
     if (typeof block === 'undefined') return null;
 
-    cached = new CacheType(blocks, block);
+    cached = new CacheType(blocks, block, topLevel /* topLevel */);
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;
