@@ -38,7 +38,6 @@ test('pushStack', t => {
 
 test('popStack', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
     t.strictEquals(th.popStack(), null);
 
@@ -47,7 +46,6 @@ test('popStack', t => {
 
 test('atStackTop', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.pushStack('secondString');
     t.strictEquals(th.atStackTop(), false);
     th.popStack();
@@ -58,7 +56,6 @@ test('atStackTop', t => {
 
 test('peekStackFrame', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     t.strictEquals(th.peekStackFrame().warpMode, false);
     th.popStack();
     t.strictEquals(th.peekStackFrame(), null);
@@ -68,7 +65,6 @@ test('peekStackFrame', t => {
 
 test('pause', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.pushStack('secondString');
     const reported = [];
     th.pause('reportingBlock', reported);
@@ -80,7 +76,6 @@ test('pause', t => {
 
 test('resume', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.pushStack('secondString');
     const reported = [];
     th.pause('reportingBlock', reported);
@@ -93,7 +88,6 @@ test('resume', t => {
 
 test('finishResuming', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.pushStack('secondString');
     const reported = [];
     th.pause('reportingBlock', reported);
@@ -109,7 +103,6 @@ test('finishResuming', t => {
 
 test('retire', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.pushStack('secondString');
     t.equal(th.stack.length, 1);
     th.retire();
@@ -122,7 +115,6 @@ test('retire', t => {
 
 test('peekStack', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     t.strictEquals(th.peekStack(), 'arbitraryString');
     th.popStack();
     t.strictEquals(th.peekStack(), null);
@@ -132,7 +124,6 @@ test('peekStack', t => {
 
 test('PushGetParam', t => {
     const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
     th.initParams();
     th.pushParam('testParam', 'testValue');
     t.strictEquals(th.peekStackFrame().params.testParam, 'testValue');
@@ -183,7 +174,7 @@ test('goToNextBlock', t => {
     rt.blocks.createBlock(block2);
     th.target = rt;
 
-    t.strictEquals(th.peekStack(), null);
+    t.strictEquals(th.peekStack(), 'arbitraryString');
     th.pushStack('secondString');
     t.strictEquals(th.peekStack(), 'secondString');
     th.goToNextBlock();
@@ -200,81 +191,83 @@ test('goToNextBlock', t => {
 });
 
 test('stopThisScript', t => {
-    const th = new Thread('arbitraryString');
-    const r = new Runtime();
-    const s = new Sprite(null, r);
-    const rt = new RenderedTarget(s, r);
-    const block1 = {fields: Object,
-        id: 'arbitraryString',
-        inputs: Object,
-        STEPS: Object,
-        block: 'fakeBlock',
-        name: 'STEPS',
-        next: null,
-        opcode: 'motion_movesteps',
-        parent: null,
-        shadow: false,
-        topLevel: true,
-        x: 0,
-        y: 0
+    const makeThread = () => {
+        const th = new Thread('arbitraryString');
+        const r = new Runtime();
+        const s = new Sprite(null, r);
+        const rt = new RenderedTarget(s, r);
+        const block1 = {fields: Object,
+            id: 'arbitraryString',
+            inputs: Object,
+            STEPS: Object,
+            block: 'fakeBlock',
+            name: 'STEPS',
+            next: null,
+            opcode: 'motion_movesteps',
+            parent: null,
+            shadow: false,
+            topLevel: true,
+            x: 0,
+            y: 0
+        };
+        const block2 = {fields: Object,
+            id: 'secondString',
+            inputs: Object,
+            STEPS: Object,
+            block: 'fakeBlock',
+            name: 'STEPS',
+            next: null,
+            opcode: 'procedures_call',
+            mutation: {proccode: 'fakeCode'},
+            parent: null,
+            shadow: false,
+            topLevel: true,
+            x: 0,
+            y: 0
+        };
+        const block3 = {fields: Object,
+            id: 'thirdString',
+            inputs: Object,
+            STEPS: Object,
+            block: 'fakeBlock',
+            name: 'STEPS',
+            next: null,
+            opcode: 'procedures_definition',
+            mutation: {proccode: 'fakeCode'},
+            parent: null,
+            shadow: false,
+            topLevel: true,
+            x: 0,
+            y: 0
+        };
+    
+        rt.blocks.createBlock(block1);
+        rt.blocks.createBlock(block2);
+        rt.blocks.createBlock(block3);
+        th.target = rt;
+        return th;
     };
-    const block2 = {fields: Object,
-        id: 'secondString',
-        inputs: Object,
-        STEPS: Object,
-        block: 'fakeBlock',
-        name: 'STEPS',
-        next: null,
-        opcode: 'procedures_call',
-        mutation: {proccode: 'fakeCode'},
-        parent: null,
-        shadow: false,
-        topLevel: true,
-        x: 0,
-        y: 0
-    };
-    const block3 = {fields: Object,
-        id: 'thirdString',
-        inputs: Object,
-        STEPS: Object,
-        block: 'fakeBlock',
-        name: 'STEPS',
-        next: null,
-        opcode: 'procedures_definition',
-        mutation: {proccode: 'fakeCode'},
-        parent: null,
-        shadow: false,
-        topLevel: true,
-        x: 0,
-        y: 0
-    };
-
-    rt.blocks.createBlock(block1);
-    rt.blocks.createBlock(block2);
-    rt.blocks.createBlock(block3);
-    th.target = rt;
-
+    
+    let th = makeThread();
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
     t.strictEquals(th.peekStackFrame(), null);
 
-    th.pushStack('arbitraryString');
+    th = makeThread();
     t.strictEquals(th.peekStack(), 'arbitraryString');
     t.notEqual(th.peekStackFrame(), null);
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
     t.strictEquals(th.peekStackFrame(), null);
 
-    th.pushStack('arbitraryString');
+    th = makeThread();
     th.pushStack('secondString');
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
     t.same(th.stack, ['arbitraryString']);
     t.notEqual(th.peekStackFrame(), null);
 
-    while (th.peekStackFrame()) th.popStack();
-
-    th.pushStack('arbitraryString');
+    th = makeThread();
     th.pushStack('secondString');
     th.pushStack('thirdString');
     th.stopThisScript();
