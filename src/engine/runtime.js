@@ -2149,7 +2149,7 @@ class Runtime extends EventEmitter {
         for (let i = 0; i < searchThreads.length; i++) {
             const thread = searchThreads[i];
             const target = thread.target;
-            if (target !== this._editingTarget || !(thread.requestScriptGlowInFrame || thread.stackClick)) {
+            if (target !== this._editingTarget || !thread.requestScriptGlowInFrame) {
                 continue;
             }
             const blockForThread = thread.blockGlowInFrame;
