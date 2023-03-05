@@ -37,68 +37,6 @@ const isPromise = function (value) {
 };
 
 /**
- * Handle any reported value from the primitive, either directly returned
- * or after a promise resolves.
- * @param {*} resolvedValue Value eventually returned from the primitive.
- * @param {!Runtime} runtime Runtime that the thread is running in.
- * @param {!Thread} thread Thread containing the primitive.
- * @param {!string} currentBlockId Id of the block in its thread for value from
- * the primitive.
- * @param {!string} opcode opcode used to identify a block function primitive.
- * @param {!boolean} isHat Is the current block a hat?
- */
-// @todo move this to callback attached to the thread when we have performance
-// metrics (dd)
-const handleReport = function (resolvedValue, runtime, thread, blockCached) {
-    const currentBlockId = blockCached.id;
-    const opcode = blockCached.opcode;
-    const isHat = blockCached._isHat;
-
-    if (isHat) {
-        // Hat predicate was evaluated.
-        if (runtime.getIsEdgeActivatedHat(opcode)) {
-            // If this is an edge-activated hat, only proceed if the value is
-            // true and used to be false, or the stack was activated explicitly
-            // via stack click
-            if (!thread.stackClick) {
-                const hasOldEdgeValue = thread.target.hasEdgeActivatedValue(currentBlockId);
-                const oldEdgeValue = thread.target.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
-
-                const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && resolvedValue) : resolvedValue;
-                if (!edgeWasActivated) {
-                    thread.retire();
-                }
-            }
-        } else if (!resolvedValue) {
-            // Not an edge-activated hat: retire the thread
-            // if predicate was false.
-            thread.retire();
-        }
-    } else if (typeof resolvedValue !== 'undefined' && resolvedValue !== null && thread.atStackTop()) {
-        // In a non-hat, report the value visually if necessary if
-        // at the top of the thread stack.
-        if (thread.stackClick) {
-            runtime.visualReport(currentBlockId, resolvedValue);
-        }
-        if (thread.updateMonitor) {
-            const targetId = runtime.monitorBlocks.getBlock(currentBlockId).targetId;
-            if (targetId && !runtime.getTargetById(targetId)) {
-                // Target no longer exists
-                return;
-            }
-            runtime.requestUpdateMonitor(Map({
-                id: currentBlockId,
-                spriteName: targetId ? runtime.getTargetById(targetId).getName() : null,
-                value: resolvedValue
-            }));
-        }
-    }
-};
-
-/**
  * A execute.js internal representation of a block to reduce the time spent in
  * execute as the same blocks are called the most.
  *
@@ -112,9 +50,11 @@ const handleReport = function (resolvedValue, runtime, thread, blockCached) {
  *
  * @param {Blocks} blockContainer the related Blocks instance
  * @param {object} block the block information to cache
+ * @param {boolean} topLevel True if the block is top-level (not nested in
+ * another block)
  */
 class BlockCached {
-    constructor (blockContainer, block) {
+    constructor (blockContainer, block, topLevel) {
         /**
          * Block id in its parent set of blocks.
          * @type {string}
@@ -282,6 +222,76 @@ class BlockCached {
         if (typeof this._blockFunction === 'function') {
             this._ops.push(this);
         }
+
+        /**
+         * @method
+         * @name BlockCached#handleReport
+         * @desc Handle the value (eventually) returned by this block primitive's function.
+         * Dynamically set based on this block's properties (top-level or nested? hat predicate?)
+         * @param {*} reportedValue Value eventually returned from the primitive.
+         * @param {!Thread} thread Thread containing the primitive.
+         */
+        if (topLevel) {
+            if (this._isHat) {
+                // This is an edge-activated hat block. Handle the reported value by retiring the thread if the
+                // hat predicate did not transition from false to true during the last tick.
+                if (runtime.getIsEdgeActivatedHat(opcode)) {
+                    this.handleReport = (reportedValue, thread) => {
+                        // If this is an edge-activated hat, only proceed if the value is
+                        // true and used to be false, or the stack was activated explicitly
+                        // via stack click
+                        if (!thread.stackClick) {
+                            const hasOldEdgeValue = thread.target.hasEdgeActivatedValue(this.id);
+                            const oldEdgeValue = thread.target.updateEdgeActivatedValue(this.id, reportedValue);
+
+                            const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && reportedValue) : reportedValue;
+                            if (!edgeWasActivated) {
+                                thread.retire();
+                            }
+                        }
+                    };
+                } else {
+                    // This is a non-edge-activated hat. Handle the reported value by retiring the thread if the hat
+                    // predicate evaluated to false.
+                    this.handleReport = (reportedValue, thread) => {
+                        if (!reportedValue) {
+                            thread.retire();
+                        }
+                    };
+                }
+            } else {
+                // This is a top-level block, either for a monitor thread or for a block that the user activated by
+                // clicking.
+                this.handleReport = (reportedValue, thread) => {
+                    if (typeof reportedValue === 'undefined' || reportedValue === null || !thread.atStackTop()) {
+                        return;
+                    }
+                    // In a non-hat, report the value visually if necessary if
+                    // at the top of the thread stack.
+                    if (thread.stackClick) {
+                        runtime.visualReport(this.id, reportedValue);
+                    }
+                    if (thread.updateMonitor) {
+                        const targetId = runtime.monitorBlocks.getBlock(this.id).targetId;
+                        if (targetId && !runtime.getTargetById(targetId)) {
+                            // Target no longer exists
+                            return;
+                        }
+                        runtime.requestUpdateMonitor(Map({
+                            id: this.id,
+                            spriteName: targetId ? runtime.getTargetById(targetId).getName() : null,
+                            value: reportedValue
+                        }));
+                    }
+                };
+            }
+        } else {
+            // This is a reporter block nested within another block's input.
+            // Handle the report by setting the parent's argument value to the result of evaluating this block.
+            this.handleReport = reportedValue => {
+                this._parentValues[this._parentKey] = reportedValue;
+            };
+        }
     }
 }
 
@@ -322,10 +332,10 @@ const execute = function (sequencer, thread) {
 
     let blockContainer = thread.blockContainer;
     /** @type {BlockCached} */
-    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached, true);
     if (blockCached === null) {
         blockContainer = runtime.flyoutBlocks;
-        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
+        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached, true);
         // Stop if block or target no longer exists.
         if (blockCached === null) {
             // No block found: stop the thread; script no longer exists.
@@ -376,23 +386,13 @@ const execute = function (sequencer, thread) {
             }
         }
 
-        const lastOperation = i === length - 1;
         // The reporting block must exist and must be the next one in the sequence of operations.
         if (i < length && ops[i].id === thread.reportingBlockId) {
-            const inputValue = thread.resolvedValue;
-            const opCached = ops[i];
-
-            if (lastOperation) {
-                handleReport(inputValue, runtime, thread, opCached);
-            } else {
-                opCached._parentValues[opCached._parentKey] = inputValue;
-            }
+            ops[i].handleReport(thread.resolvedValue, thread);
 
             // If this is the last operation, this sets i to the length of `ops`. This means that the below loop will
             // not execute, and we won't re-execute this block.
             i += 1;
-        } else if (lastOperation) {
-            throw new Error('Promise block seems to be missing its own op');
         }
 
         thread.finishResuming();
@@ -401,7 +401,6 @@ const execute = function (sequencer, thread) {
     const start = i;
 
     for (; i < length; i++) {
-        const lastOperation = i === length - 1;
         const opCached = ops[i];
 
         const blockFunction = opCached._blockFunction;
@@ -451,11 +450,7 @@ const execute = function (sequencer, thread) {
         }
 
         if (thread.status === Thread.STATUS_RUNNING) {
-            if (lastOperation) {
-                handleReport(primitiveReportedValue, runtime, thread, opCached);
-            } else {
-                opCached._parentValues[opCached._parentKey] = primitiveReportedValue;
-            }
+            opCached.handleReport(primitiveReportedValue, thread);
         }
     }
 
