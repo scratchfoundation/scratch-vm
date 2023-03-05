@@ -39,8 +39,7 @@ const isPromise = function (value) {
  * Handle any reported value from the primitive, either directly returned
  * or after a promise resolves.
  * @param {*} resolvedValue Value eventually returned from the primitive.
- * @param {!Sequencer} sequencer Sequencer stepping the thread for the ran
- * primitive.
+ * @param {!Runtime} runtime Runtime that the thread is running in.
  * @param {!Thread} thread Thread containing the primitive.
  * @param {!string} currentBlockId Id of the block in its thread for value from
  * the primitive.
@@ -49,14 +48,14 @@ const isPromise = function (value) {
  */
 // @todo move this to callback attached to the thread when we have performance
 // metrics (dd)
-const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
+const handleReport = function (resolvedValue, runtime, thread, blockCached) {
     const currentBlockId = blockCached.id;
     const opcode = blockCached.opcode;
     const isHat = blockCached._isHat;
 
     if (isHat) {
         // Hat predicate was evaluated.
-        if (sequencer.runtime.getIsEdgeActivatedHat(opcode)) {
+        if (runtime.getIsEdgeActivatedHat(opcode)) {
             // If this is an edge-activated hat, only proceed if the value is
             // true and used to be false, or the stack was activated explicitly
             // via stack click
@@ -81,17 +80,17 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached) {
         // In a non-hat, report the value visually if necessary if
         // at the top of the thread stack.
         if (thread.stackClick) {
-            sequencer.runtime.visualReport(currentBlockId, resolvedValue);
+            runtime.visualReport(currentBlockId, resolvedValue);
         }
         if (thread.updateMonitor) {
-            const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
-            if (targetId && !sequencer.runtime.getTargetById(targetId)) {
+            const targetId = runtime.monitorBlocks.getBlock(currentBlockId).targetId;
+            if (targetId && !runtime.getTargetById(targetId)) {
                 // Target no longer exists
                 return;
             }
-            sequencer.runtime.requestUpdateMonitor(Map({
+            runtime.requestUpdateMonitor(Map({
                 id: currentBlockId,
-                spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
+                spriteName: targetId ? runtime.getTargetById(targetId).getName() : null,
                 value: resolvedValue
             }));
         }
@@ -380,7 +379,7 @@ const execute = function (sequencer, thread) {
             const opCached = ops[i];
 
             if (lastOperation) {
-                handleReport(inputValue, sequencer, thread, opCached);
+                handleReport(inputValue, runtime, thread, opCached);
             } else {
                 opCached._parentValues[opCached._parentKey] = inputValue;
             }
@@ -449,7 +448,7 @@ const execute = function (sequencer, thread) {
 
         if (thread.status === Thread.STATUS_RUNNING) {
             if (lastOperation) {
-                handleReport(primitiveReportedValue, sequencer, thread, opCached);
+                handleReport(primitiveReportedValue, runtime, thread, opCached);
             } else {
                 opCached._parentValues[opCached._parentKey] = primitiveReportedValue;
             }
