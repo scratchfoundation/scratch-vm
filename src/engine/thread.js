@@ -135,7 +135,7 @@ class Thread {
          * determines what block is executed.
          * @type {string}
          */
-        this.pointer = null;
+        this.pointer = firstBlock;
 
         /**
          * Stack frames for the thread. Store metadata for the executing blocks.
@@ -147,7 +147,7 @@ class Thread {
          * The current stack frame that goes along with the pointer.
          * @type {_StackFrame}
          */
-        this.stackFrame = null;
+        this.stackFrame = _StackFrame.create(initialStackFrame);
 
         /**
          * Status of the thread, one of three states (below)
@@ -262,17 +262,12 @@ class Thread {
      * @param {string} blockId Block ID to push to stack.
      */
     pushStack (blockId) {
-        if (this.stackFrame === null) {
-            this.pointer = blockId;
-            this.stackFrame = _StackFrame.create(initialStackFrame);
-        } else {
-            this.stack.push(this.pointer);
-            this.pointer = blockId;
+        this.stack.push(this.pointer);
+        this.pointer = blockId;
 
-            const parent = this.stackFrame;
-            this.stackFrames.push(parent);
-            this.stackFrame = _StackFrame.create(parent);
-        }
+        const parent = this.stackFrame;
+        this.stackFrames.push(parent);
+        this.stackFrame = _StackFrame.create(parent);
     }
 
     /**
