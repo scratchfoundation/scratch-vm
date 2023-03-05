@@ -417,6 +417,7 @@ const execute = function (sequencer, thread) {
         // If it's a promise, wait until promise resolves.
         if (isPromise(primitiveReportedValue)) {
             // Resume thread after the promise resolves
+            const generation = thread.generation;
             primitiveReportedValue
                 .catch(rejectionReason => {
                     // Promise rejected: the primitive had some error.
@@ -425,8 +426,9 @@ const execute = function (sequencer, thread) {
                     // Return an empty string
                     return '';
                 }).then(resolvedValue => {
-                    // A thread that is STATUS_DONE must stay STATUS_DONE
-                    if (thread.status === Thread.STATUS_DONE) return;
+                    // The thread has either been stopped or restarted while we were waiting for the promise. Don't do
+                    // anything since we're working with stale state.
+                    if (thread.status === Thread.STATUS_DONE || thread.generation !== generation) return;
 
                     thread.resume(resolvedValue);
                 });
