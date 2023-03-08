@@ -2157,20 +2157,21 @@ class Runtime extends EventEmitter {
         for (let i = 0; i < searchThreads.length; i++) {
             const thread = searchThreads[i];
             const target = thread.target;
-            if (target !== this._editingTarget || !thread.requestScriptGlowInFrame) {
-                continue;
-            }
+            if (target !== this._editingTarget) continue;
+
             const blockForThread = thread.blockGlowInFrame;
-            let script = target.blocks.getTopLevelScript(blockForThread);
+            if (blockForThread === null) continue;
+
+            let blockContainer = target.blocks;
+            let script = blockContainer.getTopLevelScript(blockForThread);
             if (!script) {
+                blockContainer = this.flyoutBlocks;
                 // Attempt to find in flyout blocks.
-                script = this.flyoutBlocks.getTopLevelScript(
-                    blockForThread
-                );
+                script = blockContainer.getTopLevelScript(blockForThread);
             }
-            if (script) {
-                requestedGlowsThisFrame.add(script);
-            }
+
+            if (!script || blockContainer.forceNoGlow) continue;
+            requestedGlowsThisFrame.add(script);
         }
         // Compare to previous frame.
         for (const previousFrameGlow of this._scriptGlowsPreviousFrame.values()) {

@@ -168,12 +168,6 @@ class Thread {
         this.blockContainer = null;
 
         /**
-         * Whether the thread requests its script to glow during this frame.
-         * @type {boolean}
-         */
-        this.requestScriptGlowInFrame = false;
-
-        /**
          * Which block ID should glow during this frame, if any.
          * @type {?string}
          */
@@ -310,7 +304,7 @@ class Thread {
 
         if (this.stackFrame === null) {
             // Clean up!
-            this.requestScriptGlowInFrame = false;
+            this.blockGlowInFrame = null;
             this.status = Thread.STATUS_DONE;
         }
     }
@@ -372,7 +366,7 @@ class Thread {
         this.pointer = null;
         this.stackFrames = [];
         this.stackFrame = null;
-        this.requestScriptGlowInFrame = false;
+        this.blockGlowInFrame = null;
         this.status = Thread.STATUS_DONE;
     }
 
@@ -386,7 +380,6 @@ class Thread {
         if (this.stackFrame) _StackFrame.release(this.stackFrame);
         this.stackFrame = _StackFrame.create(initialStackFrame);
         this.stackFrames.length = 0;
-        this.requestScriptGlowInFrame = false;
         this.blockGlowInFrame = null;
         this.finishResuming();
         this.generation++;
