@@ -248,7 +248,7 @@ class Runtime extends EventEmitter {
         this._scriptGlowsPreviousFrame = [];
 
         /**
-         * Whether any non-monitor threads ran during the previous frame.
+         * Whether the project counted as "running" during the previous frame.
          * @type {boolean}
          */
         this._projectRanLastFrame = false;
@@ -2094,11 +2094,15 @@ class Runtime extends EventEmitter {
         }
         this._updateGlows(doneThreads);
 
-        const threadNonMonitor = thread => !thread.updateMonitor;
+        // Threads count as "running" if a block glowed in the thread this frame.
+        // This excludes edge-activated hat predicates and monitor blocks.
+        const threadCountsTowardsRunStatus = thread => thread.requestScriptGlowInFrame &&
+            thread.blockGlowInFrame !== null;
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
-        const anyNonMonitorThreadsRunning = this.threads.some(threadNonMonitor) || doneThreads.some(threadNonMonitor);
-        this._emitProjectRunStatus(anyNonMonitorThreadsRunning);
+        const anyThreadsRunning = this.threads.some(threadCountsTowardsRunStatus) ||
+            doneThreads.some(threadCountsTowardsRunStatus);
+        this._emitProjectRunStatus(anyThreadsRunning);
         // Store threads that completed this iteration for testing and other
         // internal purposes.
         this._lastStepDoneThreads = doneThreads;
