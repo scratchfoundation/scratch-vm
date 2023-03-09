@@ -3,6 +3,8 @@ const {OrderedMap} = require('immutable');
 
 const StageLayering = require('./stage-layering');
 
+const BlockUtility = require('./block-utility');
+
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
     scratch3_event: require('../blocks/scratch3_event'),
@@ -207,7 +209,7 @@ class Runtime extends EventEmitter {
                         }
                     }
                 }
-                // Collect hat metadata from package.
+                /* Don't Need Hats Right Now (or ever?)
                 if (packageObject.getHats) {
                     const packageHats = packageObject.getHats();
                     for (const hatName in packageHats) {
@@ -216,6 +218,7 @@ class Runtime extends EventEmitter {
                         }
                     }
                 }
+                */
             }
         }
     }
@@ -550,10 +553,10 @@ class Runtime extends EventEmitter {
      * @return {Promise} - a promise which resolves to the return value of the primitive.
      * If the primitive does not return a value, the promise resolves to null.
      */
-    exec_block_primitive(targetID, primitiveOpcode, args, token) {
+    execBlockPrimitive (targetID, primitiveOpcode, args, token) {
         return new Promise((resolve, reject) => {
             this._blockUtility.target = this.getTargetById(targetID);
-            returnVal = this._primitives[primitiveOpcode](args, this._blockUtility);
+            const returnVal = this._primitives[primitiveOpcode](args, this._blockUtility);
             resolve(returnVal);
         });
     }
