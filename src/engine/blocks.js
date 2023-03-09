@@ -48,11 +48,6 @@ class Blocks {
         Object.defineProperty(this, '_cache', {writable: true, enumerable: false});
         this._cache = {
             /**
-             * Cache block inputs by block id
-             * @type {object.<string, !Array.<object>>}
-             */
-            inputs: {},
-            /**
              * Cache procedure Param Names by block id
              * @type {object.<string, ?Array.<string>>}
              */
@@ -176,14 +171,10 @@ class Blocks {
      * @param {?object} block the block to query.
      * @return {?Array.<object>} All non-branch inputs and their associated blocks.
      */
-    getInputs (block) {
+    getNonBranchInputs (block) {
         if (typeof block === 'undefined') return null;
-        let inputs = this._cache.inputs[block.id];
-        if (typeof inputs !== 'undefined') {
-            return inputs;
-        }
 
-        inputs = {};
+        const inputs = {};
         for (const input in block.inputs) {
             // Ignore blocks prefixed with branch prefix.
             if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
@@ -192,7 +183,6 @@ class Blocks {
             }
         }
 
-        this._cache.inputs[block.id] = inputs;
         return inputs;
     }
 
@@ -511,7 +501,6 @@ class Blocks {
      * Reset all runtime caches.
      */
     resetCache () {
-        this._cache.inputs = {};
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
@@ -1242,23 +1231,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     const block = blocks.getBlock(blockId);
     if (typeof block === 'undefined') return null;
 
-    if (typeof CacheType === 'undefined') {
-        cached = {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        };
-    } else {
-        cached = new CacheType(blocks, {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        });
-    }
+    cached = new CacheType(blocks, block);
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;
