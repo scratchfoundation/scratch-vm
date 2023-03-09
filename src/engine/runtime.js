@@ -7,7 +7,6 @@ const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
 const ScratchBlocksConstants = require('./scratch-blocks-constants');
 const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
@@ -767,7 +766,7 @@ class Runtime extends EventEmitter {
                 if (packageObject.getPrimitives) {
                     const packagePrimitives = packageObject.getPrimitives();
                     for (const op in packagePrimitives) {
-                        if (packagePrimitives.hasOwnProperty(op)) {
+                        if (typeof packagePrimitives[op] === 'function') {
                             this._primitives[op] =
                                 packagePrimitives[op].bind(packageObject);
                         }
@@ -1657,8 +1656,6 @@ class Runtime extends EventEmitter {
      * @param {!Thread} thread Thread object to remove from actives
      */
     _stopThread (thread) {
-        // Mark the thread for later removal
-        thread.isKilled = true;
         // Inform sequencer to stop executing that thread.
         this.sequencer.retireThread(thread);
     }
@@ -1694,7 +1691,7 @@ class Runtime extends EventEmitter {
     isActiveThread (thread) {
         return (
             (
-                thread.stack.length > 0 &&
+                thread.stackFrame !== null &&
                 thread.status !== Thread.STATUS_DONE) &&
             this.threads.indexOf(thread) > -1);
     }
@@ -1827,7 +1824,7 @@ class Runtime extends EventEmitter {
         this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
             const {
                 blockId: topBlockId,
-                fieldsOfInputs: hatFields
+                fields: hatFields
             } = script;
 
             // Match any requested fields.
@@ -1871,11 +1868,12 @@ class Runtime extends EventEmitter {
             // Start the thread with this top block.
             newThreads.push(this._pushThread(topBlockId, target));
         }, optTarget);
-        // For compatibility with Scratch 2, edge triggered hats need to be processed before
-        // threads are stepped. See ScratchRuntime.as for original implementation
+        // For compatibility with Scratch 2, edge-activated hats need to be processed before
+        // threads are stepped. See ScratchRuntime.as for original implementation.
+        // Note that *only* edge-activated hats should be stepped--"broadcast and wait", for example, expects empty
+        // "when I receive" stacks to take one tick to execute.
         newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
+            if (this.getIsEdgeActivatedHat(requestedHatOpcode)) this.sequencer.stepHat(thread);
         });
         return newThreads;
     }
@@ -2068,9 +2066,6 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepProfilerId);
         }
-
-        // Clean up threads that were told to stop during or since the last step
-        this.threads = this.threads.filter(thread => !thread.isKilled);
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {

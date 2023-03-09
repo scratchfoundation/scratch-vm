@@ -17,7 +17,7 @@ test('spec', t => {
     t.type(th.peekStack, 'function');
     t.type(th.peekStackFrame, 'function');
     t.type(th.peekParentStackFrame, 'function');
-    t.type(th.pushReportedValue, 'function');
+    t.type(th.setResolvedValue, 'function');
     t.type(th.initParams, 'function');
     t.type(th.pushParam, 'function');
     t.type(th.peekStack, 'function');
@@ -40,7 +40,7 @@ test('popStack', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     t.strictEquals(th.popStack(), 'arbitraryString');
-    t.strictEquals(th.popStack(), undefined);
+    t.strictEquals(th.popStack(), null);
 
     t.end();
 });
@@ -86,12 +86,13 @@ test('peekParentStackFrame', t => {
     t.end();
 });
 
-test('pushReportedValue', t => {
+test('setResolvedValue', t => {
     const th = new Thread('arbitraryString');
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
-    th.pushReportedValue('value');
-    t.strictEquals(th.justReported, 'value');
+    th.setResolvedValue('value');
+    t.strictEquals(th.justResolved, true);
+    t.strictEquals(th.resolvedValue, 'value');
 
     t.end();
 });
@@ -209,21 +210,54 @@ test('stopThisScript', t => {
         x: 0,
         y: 0
     };
+    const block3 = {fields: Object,
+        id: 'thirdString',
+        inputs: Object,
+        STEPS: Object,
+        block: 'fakeBlock',
+        name: 'STEPS',
+        next: null,
+        opcode: 'procedures_definition',
+        mutation: {proccode: 'fakeCode'},
+        parent: null,
+        shadow: false,
+        topLevel: true,
+        x: 0,
+        y: 0
+    };
 
     rt.blocks.createBlock(block1);
     rt.blocks.createBlock(block2);
+    rt.blocks.createBlock(block3);
     th.target = rt;
 
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
+    t.strictEquals(th.peekStackFrame(), null);
+
     th.pushStack('arbitraryString');
     t.strictEquals(th.peekStack(), 'arbitraryString');
+    t.notEqual(th.peekStackFrame(), null);
     th.stopThisScript();
     t.strictEquals(th.peekStack(), null);
+    t.strictEquals(th.peekStackFrame(), null);
+
     th.pushStack('arbitraryString');
     th.pushStack('secondString');
     th.stopThisScript();
-    t.strictEquals(th.peekStack(), 'secondString');
+    t.strictEquals(th.peekStack(), null);
+    t.same(th.stack, ['arbitraryString', 'secondString']);
+    t.notEqual(th.peekStackFrame(), null);
+
+    while (th.peekStackFrame()) th.popStack();
+
+    th.pushStack('arbitraryString');
+    th.pushStack('secondString');
+    th.pushStack('thirdString');
+    th.stopThisScript();
+    t.strictEquals(th.peekStack(), null);
+    t.same(th.stack, ['arbitraryString', 'secondString']);
+    t.notEqual(th.peekStackFrame(), null);
 
     t.end();
 });
