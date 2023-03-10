@@ -145,9 +145,9 @@ describe('Runtime Exec Primitives', () => {
             target1.renderer = mockRenderer;
 
             const retVal = await rt.execBlockPrimitive(
-                target1.id, 'motion_pointtowards', {TO: target2.name}, 'test_token');
+                target1.id, 'motion_pointtowards', {TOWARDS: target2.name}, 'test_token');
 
-            expect(spy).to.have.been.calledWithExactly(target1.drawableID, 135, [100, 100]);
+            expect(spy).to.have.been.calledWithExactly(target1.drawableID, 45, [100, 100]);
             expect(retVal).to.equal(undefined);
         });
 
