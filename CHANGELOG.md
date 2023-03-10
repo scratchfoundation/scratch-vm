@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [1.4.0](https://github.com/LLK/scratch-vm/compare/v1.3.77...v1.4.0) (2023-03-10)
+
+
+### Features
+
+* **deps:** update dependency scratch-storage to v2.1.0 ([d037589](https://github.com/LLK/scratch-vm/commit/d03758901d51b18c6abd48e3225b56d7b85b48d8))
+
 ## [1.3.77](https://github.com/LLK/scratch-vm/compare/v1.3.76...v1.3.77) (2023-03-09)
 
 
