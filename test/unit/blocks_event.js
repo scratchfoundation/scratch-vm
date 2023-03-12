@@ -57,7 +57,7 @@ test('#760 - broadcastAndWait', t => {
 
     rt.addTarget(tgt);
 
-    let th = rt._pushThread('broadcastAndWaitBlock', t);
+    let th = rt._pushThread('broadcastAndWaitBlock', tgt);
     const util = new BlockUtility();
     util.sequencer = rt.sequencer;
     util.thread = th;
