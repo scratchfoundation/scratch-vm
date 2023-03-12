@@ -1661,16 +1661,30 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments
      * @param {?boolean} opts.stackClick true if the script was activated by clicking on the stack
      * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
-     * @return {!Thread} The newly created thread.
+     * @return {?Thread} The newly created thread, if the top block exists.
      */
     _pushThread (id, target, opts) {
+        const updateMonitor = Boolean(opts && opts.updateMonitor);
+
+        // If no top block can be found, don't try to start the thread.
+        let blockContainer;
+        if (updateMonitor) {
+            if (!this.monitorBlocks.getBlock(id)) return null;
+            blockContainer = this.monitorBlocks;
+        } else {
+            // Fall back to flyout blocks if the target blocks don't contain the block ID.
+            blockContainer = target.blocks;
+            if (!target.blocks.getBlock(id)) {
+                if (!this.flyoutBlocks.getBlock(id)) return null;
+                blockContainer = this.flyoutBlocks;
+            }
+        }
+
         const thread = new Thread(id);
         thread.target = target;
         thread.stackClick = Boolean(opts && opts.stackClick);
-        thread.updateMonitor = Boolean(opts && opts.updateMonitor);
-        thread.blockContainer = thread.updateMonitor ?
-            this.monitorBlocks :
-            target.blocks;
+        thread.updateMonitor = updateMonitor;
+        thread.blockContainer = blockContainer;
 
         this.threads.push(thread);
         return thread;
@@ -1810,7 +1824,7 @@ class Runtime extends EventEmitter {
 
                 // Start the thread with this top block.
                 const thread = this._pushThread(topBlockId, target);
-                newThreads.push(thread);
+                if (thread) newThreads.push(thread);
             }
         }
 
@@ -2162,13 +2176,8 @@ class Runtime extends EventEmitter {
             const blockForThread = thread.blockGlowInFrame;
             if (blockForThread === null) continue;
 
-            let blockContainer = target.blocks;
-            let script = blockContainer.getTopLevelScript(blockForThread);
-            if (!script) {
-                blockContainer = this.flyoutBlocks;
-                // Attempt to find in flyout blocks.
-                script = blockContainer.getTopLevelScript(blockForThread);
-            }
+            const blockContainer = thread.blockContainer;
+            const script = blockContainer.getTopLevelScript(blockForThread);
 
             if (!script || blockContainer.forceNoGlow) continue;
             requestedGlowsThisFrame.add(script);

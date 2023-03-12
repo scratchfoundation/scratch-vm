@@ -178,7 +178,7 @@ class Blocks {
     getTopLevelScript (id) {
         let block = this._blocks[id];
         if (typeof block === 'undefined') return null;
-        while (block.parent !== null) {
+        while (block.parent) {
             block = this._blocks[block.parent];
         }
         return block.id;

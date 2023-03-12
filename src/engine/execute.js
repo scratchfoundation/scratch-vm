@@ -330,18 +330,13 @@ const execute = function (sequencer, thread) {
     // Current block to execute is the one on the top of the stack.
     const currentBlockId = thread.peekStack();
 
-    let blockContainer = thread.blockContainer;
     /** @type {BlockCached} */
-    let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached, true);
+    const blockCached = BlocksExecuteCache.getCached(thread.blockContainer, currentBlockId, BlockCached, true);
+    // Stop if block or target no longer exists.
     if (blockCached === null) {
-        blockContainer = runtime.flyoutBlocks;
-        blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached, true);
-        // Stop if block or target no longer exists.
-        if (blockCached === null) {
-            // No block found: stop the thread; script no longer exists.
-            thread.retire();
-            return;
-        }
+        // No block found: stop the thread; script no longer exists.
+        thread.retire();
+        return;
     }
 
     // Indicate the block that is executing.
