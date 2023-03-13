@@ -1,3 +1,5 @@
+const {scratchFetch} = require('scratch-storage/src/scratchFetch.js');
+
 /**
  * Fetch a remote resource like `fetch` does, but with a time limit.
  * @param {Request|string} resource Remote resource to fetch.
@@ -12,7 +14,7 @@ const fetchWithTimeout = (resource, init, timeout) => {
     const signal = controller ? controller.signal : null;
     // The fetch call races a timer.
     return Promise.race([
-        fetch(resource, Object.assign({signal}, init)).then(response => {
+        scratchFetch(resource, Object.assign({signal}, init)).then(response => {
             clearTimeout(timeoutID);
             return response;
         }),

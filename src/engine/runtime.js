@@ -1,5 +1,8 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
+const uuid = require('uuid');
+
+const {setMetadata, RequestMetadata} = require('scratch-storage/src/scratchFetch.js');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
@@ -401,6 +404,8 @@ class Runtime extends EventEmitter {
         this.origin = null;
 
         this._initScratchLink();
+
+        this.resetRunId();
     }
 
     /**
@@ -2016,6 +2021,14 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Reset the Run ID. Call this any time the project logically starts, stops, or changes identity.
+     */
+    resetRunId () {
+        const newRunId = uuid.v1();
+        setMetadata(RequestMetadata.RunId, newRunId);
+    }
+
+    /**
      * Start all threads that start with the green flag.
      */
     greenFlag () {
@@ -2055,6 +2068,8 @@ class Runtime extends EventEmitter {
         }
         // Remove all remaining threads from executing in the next tick.
         this.threads = [];
+
+        this.resetRunId();
     }
 
     /**
@@ -2458,10 +2473,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Report that the project has loaded in the Virtual Machine.
+     * Handle that the project has loaded in the Virtual Machine.
      */
-    emitProjectLoaded () {
+    handleProjectLoaded () {
         this.emit(Runtime.PROJECT_LOADED);
+        this.resetRunId();
     }
 
     /**
