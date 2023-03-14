@@ -331,14 +331,6 @@ class Thread {
     }
 
     /**
-     * Get stack frame above the current top.
-     * @return {?object} Second to last stack frame stored on this thread.
-     */
-    peekParentStackFrame () {
-        return this.stackFrames.length > 0 ? this.stackFrames[this.stackFrames.length - 1] : null;
-    }
-
-    /**
      * Pause a thread while waiting on a promise, saving the state needed to resume.
      * @param {string} reportingBlockId The ID of the block we are waiting on.
      * @param {Array.<{oldOpID: string, inputValue: (string | number | boolean)}>} reported The results of the
