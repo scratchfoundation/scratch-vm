@@ -1691,19 +1691,6 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Restart a thread in place, maintaining its position in the list of threads.
-     * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
-     * Test project: https://scratch.mit.edu/projects/130183108/
-     * @param {!number} threadIndex Index (in this.threads) of the thread object to restart.
-     * @return {Thread} The restarted thread.
-     */
-    _restartThread (threadIndex) {
-        const thread = this.threads[threadIndex];
-        thread.restart();
-        return thread;
-    }
-
-    /**
      * Return whether a thread is waiting for more information or done.
      * @param {?Thread} thread Thread object to check.
      * @return {boolean} True if the thread is waiting
@@ -1799,11 +1786,13 @@ class Runtime extends EventEmitter {
                     // If `restartExistingThreads` is true, we should stop
                     // any existing threads starting with the top block.
                     for (let i = 0; i < this.threads.length; i++) {
-                        if (this.threads[i].target === target &&
-                            this.threads[i].topBlock === topBlockId &&
+                        const thread = this.threads[i];
+                        if (thread.target === target &&
+                            thread.topBlock === topBlockId &&
                             // stack click threads and hat threads can coexist
-                            !this.threads[i].stackClick) {
-                            newThreads.push(this._restartThread(i));
+                            !thread.stackClick) {
+                            thread.restart();
+                            newThreads.push(thread);
                             continue eachScript;
                         }
                     }
