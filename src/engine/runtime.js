@@ -206,7 +206,7 @@ class Runtime extends EventEmitter {
          * These will execute on `_editingTarget.`
          * @type {!Blocks}
          */
-        this.flyoutBlocks = new Blocks(this, true /* force no glow */);
+        this.flyoutBlocks = new Blocks(this, false /* force no glow */);
 
         /**
          * Storage container for monitor blocks.
