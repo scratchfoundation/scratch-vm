@@ -15,7 +15,6 @@ test('spec', t => {
     t.type(th.stopThisScript, 'function');
     t.type(th.peekStack, 'function');
     t.type(th.peekStackFrame, 'function');
-    t.type(th.peekParentStackFrame, 'function');
     t.type(th.pause, 'function');
     t.type(th.resume, 'function');
     t.type(th.finishResuming, 'function');
@@ -63,17 +62,6 @@ test('peekStackFrame', t => {
     t.strictEquals(th.peekStackFrame().warpMode, false);
     th.popStack();
     t.strictEquals(th.peekStackFrame(), null);
-
-    t.end();
-});
-
-test('peekParentStackFrame', t => {
-    const th = new Thread('arbitraryString');
-    th.pushStack('arbitraryString');
-    th.peekStackFrame().warpMode = true;
-    t.strictEquals(th.peekParentStackFrame(), null);
-    th.pushStack('secondString');
-    t.strictEquals(th.peekParentStackFrame().warpMode, true);
 
     t.end();
 });
