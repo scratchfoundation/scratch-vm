@@ -294,7 +294,7 @@ class Thread {
      * thread.
      */
     stopThisScript () {
-        let blockID = this.peekStack();
+        let blockID = this.pointer;
         while (blockID !== null) {
             const block = this.target.blocks.getBlock(blockID);
             if (typeof block !== 'undefined' && block.opcode === 'procedures_call') {
@@ -303,7 +303,7 @@ class Thread {
                 break;
             }
             this.popStack();
-            blockID = this.peekStack();
+            blockID = this.pointer;
         }
 
         if (this.stackFrame === null) {
@@ -388,8 +388,7 @@ class Thread {
      * Initialize procedure parameters on this stack frame.
      */
     initParams () {
-        const stackFrame = this.stackFrame;
-        stackFrame.params = Object.create(null);
+        this.stackFrame.params = Object.create(null);
     }
 
     /**
@@ -399,8 +398,7 @@ class Thread {
      * @param {*} value Value to set for parameter.
      */
     pushParam (paramName, value) {
-        const stackFrame = this.stackFrame;
-        stackFrame.params[paramName] = value;
+        this.stackFrame.params[paramName] = value;
     }
 
     /**
@@ -421,7 +419,7 @@ class Thread {
      * @return {boolean} True if execution is at top of the stack.
      */
     atStackTop () {
-        return this.peekStack() === this.topBlock;
+        return this.pointer === this.topBlock;
     }
 
 
