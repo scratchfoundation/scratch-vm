@@ -1,4 +1,4 @@
-const log = require('./log');
+import log from './log';
 
 class StringUtil {
     static withoutTrailingDigits (s) {
@@ -91,4 +91,4 @@ class StringUtil {
     }
 }
 
-module.exports = StringUtil;
+export default StringUtil;

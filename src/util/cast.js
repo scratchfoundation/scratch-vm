@@ -1,4 +1,4 @@
-const Color = require('../util/color');
+import Color from '../util/color';
 
 /**
  * @fileoverview
@@ -215,4 +215,4 @@ class Cast {
     }
 }
 
-module.exports = Cast;
+export default Cast;

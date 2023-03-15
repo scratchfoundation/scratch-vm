@@ -4,7 +4,7 @@
  * runtime, thread, target, and convenient methods.
  */
 
-class BlockUtility {
+export default class BlockUtility {
     constructor (target = null, runtime = null) {
         this._target = target;
         this._runtime = runtime;
@@ -40,5 +40,3 @@ class BlockUtility {
         this._runtime = newRuntime;
     }
 }
-
-module.exports = BlockUtility;

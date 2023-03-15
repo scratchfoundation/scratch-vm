@@ -1,6 +1,6 @@
-const EventEmitter = require('events');
+import EventEmitter from 'events';
 
-const uid = require('../util/uid');
+import uid from '../util/uid';
 
 /**
  * @fileoverview
@@ -125,4 +125,4 @@ class Target extends EventEmitter {
     }
 }
 
-module.exports = Target;
+export default Target;

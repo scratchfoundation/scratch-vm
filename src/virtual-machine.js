@@ -1,25 +1,15 @@
 let _TextEncoder;
 if (typeof TextEncoder === 'undefined') {
-    _TextEncoder = require('text-encoding').TextEncoder;
+    _TextEncoder = import('text-encoding').TextEncoder;
 } else {
     /* global TextEncoder */
     _TextEncoder = TextEncoder;
 }
-const EventEmitter = require('events');
-const JSZip = require('jszip');
+import EventEmitter from 'events';
 
-const Buffer = require('buffer').Buffer;
-const log = require('./util/log');
-const MathUtil = require('./util/math-util');
-const Runtime = require('./engine/runtime');
-const StringUtil = require('./util/string-util');
-const formatMessage = require('format-message');
+import { Runtime } from './engine/runtime';
 
-const newBlockIds = require('./util/new-block-ids');
-
-const {loadCostume} = require('./import/load-costume.js');
-const {loadSound} = require('./import/load-sound.js');
-require('canvas-toBlob');
+import 'canvas-toBlob';
 
 const WorkerMessages = require('./worker/WorkerMessages.js');
 
@@ -41,7 +31,7 @@ const CORE_EXTENSIONS = [
  * Handles connections between blocks, stage, and extensions.
  * @constructor
  */
-class VirtualMachine extends EventEmitter {
+export default class VirtualMachine extends EventEmitter {
     constructor () {
         super();
 
@@ -165,5 +155,3 @@ class VirtualMachine extends EventEmitter {
     // ---------------------------------------------------------------------
     
 }
-
-module.exports = VirtualMachine;

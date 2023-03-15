@@ -1,12 +1,14 @@
-const EventEmitter = require('events');
-const {OrderedMap} = require('immutable');
+import EventEmitter from 'events';
+import OrderedMap from 'immutable';
 
-const StageLayering = require('./stage-layering');
+import StageLayering from './stage-layering';
+
+import BlockUtility from './block-utility';
 
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
-    scratch3_event: require('../blocks/scratch3_event'),
-    scratch3_looks: require('../blocks/scratch3_looks'),
+    // scratch3_event: require('../blocks/scratch3_event'),
+    // scratch3_looks: require('../blocks/scratch3_looks'),
     scratch3_motion: require('../blocks/scratch3_motion'),
     // scratch3_operators: require('../blocks/scratch3_operators'),
     // scratch3_sound: require('../blocks/scratch3_sound'),
@@ -19,7 +21,7 @@ const defaultBlockPackages = {
  * Manages targets, scripts, and the sequencer.
  * @constructor
  */
-class Runtime extends EventEmitter {
+export default class Runtime extends EventEmitter {
     constructor () {
         super();
 
@@ -561,12 +563,3 @@ class Runtime extends EventEmitter {
     
 }
 
-/**
- * Event fired after a new target has been created, possibly by cloning an existing target.
- *
- * @event Runtime#targetWasCreated
- * @param {Target} newTarget - the newly created target.
- * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
- */
-
-module.exports = Runtime;

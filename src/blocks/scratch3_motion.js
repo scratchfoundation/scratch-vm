@@ -1,8 +1,8 @@
-const Cast = require('../util/cast');
-const MathUtil = require('../util/math-util');
-const Timer = require('../util/timer');
+import { Cast } from '../util/cast';
+import { MathUtil } from '../util/math-util';
+import { Timer } from '../util/timer';
 
-class Scratch3MotionBlocks {
+export default class Scratch3MotionBlocks {
     constructor (runtime) {
         /**
          * The runtime instantiating this block package.
@@ -285,4 +285,4 @@ class Scratch3MotionBlocks {
     }
 }
 
-module.exports = Scratch3MotionBlocks;
+

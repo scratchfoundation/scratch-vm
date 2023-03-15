@@ -1,8 +1,8 @@
-const RenderedTarget = require('./rendered-target');
-const {loadSoundFromAsset} = require('../import/load-sound');
-const {loadCostumeFromAsset} = require('../import/load-costume');
-const StringUtil = require('../util/string-util');
-const StageLayering = require('../engine/stage-layering');
+import RenderedTarget from './rendered-target';
+import {loadSoundFromAsset} from '../import/load-sound';
+import {loadCostumeFromAsset} from '../import/load-costume';
+import StringUtil from '../util/string-util';
+import StageLayering from '../engine/stage-layering';
 
 class Sprite {
     /**
@@ -158,4 +158,4 @@ class Sprite {
     }
 }
 
-module.exports = Sprite;
+export default Sprite;

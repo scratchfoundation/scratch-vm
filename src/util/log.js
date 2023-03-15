@@ -1,4 +1,4 @@
-const minilog = require('minilog');
+import minilog from 'minilog';
 minilog.enable();
 
-module.exports = minilog('vm');
+export default minilog('vm');
