@@ -12,7 +12,7 @@ class Sprite {
      * @param {Runtime} runtime Reference to the runtime.
      * @constructor
      */
-    constructor ( runtime) {
+    constructor (runtime) {
         this.runtime = runtime;
         /**
          * Human-readable name for this sprite (and all clones).

@@ -41,7 +41,8 @@ export default class VirtualMachine extends EventEmitter {
          */
         this.runtime = new Runtime();
 
-        this.python_worker = null;
+        this.pyatchWorker = null;
+        this.pyatchLinker = null;
     }
 
     /**
@@ -116,11 +117,17 @@ export default class VirtualMachine extends EventEmitter {
      * @param {!Worker} worker The worker to attach
      */
     attachWorker (worker) {
-        this.python_worker = worker;
-        this.python_worker.addEventListener('message', function (event) {
-            this._onWorkerMessage(event.data);
-        });
-        this.python_worker.postMessage({id: WorkerMessages.FromVM.VMConnected});
+        this.pyatchWorker = worker;
+        this.pyatchWorker.onmessage = this._onWorkerMessage;
+        this.pyatchWorker.postMessage({id: WorkerMessages.FromVM.VMConnected});
+    }
+
+    /**
+     * Set the linker for the VM
+     * @param {!Linker} linker The linker to attach
+     */
+    attachLinker (linker) {
+        this.pyatchLinker = linker;
     }
 
     /**
@@ -129,11 +136,11 @@ export default class VirtualMachine extends EventEmitter {
      * @private
      */
     _onWorkerMessage (message) {
-        const {id, targetID, op_code, args, token} = message;
+        const {id, targetID, opCode, args, token} = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            returnVal = this.runtime.exec_block_primitive(targetID, op_code, args, token);
-            returnVal.then((value) => {
-                this._postResultValue(message, value);                
+            const returnVal = this.runtime.exec_block_primitive(targetID, opCode, args, token);
+            returnVal.then(value => {
+                this._postResultValue(message, value);
             });
         }
     }
@@ -141,17 +148,28 @@ export default class VirtualMachine extends EventEmitter {
     /**
      * Post a ResultValue message to a worker in reply to a particular message.
      * The outgoing message's reply token will be copied from the provided message.
-     * @param {Worker} worker The worker to receive the ResultValue message.
-     * @param {Object} message The originating message to which this is a reply.
+     * @param {object} message The originating message to which this is a reply.
      * @param {*} value The value to send as a result.
      * @private
      */
     _postResultValue (message, value) {
-        this.python_worker.postMessage({id: WorkerMessages.FromVM.ResultValue, value: value, token: message.token});
+        this.pyatchWorker.postMessage({id: WorkerMessages.FromVM.ResultValue, value: value, token: message.token});
     }
 
-    // ---------------------------------------------------------------------
-    // Linking Python Files
-    // ---------------------------------------------------------------------
+    run (targetsAndCode) {
+        const targetArr = [];
+        targetsAndCode.forEach(target => {
+            targetArr.push(target);
+        });
+        const pythonCode = this.pyatchLinker.generatePython(targetsAndCode);
+        const message = {
+            id: 'AsyncRun',
+            token: 'token',
+            python: pythonCode,
+            targets: targetArr
+        };
+
+        this.pyatchWorker.postMessage(message);
+    }
     
 }
