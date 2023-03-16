@@ -1,6 +1,6 @@
 import EventEmitter from 'events';
 
-import uid from '../util/uid';
+import uid from '../util/uid.mjs';
 
 /**
  * @fileoverview

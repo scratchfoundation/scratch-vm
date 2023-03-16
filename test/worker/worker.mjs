@@ -7,13 +7,21 @@ import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
+import WorkerMessages from '../../src/worker/worker-messages.mjs';
+
 let expect = chai.expect;
 chai.use(sinonChai);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-//import WorkerMessages from '../src/WorkerMessages';
+const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide/pyodide.js');
+const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web-worker.mjs');
+
+const INIT_MESSAGE = {
+	id: WorkerMessages.FromVM.InitPyodide,
+	pyodideURL: PATH_TO_PYODIDE,
+}
 
 const sleep = t =>
 	new Promise(r => {
@@ -24,7 +32,7 @@ describe('Pyatch Worker Async Run', () => {
 	describe('Motion Primitive Functions', () => {
 		it('Move', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -33,15 +41,17 @@ describe('Pyatch Worker Async Run', () => {
 			const targetArr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: pythonCode,
 				targets: targetArr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let lastCallData = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(lastCallData.id).to.equal('BlockOP')
@@ -53,7 +63,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Go To XY', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -62,15 +72,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -82,7 +94,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Go To', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -91,15 +103,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -111,7 +125,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Turn Right', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -120,15 +134,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -140,7 +156,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Turn Left', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -149,15 +165,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -169,7 +187,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Point In Direction', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -178,15 +196,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -198,7 +218,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Point Towards', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -207,15 +227,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -227,7 +249,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Glide', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -236,15 +258,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -256,7 +280,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Glide To', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -265,15 +289,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -285,7 +311,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('If On Edge Bounce', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -294,15 +320,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -314,7 +342,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Set Rotation Style', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -323,15 +351,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -343,7 +373,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Change X', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -352,15 +382,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -372,7 +404,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Set X', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -381,15 +413,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -401,7 +435,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Change Y', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -410,15 +444,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')
@@ -430,7 +466,7 @@ describe('Pyatch Worker Async Run', () => {
 
 		it('Set Y', async () => {
 
-			const url = new URL('../src/pyodideWebWorker.mjs', import.meta.url);
+			const url = new URL(PATH_TO_WORKER, import.meta.url);
 			const worker = new Worker(url, { type: 'module' });
 			const spy = sinon.spy();
 			worker.onmessage = spy;
@@ -439,15 +475,17 @@ describe('Pyatch Worker Async Run', () => {
 			const target_arr = ['target1'];	
 
 			const message = {
-				id: "AsyncRun",
+				id:  WorkerMessages.FromVM.AsyncRun,
 				token: "token",
 				python: python_code,
 				targets: target_arr,
 			}
 
+			worker.postMessage(INIT_MESSAGE);
+			await sleep(500);
 			worker.postMessage(message);
 
-			await sleep(1000);
+			await sleep(500);
 
 			let last_call_data = spy.getCalls().slice(-1)[0].firstArg.data;
 			expect(last_call_data.id).to.equal('BlockOP')

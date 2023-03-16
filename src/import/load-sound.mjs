@@ -1,5 +1,5 @@
-import StringUtil from '../util/string-util';
-import log from '../util/log';
+import StringUtil from '../util/string-util.mjs';
+import log from '../util/log.mjs';
 
 /**
  * Initialize a sound from an asset asynchronously.

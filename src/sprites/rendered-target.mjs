@@ -1,9 +1,9 @@
-import MathUtil from '../util/math-util';
-import StringUtil from '../util/string-util';
-import Cast from '../util/cast';
-import Clone from '../util/clone';
-import Target from '../engine/target';
-import StageLayering from '../engine/stage-layering';
+import MathUtil from '../util/math-util.mjs';
+import StringUtil from '../util/string-util.mjs';
+import Cast from '../util/cast.mjs';
+import Clone from '../util/clone.mjs';
+import Target from '../engine/target.mjs';
+import StageLayering from '../engine/stage-layering.mjs';
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.

@@ -1,5 +1,5 @@
-import StringUtil from '../util/string-util';
-import log from '../util/log';
+import StringUtil from '../util/string-util.mjs';
+import log from '../util/log.mjs';
 import {loadSvgString, serializeSvgToString} from 'scratch-svg-renderer';
 
 const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {

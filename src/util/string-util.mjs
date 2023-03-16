@@ -1,4 +1,4 @@
-import log from './log';
+import log from './log.mjs';
 
 class StringUtil {
     static withoutTrailingDigits (s) {

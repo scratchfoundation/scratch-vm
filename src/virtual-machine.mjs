@@ -7,11 +7,13 @@ if (typeof TextEncoder === 'undefined') {
 }
 import EventEmitter from 'events';
 
-import { Runtime } from './engine/runtime';
+import Runtime from './engine/runtime.mjs';
 
 import 'canvas-toBlob';
 
-const WorkerMessages = require('./worker/WorkerMessages.js');
+import PyatchLinker from './linker/pyatch-linker.mjs';
+
+import WorkerMessages from './worker/worker-messages.mjs';
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -32,7 +34,8 @@ const CORE_EXTENSIONS = [
  * @constructor
  */
 export default class VirtualMachine extends EventEmitter {
-    constructor () {
+
+    constructor (pathToPyodide, pathToWorker) {
         super();
 
         /**
@@ -42,7 +45,23 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime = new Runtime();
 
         this.pyatchWorker = null;
-        this.pyatchLinker = null;
+        this._initWorker(pathToPyodide, pathToWorker);
+
+        this.pyatchLinker = new PyatchLinker();
+    }
+
+    _initWorker(pathToPyodide, pathToWorker) {
+
+        const initMessage = {
+            id: WorkerMessages.FromVM.InitPyodide,
+            pyodideURL: pathToPyodide,
+        }
+
+        const url = new URL(pathToWorker, import.meta.url);
+        this.pyatchWorker = new Worker(url, { type: 'module' });  
+        
+        this.pyatchWorker.onmessage = this._onWorkerMessage;
+        this.pyatchWorker.postMessage(initMessage);
     }
 
     /**
@@ -110,24 +129,6 @@ export default class VirtualMachine extends EventEmitter {
      */
     attachStorage (storage) {
         this.runtime.attachStorage(storage);
-    }
-
-    /**
-     * Set the worker for the VM/runtime
-     * @param {!Worker} worker The worker to attach
-     */
-    attachWorker (worker) {
-        this.pyatchWorker = worker;
-        this.pyatchWorker.onmessage = this._onWorkerMessage;
-        this.pyatchWorker.postMessage({id: WorkerMessages.FromVM.VMConnected});
-    }
-
-    /**
-     * Set the linker for the VM
-     * @param {!Linker} linker The linker to attach
-     */
-    attachLinker (linker) {
-        this.pyatchLinker = linker;
     }
 
     /**

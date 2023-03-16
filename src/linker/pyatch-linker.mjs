@@ -1,5 +1,5 @@
-import linkConstants from './linker-constants';
-// const PyatchAPI = require('./pyatch-api');
+import linkConstants from './linker-constants.mjs';
+
 /**
  * @fileoverview
  * @author Elliot Roe

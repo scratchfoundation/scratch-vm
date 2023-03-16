@@ -1,9 +1,9 @@
-import BlockUtility from './block-utility';
+import BlockUtility from './block-utility.mjs';
 import BlocksExecuteCache from './blocks-execute-cache';
-import log from '../util/log';
+import log from '../util/log.mjs';
 import Thread from './thread';
 import { Map } from 'immutable';
-import cast from '../util/cast';
+import cast from '../util/cast.mjs';
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.

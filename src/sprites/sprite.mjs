@@ -1,8 +1,8 @@
-import RenderedTarget from './rendered-target';
-import {loadSoundFromAsset} from '../import/load-sound';
-import {loadCostumeFromAsset} from '../import/load-costume';
-import StringUtil from '../util/string-util';
-import StageLayering from '../engine/stage-layering';
+import RenderedTarget from './rendered-target.mjs';
+import { loadSoundFromAsset } from '../import/load-sound.mjs';
+import { loadCostumeFromAsset } from '../import/load-costume.mjs';
+import StringUtil from '../util/string-util.mjs';
+import StageLayering from '../engine/stage-layering.mjs';
 
 class Sprite {
     /**

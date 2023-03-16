@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from "path";
 import { expect } from "chai";
-import PyatchLinker from '../src/index.js';
+import PyatchLinker from '../../src/linker/pyatch-linker.mjs';
 const linker = new PyatchLinker();
 
 describe("Pyatch File Linker", function() {

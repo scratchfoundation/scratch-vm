@@ -1,5 +1,5 @@
 
-let WorkerMessages = {
+const WorkerMessages = {
 
 
     ToVM: {
@@ -13,14 +13,12 @@ let WorkerMessages = {
     FromVM: {
 
         VMConnected: 'VMConnected',
-
-
+        InitPyodide: 'InitPyodide',
         AsyncRun: 'AsyncRun',
-
         ResultValue: 'ResultValue'
     }
 
 
 };
 
-module.exports = WorkerMessages;
+export default WorkerMessages;

@@ -1,7 +1,7 @@
 /* eslint-disable no-func-assign */
 
 import PrimProxy from './prim-proxy.js';
-import WorkerMessages from './worker-messages.js';
+import WorkerMessages from './worker-messages.mjs';
 import { loadPyodide } from 'pyodide';
 
 
@@ -13,10 +13,10 @@ import { loadPyodide } from 'pyodide';
 let _pendingTokens = {};
 
 
-async function initPyodide() {
+async function _initPyodide(indexURL) {
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
   self.pyodide = await loadPyodide({
-    indexURL: "/Users/H530006/Documents/pyatch-worker/node_modules/pyodide",
+    indexURL: indexURL,
   });
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
@@ -87,11 +87,11 @@ function onVMMessage(event) {
     _resolvePendingToken(token, data.value);
   } else if (id === WorkerMessages.FromVM.VMConnected) {
     console.log('Undefined Functionality');
+  } else if (id === WorkerMessages.FromVM.InitPyodide) {
+    _initPyodide(data.initURL);
   }
 
 }
 
 self.onmessage = onVMMessage;
 _postWorkerMessage = postMessage;
-
-await initPyodide();

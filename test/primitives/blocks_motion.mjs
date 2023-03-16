@@ -1,8 +1,8 @@
 /* eslint-disable no-undefined */
 /* eslint-disable no-undef */
-const Runtime = require('../../src/engine/runtime');
-const Sprite = require('../../src/sprites/sprite.js');
-const RenderedTarget = require('../../src/sprites/rendered-target.js');
+const Runtime = require('../../src/engine/runtime.mjs');
+const Sprite = require('../../src/sprites/sprite.mjs');
+const RenderedTarget = require('../../src/sprites/rendered-target.mjs');
 
 const chai = require('chai');
 import sinon from 'sinon';
