@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require("path");
-const expect = require("chai").expect;
-const PyatchLinker = require('../src/index.js');
+import fs from 'fs';
+import path from "path";
+import { expect } from "chai";
+import PyatchLinker from '../src/index.js';
 const linker = new PyatchLinker();
 
 describe("Pyatch File Linker", function() {

@@ -1,13 +1,13 @@
 /* eslint-disable no-undefined */
 /* eslint-disable no-undef */
-const VirtualMachine = require('../../src/virtual-machine');
-const Sprite = require('../../src/sprites/sprite.js');
-const RenderedTarget = require('../../src/sprites/rendered-target.js');
-const PyatchWorker = require('pyatch-worker');
-const PyatchLinker = require('pyatch-linker');
+import VirtualMachine from '../../src/virtual-machine';
+import Sprite from '../../src/sprites/sprite.js';
+import RenderedTarget from '../../src/sprites/rendered-target.js';
+import PyatchWorker from 'pyatch-worker';
+import PyatchLinker from 'pyatch-linker';
 
-const chai = require('chai');
-const sinonChai = require('sinon-chai');
+import chai from 'chai';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;

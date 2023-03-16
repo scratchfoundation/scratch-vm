@@ -5,8 +5,8 @@ const Sprite = require('../../src/sprites/sprite.js');
 const RenderedTarget = require('../../src/sprites/rendered-target.js');
 
 const chai = require('chai');
-const sinon = require('sinon');
-const sinonChai = require('sinon-chai');
+import sinon from 'sinon';
+import sinonChai from 'sinon-chai';
 
 chai.use(sinonChai);
 const expect = chai.expect;
