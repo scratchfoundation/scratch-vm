@@ -12,12 +12,20 @@ import { loadPyodide } from 'pyodide';
  */
 let _pendingTokens = {};
 
+/**
+ * If worker should generate message tokens.
+ * @type {boolean}
+ * @private
+ */
+let _generateTokens = true;
+
 
 async function _initPyodide(indexURL) {
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
   self.pyodide = await loadPyodide({
     indexURL: indexURL,
   });
+  self.pyodide.setStderr({batched: _postError});
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 
@@ -44,6 +52,14 @@ function _postBlockOpMessage(targetID, op_code, args) {
 
 function _postStatusMessage(id) {
   _postMessage(id, null, null, null, null)
+}
+
+function _postError(error) {
+  _postMessageError(WorkerMessages.ToVM.PythonError, error)
+}
+
+function _postMessageError(id, error) {
+  _postWorkerMessage({id, error})
 }
 
 function _postMessage(id, targetID, opCode, args, token) {
@@ -77,6 +93,8 @@ function _run(pythonScript,  targets) {
     target_func(new PrimProxy(targets[0], _postBlockOpMessage))
   }
 
+  _postStatusMessage(WorkerMessages.ToVM.PythonFinished);  
+
 }
 
 function onVMMessage(event) {
@@ -88,7 +106,7 @@ function onVMMessage(event) {
   } else if (id === WorkerMessages.FromVM.VMConnected) {
     console.log('Undefined Functionality');
   } else if (id === WorkerMessages.FromVM.InitPyodide) {
-    _initPyodide(data.initURL);
+    _initPyodide(data.pyodideURL);
   }
 
 }

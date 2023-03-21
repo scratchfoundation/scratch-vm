@@ -6,7 +6,8 @@ const WorkerMessages = {
         PyodideLoading: 'PyodideLoading',
         PyodideLoaded: 'PyodideLoaded',
         PythonRunning: 'PythonRunning',
-        PythonStopped: 'PythonStopped',
+        PythonFinished: 'PythonFinished',
+        PythonError: 'PythonError',
         BlockOP: 'BlockOP',
     },
 

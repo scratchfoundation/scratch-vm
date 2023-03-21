@@ -1,10 +1,10 @@
 /* eslint-disable no-undefined */
 /* eslint-disable no-undef */
-const Runtime = require('../../src/engine/runtime.mjs');
-const Sprite = require('../../src/sprites/sprite.mjs');
-const RenderedTarget = require('../../src/sprites/rendered-target.mjs');
+import Runtime from '../../src/engine/runtime.mjs';
+import Sprite from '../../src/sprites/sprite.mjs';
+import RenderedTarget from '../../src/sprites/rendered-target.mjs';
 
-const chai = require('chai');
+import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 
@@ -220,9 +220,9 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            oldX = target.x;
-            dx = 10;
-            oldY = target.y;
+            const oldX = target.x;
+            const dx = 10;
+            const oldY = target.y;
 
             const retVal = await rt.execBlockPrimitive(target.id, 'motion_changexby', {DX: dx}, 'test_token');
 
@@ -237,9 +237,9 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            oldX = target.x;
-            oldY = target.y;
-            dy = 10;
+            const oldX = target.x;
+            const oldY = target.y;
+            const dy = 10;
 
             const retVal = await rt.execBlockPrimitive(target.id, 'motion_changeyby', {DY: dy}, 'test_token');
 

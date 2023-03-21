@@ -4,6 +4,9 @@ import { expect } from "chai";
 import PyatchLinker from '../../src/linker/pyatch-linker.mjs';
 const linker = new PyatchLinker();
 
+import * as url from 'url';
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
 describe("Pyatch File Linker", function() {
   describe("Generates executable code from Python-Target dicts", function() {
     it("1 target, 1 line of code, 1 thread", function() {
