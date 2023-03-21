@@ -1,14 +1,14 @@
 {
-  "name": "scratch-vm",
-  "version": "1.2.54",
-  "description": "Virtual Machine for Scratch 3.0",
-  "author": "Massachusetts Institute of Technology",
+  "name": "pyatch-vm",
+  "version": "1.0.0",
+  "description": "Virtual Machine for Pyatch 2.0",
+  "author": "Elliot Roe",
   "license": "BSD-3-Clause",
-  "homepage": "https://github.com/LLK/scratch-vm#readme",
+  "homepage": "",
   "repository": {
     "type": "git",
-    "url": "https://github.com/LLK/scratch-vm.git",
-    "sha": "37a019c1fc1e45648419be35980c20daec736fc8"
+    "url": "https://github.com/ElliotRoe/pyatch-vm",
+    "sha": ""
   },
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
@@ -26,7 +26,7 @@
     "tap": "tap ./test/{unit,integration}/*.js",
     "tap:unit": "tap ./test/unit/*.js",
     "tap:integration": "tap ./test/integration/*.js",
-    "test": "npm run lint && npm run tap",
+    "test": "mocha test/**/*.mjs --reporter spec",
     "watch": "webpack --progress --colors --watch",
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
@@ -54,10 +54,15 @@
     "immutable": "3.8.1",
     "jszip": "^3.1.5",
     "minilog": "3.1.0",
+    "mocha": "^10.2.0",
+    "pyodide": "^0.22.1",
     "scratch-parser": "5.1.1",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",
+    "sinon": "^15.0.1",
+    "sinon-chai": "^3.7.0",
     "text-encoding": "0.7.0",
+    "web-worker": "^1.2.0",
     "worker-loader": "^1.1.1"
   },
   "peerDependencies": {
@@ -72,6 +77,7 @@
     "babel-eslint": "10.1.0",
     "babel-loader": "8.2.2",
     "callsite": "1.0.0",
+    "chai": "^4.3.7",
     "copy-webpack-plugin": "4.5.4",
     "docdash": "1.2.0",
     "eslint": "5.3.0",
@@ -90,8 +96,6 @@
     "scratch-audio": "0.1.0-prerelease.20200528195344",
     "scratch-blocks": "0.1.0-prerelease.20221024060953",
     "scratch-l10n": "3.15.20221027032119",
-    "scratch-render": "0.1.0-prerelease.20221024201900",
-    "scratch-render-fonts": "1.0.0-prerelease.20221024190656",
     "scratch-semantic-release-config": "1.0.5",
     "scratch-storage": "2.0.2",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
