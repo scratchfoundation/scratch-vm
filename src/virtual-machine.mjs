@@ -12,7 +12,7 @@ import Runtime from './engine/runtime.mjs';
 import 'canvas-toBlob';
 
 import PyatchLinker from './linker/pyatch-linker.mjs';
-
+import PyatchWorker from './worker/pyatch-worker.mjs';
 import WorkerMessages from './worker/worker-messages.mjs';
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
@@ -44,24 +44,10 @@ export default class VirtualMachine extends EventEmitter {
          */
         this.runtime = new Runtime();
 
-        this.pyatchWorker = null;
-        this._initWorker(pathToPyodide, pathToWorker);
+        this.pyatchWorker = new PyatchWorker(pathToWorker, this._onWorkerMessage.bind(this));
+        this.pyatchLoadPromise = this.pyatchWorker.loadPyodide(pathToPyodide);
 
         this.pyatchLinker = new PyatchLinker();
-    }
-
-    _initWorker(pathToPyodide, pathToWorker) {
-
-        const initMessage = {
-            id: WorkerMessages.FromVM.InitPyodide,
-            pyodideURL: pathToPyodide,
-        }
-
-        const url = new URL(pathToWorker, import.meta.url);
-        this.pyatchWorker = new Worker(url, { type: 'module' });  
-        
-        this.pyatchWorker.onmessage = this._onWorkerMessage;
-        this.pyatchWorker.postMessage(initMessage);
     }
 
     /**
@@ -139,7 +125,7 @@ export default class VirtualMachine extends EventEmitter {
     _onWorkerMessage (message) {
         const {id, targetID, opCode, args, token} = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            const returnVal = this.runtime.exec_block_primitive(targetID, opCode, args, token);
+            const returnVal = this.runtime.execBlockPrimitive(targetID, opCode, args, token);
             returnVal.then(value => {
                 this._postResultValue(message, value);
             });
@@ -157,20 +143,13 @@ export default class VirtualMachine extends EventEmitter {
         this.pyatchWorker.postMessage({id: WorkerMessages.FromVM.ResultValue, value: value, token: message.token});
     }
 
-    run (targetsAndCode) {
-        const targetArr = [];
-        targetsAndCode.forEach(target => {
-            targetArr.push(target);
-        });
-        const pythonCode = this.pyatchLinker.generatePython(targetsAndCode);
-        const message = {
-            id: 'AsyncRun',
-            token: 'token',
-            python: pythonCode,
-            targets: targetArr
-        };
+    async run (targetsAndCode) {
+        const [targetArr, pythonCode] = this.pyatchLinker.generatePython(targetsAndCode);
+        await this.pyatchLoadPromise;
 
-        this.pyatchWorker.postMessage(message);
+        const result = await this.pyatchWorker.run(pythonCode, targetArr);
+
+        return result;
     }
     
 }

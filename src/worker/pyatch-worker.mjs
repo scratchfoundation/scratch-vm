@@ -33,12 +33,13 @@ class PyatchWorker {
         const message = {
             id: WorkerMessages.FromVM.AsyncRun,
             token: token,
-            python: pythonScript,
+            python: String(pythonScript),
             targets: targets,
         }
         return new Promise((resolve, reject) => {
             let pythonRunning = false;
             this._worker.onmessage = (event) => {
+                // console.log('event', event);
                 if (event.data.id === WorkerMessages.ToVM.BlockOP) {
                     this._blockOPCallback(event.data);
                 } else if (event.data.id === WorkerMessages.ToVM.PythonFinished) {
@@ -47,6 +48,8 @@ class PyatchWorker {
                     pythonRunning = true;
                 } else if (event.data.id === WorkerMessages.ToVM.PythonError) {
                     reject(event.data.error);
+                } else {
+                    // console.log('Unknown message from worker', event.data);
                 }
             };
             this._worker.onerror = (event) => {

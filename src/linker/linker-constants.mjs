@@ -1,7 +1,6 @@
 const linkConstants = {
-    bridge_param: 'vm_bridge',
+    vm_proxy: 'vm_proxy',
     async_func_header: 'async def ',
-    vm_bridge_module_unpack: 'from vm_bridge import *',
     python_tab_char: '    ',
 }
 

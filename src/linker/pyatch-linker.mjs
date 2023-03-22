@@ -1,4 +1,5 @@
 import linkConstants from './linker-constants.mjs';
+import PrimProxy from '../worker/prim-proxy.js';
 
 /**
  * @fileoverview
@@ -27,7 +28,7 @@ class PyatchLinker {
      * @returns {string} - The method header for the target async function.
      */
     generateAsyncFuncHeader(targetId, postfix = '0') {
-        return linkConstants.async_func_header + targetId + '_' + postfix + '(' + linkConstants.bridge_param + '):\n';
+        return linkConstants.async_func_header + targetId + '_' + postfix + '(' + linkConstants.vm_proxy + '):\n';
     }
 
     /**
@@ -43,14 +44,18 @@ class PyatchLinker {
      * Generates the line of python code to unpack all the pyatch api primitives
      * @returns {string} - the line of python
      */
-    generateApiUnpackLine() {
+    registerProxyPrims(funcCode) {
         //let prims = PyatchAPI.getPrimNames();
-        let prims = ["say", "move", "think"]
+        let prims = Object.keys(PrimProxy.opcodeMap);
 
-        let inner = prims.join();
-        let unpackLine = "[" + inner + "] = " + linkConstants.bridge_param + "\n";
+        let registerPrimsCode = '';
+        prims.forEach((prim) => {
+            if (funcCode.includes(prim + '(')) {
+                registerPrimsCode += linkConstants.python_tab_char + prim + " = " + linkConstants.vm_proxy + "." + prim + "\n";
+            }
+        });
 
-        return unpackLine;
+        return registerPrimsCode;
     }
 
     /**
@@ -70,26 +75,28 @@ class PyatchLinker {
      * }
      * const linkedCode = linker.generatePython(target1, target2);
      */
-    generatePython(...targets) {
-        const imports = this._baseImports;
-
+    generatePython(targetsAndCode) {
         let codeString = "";
 
-        for (const target of targets) {
-            const targetId = target.id;
-            const targetCode = target.code;
+        const targetArr = [];
+
+        Object.keys(targetsAndCode).forEach(target => {
+            targetArr.push(target);
+
+            const targetId = target;
+            const targetCode = targetsAndCode[target];
 
             codeString += this.generateTargetHeader(targetId);
 
             for (let i = 0; i < targetCode.length; i++) {
                 const code = targetCode[i].replace('\n', '\n' + linkConstants.python_tab_char);
                 const header = this.generateAsyncFuncHeader(targetId, i.toString());
-                const unpackLine = this.generateApiUnpackLine();
-                codeString += header + linkConstants.python_tab_char + unpackLine + linkConstants.python_tab_char + code + '\n\n';
+                const registerPrimsCode = this.registerProxyPrims(targetCode[i]);
+                codeString += header + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
             }
-        }
+        });
 
-       return codeString; 
+       return [targetArr, codeString]; 
     }
 }
 export default PyatchLinker;

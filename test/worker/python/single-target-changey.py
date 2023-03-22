@@ -1,6 +1,6 @@
 ## -- target1 -- ##
 
-def target1_0(vm_bridge):
-    changeY = vm_bridge.changeY
+def target1_0(vm_proxy):
+    changeY = vm_proxy.changeY
     changeY(10)
 

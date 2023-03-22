@@ -13,11 +13,10 @@ import { loadPyodide } from 'pyodide';
 let _pendingTokens = {};
 
 /**
- * If worker should generate message tokens.
- * @type {boolean}
- * @private
+ * Final token of the last run.
+ * @type {string}
  */
-let _generateTokens = true;
+let _lastToken = null;
 
 
 async function _initPyodide(indexURL) {
@@ -35,9 +34,14 @@ function _getToken() {
 }
 
 function _resolvePendingToken(token, value) {
-  if (self._pendingTokens[token]) {
-    self._pendingTokens[token](value);
-    delete self._pendingTokens[token];
+  if (_pendingTokens){
+    if (_pendingTokens[token]) {
+      _pendingTokens[token](value);
+      delete _pendingTokens[token];
+    }
+  }
+  if (token === _lastToken) {
+    _postStatusMessage(WorkerMessages.ToVM.PythonFinished);
   }
 }
 
@@ -46,6 +50,7 @@ function _postBlockOpMessage(targetID, op_code, args) {
   let id = WorkerMessages.ToVM.BlockOP
   return new Promise((resolve) => {
     _pendingTokens[token] = resolve;
+    _lastToken = token;
     _postMessage(id, targetID, op_code, args, token)
     });
 }
@@ -92,8 +97,6 @@ function _run(pythonScript,  targets) {
   for(let target_func of target_func_arr) {
     target_func(new PrimProxy(targets[0], _postBlockOpMessage))
   }
-
-  _postStatusMessage(WorkerMessages.ToVM.PythonFinished);  
 
 }
 
