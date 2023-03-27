@@ -2,8 +2,6 @@ const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
 const uuid = require('uuid');
 
-const {setMetadata, RequestMetadata} = require('scratch-storage/src/scratchFetch.js');
-
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
 const BlocksRuntimeCache = require('./blocks-runtime-cache');
@@ -1629,6 +1627,7 @@ class Runtime extends EventEmitter {
      */
     attachStorage (storage) {
         this.storage = storage;
+        this.resetRunId();
     }
 
     // -----------------------------------------------------------------------------
@@ -2024,8 +2023,13 @@ class Runtime extends EventEmitter {
      * Reset the Run ID. Call this any time the project logically starts, stops, or changes identity.
      */
     resetRunId () {
+        if (!this.storage) {
+            // see also: attachStorage
+            return;
+        }
+
         const newRunId = uuid.v1();
-        setMetadata(RequestMetadata.RunId, newRunId);
+        this.storage.scratchFetch.setMetadata(this.storage.scratchFetch.RequestMetadata.RunId, newRunId);
     }
 
     /**
