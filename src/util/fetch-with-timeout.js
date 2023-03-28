@@ -1,4 +1,24 @@
-const {scratchFetch} = require('scratch-storage/src/scratchFetch.js');
+/**
+ * @callback FetchFunction
+ * @param {RequestInfo|URL} input
+ * @param {RequestInit|undefined} [init]
+ * @returns {Promise<Response>}
+ */
+
+/**
+ * @type {FetchFunction}
+ */
+let myFetch = global.fetch;
+
+/**
+ * Tell `fetchWithTimeout` to use a specific `fetch` function.
+ * By default, `fetchWithTimeout` will use the global `fetch` function.
+ * If there is no global `fetch`, then `fetchWithTimeout` will fail unless provided with an alternative.
+ * @param {FetchFunction} newFetch The new `fetch` function to use within fetchWithTimeout.
+ */
+const setFetch = newFetch => {
+    myFetch = newFetch;
+};
 
 /**
  * Fetch a remote resource like `fetch` does, but with a time limit.
@@ -14,7 +34,7 @@ const fetchWithTimeout = (resource, init, timeout) => {
     const signal = controller ? controller.signal : null;
     // The fetch call races a timer.
     return Promise.race([
-        scratchFetch(resource, Object.assign({signal}, init)).then(response => {
+        myFetch(resource, Object.assign({signal}, init)).then(response => {
             clearTimeout(timeoutID);
             return response;
         }),
@@ -27,4 +47,7 @@ const fetchWithTimeout = (resource, init, timeout) => {
     ]);
 };
 
-module.exports = fetchWithTimeout;
+module.exports = {
+    fetchWithTimeout,
+    setFetch
+};

@@ -18,6 +18,7 @@ const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
 const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
+const fetchWithTimeout = require('../util/fetch-with-timeout');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -1627,6 +1628,7 @@ class Runtime extends EventEmitter {
      */
     attachStorage (storage) {
         this.storage = storage;
+        fetchWithTimeout.setFetch(storage.scratchFetch.scratchFetch);
         this.resetRunId();
     }
 
