@@ -108,4 +108,4 @@ class PrimProxy {
     }
 }
 
-module.exports = PrimProxy;
+export default PrimProxy;

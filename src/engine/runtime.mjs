@@ -441,6 +441,19 @@ export default class Runtime extends EventEmitter {
     }
 
     /**
+     * Set the current editing target known by the runtime.
+     * @param {!Target} editingTarget New editing target.
+     */
+    setEditingTarget (editingTarget) {
+        const oldEditingTarget = this._editingTarget;
+        this._editingTarget = editingTarget;
+
+        if (oldEditingTarget !== this._editingTarget) {
+            this.requestToolboxExtensionsUpdate();
+        }
+    }
+
+    /**
      * Get a target representing the Scratch stage, if one exists.
      * @return {?Target} The target, if found.
      */
