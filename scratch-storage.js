@@ -5397,6 +5397,7 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 var _require = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js"),
+    Headers = _require.Headers,
     applyMetadata = _require.applyMetadata;
 /**
  * Get and send assets with a worker that uses fetch.
@@ -5515,7 +5516,14 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
         var id = Math.random().toString(16).substring(2);
         var augmentedOptions = applyMetadata(Object.assign({
           method: 'GET'
-        }, options));
+        }, options)); // the Fetch spec says options.headers could be:
+        // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
+        // structured clone (postMessage) doesn't support Headers objects
+        // so turn it into an array of two-item arrays to make it to the worker intact
+
+        if (augmentedOptions && augmentedOptions.headers instanceof Headers) {
+          augmentedOptions.headers = Array.from(augmentedOptions.headers.entries());
+        }
 
         _this2.worker.postMessage({
           id: id,
@@ -5869,6 +5877,8 @@ var _AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
 
 var _DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
 
+var _scratchFetch = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js");
+
 var ScratchStorage = /*#__PURE__*/function () {
   "use strict";
 
@@ -5917,6 +5927,16 @@ var ScratchStorage = /*#__PURE__*/function () {
     key: "DataFormat",
     get: function get() {
       return _DataFormat;
+    }
+    /**
+     * Access the `scratchFetch` module within this library.
+     * @return {module} the scratchFetch module, with properties for `scratchFetch`, `setMetadata`, etc.
+     */
+
+  }, {
+    key: "scratchFetch",
+    get: function get() {
+      return _scratchFetch;
     }
     /**
      * @deprecated Please use the `Asset` member of a storage instance instead.
@@ -6438,9 +6458,7 @@ function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o =
 
 function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-var _require = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetch/dist/browser-ponyfill.js"),
-    fetch = _require.fetch,
-    Headers = _require.Headers;
+var crossFetch = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetch/dist/browser-ponyfill.js");
 /**
  * Metadata header names
  * @enum {string} The enum value is the name of the associated header.
@@ -6450,17 +6468,39 @@ var _require = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetc
 
 var RequestMetadata = {
   /** The ID of the project associated with this request */
-  ProjectId: 'X-ProjectId',
+  ProjectId: 'X-Project-ID',
 
   /** The ID of the project run associated with this request */
-  RunId: 'X-RunId'
+  RunId: 'X-Run-ID'
 };
 /**
- * Metadata for requests
- * @type {Map<string, string>}
+ * Metadata headers for requests
+ * @type {Headers}
  */
 
-var metadata = new Map();
+var metadata = new crossFetch.Headers();
+/**
+ * Check if there is any metadata to apply.
+ * @returns {boolean} true if `metadata` has contents, or false if it is empty.
+ */
+
+var hasMetadata = function hasMetadata() {
+  var _iterator = _createForOfIteratorHelper(metadata),
+      _step;
+
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var _ = _step.value;
+      return true;
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+
+  return false;
+};
 /**
  * Non-destructively merge any metadata state (if any) with the provided options object (if any).
  * If there is metadata state but no options object is provided, make a new object.
@@ -6471,29 +6511,33 @@ var metadata = new Map();
  * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
  */
 
+
 var applyMetadata = function applyMetadata(options) {
-  if (metadata.size > 0) {
+  if (hasMetadata()) {
     var augmentedOptions = Object.assign({}, options);
-    augmentedOptions.headers = new Headers(Array.from(metadata));
+    augmentedOptions.headers = new crossFetch.Headers(metadata);
 
     if (options && options.headers) {
-      var overrideHeaders = options.headers instanceof Headers ? options.headers : new Headers(options.headers);
+      // the Fetch spec says options.headers could be:
+      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
+      // turn it into a Headers object to be sure of how to interact with it
+      var overrideHeaders = options.headers instanceof crossFetch.Headers ? options.headers : new crossFetch.Headers(options.headers);
 
-      var _iterator = _createForOfIteratorHelper(overrideHeaders.entries()),
-          _step;
+      var _iterator2 = _createForOfIteratorHelper(overrideHeaders.entries()),
+          _step2;
 
       try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var _step$value = _slicedToArray(_step.value, 2),
-              name = _step$value[0],
-              value = _step$value[1];
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+          var _step2$value = _slicedToArray(_step2.value, 2),
+              name = _step2$value[0],
+              value = _step2$value[1];
 
           augmentedOptions.headers.set(name, value);
         }
       } catch (err) {
-        _iterator.e(err);
+        _iterator2.e(err);
       } finally {
-        _iterator.f();
+        _iterator2.f();
       }
     }
 
@@ -6514,7 +6558,7 @@ var applyMetadata = function applyMetadata(options) {
 
 var scratchFetch = function scratchFetch(resource, options) {
   var augmentedOptions = applyMetadata(options);
-  return fetch(resource, augmentedOptions);
+  return crossFetch.fetch(resource, augmentedOptions);
 };
 /**
  * Set the value of a named request metadata item.
@@ -6540,12 +6584,27 @@ var unsetMetadata = function unsetMetadata(name) {
 
 module.exports = {
   default: scratchFetch,
+  Headers: crossFetch.Headers,
   RequestMetadata: RequestMetadata,
   applyMetadata: applyMetadata,
   scratchFetch: scratchFetch,
   setMetadata: setMetadata,
   unsetMetadata: unsetMetadata
 };
+
+if (true) {
+  /**
+   * Retrieve a named request metadata item.
+   * Only for use in tests.
+   * @param {RequestMetadata} name The name of the metadata item to retrieve.
+   * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
+   */
+  var getMetadata = function getMetadata(name) {
+    return metadata.get(name);
+  };
+
+  module.exports.getMetadata = getMetadata;
+}
 
 /***/ })
 
