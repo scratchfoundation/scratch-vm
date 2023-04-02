@@ -18,12 +18,24 @@ const __dirname = path.dirname(__filename);
 const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide');
 const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web-worker.mjs');
 
+// Just posts a null value result back to the worker every block OP it receives to worker can finish python execution.
+const blockOPTestCallback = (spy) => {
+	return function (message) {
+		spy(message);
+		this._worker.postMessage({
+			id: WorkerMessages.FromVM.ResultValue,
+			token: message.token,
+			value: null,
+		});
+	}
+}
+
 describe('Pyatch Worker Async Run', () => {
 	describe('Motion Primitive Functions', () => {
 		it('Move', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -49,7 +61,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Go To XY', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-gotoxy.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -75,7 +87,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Go To', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-goto.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -101,7 +113,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Turn Right', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnright.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -127,7 +139,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Turn Left', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnleft.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -153,7 +165,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Point In Direction', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointindirection.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -179,7 +191,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Point Towards', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointtowards.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -205,7 +217,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Glide', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glide.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -231,7 +243,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Glide To', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glideto.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -257,7 +269,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('If On Edge Bounce', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-ifonedgebounce.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -283,7 +295,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Set Rotation Style', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setrotationstyle.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -309,7 +321,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Change X', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changex.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -335,7 +347,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Set X', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setx.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -361,7 +373,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Change Y', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changey.py'), 'utf8');
 			const targetArr = ['target1'];	
@@ -387,7 +399,7 @@ describe('Pyatch Worker Async Run', () => {
 		it('Set Y', async () => {
 
 			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, spy);
+			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
 
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sety.py'), 'utf8');
 			const targetArr = ['target1'];	

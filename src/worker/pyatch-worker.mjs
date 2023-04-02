@@ -5,7 +5,7 @@ class PyatchWorker {
     constructor(pathToWorker, blockOPCallback) {
         const url = new URL(pathToWorker, import.meta.url);
         this._worker = new Worker(url, { type: 'module' });
-        this._blockOPCallback = blockOPCallback;
+        this._blockOPCallback = blockOPCallback.bind(this);
     }
     
     async loadPyodide(indexURL) {
@@ -36,6 +36,7 @@ class PyatchWorker {
             python: String(pythonScript),
             targets: targets,
         }
+        // console.log(message);
         return new Promise((resolve, reject) => {
             let pythonRunning = false;
             this._worker.onmessage = (event) => {

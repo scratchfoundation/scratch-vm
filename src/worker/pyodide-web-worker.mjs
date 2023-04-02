@@ -97,7 +97,7 @@ function _run(pythonScript,  targets) {
   for(let target_func of target_func_arr) {
     target_func(new PrimProxy(targets[0], _postBlockOpMessage))
   }
-
+  _postStatusMessage(WorkerMessages.ToVM.F);
 }
 
 function onVMMessage(event) {

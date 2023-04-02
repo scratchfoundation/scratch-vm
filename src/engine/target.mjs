@@ -20,7 +20,7 @@ class Target extends EventEmitter {
          * Reference to the runtime.
          * @type {Runtime}
          */
-        this.runtime = runtime.runtime;
+        this.runtime = runtime;
         /**
          * A unique ID for this target.
          * @type {string}
