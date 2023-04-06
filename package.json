@@ -11,41 +11,15 @@
     "sha": ""
   },
   "type": "module",
-  "main": "./dist/node/scratch-vm.js",
-  "browser": "./src/index.js",
+  "main": "./src/virtual-machine.mjs",
   "scripts": {
-    "build": "npm run docs && webpack --progress --colors --bail",
-    "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log -n1 --pretty=format:\"%h %s\") [skip ci]\"",
-    "docs": "jsdoc -c .jsdoc.json",
-    "i18n:src": "mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js",
-    "i18n:push": "tx-push-src scratch-editor extensions translations/core/en.json",
-    "lint": "eslint . && format-message lint src/**/*.js",
-    "prepare": "husky install",
-    "prepublish": "in-publish && npm run build || not-in-publish",
-    "start": "webpack-dev-server",
-    "tap": "tap ./test/{unit,integration}/*.js",
-    "tap:unit": "tap ./test/unit/*.js",
-    "tap:integration": "tap ./test/integration/*.js",
+    "build": "rollup -c",
     "test": "mocha test/**/*.mjs --reporter spec",
     "test:integration": "mocha test/integration/*.mjs --reporter spec",
     "test:linker": "mocha test/linker/*.mjs --reporter spec",
     "test:worker": "mocha test/worker/*.mjs --reporter spec",
     "test:prims": "mocha test/primitives/*.mjs --reporter spec",
-    "test:vm": "mocha test/scratch_vm/*.mjs --reporter spec",
-    "watch": "webpack --progress --colors --watch",
-    "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
-  },
-  "tap": {
-    "branches": 60,
-    "functions": 70,
-    "lines": 70,
-    "statements": 70
+    "test:vm": "mocha test/scratch_vm/*.mjs --reporter spec"
   },
   "dependencies": {
     "@vernier/godirect": "1.5.0",
@@ -63,6 +37,7 @@
     "mocha": "^10.2.0",
     "pyodide": "^0.22.1",
     "scratch-parser": "^5.1.1",
+    "scratch-render-fonts": "^1.0.0-prerelease.20221102164332",
     "scratch-sb1-converter": "0.2.7",
     "scratch-translate-extension-languages": "0.0.20191118205314",
     "sinon": "^15.0.1",
@@ -75,10 +50,12 @@
     "scratch-svg-renderer": "^0.2.0-prerelease"
   },
   "devDependencies": {
-    "@babel/core": "7.13.10",
-    "@babel/preset-env": "7.14.8",
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
     "@commitlint/cli": "17.0.2",
     "@commitlint/config-conventional": "17.0.2",
+    "@rollup/plugin-babel": "^6.0.3",
+    "@rollup/plugin-node-resolve": "^15.0.2",
     "adm-zip": "^0.4.11",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.2.2",
@@ -109,10 +86,7 @@
     "stats.js": "0.17.0",
     "tap": "16.2.0",
     "tiny-worker": "2.3.0",
-    "uglifyjs-webpack-plugin": "1.2.7",
-    "webpack": "4.46.0",
-    "webpack-cli": "3.1.0",
-    "webpack-dev-server": "3.11.2"
+    "uglifyjs-webpack-plugin": "1.2.7"
   },
   "volta": {
     "node": "19.8.1"
