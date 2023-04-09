@@ -4,7 +4,7 @@
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-import vmPackage from '../../package.json' assert { type: 'json' };
+import vmPackage from '../../package.json' assert { type: "json" };
 import Blocks from '../engine/blocks.mjs';
 import Sprite from '../sprites/sprite.mjs';
 import Variable from '../engine/variable.mjs';

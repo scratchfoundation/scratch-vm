@@ -1,5 +1,4 @@
 import EventEmitter from 'events';
-import OrderedMap from 'immutable';
 
 import StageLayering from './stage-layering.mjs';
 
@@ -273,7 +272,6 @@ export default class Runtime extends EventEmitter {
         });
 
         this.targets.map(this.disposeTarget, this);
-        this._monitorState = OrderedMap({});
         this.emit(Runtime.RUNTIME_DISPOSED);
         this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
