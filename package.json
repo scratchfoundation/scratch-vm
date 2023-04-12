@@ -32,7 +32,7 @@
     "decode-html": "2.0.0",
     "diff-match-patch": "1.0.4",
     "format-message": "6.2.1",
-    "htmlparser2": "3.10.0",
+    "htmlparser2": "4.0.0",
     "immutable": "^3.8.2",
     "jszip": "^3.1.5",
     "minilog": "^3.1.0",
@@ -46,6 +46,7 @@
     "sinon": "^15.0.1",
     "sinon-chai": "^3.7.0",
     "text-encoding": "0.7.0",
+    "vite-compatible-readable-stream": "^3.6.1",
     "web-worker": "^1.2.0",
     "worker-loader": "^1.1.1"
   },
@@ -98,8 +99,5 @@
     "tap": "16.2.0",
     "tiny-worker": "2.3.0",
     "uglifyjs-webpack-plugin": "1.2.7"
-  },
-  "volta": {
-    "node": "19.8.1"
   }
 }

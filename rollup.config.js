@@ -17,7 +17,8 @@ export default {
 	},
 	plugins: [
 		resolve({
-			moduleDirectories: ['node_modules']
+			moduleDirectories: ['node_modules'],
+			preferBuiltins: true
 		}),
 		replace({
 			'base64-loader!': '',
@@ -30,6 +31,9 @@ export default {
 			entries: [
 				// Mini log is no longer maintained
 			  { find: 'minilog', replacement: 'pino-minilog' },
+			  // Solves circular dependencies caused by babel converting from commonJS
+			  { find: 'readable-stream', replacement: 'vite-compatible-readable-stream' },
+			  { find: 'jszip', replacement: 'jszip/dist/jszip' },
 			]
 		}),
 		base64({
