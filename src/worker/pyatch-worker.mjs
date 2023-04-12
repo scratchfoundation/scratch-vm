@@ -20,7 +20,7 @@ class PyatchWorker {
                 }
             };
             this._worker.onerror = (event) => {
-                reject(event.error);
+                reject(event);
             };
             this._worker.postMessage(initMessage);
             setTimeout(() => {

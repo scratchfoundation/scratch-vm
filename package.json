@@ -1,6 +1,6 @@
 {
   "name": "pyatch-vm",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Virtual Machine for Pyatch 2.0",
   "author": "Elliot Roe",
   "license": "BSD-3-Clause",
