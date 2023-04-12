@@ -19,12 +19,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide');
-const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web-worker.mjs');
 
 describe('Pyatch VM Linker & Worker Integration', () => {
     describe('Motion Blocks', () => {
         it('Move', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -42,7 +41,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
         
         it('Go To XY', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -60,7 +59,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Go To', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -86,7 +85,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Turn Right', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -103,7 +102,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Turn Left', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -120,7 +119,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Point In Direction', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -138,7 +137,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
 
 
         it('pointTowards', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -163,7 +162,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Glide', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -181,7 +180,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Glide To', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -206,7 +205,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('If On Edge Bounce', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -223,7 +222,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set Rotation Style', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -240,7 +239,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Change X', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -262,7 +261,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Change Y', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -284,7 +283,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set X', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
@@ -305,7 +304,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set Y', async () => {
-            const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+            const vm = new VirtualMachine(PATH_TO_PYODIDE);
             const sprite = new Sprite(null, vm.runtime);
             const target = new RenderedTarget(sprite, vm.runtime);
             target.id = 'target1';
