@@ -20,6 +20,7 @@ class Scratch3NftBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+	this.mediaRecorder = {};
     }
 
     /**
@@ -43,6 +44,24 @@ class Scratch3NftBlocks {
                         default: 'save image',
                         description: 'save snapshot image from canvas in png format'
                     })
+                },
+                {
+                    opcode: 'start',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'nft.start',
+                        default: 'start recording',
+                        description: 'start recording viewer'
+                    })
+                },
+                {
+                    opcode: 'stop',
+                    blockType: BlockType.COMMAND,
+                    text: formatMessage({
+                        id: 'nft.stop',
+                        default: 'stop recording',
+                        description: 'stop recording viewer'
+                    })
                 }
             ]
         };
@@ -60,6 +79,51 @@ class Scratch3NftBlocks {
         document.body.appendChild(tmpLink);
         tmpLink.click();
         document.body.removeChild(tmpLink);
+    }
+
+    start () {
+	const canvas = this.runtime.renderer.canvas;
+	var video = document.createElement('video');
+	var videoStream = canvas.captureStream(30);
+	var chunks = [];
+
+	const options = {
+	  mimeType: "video/webm; codecs=vp9",
+	};
+
+	this.mediaRecorder = new MediaRecorder(videoStream, options);
+
+	this.mediaRecorder.ondataavailable = function(e) {
+	  chunks.push(e.data);
+	};
+
+	this.mediaRecorder.onstop = function(e) {
+	  var blob = new Blob(chunks, { 'type' : 'video/mp4' });
+	  chunks = [];
+	  var videoURL = URL.createObjectURL(blob);
+	  video.src = videoURL;
+
+	  // Attach the object URL to an <a> element, setting the download file name
+	  const a = document.createElement('a');
+	  a.style = "display: none;";
+	  a.href = videoURL;
+	  a.download = "video.webm";
+	  document.body.appendChild(a);
+	  // Trigger the file download
+	  a.click();
+	  setTimeout(() => {
+	    // Clean up - see https://stackoverflow.com/a/48968694 for why it is in a timeout
+	    URL.revokeObjectURL(videoURL);
+	    document.body.removeChild(a);
+	    document.body.removeChild(video);
+	  }, 0);
+	};
+
+	this.mediaRecorder.start();
+    }
+
+    stop () {
+	this.mediaRecorder.stop();
     }
 }
 
