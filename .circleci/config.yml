@@ -68,6 +68,8 @@ workflows:
   build_and_release:
     jobs:
       - build_and_release:
+          context:
+            - scratch-npm-creds
           filters:
             branches:
               only: *release-branches
