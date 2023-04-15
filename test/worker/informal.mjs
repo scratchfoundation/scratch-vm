@@ -11,7 +11,7 @@
 // const __dirname = path.dirname(__filename);
 
 // const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide');
-// const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web-worker.mjs');
+// const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web.worker.mjs');
 
 // const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, function (message) {
 //     this._worker.postMessage({

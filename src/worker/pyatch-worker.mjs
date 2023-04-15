@@ -1,10 +1,10 @@
 import WorkerMessages from './worker-messages.mjs';
 import Worker from 'web-worker';
+import { isNode, isBrowser } from "browser-or-node";
 
 class PyatchWorker {
     constructor(pathToWorker, blockOPCallback) {
-        const url = new URL(pathToWorker, import.meta.url);
-        this._worker = new Worker(url, { type: 'module' });
+        this._worker = new Worker(new URL(pathToWorker, import.meta.url), { type: 'module' });
         this._blockOPCallback = blockOPCallback.bind(this);
     }
     
@@ -30,6 +30,7 @@ class PyatchWorker {
     }
 
     async run(pythonScript, targets, token='') {
+        await this._worker;
         const message = {
             id: WorkerMessages.FromVM.AsyncRun,
             token: token,

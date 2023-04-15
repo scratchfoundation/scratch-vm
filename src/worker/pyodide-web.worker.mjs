@@ -2,8 +2,8 @@
 
 import PrimProxy from './prim-proxy.js';
 import WorkerMessages from './worker-messages.mjs';
-import { loadPyodide } from 'pyodide';
 
+console.log('Loading web worker file');
 
 /**
  * Mapping of message token to Promise resolve function.
@@ -20,11 +20,19 @@ let _lastToken = null;
 
 
 async function _initPyodide(indexURL) {
+  console.log('Loading pyoidide with index: ', indexURL);
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
-  self.pyodide = await loadPyodide({
-    indexURL: indexURL,
-  });
-  self.pyodide.setStderr({batched: _postError});
+  if (indexURL) {
+    const { loadPyodide } = await import('pyodide');
+    self.pyodide = await loadPyodide({
+      indexURL: indexURL,
+    });
+  } else {
+    console.log('loading web version');
+    console.log(loadPyodide);
+    self.pyodide = await loadPyodide();
+  }
+  // self.pyodide.setStderr({batched: _postError});
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 

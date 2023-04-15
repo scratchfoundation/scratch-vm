@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide');
-const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web-worker.mjs');
+const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web.worker.mjs');
 
 // Just posts a null value result back to the worker every block OP it receives to worker can finish python execution.
 const blockOPTestCallback = (spy) => {
