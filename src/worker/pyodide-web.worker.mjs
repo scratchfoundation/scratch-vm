@@ -34,7 +34,7 @@ async function _defaultPyodideLoader(version = npmVersion) {
 async function _initPyodide(indexURL) {
   console.log('Loading pyoidide with index: ', indexURL);
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
-  self.pyodide = _defaultPyodideLoader();
+  self.pyodide = await _defaultPyodideLoader();
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 
