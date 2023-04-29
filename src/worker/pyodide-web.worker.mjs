@@ -1,9 +1,10 @@
-/* eslint-disable no-func-assign */
+// /* eslint-disable no-func-assign */
+console.log('Loading web worker file');
 
 import PrimProxy from './prim-proxy.js';
 import WorkerMessages from './worker-messages.mjs';
+import {loadPyodide, version as npmVersion} from "pyodide";
 
-console.log('Loading web worker file');
 
 /**
  * Mapping of message token to Promise resolve function.
@@ -18,21 +19,22 @@ let _pendingTokens = {};
  */
 let _lastToken = null;
 
+async function _defaultPyodideLoader(version = npmVersion) {
+  const indexURL = `https://cdn.jsdelivr.net/pyodide/v${version}/full/`;
+  const result = await loadPyodide({indexURL});
+  if (result.version !== version) {
+    throw new Error(
+      `loadPyodide loaded version ${result.version} instead of ${version}`,
+    );
+  }
+  return result;
+}
+
 
 async function _initPyodide(indexURL) {
   console.log('Loading pyoidide with index: ', indexURL);
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
-  if (indexURL) {
-    const { loadPyodide } = await import('pyodide');
-    self.pyodide = await loadPyodide({
-      indexURL: indexURL,
-    });
-  } else {
-    console.log('loading web version');
-    console.log(loadPyodide);
-    self.pyodide = await loadPyodide();
-  }
-  // self.pyodide.setStderr({batched: _postError});
+  self.pyodide = _defaultPyodideLoader();
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 

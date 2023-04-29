@@ -1,11 +1,10 @@
 import WorkerMessages from './worker-messages.mjs';
 import Worker from 'web-worker';
-import workerPath from './pyodide-web.worker.mjs';
 import { isNode, isBrowser } from "browser-or-node";
 
 class PyatchWorker {
     constructor(pathToWorker, blockOPCallback) {
-        this._worker = new Worker(new URL(workerPath, import.meta.url), { type: 'module' });
+        this._worker = new Worker(new URL('./pyodide-web.worker.mjs', import.meta.url), { type: 'module' });
         this._blockOPCallback = blockOPCallback.bind(this);
     }
     
