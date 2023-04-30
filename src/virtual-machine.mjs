@@ -497,7 +497,7 @@ export default class VirtualMachine extends EventEmitter {
         await this.pyatchLoadPromise;
 
         const result = await this.pyatchWorker.run(pythonCode, targetArr);
-
+        
         return result;
     }
     

@@ -571,6 +571,9 @@ export default class Runtime extends EventEmitter {
             this._blockUtility.target = this.getTargetById(targetID);
             const returnVal = this._primitives[primitiveOpcode](args, this._blockUtility);
             resolve(returnVal);
+        }).then(returnVal => {
+            this.draw();
+            return returnVal;
         });
     }
 

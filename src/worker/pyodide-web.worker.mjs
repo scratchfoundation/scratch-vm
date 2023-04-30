@@ -91,8 +91,6 @@ function _run(pythonScript,  targets) {
   //await self.pyodide.loadPackagesFromImports(python);
   _postStatusMessage(WorkerMessages.ToVM.PythonLoading)
 
-  console.log(self.pyodide);
-
   // This is load each async function into the global scope of the pyodide instance
   self.pyodide.runPython(pythonScript);
   _postStatusMessage(WorkerMessages.ToVM.PythonRunning);
