@@ -8,10 +8,9 @@ class PyatchWorker {
         this._blockOPCallback = blockOPCallback.bind(this);
     }
     
-    async loadPyodide(indexURL) {
+    async loadPyodide() {
         const initMessage = {
             id: WorkerMessages.FromVM.InitPyodide,
-            pyodideURL: indexURL,
         }
         return new Promise((resolve, reject) => {
             this._worker.onmessage = (event) => {

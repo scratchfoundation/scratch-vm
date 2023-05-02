@@ -32,6 +32,7 @@
     "canvas-toBlob": "1.0.0",
     "comlink": "^4.4.1",
     "decode-html": "2.0.0",
+    "detect-browser": "^5.3.0",
     "diff-match-patch": "1.0.4",
     "format-message": "6.2.1",
     "htmlparser2": "4.0.0",

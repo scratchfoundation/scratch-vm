@@ -1,10 +1,10 @@
 // /* eslint-disable no-func-assign */
-console.log('Loading web worker file');
-
 import PrimProxy from './prim-proxy.js';
 import WorkerMessages from './worker-messages.mjs';
 import {loadPyodide, version as npmVersion} from "pyodide";
 
+import { detect } from 'detect-browser';
+const browser = detect();
 
 /**
  * Mapping of message token to Promise resolve function.
@@ -19,7 +19,7 @@ let _pendingTokens = {};
  */
 let _lastToken = null;
 
-async function _defaultPyodideLoader(version = npmVersion) {
+async function _webPyodideLoader(version = npmVersion) {
   const indexURL = `https://cdn.jsdelivr.net/pyodide/v${version}/full/`;
   const result = await loadPyodide({indexURL});
   if (result.version !== version) {
@@ -29,12 +29,22 @@ async function _defaultPyodideLoader(version = npmVersion) {
   }
   return result;
 }
+async function _nodePyodideLoader() {
+  const indexURL = './node_modules/pyodide';
+  const result = await loadPyodide({
+    indexURL: indexURL
+  });
+  return result;
+}
 
 
-async function _initPyodide(indexURL) {
-  console.log('Loading pyoidide with index: ', indexURL);
+async function _initPyodide() {
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoading)
-  self.pyodide = await _defaultPyodideLoader();
+  if (browser.name === 'node') {
+    self.pyodide = await _nodePyodideLoader();
+  } else {
+    self.pyodide = await _webPyodideLoader();
+  }
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 
@@ -119,7 +129,7 @@ function onVMMessage(event) {
   } else if (id === WorkerMessages.FromVM.VMConnected) {
     console.log('Undefined Functionality');
   } else if (id === WorkerMessages.FromVM.InitPyodide) {
-    _initPyodide(data.pyodideURL);
+    _initPyodide();
   }
 
 }

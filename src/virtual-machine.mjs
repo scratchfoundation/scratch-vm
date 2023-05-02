@@ -41,7 +41,7 @@ const CORE_EXTENSIONS = [
  */
 export default class VirtualMachine extends EventEmitter {
 
-    constructor (pathToPyodide) {
+    constructor () {
         super();
 
         /**
@@ -51,7 +51,7 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime = new Runtime();
 
         this.pyatchWorker = new PyatchWorker('./pyodide-web.worker.mjs', this._onWorkerMessage.bind(this));
-        this.pyatchLoadPromise = this.pyatchWorker.loadPyodide(pathToPyodide);
+        this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
     }
@@ -497,7 +497,7 @@ export default class VirtualMachine extends EventEmitter {
         await this.pyatchLoadPromise;
 
         const result = await this.pyatchWorker.run(pythonCode, targetArr);
-        
+
         return result;
     }
     

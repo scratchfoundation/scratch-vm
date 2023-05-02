@@ -15,7 +15,6 @@ chai.use(sinonChai);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PATH_TO_PYODIDE = path.join(__dirname, '../../node_modules/pyodide');
 const PATH_TO_WORKER = path.join(__dirname, '../../src/worker/pyodide-web.worker.mjs');
 
 // Just posts a null value result back to the worker every block OP it receives to worker can finish python execution.
@@ -40,7 +39,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -66,7 +65,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-gotoxy.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -92,7 +91,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-goto.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -118,7 +117,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnright.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -144,7 +143,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnleft.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -170,7 +169,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointindirection.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -196,7 +195,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointtowards.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -222,7 +221,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glide.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -248,7 +247,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glideto.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -274,7 +273,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-ifonedgebounce.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -300,7 +299,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setrotationstyle.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -326,7 +325,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changex.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -352,7 +351,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setx.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -378,7 +377,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changey.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -404,7 +403,7 @@ describe('Pyatch Worker Async Run', () => {
 			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sety.py'), 'utf8');
 			const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide(PATH_TO_PYODIDE);
+			const loadResult = await pyatchWorker.loadPyodide();
 			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
 
 			const runResult = await pyatchWorker.run(pythonCode, targetArr);
