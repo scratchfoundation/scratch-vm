@@ -29,396 +29,311 @@ const blockOPTestCallback = (spy) => {
 	}
 }
 
-describe('Pyatch Worker Async Run', () => {
-	describe('Motion Primitive Functions', () => {
-		it('Move', async () => {
+let spy = null;
+let pyatchWorker = null;
+
+before( async () => {  
+	spy = sinon.spy();
+	pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));	
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+	await pyatchWorker.loadPyodide();
+});
+
+beforeEach(async () => {
+	spy.resetHistory();
+});
+
+after( async () => {
+	pyatchWorker.terminate();
+});
+
+describe('Pyatch Worker Fucntionality', () => {
+	describe('Async Run', () => {
+		describe('Motion Primitive Functions', () => {
+			it('Move', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
-			const targetArr = ['target1'];	
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_movesteps')
+				expect(lastCallData.args).to.eql({ STEPS: 10 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				
+			});
 
-			expect(spy).to.be.calledOnce;
-	
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_movesteps')
-			expect(lastCallData.args).to.eql({ STEPS: 10 })
-			expect(lastCallData.token).to.be.a('string')
+			it('Go To XY', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-gotoxy.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			pyatchWorker.terminate();
-		});
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-		it('Go To XY', async () => {
+				expect(spy).to.be.calledOnce;
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_gotoxy')
+				expect(lastCallData.args).to.eql({ X: 10, Y: 5 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-gotoxy.py'), 'utf8');
-			const targetArr = ['target1'];	
+				
+			});
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+			it('Go To', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-goto.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			expect(spy).to.be.calledOnce;
+				expect(spy).to.be.calledOnce;
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_gotoxy')
-			expect(lastCallData.args).to.eql({ X: 10, Y: 5 })
-			expect(lastCallData.token).to.be.a('string')
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_goto')
+				expect(lastCallData.args).to.eql({ TO: 'target1' })
+				expect(lastCallData.token).to.be.a('string')
 
-			pyatchWorker.terminate();
-		});
+				
+			});
 
-		it('Go To', async () => {
+			it('Turn Right', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnright.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-goto.py'), 'utf8');
-			const targetArr = ['target1'];	
+				expect(spy).to.be.calledOnce;
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_turnright')
+				expect(lastCallData.args).to.eql({ DEGREES: 90 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				
+			});
 
-			expect(spy).to.be.calledOnce;
+			it('Turn Left', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnleft.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_goto')
-			expect(lastCallData.args).to.eql({ TO: 'target1' })
-			expect(lastCallData.token).to.be.a('string')
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			pyatchWorker.terminate();
-		});
+				expect(spy).to.be.calledOnce;
 
-		it('Turn Right', async () => {
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_turnleft')
+				expect(lastCallData.args).to.eql({ DEGREES: 90 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				
+			});
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnright.py'), 'utf8');
-			const targetArr = ['target1'];	
+			it('Point In Direction', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointindirection.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				expect(spy).to.be.calledOnce;
 
-			expect(spy).to.be.calledOnce;
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_pointindirection')
+				expect(lastCallData.args).to.eql({ DIRECTION: 90 })
+				expect(lastCallData.token).to.be.a('string')
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_turnright')
-			expect(lastCallData.args).to.eql({ DEGREES: 90 })
-			expect(lastCallData.token).to.be.a('string')
+				
+			});
 
-			pyatchWorker.terminate();
-		});
+			it('Point Towards', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointtowards.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-		it('Turn Left', async () => {
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				expect(spy).to.be.calledOnce;
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnleft.py'), 'utf8');
-			const targetArr = ['target1'];	
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_pointtowards')
+				expect(lastCallData.args).to.eql({ TOWARDS: 'target1' })
+				expect(lastCallData.token).to.be.a('string')
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				
+			});
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+			it('Glide', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glide.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			expect(spy).to.be.calledOnce;
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_turnleft')
-			expect(lastCallData.args).to.eql({ DEGREES: 90 })
-			expect(lastCallData.token).to.be.a('string')
+				expect(spy).to.be.calledOnce;
 
-			pyatchWorker.terminate();
-		});
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_glidesecstoxy')
+				expect(lastCallData.args).to.eql({ SECS: 1, X: 10, Y:5 })
+				expect(lastCallData.token).to.be.a('string')
 
-		it('Point In Direction', async () => {
+				
+			});
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+			it('Glide To', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glideto.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointindirection.py'), 'utf8');
-			const targetArr = ['target1'];	
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				expect(spy).to.be.calledOnce;
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_glideto')
+				expect(lastCallData.args).to.eql({ SECS: 1, TO: 'target1' })
+				expect(lastCallData.token).to.be.a('string')
 
-			expect(spy).to.be.calledOnce;
+				
+			});
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_pointindirection')
-			expect(lastCallData.args).to.eql({ DIRECTION: 90 })
-			expect(lastCallData.token).to.be.a('string')
+			it('If On Edge Bounce', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-ifonedgebounce.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			pyatchWorker.terminate();
-		});
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-		it('Point Towards', async () => {
+				expect(spy).to.be.calledOnce;
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_ifonedgebounce')
+				expect(lastCallData.args).to.eql({})
+				expect(lastCallData.token).to.be.a('string')
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointtowards.py'), 'utf8');
-			const targetArr = ['target1'];	
+				
+			});
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+			it('Set Rotation Style', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setrotationstyle.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			expect(spy).to.be.calledOnce;
+				expect(spy).to.be.calledOnce;
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_pointtowards')
-			expect(lastCallData.args).to.eql({ TOWARDS: 'target1' })
-			expect(lastCallData.token).to.be.a('string')
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_setrotationstyle')
+				expect(lastCallData.args).to.eql({ STYLE: 'free' })
+				expect(lastCallData.token).to.be.a('string')
 
-			pyatchWorker.terminate();
-		});
+				
+			});
 
-		it('Glide', async () => {
+			it('Change X', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changex.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glide.py'), 'utf8');
-			const targetArr = ['target1'];	
+				expect(spy).to.be.calledOnce;
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_changexby')
+				expect(lastCallData.args).to.eql({ DX: 10 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				
+			});
 
-			expect(spy).to.be.calledOnce;
+			it('Set X', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setx.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_glidesecstoxy')
-			expect(lastCallData.args).to.eql({ SECS: 1, X: 10, Y:5 })
-			expect(lastCallData.token).to.be.a('string')
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			pyatchWorker.terminate();
-		});
+				expect(spy).to.be.calledOnce;
 
-		it('Glide To', async () => {
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_setx')
+				expect(lastCallData.args).to.eql({ X: 10 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				
+			});
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glideto.py'), 'utf8');
-			const targetArr = ['target1'];	
+			it('Change Y', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changey.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+				expect(spy).to.be.calledOnce;
 
-			expect(spy).to.be.calledOnce;
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_changeyby')
+				expect(lastCallData.args).to.eql({ DY: 10 })
+				expect(lastCallData.token).to.be.a('string')
 
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_glideto')
-			expect(lastCallData.args).to.eql({ SECS: 1, TO: 'target1' })
-			expect(lastCallData.token).to.be.a('string')
+				
+			});
 
-			pyatchWorker.terminate();
-		});
+			it('Set Y', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sety.py'), 'utf8');
+				const targetArr = ['target1'];	
 
-		it('If On Edge Bounce', async () => {
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
 
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
+				expect(spy).to.be.calledOnce;
 
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-ifonedgebounce.py'), 'utf8');
-			const targetArr = ['target1'];	
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('motion_sety')
+				expect(lastCallData.args).to.eql({ Y: 10 })
+				expect(lastCallData.token).to.be.a('string')
 
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_ifonedgebounce')
-			expect(lastCallData.args).to.eql({})
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
-		});
-
-		it('Set Rotation Style', async () => {
-
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
-
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setrotationstyle.py'), 'utf8');
-			const targetArr = ['target1'];	
-
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_setrotationstyle')
-			expect(lastCallData.args).to.eql({ STYLE: 'free' })
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
-		});
-
-		it('Change X', async () => {
-
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
-
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changex.py'), 'utf8');
-			const targetArr = ['target1'];	
-
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_changexby')
-			expect(lastCallData.args).to.eql({ DX: 10 })
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
-		});
-
-		it('Set X', async () => {
-
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
-
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setx.py'), 'utf8');
-			const targetArr = ['target1'];	
-
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_setx')
-			expect(lastCallData.args).to.eql({ X: 10 })
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
-		});
-
-		it('Change Y', async () => {
-
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
-
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changey.py'), 'utf8');
-			const targetArr = ['target1'];	
-
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_changeyby')
-			expect(lastCallData.args).to.eql({ DY: 10 })
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
-		});
-
-		it('Set Y', async () => {
-
-			const spy = sinon.spy();
-			const pyatchWorker = new PyatchWorker(PATH_TO_WORKER, blockOPTestCallback(spy));
-
-			const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sety.py'), 'utf8');
-			const targetArr = ['target1'];	
-
-			const loadResult = await pyatchWorker.loadPyodide();
-			expect(loadResult).to.equal(WorkerMessages.ToVM.PyodideLoaded);
-
-			const runResult = await pyatchWorker.run(pythonCode, targetArr);
-			expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-			expect(spy).to.be.calledOnce;
-
-			let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-			expect(lastCallData.id).to.equal('BlockOP')
-			expect(lastCallData.targetID).to.equal(targetArr[0])
-			expect(lastCallData.opCode).to.equal('motion_sety')
-			expect(lastCallData.args).to.eql({ Y: 10 })
-			expect(lastCallData.token).to.be.a('string')
-
-			pyatchWorker.terminate();
+				
+			});
 		});
 	});
 });
