@@ -15,14 +15,49 @@ import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const expect = chai.expect;
 
+let vm = null;
+let sprite = null;
+let target = null;
+
+let sprite2 = null;
+let target2 = null;
+
+before( async () => {  
+    vm = new VirtualMachine();
+
+    sprite = new Sprite(null, vm.runtime);
+    target = new RenderedTarget(sprite, vm.runtime);
+    target.id = 'target1';
+    vm.runtime.addTarget(target);
+
+    sprite2 = new Sprite(null, vm.runtime);
+    target2 = new RenderedTarget(sprite2, vm.runtime);
+    target2.id = 'target2';
+    sprite2.name = 'target2';
+
+    vm.runtime.addTarget(target2);
+
+});
+
+const resetVm = () => {
+    vm.runtime.targets.map((target) => {
+        target.x = 0;
+        target.y = 0;
+        target.direction = 90;
+
+        return target;
+    });
+}
+
+beforeEach(async () => {
+    resetVm();
+});
+
+
 describe('Pyatch VM Linker & Worker Integration', () => {
     describe('Motion Blocks', () => {
         it('Move', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['move(10)'],
@@ -36,11 +71,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
         
         it('Go To XY', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['goToXY(10, 5)'],
@@ -54,23 +85,14 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Go To', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['goTo("target2")'],
             };
 
-            const sprite2 = new Sprite(null, vm.runtime);
-            const target2 = new RenderedTarget(sprite2, vm.runtime);
-            target2.id = 'target2';
-            sprite2.name = 'target2';
             target2.x = 10;
             target2.y = 5;
-            vm.runtime.addTarget(target2);
 
             const result = await vm.run(targetAndCode);
 
@@ -80,11 +102,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Turn Right', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['turnRight(90)'],
@@ -97,11 +115,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Turn Left', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['turnLeft(90)'],
@@ -114,11 +128,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Point In Direction', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['pointInDirection(90)'],
@@ -132,23 +142,14 @@ describe('Pyatch VM Linker & Worker Integration', () => {
 
 
         it('pointTowards', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['pointTowards("target2")'],
             };
 
-            const sprite2 = new Sprite(null, vm.runtime);
-            const target2 = new RenderedTarget(sprite2, vm.runtime);
-            target2.id = 'target2';
-            sprite2.name = 'target2';
             target2.x = 5;
             target2.y = 5;
-            vm.runtime.addTarget(target2);
 
             const result = await vm.run(targetAndCode);
 
@@ -157,11 +158,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Glide', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['glide(10, 5, 1)'],
@@ -175,22 +172,14 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Glide To', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['glideTo("target2", 1)'],
             };
 
-            const sprite2 = new Sprite(null, vm.runtime);
-            const target2 = new RenderedTarget(sprite2, vm.runtime);
-            target2.id = 'target2';
             target2.x = 10;
             target2.y = 5;
-            vm.runtime.addTarget(target2);
 
             const result = await vm.run(targetAndCode);
 
@@ -200,11 +189,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('If On Edge Bounce', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['ifOnEdgeBounce()'],
@@ -217,11 +202,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set Rotation Style', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const targetAndCode = {
                 target1: ['setRotationStyle("leftRight")'],
@@ -234,11 +215,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Change X', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const oldX = target.x;
             const dx = 10;
@@ -256,11 +233,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Change Y', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const oldX = target.x;
             const oldY = target.y;
@@ -278,11 +251,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set X', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const eX = 10;
             const oldY = target.y;
@@ -299,11 +268,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
         });
 
         it('Set Y', async () => {
-            const vm = new VirtualMachine();
-            const sprite = new Sprite(null, vm.runtime);
-            const target = new RenderedTarget(sprite, vm.runtime);
-            target.id = 'target1';
-            vm.runtime.addTarget(target);
+            
 
             const oldX = target.x;
             const eY = 10;
