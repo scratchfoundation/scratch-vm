@@ -107,7 +107,6 @@ function _run(pythonScript,  targets) {
 
   let target_func_arr = []
 
-  // TODO: Need to loop through each async function in the global scope and run them concurrently
   for(let global of self.pyodide.globals) {
     if (global.includes('target')) {
       target_func_arr.push(self.pyodide.globals.get(global))
