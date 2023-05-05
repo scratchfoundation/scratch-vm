@@ -206,12 +206,11 @@ describe('Runtime Exec Primitives', () => {
             const targetId = target.id;
             rt.addTarget(target);
 
-            // eslint-disable-next-line no-unused-vars
             const retVal = await rt.execBlockPrimitive(
-                targetId, 'motion_setrotationstyle', {STYLE: RenderedTarget.ROTATION_STYLE_NONE}, 'test_token');
+                targetId, 'motion_setrotationstyle', {STYLE: RenderedTarget.ROTATION_STYLE_LEFT_RIGHT}, 'test_token');
 
-            // NOTE: Not implemented yet
-            expect(true).to.equal(false);
+            expect(target.rotationStyle).to.equal(RenderedTarget.ROTATION_STYLE_LEFT_RIGHT);
+            expect(retVal).to.equal(undefined);
         });
 
         it('Change X', async () => {
