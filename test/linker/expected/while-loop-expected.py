@@ -5,3 +5,4 @@ async def target1_0(vm_proxy):
     while True:
         move(10)
         move(10)
+
