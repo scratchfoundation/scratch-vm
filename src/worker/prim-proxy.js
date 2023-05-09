@@ -20,6 +20,25 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+        say: "looks_say",
+        sayFor: "looks_sayforsecs",
+        think: "looks_think",
+        thinkFor: "looks_thinkforsecs",
+        show: "looks_show",
+        hide: "looks_hide",
+        switchCostumeTo: "looks_switchcostumeto",
+        switchBackdropTo: "looks_switchbackdropto",
+        switchBackdropToAndWait: "looks_switchbackdroptoandwait",
+        nextCostume: "looks_nextCostume",
+        nextBackdrop: "looks_nextBackdrop",
+        changeEffectBy: "looks_changeeffectby",
+        setEffectTo: "looks_seteffectto",
+        clearGraphicEffects: "looks_cleargraphiceffects",
+        changeSizeBy: "looks_changesizeby",
+        setSizeTo: "looks_setsizeto",
+        goToLayer: "looks_gotofrontback",
+        changeLayer: "looks_goforwardbackwardlayers",
+        getSize: "looks_size"
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;
@@ -105,6 +124,22 @@ class PrimProxy {
     async getDirection() {
         let direction = PrimProxy.post(this.opcodeMap.getDirection, {});
         return direction;
+    }
+
+    say(message) {
+        this.post(PrimProxy.opcodeMap.say, { MESSAGE: message });
+    }
+
+    sayFor(message, secs) {
+        this.post(PrimProxy.opcodeMap.sayFor, { MESSAGE: message, SECS: secs });
+    }
+
+    think(message) {
+        this.post(PrimProxy.opcodeMap.think, { MESSAGE: message });
+    }
+
+    thinkFor(message, secs) {
+        this.post(PrimProxy.opcodeMap.thinkFor, { MESSAGE: message, SECS: secs });
     }
 }
 

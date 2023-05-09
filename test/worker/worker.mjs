@@ -47,7 +47,7 @@ after( async () => {
 	pyatchWorker.terminate();
 });
 
-describe('Pyatch Worker Fucntionality', () => {
+describe('Pyatch Worker Functionality', () => {
 	describe('Async Run', () => {
 		describe('Motion Primitive Functions', () => {
 			it('Move', async () => {
@@ -334,6 +334,85 @@ describe('Pyatch Worker Fucntionality', () => {
 
 				
 			});
+		});
+
+		describe('Looks Primitive Functions', () => {
+			it('Say', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-say.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('looks_say')
+				expect(lastCallData.args).to.eql({ MESSAGE: 'Hello World' })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Say For Seconds', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sayfor.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('looks_sayforsecs')
+				expect(lastCallData.args).to.eql({ MESSAGE: 'Hello World', SECS: 5 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Think', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-think.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('looks_think')
+				expect(lastCallData.args).to.eql({ MESSAGE: 'Hello World' })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Think For Seconds', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-thinkfor.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('looks_thinkforsecs')
+				expect(lastCallData.args).to.eql({ MESSAGE: 'Hello World', SECS: 5 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
 		});
 	});
 });
