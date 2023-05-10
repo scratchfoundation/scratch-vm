@@ -5,11 +5,12 @@ import StageLayering from './stage-layering.mjs';
 import BlockUtility from './block-utility.mjs';
 
 import scratch3MotionBlocks from '../blocks/scratch3_motion.mjs';
+import scratch3LooksBlocks from '../blocks/scratch3_looks.mjs';
 
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
     // scratch3_event: require('../blocks/scratch3_event'),
-    // scratch3_looks: require('../blocks/scratch3_looks'),
+    scratch3_looks: scratch3LooksBlocks,
     scratch3_motion: scratch3MotionBlocks,
     // scratch3_operators: require('../blocks/scratch3_operators'),
     // scratch3_sound: require('../blocks/scratch3_sound'),

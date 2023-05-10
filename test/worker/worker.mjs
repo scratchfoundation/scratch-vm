@@ -463,7 +463,7 @@ describe('Pyatch Worker Functionality', () => {
 				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
 				expect(lastCallData.id).to.equal('BlockOP')
 				expect(lastCallData.targetID).to.equal(targetArr[0])
-				expect(lastCallData.opCode).to.equal('looks_setcostumeto')
+				expect(lastCallData.opCode).to.equal('looks_switchcostumeto')
 				expect(lastCallData.args).to.eql({ COSTUME: 1 })
 				expect(lastCallData.token).to.be.a('string')
 
@@ -482,7 +482,7 @@ describe('Pyatch Worker Functionality', () => {
 				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
 				expect(lastCallData.id).to.equal('BlockOP')
 				expect(lastCallData.targetID).to.equal(targetArr[0])
-				expect(lastCallData.opCode).to.equal('looks_setbackdropto')
+				expect(lastCallData.opCode).to.equal('looks_switchbackdropto')
 				expect(lastCallData.args).to.eql({ BACKDROP: 1 })
 				expect(lastCallData.token).to.be.a('string')
 
@@ -501,7 +501,7 @@ describe('Pyatch Worker Functionality', () => {
 				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
 				expect(lastCallData.id).to.equal('BlockOP')
 				expect(lastCallData.targetID).to.equal(targetArr[0])
-				expect(lastCallData.opCode).to.equal('looks_setbackdroptoandwait')
+				expect(lastCallData.opCode).to.equal('looks_switchbackdroptoandwait')
 				expect(lastCallData.args).to.eql({ BACKDROP: 1 })
 				expect(lastCallData.token).to.be.a('string')
 
