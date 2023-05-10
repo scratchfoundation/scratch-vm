@@ -26,19 +26,21 @@ class PrimProxy {
         thinkFor: "looks_thinkforsecs",
         show: "looks_show",
         hide: "looks_hide",
-        switchCostumeTo: "looks_switchcostumeto",
-        switchBackdropTo: "looks_switchbackdropto",
-        switchBackdropToAndWait: "looks_switchbackdroptoandwait",
-        nextCostume: "looks_nextCostume",
-        nextBackdrop: "looks_nextBackdrop",
+        setCostumeTo: "looks_setcostumeto",
+        setBackdropTo: "looks_setbackdropto",
+        setBackdropToAndWait: "looks_setbackdroptoandwait",
+        nextCostume: "looks_nextcostume",
+        nextBackdrop: "looks_nextbackdrop",
         changeEffectBy: "looks_changeeffectby",
         setEffectTo: "looks_seteffectto",
         clearGraphicEffects: "looks_cleargraphiceffects",
         changeSizeBy: "looks_changesizeby",
         setSizeTo: "looks_setsizeto",
-        goToLayer: "looks_gotofrontback",
-        changeLayer: "looks_goforwardbackwardlayers",
-        getSize: "looks_size"
+        setLayerTo: "looks_gotofrontback",
+        changeLayerBy: "looks_goforwardbackwardlayers",
+        getSize: "looks_size",
+        getCostume: "looks_costumenumbername",
+        getBackdrop: "looks_backdropnumbername"
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;
@@ -111,16 +113,19 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.setY, { Y: y });
     }
 
+    // Does not work? No tests for any async functions
     async getX() {
         let x = await PrimProxy.post(this.opcodeMap.getX, {});
         return x;
     }
 
+    // Does not work?
     async getY() {
         let y = PrimProxy.post(this.opcodeMap.getY, {});
         return y;
     }
 
+    // Does not work?
     async getDirection() {
         let direction = PrimProxy.post(this.opcodeMap.getDirection, {});
         return direction;
@@ -140,6 +145,79 @@ class PrimProxy {
 
     thinkFor(message, secs) {
         this.post(PrimProxy.opcodeMap.thinkFor, { MESSAGE: message, SECS: secs });
+    }
+
+    show() {
+        this.post(PrimProxy.opcodeMap.show, {});
+    }
+
+    hide() {
+        this.post(PrimProxy.opcodeMap.hide, {});
+    }
+
+    setCostumeTo(costume) {
+        this.post(PrimProxy.opcodeMap.setCostumeTo, { COSTUME: costume });
+    }
+
+    setBackdropTo(backdrop) {
+        this.post(PrimProxy.opcodeMap.setBackdropTo, { BACKDROP: backdrop });
+    }
+
+    setBackdropToAndWait(backdrop) {
+        this.post(PrimProxy.opcodeMap.setBackdropToAndWait, { BACKDROP: backdrop });
+    }
+
+    nextCostume() {
+        this.post(PrimProxy.opcodeMap.nextCostume, {});
+    }
+
+    nextBackdrop() {
+        this.post(PrimProxy.opcodeMap.nextBackdrop, {});
+    }
+
+    changeEffectBy(effect, change) {
+        this.post(PrimProxy.opcodeMap.changeEffectBy, { EFFECT: effect, CHANGE: change });
+    }
+
+    setEffectTo(effect, value) {
+        this.post(PrimProxy.opcodeMap.setEffectTo, { EFFECT: effect, VALUE: value });
+    }
+
+    clearGraphicEffects() {
+        this.post(PrimProxy.opcodeMap.clearGraphicEffects, {});
+    }
+
+    changeSizeBy(change) {
+        this.post(PrimProxy.opcodeMap.changeSizeBy, { CHANGE: change });
+    }
+
+    setSizeTo(size) {
+        this.post(PrimProxy.opcodeMap.setSizeTo, { SIZE: size });
+    }
+
+    setLayerTo(front_back) {
+        this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: front_back });
+    }
+
+    changeLayerBy(num) {
+        this.post(PrimProxy.opcodeMap.changeLayerBy, { NUM: num });
+    }
+
+    async getSize() {
+        let size = PrimProxy.post(this.opcodeMap.getSize, {});
+        return size;
+    }
+
+    // Does not work?
+    async getCostume() {
+        let costume = await PrimProxy.post(this.opcodeMap.getCostume, { NUMBER_NAME: 'name' });
+        return costume;
+    }
+
+    // Does not work?
+    async getBackdrop() {
+        let backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, { NUMBER_NAME: 'name' });
+        return backdrop;
     }
 }
 
