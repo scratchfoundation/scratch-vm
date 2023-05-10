@@ -40,7 +40,11 @@ class PrimProxy {
         changeLayerBy: "looks_goforwardbackwardlayers",
         getSize: "looks_size",
         getCostume: "looks_costumenumbername",
-        getBackdrop: "looks_backdropnumbername"
+        getBackdrop: "looks_backdropnumbername",
+        whenTouchingObject: "event_whentouchingobject",
+        broadcast: "event_broadcast",
+        broadcastAndWait: "event_broadcastandwait",
+        whenGreaterThan: "event_whengreaterthan"
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;
@@ -218,6 +222,10 @@ class PrimProxy {
     async getBackdrop() {
         let backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, { NUMBER_NAME: 'name' });
         return backdrop;
+    }
+
+    whenBackdropSwitchesTo(backdrop) {
+        this.post(PrimProxy.opcodeMap.whenBackdropSwitchesTo, { BACKDROP: backdrop });
     }
 }
 
