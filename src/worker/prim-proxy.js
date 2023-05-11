@@ -224,9 +224,6 @@ class PrimProxy {
         return backdrop;
     }
 
-    whenBackdropSwitchesTo(backdrop) {
-        this.post(PrimProxy.opcodeMap.whenBackdropSwitchesTo, { BACKDROP: backdrop });
-    }
 }
 
 export default PrimProxy;

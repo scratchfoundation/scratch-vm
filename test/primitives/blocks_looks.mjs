@@ -480,5 +480,117 @@ describe('Runtime Exec Primitives', () => {
             expect(retVal2).to.equal(undefined);
         });
 
+        it('Change Effect By', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            expect(target.effects.ghost).to.equal(0);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'ghost', CHANGE: 10 }, 'test_token');
+
+            expect(target.effects.ghost).to.equal(10);
+            expect(retVal).to.equal(undefined);
+        });
+
+        it('Change Effect to be Out of Bounds', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            expect(target.effects.brightness).to.equal(0);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'brightness', CHANGE: 8000 }, 'test_token');
+
+            expect(target.effects.brightness).to.equal(100);
+            expect(retVal).to.equal(undefined);
+        });
+
+        it('Set Effect To', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            expect(target.effects.ghost).to.equal(0);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 10 }, 'test_token');
+
+            expect(target.effects.ghost).to.equal(10);
+            expect(retVal).to.equal(undefined);
+        });
+
+        it('Set Effect to be Out of Bounds', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            expect(target.effects.brightness).to.equal(0);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'brightness', VALUE: -8000 }, 'test_token');
+
+            expect(target.effects.brightness).to.equal(-100);
+            expect(retVal).to.equal(undefined);
+        });
+
+        it('Clear Graphic Effects', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            // add graphic effect of ghost 50
+            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 50 }, 'test_token');
+            expect(target.effects.ghost).to.equal(50);
+
+            // clear graphic effects
+            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_cleargraphiceffects', {}, 'test_token');
+
+            expect(target.effects.ghost).to.equal(0);
+
+            expect(retVal1).to.equal(undefined);
+            expect(retVal2).to.equal(undefined);
+        });
+
+        // possible range of sprite sizes depends on cosume and stage size
+        // without defining these sizes, Sprite Size is limited to [100, 100]
+        // I'm doing a simple 0 change function
+        it('Change Size By', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            expect(target.size).to.equal(100);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changesizeby', { CHANGE: 0 }, 'test_token');
+
+            expect(target.size).to.equal(100);
+            expect(retVal).to.equal(undefined);
+        });
+
+        // similar to above, Sprite Size is limited to [100, 100]
+        // Testing just a setSize(100)
+        it('Set Size To', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_setsizeto', { SIZE: 100 }, 'test_token');
+
+            expect(target.size).to.equal(100);
+            expect(retVal).to.equal(undefined);
+        });
+
+        // NOTE: I can't unit test the layers functions since they
+        // call functions on the Scratch renderer
+
+        // TODO: Get functions
+        // getSize, getCostume, getBackdrop
+
     });
 });
