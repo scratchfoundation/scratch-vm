@@ -62,5 +62,21 @@ describe("Pyatch File Linker", function() {
         expect(targetArr).to.deep.equal(['target1']);
         expect(code).to.equal(expected);
     });
+
+    it("1 target, 2 lines of code nested, 1 threads", function() {
+
+        let inputFile = path.join(__dirname, "./", "input", "while-loop.py");
+        let inputStr = fs.readFileSync(inputFile, "utf8", function(err, data) {return data});
+        const targetCode = {
+            target1: [inputStr]
+        }
+        let file = path.join(__dirname, "./", "expected", "while-loop-expected.py");
+        let expected = fs.readFileSync(file, "utf8", function(err, data) {return data});
+
+        const [targetArr, code] = linker.generatePython(targetCode)
+
+        expect(targetArr).to.deep.equal(['target1']);
+        expect(code).to.equal(expected);
+    });
   });
 });
