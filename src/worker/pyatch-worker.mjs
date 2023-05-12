@@ -3,7 +3,7 @@ import Worker from 'web-worker';
 import { isNode, isBrowser } from "browser-or-node";
 
 class PyatchWorker {
-    constructor(pathToWorker, blockOPCallback) {
+    constructor(blockOPCallback) {
         this._worker = new Worker(new URL('./pyodide-web.worker.mjs', import.meta.url), { type: 'module' });
         this._blockOPCallback = blockOPCallback.bind(this);
     }

@@ -122,11 +122,16 @@ function _run(pythonScript,  threads) {
 }
 
 function onVMMessage(event) {
-  const { id, token, ...data } = event.data;
+  const id = event.data?.id;
+  const token = event.data?.token;
+  const value = event.data?.value;
+  const threads = event.data?.threads;
+  const python = event.data?.python;
+
   if (id === WorkerMessages.FromVM.AsyncRun) {
-    _run(data.python, data.threads);
+    _run(python, threads);
   } else if (id === WorkerMessages.FromVM.ResultValue) {
-    _resolvePendingToken(token, data.value);
+    _resolvePendingToken(token, value);
   } else if (id === WorkerMessages.FromVM.VMConnected) {
     console.log('Undefined Functionality');
   } else if (id === WorkerMessages.FromVM.InitPyodide) {

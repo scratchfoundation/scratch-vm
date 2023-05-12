@@ -50,7 +50,7 @@ export default class VirtualMachine extends EventEmitter {
          */
         this.runtime = new Runtime();
 
-        this.pyatchWorker = new PyatchWorker('./pyodide-web.worker.mjs', this._onWorkerMessage.bind(this));
+        this.pyatchWorker = new PyatchWorker(this._onWorkerMessage.bind(this));
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
