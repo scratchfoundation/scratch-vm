@@ -579,5 +579,16 @@ export default class Runtime extends EventEmitter {
         });
     }
     
+    /**
+     * Start all relevant hats.
+     * @param {!string} requestedHatOpcode Opcode of hats to start.
+     * @param {object=} optMatchFields Optionally, fields to match on the hat.
+     * @param {Target=} optTarget Optionally, a target to restrict to.
+     * @return {Array.<Thread>} List of threads started by this function.
+     */
+    startHats (requestedHatOpcode,
+        optMatchFields, optTarget) {
+
+    }
 }
 

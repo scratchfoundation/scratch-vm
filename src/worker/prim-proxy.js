@@ -31,8 +31,8 @@ class PrimProxy {
         setBackdropToAndWait: "looks_switchbackdroptoandwait",
         nextCostume: "looks_nextcostume",
         nextBackdrop: "looks_nextbackdrop",
-        changeEffectBy: "looks_changeeffectby",
-        setEffectTo: "looks_seteffectto",
+        changeGraphicEffectBy: "looks_changeeffectby",
+        setGraphicEffectTo: "looks_seteffectto",
         clearGraphicEffects: "looks_cleargraphiceffects",
         changeSizeBy: "looks_changesizeby",
         setSizeTo: "looks_setsizeto",
@@ -177,12 +177,12 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.nextBackdrop, {});
     }
 
-    changeEffectBy(effect, change) {
-        this.post(PrimProxy.opcodeMap.changeEffectBy, { EFFECT: effect, CHANGE: change });
+    changeGraphicEffectBy(effect, change) {
+        this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, { EFFECT: effect, CHANGE: change });
     }
 
-    setEffectTo(effect, value) {
-        this.post(PrimProxy.opcodeMap.setEffectTo, { EFFECT: effect, VALUE: value });
+    setGraphicEffectTo(effect, value) {
+        this.post(PrimProxy.opcodeMap.setGraphicEffectTo, { EFFECT: effect, VALUE: value });
     }
 
     clearGraphicEffects() {

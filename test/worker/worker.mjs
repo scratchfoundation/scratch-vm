@@ -546,8 +546,8 @@ describe('Pyatch Worker Functionality', () => {
 				
 			});
 
-			it('Change Effect By', async () => {
-				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changeeffectby.py'), 'utf8');
+			it('Change Graphic Effect By', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changegraphiceffectby.py'), 'utf8');
 				const targetArr = ['target1'];	
 
 				const runResult = await pyatchWorker.run(pythonCode, targetArr);
@@ -565,8 +565,8 @@ describe('Pyatch Worker Functionality', () => {
 				
 			});
 
-			it('Set Effect To', async () => {
-				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-seteffectto.py'), 'utf8');
+			it('Set Graphic Effect To', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setgraphiceffectto.py'), 'utf8');
 				const targetArr = ['target1'];	
 
 				const runResult = await pyatchWorker.run(pythonCode, targetArr);
