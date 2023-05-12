@@ -75,7 +75,7 @@ class PyatchLinker {
 
             const code = threadCode.replaceAll('\n', '\n' + linkConstants.python_tab_char);
             const header = this.generateAsyncFuncHeader(id);
-            const registerPrimsCode = this.registerProxyPrims(threadCode[i]);
+            const registerPrimsCode = this.registerProxyPrims(threadCode);
             codeString += header + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
         });
 
