@@ -28,13 +28,13 @@ class PyatchWorker {
         });
     }
 
-    async run(pythonScript, targets, token='') {
+    async run(pythonScript, threads, token='') {
         await this._worker;
         const message = {
             id: WorkerMessages.FromVM.AsyncRun,
             token: token,
             python: String(pythonScript),
-            targets: targets,
+            threads: threads,
         }
         // console.log(message);
         return new Promise((resolve, reject) => {

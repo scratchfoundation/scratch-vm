@@ -65,13 +65,13 @@ function _resolvePendingToken(token, value) {
   }
 }
 
-function _postBlockOpMessage(targetID, op_code, args) {
+function _postBlockOpMessage(threadId, op_code, args) {
   let token = _getToken();
   let id = WorkerMessages.ToVM.BlockOP
   return new Promise((resolve) => {
     _pendingTokens[token] = resolve;
     _lastToken = token;
-    _postMessage(id, targetID, op_code, args, token)
+    _postMessage(id, threadId, op_code, args, token)
     });
 }
 
@@ -87,15 +87,15 @@ function _postMessageError(id, error) {
   _postWorkerMessage({id, error})
 }
 
-function _postMessage(id, targetID, opCode, args, token) {
-  _postWorkerMessage({id, targetID, opCode, args, token});
+function _postMessage(id, threadId, opCode, args, token) {
+  _postWorkerMessage({id, threadId, opCode, args, token});
 }
 
 function _postWorkerMessage(message) {
   return;
 }
 
-function _run(pythonScript,  targets) {
+function _run(pythonScript,  threads) {
 
   // Don't need this line as we will be passing the bridge module in as a parameter as we execute 
   //await self.pyodide.loadPackagesFromImports(python);
@@ -108,13 +108,15 @@ function _run(pythonScript,  targets) {
   let target_func_arr = []
 
   for(let global of self.pyodide.globals) {
-    if (global.includes('target')) {
+    if (global.includes('thread')) {
       target_func_arr.push(self.pyodide.globals.get(global))
     }
   }
 
+  let i = 0;
   for(let target_func of target_func_arr) {
-    target_func(new PrimProxy(targets[0], _postBlockOpMessage))
+    target_func(new PrimProxy(threads[i], _postBlockOpMessage))
+    i++;
   }
   _postStatusMessage(WorkerMessages.ToVM.F);
 }
@@ -122,7 +124,7 @@ function _run(pythonScript,  targets) {
 function onVMMessage(event) {
   const { id, token, ...data } = event.data;
   if (id === WorkerMessages.FromVM.AsyncRun) {
-    _run(data.python, data.targets);
+    _run(data.python, data.threads);
   } else if (id === WorkerMessages.FromVM.ResultValue) {
     _resolvePendingToken(token, data.value);
   } else if (id === WorkerMessages.FromVM.VMConnected) {
