@@ -27,8 +27,8 @@ class PyatchLinker {
      * @param {string} targetId - The id of the target.
      * @returns {string} - The method header for the target async function.
      */
-    generateAsyncFuncHeader(targetId, postfix = '0') {
-        return linkConstants.async_func_header + targetId + '_' + postfix + '(' + linkConstants.vm_proxy + '):\n';
+    generateAsyncFuncHeader(targetId) {
+        return linkConstants.async_func_header + targetId + '(' + linkConstants.vm_proxy + '):\n';
     }
 
     /**
@@ -60,43 +60,26 @@ class PyatchLinker {
 
     /**
      * Generate the fully linked executable python code.
-     * @param {Object} targets - The target id and python code.
-     * @returns {string} - The fully linked python code.
+     * @param {Object} threadsCode - Dict with thread id as key and code.
      * 
-     * @example
-     * const linker = new PyatchLinker();
-     * const target1 = {
-     *    id: 'target1',
-     *   code: ['print("Hello World!")', 'print("Hello World 2!")']
-     * }
-     * const target2 = {
-     *    id: 'target2',
-     *   code: ['print("Hello Universe!")', 'print("Hello Universe 2!")']
-     * }
-     * const linkedCode = linker.generatePython(target1, target2);
      */
-    generatePython(targetsAndCode) {
+    generatePython(threadsCode) {
         let codeString = "";
 
-        const targetArr = [];
+        const threadIds = [];
 
-        Object.keys(targetsAndCode).forEach(target => {
-            targetArr.push(target);
+        Object.keys(threadsCode).forEach(id => {
+            threadIds.push(id);
 
-            const targetId = target;
-            const targetCode = targetsAndCode[target];
+            const threadCode = threadsCode[id];
 
-            codeString += this.generateTargetHeader(targetId);
-
-            for (let i = 0; i < targetCode.length; i++) {
-                const code = targetCode[i].replaceAll('\n', '\n' + linkConstants.python_tab_char);
-                const header = this.generateAsyncFuncHeader(targetId, i.toString());
-                const registerPrimsCode = this.registerProxyPrims(targetCode[i]);
-                codeString += header + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
-            }
+            const code = threadCode.replaceAll('\n', '\n' + linkConstants.python_tab_char);
+            const header = this.generateAsyncFuncHeader(id);
+            const registerPrimsCode = this.registerProxyPrims(threadCode[i]);
+            codeString += header + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
         });
 
-       return [targetArr, codeString]; 
+       return [threadIds, codeString]; 
     }
 }
 export default PyatchLinker;

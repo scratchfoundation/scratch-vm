@@ -472,12 +472,9 @@ export default class VirtualMachine extends EventEmitter {
      * @private
      */
     _onWorkerMessage (message) {
-        const {id, targetID, opCode, args, token} = message;
+        const {id, threadId, opCode, args, token} = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            const returnVal = this.runtime.execBlockPrimitive(targetID, opCode, args, token);
-            returnVal.then(value => {
-                this._postResultValue(message, value);
-            });
+            this.runtime.pushBlockOp(threadId, opCode, args);
         }
     }
 
@@ -493,10 +490,13 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     async run (targetsAndCode) {
-        const [targetArr, pythonCode] = this.pyatchLinker.generatePython(targetsAndCode);
+        const threadsCode = this.runtime.registerThreads(targetsAndCode);
+        const [threadIds, pythonCode] = this.pyatchLinker.generatePython(threadsCode);
         await this.pyatchLoadPromise;
 
-        const result = await this.pyatchWorker.run(pythonCode, targetArr);
+        this.runtime.start();
+
+        const result = await this.pyatchWorker.run(pythonCode, threadIds);
 
         return result;
     }

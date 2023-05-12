@@ -2,9 +2,10 @@ import EventEmitter from 'events';
 
 import StageLayering from './stage-layering.mjs';
 
-import BlockUtility from './block-utility.mjs';
-
 import scratch3MotionBlocks from '../blocks/scratch3_motion.mjs';
+
+import Thread from './thread.mjs';
+import safeUid from '../util/safe-uid.mjs';
 
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
@@ -66,6 +67,13 @@ export default class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * A reference to the current runtime stepping interval, set
+         * by a `setInterval`.
+         * @type {!number}
+         */
+        this._steppingInterval = null;
+
+        /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
          * after stepping each thread.
@@ -73,8 +81,6 @@ export default class Runtime extends EventEmitter {
          * @type {boolean}
          */
         this.redrawRequested = false;
-
-        this._blockUtility = new BlockUtility(null, this);
 
         // Register all given block packages.
         this._registerBlockPackages();
@@ -185,6 +191,13 @@ export default class Runtime extends EventEmitter {
      */
     static get MAX_CLONES () {
         return 300;
+    }
+
+    /**
+     * How rapidly we try to step threads by default, in ms.
+     */
+    static get THREAD_STEP_INTERVAL () {
+        return 1000 / 60;
     }
 
     // -----------------------------------------------------------------------------
@@ -334,6 +347,17 @@ export default class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
+    }
+
+    /**
+     * Repeatedly run `sequencer.stepThreads` and filter out
+     * inactive threads after each iteration.
+     */
+    _step () {
+        this._threads.forEach((thread) => {
+            this._threads[thread].step();
+        });
+        this.draw();
     }
 
     /**
@@ -542,7 +566,15 @@ export default class Runtime extends EventEmitter {
      * Start listening for events from python 
      */
     start () {
-        
+        // Do not start if we are already running
+        if (this._steppingInterval) return;
+
+        let interval = Runtime.THREAD_STEP_INTERVAL;
+        this.currentStepTime = interval;
+        this._steppingInterval = setInterval(() => {
+            this._step();
+        }, interval);
+        this.emit(Runtime.RUNTIME_STARTED);
     }
 
     /**
@@ -550,7 +582,8 @@ export default class Runtime extends EventEmitter {
      * Do not use the runtime after calling this method. This method is meant for test shutdown.
      */
     quit () {
-        
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
     }
 
     // -----------------------------------------------------------------------------
@@ -558,7 +591,7 @@ export default class Runtime extends EventEmitter {
 
     /**
      * Execute a block primitive.
-     * @param {!Target} targetID - the target to execute the primitive on.
+     * @param {!Target} targetId - the target to execute the primitive on.
      * @param {!string} primitiveOpcode - the opcode of the primitive to execute.
      * @param {!Object} args - the arguments to the primitive.
      * @param {!String} token - the token of the block to execute.
@@ -566,15 +599,28 @@ export default class Runtime extends EventEmitter {
      * @return {Promise} - a promise which resolves to the return value of the primitive.
      * If the primitive does not return a value, the promise resolves to null.
      */
-    execBlockPrimitive (targetID, primitiveOpcode, args, token) {
+    execBlockPrimitive (targetId, primitiveOpcode, args, blockUtility, token) {
         return new Promise((resolve, reject) => {
-            this._blockUtility.target = this.getTargetById(targetID);
-            const returnVal = this._primitives[primitiveOpcode](args, this._blockUtility);
+            blockUtility.target = this.getTargetById(targetId);
+            const returnVal = this._primitives[primitiveOpcode](args, blockUtility);
             resolve(returnVal);
-        }).then(returnVal => {
-            this.draw();
-            return returnVal;
         });
+    }
+
+    pushBlockOp (threadId, primitiveOpcode, args) {
+        this._threads[threadId].pushOp(primitiveOpcode, args);
+    }
+
+    registerThreads (targetsAndCode) {
+        const threadsCode = {};
+        targetsAndCode.forEach((target) => {
+            targetsAndCode.forEach((code) => {
+                const uid = safeUid();
+                this._threads[uid] = new Thread(target);
+                threadsCode[uid] = code
+            });
+        });
+        return threadsCode;
     }
 
     
