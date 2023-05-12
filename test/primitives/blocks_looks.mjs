@@ -11,6 +11,102 @@ import sinonChai from 'sinon-chai';
 chai.use(sinonChai);
 const expect = chai.expect;
 
+let costumeRT = null;
+let costumeSprite = null;
+let costumeTarget = null;
+
+let backdropRT = null;
+let backdropSprite = null;
+let backdropTarget = null;
+
+// set up preset runtimes for costume and backdrop testing
+// each has three costumes or three backdrops, respectively
+before( async () => {  
+
+    // COSTUME RUNTIME 
+    costumeRT = new Runtime();
+    costumeSprite = new Sprite(null, costumeRT);
+    costumeTarget = new RenderedTarget(costumeSprite, costumeRT);
+    costumeRT.addTarget(costumeTarget);
+
+    const costumeCatWalk = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'cat-walk',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    const costumeCatRun = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'cat-run',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    const costumeCatFly = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'cat-fly',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    costumeTarget.addCostume(costumeCatWalk);
+    costumeTarget.addCostume(costumeCatRun);
+    costumeTarget.addCostume(costumeCatFly);
+
+    // BACKDROP RUNTIME
+    backdropRT = new Runtime();
+    backdropSprite = new Sprite(null, backdropRT);
+    backdropTarget = new RenderedTarget(backdropSprite, backdropRT);
+    backdropRT.addTarget(backdropTarget);
+
+    const backdropGalaxy = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'galaxy',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    const backdropMoon = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'moon',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    const backdropNebula = {
+        asset: null,
+        assetId: null,
+        skinId: null,
+        name: 'nebula',
+        bitmapResolution: null,
+        rotationCenterX: 0,
+        rotationCenterY: 0
+    };
+
+    backdropTarget.addCostume(backdropGalaxy);
+    backdropTarget.addCostume(backdropMoon);
+    backdropTarget.addCostume(backdropNebula);
+
+    backdropTarget.isStage = true;
+
+
+});
 
 describe('Runtime Exec Primitives', () => {
     describe('Looks Blocks', () => {
@@ -68,413 +164,101 @@ describe('Runtime Exec Primitives', () => {
         });
 
         it('Set Costume To From Index', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const costumeCatWalk = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-walk',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatRun = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-run',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatFly = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-fly',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(costumeCatWalk);
-            target.addCostume(costumeCatRun);
-            target.addCostume(costumeCatFly);
-
+            
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_switchcostumeto', { COSTUME: 1 }, 'test_token');
+            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 1 }, 'test_token');
 
             // but the current costume starts counting at 0
-            expect(target.currentCostume).to.equal(0);
+            expect(costumeTarget.currentCostume).to.equal(0);
             expect(retVal).to.equal(undefined);
         });
 
         it('Set Costume To From Name', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const costumeCatWalk = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-walk',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatRun = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-run',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatFly = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-fly',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(costumeCatWalk);
-            target.addCostume(costumeCatRun);
-            target.addCostume(costumeCatFly);
 
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
+            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
 
-            expect(target.currentCostume).to.equal(2);
+            expect(costumeTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
         });
 
         // TODO Set Backdrop To And Wait function
 
         it('Next Costume', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const costumeCatWalk = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-walk',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatRun = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-run',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatFly = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-fly',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(costumeCatWalk);
-            target.addCostume(costumeCatRun);
-            target.addCostume(costumeCatFly);
 
             // set to the walk costume
-            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_switchcostumeto', { COSTUME: 'cat-walk' }, 'test_token');
+            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-walk' }, 'test_token');
 
-            expect(target.currentCostume).to.equal(0);
+            expect(costumeTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_nextcostume', {}, 'test_token');
+            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, 'test_token');
 
-            expect(target.currentCostume).to.equal(1);
+            expect(costumeTarget.currentCostume).to.equal(1);
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
         });
 
         it('Next Costume Last Loops to First', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const costumeCatWalk = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-walk',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatRun = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-run',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const costumeCatFly = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'cat-fly',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(costumeCatWalk);
-            target.addCostume(costumeCatRun);
-            target.addCostume(costumeCatFly);
 
             // set to the fly costume
-            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
+            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
 
-            expect(target.currentCostume).to.equal(2);
+            expect(costumeTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_nextcostume', {}, 'test_token');
+            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, 'test_token');
 
-            expect(target.currentCostume).to.equal(0);
+            expect(costumeTarget.currentCostume).to.equal(0);
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
         });
 
         it('Set Backdrop To From Index', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const backdropGalaxy = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'galaxy',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropMoon = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'moon',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropNebula = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'nebula',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(backdropGalaxy);
-            target.addCostume(backdropMoon);
-            target.addCostume(backdropNebula);
-
-            target.isStage = true;
-
+            
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_switchbackdropto', { BACKDROP: 2 }, 'test_token');
+            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 2 }, 'test_token');
 
             // but the current backdrop starts counting at 0
-            expect(target.currentCostume).to.equal(1);
+            expect(backdropTarget.currentCostume).to.equal(1);
             expect(retVal).to.equal(undefined);
         });
 
         it('Set Backdrop To From Name', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
 
-            const backdropGalaxy = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'galaxy',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
+            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 'nebula' }, 'test_token');
 
-            const backdropMoon = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'moon',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropNebula = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'nebula',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(backdropGalaxy);
-            target.addCostume(backdropMoon);
-            target.addCostume(backdropNebula);
-
-            target.isStage = true;
-
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_switchbackdropto', { BACKDROP: 'nebula' }, 'test_token');
-
-            expect(target.currentCostume).to.equal(2);
+            expect(backdropTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
         });
 
         it('Next Backdrop', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const backdropGalaxy = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'galaxy',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropMoon = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'moon',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropNebula = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'nebula',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(backdropGalaxy);
-            target.addCostume(backdropMoon);
-            target.addCostume(backdropNebula);
-
-            target.isStage = true;
-
+            
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_switchbackdropto', { BACKDROP: 1 }, 'test_token');
+            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 1 }, 'test_token');
 
             // but the current backdrop starts counting at 0
-            expect(target.currentCostume).to.equal(0);
+            expect(backdropTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_nextbackdrop', {}, 'test_token');
+            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, 'test_token');
 
-            expect(target.currentCostume).to.equal(1);
+            expect(backdropTarget.currentCostume).to.equal(1);
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
         });
 
         it('Next Backdrop Last Loops to First', async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
-            const backdropGalaxy = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'galaxy',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropMoon = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'moon',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            const backdropNebula = {
-                asset: null,
-                assetId: null,
-                skinId: null,
-                name: 'nebula',
-                bitmapResolution: null,
-                rotationCenterX: 0,
-                rotationCenterY: 0
-            };
-
-            target.addCostume(backdropGalaxy);
-            target.addCostume(backdropMoon);
-            target.addCostume(backdropNebula);
-
-            target.isStage = true;
 
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_switchbackdropto', { BACKDROP: 3 }, 'test_token');
+            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 3 }, 'test_token');
 
             // but the current backdrop starts counting at 0
-            expect(target.currentCostume).to.equal(2);
+            expect(backdropTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_nextbackdrop', {}, 'test_token');
+            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, 'test_token');
 
-            expect(target.currentCostume).to.equal(0);
+            expect(backdropTarget.currentCostume).to.equal(0);
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);

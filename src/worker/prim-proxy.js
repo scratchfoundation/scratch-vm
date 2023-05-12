@@ -117,19 +117,17 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.setY, { Y: y });
     }
 
-    // Does not work? No tests for any async functions
+    // Does not work. No tests for any async functions yet
     async getX() {
         let x = await PrimProxy.post(this.opcodeMap.getX, {});
         return x;
     }
 
-    // Does not work?
     async getY() {
         let y = PrimProxy.post(this.opcodeMap.getY, {});
         return y;
     }
 
-    // Does not work?
     async getDirection() {
         let direction = PrimProxy.post(this.opcodeMap.getDirection, {});
         return direction;
@@ -207,18 +205,17 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.changeLayerBy, { NUM: num });
     }
 
+    // as above, no tests for async functions
     async getSize() {
         let size = PrimProxy.post(this.opcodeMap.getSize, {});
         return size;
     }
 
-    // Does not work?
     async getCostume() {
         let costume = await PrimProxy.post(this.opcodeMap.getCostume, { NUMBER_NAME: 'name' });
         return costume;
     }
 
-    // Does not work?
     async getBackdrop() {
         let backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, { NUMBER_NAME: 'name' });
         return backdrop;
