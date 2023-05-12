@@ -20,6 +20,15 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+        playSound: "sound_play",
+        playSoundUntilDone: "sound_playuntildone",
+        stopAllSounds: "sound_stopallsounds",
+        setSoundEffectTo: "sound_seteffectto",
+        changeSoundEffectBy: "sound_changeeffectby",
+        clearSoundEffects: "sound_cleareffects",
+        setVolumeTo: "sound_setvolumeto",
+        changeVolumeBy: "sound_changevolumeby",
+        getVolume: "sound_volume"
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;
@@ -105,6 +114,43 @@ class PrimProxy {
     async getDirection() {
         let direction = PrimProxy.post(this.opcodeMap.getDirection, {});
         return direction;
+    }
+
+    playSound(sound_menu) {
+        this.post(PrimProxy.opcodeMap.playSound, { SOUND_MENU: sound_menu });
+    }
+
+    playSoundUntilDone(sound_menu) {
+        this.post(PrimProxy.opcodeMap.playSoundUntilDone, { SOUND_MENU: sound_menu });
+    }
+
+    stopAllSounds() {
+        this.post(PrimProxy.opcodeMap.stopAllSounds, {});
+    }
+
+    setSoundEffectTo(effect, value) {
+        this.post(PrimProxy.opcodeMap.setSoundEffectTo, { EFFECT: effect, VALUE: value });
+    }
+
+    changeSoundEffectBy(effect, value) {
+        this.post(PrimProxy.opcodeMap.changeSoundEffectBy, { EFFECT: effect, VALUE: value });
+    }
+
+    clearSoundEffects() {
+        this.post(PrimProxy.opcodeMap.clearSoundEffects, {});
+    }
+
+    setVolumeTo(volume) {
+        this.post(PrimProxy.opcodeMap.setVolumeTo, { VOLUME: volume });
+    }
+
+    changeVolumeBy(volume) {
+        this.post(PrimProxy.opcodeMap.changeVolumeBy, { VOLUME: volume });
+    }
+
+    async getVolume() {
+        let volume = PrimProxy.post(this.opcodeMap.getVolume, {});
+        return volume;
     }
 }
 

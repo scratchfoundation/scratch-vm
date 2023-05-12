@@ -335,5 +335,161 @@ describe('Pyatch Worker Fucntionality', () => {
 				
 			});
 		});
+
+		describe('Sound Primitive Functions', () => {
+			it('Play Sound', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-playsound.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_play')
+				expect(lastCallData.args).to.eql({ SOUND_MENU: 'Meow' })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Play Sound Until Done', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-playsounduntildone.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_playuntildone')
+				expect(lastCallData.args).to.eql({ SOUND_MENU: 'Meow' })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Stop All Sounds', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-stopallsounds.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_stopallsounds')
+				expect(lastCallData.args).to.eql({})
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Set Sound Effect To', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setsoundeffectto.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_seteffectto')
+				expect(lastCallData.args).to.eql({ EFFECT: 'pitch', VALUE: 100 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Change Sound Effect By', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changesoundeffectby.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_changeeffectby')
+				expect(lastCallData.args).to.eql({ EFFECT: 'pitch', VALUE: 10 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Clear Sound Effects', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-clearsoundeffects.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_cleareffects')
+				expect(lastCallData.args).to.eql({})
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Set Volume To', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setvolumeto.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_setvolumeto')
+				expect(lastCallData.args).to.eql({ VOLUME: 80 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			it('Change Volume By', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changevolumeby.py'), 'utf8');
+				const targetArr = ['target1'];	
+
+				const runResult = await pyatchWorker.run(pythonCode, targetArr);
+				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
+
+				expect(spy).to.be.calledOnce;
+		
+				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
+				expect(lastCallData.id).to.equal('BlockOP')
+				expect(lastCallData.targetID).to.equal(targetArr[0])
+				expect(lastCallData.opCode).to.equal('sound_changevolumeby')
+				expect(lastCallData.args).to.eql({ VOLUME: -20 })
+				expect(lastCallData.token).to.be.a('string')
+
+				
+			});
+
+			
+		});
 	});
 });
