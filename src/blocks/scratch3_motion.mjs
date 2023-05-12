@@ -142,37 +142,37 @@ export default class Scratch3MotionBlocks {
     }
 
     glide (args, util) {
-        if (util.stackFrame.timer) {
-            const timeElapsed = util.stackFrame.timer.timeElapsed();
-            if (timeElapsed < util.stackFrame.duration * 1000) {
+        if (util.timerUtil.timer) {
+            const timeElapsed = util.timerUtil.timer.timeElapsed();
+            if (timeElapsed < util.timerUtil.duration * 1000) {
                 // In progress: move to intermediate position.
-                const frac = timeElapsed / (util.stackFrame.duration * 1000);
-                const dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-                const dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+                const frac = timeElapsed / (util.timerUtil.duration * 1000);
+                const dx = frac * (util.timerUtil.endX - util.timerUtil.startX);
+                const dy = frac * (util.timerUtil.endY - util.timerUtil.startY);
                 util.target.setXY(
-                    util.stackFrame.startX + dx,
-                    util.stackFrame.startY + dy
+                    util.timerUtil.startX + dx,
+                    util.timerUtil.startY + dy
                 );
-                util.yield();
+                util.yieldTick();
             } else {
                 // Finished: move to final position.
-                util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+                util.target.setXY(util.timerUtil.endX, util.timerUtil.endY);
             }
         } else {
             // First time: save data for future use.
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.stackFrame.duration = Cast.toNumber(args.SECS);
-            util.stackFrame.startX = util.target.x;
-            util.stackFrame.startY = util.target.y;
-            util.stackFrame.endX = Cast.toNumber(args.X);
-            util.stackFrame.endY = Cast.toNumber(args.Y);
-            if (util.stackFrame.duration <= 0) {
+            util.timerUtil.timer = new Timer();
+            util.timerUtil.timer.start();
+            util.timerUtil.duration = Cast.toNumber(args.SECS);
+            util.timerUtil.startX = util.target.x;
+            util.timerUtil.startY = util.target.y;
+            util.timerUtil.endX = Cast.toNumber(args.X);
+            util.timerUtil.endY = Cast.toNumber(args.Y);
+            if (util.timerUtil.duration <= 0) {
                 // Duration too short to glide.
-                util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+                util.target.setXY(util.timerUtil.endX, util.timerUtil.endY);
                 return;
             }
-            util.yield();
+            util.yieldTick();
         }
     }
 
