@@ -3,12 +3,11 @@
 import Runtime from '../../src/engine/runtime.mjs';
 import Sprite from '../../src/sprites/sprite.mjs';
 import RenderedTarget from '../../src/sprites/rendered-target.mjs';
-import Thread from '../../src/engine/thread.mjs';
+import BlockUtility from '../../src/engine/block-utility.mjs';
 
 import chai from 'chai';
 import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
-import BlockUtility from '../../src/engine/block-utility.mjs';
 
 import simThreadExecution from '../fixtures/sim-thread-execution.mjs';
 
@@ -24,7 +23,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_movesteps', {STEPS: 10}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_movesteps', {STEPS: 10}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(10);
             expect(target.y).to.equal(0);
@@ -37,7 +36,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_gotoxy', {X: 10, Y: 5}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_gotoxy', {X: 10, Y: 5}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(10);
             expect(target.y).to.equal(5);
@@ -57,7 +56,7 @@ describe('Runtime Exec Primitives', () => {
             target2.setXY(5, 2);
             rt.addTarget(target2);
 
-            const retVal = await rt.execBlockPrimitive(target1.id, 'motion_goto', {TO: target2.name}, new BlockUtility(target1, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target1.id, 'motion_goto', {TO: target2.name}, new BlockUtility(target1, rt), 'test_token');
 
             expect(target1.x).to.equal(target2.x);
             expect(target1.y).to.equal(target2.y);
@@ -80,7 +79,7 @@ describe('Runtime Exec Primitives', () => {
             const direction = 90;
 
             const retVal = await rt.execBlockPrimitive(
-                target.id, 'motion_turnright', {DEGREES: direction}, new BlockUtility(target, new Runtime()), 'test_token');
+                target.id, 'motion_turnright', {DEGREES: direction}, new BlockUtility(target, rt), 'test_token');
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 180, [100, 100]);
             expect(retVal).to.equal(undefined);
         });
@@ -101,7 +100,7 @@ describe('Runtime Exec Primitives', () => {
             const direction = 90;
 
             const retVal = await rt.execBlockPrimitive(
-                target.id, 'motion_turnleft', {DEGREES: direction}, new BlockUtility(target, new Runtime()), 'test_token');
+                target.id, 'motion_turnleft', {DEGREES: direction}, new BlockUtility(target, rt), 'test_token');
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 0, [100, 100]);
             expect(retVal).to.equal(undefined);
         });
@@ -122,7 +121,7 @@ describe('Runtime Exec Primitives', () => {
             const direction = 180;
 
             const retVal = await rt.execBlockPrimitive(
-                target.id, 'motion_pointindirection', {DIRECTION: direction}, new BlockUtility(target, new Runtime()), 'test_token');
+                target.id, 'motion_pointindirection', {DIRECTION: direction}, new BlockUtility(target, rt), 'test_token');
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 180, [100, 100]);
             expect(retVal).to.equal(undefined);
         });
@@ -149,7 +148,7 @@ describe('Runtime Exec Primitives', () => {
             target1.renderer = mockRenderer;
 
             const retVal = await rt.execBlockPrimitive(
-                target1.id, 'motion_pointtowards', {TOWARDS: target2.name}, new BlockUtility(target1, new Runtime()), 'test_token');
+                target1.id, 'motion_pointtowards', {TOWARDS: target2.name}, new BlockUtility(target1, rt), 'test_token');
 
             expect(spy).to.have.been.calledWithExactly(target1.drawableID, 45, [100, 100]);
             expect(retVal).to.equal(undefined);
@@ -210,7 +209,7 @@ describe('Runtime Exec Primitives', () => {
             rt.addTarget(target);
 
             // eslint-disable-next-line no-unused-vars
-            const retVal = await rt.execBlockPrimitive(targetId, 'motion_ifonedgebounce', {}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(targetId, 'motion_ifonedgebounce', {}, new BlockUtility(target, rt), 'test_token');
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, -90, [100, 100]);
             expect(retVal).to.equal(undefined);
@@ -224,7 +223,7 @@ describe('Runtime Exec Primitives', () => {
             rt.addTarget(target);
 
             const retVal = await rt.execBlockPrimitive(
-                targetId, 'motion_setrotationstyle', {STYLE: RenderedTarget.ROTATION_STYLE_LEFT_RIGHT}, new BlockUtility(target, new Runtime()), 'test_token');
+                targetId, 'motion_setrotationstyle', {STYLE: RenderedTarget.ROTATION_STYLE_LEFT_RIGHT}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.rotationStyle).to.equal(RenderedTarget.ROTATION_STYLE_LEFT_RIGHT);
             expect(retVal).to.equal(undefined);
@@ -240,7 +239,7 @@ describe('Runtime Exec Primitives', () => {
             const dx = 10;
             const oldY = target.y;
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_changexby', {DX: dx}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_changexby', {DX: dx}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(oldX + dx);
             expect(target.y).to.equal(oldY);
@@ -257,7 +256,7 @@ describe('Runtime Exec Primitives', () => {
             const oldY = target.y;
             const dy = 10;
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_changeyby', {DY: dy}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_changeyby', {DY: dy}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(oldX);
             expect(target.y).to.equal(oldY + dy);
@@ -273,7 +272,7 @@ describe('Runtime Exec Primitives', () => {
             const eX = 10;
             const oldY = target.y;
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_setx', {X: eX}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_setx', {X: eX}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(eX);
             expect(target.y).to.equal(oldY);
@@ -289,7 +288,7 @@ describe('Runtime Exec Primitives', () => {
             const eY = 10;
             const oldX = target.x;
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'motion_sety', {Y: eY}, new BlockUtility(target, new Runtime()), 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_sety', {Y: eY}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.x).to.equal(oldX);
             expect(target.y).to.equal(eY);
