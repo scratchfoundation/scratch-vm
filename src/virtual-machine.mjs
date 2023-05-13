@@ -50,7 +50,7 @@ export default class VirtualMachine extends EventEmitter {
          */
         this.runtime = new Runtime();
 
-        this.pyatchWorker = new PyatchWorker('./pyodide-web.worker.mjs', this._onWorkerMessage.bind(this));
+        this.pyatchWorker = new PyatchWorker(this._onWorkerMessage.bind(this));
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
@@ -472,12 +472,9 @@ export default class VirtualMachine extends EventEmitter {
      * @private
      */
     _onWorkerMessage (message) {
-        const {id, targetID, opCode, args, token} = message;
+        const {id, threadId, opCode, args, token} = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            const returnVal = this.runtime.execBlockPrimitive(targetID, opCode, args, token);
-            returnVal.then(value => {
-                this._postResultValue(message, value);
-            });
+            this.runtime.pushBlockOp(threadId, opCode, args, token);
         }
     }
 
@@ -493,10 +490,11 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     async run (targetsAndCode) {
-        const [targetArr, pythonCode] = this.pyatchLinker.generatePython(targetsAndCode);
+        const threadsCode = this.runtime.registerThreads(targetsAndCode, this._postResultValue.bind(this));
+        const [threadIds, pythonCode] = this.pyatchLinker.generatePython(threadsCode);
         await this.pyatchLoadPromise;
 
-        const result = await this.pyatchWorker.run(pythonCode, targetArr);
+        const result = await this.pyatchWorker.run(pythonCode, threadIds);
 
         return result;
     }

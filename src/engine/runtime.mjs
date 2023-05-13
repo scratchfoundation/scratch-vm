@@ -7,6 +7,10 @@ import BlockUtility from './block-utility.mjs';
 import scratch3EventBlocks from '../blocks/scratch3_event.mjs';
 import scratch3LooksBlocks from '../blocks/scratch3_looks.mjs';
 import scratch3MotionBlocks from '../blocks/scratch3_motion.mjs';
+import patchCoreBlocks from '../blocks/patch_core.mjs';
+
+import Thread from './thread.mjs';
+import safeUid from '../util/safe-uid.mjs';
 
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
@@ -18,6 +22,7 @@ const defaultBlockPackages = {
     // scratch3_sensing: require('../blocks/scratch3_sensing'),
     // scratch3_data: require('../blocks/scratch3_data'),
     // scratch3_procedures: require('../blocks/scratch3_procedures')
+    patch_core: patchCoreBlocks,
 };
 
 /**
@@ -68,6 +73,20 @@ export default class Runtime extends EventEmitter {
         this._refreshTargets = false;
 
         /**
+         * A reference to the current runtime stepping interval, set
+         * by a `setInterval`.
+         * @type {!number}
+         */
+        this._steppingInterval = null;
+
+        /**
+         * A dictionary of all threads running no the Patch vm. Dict keys
+         * are thread id.
+         * @type {Dictionary.<String, Thread>}
+         */
+        this._threads = {};
+
+        /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
          * after stepping each thread.
@@ -75,8 +94,6 @@ export default class Runtime extends EventEmitter {
          * @type {boolean}
          */
         this.redrawRequested = false;
-
-        this._blockUtility = new BlockUtility(null, this);
 
         // Register all given block packages.
         this._registerBlockPackages();
@@ -187,6 +204,13 @@ export default class Runtime extends EventEmitter {
      */
     static get MAX_CLONES () {
         return 300;
+    }
+
+    /**
+     * How rapidly we try to step threads by default, in ms.
+     */
+    static get THREAD_STEP_INTERVAL () {
+        return 1000 / 60;
     }
 
     // -----------------------------------------------------------------------------
@@ -336,6 +360,21 @@ export default class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
+    }
+
+    /**
+     * Repeatedly run `sequencer.stepThreads` and filter out
+     * inactive threads after each iteration.
+     */
+    _step () {
+        for (let threadId in this._threads) {
+            this._threads[threadId].step();
+
+            if (this._threads[threadId].done()) {
+                delete this._threads[threadId];
+            }
+        }
+        this.draw();
     }
 
     /**
@@ -544,7 +583,15 @@ export default class Runtime extends EventEmitter {
      * Start listening for events from python 
      */
     start () {
-        
+        // Do not start if we are already running
+        if (this._steppingInterval) return;
+
+        let interval = Runtime.THREAD_STEP_INTERVAL;
+        this.currentStepTime = interval;
+        this._steppingInterval = setInterval(() => {
+            this._step();
+        }, interval);
+        this.emit(Runtime.RUNTIME_STARTED);
     }
 
     /**
@@ -552,7 +599,9 @@ export default class Runtime extends EventEmitter {
      * Do not use the runtime after calling this method. This method is meant for test shutdown.
      */
     quit () {
-        
+        clearInterval(this._steppingInterval);
+        this._steppingInterval = null;
+        this._threads = {}; 
     }
 
     // -----------------------------------------------------------------------------
@@ -560,7 +609,7 @@ export default class Runtime extends EventEmitter {
 
     /**
      * Execute a block primitive.
-     * @param {!Target} targetID - the target to execute the primitive on.
+     * @param {!Target} targetId - the target to execute the primitive on.
      * @param {!string} primitiveOpcode - the opcode of the primitive to execute.
      * @param {!Object} args - the arguments to the primitive.
      * @param {!String} token - the token of the block to execute.
@@ -568,15 +617,47 @@ export default class Runtime extends EventEmitter {
      * @return {Promise} - a promise which resolves to the return value of the primitive.
      * If the primitive does not return a value, the promise resolves to null.
      */
-    execBlockPrimitive (targetID, primitiveOpcode, args, token) {
-        return new Promise((resolve, reject) => {
-            this._blockUtility.target = this.getTargetById(targetID);
-            const returnVal = this._primitives[primitiveOpcode](args, this._blockUtility);
-            resolve(returnVal);
-        }).then(returnVal => {
-            this.draw();
-            return returnVal;
-        });
+    execBlockPrimitive (targetId, primitiveOpcode, args, blockUtility, token) {
+        blockUtility.target = this.getTargetById(targetId);
+        return this._primitives[primitiveOpcode](args, blockUtility);
+    }
+
+    getThreadById(threadId) {
+        if(this._threads[threadId]) {
+            return this._threads[threadId];
+        } else {
+            throw new Error(`Cannot find thread ${threadId}`);
+        }
+    }
+
+    endThread(threadId) {
+        const thread = this.getThreadById(threadId);
+        thread.setStatus(Thread.STATUS_DONE);
+    }
+
+    pushBlockOp (threadId, primitiveOpcode, args, token) {
+        const thread = this.getThreadById(threadId);
+        thread.pushOp(primitiveOpcode, args, token);
+    }
+
+    registerThreads (targetsAndCode, returnValueCallback) {
+        const threadsCode = {};
+
+        for (let targetId in targetsAndCode) {
+            const target = this.getTargetById(targetId)
+            if (target) {
+                targetsAndCode[targetId].forEach((code) => {
+                    const uid = safeUid();
+
+                    this._threads[uid] = new Thread(target, returnValueCallback);
+                    threadsCode[uid] = code;
+                });
+            } else {
+                throw new Error(`Cannot find target with id ${targetId}`);
+            }
+        }
+
+        return threadsCode;
     }
     
     /**

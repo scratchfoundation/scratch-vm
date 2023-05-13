@@ -3,6 +3,7 @@
 import Runtime from '../../src/engine/runtime.mjs';
 import Sprite from '../../src/sprites/sprite.mjs';
 import RenderedTarget from '../../src/sprites/rendered-target.mjs';
+import BlockUtility from '../../src/engine/block-utility.mjs';
 
 import chai from 'chai';
 import sinon from 'sinon';
@@ -116,7 +117,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_say', {MESSAGE: 'Hello World'}, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_say', {MESSAGE: 'Hello World'}, new BlockUtility(target, rt), 'test_token');
 
             // the Scratch.looks custom state get's a target's bubble-related state
             expect(target.getCustomState('Scratch.looks').type).to.equal('say');
@@ -130,7 +131,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_think', {MESSAGE: 'Hello World'}, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_think', {MESSAGE: 'Hello World'}, new BlockUtility(target, rt), new BlockUtility(target, rt), 'test_token');
 
             expect(target.getCustomState('Scratch.looks').type).to.equal('think');
             expect(target.getCustomState('Scratch.looks').text).to.equal('Hello World');
@@ -145,7 +146,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_show', {}, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_show', {}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.visible).to.equal(true);
             expect(retVal).to.equal(undefined);
@@ -157,7 +158,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_hide', {}, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_hide', {}, new BlockUtility(target, rt), new BlockUtility(target, rt), 'test_token');
 
             expect(target.visible).to.equal(false);
             expect(retVal).to.equal(undefined);
@@ -166,7 +167,7 @@ describe('Runtime Exec Primitives', () => {
         it('Set Costume To From Index', async () => {
             
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 1 }, 'test_token');
+            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 1 }, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             // but the current costume starts counting at 0
             expect(costumeTarget.currentCostume).to.equal(0);
@@ -176,7 +177,7 @@ describe('Runtime Exec Primitives', () => {
         it('Set Costume To From Name', async () => {
 
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
+            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             expect(costumeTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
@@ -187,11 +188,11 @@ describe('Runtime Exec Primitives', () => {
         it('Next Costume', async () => {
 
             // set to the walk costume
-            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-walk' }, 'test_token');
+            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-walk' }, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             expect(costumeTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, 'test_token');
+            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             expect(costumeTarget.currentCostume).to.equal(1);
 
@@ -202,11 +203,11 @@ describe('Runtime Exec Primitives', () => {
         it('Next Costume Last Loops to First', async () => {
 
             // set to the fly costume
-            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, 'test_token');
+            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_switchcostumeto', { COSTUME: 'cat-fly' }, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             expect(costumeTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, 'test_token');
+            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, 'looks_nextcostume', {}, new BlockUtility(costumeTarget, costumeRT), 'test_token');
 
             expect(costumeTarget.currentCostume).to.equal(0);
 
@@ -217,7 +218,7 @@ describe('Runtime Exec Primitives', () => {
         it('Set Backdrop To From Index', async () => {
             
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 2 }, 'test_token');
+            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 2 }, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(1);
@@ -226,7 +227,7 @@ describe('Runtime Exec Primitives', () => {
 
         it('Set Backdrop To From Name', async () => {
 
-            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 'nebula' }, 'test_token');
+            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 'nebula' }, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             expect(backdropTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
@@ -235,12 +236,12 @@ describe('Runtime Exec Primitives', () => {
         it('Next Backdrop', async () => {
             
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 1 }, 'test_token');
+            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 1 }, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, 'test_token');
+            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             expect(backdropTarget.currentCostume).to.equal(1);
 
@@ -251,12 +252,12 @@ describe('Runtime Exec Primitives', () => {
         it('Next Backdrop Last Loops to First', async () => {
 
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 3 }, 'test_token');
+            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_switchbackdropto', { BACKDROP: 3 }, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, 'test_token');
+            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, 'looks_nextbackdrop', {}, new BlockUtility(backdropTarget, backdropRT), 'test_token');
 
             expect(backdropTarget.currentCostume).to.equal(0);
 
@@ -272,7 +273,7 @@ describe('Runtime Exec Primitives', () => {
 
             expect(target.effects.ghost).to.equal(0);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'ghost', CHANGE: 10 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'ghost', CHANGE: 10 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.effects.ghost).to.equal(10);
             expect(retVal).to.equal(undefined);
@@ -286,7 +287,7 @@ describe('Runtime Exec Primitives', () => {
 
             expect(target.effects.brightness).to.equal(0);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'brightness', CHANGE: 8000 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changeeffectby', { EFFECT: 'brightness', CHANGE: 8000 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.effects.brightness).to.equal(100);
             expect(retVal).to.equal(undefined);
@@ -300,7 +301,7 @@ describe('Runtime Exec Primitives', () => {
 
             expect(target.effects.ghost).to.equal(0);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 10 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 10 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.effects.ghost).to.equal(10);
             expect(retVal).to.equal(undefined);
@@ -314,7 +315,7 @@ describe('Runtime Exec Primitives', () => {
 
             expect(target.effects.brightness).to.equal(0);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'brightness', VALUE: -8000 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'brightness', VALUE: -8000 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.effects.brightness).to.equal(-100);
             expect(retVal).to.equal(undefined);
@@ -327,11 +328,11 @@ describe('Runtime Exec Primitives', () => {
             rt.addTarget(target);
 
             // add graphic effect of ghost 50
-            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 50 }, 'test_token');
+            const retVal1 = await rt.execBlockPrimitive(target.id, 'looks_seteffectto', { EFFECT: 'ghost', VALUE: 50 }, new BlockUtility(target, rt), 'test_token');
             expect(target.effects.ghost).to.equal(50);
 
             // clear graphic effects
-            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_cleargraphiceffects', {}, 'test_token');
+            const retVal2 = await rt.execBlockPrimitive(target.id, 'looks_cleargraphiceffects', {}, new BlockUtility(target, rt), 'test_token');
 
             expect(target.effects.ghost).to.equal(0);
 
@@ -350,7 +351,7 @@ describe('Runtime Exec Primitives', () => {
 
             expect(target.size).to.equal(100);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changesizeby', { CHANGE: 0 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_changesizeby', { CHANGE: 0 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.size).to.equal(100);
             expect(retVal).to.equal(undefined);
@@ -364,7 +365,7 @@ describe('Runtime Exec Primitives', () => {
             const target = new RenderedTarget(sprite, rt);
             rt.addTarget(target);
 
-            const retVal = await rt.execBlockPrimitive(target.id, 'looks_setsizeto', { SIZE: 100 }, 'test_token');
+            const retVal = await rt.execBlockPrimitive(target.id, 'looks_setsizeto', { SIZE: 100 }, new BlockUtility(target, rt), 'test_token');
 
             expect(target.size).to.equal(100);
             expect(retVal).to.equal(undefined);

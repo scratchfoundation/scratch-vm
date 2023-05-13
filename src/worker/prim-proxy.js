@@ -44,7 +44,9 @@ class PrimProxy {
         whenTouchingObject: "event_whentouchingobject",
         broadcast: "event_broadcast",
         broadcastAndWait: "event_broadcastandwait",
-        whenGreaterThan: "event_whengreaterthan"
+        whenGreaterThan: "event_whengreaterthan",
+
+        endThread: "core_endthread",
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;

@@ -120,6 +120,8 @@ before( async () => {
 
     vm.runtime.addTarget(target2);
 
+    vm.start();
+
 });
 
 const resetVm = () => {
@@ -146,9 +148,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['say("Hello friends")'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].getCustomState('Scratch.looks').type).to.equal('say');
             expect(vm.runtime.targets[0].getCustomState('Scratch.looks').text).to.equal('Hello friends');
         });
@@ -160,9 +161,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['think("Hello friends")'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].getCustomState('Scratch.looks').type).to.equal('think');
             expect(vm.runtime.targets[0].getCustomState('Scratch.looks').text).to.equal('Hello friends');
         });
@@ -176,9 +176,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['show()'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].visible).to.equal(true);
         });
 
@@ -189,9 +188,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['hide()'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].visible).to.equal(false);
         });
 
@@ -201,9 +199,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setCostumeTo(2)'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
@@ -214,9 +211,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setCostumeTo("cat-fly")'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].currentCostume).to.equal(2);
         });
 
@@ -226,9 +222,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setCostumeTo(1)\nnextCostume()'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
@@ -238,9 +233,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setBackdropTo(1)'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(0);
         });
 
@@ -251,9 +245,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setBackdropTo("nebula")'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
@@ -264,45 +257,41 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setBackdropTo(1)\nnextBackdrop()\nnextBackdrop()'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
         it('Change Effect By', async () => {
             
             const targetAndCode = {
-                target1: ['changeEffectBy("ghost", 50)'],
+                target1: ['changeGraphicEffectBy("ghost", 50)'],
             };
 
-            const result = await vm.run(targetAndCode);
-
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
+            await vm.run(targetAndCode);
+            
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it('Set Effect To', async () => {
             
             const targetAndCode = {
-                target1: ['setEffectTo("ghost", 50)'],
+                target1: ['setGraphicEffectTo("ghost", 50)'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it('Clear Graphic Effects', async () => {
             
             const targetAndCode = {
-                target1: ['setEffectTo("ghost", 50)\nsetEffectTo("brightness", 100)\nclearGraphicEffects()'],
+                target1: ['setGraphicEffectTo("ghost", 50)\nsetGraphicEffectTo("brightness", 100)\nclearGraphicEffects()'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].effects.ghost).to.equal(0);
             expect(vm.runtime.targets[0].effects.brightness).to.equal(0);
         });
@@ -316,9 +305,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['changeSizeBy(0)'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].size).to.equal(100);
         });
 
@@ -330,9 +318,8 @@ describe('Pyatch VM Linker & Worker Integration', () => {
                 target1: ['setSizeTo(100)'],
             };
 
-            const result = await vm.run(targetAndCode);
+            await vm.run(targetAndCode);
 
-            expect(result).to.equal(WorkerMessages.ToVM.PythonFinished);
             expect(vm.runtime.targets[0].size).to.equal(100);
         });
     });
