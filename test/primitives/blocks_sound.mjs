@@ -55,5 +55,37 @@ describe('Runtime Exec Primitives', () => {
             expect(target.getCustomState('Scratch.sound').effects.pan).to.equal(-50);
             expect(retVal).to.equal(undefined);
         });
+
+        it('Clear Sound Effects', async () => {
+
+            const retVal1 = await rt.execBlockPrimitive(target.id, 'sound_seteffectto', { EFFECT: 'pitch', VALUE: 120 }, 'test_token');
+
+            expect(target.getCustomState('Scratch.sound').effects.pitch).to.equal(120);
+
+            const retVal2 = await rt.execBlockPrimitive(target.id, 'sound_cleareffects', {}, 'test_token');
+
+            expect(target.getCustomState('Scratch.sound').effects.pitch).to.equal(0);
+            expect(retVal1).to.equal(undefined);
+            expect(retVal2).to.equal(undefined);
+        });
+
+        it('Set Volume To', async () => {
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'sound_setvolumeto', { VOLUME: 50 }, 'test_token');
+
+            expect(target.volume).to.equal(50);
+            expect(retVal).to.equal(undefined);
+        });
+
+        it('Change Volume By', async () => {
+
+            const retVal1 = await rt.execBlockPrimitive(target.id, 'sound_setvolumeto', { VOLUME: 100 }, 'test_token');
+
+            const retVal2 = await rt.execBlockPrimitive(target.id, 'sound_changevolumeby', { VOLUME: -40 }, 'test_token');
+
+            expect(target.volume).to.equal(60);
+            expect(retVal1).to.equal(undefined);
+            expect(retVal2).to.equal(undefined);
+        });
     });
 });
