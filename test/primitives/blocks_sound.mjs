@@ -40,6 +40,13 @@ describe('Runtime Exec Primitives', () => {
             expect(retVal).to.equal(undefined);
         });
 
+        it('Stop All Sounds', async () => {
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'sound_playuntildone', { SOUND_MENU: "meow" }, 'test_token');
+
+            expect(retVal).to.equal(undefined);
+        });
+
         it('Set Sound Effect To', async () => {
 
             const retVal = await rt.execBlockPrimitive(target.id, 'sound_seteffectto', { EFFECT: 'pitch', VALUE: 120 }, 'test_token');
