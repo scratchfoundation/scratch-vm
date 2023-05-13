@@ -3,6 +3,7 @@ import EventEmitter from 'events';
 import StageLayering from './stage-layering.mjs';
 
 import scratch3MotionBlocks from '../blocks/scratch3_motion.mjs';
+import patchCoreBlocks from '../blocks/patch_core.mjs';
 
 import Thread from './thread.mjs';
 import safeUid from '../util/safe-uid.mjs';
@@ -17,6 +18,7 @@ const defaultBlockPackages = {
     // scratch3_sensing: require('../blocks/scratch3_sensing'),
     // scratch3_data: require('../blocks/scratch3_data'),
     // scratch3_procedures: require('../blocks/scratch3_procedures')
+    patch_core: patchCoreBlocks,
 };
 
 /**
@@ -72,6 +74,13 @@ export default class Runtime extends EventEmitter {
          * @type {!number}
          */
         this._steppingInterval = null;
+
+        /**
+         * A dictionary of all threads running no the Patch vm. Dict keys
+         * are thread id.
+         * @type {Dictionary.<String, Thread>}
+         */
+        this._threads = {};
 
         /**
          * Whether any primitive has requested a redraw.
@@ -354,9 +363,13 @@ export default class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
-        this._threads.forEach((thread) => {
-            this._threads[thread].step();
-        });
+        for (let threadId in this._threads) {
+            this._threads[threadId].step();
+
+            if (this._threads[threadId].done()) {
+                delete this._threads[threadId];
+            }
+        }
         this.draw();
     }
 
@@ -584,6 +597,7 @@ export default class Runtime extends EventEmitter {
     quit () {
         clearInterval(this._steppingInterval);
         this._steppingInterval = null;
+        this._threads = {}; 
     }
 
     // -----------------------------------------------------------------------------
@@ -600,26 +614,45 @@ export default class Runtime extends EventEmitter {
      * If the primitive does not return a value, the promise resolves to null.
      */
     execBlockPrimitive (targetId, primitiveOpcode, args, blockUtility, token) {
-        return new Promise((resolve, reject) => {
-            blockUtility.target = this.getTargetById(targetId);
-            const returnVal = this._primitives[primitiveOpcode](args, blockUtility);
-            resolve(returnVal);
-        });
+        blockUtility.target = this.getTargetById(targetId);
+        return this._primitives[primitiveOpcode](args, blockUtility);
     }
 
-    pushBlockOp (threadId, primitiveOpcode, args) {
-        this._threads[threadId].pushOp(primitiveOpcode, args);
+    getThreadById(threadId) {
+        if(this._threads[threadId]) {
+            return this._threads[threadId];
+        } else {
+            throw new Error(`Cannot find thread ${threadId}`);
+        }
     }
 
-    registerThreads (targetsAndCode) {
+    endThread(threadId) {
+        const thread = this.getThreadById(threadId);
+        thread.setStatus(Thread.STATUS_DONE);
+    }
+
+    pushBlockOp (threadId, primitiveOpcode, args, token) {
+        const thread = this.getThreadById(threadId);
+        thread.pushOp(primitiveOpcode, args, token);
+    }
+
+    registerThreads (targetsAndCode, returnValueCallback) {
         const threadsCode = {};
-        targetsAndCode.forEach((target) => {
-            targetsAndCode.forEach((code) => {
-                const uid = safeUid();
-                this._threads[uid] = new Thread(target);
-                threadsCode[uid] = code
-            });
-        });
+
+        for (let targetId in targetsAndCode) {
+            const target = this.getTargetById(targetId)
+            if (target) {
+                targetsAndCode[targetId].forEach((code) => {
+                    const uid = safeUid();
+
+                    this._threads[uid] = new Thread(target, returnValueCallback);
+                    threadsCode[uid] = code;
+                });
+            } else {
+                throw new Error(`Cannot find target with id ${targetId}`);
+            }
+        }
+
         return threadsCode;
     }
 

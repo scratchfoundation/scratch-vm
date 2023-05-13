@@ -38,6 +38,13 @@ export default class BlockUtility {
     }
 
     /**
+     * End the current thread of execution as all blocks have been executed
+     */
+    endThread () {
+        this.thread.setStatus(Thread.STATUS_DONE);
+    }
+
+    /**
      * The target the primitive is working on.
      * @type {Target}
      */

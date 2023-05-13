@@ -474,7 +474,7 @@ export default class VirtualMachine extends EventEmitter {
     _onWorkerMessage (message) {
         const {id, threadId, opCode, args, token} = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            this.runtime.pushBlockOp(threadId, opCode, args);
+            this.runtime.pushBlockOp(threadId, opCode, args, token);
         }
     }
 
@@ -490,11 +490,9 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     async run (targetsAndCode) {
-        const threadsCode = this.runtime.registerThreads(targetsAndCode);
+        const threadsCode = this.runtime.registerThreads(targetsAndCode, this._postResultValue.bind(this));
         const [threadIds, pythonCode] = this.pyatchLinker.generatePython(threadsCode);
         await this.pyatchLoadPromise;
-
-        this.runtime.start();
 
         const result = await this.pyatchWorker.run(pythonCode, threadIds);
 

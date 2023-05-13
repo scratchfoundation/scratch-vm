@@ -45,292 +45,280 @@ after( async () => {
 	pyatchWorker.terminate();
 });
 
-describe('Pyatch Worker Fucntionality', () => {
-	describe('Async Run', () => {
+describe('Patch Worker Fucntionality', () => {
+	describe('Run Patch Functions', () => {
+		describe('Threading Messages', () => {
+			it('End Of Thread Message', async () => {
+				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
+				const threads = ['id_0'];	
+
+				await pyatchWorker.run(pythonCode, threads);
+				
+
+				expect(spy).to.be.calledTwice;
+		
+				let endOfThreadCall = spy.getCalls().slice(-1)[0].firstArg;
+				expect(endOfThreadCall.id).to.equal('BlockOP')
+				expect(endOfThreadCall.threadId).to.equal(threads[0])
+				expect(endOfThreadCall.opCode).to.equal('core_endthread')
+				expect(endOfThreadCall.args).to.eql({})
+				expect(endOfThreadCall.token).to.be.a('string')
+			});
+		});
 		describe('Motion Primitive Functions', () => {
 			it('Move', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-move.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-		
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_movesteps')
-				expect(lastCallData.args).to.eql({ STEPS: 10 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+		
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_movesteps')
+				expect(blockOpCall.args).to.eql({ STEPS: 10 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Go To XY', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-gotoxy.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_gotoxy')
-				expect(lastCallData.args).to.eql({ X: 10, Y: 5 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_gotoxy')
+				expect(blockOpCall.args).to.eql({ X: 10, Y: 5 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Go To', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-goto.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_goto')
-				expect(lastCallData.args).to.eql({ TO: 'target1' })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_goto')
+				expect(blockOpCall.args).to.eql({ TO: 'target1' })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Turn Right', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnright.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_turnright')
-				expect(lastCallData.args).to.eql({ DEGREES: 90 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_turnright')
+				expect(blockOpCall.args).to.eql({ DEGREES: 90 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Turn Left', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-turnleft.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_turnleft')
-				expect(lastCallData.args).to.eql({ DEGREES: 90 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_turnleft')
+				expect(blockOpCall.args).to.eql({ DEGREES: 90 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Point In Direction', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointindirection.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_pointindirection')
-				expect(lastCallData.args).to.eql({ DIRECTION: 90 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_pointindirection')
+				expect(blockOpCall.args).to.eql({ DIRECTION: 90 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Point Towards', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-pointtowards.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_pointtowards')
-				expect(lastCallData.args).to.eql({ TOWARDS: 'target1' })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_pointtowards')
+				expect(blockOpCall.args).to.eql({ TOWARDS: 'target1' })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Glide', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glide.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_glidesecstoxy')
-				expect(lastCallData.args).to.eql({ SECS: 1, X: 10, Y:5 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_glidesecstoxy')
+				expect(blockOpCall.args).to.eql({ SECS: 1, X: 10, Y:5 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Glide To', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-glideto.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_glideto')
-				expect(lastCallData.args).to.eql({ SECS: 1, TO: 'target1' })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_glideto')
+				expect(blockOpCall.args).to.eql({ SECS: 1, TO: 'target1' })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('If On Edge Bounce', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-ifonedgebounce.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_ifonedgebounce')
-				expect(lastCallData.args).to.eql({})
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_ifonedgebounce')
+				expect(blockOpCall.args).to.eql({})
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Set Rotation Style', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setrotationstyle.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_setrotationstyle')
-				expect(lastCallData.args).to.eql({ STYLE: 'free' })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_setrotationstyle')
+				expect(blockOpCall.args).to.eql({ STYLE: 'free' })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Change X', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changex.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_changexby')
-				expect(lastCallData.args).to.eql({ DX: 10 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_changexby')
+				expect(blockOpCall.args).to.eql({ DX: 10 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Set X', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-setx.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_setx')
-				expect(lastCallData.args).to.eql({ X: 10 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_setx')
+				expect(blockOpCall.args).to.eql({ X: 10 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Change Y', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-changey.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_changeyby')
-				expect(lastCallData.args).to.eql({ DY: 10 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_changeyby')
+				expect(blockOpCall.args).to.eql({ DY: 10 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 
 			it('Set Y', async () => {
 				const pythonCode = fs.readFileSync(path.join(__dirname, './python', 'single-target-sety.py'), 'utf8');
 				const threads = ['id_0'];	
 
-				const runResult = await pyatchWorker.run(pythonCode, threads);
-				expect(runResult).to.equal(WorkerMessages.ToVM.PythonFinished);
-
-				expect(spy).to.be.calledOnce;
-
-				let lastCallData = spy.getCalls().slice(-1)[0].firstArg;
-				expect(lastCallData.id).to.equal('BlockOP')
-				expect(lastCallData.threadId).to.equal(threads[0])
-				expect(lastCallData.opCode).to.equal('motion_sety')
-				expect(lastCallData.args).to.eql({ Y: 10 })
-				expect(lastCallData.token).to.be.a('string')
-
+				await pyatchWorker.run(pythonCode, threads);
 				
+
+				expect(spy).to.be.calledTwice;
+
+				let blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
+				expect(blockOpCall.id).to.equal('BlockOP')
+				expect(blockOpCall.threadId).to.equal(threads[0])
+				expect(blockOpCall.opCode).to.equal('motion_sety')
+				expect(blockOpCall.args).to.eql({ Y: 10 })
+				expect(blockOpCall.token).to.be.a('string')
 			});
 		});
 	});

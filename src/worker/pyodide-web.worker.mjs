@@ -17,7 +17,13 @@ let _pendingTokens = {};
  * Final token of the last run.
  * @type {string}
  */
-let _lastToken = null;
+let _lastTokens = {};
+
+/**
+ * Inital pyodide state. This is saved so we can reset globals without having to completely reload pyodide which is very expensive
+ * @type {Object}
+ */
+let _initPyodideState = null;
 
 async function _webPyodideLoader(version = npmVersion) {
   const indexURL = `https://cdn.jsdelivr.net/pyodide/v${version}/full/`;
@@ -45,6 +51,7 @@ async function _initPyodide() {
   } else {
     self.pyodide = await _webPyodideLoader();
   }
+  _initPyodideState = self.pyodide._api.saveState();
   _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded)
 }
 
@@ -60,8 +67,8 @@ function _resolvePendingToken(token, value) {
       delete _pendingTokens[token];
     }
   }
-  if (token === _lastToken) {
-    _postStatusMessage(WorkerMessages.ToVM.PythonFinished);
+  if (_lastTokens[token]) {
+    _postThreadStatusMessage(WorkerMessages.ToVM.ThreadDone, _lastTokens[token]);
   }
 }
 
@@ -70,13 +77,19 @@ function _postBlockOpMessage(threadId, op_code, args) {
   let id = WorkerMessages.ToVM.BlockOP
   return new Promise((resolve) => {
     _pendingTokens[token] = resolve;
-    _lastToken = token;
+    if (op_code === PrimProxy.opcodeMap.endThread) {
+      _lastTokens[token] = threadId;
+    }
     _postMessage(id, threadId, op_code, args, token)
     });
 }
 
 function _postStatusMessage(id) {
   _postMessage(id, null, null, null, null)
+}
+
+function _postThreadStatusMessage(id, threadId) {
+  _postMessage(id, threadId, null, null, null)
 }
 
 function _postError(error) {
@@ -101,24 +114,29 @@ function _run(pythonScript,  threads) {
   //await self.pyodide.loadPackagesFromImports(python);
   _postStatusMessage(WorkerMessages.ToVM.PythonLoading)
 
+  // This will load the initial state of pyodide and reset the globals of pyodide. This is so previously added global functions are not re-run
+  self.pyodide._api.restoreState(_initPyodideState);
+
   // This is load each async function into the global scope of the pyodide instance
   self.pyodide.runPython(pythonScript);
   _postStatusMessage(WorkerMessages.ToVM.PythonRunning);
 
-  let target_func_arr = []
+  let thread_funcs = []
 
   for(let global of self.pyodide.globals) {
     if (global.includes('thread')) {
-      target_func_arr.push(self.pyodide.globals.get(global))
+      thread_funcs.push(self.pyodide.globals.get(global));
     }
   }
 
   let i = 0;
-  for(let target_func of target_func_arr) {
-    target_func(new PrimProxy(threads[i], _postBlockOpMessage))
+  for(let run_thread of thread_funcs) {
+    run_thread(new PrimProxy(threads[i], _postBlockOpMessage)).then(((threadId) => {
+      _postBlockOpMessage(threadId, PrimProxy.opcodeMap.endThread, {});
+    }).bind(null, threads[i]));
     i++;
   }
-  _postStatusMessage(WorkerMessages.ToVM.F);
+  // _postStatusMessage(WorkerMessages.ToVM.PythonFinished);
 }
 
 function onVMMessage(event) {

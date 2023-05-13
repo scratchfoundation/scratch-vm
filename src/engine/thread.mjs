@@ -5,47 +5,56 @@ import BlockUtility from './block-utility.mjs';
  * @constructor
  */
 class Thread {
-    constructor (target) {
+    constructor (target, returnValueCallback) {
 
         this.blockOpQueue = [];
 
         this._target = target;
 
-        this.runtime = target.runtime;
+        if (target.runtime) {
+            this.runtime = target.runtime;
+        } else {
+            throw new Error('Targets must include a runtime to be used in threads');
+        }
 
         this._status = 0;
 
         this._blockUtility = new BlockUtility(this._target, this.runtime, this);
+
+        this.returnValueCallback = returnValueCallback;
     }
 
-    pushOp(primitiveOpcode, args) {
+    pushOp(primitiveOpcode, args, token) {
         const targetId = this._target.id;
         const blockUtil = this._blockUtility;
-        const opObj = {targetId, primitiveOpcode, args, blockUtil};
+        const opObj = {targetId, primitiveOpcode, args, blockUtil, token};
         this.blockOpQueue.push(opObj);
+
+        this._status = Thread.STATUS_RUNNING;
     }
 
     step() {
         if (this._status === Thread.STATUS_YIELD_TICK || this._status === Thread.STATUS_RUNNING) {
             this._status = Thread.STATUS_RUNNING;
             while (this.blockOpQueue.length > 0) {
-                const op = this.blockOpQueue[this.blockOpQueue.length - 1];
+                const op = this.blockOpQueue[0];
+
                 const returnVal = this.runtime.execBlockPrimitive(op.targetId, op.primitiveOpcode, op.args, op.blockUtil);
 
-                // If the thread yielded we should not return yet
-                if (this._status !== Thread.STATUS_RUNNING) return;
+                // If the thread has yielded then we need to stall until the next tick
+                if (this._status === Thread.STATUS_YIELD_TICK || this._status === Thread.STATUS_YIELD) return;
 
-                returnVal.then(value => {
-                    this._postResultValue(message, value);
-                });
-                this.blockOpQueue.pop();
+                this.returnValueCallback({token: op.token}, returnVal);
+                this.blockOpQueue.shift();
             }
-            this._status = Thread.STATUS_DONE;
+            if (this._status === Thread.STATUS_RUNNING) {
+                this._status = Thread.STATUS_IDLE;
+            }
         }
     }
 
     done() {
-        return this._status === Thread.STATUS_DONE;
+        return this._status == Thread.STATUS_DONE;
     }
 
     /**
@@ -91,6 +100,15 @@ class Thread {
      */
     static get STATUS_DONE () {
         return 4;
+    }
+
+    /**
+     * Thread is done with everything in its block queue
+     * Idling waiting for a new message
+     * @const
+     */
+    static get STATUS_IDLE () {
+        return 5;
     }
 
     /**

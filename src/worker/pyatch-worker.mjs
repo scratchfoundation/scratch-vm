@@ -39,18 +39,26 @@ class PyatchWorker {
         // console.log(message);
         return new Promise((resolve, reject) => {
             let pythonRunning = false;
+            let resolvedThreads = 0;
             this._worker.onmessage = (event) => {
                 // console.log('event', event);
                 if (event.data.id === WorkerMessages.ToVM.BlockOP) {
                     this._blockOPCallback(event.data);
-                } else if (event.data.id === WorkerMessages.ToVM.PythonFinished) {
-                    resolve(WorkerMessages.ToVM.PythonFinished);
+                } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
+                    if (threads.includes(event.data.threadId)) {
+                        resolvedThreads++;
+                    }
+                    if (resolvedThreads === threads.length) {
+                        resolve();
+                    }
                 } else if (event.data.id === WorkerMessages.ToVM.PythonRunning) {
                     pythonRunning = true;
                 } else if (event.data.id === WorkerMessages.ToVM.PythonError) {
                     reject(event.data.error);
+                } else if (event.data.id === WorkerMessages.ToVM.PythonLoading) {
+
                 } else {
-                    // console.log('Unknown message from worker', event.data);
+                    console.log('Unknown message from worker', event.data);
                 }
             };
             this._worker.onerror = (event) => {

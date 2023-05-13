@@ -10,6 +10,8 @@ import sinon from 'sinon';
 import sinonChai from 'sinon-chai';
 import BlockUtility from '../../src/engine/block-utility.mjs';
 
+import simThreadExecution from '../fixtures/sim-thread-execution.mjs';
+
 chai.use(sinonChai);
 const expect = chai.expect;
 
@@ -160,22 +162,7 @@ describe('Runtime Exec Primitives', () => {
             const targetId = target.id;
             rt.addTarget(target);
 
-            const thread = new Thread(target);
-
-            thread.pushOp('motion_glidesecstoxy', {X: 10, Y: 5, SECS: 1})
-
-            const start = performance.now();
-            await new Promise((resolve, reject) => {
-                const interval = setInterval(() => {
-                    if (!thread.done()) {
-                        thread.step();
-                    } else {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, Runtime.THREAD_STEP_INTERVAL);
-            });
-            const secs = (performance.now() - start)/1000;
+            const secs = await simThreadExecution(target, 'motion_glidesecstoxy', {X: 10, Y: 5, SECS: 1});
 
             expect(target.x).to.equal(10);
             expect(target.y).to.equal(5);
@@ -194,23 +181,8 @@ describe('Runtime Exec Primitives', () => {
             sprite2.name = 'destination_target';
             target2.setXY(5, 5);
             rt.addTarget(target2);
-
-            const thread = new Thread(target1);
-
-            thread.pushOp('motion_glideto', {TO: target2.name, SECS: 1})
-
-            const start = performance.now();
-            await new Promise((resolve, reject) => {
-                const interval = setInterval(() => {
-                    if (!thread.done()) {
-                        thread.step();
-                    } else {
-                        clearInterval(interval);
-                        resolve();
-                    }
-                }, Runtime.THREAD_STEP_INTERVAL);
-            });
-            const secs = (performance.now() - start)/1000;
+            
+            const secs = await simThreadExecution(target1, 'motion_glideto', {TO: target2.name, SECS: 1})
 
             expect(target1.x).to.equal(target2.x);
             expect(target1.y).to.equal(target2.y);
@@ -221,14 +193,27 @@ describe('Runtime Exec Primitives', () => {
             const rt = new Runtime();
             const sprite = new Sprite(null, rt);
             const target = new RenderedTarget(sprite, rt);
+
+            // Mocking values so we can test functionality without renderer
+            target.getBounds = () => {return {left: 0, right: Runtime.STAGE_WIDTH/2, top: 0, bottom: 0}}
+
+            const spy = sinon.spy();
+            const mockRenderer = {
+                updateDrawableDirectionScale: spy,
+                getFencedPositionOfDrawable: () => {return [0, 0]},
+                updateDrawablePosition: () => {},
+            };
+
+            target.renderer = mockRenderer;
+
             const targetId = target.id;
             rt.addTarget(target);
 
             // eslint-disable-next-line no-unused-vars
             const retVal = await rt.execBlockPrimitive(targetId, 'motion_ifonedgebounce', {}, new BlockUtility(target, new Runtime()), 'test_token');
 
-            // NOTE: Not implemented yet
-            expect(true).to.equal(false);
+            expect(spy).to.have.been.calledWithExactly(target.drawableID, -90, [100, 100]);
+            expect(retVal).to.equal(undefined);
         });
 
         it('Set Rotation Style', async () => {

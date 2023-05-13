@@ -20,6 +20,8 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+
+        endThread: "core_endthread",
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;

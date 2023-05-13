@@ -5,10 +5,12 @@ const WorkerMessages = {
     ToVM: {
         PyodideLoading: 'PyodideLoading',
         PyodideLoaded: 'PyodideLoaded',
+        PythonLoading: 'PythonLoading',
         PythonRunning: 'PythonRunning',
         PythonFinished: 'PythonFinished',
         PythonError: 'PythonError',
         BlockOP: 'BlockOP',
+        EndOfThread: 'EndOfThread',
     },
 
     FromVM: {
