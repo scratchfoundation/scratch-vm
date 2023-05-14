@@ -294,5 +294,44 @@ describe('Runtime Exec Primitives', () => {
             expect(target.y).to.equal(eY);
             expect(retVal).to.equal(undefined);
         });
+
+        it('Get X', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            const eX = target.x;
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_xposition', {}, new BlockUtility(target, rt), 'test_token');
+
+            expect(retVal).to.equal(eX);
+        });
+
+        it('Get Y', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            const eY = target.y;
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_yposition', {}, new BlockUtility(target, rt), 'test_token');
+
+            expect(retVal).to.equal(eY);
+        });
+
+        it('Get Direction', async () => {
+            const rt = new Runtime();
+            const sprite = new Sprite(null, rt);
+            const target = new RenderedTarget(sprite, rt);
+            rt.addTarget(target);
+
+            const eDirection = target.direction;
+
+            const retVal = await rt.execBlockPrimitive(target.id, 'motion_direction', {}, new BlockUtility(target, rt), 'test_token');
+
+            expect(retVal).to.equal(eDirection);
+        });
     });
 });
