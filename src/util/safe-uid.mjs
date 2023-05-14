@@ -8,15 +8,14 @@
  * Removed $ due to issue 251.
  * @private
  */
-const soup_ = '!#%()*+,-./:;=?@[]^_`{|}~' +
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const soup_ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /**
  * Generate a unique ID, from Blockly.  This should be globally unique.
  * 87 characters ^ 20 length > 128 bits (better than a UUID).
  * @return {string} A globally unique ID string.
  */
-const uid = function () {
+const safeUid = function () {
     const length = 20;
     const soupLength = soup_.length;
     const id = [];
@@ -27,4 +26,4 @@ const uid = function () {
 };
 
 
-export default uid;
+export default safeUid;

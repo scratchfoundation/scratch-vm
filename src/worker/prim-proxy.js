@@ -20,6 +20,33 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+        say: "looks_say",
+        sayFor: "looks_sayforsecs",
+        think: "looks_think",
+        thinkFor: "looks_thinkforsecs",
+        show: "looks_show",
+        hide: "looks_hide",
+        setCostumeTo: "looks_switchcostumeto",
+        setBackdropTo: "looks_switchbackdropto",
+        setBackdropToAndWait: "looks_switchbackdroptoandwait",
+        nextCostume: "looks_nextcostume",
+        nextBackdrop: "looks_nextbackdrop",
+        changeGraphicEffectBy: "looks_changeeffectby",
+        setGraphicEffectTo: "looks_seteffectto",
+        clearGraphicEffects: "looks_cleargraphiceffects",
+        changeSizeBy: "looks_changesizeby",
+        setSizeTo: "looks_setsizeto",
+        setLayerTo: "looks_gotofrontback",
+        changeLayerBy: "looks_goforwardbackwardlayers",
+        getSize: "looks_size",
+        getCostume: "looks_costumenumbername",
+        getBackdrop: "looks_backdropnumbername",
+        whenTouchingObject: "event_whentouchingobject",
+        broadcast: "event_broadcast",
+        broadcastAndWait: "event_broadcastandwait",
+        whenGreaterThan: "event_whengreaterthan",
+
+        endThread: "core_endthread",
         playSound: "sound_play",
         playSoundUntilDone: "sound_playuntildone",
         stopAllSounds: "sound_stopallsounds",
@@ -32,8 +59,8 @@ class PrimProxy {
     };
     constructor(targetId, postFunction) {
         this.targetId = targetId;
-        this.post = function (opCode, args) {
-            postFunction(this.targetId, opCode, args);
+        this.post = async function (opCode, args) {
+            return await postFunction(this.targetId, opCode, args);
         }
     }
 
@@ -102,19 +129,108 @@ class PrimProxy {
     }
 
     async getX() {
-        let x = await PrimProxy.post(this.opcodeMap.getX, {});
+        const x = await this.post(PrimProxy.opcodeMap.getX, {});
         return x;
     }
 
     async getY() {
-        let y = PrimProxy.post(this.opcodeMap.getY, {});
+        const y = await this.post(PrimProxy.opcodeMap.getY, {});
         return y;
     }
 
     async getDirection() {
-        let direction = PrimProxy.post(this.opcodeMap.getDirection, {});
+        const direction = await this.post(PrimProxy.opcodeMap.getDirection, {});
         return direction;
     }
+
+    say(message) {
+        this.post(PrimProxy.opcodeMap.say, { MESSAGE: message });
+    }
+
+    sayFor(message, secs) {
+        this.post(PrimProxy.opcodeMap.sayFor, { MESSAGE: message, SECS: secs });
+    }
+
+    think(message) {
+        this.post(PrimProxy.opcodeMap.think, { MESSAGE: message });
+    }
+
+    thinkFor(message, secs) {
+        this.post(PrimProxy.opcodeMap.thinkFor, { MESSAGE: message, SECS: secs });
+    }
+
+    show() {
+        this.post(PrimProxy.opcodeMap.show, {});
+    }
+
+    hide() {
+        this.post(PrimProxy.opcodeMap.hide, {});
+    }
+
+    setCostumeTo(costume) {
+        this.post(PrimProxy.opcodeMap.setCostumeTo, { COSTUME: costume });
+    }
+
+    setBackdropTo(backdrop) {
+        this.post(PrimProxy.opcodeMap.setBackdropTo, { BACKDROP: backdrop });
+    }
+
+    setBackdropToAndWait(backdrop) {
+        this.post(PrimProxy.opcodeMap.setBackdropToAndWait, { BACKDROP: backdrop });
+    }
+
+    nextCostume() {
+        this.post(PrimProxy.opcodeMap.nextCostume, {});
+    }
+
+    nextBackdrop() {
+        this.post(PrimProxy.opcodeMap.nextBackdrop, {});
+    }
+
+    changeGraphicEffectBy(effect, change) {
+        this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, { EFFECT: effect, CHANGE: change });
+    }
+
+    setGraphicEffectTo(effect, value) {
+        this.post(PrimProxy.opcodeMap.setGraphicEffectTo, { EFFECT: effect, VALUE: value });
+    }
+
+    clearGraphicEffects() {
+        this.post(PrimProxy.opcodeMap.clearGraphicEffects, {});
+    }
+
+    changeSizeBy(change) {
+        this.post(PrimProxy.opcodeMap.changeSizeBy, { CHANGE: change });
+    }
+
+    setSizeTo(size) {
+        this.post(PrimProxy.opcodeMap.setSizeTo, { SIZE: size });
+    }
+
+    setLayerTo(front_back) {
+        this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: front_back });
+    }
+
+    changeLayerBy(num) {
+        this.post(PrimProxy.opcodeMap.changeLayerBy, { NUM: num });
+    }
+
+    // as above, no tests for async functions
+    async getSize() {
+        let size = PrimProxy.post(this.opcodeMap.getSize, {});
+        return size;
+    }
+
+    async getCostume() {
+        let costume = await PrimProxy.post(this.opcodeMap.getCostume, { NUMBER_NAME: 'name' });
+        return costume;
+    }
+
+    async getBackdrop() {
+        let backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, { NUMBER_NAME: 'name' });
+        return backdrop;
+    }
+
 
     playSound(sound_menu) {
         this.post(PrimProxy.opcodeMap.playSound, { SOUND_MENU: sound_menu });
