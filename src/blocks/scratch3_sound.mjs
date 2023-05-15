@@ -280,7 +280,7 @@ export default class Scratch3SoundBlocks {
 
         this._syncEffectsForTarget(util.target);
         // Yield until the next tick.
-        return Promise.resolve();
+        return Promise.resolve(null);
     }
 
     _syncEffectsForTarget (target) {
@@ -327,7 +327,7 @@ export default class Scratch3SoundBlocks {
         this._syncEffectsForTarget(util.target);
 
         // Yield until the next tick.
-        return Promise.resolve();
+        return Promise.resolve(null);
     }
 
     getVolume (args, util) {
