@@ -1,16 +1,15 @@
-import EventEmitter from 'events';
+import EventEmitter from "events";
 
-import StageLayering from './stage-layering.mjs';
+import StageLayering from "./stage-layering.mjs";
 
-import BlockUtility from './block-utility.mjs';
+import scratch3EventBlocks from "../blocks/scratch3_event.mjs";
+import scratch3LooksBlocks from "../blocks/scratch3_looks.mjs";
+import scratch3MotionBlocks from "../blocks/scratch3_motion.mjs";
+import patchCoreBlocks from "../blocks/patch_core.mjs";
 
-import scratch3EventBlocks from '../blocks/scratch3_event.mjs';
-import scratch3LooksBlocks from '../blocks/scratch3_looks.mjs';
-import scratch3MotionBlocks from '../blocks/scratch3_motion.mjs';
-import patchCoreBlocks from '../blocks/patch_core.mjs';
-
-import Thread from './thread.mjs';
-import safeUid from '../util/safe-uid.mjs';
+import Thread from "./thread.mjs";
+import safeUid from "../util/safe-uid.mjs";
+import StringUtil from "../util/string-util.mjs";
 
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
@@ -30,7 +29,7 @@ const defaultBlockPackages = {
  * @constructor
  */
 export default class Runtime extends EventEmitter {
-    constructor () {
+    constructor() {
         super();
 
         /**
@@ -103,7 +102,7 @@ export default class Runtime extends EventEmitter {
      * Width of the stage, in pixels.
      * @const {number}
      */
-    static get STAGE_WIDTH () {
+    static get STAGE_WIDTH() {
         return 480;
     }
 
@@ -111,7 +110,7 @@ export default class Runtime extends EventEmitter {
      * Height of the stage, in pixels.
      * @const {number}
      */
-    static get STAGE_HEIGHT () {
+    static get STAGE_HEIGHT() {
         return 360;
     }
 
@@ -120,8 +119,8 @@ export default class Runtime extends EventEmitter {
      * running).
      * @const {string}
      */
-    static get PROJECT_START () {
-        return 'PROJECT_START';
+    static get PROJECT_START() {
+        return "PROJECT_START";
     }
 
     /**
@@ -129,8 +128,8 @@ export default class Runtime extends EventEmitter {
      * Used by blocks that need to reset state.
      * @const {string}
      */
-    static get PROJECT_STOP_ALL () {
-        return 'PROJECT_STOP_ALL';
+    static get PROJECT_STOP_ALL() {
+        return "PROJECT_STOP_ALL";
     }
 
     /**
@@ -138,78 +137,78 @@ export default class Runtime extends EventEmitter {
      * Used by blocks that need to stop individual targets.
      * @const {string}
      */
-    static get STOP_FOR_TARGET () {
-        return 'STOP_FOR_TARGET';
+    static get STOP_FOR_TARGET() {
+        return "STOP_FOR_TARGET";
     }
 
     /**
      * Event name for project loaded report.
      * @const {string}
      */
-    static get PROJECT_LOADED () {
-        return 'PROJECT_LOADED';
+    static get PROJECT_LOADED() {
+        return "PROJECT_LOADED";
     }
 
     /**
      * Event name for report that a change was made that can be saved
      * @const {string}
      */
-    static get PROJECT_CHANGED () {
-        return 'PROJECT_CHANGED';
+    static get PROJECT_CHANGED() {
+        return "PROJECT_CHANGED";
     }
 
     /**
      * Event name for targets update report.
      * @const {string}
      */
-    static get TARGETS_UPDATE () {
-        return 'TARGETS_UPDATE';
+    static get TARGETS_UPDATE() {
+        return "TARGETS_UPDATE";
     }
 
     /**
      * Event name for monitors update.
      * @const {string}
      */
-    static get MONITORS_UPDATE () {
-        return 'MONITORS_UPDATE';
+    static get MONITORS_UPDATE() {
+        return "MONITORS_UPDATE";
     }
 
     /**
      * Event name for reporting that blocksInfo was updated.
      * @const {string}
      */
-    static get BLOCKSINFO_UPDATE () {
-        return 'BLOCKSINFO_UPDATE';
+    static get BLOCKSINFO_UPDATE() {
+        return "BLOCKSINFO_UPDATE";
     }
 
     /**
      * Event name when the runtime tick loop has been started.
      * @const {string}
      */
-    static get RUNTIME_STARTED () {
-        return 'RUNTIME_STARTED';
+    static get RUNTIME_STARTED() {
+        return "RUNTIME_STARTED";
     }
 
     /**
      * Event name when the runtime dispose has been called.
      * @const {string}
      */
-    static get RUNTIME_DISPOSED () {
-        return 'RUNTIME_DISPOSED';
+    static get RUNTIME_DISPOSED() {
+        return "RUNTIME_DISPOSED";
     }
 
     /**
      * How many clones can be created at a time.
      * @const {number}
      */
-    static get MAX_CLONES () {
+    static get MAX_CLONES() {
         return 300;
     }
 
     /**
      * How rapidly we try to step threads by default, in ms.
      */
-    static get THREAD_STEP_INTERVAL () {
+    static get THREAD_STEP_INTERVAL() {
         return 1000 / 60;
     }
 
@@ -221,18 +220,19 @@ export default class Runtime extends EventEmitter {
      * @todo Prefix opcodes with package name.
      * @private
      */
-    _registerBlockPackages () {
+    _registerBlockPackages() {
+        // eslint-disable-next-line no-restricted-syntax
         for (const packageName in defaultBlockPackages) {
             if (defaultBlockPackages.hasOwnProperty(packageName)) {
                 // @todo pass a different runtime depending on package privilege?
-                const packageObject = new (defaultBlockPackages[packageName])(this);
+                const packageObject = new defaultBlockPackages[packageName](this);
                 // Collect primitives from package.
                 if (packageObject.getPrimitives) {
                     const packagePrimitives = packageObject.getPrimitives();
+                    // eslint-disable-next-line no-restricted-syntax
                     for (const op in packagePrimitives) {
                         if (packagePrimitives.hasOwnProperty(op)) {
-                            this._primitives[op] =
-                                packagePrimitives[op].bind(packageObject);
+                            this._primitives[op] = packagePrimitives[op].bind(packageObject);
                         }
                     }
                 }
@@ -255,7 +255,7 @@ export default class Runtime extends EventEmitter {
      * @param {!string} opcode The opcode to look up.
      * @return {Function} The function which implements the opcode.
      */
-    getOpcodeFunction (opcode) {
+    getOpcodeFunction(opcode) {
         return this._primitives[opcode];
     }
 
@@ -263,7 +263,7 @@ export default class Runtime extends EventEmitter {
      * Attach the audio engine
      * @param {!AudioEngine} audioEngine The audio engine to attach
      */
-    attachAudioEngine (audioEngine) {
+    attachAudioEngine(audioEngine) {
         this.audioEngine = audioEngine;
     }
 
@@ -271,7 +271,7 @@ export default class Runtime extends EventEmitter {
      * Attach the renderer
      * @param {!RenderWebGL} renderer The renderer to attach
      */
-    attachRenderer (renderer) {
+    attachRenderer(renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
     }
@@ -280,7 +280,7 @@ export default class Runtime extends EventEmitter {
      * Attach the storage module
      * @param {!ScratchStorage} storage The storage module to attach
      */
-    attachStorage (storage) {
+    attachStorage(storage) {
         this.storage = storage;
     }
 
@@ -290,10 +290,10 @@ export default class Runtime extends EventEmitter {
     /**
      * Dispose all targets. Return to clean state.
      */
-    dispose () {
+    dispose() {
         this.stopAll();
         // Deleting each target's variable's monitors.
-        this.targets.forEach(target => {
+        this.targets.forEach((target) => {
             if (target.isOriginal) target.deleteMonitors();
         });
 
@@ -309,7 +309,7 @@ export default class Runtime extends EventEmitter {
      * into the correct execution order after calling this function.
      * @param {Target} target target to add
      */
-    addTarget (target) {
+    addTarget(target) {
         this.targets.push(target);
         this.executableTargets.push(target);
     }
@@ -318,8 +318,8 @@ export default class Runtime extends EventEmitter {
      * Dispose of a target.
      * @param {!Target} disposingTarget Target to dispose of.
      */
-    disposeTarget (disposingTarget) {
-        this.targets = this.targets.filter(target => {
+    disposeTarget(disposingTarget) {
+        this.targets = this.targets.filter((target) => {
             if (disposingTarget !== target) return true;
             // Allow target to do dispose actions.
             target.dispose();
@@ -331,10 +331,10 @@ export default class Runtime extends EventEmitter {
     /**
      * Start all threads that start with the green flag.
      */
-    greenFlag () {
+    greenFlag() {
         this.stopAll();
         this.emit(Runtime.PROJECT_START);
-        this.targets.forEach(target => target.clearEdgeActivatedValues());
+        this.targets.forEach((target) => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onGreenFlag();
@@ -344,7 +344,7 @@ export default class Runtime extends EventEmitter {
     /**
      * Stop "everything."
      */
-    stopAll () {
+    stopAll() {
         // Emit stop event to allow blocks to clean up any state.
         this.emit(Runtime.PROJECT_STOP_ALL);
 
@@ -352,8 +352,7 @@ export default class Runtime extends EventEmitter {
         const newTargets = [];
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onStopAll();
-            if (this.targets[i].hasOwnProperty('isOriginal') &&
-                !this.targets[i].isOriginal) {
+            if (this.targets[i].hasOwnProperty("isOriginal") && !this.targets[i].isOriginal) {
                 this.targets[i].dispose();
             } else {
                 newTargets.push(this.targets[i]);
@@ -366,14 +365,16 @@ export default class Runtime extends EventEmitter {
      * Repeatedly run `sequencer.stepThreads` and filter out
      * inactive threads after each iteration.
      */
-    _step () {
-        for (let threadId in this._threads) {
-            this._threads[threadId].step();
+    _step() {
+        const threadIds = Object.keys(this._threads);
 
-            if (this._threads[threadId].done()) {
-                delete this._threads[threadId];
+        threadIds.forEach((id) => {
+            this._threads[id].step();
+
+            if (this._threads[id].done()) {
+                delete this._threads[id];
             }
-        }
+        });
         this.draw();
     }
 
@@ -383,22 +384,21 @@ export default class Runtime extends EventEmitter {
      *
      * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
      */
-    _emitProjectRunStatus (nonMonitorThreadCount) {
-        return
-    }
+    _emitProjectRunStatus(nonMonitorThreadCount) {}
 
     /**
      * Get a target by its id.
      * @param {string} targetId Id of target to find.
      * @return {?Target} The target, if found.
      */
-    getTargetById (targetId) {
+    getTargetById(targetId) {
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
             if (target.id === targetId) {
                 return target;
             }
         }
+        return null;
     }
 
     /**
@@ -406,16 +406,18 @@ export default class Runtime extends EventEmitter {
      * @param {string} spriteName Name of sprite to look for.
      * @return {?Target} Target representing a sprite of the given name.
      */
-    getSpriteTargetByName (spriteName) {
+    getSpriteTargetByName(spriteName) {
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
             if (target.isStage) {
+                // eslint-disable-next-line no-continue
                 continue;
             }
             if (target.sprite && target.sprite.name === spriteName) {
                 return target;
             }
         }
+        return null;
     }
 
     /**
@@ -423,18 +425,19 @@ export default class Runtime extends EventEmitter {
      * @param {number} drawableID drawable id of target to find
      * @return {?Target} The target, if found
      */
-    getTargetByDrawableId (drawableID) {
+    getTargetByDrawableId(drawableID) {
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
             if (target.drawableID === drawableID) return target;
         }
+        return null;
     }
 
     /**
      * Update the clone counter to track how many clones are created.
      * @param {number} changeAmount How many clones have been created/destroyed.
      */
-    changeCloneCounter (changeAmount) {
+    changeCloneCounter(changeAmount) {
         this._cloneCounter += changeAmount;
     }
 
@@ -442,21 +445,21 @@ export default class Runtime extends EventEmitter {
      * Return whether there are clones available.
      * @return {boolean} True until the number of clones hits Runtime.MAX_CLONES.
      */
-    clonesAvailable () {
+    clonesAvailable() {
         return this._cloneCounter < Runtime.MAX_CLONES;
     }
 
     /**
      * Report that the project has loaded in the Virtual Machine.
      */
-    emitProjectLoaded () {
+    emitProjectLoaded() {
         this.emit(Runtime.PROJECT_LOADED);
     }
 
     /**
      * Report that the project has changed in a way that would affect serialization
      */
-    emitProjectChanged () {
+    emitProjectChanged() {
         this.emit(Runtime.PROJECT_CHANGED);
     }
 
@@ -466,8 +469,8 @@ export default class Runtime extends EventEmitter {
      * @param {Target} [sourceTarget] - the target used as a source for the new clone, if any.
      * @fires Runtime#targetWasCreated
      */
-    fireTargetWasCreated (newTarget, sourceTarget) {
-        this.emit('targetWasCreated', newTarget, sourceTarget);
+    fireTargetWasCreated(newTarget, sourceTarget) {
+        this.emit("targetWasCreated", newTarget, sourceTarget);
     }
 
     /**
@@ -475,15 +478,15 @@ export default class Runtime extends EventEmitter {
      * @param {Target} target - the target being removed
      * @fires Runtime#targetWasRemoved
      */
-    fireTargetWasRemoved (target) {
-        this.emit('targetWasRemoved', target);
+    fireTargetWasRemoved(target) {
+        this.emit("targetWasRemoved", target);
     }
 
     /**
      * Set the current editing target known by the runtime.
      * @param {!Target} editingTarget New editing target.
      */
-    setEditingTarget (editingTarget) {
+    setEditingTarget(editingTarget) {
         const oldEditingTarget = this._editingTarget;
         this._editingTarget = editingTarget;
 
@@ -496,20 +499,21 @@ export default class Runtime extends EventEmitter {
      * Get a target representing the Scratch stage, if one exists.
      * @return {?Target} The target, if found.
      */
-    getTargetForStage () {
+    getTargetForStage() {
         for (let i = 0; i < this.targets.length; i++) {
             const target = this.targets[i];
             if (target.isStage) {
                 return target;
             }
         }
+        return null;
     }
 
     /**
      * Get the editing target.
      * @return {?Target} The editing target.
      */
-    getEditingTarget () {
+    getEditingTarget() {
         return this._editingTarget;
     }
 
@@ -521,27 +525,28 @@ export default class Runtime extends EventEmitter {
      * @property {Function} [labelFn] - function to generate the label for this opcode
      * @property {string} [label] - the label for this opcode if `labelFn` is absent
      */
-    getLabelForOpcode (extendedOpcode) {
-        const [category, opcode] = StringUtil.splitFirst(extendedOpcode, '_');
+    getLabelForOpcode(extendedOpcode) {
+        const [category, opcode] = StringUtil.splitFirst(extendedOpcode, "_");
         if (!(category && opcode)) return;
 
-        const categoryInfo = this._blockInfo.find(ci => ci.id === category);
+        const categoryInfo = this._blockInfo.find((ci) => ci.id === category);
         if (!categoryInfo) return;
 
-        const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+        const block = categoryInfo.blocks.find((b) => b.info.opcode === opcode);
         if (!block) return;
 
         // TODO: we may want to format the label in a locale-specific way.
+        // eslint-disable-next-line consistent-return
         return {
-            category: 'extension', // This assumes that all extensions have the same monitor color.
-            label: `${categoryInfo.name}: ${block.info.text}`
+            category: "extension", // This assumes that all extensions have the same monitor color.
+            label: `${categoryInfo.name}: ${block.info.text}`,
         };
     }
 
     /**
      * Draw all targets.
      */
-    draw () {
+    draw() {
         if (this.renderer) {
             this.renderer.draw();
         }
@@ -551,7 +556,7 @@ export default class Runtime extends EventEmitter {
      * Tell the runtime to request a redraw.
      * Use after a clone/sprite has completed some visible operation on the stage.
      */
-    requestRedraw () {
+    requestRedraw() {
         this.redrawRequested = true;
     }
 
@@ -560,7 +565,7 @@ export default class Runtime extends EventEmitter {
      * the original sprite
      * @param {!Target} target Target requesting the targets update
      */
-    requestTargetsUpdate (target) {
+    requestTargetsUpdate(target) {
         if (!target.isOriginal) return;
         this._refreshTargets = true;
     }
@@ -568,25 +573,25 @@ export default class Runtime extends EventEmitter {
     /**
      * Emit an event that indicates that the blocks on the workspace need updating.
      */
-    requestBlocksUpdate () {
+    requestBlocksUpdate() {
         this.emit(Runtime.BLOCKS_NEED_UPDATE);
     }
 
     /**
      * Emit an event that indicates that the toolbox extension blocks need updating.
      */
-    requestToolboxExtensionsUpdate () {
+    requestToolboxExtensionsUpdate() {
         this.emit(Runtime.TOOLBOX_EXTENSIONS_NEED_UPDATE);
     }
 
     /**
-     * Start listening for events from python 
+     * Start listening for events from python
      */
-    start () {
+    start() {
         // Do not start if we are already running
         if (this._steppingInterval) return;
 
-        let interval = Runtime.THREAD_STEP_INTERVAL;
+        const interval = Runtime.THREAD_STEP_INTERVAL;
         this.currentStepTime = interval;
         this._steppingInterval = setInterval(() => {
             this._step();
@@ -598,10 +603,10 @@ export default class Runtime extends EventEmitter {
      * Quit the Runtime, clearing any handles which might keep the process alive.
      * Do not use the runtime after calling this method. This method is meant for test shutdown.
      */
-    quit () {
+    quit() {
         clearInterval(this._steppingInterval);
         this._steppingInterval = null;
-        this._threads = {}; 
+        this._threads = {};
     }
 
     // -----------------------------------------------------------------------------
@@ -613,21 +618,21 @@ export default class Runtime extends EventEmitter {
      * @param {!string} primitiveOpcode - the opcode of the primitive to execute.
      * @param {!Object} args - the arguments to the primitive.
      * @param {!String} token - the token of the block to execute.
-     * 
+     *
      * @return {Promise} - a promise which resolves to the return value of the primitive.
      * If the primitive does not return a value, the promise resolves to null.
      */
-    execBlockPrimitive (targetId, primitiveOpcode, args, blockUtility, token) {
+    execBlockPrimitive(targetId, primitiveOpcode, args, blockUtility, token) {
+        // eslint-disable-next-line no-param-reassign
         blockUtility.target = this.getTargetById(targetId);
         return this._primitives[primitiveOpcode](args, blockUtility);
     }
 
     getThreadById(threadId) {
-        if(this._threads[threadId]) {
+        if (this._threads[threadId]) {
             return this._threads[threadId];
-        } else {
-            throw new Error(`Cannot find thread ${threadId}`);
         }
+        throw new Error(`Cannot find thread ${threadId}`);
     }
 
     endThread(threadId) {
@@ -635,31 +640,32 @@ export default class Runtime extends EventEmitter {
         thread.setStatus(Thread.STATUS_DONE);
     }
 
-    pushBlockOp (threadId, primitiveOpcode, args, token) {
+    pushBlockOp(threadId, primitiveOpcode, args, token) {
         const thread = this.getThreadById(threadId);
         thread.pushOp(primitiveOpcode, args, token);
     }
 
-    registerThreads (targetsAndCode, returnValueCallback) {
+    registerThreads(targetsAndCode, returnValueCallback) {
         const threadsCode = {};
 
-        for (let targetId in targetsAndCode) {
-            const target = this.getTargetById(targetId)
+        const targetIds = Object.keys(targetsAndCode);
+
+        targetIds.forEach((id) => {
+            const target = this.getTargetById(id);
             if (target) {
-                targetsAndCode[targetId].forEach((code) => {
+                targetsAndCode[id].forEach((code) => {
                     const uid = safeUid();
 
                     this._threads[uid] = new Thread(target, returnValueCallback);
                     threadsCode[uid] = code;
                 });
             } else {
-                throw new Error(`Cannot find target with id ${targetId}`);
+                throw new Error(`Cannot find target with id ${id}`);
             }
-        }
-
+        });
         return threadsCode;
     }
-    
+
     /**
      * Start all relevant hats.
      * @param {!string} requestedHatOpcode Opcode of hats to start.
@@ -667,9 +673,5 @@ export default class Runtime extends EventEmitter {
      * @param {Target=} optTarget Optionally, a target to restrict to.
      * @return {Array.<Thread>} List of threads started by this function.
      */
-    startHats (requestedHatOpcode,
-        optMatchFields, optTarget) {
-
-    }
+    startHats(requestedHatOpcode, optMatchFields, optTarget) {}
 }
-

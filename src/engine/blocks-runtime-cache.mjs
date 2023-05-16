@@ -13,7 +13,7 @@
  * @param {string} blockId - Id for whose block data is cached in this instance
  */
 class RuntimeScriptCache {
-    constructor (container, blockId) {
+    constructor(container, blockId) {
         /**
          * Container with block data for blockId.
          * @type {Blocks}
@@ -40,7 +40,7 @@ class RuntimeScriptCache {
          * values will be compared later by the VM.
          * @type {object}
          */
-        this.fieldsOfInputs = Object.assign({}, fields);
+        this.fieldsOfInputs = { ...fields };
         if (Object.keys(fields).length === 0) {
             const inputs = container.getInputs(block);
             for (const input in inputs) {
@@ -52,7 +52,7 @@ class RuntimeScriptCache {
             }
         }
         for (const key in this.fieldsOfInputs) {
-            const field = this.fieldsOfInputs[key] = Object.assign({}, this.fieldsOfInputs[key]);
+            const field = (this.fieldsOfInputs[key] = { ...this.fieldsOfInputs[key] });
             if (field.value.toUpperCase) {
                 field.value = field.value.toUpperCase();
             }
@@ -66,7 +66,7 @@ class RuntimeScriptCache {
  * @param {string} opcode - Opcode to filter top blocks by
  */
 export const getScripts = function () {
-    throw new Error('blocks.js has not initialized BlocksRuntimeCache');
+    throw new Error("blocks.js has not initialized BlocksRuntimeCache");
 };
 
 /**
@@ -76,4 +76,4 @@ export const getScripts = function () {
 const _RuntimeScriptCache = RuntimeScriptCache;
 export default _RuntimeScriptCache;
 
-import('./blocks.mjs');
+import("./blocks.mjs");

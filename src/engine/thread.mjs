@@ -1,60 +1,59 @@
-import BlockUtility from './block-utility.mjs';
+import BlockUtility from "./block-utility.mjs";
 
 /**
  * A thread is just a queue of all the block operations requested by the worker
  * @constructor
  */
 class Thread {
-    constructor (target, returnValueCallback) {
-
+    constructor(target, returnValueCallback) {
         this.blockOpQueue = [];
 
-        this._target = target;
+        this.target = target;
 
         if (target.runtime) {
             this.runtime = target.runtime;
         } else {
-            throw new Error('Targets must include a runtime to be used in threads');
+            throw new Error("Targets must include a runtime to be used in threads");
         }
 
-        this._status = 0;
+        this.status = 0;
 
-        this._blockUtility = new BlockUtility(this._target, this.runtime, this);
+        this.blockUtility = new BlockUtility(this.target, this.runtime, this);
 
         this.returnValueCallback = returnValueCallback;
     }
 
     pushOp(primitiveOpcode, args, token) {
-        const targetId = this._target.id;
-        const blockUtil = this._blockUtility;
-        const opObj = {targetId, primitiveOpcode, args, blockUtil, token};
+        const targetId = this.target.id;
+        const blockUtil = this.blockUtility;
+        const opObj = { targetId, primitiveOpcode, args, blockUtil, token };
         this.blockOpQueue.push(opObj);
 
-        this._status = Thread.STATUS_RUNNING;
+        this.status = Thread.STATUS_RUNNING;
     }
 
     step() {
-        if (this._status === Thread.STATUS_YIELD_TICK || this._status === Thread.STATUS_RUNNING) {
-            this._status = Thread.STATUS_RUNNING;
+        if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
+            this.status = Thread.STATUS_RUNNING;
             while (this.blockOpQueue.length > 0) {
                 const op = this.blockOpQueue[0];
 
                 const returnVal = this.runtime.execBlockPrimitive(op.targetId, op.primitiveOpcode, op.args, op.blockUtil);
 
                 // If the thread has yielded then we need to stall until the next tick
-                if (this._status === Thread.STATUS_YIELD_TICK || this._status === Thread.STATUS_YIELD) return;
+                if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_YIELD) return;
 
-                this.returnValueCallback({token: op.token}, returnVal);
+                this.returnValueCallback({ token: op.token }, returnVal);
                 this.blockOpQueue.shift();
             }
-            if (this._status === Thread.STATUS_RUNNING) {
-                this._status = Thread.STATUS_IDLE;
+            if (this.status === Thread.STATUS_RUNNING) {
+                this.status = Thread.STATUS_IDLE;
             }
         }
     }
 
     done() {
-        return this._status == Thread.STATUS_DONE;
+        return this.status === Thread.STATUS_DONE;
     }
 
     /**
@@ -63,7 +62,7 @@ class Thread {
      * stepping from block to block.
      * @const
      */
-    static get STATUS_RUNNING () {
+    static get STATUS_RUNNING() {
         return 0;
     }
 
@@ -72,7 +71,7 @@ class Thread {
      * execution is paused until the promise changes thread status.
      * @const
      */
-    static get STATUS_PROMISE_WAIT () {
+    static get STATUS_PROMISE_WAIT() {
         return 1;
     }
 
@@ -80,7 +79,7 @@ class Thread {
      * Thread status for yield.
      * @const
      */
-    static get STATUS_YIELD () {
+    static get STATUS_YIELD() {
         return 2;
     }
 
@@ -89,7 +88,7 @@ class Thread {
      * thread is resumed.
      * @const
      */
-    static get STATUS_YIELD_TICK () {
+    static get STATUS_YIELD_TICK() {
         return 3;
     }
 
@@ -98,7 +97,7 @@ class Thread {
      * Thread is in this state when there are no more blocks to execute.
      * @const
      */
-    static get STATUS_DONE () {
+    static get STATUS_DONE() {
         return 4;
     }
 
@@ -107,7 +106,7 @@ class Thread {
      * Idling waiting for a new message
      * @const
      */
-    static get STATUS_IDLE () {
+    static get STATUS_IDLE() {
         return 5;
     }
 
@@ -115,14 +114,26 @@ class Thread {
      * Get the status of this thread.
      */
     getStatus() {
-        return this._status;
+        return this.status;
     }
 
     /**
      * Set the status of this thread.
      */
     setStatus(newStatus) {
-        this._status = newStatus;
+        this.status = newStatus;
+    }
+
+    yield() {
+        this.setStatus(Thread.STATUS_YIELD);
+    }
+
+    yieldTick() {
+        this.setStatus(Thread.STATUS_YIELD_TICK);
+    }
+
+    endThread() {
+        this.setStatus(Thread.STATUS_DONE);
     }
 }
 

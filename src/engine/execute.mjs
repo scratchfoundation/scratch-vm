@@ -1,9 +1,9 @@
-import BlockUtility from './block-utility.mjs';
-import BlocksExecuteCache from './blocks-execute-cache';
-import log from '../util/log.mjs';
-import Thread from './thread';
-import { Map } from 'immutable';
-import cast from '../util/cast.mjs';
+import { Map } from "immutable";
+import BlockUtility from "./block-utility.mjs";
+import BlocksExecuteCache from "./blocks-execute-cache";
+import log from "../util/log.mjs";
+import Thread from "./thread";
+import cast from "../util/cast.mjs";
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -15,7 +15,7 @@ const blockUtility = new BlockUtility();
  * Profiler frame name for block functions.
  * @const {string}
  */
-const blockFunctionProfilerFrame = 'blockFunction';
+const blockFunctionProfilerFrame = "blockFunction";
 
 /**
  * Profiler frame ID for 'blockFunction'.
@@ -29,11 +29,7 @@ let blockFunctionProfilerId = -1;
  * @return {boolean} True if the value appears to be a Promise.
  */
 const isPromise = function (value) {
-    return (
-        value !== null &&
-        typeof value === 'object' &&
-        typeof value.then === 'function'
-    );
+    return value !== null && typeof value === "object" && typeof value.then === "function";
 };
 
 /**
@@ -52,7 +48,7 @@ const isPromise = function (value) {
 // metrics (dd)
 const handleReport = function (resolvedValue, sequencer, thread, blockCached, lastOperation) {
     const currentBlockId = blockCached.id;
-    const opcode = blockCached.opcode;
+    const { opcode } = blockCached;
     const isHat = blockCached._isHat;
 
     thread.pushReportedValue(resolvedValue);
@@ -64,12 +60,9 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
             // via stack click
             if (!thread.stackClick) {
                 const hasOldEdgeValue = thread.target.hasEdgeActivatedValue(currentBlockId);
-                const oldEdgeValue = thread.target.updateEdgeActivatedValue(
-                    currentBlockId,
-                    resolvedValue
-                );
+                const oldEdgeValue = thread.target.updateEdgeActivatedValue(currentBlockId, resolvedValue);
 
-                const edgeWasActivated = hasOldEdgeValue ? (!oldEdgeValue && resolvedValue) : resolvedValue;
+                const edgeWasActivated = hasOldEdgeValue ? !oldEdgeValue && resolvedValue : resolvedValue;
                 if (!edgeWasActivated) {
                     sequencer.retireThread(thread);
                 }
@@ -82,21 +75,23 @@ const handleReport = function (resolvedValue, sequencer, thread, blockCached, la
     } else {
         // In a non-hat, report the value visually if necessary if
         // at the top of the thread stack.
-        if (lastOperation && typeof resolvedValue !== 'undefined' && thread.atStackTop()) {
+        if (lastOperation && typeof resolvedValue !== "undefined" && thread.atStackTop()) {
             if (thread.stackClick) {
                 sequencer.runtime.visualReport(currentBlockId, resolvedValue);
             }
             if (thread.updateMonitor) {
-                const targetId = sequencer.runtime.monitorBlocks.getBlock(currentBlockId).targetId;
+                const { targetId } = sequencer.runtime.monitorBlocks.getBlock(currentBlockId);
                 if (targetId && !sequencer.runtime.getTargetById(targetId)) {
                     // Target no longer exists
                     return;
                 }
-                sequencer.runtime.requestUpdateMonitor(Map({
-                    id: currentBlockId,
-                    spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
-                    value: resolvedValue
-                }));
+                sequencer.runtime.requestUpdateMonitor(
+                    Map({
+                        id: currentBlockId,
+                        spriteName: targetId ? sequencer.runtime.getTargetById(targetId).getName() : null,
+                        value: resolvedValue,
+                    })
+                );
             }
         }
         // Finished any yields.
@@ -110,38 +105,41 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
         thread.status = Thread.STATUS_PROMISE_WAIT;
     }
     // Promise handlers
-    primitiveReportedValue.then(resolvedValue => {
-        handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
-        // If it's a command block or a top level reporter in a stackClick.
-        if (lastOperation) {
-            let stackFrame;
-            let nextBlockId;
-            do {
-                // In the case that the promise is the last block in the current thread stack
-                // We need to pop out repeatedly until we find the next block.
-                const popped = thread.popStack();
-                if (popped === null) {
-                    return;
-                }
-                nextBlockId = thread.target.blocks.getNextBlock(popped);
-                if (nextBlockId !== null) {
-                    // A next block exists so break out this loop
-                    break;
-                }
-                // Investigate the next block and if not in a loop,
-                // then repeat and pop the next item off the stack frame
-                stackFrame = thread.peekStackFrame();
-            } while (stackFrame !== null && !stackFrame.isLoop);
+    primitiveReportedValue.then(
+        (resolvedValue) => {
+            handleReport(resolvedValue, sequencer, thread, blockCached, lastOperation);
+            // If it's a command block or a top level reporter in a stackClick.
+            if (lastOperation) {
+                let stackFrame;
+                let nextBlockId;
+                do {
+                    // In the case that the promise is the last block in the current thread stack
+                    // We need to pop out repeatedly until we find the next block.
+                    const popped = thread.popStack();
+                    if (popped === null) {
+                        return;
+                    }
+                    nextBlockId = thread.target.blocks.getNextBlock(popped);
+                    if (nextBlockId !== null) {
+                        // A next block exists so break out this loop
+                        break;
+                    }
+                    // Investigate the next block and if not in a loop,
+                    // then repeat and pop the next item off the stack frame
+                    stackFrame = thread.peekStackFrame();
+                } while (stackFrame !== null && !stackFrame.isLoop);
 
-            thread.pushStack(nextBlockId);
+                thread.pushStack(nextBlockId);
+            }
+        },
+        (rejectionReason) => {
+            // Promise rejected: the primitive had some error.
+            // Log it and proceed.
+            log.warn("Primitive rejected promise: ", rejectionReason);
+            thread.status = Thread.STATUS_RUNNING;
+            thread.popStack();
         }
-    }, rejectionReason => {
-        // Promise rejected: the primitive had some error.
-        // Log it and proceed.
-        log.warn('Primitive rejected promise: ', rejectionReason);
-        thread.status = Thread.STATUS_RUNNING;
-        thread.popStack();
-    });
+    );
 };
 
 /**
@@ -160,7 +158,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
  * @param {object} cached default set of cached values
  */
 class BlockCached {
-    constructor (blockContainer, cached) {
+    constructor(blockContainer, cached) {
         /**
          * Block id in its parent set of blocks.
          * @type {string}
@@ -237,13 +235,13 @@ class BlockCached {
          * A copy of the block's fields that may be modified.
          * @type {object}
          */
-        this._fields = Object.assign({}, this.fields);
+        this._fields = { ...this.fields };
 
         /**
          * A copy of the block's inputs that may be modified.
          * @type {object}
          */
-        this._inputs = Object.assign({}, this.inputs);
+        this._inputs = { ...this.inputs };
 
         /**
          * An arguments object for block implementations. All executions of this
@@ -251,7 +249,7 @@ class BlockCached {
          * @type {object}
          */
         this._argValues = {
-            mutation: this.mutation
+            mutation: this.mutation,
         };
 
         /**
@@ -277,34 +275,26 @@ class BlockCached {
          */
         this._ops = [];
 
-        const {runtime} = blockUtility.sequencer;
+        const { runtime } = blockUtility.sequencer;
 
-        const {opcode, fields, inputs} = this;
+        const { opcode, fields, inputs } = this;
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
-        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
+        this._definedBlockFunction = typeof this._blockFunction !== "undefined";
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
-        this._isShadowBlock = (
-            !this._definedBlockFunction &&
-            fieldKeys.length === 1 &&
-            Object.keys(inputs).length === 0
-        );
+        this._isShadowBlock = !this._definedBlockFunction && fieldKeys.length === 1 && Object.keys(inputs).length === 0;
         this._shadowValue = this._isShadowBlock && fields[fieldKeys[0]].value;
 
         // Store the static fields onto _argValues.
         for (const fieldName in fields) {
-            if (
-                fieldName === 'VARIABLE' ||
-                fieldName === 'LIST' ||
-                fieldName === 'BROADCAST_OPTION'
-            ) {
+            if (fieldName === "VARIABLE" || fieldName === "LIST" || fieldName === "BROADCAST_OPTION") {
                 this._argValues[fieldName] = {
                     id: fields[fieldName].id,
-                    name: fields[fieldName].value
+                    name: fields[fieldName].value,
                 };
             } else {
                 this._argValues[fieldName] = fields[fieldName].value;
@@ -314,12 +304,12 @@ class BlockCached {
         // Remove custom_block. It is not part of block execution.
         delete this._inputs.custom_block;
 
-        if ('BROADCAST_INPUT' in this._inputs) {
+        if ("BROADCAST_INPUT" in this._inputs) {
             // BROADCAST_INPUT is called BROADCAST_OPTION in the args and is an
             // object with an unchanging shape.
             this._argValues.BROADCAST_OPTION = {
                 id: null,
-                name: null
+                name: null,
             };
 
             // We can go ahead and compute BROADCAST_INPUT if it is a shadow
@@ -397,7 +387,7 @@ const _prepareBlockProfiling = function (profiler, blockCached) {
  * @param {!Thread} thread Thread which to read and execute.
  */
 const execute = function (sequencer, thread) {
-    const runtime = sequencer.runtime;
+    const { runtime } = sequencer;
 
     // store sequencer and thread so block functions can access them through
     // convenience methods.
@@ -408,7 +398,7 @@ const execute = function (sequencer, thread) {
     const currentBlockId = thread.peekStack();
     const currentStackFrame = thread.peekStackFrame();
 
-    let blockContainer = thread.blockContainer;
+    let { blockContainer } = thread;
     let blockCached = BlocksExecuteCache.getCached(blockContainer, currentBlockId, BlockCached);
     if (blockCached === null) {
         blockContainer = runtime.flyoutBlocks;
@@ -422,22 +412,22 @@ const execute = function (sequencer, thread) {
     }
 
     const ops = blockCached._ops;
-    const length = ops.length;
+    const { length } = ops;
     let i = 0;
 
     if (currentStackFrame.reported !== null) {
-        const reported = currentStackFrame.reported;
+        const { reported } = currentStackFrame;
         // Reinstate all the previous values.
         for (; i < reported.length; i++) {
-            const {opCached: oldOpCached, inputValue} = reported[i];
+            const { opCached: oldOpCached, inputValue } = reported[i];
 
-            const opCached = ops.find(op => op.id === oldOpCached);
+            const opCached = ops.find((op) => op.id === oldOpCached);
 
             if (opCached) {
                 const inputName = opCached._parentKey;
                 const argValues = opCached._parentValues;
 
-                if (inputName === 'BROADCAST_INPUT') {
+                if (inputName === "BROADCAST_INPUT") {
                     // Something is plugged into the broadcast input.
                     // Cast it to a string. We don't need an id here.
                     argValues.BROADCAST_OPTION.id = null;
@@ -453,9 +443,9 @@ const execute = function (sequencer, thread) {
         // candidate. If an earlier block that was performed was removed then
         // we'll find the index where the last operation is now.
         if (reported.length > 0) {
-            const lastExisting = reported.reverse().find(report => ops.find(op => op.id === report.opCached));
+            const lastExisting = reported.reverse().find((report) => ops.find((op) => op.id === report.opCached));
             if (lastExisting) {
-                i = ops.findIndex(opCached => opCached.id === lastExisting.opCached) + 1;
+                i = ops.findIndex((opCached) => opCached.id === lastExisting.opCached) + 1;
             } else {
                 i = 0;
             }
@@ -471,7 +461,7 @@ const execute = function (sequencer, thread) {
             const inputName = opCached._parentKey;
             const argValues = opCached._parentValues;
 
-            if (inputName === 'BROADCAST_INPUT') {
+            if (inputName === "BROADCAST_INPUT") {
                 // Something is plugged into the broadcast input.
                 // Cast it to a string. We don't need an id here.
                 argValues.BROADCAST_OPTION.id = null;
@@ -522,19 +512,19 @@ const execute = function (sequencer, thread) {
             // that time.
             thread.justReported = null;
             currentStackFrame.reporting = ops[i].id;
-            currentStackFrame.reported = ops.slice(0, i).map(reportedCached => {
+            currentStackFrame.reported = ops.slice(0, i).map((reportedCached) => {
                 const inputName = reportedCached._parentKey;
                 const reportedValues = reportedCached._parentValues;
 
-                if (inputName === 'BROADCAST_INPUT') {
+                if (inputName === "BROADCAST_INPUT") {
                     return {
                         opCached: reportedCached.id,
-                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name
+                        inputValue: reportedValues[inputName].BROADCAST_OPTION.name,
                     };
                 }
                 return {
                     opCached: reportedCached.id,
-                    inputValue: reportedValues[inputName]
+                    inputValue: reportedValues[inputName],
                 };
             });
 
@@ -550,7 +540,7 @@ const execute = function (sequencer, thread) {
                 const inputName = opCached._parentKey;
                 const parentValues = opCached._parentValues;
 
-                if (inputName === 'BROADCAST_INPUT') {
+                if (inputName === "BROADCAST_INPUT") {
                     // Something is plugged into the broadcast input.
                     // Cast it to a string. We don't need an id here.
                     parentValues.BROADCAST_OPTION.id = null;

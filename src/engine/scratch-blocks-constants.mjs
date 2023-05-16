@@ -21,7 +21,7 @@ const ScratchBlocksConstants = {
      * ENUM for output shape: squared (any/all values; strings).
      * @const
      */
-    OUTPUT_SHAPE_SQUARE: 3
+    OUTPUT_SHAPE_SQUARE: 3,
 };
 
 export default ScratchBlocksConstants;

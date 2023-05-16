@@ -1,6 +1,4 @@
-
 class PrimProxy {
-
     static opcodeMap = {
         move: "motion_movesteps",
         goToXY: "motion_gotoxy",
@@ -48,11 +46,13 @@ class PrimProxy {
 
         endThread: "core_endthread",
     };
+
     constructor(targetId, postFunction) {
         this.targetId = targetId;
         this.post = async function (opCode, args) {
-            return await postFunction(this.targetId, opCode, args);
-        }
+            const retVal = await postFunction(this.targetId, opCode, args);
+            return retVal;
+        };
     }
 
     static getPrimNames() {
@@ -92,7 +92,10 @@ class PrimProxy {
     }
 
     glideTo(seconds, targetName) {
-        this.post(PrimProxy.opcodeMap.glideTo, { SECS: seconds, TO: targetName });
+        this.post(PrimProxy.opcodeMap.glideTo, {
+            SECS: seconds,
+            TO: targetName,
+        });
     }
 
     ifOnEdgeBounce() {
@@ -147,7 +150,10 @@ class PrimProxy {
     }
 
     thinkFor(message, secs) {
-        this.post(PrimProxy.opcodeMap.thinkFor, { MESSAGE: message, SECS: secs });
+        this.post(PrimProxy.opcodeMap.thinkFor, {
+            MESSAGE: message,
+            SECS: secs,
+        });
     }
 
     show() {
@@ -167,7 +173,9 @@ class PrimProxy {
     }
 
     setBackdropToAndWait(backdrop) {
-        this.post(PrimProxy.opcodeMap.setBackdropToAndWait, { BACKDROP: backdrop });
+        this.post(PrimProxy.opcodeMap.setBackdropToAndWait, {
+            BACKDROP: backdrop,
+        });
     }
 
     nextCostume() {
@@ -179,11 +187,17 @@ class PrimProxy {
     }
 
     changeGraphicEffectBy(effect, change) {
-        this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, { EFFECT: effect, CHANGE: change });
+        this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, {
+            EFFECT: effect,
+            CHANGE: change,
+        });
     }
 
     setGraphicEffectTo(effect, value) {
-        this.post(PrimProxy.opcodeMap.setGraphicEffectTo, { EFFECT: effect, VALUE: value });
+        this.post(PrimProxy.opcodeMap.setGraphicEffectTo, {
+            EFFECT: effect,
+            VALUE: value,
+        });
     }
 
     clearGraphicEffects() {
@@ -198,8 +212,8 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.setSizeTo, { SIZE: size });
     }
 
-    setLayerTo(front_back) {
-        this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: front_back });
+    setLayerTo(frontBack) {
+        this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: frontBack });
     }
 
     changeLayerBy(num) {
@@ -208,20 +222,23 @@ class PrimProxy {
 
     // as above, no tests for async functions
     async getSize() {
-        let size = PrimProxy.post(this.opcodeMap.getSize, {});
+        const size = PrimProxy.post(this.opcodeMap.getSize, {});
         return size;
     }
 
     async getCostume() {
-        let costume = await PrimProxy.post(this.opcodeMap.getCostume, { NUMBER_NAME: 'name' });
+        const costume = await PrimProxy.post(this.opcodeMap.getCostume, {
+            NUMBER_NAME: "name",
+        });
         return costume;
     }
 
     async getBackdrop() {
-        let backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, { NUMBER_NAME: 'name' });
+        const backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, {
+            NUMBER_NAME: "name",
+        });
         return backdrop;
     }
-
 }
 
 export default PrimProxy;

@@ -1,6 +1,6 @@
-import mutationAdapter from './mutation-adapter.mjs';
-import html from 'htmlparser2';
-import uid from '../util/uid.mjs';
+import html from "htmlparser2";
+import mutationAdapter from "./mutation-adapter.mjs";
+import uid from "../util/uid.mjs";
 
 /**
  * Convert and an individual block DOM to the representation tree.
@@ -25,9 +25,9 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
         next: null, // Next block in the stack, if one exists.
         topLevel: isTopBlock, // If this block starts a stack.
         parent: parent, // Parent block ID, if available.
-        shadow: blockDOM.name === 'shadow', // If this represents a shadow/slot.
+        shadow: blockDOM.name === "shadow", // If this represents a shadow/slot.
         x: blockDOM.attribs.x, // X position of script, if top-level.
-        y: blockDOM.attribs.y // Y position of script, if top-level.
+        y: blockDOM.attribs.y, // Y position of script, if top-level.
     };
 
     // Add the block to the representation tree.
@@ -46,9 +46,9 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
                 continue;
             }
             const grandChildNodeName = grandChildNode.name.toLowerCase();
-            if (grandChildNodeName === 'block') {
+            if (grandChildNodeName === "block") {
                 childBlockNode = grandChildNode;
-            } else if (grandChildNodeName === 'shadow') {
+            } else if (grandChildNodeName === "shadow") {
                 childShadowNode = grandChildNode;
             }
         }
@@ -61,71 +61,66 @@ const domToBlock = function (blockDOM, blocks, isTopBlock, parent) {
         // Not all Blockly-type blocks are handled here,
         // as we won't be using all of them for Scratch.
         switch (xmlChild.name.toLowerCase()) {
-        case 'field':
-        {
-            // Add the field to this block.
-            const fieldName = xmlChild.attribs.name;
-            // Add id in case it is a variable field
-            const fieldId = xmlChild.attribs.id;
-            let fieldData = '';
-            if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
-                fieldData = xmlChild.children[0].data;
-            } else {
-                // If the child of the field with a data property
-                // doesn't exist, set the data to an empty string.
-                fieldData = '';
+            case "field": {
+                // Add the field to this block.
+                const fieldName = xmlChild.attribs.name;
+                // Add id in case it is a variable field
+                const fieldId = xmlChild.attribs.id;
+                let fieldData = "";
+                if (xmlChild.children.length > 0 && xmlChild.children[0].data) {
+                    fieldData = xmlChild.children[0].data;
+                } else {
+                    // If the child of the field with a data property
+                    // doesn't exist, set the data to an empty string.
+                    fieldData = "";
+                }
+                block.fields[fieldName] = {
+                    name: fieldName,
+                    id: fieldId,
+                    value: fieldData,
+                };
+                const fieldVarType = xmlChild.attribs.variabletype;
+                if (typeof fieldVarType === "string") {
+                    block.fields[fieldName].variableType = fieldVarType;
+                }
+                break;
             }
-            block.fields[fieldName] = {
-                name: fieldName,
-                id: fieldId,
-                value: fieldData
-            };
-            const fieldVarType = xmlChild.attribs.variabletype;
-            if (typeof fieldVarType === 'string') {
-                block.fields[fieldName].variableType = fieldVarType;
+            case "comment": {
+                block.comment = xmlChild.attribs.id;
+                break;
             }
-            break;
-        }
-        case 'comment':
-        {
-            block.comment = xmlChild.attribs.id;
-            break;
-        }
-        case 'value':
-        case 'statement':
-        {
-            // Recursively generate block structure for input block.
-            domToBlock(childBlockNode, blocks, false, block.id);
-            if (childShadowNode && childBlockNode !== childShadowNode) {
-                // Also generate the shadow block.
-                domToBlock(childShadowNode, blocks, false, block.id);
+            case "value":
+            case "statement": {
+                // Recursively generate block structure for input block.
+                domToBlock(childBlockNode, blocks, false, block.id);
+                if (childShadowNode && childBlockNode !== childShadowNode) {
+                    // Also generate the shadow block.
+                    domToBlock(childShadowNode, blocks, false, block.id);
+                }
+                // Link this block's input to the child block.
+                const inputName = xmlChild.attribs.name;
+                block.inputs[inputName] = {
+                    name: inputName,
+                    block: childBlockNode.attribs.id,
+                    shadow: childShadowNode ? childShadowNode.attribs.id : null,
+                };
+                break;
             }
-            // Link this block's input to the child block.
-            const inputName = xmlChild.attribs.name;
-            block.inputs[inputName] = {
-                name: inputName,
-                block: childBlockNode.attribs.id,
-                shadow: childShadowNode ? childShadowNode.attribs.id : null
-            };
-            break;
-        }
-        case 'next':
-        {
-            if (!childBlockNode || !childBlockNode.attribs) {
-                // Invalid child block.
-                continue;
+            case "next": {
+                if (!childBlockNode || !childBlockNode.attribs) {
+                    // Invalid child block.
+                    continue;
+                }
+                // Recursively generate block structure for next block.
+                domToBlock(childBlockNode, blocks, false, block.id);
+                // Link next block to this block.
+                block.next = childBlockNode.attribs.id;
+                break;
             }
-            // Recursively generate block structure for next block.
-            domToBlock(childBlockNode, blocks, false, block.id);
-            // Link next block to this block.
-            block.next = childBlockNode.attribs.id;
-            break;
-        }
-        case 'mutation':
-        {
-            block.mutation = mutationAdapter(xmlChild);
-            break;
-        }
+            case "mutation": {
+                block.mutation = mutationAdapter(xmlChild);
+                break;
+            }
         }
     }
 };
@@ -146,7 +141,7 @@ const domToBlocks = function (blocksDOM) {
             continue;
         }
         const tagName = block.name.toLowerCase();
-        if (tagName === 'block' || tagName === 'shadow') {
+        if (tagName === "block" || tagName === "shadow") {
             domToBlock(block, blocks, true, null);
         }
     }
@@ -167,10 +162,10 @@ const domToBlocks = function (blocksDOM) {
  */
 const adapter = function (e) {
     // Validate input
-    if (typeof e !== 'object') return;
-    if (typeof e.xml !== 'object') return;
+    if (typeof e !== "object") return;
+    if (typeof e.xml !== "object") return;
 
-    return domToBlocks(html.parseDOM(e.xml.outerHTML, {decodeEntities: true}));
+    return domToBlocks(html.parseDOM(e.xml.outerHTML, { decodeEntities: true }));
 };
 
 export default adapter;

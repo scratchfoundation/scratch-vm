@@ -1,4 +1,4 @@
-import immutable from 'immutable';
+import immutable from "immutable";
 
 const { Record } = immutable;
 
@@ -11,7 +11,7 @@ const MonitorRecord = Record({
     opcode: null,
     value: null,
     params: null,
-    mode: 'default',
+    mode: "default",
     sliderMin: 0,
     sliderMax: 100,
     isDiscrete: true,
@@ -19,7 +19,7 @@ const MonitorRecord = Record({
     y: null,
     width: 0,
     height: 0,
-    visible: true
+    visible: true,
 });
 
 export default MonitorRecord;

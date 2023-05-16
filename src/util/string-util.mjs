@@ -1,13 +1,13 @@
-import log from './log.mjs';
+import log from "./log.mjs";
 
 class StringUtil {
-    static withoutTrailingDigits (s) {
+    static withoutTrailingDigits(s) {
         let i = s.length - 1;
-        while ((i >= 0) && ('0123456789'.indexOf(s.charAt(i)) > -1)) i--;
+        while (i >= 0 && "0123456789".indexOf(s.charAt(i)) > -1) i--;
         return s.slice(0, i + 1);
     }
 
-    static unusedName (name, existingNames) {
+    static unusedName(name, existingNames) {
         if (existingNames.indexOf(name) < 0) return name;
         name = StringUtil.withoutTrailingDigits(name);
         let i = 2;
@@ -30,13 +30,12 @@ class StringUtil {
      * // returns ['foo', '']
      * splitFirst('foo.', '.');
      */
-    static splitFirst (text, separator) {
+    static splitFirst(text, separator) {
         const index = text.indexOf(separator);
         if (index >= 0) {
             return [text.substring(0, index), text.substring(index + 1)];
         }
         return [text, null];
-
     }
 
     /**
@@ -50,15 +49,15 @@ class StringUtil {
      * @param {!object} obj - The object to serialize
      * @return {!string} The JSON.stringified string with Infinity/NaN replaced with 0
      */
-    static stringify (obj) {
+    static stringify(obj) {
         return JSON.stringify(obj, (_key, value) => {
-            if (typeof value === 'number' &&
-               (value === Infinity || value === -Infinity || isNaN(value))){
+            if (typeof value === "number" && (value === Infinity || value === -Infinity || isNaN(value))) {
                 return 0;
             }
             return value;
         });
     }
+
     /**
      * A function to replace unsafe characters (not allowed in XML) with safe ones. This is used
      * in cases where we're replacing non-user facing strings (e.g. variable IDs).
@@ -68,24 +67,29 @@ class StringUtil {
      * In some cases this argument may be an array (e.g. hacked inputs from 2.0)
      * @return {string} String with control characters replaced.
      */
-    static replaceUnsafeChars (unsafe) {
-        if (typeof unsafe !== 'string') {
+    static replaceUnsafeChars(unsafe) {
+        if (typeof unsafe !== "string") {
             if (Array.isArray(unsafe)) {
                 // This happens when we have hacked blocks from 2.0
                 // See #1030
                 unsafe = String(unsafe);
             } else {
-                log.error('Unexpected input recieved in replaceUnsafeChars');
+                log.error("Unexpected input recieved in replaceUnsafeChars");
                 return unsafe;
             }
         }
-        return unsafe.replace(/[<>&'"]/g, c => {
+        return unsafe.replace(/[<>&'"]/g, (c) => {
             switch (c) {
-            case '<': return 'lt';
-            case '>': return 'gt';
-            case '&': return 'amp';
-            case '\'': return 'apos';
-            case '"': return 'quot';
+                case "<":
+                    return "lt";
+                case ">":
+                    return "gt";
+                case "&":
+                    return "amp";
+                case "'":
+                    return "apos";
+                case '"':
+                    return "quot";
             }
         });
     }

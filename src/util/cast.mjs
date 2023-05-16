@@ -1,4 +1,4 @@
-import Color from './color.mjs';
+import Color from "./color.mjs";
 
 /**
  * @fileoverview
@@ -19,10 +19,10 @@ class Cast {
      * @param {*} value Value to cast to number.
      * @return {number} The Scratch-casted number value.
      */
-    static toNumber (value) {
+    static toNumber(value) {
         // If value is already a number we don't need to coerce it with
         // Number().
-        if (typeof value === 'number') {
+        if (typeof value === "number") {
             // Scratch treats NaN as 0, when needed as a number.
             // E.g., 0 + NaN -> 0.
             if (Number.isNaN(value)) {
@@ -46,16 +46,14 @@ class Cast {
      * @param {*} value Value to cast to boolean.
      * @return {boolean} The Scratch-casted boolean value.
      */
-    static toBoolean (value) {
+    static toBoolean(value) {
         // Already a boolean?
-        if (typeof value === 'boolean') {
+        if (typeof value === "boolean") {
             return value;
         }
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
             // These specific strings are treated as false in Scratch.
-            if ((value === '') ||
-                (value === '0') ||
-                (value.toLowerCase() === 'false')) {
+            if (value === "" || value === "0" || value.toLowerCase() === "false") {
                 return false;
             }
             // All other strings treated as true.
@@ -70,7 +68,7 @@ class Cast {
      * @param {*} value Value to cast to string.
      * @return {string} The Scratch-casted string value.
      */
-    static toString (value) {
+    static toString(value) {
         return String(value);
     }
 
@@ -79,7 +77,7 @@ class Cast {
      * @param {*} value Value to convert to RGB color array.
      * @return {Array.<number>} [r,g,b], values between 0-255.
      */
-    static toRgbColorList (value) {
+    static toRgbColorList(value) {
         const color = Cast.toRgbColorObject(value);
         return [color.r, color.g, color.b];
     }
@@ -89,13 +87,13 @@ class Cast {
      * @param {*} value Value to convert to RGB color object.
      * @return {RGBOject} [r,g,b], values between 0-255.
      */
-    static toRgbColorObject (value) {
+    static toRgbColorObject(value) {
         let color;
-        if (typeof value === 'string' && value.substring(0, 1) === '#') {
+        if (typeof value === "string" && value.substring(0, 1) === "#") {
             color = Color.hexToRgb(value);
 
             // If the color wasn't *actually* a hex color, cast to black
-            if (!color) color = {r: 0, g: 0, b: 0, a: 255};
+            if (!color) color = { r: 0, g: 0, b: 0, a: 255 };
         } else {
             color = Color.decimalToRgb(Cast.toNumber(value));
         }
@@ -107,8 +105,8 @@ class Cast {
      * @param {*} val value to check.
      * @return {boolean} True if the argument is all white spaces or null / empty.
      */
-    static isWhiteSpace (val) {
-        return val === null || (typeof val === 'string' && val.trim().length === 0);
+    static isWhiteSpace(val) {
+        return val === null || (typeof val === "string" && val.trim().length === 0);
     }
 
     /**
@@ -118,7 +116,7 @@ class Cast {
      * @param {*} v2 Second value to compare.
      * @returns {number} Negative number if v1 < v2; 0 if equal; positive otherwise.
      */
-    static compare (v1, v2) {
+    static compare(v1, v2) {
         let n1 = Number(v1);
         let n2 = Number(v2);
         if (n1 === 0 && Cast.isWhiteSpace(v1)) {
@@ -133,16 +131,14 @@ class Cast {
             const s2 = String(v2).toLowerCase();
             if (s1 < s2) {
                 return -1;
-            } else if (s1 > s2) {
+            }
+            if (s1 > s2) {
                 return 1;
             }
             return 0;
         }
         // Handle the special case of Infinity
-        if (
-            (n1 === Infinity && n2 === Infinity) ||
-            (n1 === -Infinity && n2 === -Infinity)
-        ) {
+        if ((n1 === Infinity && n2 === Infinity) || (n1 === -Infinity && n2 === -Infinity)) {
             return 0;
         }
         // Compare as numbers.
@@ -154,30 +150,33 @@ class Cast {
      * @param {*} val Value to check.
      * @return {boolean} True if number looks like an integer.
      */
-    static isInt (val) {
+    static isInt(val) {
         // Values that are already numbers.
-        if (typeof val === 'number') {
-            if (isNaN(val)) { // NaN is considered an integer.
+        if (typeof val === "number") {
+            if (isNaN(val)) {
+                // NaN is considered an integer.
                 return true;
             }
             // True if it's "round" (e.g., 2.0 and 2).
             return val === parseInt(val, 10);
-        } else if (typeof val === 'boolean') {
+        }
+        if (typeof val === "boolean") {
             // `True` and `false` always represent integer after Scratch cast.
             return true;
-        } else if (typeof val === 'string') {
+        }
+        if (typeof val === "string") {
             // If it contains a decimal point, don't consider it an int.
-            return val.indexOf('.') < 0;
+            return val.indexOf(".") < 0;
         }
         return false;
     }
 
-    static get LIST_INVALID () {
-        return 'INVALID';
+    static get LIST_INVALID() {
+        return "INVALID";
     }
 
-    static get LIST_ALL () {
-        return 'ALL';
+    static get LIST_ALL() {
+        return "ALL";
     }
 
     /**
@@ -190,17 +189,18 @@ class Cast {
      * @param {boolean} acceptAll Whether it should accept "all" or not.
      * @return {(number|string)} 1-based index for list, LIST_ALL, or LIST_INVALID.
      */
-    static toListIndex (index, length, acceptAll) {
-        if (typeof index !== 'number') {
-            if (index === 'all') {
+    static toListIndex(index, length, acceptAll) {
+        if (typeof index !== "number") {
+            if (index === "all") {
                 return acceptAll ? Cast.LIST_ALL : Cast.LIST_INVALID;
             }
-            if (index === 'last') {
+            if (index === "last") {
                 if (length > 0) {
                     return length;
                 }
                 return Cast.LIST_INVALID;
-            } else if (index === 'random' || index === 'any') {
+            }
+            if (index === "random" || index === "any") {
                 if (length > 0) {
                     return 1 + Math.floor(Math.random() * length);
                 }

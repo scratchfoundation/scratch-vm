@@ -1,4 +1,5 @@
-import minilog from 'minilog';
+import minilog from "minilog";
+
 minilog.enable();
 
-export default minilog('vm');
+export default minilog("vm");

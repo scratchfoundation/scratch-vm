@@ -1,0 +1,11 @@
+{
+    "editor.tabSize": 3,
+    "[javascript]": {
+        "editor.formatOnSave": false
+    },
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    },
+    "files.eol": "\n",
+    "prettier.printWidth": 999999
+}
