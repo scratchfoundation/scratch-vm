@@ -16,26 +16,7 @@ import sb2 from "./serialization/sb2.mjs";
 
 import StringUtil from "./util/string-util.mjs";
 
-let _TextEncoder;
-if (typeof TextEncoder === "undefined") {
-    _TextEncoder = import("text-encoding").TextEncoder;
-} else {
-    _TextEncoder = TextEncoder;
-}
-
 const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
-
-const CORE_EXTENSIONS = [
-    // 'motion',
-    // 'looks',
-    // 'sound',
-    // 'events',
-    // 'control',
-    // 'sensing',
-    // 'operators',
-    // 'variables',
-    // 'myBlocks'
-];
 
 /**
  * Handles connections between blocks, stage, and extensions.
