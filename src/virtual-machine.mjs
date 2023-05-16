@@ -1,27 +1,29 @@
+import EventEmitter from "events";
+
+import validate from "scratch-parser";
+
+import Runtime from "./engine/runtime.mjs";
+import Variable from "./engine/variable.mjs";
+
+import "canvas-toBlob";
+
+import PyatchLinker from "./linker/pyatch-linker.mjs";
+import PyatchWorker from "./worker/pyatch-worker.mjs";
+import WorkerMessages from "./worker/worker-messages.mjs";
+
+import sb3 from "./serialization/sb3.mjs";
+import sb2 from "./serialization/sb2.mjs";
+
+import StringUtil from "./util/string-util.mjs";
+
 let _TextEncoder;
-if (typeof TextEncoder === 'undefined') {
-    _TextEncoder = import('text-encoding').TextEncoder;
+if (typeof TextEncoder === "undefined") {
+    _TextEncoder = import("text-encoding").TextEncoder;
 } else {
-    /* global TextEncoder */
     _TextEncoder = TextEncoder;
 }
-import EventEmitter from 'events';
 
-import Runtime from './engine/runtime.mjs';
-
-import 'canvas-toBlob';
-
-import PyatchLinker from './linker/pyatch-linker.mjs';
-import PyatchWorker from './worker/pyatch-worker.mjs';
-import WorkerMessages from './worker/worker-messages.mjs';
-
-import validate from 'scratch-parser';
-import sb3 from './serialization/sb3.mjs';
-import sb2 from './serialization/sb2.mjs';
-
-import StringUtil from './util/string-util.mjs';
-
-const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
+const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
 
 const CORE_EXTENSIONS = [
     // 'motion',
@@ -40,8 +42,7 @@ const CORE_EXTENSIONS = [
  * @constructor
  */
 export default class VirtualMachine extends EventEmitter {
-
-    constructor () {
+    constructor() {
         super();
 
         /**
@@ -59,7 +60,7 @@ export default class VirtualMachine extends EventEmitter {
     /**
      * Start running the VM - do this before anything else.
      */
-    start () {
+    start() {
         this.runtime.start();
     }
 
@@ -67,28 +68,28 @@ export default class VirtualMachine extends EventEmitter {
      * Quit the VM, clearing any handles which might keep the process alive.
      * Do not use the runtime after calling this method. This method is meant for test shutdown.
      */
-    quit () {
+    quit() {
         this.runtime.quit();
     }
 
     /**
      * "Green flag" handler - start all threads starting with a green flag.
      */
-    greenFlag () {
+    greenFlag() {
         this.runtime.greenFlag();
     }
 
     /**
      * Stop all threads and running activities.
      */
-    stopAll () {
+    stopAll() {
         this.runtime.stopAll();
     }
 
     /**
      * Clear out current running project data.
      */
-    clear () {
+    clear() {
         this.runtime.dispose();
     }
 
@@ -96,7 +97,7 @@ export default class VirtualMachine extends EventEmitter {
      * Set the audio engine for the VM/runtime
      * @param {!AudioEngine} audioEngine The audio engine to attach
      */
-    attachAudioEngine (audioEngine) {
+    attachAudioEngine(audioEngine) {
         this.runtime.attachAudioEngine(audioEngine);
     }
 
@@ -104,14 +105,14 @@ export default class VirtualMachine extends EventEmitter {
      * Set the renderer for the VM/runtime
      * @param {!RenderWebGL} renderer The renderer to attach
      */
-    attachRenderer (renderer) {
+    attachRenderer(renderer) {
         this.runtime.attachRenderer(renderer);
     }
 
     /**
      * @returns {RenderWebGL} The renderer attached to the vm
      */
-    get renderer () {
+    get renderer() {
         return this.runtime && this.runtime.renderer;
     }
 
@@ -119,7 +120,7 @@ export default class VirtualMachine extends EventEmitter {
      * Set the storage module for the VM/runtime
      * @param {!ScratchStorage} storage The storage module to attach
      */
-    attachStorage (storage) {
+    attachStorage(storage) {
         this.runtime.attachStorage(storage);
     }
 
@@ -131,19 +132,19 @@ export default class VirtualMachine extends EventEmitter {
      * Disabled selectively by updates that don't affect project serialization.
      * Defaults to true.
      */
-    emitTargetsUpdate (triggerProjectChange) {
-        if (typeof triggerProjectChange === 'undefined') triggerProjectChange = true;
-        this.emit('targetsUpdate', {
+    emitTargetsUpdate(triggerProjectChange) {
+        // eslint-disable-next-line no-param-reassign
+        if (typeof triggerProjectChange === "undefined") triggerProjectChange = true;
+        this.emit("targetsUpdate", {
             // [[target id, human readable target name], ...].
             targetList: this.runtime.targets
                 .filter(
                     // Don't report clones.
-                    target => !target.hasOwnProperty('isOriginal') || target.isOriginal
-                ).map(
-                    target => target.toJSON()
-                ),
+                    (target) => !target.hasOwnProperty("isOriginal") || target.isOriginal
+                )
+                .map((target) => target.toJSON()),
             // Currently editing target id.
-            editingTarget: this.editingTarget ? this.editingTarget.id : null
+            editingTarget: this.editingTarget ? this.editingTarget.id : null,
         });
         if (triggerProjectChange) {
             this.runtime.emitProjectChanged();
@@ -154,10 +155,11 @@ export default class VirtualMachine extends EventEmitter {
      * Emit an Blockly/scratch-blocks compatible XML representation
      * of the current editing target's blocks.
      */
-    emitWorkspaceUpdate () {
+    emitWorkspaceUpdate() {
         // Create a list of broadcast message Ids according to the stage variables
         const stageVariables = this.runtime.getTargetForStage().variables;
-        let messageIds = [];
+        const messageIds = [];
+        // eslint-disable-next-line no-restricted-syntax
         for (const varId in stageVariables) {
             if (stageVariables[varId].type === Variable.BROADCAST_MESSAGE_TYPE) {
                 messageIds.push(varId);
@@ -184,27 +186,25 @@ export default class VirtualMachine extends EventEmitter {
             const id = messageIds[i];
             delete this.runtime.getTargetForStage().variables[id];
         }
-        const globalVarMap = Object.assign({}, this.runtime.getTargetForStage().variables);
-        const localVarMap = this.editingTarget.isStage ?
-            Object.create(null) :
-            Object.assign({}, this.editingTarget.variables);
+        const globalVarMap = { ...this.runtime.getTargetForStage().variables };
+        const localVarMap = this.editingTarget.isStage ? Object.create(null) : { ...this.editingTarget.variables };
 
-        const globalVariables = Object.keys(globalVarMap).map(k => globalVarMap[k]);
-        const localVariables = Object.keys(localVarMap).map(k => localVarMap[k]);
+        const globalVariables = Object.keys(globalVarMap).map((k) => globalVarMap[k]);
+        const localVariables = Object.keys(localVarMap).map((k) => localVarMap[k]);
         const workspaceComments = Object.keys(this.editingTarget.comments)
-            .map(k => this.editingTarget.comments[k])
-            .filter(c => c.blockId === null);
+            .map((k) => this.editingTarget.comments[k])
+            .filter((c) => c.blockId === null);
 
         const xmlString = `<xml xmlns="http://www.w3.org/1999/xhtml">
                             <variables>
-                                ${globalVariables.map(v => v.toXML()).join()}
-                                ${localVariables.map(v => v.toXML(true)).join()}
+                                ${globalVariables.map((v) => v.toXML()).join()}
+                                ${localVariables.map((v) => v.toXML(true)).join()}
                             </variables>
-                            ${workspaceComments.map(c => c.toXML()).join()}
+                            ${workspaceComments.map((c) => c.toXML()).join()}
                             ${this.editingTarget.blocks.toXML(this.editingTarget.comments)}
                         </xml>`;
 
-        this.emit('workspaceUpdate', {xml: xmlString});
+        this.emit("workspaceUpdate", { xml: xmlString });
     }
 
     /**
@@ -214,36 +214,40 @@ export default class VirtualMachine extends EventEmitter {
      * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
      * @returns {Promise} resolved once targets have been installed
      */
-    installTargets (targets, extensions, wholeProject) {
+    installTargets(targets, extensions, wholeProject) {
         const extensionPromises = [];
 
-        extensions.extensionIDs.forEach(extensionID => {
+        extensions.extensionIDs.forEach((extensionID) => {
             if (!this.extensionManager.isExtensionLoaded(extensionID)) {
                 const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
                 extensionPromises.push(this.extensionManager.loadExtensionURL(extensionURL));
             }
         });
 
-        targets = targets.filter(target => !!target);
+        // eslint-disable-next-line no-param-reassign
+        targets = targets.filter((target) => !!target);
 
         return Promise.all(extensionPromises).then(() => {
-            targets.forEach(target => {
+            targets.forEach((target) => {
                 this.runtime.addTarget(target);
-                (/** @type RenderedTarget */ target).updateAllDrawableProperties();
+                /** @type RenderedTarget */ target.updateAllDrawableProperties();
                 // Ensure unique sprite name
                 if (target.isSprite()) this.renameSprite(target.id, target.getName());
             });
             // Sort the executable targets by layerOrder.
             // Remove layerOrder property after use.
             this.runtime.executableTargets.sort((a, b) => a.layerOrder - b.layerOrder);
-            targets.forEach(target => {
+            targets.forEach((target) => {
+                // eslint-disable-next-line no-param-reassign
                 delete target.layerOrder;
             });
 
             // Select the first target for editing, e.g., the first sprite.
-            if (wholeProject && (targets.length > 1)) {
+            if (wholeProject && targets.length > 1) {
+                // eslint-disable-next-line prefer-destructuring
                 this.editingTarget = targets[1];
             } else {
+                // eslint-disable-next-line prefer-destructuring
                 this.editingTarget = targets[0];
             }
 
@@ -265,23 +269,25 @@ export default class VirtualMachine extends EventEmitter {
      * @param {string | object} input A json string, object, or ArrayBuffer representing the project to load.
      * @return {!Promise} Promise that resolves after targets are installed.
      */
-    addSprite (input) {
-        const errorPrefix = 'Sprite Upload Error:';
-        if (typeof input === 'object' && !(input instanceof ArrayBuffer) &&
-          !ArrayBuffer.isView(input)) {
+    addSprite(input) {
+        const errorPrefix = "Sprite Upload Error:";
+        if (typeof input === "object" && !(input instanceof ArrayBuffer) && !ArrayBuffer.isView(input)) {
             // If the input is an object and not any ArrayBuffer
             // or an ArrayBuffer view (this includes all typed arrays and DataViews)
             // turn the object into a JSON string, because we suspect
             // this is a project.json as an object
             // validate expects a string or buffer as input
             // TODO not sure if we need to check that it also isn't a data view
+            // eslint-disable-next-line no-param-reassign
             input = JSON.stringify(input);
         }
 
+        // eslint-disable-next-line no-async-promise-executor
         const validationPromise = new Promise(async (resolve, reject) => {
             // The second argument of true below indicates to the parser/validator
             // that the given input should be treated as a single sprite and not
             // an entire project
+            // eslint-disable-next-line consistent-return
             validate(input, true, (error, res) => {
                 if (error) return reject(error);
                 resolve(res);
@@ -289,22 +295,24 @@ export default class VirtualMachine extends EventEmitter {
         });
 
         return validationPromise
-            .then(validatedInput => {
-                const projectVersion = validatedInput[0].projectVersion;
+            .then((validatedInput) => {
+                const { projectVersion } = validatedInput[0];
                 if (projectVersion === 2) {
                     return this._addSprite2(validatedInput[0], validatedInput[1]);
                 }
                 if (projectVersion === 3) {
                     return this._addSprite3(validatedInput[0], validatedInput[1]);
                 }
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
             .then(() => this.runtime.emitProjectChanged())
-            .catch(error => {
+            .catch((error) => {
                 // Intentionally rejecting here (want errors to be handled by caller)
-                if (error.hasOwnProperty('validationError')) {
+                if (error.hasOwnProperty("validationError")) {
                     return Promise.reject(JSON.stringify(error));
                 }
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} ${error}`);
             });
     }
@@ -315,12 +323,10 @@ export default class VirtualMachine extends EventEmitter {
      * @param {?ArrayBuffer} zip Optional zip of assets being referenced by json
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    _addSprite2 (sprite, zip) {
+    _addSprite2(sprite, zip) {
         // Validate & parse
 
-        return sb2.deserialize(sprite, this.runtime, true, zip)
-            .then(({targets, extensions}) =>
-                this.installTargets(targets, extensions, false));
+        return sb2.deserialize(sprite, this.runtime, true, zip).then(({ targets, extensions }) => this.installTargets(targets, extensions, false));
     }
 
     /**
@@ -329,45 +335,41 @@ export default class VirtualMachine extends EventEmitter {
      * @param {?ArrayBuffer} zip Optional zip of assets being referenced by target json
      * @returns {Promise} Promise that resolves after the sprite is added
      */
-    _addSprite3 (sprite, zip) {
+    _addSprite3(sprite, zip) {
         // Validate & parse
-        return sb3
-            .deserialize(sprite, this.runtime, zip, true)
-            .then(({targets, extensions}) => this.installTargets(targets, extensions, false));
+        return sb3.deserialize(sprite, this.runtime, zip, true).then(({ targets, extensions }) => this.installTargets(targets, extensions, false));
     }
 
-      /**
+    /**
      * Rename a sprite.
      * @param {string} targetId ID of a target whose sprite to rename.
      * @param {string} newName New name of the sprite.
      */
-      renameSprite (targetId, newName) {
+    renameSprite(targetId, newName) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
             if (!target.isSprite()) {
-                throw new Error('Cannot rename non-sprite targets.');
+                throw new Error("Cannot rename non-sprite targets.");
             }
-            const sprite = target.sprite;
+            const { sprite } = target;
             if (!sprite) {
-                throw new Error('No sprite associated with this target.');
+                throw new Error("No sprite associated with this target.");
             }
             if (newName && RESERVED_NAMES.indexOf(newName) === -1) {
-                const names = this.runtime.targets
-                    .filter(runtimeTarget => runtimeTarget.isSprite() && runtimeTarget.id !== target.id)
-                    .map(runtimeTarget => runtimeTarget.sprite.name);
+                const names = this.runtime.targets.filter((runtimeTarget) => runtimeTarget.isSprite() && runtimeTarget.id !== target.id).map((runtimeTarget) => runtimeTarget.sprite.name);
                 const oldName = sprite.name;
                 const newUnusedName = StringUtil.unusedName(newName, names);
                 sprite.name = newUnusedName;
                 const allTargets = this.runtime.targets;
                 for (let i = 0; i < allTargets.length; i++) {
                     const currTarget = allTargets[i];
-                    currTarget.blocks?.updateAssetName(oldName, newName, 'sprite');
+                    currTarget.blocks?.updateAssetName(oldName, newName, "sprite");
                 }
 
                 if (newUnusedName !== oldName) this.emitTargetsUpdate();
             }
         } else {
-            throw new Error('No target with the provided id.');
+            throw new Error("No target with the provided id.");
         }
     }
 
@@ -376,20 +378,20 @@ export default class VirtualMachine extends EventEmitter {
      * @param {string} targetId ID of a target whose sprite to delete.
      * @return {Function} Returns a function to restore the sprite that was deleted
      */
-    deleteSprite (targetId) {
+    deleteSprite(targetId) {
         const target = this.runtime.getTargetById(targetId);
 
         if (target) {
-            const targetIndexBeforeDelete = this.runtime.targets.map(t => t.id).indexOf(target.id);
+            const targetIndexBeforeDelete = this.runtime.targets.map((t) => t.id).indexOf(target.id);
             if (!target.isSprite()) {
-                throw new Error('Cannot delete non-sprite targets.');
+                throw new Error("Cannot delete non-sprite targets.");
             }
-            const sprite = target.sprite;
+            const { sprite } = target;
             if (!sprite) {
-                throw new Error('No sprite associated with this target.');
+                throw new Error("No sprite associated with this target.");
             }
-            const spritePromise = this.exportSprite(targetId, 'uint8array');
-            const restoreSprite = () => spritePromise.then(spriteBuffer => this.addSprite(spriteBuffer));
+            const spritePromise = this.exportSprite(targetId, "uint8array");
+            const restoreSprite = () => spritePromise.then((spriteBuffer) => this.addSprite(spriteBuffer));
             // Remove monitors from the runtime state and remove the
             // target-specific monitored blocks (e.g. local variables)
             target.deleteMonitors();
@@ -401,7 +403,7 @@ export default class VirtualMachine extends EventEmitter {
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
                     const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                    if (this.runtime.targets.length > 0){
+                    if (this.runtime.targets.length > 0) {
                         this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                     } else {
                         this.editingTarget = null;
@@ -413,7 +415,7 @@ export default class VirtualMachine extends EventEmitter {
             return restoreSprite;
         }
 
-        throw new Error('No target with the provided id.');
+        throw new Error("No target with the provided id.");
     }
 
     /**
@@ -422,16 +424,16 @@ export default class VirtualMachine extends EventEmitter {
      * @returns {Promise} Promise that resolves when duplicated target has
      *     been added to the runtime.
      */
-    duplicateSprite (targetId) {
+    duplicateSprite(targetId) {
         const target = this.runtime.getTargetById(targetId);
         if (!target) {
-            throw new Error('No target with the provided id.');
+            throw new Error("No target with the provided id.");
         } else if (!target.isSprite()) {
-            throw new Error('Cannot duplicate non-sprite targets.');
+            throw new Error("Cannot duplicate non-sprite targets.");
         } else if (!target.sprite) {
-            throw new Error('No sprite associated with this target.');
+            throw new Error("No sprite associated with this target.");
         }
-        return target.duplicate().then(newTarget => {
+        return target.duplicate().then((newTarget) => {
             this.runtime.addTarget(newTarget);
             newTarget.goBehindOther(target);
             this.setEditingTarget(newTarget.id);
@@ -450,15 +452,13 @@ export default class VirtualMachine extends EventEmitter {
      * @param {string} optVersion - if this is 2, load costume as sb2, otherwise load costume as sb3.
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
-    addCostume (md5ext, costumeObject, optTargetId, optVersion) {
-        const target = optTargetId ? this.runtime.getTargetById(optTargetId) :
-            this.editingTarget;
+    addCostume(md5ext, costumeObject, optTargetId, optVersion) {
+        const target = optTargetId ? this.runtime.getTargetById(optTargetId) : this.editingTarget;
         if (target) {
+            // eslint-disable-next-line no-undef
             return loadCostume(md5ext, costumeObject, this.runtime, optVersion).then(() => {
                 target.addCostume(costumeObject);
-                target.setCostume(
-                    target.getCostumes().length - 1
-                );
+                target.setCostume(target.getCostumes().length - 1);
                 this.runtime.emitProjectChanged();
             });
         }
@@ -471,8 +471,8 @@ export default class VirtualMachine extends EventEmitter {
      * @param {object} message The message from the worker.
      * @private
      */
-    _onWorkerMessage (message) {
-        const {id, threadId, opCode, args, token} = message;
+    _onWorkerMessage(message) {
+        const { id, threadId, opCode, args, token } = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
             this.runtime.pushBlockOp(threadId, opCode, args, token);
         }
@@ -485,11 +485,15 @@ export default class VirtualMachine extends EventEmitter {
      * @param {*} value The value to send as a result.
      * @private
      */
-    _postResultValue (message, value) {
-        this.pyatchWorker.postMessage({id: WorkerMessages.FromVM.ResultValue, value: value, token: message.token});
+    _postResultValue(message, value) {
+        this.pyatchWorker.postMessage({
+            id: WorkerMessages.FromVM.ResultValue,
+            value: value,
+            token: message.token,
+        });
     }
 
-    async run (targetsAndCode) {
+    async run(targetsAndCode) {
         const threadsCode = this.runtime.registerThreads(targetsAndCode, this._postResultValue.bind(this));
         const [threadIds, pythonCode] = this.pyatchLinker.generatePython(threadsCode);
         await this.pyatchLoadPromise;
@@ -498,5 +502,4 @@ export default class VirtualMachine extends EventEmitter {
 
         return result;
     }
-    
 }

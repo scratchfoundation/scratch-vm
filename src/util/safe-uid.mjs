@@ -8,7 +8,7 @@
  * Removed $ due to issue 251.
  * @private
  */
-const soup_ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const soup_ = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 /**
  * Generate a unique ID, from Blockly.  This should be globally unique.
@@ -22,8 +22,7 @@ const safeUid = function () {
     for (let i = 0; i < length; i++) {
         id[i] = soup_.charAt(Math.random() * soupLength);
     }
-    return id.join('');
+    return id.join("");
 };
-
 
 export default safeUid;

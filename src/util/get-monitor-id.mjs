@@ -10,11 +10,11 @@
 // IDs are obtained given an opcode for the reporter block and the list of
 // selected parameters.
 const getMonitorIdForBlockWithArgs = function (id, fields) {
-    let fieldString = '';
+    let fieldString = "";
     for (const fieldKey in fields) {
         let fieldValue = fields[fieldKey].value;
-        if (fieldKey === 'CURRENTMENU') {
-            // The 'sensing_current' block has field values in all caps.    
+        if (fieldKey === "CURRENTMENU") {
+            // The 'sensing_current' block has field values in all caps.
             // However, when importing from scratch 2.0, these
             // could have gotten imported as lower case field values.
             // Normalize the field value here so that we don't ever

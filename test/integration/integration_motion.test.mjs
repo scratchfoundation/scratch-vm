@@ -1,19 +1,11 @@
-/* eslint-disable no-undefined */
-/* eslint-disable no-undef */
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-import VirtualMachine from '../../src/virtual-machine.mjs';
-import Sprite from '../../src/sprites/sprite.mjs';
-import RenderedTarget from '../../src/sprites/rendered-target.mjs';
-
-import WorkerMessages from '../../src/worker/worker-messages.mjs';
-
-import chai from 'chai';
-import sinonChai from 'sinon-chai';
+import sinonChai from "sinon-chai";
+import chai from "chai";
+import VirtualMachine from "../../src/virtual-machine.mjs";
+import Sprite from "../../src/sprites/sprite.mjs";
+import RenderedTarget from "../../src/sprites/rendered-target.mjs";
 
 chai.use(sinonChai);
-const expect = chai.expect;
+const { expect } = chai;
 
 let vm = null;
 let sprite = null;
@@ -22,47 +14,39 @@ let target = null;
 let sprite2 = null;
 let target2 = null;
 
-before( async () => {  
+before(async () => {
     vm = new VirtualMachine();
 
     sprite = new Sprite(null, vm.runtime);
     target = new RenderedTarget(sprite, vm.runtime);
-    target.id = 'target1';
+    target.id = "target1";
     vm.runtime.addTarget(target);
 
     sprite2 = new Sprite(null, vm.runtime);
     target2 = new RenderedTarget(sprite2, vm.runtime);
-    target2.id = 'target2';
-    sprite2.name = 'target2';
+    target2.id = "target2";
+    sprite2.name = "target2";
 
     vm.runtime.addTarget(target2);
 
     vm.start();
-
 });
 
-const resetTargt = () => {
-    vm.runtime.targets.map((target) => {
-        target.x = 0;
-        target.y = 0;
-        target.direction = 90;
-
-        return target;
-    });
-}
+const resetTarget = () => {
+    vm.runtime.targets[0].x = 0;
+    vm.runtime.targets[0].y = 0;
+    vm.runtime.targets[0].direction = 90;
+};
 
 afterEach(async () => {
-    resetTargt();
+    resetTarget();
 });
 
-
-describe('Pyatch VM Linker & Worker Integration', () => {
-    describe('Motion Blocks', () => {
-        it('Move', async () => {
-            
-
+describe("Pyatch VM Linker & Worker Integration", () => {
+    describe("Motion Blocks", () => {
+        it("Move", async () => {
             const targetAndCode = {
-                target1: ['move(10)'],
+                target1: ["move(10)"],
             };
 
             await vm.run(targetAndCode);
@@ -70,12 +54,10 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
-        
-        it('Go To XY', async () => {
-            
 
+        it("Go To XY", async () => {
             const targetAndCode = {
-                target1: ['goToXY(10, 5)'],
+                target1: ["goToXY(10, 5)"],
             };
 
             await vm.run(targetAndCode);
@@ -84,9 +66,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
-        it('Go To', async () => {
-            
-
+        it("Go To", async () => {
             const targetAndCode = {
                 target1: ['goTo("target2")'],
             };
@@ -100,11 +80,9 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
-        it('Turn Right', async () => {
-            
-
+        it("Turn Right", async () => {
             const targetAndCode = {
-                target1: ['turnRight(90)'],
+                target1: ["turnRight(90)"],
             };
 
             await vm.run(targetAndCode);
@@ -112,11 +90,9 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].direction).to.equal(180);
         });
 
-        it('Turn Left', async () => {
-            
-
+        it("Turn Left", async () => {
             const targetAndCode = {
-                target1: ['turnLeft(90)'],
+                target1: ["turnLeft(90)"],
             };
 
             await vm.run(targetAndCode);
@@ -124,11 +100,9 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].direction).to.equal(0);
         });
 
-        it('Point In Direction', async () => {
-            
-
+        it("Point In Direction", async () => {
             const targetAndCode = {
-                target1: ['pointInDirection(90)'],
+                target1: ["pointInDirection(90)"],
             };
 
             await vm.run(targetAndCode);
@@ -136,27 +110,22 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
-
-        it('pointTowards', async () => {
-            
-
+        it("pointTowards", async () => {
             const targetAndCode = {
                 target1: ['pointTowards("target2")'],
             };
-
-            target2.x = 5;
-            target2.y = 5;
+            const t2i = 1;
+            vm.runtime.targets[t2i].x = 5;
+            vm.runtime.targets[t2i].y = 5;
 
             await vm.run(targetAndCode);
 
             expect(vm.runtime.targets[0].direction).to.equal(45);
         });
 
-        it('Glide', async () => {
-            
-
+        it("Glide", async () => {
             const targetAndCode = {
-                target1: ['glide(1, 10, 5)'],
+                target1: ["glide(1, 10, 5)"],
             };
 
             await vm.run(targetAndCode);
@@ -165,9 +134,7 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
-        it('Glide To', async () => {
-            
-
+        it("Glide To", async () => {
             const targetAndCode = {
                 target1: ['glideTo(1, "target2")'],
             };
@@ -181,11 +148,9 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
-        it('If On Edge Bounce', async () => {
-            
-
+        it("If On Edge Bounce", async () => {
             const targetAndCode = {
-                target1: ['ifOnEdgeBounce()'],
+                target1: ["ifOnEdgeBounce()"],
             };
 
             await vm.run(targetAndCode);
@@ -194,28 +159,24 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
-        it('Set Rotation Style', async () => {
-            
-
+        it("Set Rotation Style", async () => {
             const targetAndCode = {
                 target1: ['setRotationStyle("left-right")'],
             };
 
             await vm.run(targetAndCode);
 
-            expect(vm.runtime.targets[0].rotationStyle).to.equal('left-right');
+            expect(vm.runtime.targets[0].rotationStyle).to.equal("left-right");
         });
 
-        it('Change X', async () => {
-            
-
+        it("Change X", async () => {
             const oldX = target.x;
             const dx = 10;
             const oldY = target.y;
 
             const targetAndCode = {
-                target1: ['changeX(' + dx + ')'],
-            }
+                target1: [`changeX(${dx})`],
+            };
 
             await vm.run(targetAndCode);
 
@@ -223,16 +184,14 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(oldY);
         });
 
-        it('Change Y', async () => {
-            
-
+        it("Change Y", async () => {
             const oldX = target.x;
             const oldY = target.y;
             const dy = 10;
 
             const targetAndCode = {
-                target1: ['changeY(' + dy + ')'],
-            }
+                target1: [`changeY(${dy})`],
+            };
 
             await vm.run(targetAndCode);
 
@@ -240,15 +199,13 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(oldY + dy);
         });
 
-        it('Set X', async () => {
-            
-
+        it("Set X", async () => {
             const eX = 10;
             const oldY = target.y;
 
             const targetAndCode = {
-                target1: ['setX(' + eX + ')'],
-            }
+                target1: [`setX(${eX})`],
+            };
 
             await vm.run(targetAndCode);
 
@@ -256,21 +213,18 @@ describe('Pyatch VM Linker & Worker Integration', () => {
             expect(vm.runtime.targets[0].y).to.equal(oldY);
         });
 
-        it('Set Y', async () => {
-            
-
+        it("Set Y", async () => {
             const oldX = target.x;
             const eY = 10;
 
             const targetAndCode = {
-                target1: ['setY(' + eY + ')'],
-            }
+                target1: [`setY(${eY})`],
+            };
 
             await vm.run(targetAndCode);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(eY);
         });
-
     });
 });

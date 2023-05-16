@@ -1,5 +1,3 @@
-import Thread from './thread.mjs'
-
 /**
  * @fileoverview
  * Interface provided to block primitive functions for interacting with the
@@ -7,11 +5,11 @@ import Thread from './thread.mjs'
  */
 
 export default class BlockUtility {
-    constructor (target = null, runtime = null, thread = null) {
+    constructor(target = null, runtime = null, thread = null) {
         this._target = target;
         this._runtime = runtime;
 
-        this.thread = thread
+        this._thread = thread;
 
         this.timerUtil = {};
         this.timerUtil.timer = null;
@@ -20,42 +18,41 @@ export default class BlockUtility {
         this.timerUtil.startY = null;
         this.timerUtil.endX = null;
         this.timerUtil.endY = null;
-        
     }
 
     /**
      * Set the thread to yield.
      */
-    yield () {
-        this.thread.setStatus(Thread.STATUS_YIELD);
+    yield() {
+        this._thread.yield();
     }
 
     /**
      * Set the thread to yield until the next tick of the runtime.
      */
-    yieldTick () {
-        this.thread.setStatus(Thread.STATUS_YIELD_TICK);
+    yieldTick() {
+        this._thread.yieldTick();
     }
 
     /**
      * End the current thread of execution as all blocks have been executed
      */
-    endThread () {
-        this.thread.setStatus(Thread.STATUS_DONE);
+    endThread() {
+        this._thread.endThread();
     }
 
     /**
      * The target the primitive is working on.
      * @type {Target}
      */
-    get target () {
+    get target() {
         return this._target;
     }
 
     /**
      * Set the target the primitive is working on.
      */
-    set target (newTarget) {
+    set target(newTarget) {
         this._target = newTarget;
     }
 
@@ -63,14 +60,14 @@ export default class BlockUtility {
      * The runtime the block primitive is running in.
      * @type {Runtime}
      */
-    get runtime () {
+    get runtime() {
         return this._runtime;
     }
 
     /**
      * Set the runtime the block primitive is running in.
      */
-    set runtime (newRuntime) {
+    set runtime(newRuntime) {
         this._runtime = newRuntime;
     }
 }

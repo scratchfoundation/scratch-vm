@@ -7,10 +7,10 @@ async function simThreadExecution(target, opcode, args) {
         done = true;
     });
 
-    thread.pushOp(opcode, args)
+    thread.pushOp(opcode, args);
 
     const start = performance.now();
-    await new Promise((resolve, reject) => {
+    await new Promise((resolve) => {
         const interval = setInterval(() => {
             if (!done) {
                 thread.step();
@@ -20,7 +20,7 @@ async function simThreadExecution(target, opcode, args) {
             }
         }, Runtime.THREAD_STEP_INTERVAL);
     });
-    const secs = (performance.now() - start)/1000;
+    const secs = (performance.now() - start) / 1000;
 
     return secs;
 }

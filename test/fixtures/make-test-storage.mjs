@@ -1,19 +1,19 @@
-import ScratchStorage from 'scratch-storage';
+import ScratchStorage from "scratch-storage";
 
-const ASSET_SERVER = 'https://cdn.assets.scratch.mit.edu/';
-const PROJECT_SERVER = 'https://cdn.projects.scratch.mit.edu/';
+const ASSET_SERVER = "https://cdn.assets.scratch.mit.edu/";
+const PROJECT_SERVER = "https://cdn.projects.scratch.mit.edu/";
 
 /**
  * @param {Asset} asset - calculate a URL for this asset.
  * @returns {string} a URL to download a project file.
  */
 const getProjectUrl = function (asset) {
-    const assetIdParts = asset.assetId.split('.');
-    const assetUrlParts = [PROJECT_SERVER, 'internalapi/project/', assetIdParts[0], '/get/'];
+    const assetIdParts = asset.assetId.split(".");
+    const assetUrlParts = [PROJECT_SERVER, "internalapi/project/", assetIdParts[0], "/get/"];
     if (assetIdParts[1]) {
         assetUrlParts.push(assetIdParts[1]);
     }
-    return assetUrlParts.join('');
+    return assetUrlParts.join("");
 };
 
 /**
@@ -21,15 +21,8 @@ const getProjectUrl = function (asset) {
  * @returns {string} a URL to download a project asset (PNG, WAV, etc.)
  */
 const getAssetUrl = function (asset) {
-    const assetUrlParts = [
-        ASSET_SERVER,
-        'internalapi/asset/',
-        asset.assetId,
-        '.',
-        asset.dataFormat,
-        '/get/'
-    ];
-    return assetUrlParts.join('');
+    const assetUrlParts = [ASSET_SERVER, "internalapi/asset/", asset.assetId, ".", asset.dataFormat, "/get/"];
+    return assetUrlParts.join("");
 };
 
 /**
@@ -38,7 +31,7 @@ const getAssetUrl = function (asset) {
  */
 const makeTestStorage = function () {
     const storage = new ScratchStorage();
-    const AssetType = storage.AssetType;
+    const { AssetType } = storage;
     storage.addWebStore([AssetType.Project], getProjectUrl);
     storage.addWebStore([AssetType.ImageVector, AssetType.ImageBitmap, AssetType.Sound], getAssetUrl);
     return storage;

@@ -1,0 +1,4 @@
+{
+    "presets": ["@babel/env"],
+    "plugins": [["inline-json-import", {}], "@babel/plugin-syntax-import-assertions"]
+}

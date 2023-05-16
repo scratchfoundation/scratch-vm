@@ -1,3 +1,40 @@
 {
-    "extends": "airbnb-base"
+    "root": true,
+    "extends": ["airbnb", "airbnb/hooks", "prettier"],
+    "parserOptions": {
+        "sourceType": "module"
+    },
+    "plugins": ["prettier", "chai-friendly"],
+    "parser": "@babel/eslint-parser",
+    "rules": {
+        "prettier/prettier": "error",
+        "no-unused-vars": "warn",
+        "no-console": "off",
+        "func-names": "off",
+        "no-process-exit": "off",
+        "object-shorthand": "off",
+        "class-methods-use-this": "off",
+        "no-underscore-dangle": "off",
+        "no-plusplus": "off",
+        "no-prototype-builtins": "off",
+        "import/extensions": "off"
+    },
+    "overrides": [{
+        "files": "*.test.mjs",
+        "rules": {
+          "no-unused-expressions": "off",
+          "chai-friendly/no-unused-expressions": "error"
+        }
+    },
+    {
+        "files": "*.worker.mjs",
+        "rules": {
+          "no-restricted-globals": "off",
+          "no-func-assign": "off"
+        }
+    }],
+    "env": {
+        "browser": true,
+        "mocha": true
+    }
 }
