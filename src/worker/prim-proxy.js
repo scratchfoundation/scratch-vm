@@ -49,8 +49,9 @@ class PrimProxy {
 
     constructor(targetId, postFunction) {
         this.targetId = targetId;
-        this.post = function (opCode, args) {
-            postFunction(this.targetId, opCode, args);
+        this.post = async function (opCode, args) {
+            const retVal = await postFunction(this.targetId, opCode, args);
+            return retVal;
         };
     }
 
@@ -121,19 +122,18 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.setY, { Y: y });
     }
 
-    // Does not work. No tests for any async functions yet
     async getX() {
-        const x = await PrimProxy.post(this.opcodeMap.getX, {});
+        const x = await this.post(PrimProxy.opcodeMap.getX, {});
         return x;
     }
 
     async getY() {
-        const y = PrimProxy.post(this.opcodeMap.getY, {});
+        const y = await this.post(PrimProxy.opcodeMap.getY, {});
         return y;
     }
 
     async getDirection() {
-        const direction = PrimProxy.post(this.opcodeMap.getDirection, {});
+        const direction = await this.post(PrimProxy.opcodeMap.getDirection, {});
         return direction;
     }
 

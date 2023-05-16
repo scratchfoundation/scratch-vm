@@ -9,6 +9,8 @@ import sinonChai from "sinon-chai";
 import PyatchWorker from "../../src/worker/pyatch-worker.mjs";
 import WorkerMessages from "../../src/worker/worker-messages.mjs";
 
+import extractCallsSpy from "../fixtures/extract-calls-spy.mjs";
+
 const { expect } = chai;
 chai.use(sinonChai);
 
@@ -16,13 +18,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Just posts a null value result back to the worker every block OP it receives to worker can finish python execution.
-const blockOPTestCallback = (spy) =>
+const createBlockOPTestCallback = (spy, returnValue) =>
     function (message) {
         spy(message);
         this._worker.postMessage({
             id: WorkerMessages.FromVM.ResultValue,
             token: message.token,
-            value: null,
+            value: returnValue,
         });
     };
 
@@ -31,7 +33,7 @@ let pyatchWorker = null;
 
 before(async () => {
     spy = sinon.spy();
-    pyatchWorker = new PyatchWorker(blockOPTestCallback(spy));
+    pyatchWorker = new PyatchWorker(createBlockOPTestCallback(spy, null));
 
     await pyatchWorker.loadPyodide();
 });
@@ -302,6 +304,88 @@ describe("Patch Worker Functionality", () => {
                 expect(blockOpCall.opCode).to.equal("motion_sety");
                 expect(blockOpCall.args).to.eql({ Y: 10 });
                 expect(blockOpCall.token).to.be.a("string");
+            });
+
+            it("Get X", async () => {
+                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "motion", "single-target-getx.py"), "utf8");
+                const threads = ["id_0"];
+
+                const mockedX = 5;
+
+                pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedX);
+
+                await pyatchWorker.run(pythonCode, threads);
+
+                expect(spy).to.be.calledThrice;
+
+                const blockOpCalls = extractCallsSpy(spy);
+
+                expect(blockOpCalls[2].id).to.equal("BlockOP");
+                expect(blockOpCalls[2].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[2].opCode).to.equal("motion_xposition");
+                expect(blockOpCalls[2].args).to.eql({});
+                expect(blockOpCalls[2].token).to.be.a("string");
+
+                // The reason for this test is to ensure that the proper value was returned in the python env
+                expect(blockOpCalls[1].id).to.equal("BlockOP");
+                expect(blockOpCalls[1].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[1].opCode).to.equal("motion_setx");
+                expect(blockOpCalls[1].args).to.eql({ X: mockedX });
+                expect(blockOpCalls[1].token).to.be.a("string");
+            });
+
+            it("Get Y", async () => {
+                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "motion", "single-target-gety.py"), "utf8");
+                const threads = ["id_0"];
+
+                const mockedY = 5;
+
+                pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedY);
+
+                await pyatchWorker.run(pythonCode, threads);
+
+                expect(spy).to.be.calledThrice;
+
+                const blockOpCalls = extractCallsSpy(spy);
+
+                expect(blockOpCalls[2].id).to.equal("BlockOP");
+                expect(blockOpCalls[2].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[2].opCode).to.equal("motion_yposition");
+                expect(blockOpCalls[2].args).to.eql({});
+                expect(blockOpCalls[2].token).to.be.a("string");
+
+                expect(blockOpCalls[1].id).to.equal("BlockOP");
+                expect(blockOpCalls[1].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[1].opCode).to.equal("motion_sety");
+                expect(blockOpCalls[1].args).to.eql({ Y: mockedY });
+                expect(blockOpCalls[1].token).to.be.a("string");
+            });
+
+            it("Get Direction", async () => {
+                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "motion", "single-target-getdirection.py"), "utf8");
+                const threads = ["id_0"];
+
+                const mockedDirection = 90;
+
+                pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedDirection);
+
+                await pyatchWorker.run(pythonCode, threads);
+
+                expect(spy).to.be.calledThrice;
+
+                const blockOpCalls = extractCallsSpy(spy);
+
+                expect(blockOpCalls[2].id).to.equal("BlockOP");
+                expect(blockOpCalls[2].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[2].opCode).to.equal("motion_direction");
+                expect(blockOpCalls[2].args).to.eql({});
+                expect(blockOpCalls[2].token).to.be.a("string");
+
+                expect(blockOpCalls[1].id).to.equal("BlockOP");
+                expect(blockOpCalls[1].threadId).to.equal(threads[0]);
+                expect(blockOpCalls[1].opCode).to.equal("motion_pointindirection");
+                expect(blockOpCalls[1].args).to.eql({ DIRECTION: mockedDirection });
+                expect(blockOpCalls[1].token).to.be.a("string");
             });
         });
     });
