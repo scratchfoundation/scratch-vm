@@ -3,8 +3,8 @@
  * Object representing a Scratch Comment (block or workspace).
  */
 
-import uidfrom from '../util/uid.mjs';
-import  xmlEscape from '../util/xml-escape.mjs';
+import uidfrom from "../util/uid.mjs";
+import xmlEscape from "../util/xml-escape.mjs";
 
 class Comment {
     /**
@@ -17,7 +17,7 @@ class Comment {
      * @param {boolean} minimized Whether the comment is minimized.
      * @constructor
      */
-    constructor (id, text, x, y, width, height, minimized) {
+    constructor(id, text, x, y, width, height, minimized) {
         this.id = id || uid();
         this.text = text;
         this.x = x;
@@ -28,29 +28,26 @@ class Comment {
         this.blockId = null;
     }
 
-    toXML () {
-        return `<comment id="${this.id}" x="${this.x}" y="${
-            this.y}" w="${this.width}" h="${this.height}" pinned="${
-            this.blockId !== null}" minimized="${this.minimized}">${xmlEscape(this.text)}</comment>`;
+    toXML() {
+        return `<comment id="${this.id}" x="${this.x}" y="${this.y}" w="${this.width}" h="${this.height}" pinned="${this.blockId !== null}" minimized="${this.minimized}">${xmlEscape(this.text)}</comment>`;
     }
 
     // TODO choose min and defaults for width and height
-    static get MIN_WIDTH () {
+    static get MIN_WIDTH() {
         return 20;
     }
 
-    static get MIN_HEIGHT () {
+    static get MIN_HEIGHT() {
         return 20;
     }
 
-    static get DEFAULT_WIDTH () {
+    static get DEFAULT_WIDTH() {
         return 100;
     }
 
-    static get DEFAULT_HEIGHT () {
+    static get DEFAULT_HEIGHT() {
         return 100;
     }
-
 }
 
 export default Comment;

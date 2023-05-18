@@ -4,8 +4,8 @@ class MathUtil {
      * @param {!number} deg Value in degrees.
      * @return {!number} Equivalent value in radians.
      */
-    static degToRad (deg) {
-        return deg * Math.PI / 180;
+    static degToRad(deg) {
+        return (deg * Math.PI) / 180;
     }
 
     /**
@@ -13,8 +13,8 @@ class MathUtil {
      * @param {!number} rad Value in radians.
      * @return {!number} Equivalent value in degrees.
      */
-    static radToDeg (rad) {
-        return rad * 180 / Math.PI;
+    static radToDeg(rad) {
+        return (rad * 180) / Math.PI;
     }
 
     /**
@@ -25,7 +25,7 @@ class MathUtil {
      * @param {!number} max Maximum limit.
      * @return {!number} Value of n clamped to min and max.
      */
-    static clamp (n, min, max) {
+    static clamp(n, min, max) {
         return Math.min(Math.max(n, min), max);
     }
 
@@ -39,28 +39,27 @@ class MathUtil {
      * @param {!number} max Maximum limit.
      * @return {!number} Value of n wrapped between min and max.
      */
-    static wrapClamp (n, min, max) {
-        const range = (max - min) + 1;
-        return n - (Math.floor((n - min) / range) * range);
+    static wrapClamp(n, min, max) {
+        const range = max - min + 1;
+        return n - Math.floor((n - min) / range) * range;
     }
-
 
     /**
      * Convert a value from tan function in degrees.
      * @param {!number} angle in degrees
      * @return {!number} Correct tan value
      */
-    static tan (angle) {
-        angle = angle % 360;
+    static tan(angle) {
+        angle %= 360;
         switch (angle) {
-        case -270:
-        case 90:
-            return Infinity;
-        case -90:
-        case 270:
-            return -Infinity;
-        default:
-            return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
+            case -270:
+            case 90:
+                return Infinity;
+            case -90:
+            case 270:
+                return -Infinity;
+            default:
+                return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
         }
     }
 
@@ -73,9 +72,9 @@ class MathUtil {
      * @param {Array<number>} elts The elements to sort and reduce
      * @return {Array<number>} The array of reduced orderings
      */
-    static reducedSortOrdering (elts) {
+    static reducedSortOrdering(elts) {
         const sorted = elts.slice(0).sort((a, b) => a - b);
-        return elts.map(e => sorted.indexOf(e));
+        return elts.map((e) => sorted.indexOf(e));
     }
 
     /**
@@ -90,7 +89,7 @@ class MathUtil {
      * @param {number} excluded - The number to exclude (MUST be in the range)
      * @return {number} A random integer in the range [lower, upper] that is not "excluded"
      */
-    static inclusiveRandIntWithout (lower, upper, excluded) {
+    static inclusiveRandIntWithout(lower, upper, excluded) {
         // Note that subtraction is the number of items in the
         // inclusive range [lower, upper] minus 1 already
         // (e.g. in the set {3, 4, 5}, 5 - 3 = 2).
@@ -103,7 +102,7 @@ class MathUtil {
 
         return randInt;
     }
- 
+
     /**
      * Scales a number from one range to another.
      * @param {number} i number to be scaled
@@ -113,9 +112,9 @@ class MathUtil {
      * @param {number} oMax output range maximum
      * @return {number} scaled number
      */
-    static scale (i, iMin, iMax, oMin, oMax) {
+    static scale(i, iMin, iMax, oMin, oMax) {
         const p = (i - iMin) / (iMax - iMin);
-        return (p * (oMax - oMin)) + oMin;
+        return p * (oMax - oMin) + oMin;
     }
 }
 

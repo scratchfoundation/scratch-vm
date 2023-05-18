@@ -1,5 +1,5 @@
 class VariableUtil {
-    static _mergeVarRefObjects (accum, obj2) {
+    static _mergeVarRefObjects(accum, obj2) {
         for (const id in obj2) {
             if (accum[id]) {
                 accum[id] = accum[id].concat(obj2[id]);
@@ -19,9 +19,13 @@ class VariableUtil {
      * @return {object} An object with variable ids as the keys and a list of block fields referencing
      * the variable.
      */
-    static getAllVarRefsForTargets (targets, shouldIncludeBroadcast) {
+    static getAllVarRefsForTargets(targets, shouldIncludeBroadcast) {
         return targets
-            .map((t) => { if (!!t && !!t.blocks) { t.blocks.getAllVariableAndListReferences(null, shouldIncludeBroadcast)}})
+            .map((t) => {
+                if (!!t && !!t.blocks) {
+                    t.blocks.getAllVariableAndListReferences(null, shouldIncludeBroadcast);
+                }
+            })
             .reduce(VariableUtil._mergeVarRefObjects, {});
     }
 
@@ -34,8 +38,8 @@ class VariableUtil {
      * variable name in the references being updated should be replaced with this new name.
      * If this parameter is not provided or is '', no name change occurs.
      */
-    static updateVariableIdentifiers (referencesToUpdate, newId, optNewName) {
-        referencesToUpdate.map(ref => {
+    static updateVariableIdentifiers(referencesToUpdate, newId, optNewName) {
+        referencesToUpdate.map((ref) => {
             ref.referencingField.id = newId;
             if (optNewName) {
                 ref.referencingField.value = optNewName;

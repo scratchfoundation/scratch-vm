@@ -1,5 +1,5 @@
-import JSZip from 'jszip';
-import log from '../util/log.mjs';
+import JSZip from "jszip";
+import log from "../util/log.mjs";
 
 /**
  * Deserializes sound from file into storage cache so that it can
@@ -15,14 +15,15 @@ import log from '../util/log.mjs';
  * occurred.
  */
 export const deserializeSound = function (sound, runtime, zip, assetFileName) {
-    const fileName = assetFileName ? assetFileName : sound.md5;
-    const storage = runtime.storage;
+    const fileName = assetFileName || sound.md5;
+    const { storage } = runtime;
     if (!storage) {
-        log.warn('No storage module present; cannot load sound asset: ', fileName);
+        log.warn("No storage module present; cannot load sound asset: ", fileName);
         return Promise.resolve(null);
     }
 
-    if (!zip) { // Zip will not be provided if loading project json from server
+    if (!zip) {
+        // Zip will not be provided if loading project json from server
         return Promise.resolve(null);
     }
 
@@ -39,20 +40,15 @@ export const deserializeSound = function (sound, runtime, zip, assetFileName) {
     }
 
     if (!JSZip.support.uint8array) {
-        log.error('JSZip uint8array is not supported in this browser.');
+        log.error("JSZip uint8array is not supported in this browser.");
         return Promise.resolve(null);
     }
 
-    const dataFormat = sound.dataFormat.toLowerCase() === 'mp3' ?
-        storage.DataFormat.MP3 : storage.DataFormat.WAV;
-    return soundFile.async('uint8array').then(data => storage.createAsset(
-        storage.AssetType.Sound,
-        dataFormat,
-        data,
-        null,
-        true
-    ))
-        .then(asset => {
+    const dataFormat = sound.dataFormat.toLowerCase() === "mp3" ? storage.DataFormat.MP3 : storage.DataFormat.WAV;
+    return soundFile
+        .async("uint8array")
+        .then((data) => storage.createAsset(storage.AssetType.Sound, dataFormat, data, null, true))
+        .then((asset) => {
             sound.asset = asset;
             sound.assetId = asset.assetId;
             sound.md5 = `${asset.assetId}.${asset.dataFormat}`;
@@ -75,26 +71,19 @@ export const deserializeSound = function (sound, runtime, zip, assetFileName) {
  * occurred.
  */
 export const deserializeCostume = function (costume, runtime, zip, assetFileName, textLayerFileName) {
-    const storage = runtime.storage;
-    const assetId = costume.assetId;
-    const fileName = assetFileName ? assetFileName :
-        `${assetId}.${costume.dataFormat}`;
+    const { storage } = runtime;
+    const { assetId } = costume;
+    const fileName = assetFileName || `${assetId}.${costume.dataFormat}`;
 
     if (!storage) {
-        log.warn('No storage module present; cannot load costume asset: ', fileName);
+        log.warn("No storage module present; cannot load costume asset: ", fileName);
         return Promise.resolve(null);
     }
 
     if (costume.asset) {
         // When uploading a sprite from an image file, the asset data will be provided
         // @todo Cache the asset data somewhere and pull it out here
-        return Promise.resolve(storage.createAsset(
-            costume.asset.assetType,
-            costume.asset.dataFormat,
-            new Uint8Array(Object.keys(costume.asset.data).map(key => costume.asset.data[key])),
-            null,
-            true
-        )).then(asset => {
+        return Promise.resolve(storage.createAsset(costume.asset.assetType, costume.asset.dataFormat, new Uint8Array(Object.keys(costume.asset.data).map((key) => costume.asset.data[key])), null, true)).then((asset) => {
             costume.asset = asset;
             costume.assetId = asset.assetId;
             costume.md5 = `${asset.assetId}.${asset.dataFormat}`;
@@ -119,15 +108,15 @@ export const deserializeCostume = function (costume, runtime, zip, assetFileName
     }
     let assetType = null;
     const costumeFormat = costume.dataFormat.toLowerCase();
-    if (costumeFormat === 'svg') {
+    if (costumeFormat === "svg") {
         assetType = storage.AssetType.ImageVector;
-    } else if (['png', 'bmp', 'jpeg', 'jpg', 'gif'].indexOf(costumeFormat) >= 0) {
+    } else if (["png", "bmp", "jpeg", "jpg", "gif"].indexOf(costumeFormat) >= 0) {
         assetType = storage.AssetType.ImageBitmap;
     } else {
         log.error(`Unexpected file format for costume: ${costumeFormat}`);
     }
     if (!JSZip.support.uint8array) {
-        log.error('JSZip uint8array is not supported in this browser.');
+        log.error("JSZip uint8array is not supported in this browser.");
         return Promise.resolve(null);
     }
 
@@ -140,34 +129,34 @@ export const deserializeCostume = function (costume, runtime, zip, assetFileName
             log.error(`Could not find text layer file associated with the ${costume.name} costume.`);
             return Promise.resolve(null);
         }
-        textLayerFilePromise = textLayerFile.async('uint8array')
-            .then(data => storage.createAsset(
-                storage.AssetType.ImageBitmap,
-                'png',
-                data,
-                costume.textLayerMD5
-            ))
-            .then(asset => {
+        textLayerFilePromise = textLayerFile
+            .async("uint8array")
+            .then((data) => storage.createAsset(storage.AssetType.ImageBitmap, "png", data, costume.textLayerMD5))
+            .then((asset) => {
                 costume.textLayerAsset = asset;
             });
     } else {
         textLayerFilePromise = Promise.resolve(null);
     }
 
-    return Promise.all([textLayerFilePromise,
-        costumeFile.async('uint8array')
-            .then(data => storage.createAsset(
-                assetType,
-                // TODO eventually we want to map non-png's to their actual file types?
-                costumeFormat,
-                data,
-                null,
-                true
-            ))
-            .then(asset => {
+    return Promise.all([
+        textLayerFilePromise,
+        costumeFile
+            .async("uint8array")
+            .then((data) =>
+                storage.createAsset(
+                    assetType,
+                    // TODO eventually we want to map non-png's to their actual file types?
+                    costumeFormat,
+                    data,
+                    null,
+                    true
+                )
+            )
+            .then((asset) => {
                 costume.asset = asset;
                 costume.assetId = asset.assetId;
                 costume.md5 = `${asset.assetId}.${asset.dataFormat}`;
-            })
+            }),
     ]);
 };
