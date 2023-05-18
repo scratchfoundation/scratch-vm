@@ -448,6 +448,17 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     /**
+     * Post I/O data to the virtual devices.
+     * @param {?string} device Name of virtual I/O device.
+     * @param {object} data Any data object to post to the I/O device.
+     */
+    postIOData(device, data) {
+        if (this.runtime.ioDevices[device]) {
+            this.runtime.ioDevices[device].postData(data);
+        }
+    }
+
+    /**
      * Handles a message from the python worker.
      * @param {object} message The message from the worker.
      * @private

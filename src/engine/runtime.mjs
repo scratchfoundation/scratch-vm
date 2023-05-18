@@ -11,6 +11,11 @@ import Thread from "./thread.mjs";
 import safeUid from "../util/safe-uid.mjs";
 import StringUtil from "../util/string-util.mjs";
 
+import Clock from "../io/clock.mjs";
+import Keyboard from "../io/keyboard.mjs";
+import Mouse from "../io/mouse.mjs";
+import MouseWheel from "../io/mouseWheel.mjs";
+
 const defaultBlockPackages = {
     // scratch3_control: require('../blocks/scratch3_control'),
     scratch3_event: scratch3EventBlocks,
@@ -96,6 +101,16 @@ export default class Runtime extends EventEmitter {
 
         // Register all given block packages.
         this._registerBlockPackages();
+
+        // Register and initialize "IO devices", containers for processing
+        // I/O related data.
+        /** @type {Object.<string, Object>} */
+        this.ioDevices = {
+            clock: new Clock(this),
+            keyboard: new Keyboard(this),
+            mouse: new Mouse(this),
+            mouseWheel: new MouseWheel(this),
+        };
     }
 
     /**
