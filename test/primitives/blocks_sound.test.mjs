@@ -1,7 +1,4 @@
-/* eslint-disable no-undefined */
-/* eslint-disable no-undef */
 import chai from "chai";
-import sinon from "sinon";
 import sinonChai from "sinon-chai";
 import Runtime from "../../src/engine/runtime.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";

@@ -18,6 +18,7 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+
         say: "looks_say",
         sayFor: "looks_sayforsecs",
         think: "looks_think",
@@ -44,7 +45,6 @@ class PrimProxy {
         broadcastAndWait: "event_broadcastandwait",
         whenGreaterThan: "event_whengreaterthan",
 
-        endThread: "core_endthread",
         playSound: "sound_play",
         playSoundUntilDone: "sound_playuntildone",
         stopAllSounds: "sound_stopallsounds",
@@ -54,6 +54,8 @@ class PrimProxy {
         setVolumeTo: "sound_setvolumeto",
         changeVolumeBy: "sound_changevolumeby",
         getVolume: "sound_volume",
+
+        endThread: "core_endthread",
     };
 
     constructor(targetId, postFunction) {
