@@ -226,5 +226,44 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(eY);
         });
+
+        it("Get X", async () => {
+            const oldX = target.x;
+            const dX = 15;
+
+            const targetAndCode = {
+                target1: [`x = await getX()\nsetX(x + ${dX})`],
+            };
+
+            await vm.run(targetAndCode);
+
+            expect(vm.runtime.targets[0].x).to.equal(oldX + dX);
+        });
+
+        it("Get Y", async () => {
+            const oldY = target.y;
+            const dY = 15;
+
+            const targetAndCode = {
+                target1: [`y = await getY()\nsetY(y + ${dY})`],
+            };
+
+            await vm.run(targetAndCode);
+
+            expect(vm.runtime.targets[0].y).to.equal(oldY + dY);
+        });
+
+        it("Get Direction", async () => {
+            const oldDegrees = target.direction;
+            const dDegrees = 15;
+
+            const targetAndCode = {
+                target1: [`degrees = await getDirection()\npointInDirection(degrees + ${dDegrees})`],
+            };
+
+            await vm.run(targetAndCode);
+
+            expect(vm.runtime.targets[0].direction).to.equal(oldDegrees + dDegrees);
+        });
     });
 });

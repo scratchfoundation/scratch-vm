@@ -270,7 +270,7 @@ export default class Scratch3SoundBlocks {
         const value = Cast.toNumber(args.VALUE);
 
         const soundState = this._getSoundState(util.target);
-        if (!soundState.effects.hasOwnProperty(effect)) return null;
+        if (!soundState.effects.hasOwnProperty(effect)) return;
 
         if (change) {
             soundState.effects[effect] += value;
@@ -282,8 +282,6 @@ export default class Scratch3SoundBlocks {
         soundState.effects[effect] = MathUtil.clamp(soundState.effects[effect], min, max);
 
         this._syncEffectsForTarget(util.target);
-        // Yield until the next tick.
-        return Promise.resolve(null);
     }
 
     _syncEffectsForTarget(target) {
@@ -333,9 +331,6 @@ export default class Scratch3SoundBlocks {
         // eslint-disable-next-line no-param-reassign
         util.target.volume = volume;
         this._syncEffectsForTarget(util.target);
-
-        // Yield until the next tick.
-        return Promise.resolve(null);
     }
 
     getVolume(args, util) {

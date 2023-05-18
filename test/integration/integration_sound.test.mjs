@@ -1,15 +1,8 @@
-/* eslint-disable no-undefined */
-/* eslint-disable no-undef */
-import path from "path";
-import { fileURLToPath } from "url";
-
 import chai from "chai";
 import sinonChai from "sinon-chai";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
-
-import WorkerMessages from "../../src/worker/worker-messages.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
