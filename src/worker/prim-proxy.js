@@ -65,7 +65,7 @@ class PrimProxy {
         getMouseX: "sensing_mousex",
         getMouseY: "sensing_mousey",
         isMouseDown: "sensing_mousedown",
-        setDragMode: "sensing_getdragmode",
+        setDragMode: "sensing_setdragmode",
         isKeyPressed: "sensing_keypressed",
         current: "sensing_current",
         daysSince2000: "sensing_dayssince2000",
@@ -308,27 +308,27 @@ class PrimProxy {
     }
 
     async isTouching(object) {
-        const isTouching = PrimProxy.post(this.opcodeMap.isTouching, { TOUCHINGOBJECTMENU: object });
+        const isTouching = await this.post(PrimProxy.opcodeMap.isTouching, { TOUCHINGOBJECTMENU: object });
         return isTouching;
     }
 
     async isTouchingColor(color) {
-        const isTouching = PrimProxy.post(this.opcodeMap.isTouchingColor, { COLOR: color });
+        const isTouching = await this.post(PrimProxy.opcodeMap.isTouchingColor, { COLOR: color });
         return isTouching;
     }
 
     async isColorTouchingColor(color, color2) {
-        const isTouching = PrimProxy.post(this.opcodeMap.isColorTouchingColor, { COLOR: color, COLOR2: color2 });
+        const isTouching = await this.post(PrimProxy.opcodeMap.isColorTouchingColor, { COLOR: color, COLOR2: color2 });
         return isTouching;
     }
 
     async distanceTo(object) {
-        const distance = PrimProxy.post(this.opcodeMap.distanceTo, { DISTANCETOMENU: object });
+        const distance = await this.post(PrimProxy.opcodeMap.distanceTo, { DISTANCETOMENU: object });
         return distance;
     }
 
     async getTimer() {
-        const time = PrimProxy.post(this.opcodeMap.getTimer, {});
+        const time = await this.post(PrimProxy.opcodeMap.getTimer, {});
         return time;
     }
 
@@ -337,22 +337,22 @@ class PrimProxy {
     }
 
     async getAttributeOf(object, property) {
-        const value = PrimProxy.post(this.opcodeMap.getAttributeOf, { OBJECT: object, PROPERTY: property});
+        const value = await this.post(PrimProxy.opcodeMap.getAttributeOf, { OBJECT: object, PROPERTY: property});
         return value;
     }
 
-    async getMouseY() {
-        const mouseX = PrimProxy.post(this.opcodeMap.getMouseX, {});
+    async getMouseX() {
+        const mouseX = await this.post(PrimProxy.opcodeMap.getMouseX, {});
         return mouseX;
     }
 
     async getMouseY() {
-        const mouseY = PrimProxy.post(this.opcodeMap.getMouseY, {});
+        const mouseY = await this.post(PrimProxy.opcodeMap.getMouseY, {});
         return mouseY;
     }
 
     async isMouseDown() {
-        const mouseDown = PrimProxy.post(this.opcodeMap.isMouseDown, {});
+        const mouseDown = await this.post(PrimProxy.opcodeMap.isMouseDown, {});
         return mouseDown;
     }
 
@@ -361,27 +361,27 @@ class PrimProxy {
     }
 
     async isKeyPressed(key) {
-        const keyPressed = PrimProxy.post(this.opcodeMap.isKeyPressed, { KEY_OPTION: key });
+        const keyPressed = await this.post(PrimProxy.opcodeMap.isKeyPressed, { KEY_OPTION: key });
         return keyPressed;
     }
 
     async current(timeIncrement) {
-        const current = PrimProxy.post(this.opcodeMap.current, { CURRENTMENU: timeIncrement });
+        const current = await this.post(PrimProxy.opcodeMap.current, { CURRENTMENU: timeIncrement });
         return current;
     }
 
     async daysSince2000() {
-        const days = PrimProxy.post(this.opcodeMap.daysSince2000, {});
+        const days = await this.post(PrimProxy.opcodeMap.daysSince2000, {});
         return days;
     }
 
     async getLoudness() {
-        const loudness = PrimProxy.post(this.opcodeMap.getLoudness, {});
+        const loudness = await this.post(PrimProxy.opcodeMap.getLoudness, {});
         return loudness;
     }
 
     async getUsername() {
-        const username = PrimProxy.post(this.opcodeMap.getUsername, {});
+        const username = await this.post(PrimProxy.opcodeMap.getUsername, {});
         return username;
     }
 
