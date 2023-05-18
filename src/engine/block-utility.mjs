@@ -70,4 +70,21 @@ export default class BlockUtility {
     set runtime(newRuntime) {
         this._runtime = newRuntime;
     }
+
+    /**
+     * Query a named IO device.
+     * @param {string} device The name of like the device, like keyboard.
+     * @param {string} func The name of the device's function to query.
+     * @param {Array.<*>} args Arguments to pass to the device's function.
+     * @return {*} The expected output for the device's function.
+     */
+    ioQuery(device, func, args) {
+        // Find the I/O device and execute the query/function call.
+        if (this._runtime.ioDevices[device] && this._runtime.ioDevices[device][func]) {
+            const devObject = this._runtime.ioDevices[device];
+            // eslint-disable-next-line prefer-spread
+            return devObject[func].apply(devObject, args);
+        }
+        return null;
+    }
 }
