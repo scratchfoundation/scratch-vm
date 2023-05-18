@@ -70,9 +70,9 @@ class PrimProxy {
         current: "sensing_current",
         daysSince2000: "sensing_dayssince2000",
         getLoudness: "sensing_loudness",
-        askAndWait: "sensing_askandwait",
-        getAnswer: "sensing_answer",
         getUsername: "sensing_username",
+        // askAndWait: "sensing_askandwait",
+        // getAnswer: "sensing_answer",
 
         endThread: "core_endthread",
     };
@@ -380,6 +380,12 @@ class PrimProxy {
         return loudness;
     }
 
+    async getUsername() {
+        const username = PrimProxy.post(this.opcodeMap.getUsername, {});
+        return username;
+    }
+
+    /*
     askAndWait(question) {
         // not returning answer since there's the separate answer bubble
         this.post(PrimProxy.opcodeMap.askAndWait, { QUESTION: question });
@@ -389,11 +395,7 @@ class PrimProxy {
         const answer = PrimProxy.post(this.opcodeMap.getAnswer, {});
         return answer;
     }
-
-    async getUsername() {
-        const username = PrimProxy.post(this.opcodeMap.getUsername, {});
-        return username;
-    }
+    */
 }
 
 export default PrimProxy;
