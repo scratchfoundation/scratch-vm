@@ -55,6 +55,25 @@ class PrimProxy {
         changeVolumeBy: "sound_changevolumeby",
         getVolume: "sound_volume",
 
+        isTouching: "sensing_touchingobject",
+        isTouchingColor: "sensing_touchingcolor",
+        isColorTouchingColor: "sensing_coloristouchingcolor",
+        distanceTo: "sensing_distanceto",
+        getTimer: "sensing_timer",
+        resetTimer: "sensing_resettimer",
+        getAttributeOf: "sensing_of",
+        getMouseX: "sensing_mousex",
+        getMouseY: "sensing_mousey",
+        isMouseDown: "sensing_mousedown",
+        setDragMode: "sensing_getdragmode",
+        isKeyPressed: "sensing_keypressed",
+        current: "sensing_current",
+        daysSince2000: "sensing_dayssince2000",
+        getLoudness: "sensing_loudness",
+        askAndWait: "sensing_askandwait",
+        getAnswer: "sensing_answer",
+        getUsername: "sensing_username",
+
         endThread: "core_endthread",
     };
 
@@ -286,6 +305,94 @@ class PrimProxy {
     async getVolume() {
         const volume = PrimProxy.post(this.opcodeMap.getVolume, {});
         return volume;
+    }
+
+    async isTouching(object) {
+        const isTouching = PrimProxy.post(this.opcodeMap.isTouching, { TOUCHINGOBJECTMENU: object });
+        return isTouching;
+    }
+
+    async isTouchingColor(color) {
+        const isTouching = PrimProxy.post(this.opcodeMap.isTouchingColor, { COLOR: color });
+        return isTouching;
+    }
+
+    async isColorTouchingColor(color, color2) {
+        const isTouching = PrimProxy.post(this.opcodeMap.isColorTouchingColor, { COLOR: color, COLOR2: color2 });
+        return isTouching;
+    }
+
+    async distanceTo(object) {
+        const distance = PrimProxy.post(this.opcodeMap.distanceTo, { DISTANCETOMENU: object });
+        return distance;
+    }
+
+    async getTimer() {
+        const time = PrimProxy.post(this.opcodeMap.getTimer, {});
+        return time;
+    }
+
+    resetTimer() {
+        this.post(PrimProxy.opcodeMap.resetTimer, {});
+    }
+
+    async getAttributeOf(object, property) {
+        const value = PrimProxy.post(this.opcodeMap.getAttributeOf, { OBJECT: object, PROPERTY: property});
+        return value;
+    }
+
+    async getMouseY() {
+        const mouseX = PrimProxy.post(this.opcodeMap.getMouseX, {});
+        return mouseX;
+    }
+
+    async getMouseY() {
+        const mouseY = PrimProxy.post(this.opcodeMap.getMouseY, {});
+        return mouseY;
+    }
+
+    async isMouseDown() {
+        const mouseDown = PrimProxy.post(this.opcodeMap.isMouseDown, {});
+        return mouseDown;
+    }
+
+    setDragMode(dragMode) {
+        this.post(PrimProxy.opcodeMap.setDragMode, { DRAG_MODE: dragMode });
+    }
+
+    async isKeyPressed(key) {
+        const keyPressed = PrimProxy.post(this.opcodeMap.isKeyPressed, { KEY_OPTION: key });
+        return keyPressed;
+    }
+
+    async current(timeIncrement) {
+        const current = PrimProxy.post(this.opcodeMap.current, { CURRENTMENU: timeIncrement });
+        return current;
+    }
+
+    async daysSince2000() {
+        const days = PrimProxy.post(this.opcodeMap.daysSince2000, {});
+        return days;
+    }
+
+    async getLoudness() {
+        const loudness = PrimProxy.post(this.opcodeMap.getLoudness, {});
+        return loudness;
+    }
+
+    askAndWait(question) {
+        // not returning answer since there's the separate answer bubble
+        this.post(PrimProxy.opcodeMap.askAndWait, { QUESTION: question });
+    }
+
+    async getAnswer() {
+        const answer = PrimProxy.post(this.opcodeMap.getAnswer, {});
+        return answer;
+    }
+
+    async getUsername() {
+        const username = PrimProxy.post(this.opcodeMap.getUsername, {});
+        return username;
     }
 }
 
