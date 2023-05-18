@@ -18,6 +18,7 @@ class PrimProxy {
         getX: "motion_xposition",
         getY: "motion_yposition",
         getDirection: "motion_direction",
+
         say: "looks_say",
         sayFor: "looks_sayforsecs",
         think: "looks_think",
@@ -43,6 +44,16 @@ class PrimProxy {
         broadcast: "event_broadcast",
         broadcastAndWait: "event_broadcastandwait",
         whenGreaterThan: "event_whengreaterthan",
+
+        playSound: "sound_play",
+        playSoundUntilDone: "sound_playuntildone",
+        stopAllSounds: "sound_stopallsounds",
+        setSoundEffectTo: "sound_seteffectto",
+        changeSoundEffectBy: "sound_changeeffectby",
+        clearSoundEffects: "sound_cleareffects",
+        setVolumeTo: "sound_setvolumeto",
+        changeVolumeBy: "sound_changevolumeby",
+        getVolume: "sound_volume",
 
         endThread: "core_endthread",
     };
@@ -238,6 +249,43 @@ class PrimProxy {
             NUMBER_NAME: "name",
         });
         return backdrop;
+    }
+
+    playSound(soundMenu) {
+        this.post(PrimProxy.opcodeMap.playSound, { SOUND_MENU: soundMenu });
+    }
+
+    playSoundUntilDone(soundMenu) {
+        this.post(PrimProxy.opcodeMap.playSoundUntilDone, { SOUND_MENU: soundMenu });
+    }
+
+    stopAllSounds() {
+        this.post(PrimProxy.opcodeMap.stopAllSounds, {});
+    }
+
+    setSoundEffectTo(effect, value) {
+        this.post(PrimProxy.opcodeMap.setSoundEffectTo, { EFFECT: effect, VALUE: value });
+    }
+
+    changeSoundEffectBy(effect, value) {
+        this.post(PrimProxy.opcodeMap.changeSoundEffectBy, { EFFECT: effect, VALUE: value });
+    }
+
+    clearSoundEffects() {
+        this.post(PrimProxy.opcodeMap.clearSoundEffects, {});
+    }
+
+    setVolumeTo(volume) {
+        this.post(PrimProxy.opcodeMap.setVolumeTo, { VOLUME: volume });
+    }
+
+    changeVolumeBy(volume) {
+        this.post(PrimProxy.opcodeMap.changeVolumeBy, { VOLUME: volume });
+    }
+
+    async getVolume() {
+        const volume = PrimProxy.post(this.opcodeMap.getVolume, {});
+        return volume;
     }
 }
 

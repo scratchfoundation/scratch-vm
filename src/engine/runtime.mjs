@@ -5,6 +5,7 @@ import StageLayering from "./stage-layering.mjs";
 import scratch3EventBlocks from "../blocks/scratch3_event.mjs";
 import scratch3LooksBlocks from "../blocks/scratch3_looks.mjs";
 import scratch3MotionBlocks from "../blocks/scratch3_motion.mjs";
+import scratch3SoundBlocks from "../blocks/scratch3_sound.mjs";
 import patchCoreBlocks from "../blocks/patch_core.mjs";
 
 import Thread from "./thread.mjs";
@@ -17,7 +18,7 @@ const defaultBlockPackages = {
     scratch3_looks: scratch3LooksBlocks,
     scratch3_motion: scratch3MotionBlocks,
     // scratch3_operators: require('../blocks/scratch3_operators'),
-    // scratch3_sound: require('../blocks/scratch3_sound'),
+    scratch3_sound: scratch3SoundBlocks,
     // scratch3_sensing: require('../blocks/scratch3_sensing'),
     // scratch3_data: require('../blocks/scratch3_data'),
     // scratch3_procedures: require('../blocks/scratch3_procedures')
