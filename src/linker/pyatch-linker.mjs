@@ -59,6 +59,34 @@ class PyatchLinker {
     }
 
     /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsAssignments(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            const value = globalVars[name];
+            const valueValidated = typeof value !== "number" ? `'${value}'` : `${value}`;
+            snippet += `${name} = ${valueValidated}\n`;
+        });
+
+        return snippet;
+    }
+
+    /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsImports(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            snippet += `${linkConstants.python_tab_char}global ${name}\n`;
+        });
+
+        return snippet;
+    }
+
+    /**
      * Generate the fully linked executable python code.
      * @param {Object} threadsCode - Dict with thread id as key and code.
      *
@@ -68,25 +96,24 @@ class PyatchLinker {
 
         const threadIds = [];
 
-        for (const [name, value] of Object.entries(globalVars)) {
-            const nameCode = isNaN(value) ? "'" + `${value}` + "'" : `${value}`;
-            codeString += `${name}` + ` = ${nameCode}\n`;
+        if (globalVars) {
+            const globalSnippet = this.registerGlobalsAssignments(globalVars);
+            codeString += globalSnippet;
         }
 
         Object.keys(threadsCode).forEach((id) => {
             threadIds.push(id);
 
-            let variableCode = "";
-            for (const [name, value] of Object.entries(globalVars)) {
-                variableCode += `${linkConstants.python_tab_char}global ` + `${name}` + `\n`;
-            }
-
             const threadCode = threadsCode[id];
 
             const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
             const header = this.generateAsyncFuncHeader(id);
-            const registerPrimsCode = this.registerProxyPrims(threadCode);
-            codeString += `${header + registerPrimsCode + linkConstants.python_tab_char + code}\n\n`;
+            let variabelSnippet = "";
+            if (globalVars) {
+                variabelSnippet = this.registerGlobalsImports(globalVars);
+            }
+            const registerPrimsSnippet = this.registerProxyPrims(threadCode);
+            codeString += `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;
         });
 
         return [threadIds, codeString];
