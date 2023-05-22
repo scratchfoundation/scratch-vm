@@ -63,20 +63,30 @@ class PyatchLinker {
      * @param {Object} threadsCode - Dict with thread id as key and code.
      * 
      */
-    generatePython(threadsCode) {
+    generatePython(threadsCode, globalVars) {
         let codeString = "";
 
         const threadIds = [];
+        
+        for(const [name,value] of Object.entries(globalVars)){
+            const nameCode = isNaN(value) ? ("\'"+`${value}`+"\'") : `${value}`;
+            codeString += `${name}` + " = "+ nameCode+ '\n';
+        }
 
         Object.keys(threadsCode).forEach(id => {
             threadIds.push(id);
+
+            let variableCode = "";
+            for(const [name,value] of Object.entries(globalVars)){
+                variableCode += linkConstants.python_tab_char + 'global '+ `${name}` + '\n';
+            }
 
             const threadCode = threadsCode[id];
 
             const code = threadCode.replaceAll('\n', '\n' + linkConstants.python_tab_char);
             const header = this.generateAsyncFuncHeader(id);
             const registerPrimsCode = this.registerProxyPrims(threadCode);
-            codeString += header + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
+            codeString += header + variableCode + registerPrimsCode + linkConstants.python_tab_char + code + '\n\n';
         });
 
        return [threadIds, codeString]; 
