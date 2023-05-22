@@ -1,9 +1,9 @@
-import Cast from '../util/cast.mjs';
-import MathUtil from '../util/math-util.mjs';
-import Timer from '../util/timer.mjs';
+import Cast from "../util/cast.mjs";
+import MathUtil from "../util/math-util.mjs";
+import Timer from "../util/timer.mjs";
 
 export default class PatchCoreBlocks {
-    constructor (runtime) {
+    constructor(runtime) {
         /**
          * The runtime instantiating this block package.
          * @type {Runtime}
@@ -15,7 +15,7 @@ export default class PatchCoreBlocks {
      * Retrieve the block primitives implemented by this package.
      * @return {object.<string, Function>} Mapping of opcode to Function.
      */
-    getPrimitives () {
+    getPrimitives() {
         return {
             core_endthread: this.endThread,
         };
@@ -25,5 +25,3 @@ export default class PatchCoreBlocks {
         util.endThread();
     }
 }
-
-

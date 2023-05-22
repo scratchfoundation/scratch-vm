@@ -3,8 +3,8 @@
  * Object representing a Scratch variable.
  */
 
-import uid from '../util/uid.mjs';
-import xmlEscape from '../util/xml-escape.mjs';
+import uid from "../util/uid.mjs";
+import xmlEscape from "../util/xml-escape.mjs";
 
 class Variable {
     /**
@@ -14,30 +14,29 @@ class Variable {
      * @param {boolean} isCloud Whether the variable is stored in the cloud.
      * @constructor
      */
-    constructor (id, name, type, isCloud) {
+    constructor(id, name, type, isCloud) {
         this.id = id || uid();
         this.name = name;
         this.type = type;
         this.isCloud = isCloud;
         switch (this.type) {
-        case Variable.SCALAR_TYPE:
-            this.value = 0;
-            break;
-        case Variable.LIST_TYPE:
-            this.value = [];
-            break;
-        case Variable.BROADCAST_MESSAGE_TYPE:
-            this.value = this.name;
-            break;
-        default:
-            throw new Error(`Invalid variable type: ${this.type}`);
+            case Variable.SCALAR_TYPE:
+                this.value = 0;
+                break;
+            case Variable.LIST_TYPE:
+                this.value = [];
+                break;
+            case Variable.BROADCAST_MESSAGE_TYPE:
+                this.value = this.name;
+                break;
+            default:
+                throw new Error(`Invalid variable type: ${this.type}`);
         }
     }
 
-    toXML (isLocal) {
-        isLocal = (isLocal === true);
-        return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal
-        }" iscloud="${this.isCloud}">${xmlEscape(this.name)}</variable>`;
+    toXML(isLocal) {
+        isLocal = isLocal === true;
+        return `<variable type="${this.type}" id="${this.id}" islocal="${isLocal}" iscloud="${this.isCloud}">${xmlEscape(this.name)}</variable>`;
     }
 
     /**
@@ -46,24 +45,24 @@ class Variable {
      * for compatibility with blockly.
      * @const {string}
      */
-    static get SCALAR_TYPE () {
-        return '';
+    static get SCALAR_TYPE() {
+        return "";
     }
 
     /**
      * Type representation for list variables.
      * @const {string}
      */
-    static get LIST_TYPE () {
-        return 'list';
+    static get LIST_TYPE() {
+        return "list";
     }
 
     /**
      * Type representation for list variables.
      * @const {string}
      */
-    static get BROADCAST_MESSAGE_TYPE () {
-        return 'broadcast_msg';
+    static get BROADCAST_MESSAGE_TYPE() {
+        return "broadcast_msg";
     }
 }
 

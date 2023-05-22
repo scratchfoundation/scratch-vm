@@ -1,17 +1,17 @@
-import WorkerMessages from './worker-messages.mjs';
-import Worker from 'web-worker';
+import Worker from "web-worker";
 import { isNode, isBrowser } from "browser-or-node";
+import WorkerMessages from "./worker-messages.mjs";
 
 class PyatchWorker {
     constructor(blockOPCallback) {
-        this._worker = new Worker(new URL('./pyodide-web.worker.mjs', import.meta.url), { type: 'module' });
+        this._worker = new Worker(new URL("./pyodide-web.worker.mjs", import.meta.url), { type: "module" });
         this._blockOPCallback = blockOPCallback.bind(this);
     }
-    
+
     async loadPyodide() {
         const initMessage = {
             id: WorkerMessages.FromVM.InitPyodide,
-        }
+        };
         return new Promise((resolve, reject) => {
             this._worker.onmessage = (event) => {
                 if (event.data.id === WorkerMessages.ToVM.PyodideLoaded) {
@@ -23,19 +23,19 @@ class PyatchWorker {
             };
             this._worker.postMessage(initMessage);
             setTimeout(() => {
-                reject(new Error('Pyodide load timed out.'));
+                reject(new Error("Pyodide load timed out."));
             }, 10000);
         });
     }
 
-    async run(pythonScript, threads, token='') {
+    async run(pythonScript, threads, token = "") {
         await this._worker;
         const message = {
             id: WorkerMessages.FromVM.AsyncRun,
             token: token,
             python: String(pythonScript),
             threads: threads,
-        }
+        };
         // console.log(message);
         return new Promise((resolve, reject) => {
             let pythonRunning = false;
@@ -55,10 +55,8 @@ class PyatchWorker {
                     pythonRunning = true;
                 } else if (event.data.id === WorkerMessages.ToVM.PythonError) {
                     reject(event.data.error);
-                } else if (event.data.id === WorkerMessages.ToVM.PythonLoading) {
-
-                } else {
-                    console.log('Unknown message from worker', event.data);
+                } else if (event.data.id !== WorkerMessages.ToVM.PythonLoading) {
+                    console.log("Unknown message from worker", event.data);
                 }
             };
             this._worker.onerror = (event) => {
@@ -67,7 +65,7 @@ class PyatchWorker {
             this._worker.postMessage(message);
             setTimeout(() => {
                 if (!pythonRunning) {
-                    reject(new Error('Python run timed out.'));
+                    reject(new Error("Python run timed out."));
                 }
             }, 10000);
         });
@@ -80,7 +78,6 @@ class PyatchWorker {
     postMessage(message) {
         this._worker.postMessage(message);
     }
-
 }
 
 export default PyatchWorker;

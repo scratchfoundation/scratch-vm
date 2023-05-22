@@ -9,7 +9,7 @@ class Clone {
      * @param {object} original - the object to be cloned.
      * @returns {object} a deep clone of the original object.
      */
-    static simple (original) {
+    static simple(original) {
         return JSON.parse(JSON.stringify(original));
     }
 }

@@ -4,24 +4,24 @@
  * JSON and then generates all needed scratch-vm runtime structures.
  */
 
-import vmPackage from '../../package.json' assert { type: "json" };
-import Blocks from '../engine/blocks.mjs';
-import Sprite from '../sprites/sprite.mjs';
-import Variable from '../engine/variable.mjs';
-import Comment from '../engine/comment.mjs';
-import MonitorRecord from '../engine/monitor-record.mjs';
-import StageLayering from '../engine/stage-layering.mjs';
-import log from '../util/log.mjs';
-import uid from '../util/uid.mjs';
-import MathUtil from '../util/math-util.mjs';
-import StringUtil from '../util/string-util.mjs';
-import VariableUtil from '../util/variable-util.mjs';
+import vmPackage from "../../package.json" assert { type: "json" };
+import Blocks from "../engine/blocks.mjs";
+import Sprite from "../sprites/sprite.mjs";
+import Variable from "../engine/variable.mjs";
+import Comment from "../engine/comment.mjs";
+import MonitorRecord from "../engine/monitor-record.mjs";
+import StageLayering from "../engine/stage-layering.mjs";
+import log from "../util/log.mjs";
+import uid from "../util/uid.mjs";
+import MathUtil from "../util/math-util.mjs";
+import StringUtil from "../util/string-util.mjs";
+import VariableUtil from "../util/variable-util.mjs";
 
-import {loadCostume} from '../import/load-costume.mjs';
-import {loadSound} from '../import/load-sound.mjs';
-import {deserializeCostume, deserializeSound} from './deserialize-assets.mjs';
+import { loadCostume } from "../import/load-costume.mjs";
+import { loadSound } from "../import/load-sound.mjs";
+import { deserializeCostume, deserializeSound } from "./deserialize-assets.mjs";
 
-const hasOwnProperty = Object.prototype.hasOwnProperty;
+const { hasOwnProperty } = Object.prototype;
 
 /**
  * @typedef {object} ImportedProject
@@ -42,20 +42,7 @@ const INPUT_DIFF_BLOCK_SHADOW = 3; // obscured shadow
 // There shouldn't be a case where block is null, but shadow is present...
 
 // Constants used during deserialization of an SB3 file
-const CORE_EXTENSIONS = [
-    'argument',
-    'colour',
-    'control',
-    'data',
-    'event',
-    'looks',
-    'math',
-    'motion',
-    'operator',
-    'procedures',
-    'sensing',
-    'sound'
-];
+const CORE_EXTENSIONS = ["argument", "colour", "control", "data", "event", "looks", "math", "motion", "operator", "procedures", "sensing", "sound"];
 
 // Constants referring to 'primitive' blocks that are usually shadows,
 // or in the case of variables and lists, appear quite often in projects
@@ -83,16 +70,16 @@ const LIST_PRIMITIVE = 13;
 // Map block opcodes to the above primitives and the name of the field we can use
 // to find the value of the field
 const primitiveOpcodeInfoMap = {
-    math_number: [MATH_NUM_PRIMITIVE, 'NUM'],
-    math_positive_number: [POSITIVE_NUM_PRIMITIVE, 'NUM'],
-    math_whole_number: [WHOLE_NUM_PRIMITIVE, 'NUM'],
-    math_integer: [INTEGER_NUM_PRIMITIVE, 'NUM'],
-    math_angle: [ANGLE_NUM_PRIMITIVE, 'NUM'],
-    colour_picker: [COLOR_PICKER_PRIMITIVE, 'COLOUR'],
-    text: [TEXT_PRIMITIVE, 'TEXT'],
-    event_broadcast_menu: [BROADCAST_PRIMITIVE, 'BROADCAST_OPTION'],
-    data_variable: [VAR_PRIMITIVE, 'VARIABLE'],
-    data_listcontents: [LIST_PRIMITIVE, 'LIST']
+    math_number: [MATH_NUM_PRIMITIVE, "NUM"],
+    math_positive_number: [POSITIVE_NUM_PRIMITIVE, "NUM"],
+    math_whole_number: [WHOLE_NUM_PRIMITIVE, "NUM"],
+    math_integer: [INTEGER_NUM_PRIMITIVE, "NUM"],
+    math_angle: [ANGLE_NUM_PRIMITIVE, "NUM"],
+    colour_picker: [COLOR_PICKER_PRIMITIVE, "COLOUR"],
+    text: [TEXT_PRIMITIVE, "TEXT"],
+    event_broadcast_menu: [BROADCAST_PRIMITIVE, "BROADCAST_OPTION"],
+    data_variable: [VAR_PRIMITIVE, "VARIABLE"],
+    data_listcontents: [LIST_PRIMITIVE, "LIST"],
 };
 
 /**
@@ -110,9 +97,9 @@ const serializePrimitiveBlock = function (block) {
         const fieldName = primitiveInfo[1];
         const field = block.fields[fieldName];
         const primitiveDesc = [primitiveConstant, field.value];
-        if (block.opcode === 'event_broadcast_menu') {
+        if (block.opcode === "event_broadcast_menu") {
             primitiveDesc.push(field.id);
-        } else if (block.opcode === 'data_variable' || block.opcode === 'data_listcontents') {
+        } else if (block.opcode === "data_variable" || block.opcode === "data_listcontents") {
             primitiveDesc.push(field.id);
             if (block.topLevel) {
                 primitiveDesc.push(block.x ? Math.round(block.x) : 0);
@@ -141,23 +128,13 @@ const serializeInputs = function (inputs) {
         // if block and shadow refer to the same block, only serialize one
         if (inputs[inputName].block === inputs[inputName].shadow) {
             // has block and shadow, and they are the same
-            obj[inputName] = [
-                INPUT_SAME_BLOCK_SHADOW,
-                inputs[inputName].block
-            ];
+            obj[inputName] = [INPUT_SAME_BLOCK_SHADOW, inputs[inputName].block];
         } else if (inputs[inputName].shadow === null) {
             // does not have shadow
-            obj[inputName] = [
-                INPUT_BLOCK_NO_SHADOW,
-                inputs[inputName].block
-            ];
+            obj[inputName] = [INPUT_BLOCK_NO_SHADOW, inputs[inputName].block];
         } else {
             // block and shadow are both present and are different
-            obj[inputName] = [
-                INPUT_DIFF_BLOCK_SHADOW,
-                inputs[inputName].block,
-                inputs[inputName].shadow
-            ];
+            obj[inputName] = [INPUT_DIFF_BLOCK_SHADOW, inputs[inputName].block, inputs[inputName].shadow];
         }
     }
     return obj;
@@ -173,7 +150,7 @@ const serializeFields = function (fields) {
     for (const fieldName in fields) {
         if (!hasOwnProperty.call(fields, fieldName)) continue;
         obj[fieldName] = [fields[fieldName].value];
-        if (fields[fieldName].hasOwnProperty('id')) {
+        if (fields[fieldName].hasOwnProperty("id")) {
             obj[fieldName].push(fields[fieldName].id);
         }
     }
@@ -279,13 +256,13 @@ const compressInputTree = function (block, blocks) {
  * @param {!string} opcode The opcode to examine for extension.
  * @return {?string} The extension ID, if it exists and is not a core extension.
  */
- const getExtensionIdForOpcode = function (opcode) {
+const getExtensionIdForOpcode = function (opcode) {
     // Allowed ID characters are those matching the regular expression [\w-]: A-Z, a-z, 0-9, and hyphen ("-").
-    const index = opcode.indexOf('_');
+    const index = opcode.indexOf("_");
     const forbiddenSymbols = /[^\w-]/g;
-    const prefix = opcode.substring(0, index).replace(forbiddenSymbols, '-');
+    const prefix = opcode.substring(0, index).replace(forbiddenSymbols, "-");
     if (CORE_EXTENSIONS.indexOf(prefix) === -1) {
-        if (prefix !== '') return prefix;
+        if (prefix !== "") return prefix;
     }
 };
 
@@ -297,7 +274,7 @@ const compressInputTree = function (block, blocks) {
  * compressed primitives and the list of all extension IDs present
  * in the serialized blocks.
  */
- const serializeBlocks = function (blocks) {
+const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
     const extensionIDs = new Set();
     for (const blockID in blocks) {
@@ -328,10 +305,8 @@ const compressInputTree = function (block, blocks) {
         // e.g. variable getter or list getter, then it should be deleted as it's
         // a shadow block, and there are no blocks that reference it, otherwise
         // they would have been compressed in the last pass)
-        if (Array.isArray(serializedBlock) &&
-            [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock[0]) < 0) {
-            log.warn(`Found an unexpected top level primitive with block ID: ${
-                blockID}; deleting it from serialized blocks.`);
+        if (Array.isArray(serializedBlock) && [VAR_PRIMITIVE, LIST_PRIMITIVE].indexOf(serializedBlock[0]) < 0) {
+            log.warn(`Found an unexpected top level primitive with block ID: ${blockID}; deleting it from serialized blocks.`);
             delete obj[blockID];
         }
     }
@@ -351,16 +326,16 @@ const serializeCostume = function (costume) {
 
     obj.bitmapResolution = costumeToSerialize.bitmapResolution;
     obj.dataFormat = costumeToSerialize.dataFormat.toLowerCase();
-    
+
     obj.assetId = costumeToSerialize.assetId;
-    
+
     // serialize this property with the name 'md5ext' because that's
     // what it's actually referring to. TODO runtime objects need to be
     // updated to actually refer to this as 'md5ext' instead of 'md5'
     // but that change should be made carefully since it is very
     // pervasive
     obj.md5ext = costumeToSerialize.md5;
-    
+
     obj.rotationCenterX = costumeToSerialize.rotationCenterX;
     obj.rotationCenterY = costumeToSerialize.rotationCenterY;
 
@@ -375,7 +350,7 @@ const serializeCostume = function (costume) {
 const serializeSound = function (sound) {
     const obj = Object.create(null);
     obj.name = sound.name;
-    
+
     const soundToSerialize = sound.broken || sound;
 
     obj.assetId = soundToSerialize.assetId;
@@ -456,7 +431,7 @@ const serializeTarget = function (target, extensions) {
     const obj = Object.create(null);
     let targetExtensions = [];
     obj.isStage = target.isStage;
-    obj.name = obj.isStage ? 'Stage' : target.name;
+    obj.name = obj.isStage ? "Stage" : target.name;
     const vars = serializeVariables(target.variables);
     obj.variables = vars.variables;
     obj.lists = vars.lists;
@@ -473,14 +448,16 @@ const serializeTarget = function (target, extensions) {
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
-    if (target.hasOwnProperty('volume')) obj.volume = target.volume;
-    if (target.hasOwnProperty('layerOrder')) obj.layerOrder = target.layerOrder;
-    if (obj.isStage) { // Only the stage should have these properties
-        if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
-        if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
-        if (target.hasOwnProperty('videoState')) obj.videoState = target.videoState;
-        if (target.hasOwnProperty('textToSpeechLanguage')) obj.textToSpeechLanguage = target.textToSpeechLanguage;
-    } else { // The stage does not need the following properties, but sprites should
+    if (target.hasOwnProperty("volume")) obj.volume = target.volume;
+    if (target.hasOwnProperty("layerOrder")) obj.layerOrder = target.layerOrder;
+    if (obj.isStage) {
+        // Only the stage should have these properties
+        if (target.hasOwnProperty("tempo")) obj.tempo = target.tempo;
+        if (target.hasOwnProperty("videoTransparency")) obj.videoTransparency = target.videoTransparency;
+        if (target.hasOwnProperty("videoState")) obj.videoState = target.videoState;
+        if (target.hasOwnProperty("textToSpeechLanguage")) obj.textToSpeechLanguage = target.textToSpeechLanguage;
+    } else {
+        // The stage does not need the following properties, but sprites should
         obj.visible = target.visible;
         obj.x = target.x;
         obj.y = target.y;
@@ -491,19 +468,19 @@ const serializeTarget = function (target, extensions) {
     }
 
     // Add found extensions to the extensions object
-    targetExtensions.forEach(extensionId => {
+    targetExtensions.forEach((extensionId) => {
         extensions.add(extensionId);
     });
     return obj;
 };
 
 const getSimplifiedLayerOrdering = function (targets) {
-    const layerOrders = targets.map(t => t.getLayerOrder());
+    const layerOrders = targets.map((t) => t.getLayerOrder());
     return MathUtil.reducedSortOrdering(layerOrders);
 };
 
 const serializeMonitors = function (monitors) {
-    return monitors.valueSeq().map(monitorData => {
+    return monitors.valueSeq().map((monitorData) => {
         const serializedMonitor = {
             id: monitorData.id,
             mode: monitorData.mode,
@@ -515,9 +492,9 @@ const serializeMonitors = function (monitors) {
             height: monitorData.height,
             x: monitorData.x,
             y: monitorData.y,
-            visible: monitorData.visible
+            visible: monitorData.visible,
         };
-        if (monitorData.mode !== 'list') {
+        if (monitorData.mode !== "list") {
             serializedMonitor.sliderMin = monitorData.sliderMin;
             serializedMonitor.sliderMax = monitorData.sliderMax;
             serializedMonitor.isDiscrete = monitorData.isDiscrete;
@@ -532,19 +509,17 @@ const serializeMonitors = function (monitors) {
  * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
- const serialize = function (runtime, targetId) {
+const serialize = function (runtime, targetId) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
     const extensions = new Set();
 
-    const originalTargetsToSerialize = targetId ?
-        [runtime.getTargetById(targetId)] :
-        runtime.targets.filter(target => target.isOriginal);
+    const originalTargetsToSerialize = targetId ? [runtime.getTargetById(targetId)] : runtime.targets.filter((target) => target.isOriginal);
 
     const layerOrdering = getSimplifiedLayerOrdering(originalTargetsToSerialize);
 
-    const flattenedOriginalTargets = originalTargetsToSerialize.map(t => t.toJSON());
+    const flattenedOriginalTargets = originalTargetsToSerialize.map((t) => t.toJSON());
 
     // If the renderer is attached, and we're serializing a whole project (not a sprite)
     // add a temporary layerOrder property to each target.
@@ -554,7 +529,7 @@ const serializeMonitors = function (monitors) {
         });
     }
 
-    const serializedTargets = flattenedOriginalTargets.map(t => serializeTarget(t, extensions));
+    const serializedTargets = flattenedOriginalTargets.map((t) => serializeTarget(t, extensions));
 
     if (targetId) {
         return serializedTargets[0];
@@ -569,15 +544,15 @@ const serializeMonitors = function (monitors) {
 
     // Assemble metadata
     const meta = Object.create(null);
-    meta.semver = '3.0.0';
+    meta.semver = "3.0.0";
     meta.vm = vmPackage.version;
     if (runtime.origin) {
         meta.origin = runtime.origin;
     }
 
     // Attach full user agent string to metadata if available
-    meta.agent = 'none';
-    if (typeof navigator !== 'undefined') meta.agent = navigator.userAgent;
+    meta.agent = "none";
+    if (typeof navigator !== "undefined") meta.agent = navigator.userAgent;
 
     // Assemble payload and return
     obj.meta = meta;
@@ -605,134 +580,134 @@ const deserializeInputDesc = function (inputDescOrId, parentId, isShadow, blocks
     primitiveObj.inputs = Object.create(null);
     // need a reference to parent id
     switch (inputDescOrId[0]) {
-    case MATH_NUM_PRIMITIVE: {
-        primitiveObj.opcode = 'math_number';
-        primitiveObj.fields = {
-            NUM: {
-                name: 'NUM',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case POSITIVE_NUM_PRIMITIVE: {
-        primitiveObj.opcode = 'math_positive_number';
-        primitiveObj.fields = {
-            NUM: {
-                name: 'NUM',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case WHOLE_NUM_PRIMITIVE: {
-        primitiveObj.opcode = 'math_whole_number';
-        primitiveObj.fields = {
-            NUM: {
-                name: 'NUM',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case INTEGER_NUM_PRIMITIVE: {
-        primitiveObj.opcode = 'math_integer';
-        primitiveObj.fields = {
-            NUM: {
-                name: 'NUM',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case ANGLE_NUM_PRIMITIVE: {
-        primitiveObj.opcode = 'math_angle';
-        primitiveObj.fields = {
-            NUM: {
-                name: 'NUM',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case COLOR_PICKER_PRIMITIVE: {
-        primitiveObj.opcode = 'colour_picker';
-        primitiveObj.fields = {
-            COLOUR: {
-                name: 'COLOUR',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case TEXT_PRIMITIVE: {
-        primitiveObj.opcode = 'text';
-        primitiveObj.fields = {
-            TEXT: {
-                name: 'TEXT',
-                value: inputDescOrId[1]
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case BROADCAST_PRIMITIVE: {
-        primitiveObj.opcode = 'event_broadcast_menu';
-        primitiveObj.fields = {
-            BROADCAST_OPTION: {
-                name: 'BROADCAST_OPTION',
-                value: inputDescOrId[1],
-                id: inputDescOrId[2],
-                variableType: Variable.BROADCAST_MESSAGE_TYPE
-            }
-        };
-        primitiveObj.topLevel = false;
-        break;
-    }
-    case VAR_PRIMITIVE: {
-        primitiveObj.opcode = 'data_variable';
-        primitiveObj.fields = {
-            VARIABLE: {
-                name: 'VARIABLE',
-                value: inputDescOrId[1],
-                id: inputDescOrId[2],
-                variableType: Variable.SCALAR_TYPE
-            }
-        };
-        if (inputDescOrId.length > 3) {
-            primitiveObj.topLevel = true;
-            primitiveObj.x = inputDescOrId[3];
-            primitiveObj.y = inputDescOrId[4];
+        case MATH_NUM_PRIMITIVE: {
+            primitiveObj.opcode = "math_number";
+            primitiveObj.fields = {
+                NUM: {
+                    name: "NUM",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
         }
-        break;
-    }
-    case LIST_PRIMITIVE: {
-        primitiveObj.opcode = 'data_listcontents';
-        primitiveObj.fields = {
-            LIST: {
-                name: 'LIST',
-                value: inputDescOrId[1],
-                id: inputDescOrId[2],
-                variableType: Variable.LIST_TYPE
-            }
-        };
-        if (inputDescOrId.length > 3) {
-            primitiveObj.topLevel = true;
-            primitiveObj.x = inputDescOrId[3];
-            primitiveObj.y = inputDescOrId[4];
+        case POSITIVE_NUM_PRIMITIVE: {
+            primitiveObj.opcode = "math_positive_number";
+            primitiveObj.fields = {
+                NUM: {
+                    name: "NUM",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
         }
-        break;
-    }
-    default: {
-        log.error(`Found unknown primitive type during deserialization: ${JSON.stringify(inputDescOrId)}`);
-        return null;
-    }
+        case WHOLE_NUM_PRIMITIVE: {
+            primitiveObj.opcode = "math_whole_number";
+            primitiveObj.fields = {
+                NUM: {
+                    name: "NUM",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case INTEGER_NUM_PRIMITIVE: {
+            primitiveObj.opcode = "math_integer";
+            primitiveObj.fields = {
+                NUM: {
+                    name: "NUM",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case ANGLE_NUM_PRIMITIVE: {
+            primitiveObj.opcode = "math_angle";
+            primitiveObj.fields = {
+                NUM: {
+                    name: "NUM",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case COLOR_PICKER_PRIMITIVE: {
+            primitiveObj.opcode = "colour_picker";
+            primitiveObj.fields = {
+                COLOUR: {
+                    name: "COLOUR",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case TEXT_PRIMITIVE: {
+            primitiveObj.opcode = "text";
+            primitiveObj.fields = {
+                TEXT: {
+                    name: "TEXT",
+                    value: inputDescOrId[1],
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case BROADCAST_PRIMITIVE: {
+            primitiveObj.opcode = "event_broadcast_menu";
+            primitiveObj.fields = {
+                BROADCAST_OPTION: {
+                    name: "BROADCAST_OPTION",
+                    value: inputDescOrId[1],
+                    id: inputDescOrId[2],
+                    variableType: Variable.BROADCAST_MESSAGE_TYPE,
+                },
+            };
+            primitiveObj.topLevel = false;
+            break;
+        }
+        case VAR_PRIMITIVE: {
+            primitiveObj.opcode = "data_variable";
+            primitiveObj.fields = {
+                VARIABLE: {
+                    name: "VARIABLE",
+                    value: inputDescOrId[1],
+                    id: inputDescOrId[2],
+                    variableType: Variable.SCALAR_TYPE,
+                },
+            };
+            if (inputDescOrId.length > 3) {
+                primitiveObj.topLevel = true;
+                primitiveObj.x = inputDescOrId[3];
+                primitiveObj.y = inputDescOrId[4];
+            }
+            break;
+        }
+        case LIST_PRIMITIVE: {
+            primitiveObj.opcode = "data_listcontents";
+            primitiveObj.fields = {
+                LIST: {
+                    name: "LIST",
+                    value: inputDescOrId[1],
+                    id: inputDescOrId[2],
+                    variableType: Variable.LIST_TYPE,
+                },
+            };
+            if (inputDescOrId.length > 3) {
+                primitiveObj.topLevel = true;
+                primitiveObj.x = inputDescOrId[3];
+                primitiveObj.y = inputDescOrId[4];
+            }
+            break;
+        }
+        default: {
+            log.error(`Found unknown primitive type during deserialization: ${JSON.stringify(inputDescOrId)}`);
+            return null;
+        }
     }
     blocks[newId] = primitiveObj;
     return newId;
@@ -763,14 +738,15 @@ const deserializeInputs = function (inputs, parentId, blocks) {
             block = shadow = deserializeInputDesc(inputDescArr[1], parentId, true, blocks);
         } else if (blockShadowInfo === INPUT_BLOCK_NO_SHADOW) {
             block = deserializeInputDesc(inputDescArr[1], parentId, false, blocks);
-        } else { // assume INPUT_DIFF_BLOCK_SHADOW
+        } else {
+            // assume INPUT_DIFF_BLOCK_SHADOW
             block = deserializeInputDesc(inputDescArr[1], parentId, false, blocks);
             shadow = deserializeInputDesc(inputDescArr[2], parentId, true, blocks);
         }
         obj[inputName] = {
             name: inputName,
             block: block,
-            shadow: shadow
+            shadow: shadow,
         };
     }
     return obj;
@@ -792,16 +768,16 @@ const deserializeFields = function (fields) {
         if (!Array.isArray(fieldDescArr)) continue;
         obj[fieldName] = {
             name: fieldName,
-            value: fieldDescArr[0]
+            value: fieldDescArr[0],
         };
         if (fieldDescArr.length > 1) {
             obj[fieldName].id = fieldDescArr[1];
         }
-        if (fieldName === 'BROADCAST_OPTION') {
+        if (fieldName === "BROADCAST_OPTION") {
             obj[fieldName].variableType = Variable.BROADCAST_MESSAGE_TYPE;
-        } else if (fieldName === 'VARIABLE') {
+        } else if (fieldName === "VARIABLE") {
             obj[fieldName].variableType = Variable.SCALAR_TYPE;
-        } else if (fieldName === 'LIST') {
+        } else if (fieldName === "LIST") {
             obj[fieldName].variableType = Variable.LIST_TYPE;
         }
     }
@@ -817,7 +793,7 @@ const deserializeFields = function (fields) {
  * @param {object} blocks Serialized SB3 "blocks" property of a target. Will be mutated.
  * @return {object} input is modified and returned
  */
- const deserializeBlocks = function (blocks) {
+const deserializeBlocks = function (blocks) {
     for (const blockId in blocks) {
         if (!Object.prototype.hasOwnProperty.call(blocks, blockId)) {
             continue;
@@ -838,7 +814,6 @@ const deserializeFields = function (fields) {
     return blocks;
 };
 
-
 /**
  * Parse the assets of a single "Scratch object" and load them. This
  * preprocesses objects to support loading the data for those assets over a
@@ -852,7 +827,7 @@ const deserializeFields = function (fields) {
  * SoundBank for the sound assets. null for unsupported objects.
  */
 const parseScratchAssets = function (object, runtime, zip) {
-    if (!object.hasOwnProperty('name')) {
+    if (!object.hasOwnProperty("name")) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
         return Promise.resolve(null);
@@ -861,11 +836,11 @@ const parseScratchAssets = function (object, runtime, zip) {
     const assets = {
         costumePromises: null,
         soundPromises: null,
-        soundBank: runtime.audioEngine && runtime.audioEngine.createBank()
+        soundBank: runtime.audioEngine && runtime.audioEngine.createBank(),
     };
 
     // Costumes from JSON.
-    assets.costumePromises = (object.costumes || []).map(costumeSource => {
+    assets.costumePromises = (object.costumes || []).map((costumeSource) => {
         // @todo: Make sure all the relevant metadata is being pulled out.
         const costume = {
             // costumeSource only has an asset if an image is being uploaded as
@@ -876,14 +851,13 @@ const parseScratchAssets = function (object, runtime, zip) {
             name: costumeSource.name,
             bitmapResolution: costumeSource.bitmapResolution,
             rotationCenterX: costumeSource.rotationCenterX,
-            rotationCenterY: costumeSource.rotationCenterY
+            rotationCenterY: costumeSource.rotationCenterY,
         };
         const dataFormat =
             costumeSource.dataFormat ||
             (costumeSource.assetType && costumeSource.assetType.runtimeFormat) || // older format
-            'png'; // if all else fails, guess that it might be a PNG
-        const costumeMd5Ext = costumeSource.hasOwnProperty('md5ext') ?
-            costumeSource.md5ext : `${costumeSource.assetId}.${dataFormat}`;
+            "png"; // if all else fails, guess that it might be a PNG
+        const costumeMd5Ext = costumeSource.hasOwnProperty("md5ext") ? costumeSource.md5ext : `${costumeSource.assetId}.${dataFormat}`;
         costume.md5 = costumeMd5Ext;
         costume.dataFormat = dataFormat;
         // deserializeCostume should be called on the costume object we're
@@ -891,13 +865,12 @@ const parseScratchAssets = function (object, runtime, zip) {
         // we're always loading the 'sb3' representation of the costume
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
-        return deserializeCostume(costume, runtime, zip)
-            .then(() => loadCostume(costumeMd5Ext, costume, runtime));
+        return deserializeCostume(costume, runtime, zip).then(() => loadCostume(costumeMd5Ext, costume, runtime));
         // Only attempt to load the costume after the deserialization
         // process has been completed
     });
     // Sounds from JSON
-    assets.soundPromises = (object.sounds || []).map(soundSource => {
+    assets.soundPromises = (object.sounds || []).map((soundSource) => {
         const sound = {
             assetId: soundSource.assetId,
             format: soundSource.format,
@@ -909,15 +882,14 @@ const parseScratchAssets = function (object, runtime, zip) {
             // moment, so this translation is very important
             md5: soundSource.md5ext,
             dataFormat: soundSource.dataFormat,
-            data: null
+            data: null,
         };
         // deserializeSound should be called on the sound object we're
         // creating above instead of the source sound object, because this way
         // we're always loading the 'sb3' representation of the costume
         // any translation that needs to happen will happen in the process
         // of building up the costume object into an sb3 format
-        return deserializeSound(sound, runtime, zip)
-            .then(() => loadSound(sound, runtime, assets.soundBank));
+        return deserializeSound(sound, runtime, zip).then(() => loadSound(sound, runtime, assets.soundBank));
         // Only attempt to load the sound after the deserialization
         // process has been completed.
     });
@@ -936,7 +908,7 @@ const parseScratchAssets = function (object, runtime, zip) {
  * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
  */
 const parseScratchObject = function (object, runtime, extensions, zip, assets) {
-    if (!object.hasOwnProperty('name')) {
+    if (!object.hasOwnProperty("name")) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
         return Promise.resolve(null);
@@ -948,10 +920,10 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     const sprite = new Sprite(runtime);
 
     // Sprite/stage name from JSON.
-    if (object.hasOwnProperty('name')) {
+    if (object.hasOwnProperty("name")) {
         sprite.name = object.name;
     }
-    if (object.hasOwnProperty('blocks')) {
+    if (object.hasOwnProperty("blocks")) {
         deserializeBlocks(object.blocks);
         // Take a second pass to create objects and add extensions
         for (const blockId in object.blocks) {
@@ -967,36 +939,35 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
         }
     }
     // Costumes from JSON.
-    const {costumePromises} = assets;
+    const { costumePromises } = assets;
     // Sounds from JSON
-    const {soundBank, soundPromises} = assets;
+    const { soundBank, soundPromises } = assets;
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone(object.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
     // Load target properties from JSON.
-    if (object.hasOwnProperty('tempo')) {
+    if (object.hasOwnProperty("tempo")) {
         target.tempo = object.tempo;
     }
-    if (object.hasOwnProperty('volume')) {
+    if (object.hasOwnProperty("volume")) {
         target.volume = object.volume;
     }
-    if (object.hasOwnProperty('videoTransparency')) {
+    if (object.hasOwnProperty("videoTransparency")) {
         target.videoTransparency = object.videoTransparency;
     }
-    if (object.hasOwnProperty('videoState')) {
+    if (object.hasOwnProperty("videoState")) {
         target.videoState = object.videoState;
     }
-    if (object.hasOwnProperty('textToSpeechLanguage')) {
+    if (object.hasOwnProperty("textToSpeechLanguage")) {
         target.textToSpeechLanguage = object.textToSpeechLanguage;
     }
-    if (object.hasOwnProperty('variables')) {
+    if (object.hasOwnProperty("variables")) {
         for (const varId in object.variables) {
             const variable = object.variables[varId];
             // A variable is a cloud variable if:
             // - the project says it's a cloud variable, and
             // - it's a stage variable, and
             // - the runtime can support another cloud variable
-            const isCloud = (variable.length === 3) && variable[2] &&
-                object.isStage && runtime.canAddCloudVariable();
+            const isCloud = variable.length === 3 && variable[2] && object.isStage && runtime.canAddCloudVariable();
             const newVariable = new Variable(
                 varId, // var id is the index of the variable desc array in the variables obj
                 variable[0], // name of the variable
@@ -1008,88 +979,70 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
             target.variables[newVariable.id] = newVariable;
         }
     }
-    if (object.hasOwnProperty('lists')) {
+    if (object.hasOwnProperty("lists")) {
         for (const listId in object.lists) {
             const list = object.lists[listId];
-            const newList = new Variable(
-                listId,
-                list[0],
-                Variable.LIST_TYPE,
-                false
-            );
+            const newList = new Variable(listId, list[0], Variable.LIST_TYPE, false);
             newList.value = list[1];
             target.variables[newList.id] = newList;
         }
     }
-    if (object.hasOwnProperty('broadcasts')) {
+    if (object.hasOwnProperty("broadcasts")) {
         for (const broadcastId in object.broadcasts) {
             const broadcast = object.broadcasts[broadcastId];
-            const newBroadcast = new Variable(
-                broadcastId,
-                broadcast,
-                Variable.BROADCAST_MESSAGE_TYPE,
-                false
-            );
+            const newBroadcast = new Variable(broadcastId, broadcast, Variable.BROADCAST_MESSAGE_TYPE, false);
             // no need to explicitly set the value, variable constructor
             // sets the value to the same as the name for broadcast msgs
             target.variables[newBroadcast.id] = newBroadcast;
         }
     }
-    if (object.hasOwnProperty('comments')) {
+    if (object.hasOwnProperty("comments")) {
         for (const commentId in object.comments) {
             const comment = object.comments[commentId];
-            const newComment = new Comment(
-                commentId,
-                comment.text,
-                comment.x,
-                comment.y,
-                comment.width,
-                comment.height,
-                comment.minimized
-            );
+            const newComment = new Comment(commentId, comment.text, comment.x, comment.y, comment.width, comment.height, comment.minimized);
             if (comment.blockId) {
                 newComment.blockId = comment.blockId;
             }
             target.comments[newComment.id] = newComment;
         }
     }
-    if (object.hasOwnProperty('x')) {
+    if (object.hasOwnProperty("x")) {
         target.x = object.x;
     }
-    if (object.hasOwnProperty('y')) {
+    if (object.hasOwnProperty("y")) {
         target.y = object.y;
     }
-    if (object.hasOwnProperty('direction')) {
+    if (object.hasOwnProperty("direction")) {
         target.direction = object.direction;
     }
-    if (object.hasOwnProperty('size')) {
+    if (object.hasOwnProperty("size")) {
         target.size = object.size;
     }
-    if (object.hasOwnProperty('visible')) {
+    if (object.hasOwnProperty("visible")) {
         target.visible = object.visible;
     }
-    if (object.hasOwnProperty('currentCostume')) {
+    if (object.hasOwnProperty("currentCostume")) {
         target.currentCostume = MathUtil.clamp(object.currentCostume, 0, object.costumes.length - 1);
     }
-    if (object.hasOwnProperty('rotationStyle')) {
+    if (object.hasOwnProperty("rotationStyle")) {
         target.rotationStyle = object.rotationStyle;
     }
-    if (object.hasOwnProperty('isStage')) {
+    if (object.hasOwnProperty("isStage")) {
         target.isStage = object.isStage;
     }
-    if (object.hasOwnProperty('targetPaneOrder')) {
+    if (object.hasOwnProperty("targetPaneOrder")) {
         // Temporarily store the 'targetPaneOrder' property
         // so that we can correctly order sprites in the target pane.
         // This will be deleted after we are done parsing and ordering the targets list.
         target.targetPaneOrder = object.targetPaneOrder;
     }
-    if (object.hasOwnProperty('draggable')) {
+    if (object.hasOwnProperty("draggable")) {
         target.draggable = object.draggable;
     }
-    Promise.all(costumePromises).then(costumes => {
+    Promise.all(costumePromises).then((costumes) => {
         sprite.costumes = costumes;
     });
-    Promise.all(soundPromises).then(sounds => {
+    Promise.all(soundPromises).then((sounds) => {
         sprite.sounds = sounds;
         // Make sure if soundBank is undefined, sprite.soundBank is then null.
         sprite.soundBank = soundBank || null;
@@ -1102,12 +1055,11 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // by name in the given list of targets and update the monitor's targetId
     // to match the sprite's id.
     if (monitorData.spriteName) {
-        const filteredTargets = targets.filter(t => t.sprite.name === monitorData.spriteName);
+        const filteredTargets = targets.filter((t) => t.sprite.name === monitorData.spriteName);
         if (filteredTargets && filteredTargets.length > 0) {
             monitorData.targetId = filteredTargets[0].id;
         } else {
-            log.warn(`Tried to deserialize sprite specific monitor ${
-                monitorData.opcode} but could not find sprite ${monitorData.spriteName}.`);
+            log.warn(`Tried to deserialize sprite specific monitor ${monitorData.opcode} but could not find sprite ${monitorData.spriteName}.`);
         }
     }
 
@@ -1117,14 +1069,9 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
 
     // Due to a bug (see https://github.com/LLK/scratch-vm/pull/2322), renamed list monitors may have been serialized
     // with an outdated/incorrect LIST parameter. Fix it up to use the current name of the actual corresponding list.
-    if (monitorData.opcode === 'data_listcontents') {
-        const listTarget = monitorData.targetId ?
-            targets.find(t => t.id === monitorData.targetId) :
-            targets.find(t => t.isStage);
-        if (
-            listTarget &&
-            Object.prototype.hasOwnProperty.call(listTarget.variables, monitorData.id)
-        ) {
+    if (monitorData.opcode === "data_listcontents") {
+        const listTarget = monitorData.targetId ? targets.find((t) => t.id === monitorData.targetId) : targets.find((t) => t.isStage);
+        if (listTarget && Object.prototype.hasOwnProperty.call(listTarget.variables, monitorData.id)) {
             monitorData.params.LIST = listTarget.variables[monitorData.id].name;
         }
     }
@@ -1134,7 +1081,7 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     for (const paramKey in monitorData.params) {
         const field = {
             name: paramKey,
-            value: monitorData.params[paramKey]
+            value: monitorData.params[paramKey],
         };
         fields[paramKey] = field;
     }
@@ -1142,10 +1089,8 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // Variables, lists, and non-sprite-specific monitors, including any extension
     // monitors should already have the correct monitor ID serialized in the monitorData,
     // find the correct id for all other monitors.
-    if (monitorData.opcode !== 'data_variable' && monitorData.opcode !== 'data_listcontents' &&
-        monitorBlockInfo && monitorBlockInfo.isSpriteSpecific) {
-        monitorData.id = monitorBlockInfo.getId(
-            monitorData.targetId, fields);
+    if (monitorData.opcode !== "data_variable" && monitorData.opcode !== "data_listcontents" && monitorBlockInfo && monitorBlockInfo.isSpriteSpecific) {
+        monitorData.id = monitorBlockInfo.getId(monitorData.targetId, fields);
     } else {
         // Replace unsafe characters in monitor ID, if there are any.
         // These would have come from projects that were originally 2.0 projects
@@ -1177,17 +1122,17 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
             x: 0,
             y: 0,
             isMonitored: monitorData.visible,
-            targetId: monitorData.targetId
+            targetId: monitorData.targetId,
         };
 
         // Variables and lists have additional properties
         // stored in their fields, update this info in the
         // monitor block fields
-        if (monitorData.opcode === 'data_variable') {
+        if (monitorData.opcode === "data_variable") {
             const field = monitorBlock.fields.VARIABLE;
             field.id = monitorData.id;
             field.variableType = Variable.SCALAR_TYPE;
-        } else if (monitorData.opcode === 'data_listcontents') {
+        } else if (monitorData.opcode === "data_listcontents") {
             const field = monitorBlock.fields.LIST;
             field.id = monitorData.id;
             field.variableType = Variable.LIST_TYPE;
@@ -1213,9 +1158,9 @@ const replaceUnsafeCharsInVariableIds = function (targets) {
     if (!targets) return;
     const allVarRefs = VariableUtil.getAllVarRefsForTargets(targets, true);
     // Re-id the variables in the actual targets
-    targets.forEach(t => {
+    targets.forEach((t) => {
         if (!t.variables) return;
-        Object.keys(t.variables).forEach(id => {
+        Object.keys(t.variables).forEach((id) => {
             const newId = StringUtil.replaceUnsafeChars(id);
             if (newId === id) return;
             t.variables[id].id = newId;
@@ -1244,10 +1189,10 @@ const replaceUnsafeCharsInVariableIds = function (targets) {
  * @param {boolean} isSingleSprite - If true treat as single sprite, else treat as whole project
  * @returns {Promise.<ImportedProject>} Promise that resolves to the list of targets after the project is deserialized
  */
- const deserialize = function (json, runtime, zip, isSingleSprite) {
+const deserialize = function (json, runtime, zip, isSingleSprite) {
     const extensions = {
         extensionIDs: new Set(),
-        extensionURLs: new Map()
+        extensionURLs: new Map(),
     };
 
     // Store the origin field (e.g. project originated at CSFirst) so that we can save it again.
@@ -1261,46 +1206,43 @@ const replaceUnsafeCharsInVariableIds = function (targets) {
     // then sort by the layer order property before parsing the targets
     // so that their corresponding render drawables can be created in
     // their layer order (e.g. back to front)
-    const targetObjects = ((isSingleSprite ? [json] : json.targets) || [])
-        .map((t, i) => Object.assign(t, {targetPaneOrder: i}))
-        .sort((a, b) => a.layerOrder - b.layerOrder);
+    const targetObjects = ((isSingleSprite ? [json] : json.targets) || []).map((t, i) => Object.assign(t, { targetPaneOrder: i })).sort((a, b) => a.layerOrder - b.layerOrder);
 
     const monitorObjects = json.monitors || [];
 
-    return Promise.resolve(
-        targetObjects.map(target =>
-            parseScratchAssets(target, runtime, zip))
-    )
-        // Force this promise to wait for the next loop in the js tick. Let
-        // storage have some time to send off asset requests.
-        .then(assets => Promise.resolve(assets))
-        .then(assets => Promise.all(targetObjects
-            .map((target, index) =>
-                parseScratchObject(target, runtime, extensions, zip, assets[index]))))
-        .then(targets => targets // Re-sort targets back into original sprite-pane ordering
-            .map((t, i) => {
-                // Add layer order property to deserialized targets.
-                // This property is used to initialize executable targets in
-                // the correct order and is deleted in VM's installTargets function
-                t.layerOrder = i;
-                return t;
+    return (
+        Promise.resolve(targetObjects.map((target) => parseScratchAssets(target, runtime, zip)))
+            // Force this promise to wait for the next loop in the js tick. Let
+            // storage have some time to send off asset requests.
+            .then((assets) => Promise.resolve(assets))
+            .then((assets) => Promise.all(targetObjects.map((target, index) => parseScratchObject(target, runtime, extensions, zip, assets[index]))))
+            .then((targets) =>
+                targets // Re-sort targets back into original sprite-pane ordering
+                    .map((t, i) => {
+                        // Add layer order property to deserialized targets.
+                        // This property is used to initialize executable targets in
+                        // the correct order and is deleted in VM's installTargets function
+                        t.layerOrder = i;
+                        return t;
+                    })
+                    .sort((a, b) => a.targetPaneOrder - b.targetPaneOrder)
+                    .map((t) => {
+                        // Delete the temporary properties used for
+                        // sprite pane ordering and stage layer ordering
+                        delete t.targetPaneOrder;
+                        return t;
+                    })
+            )
+            .then((targets) => replaceUnsafeCharsInVariableIds(targets))
+            .then((targets) => {
+                monitorObjects.map((monitorDesc) => deserializeMonitor(monitorDesc, runtime, targets, extensions));
+                return targets;
             })
-            .sort((a, b) => a.targetPaneOrder - b.targetPaneOrder)
-            .map(t => {
-                // Delete the temporary properties used for
-                // sprite pane ordering and stage layer ordering
-                delete t.targetPaneOrder;
-                return t;
+            .then((targets) => ({
+                targets,
+                extensions,
             }))
-        .then(targets => replaceUnsafeCharsInVariableIds(targets))
-        .then(targets => {
-            monitorObjects.map(monitorDesc => deserializeMonitor(monitorDesc, runtime, targets, extensions));
-            return targets;
-        })
-        .then(targets => ({
-            targets,
-            extensions
-        }));
+    );
 };
 
 const sb3 = {
@@ -1308,7 +1250,7 @@ const sb3 = {
     deserialize: deserialize,
     deserializeBlocks: deserializeBlocks,
     serializeBlocks: serializeBlocks,
-    getExtensionIdForOpcode: getExtensionIdForOpcode
+    getExtensionIdForOpcode: getExtensionIdForOpcode,
 };
 
 export default sb3;

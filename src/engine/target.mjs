@@ -1,6 +1,6 @@
-import EventEmitter from 'events';
+import EventEmitter from "events";
 
-import uid from '../util/uid.mjs';
+import uid from "../util/uid.mjs";
 
 /**
  * @fileoverview
@@ -9,12 +9,11 @@ import uid from '../util/uid.mjs';
  */
 
 class Target extends EventEmitter {
-
     /**
      * @param {Runtime} runtime Reference to the runtime.
      * @constructor
      */
-    constructor (runtime) {
+    constructor(runtime) {
         super();
         /**
          * Reference to the runtime.
@@ -52,7 +51,7 @@ class Target extends EventEmitter {
      * Called when the project receives a "green flag."
      * @abstract
      */
-    onGreenFlag () {}
+    onGreenFlag() {}
 
     /**
      * Return a human-readable name for this target.
@@ -60,7 +59,7 @@ class Target extends EventEmitter {
      * @abstract
      * @returns {string} Human-readable name for the target.
      */
-    getName () {
+    getName() {
         return this.id;
     }
 
@@ -70,20 +69,20 @@ class Target extends EventEmitter {
      * @param {*} newValue Value to store for edge-activated hat.
      * @return {*} The old value for the edge-activated hat.
      */
-    updateEdgeActivatedValue (blockId, newValue) {
+    updateEdgeActivatedValue(blockId, newValue) {
         const oldValue = this._edgeActivatedHatValues[blockId];
         this._edgeActivatedHatValues[blockId] = newValue;
         return oldValue;
     }
 
-    hasEdgeActivatedValue (blockId) {
+    hasEdgeActivatedValue(blockId) {
         return this._edgeActivatedHatValues.hasOwnProperty(blockId);
     }
 
     /**
      * Clear all edge-activaed hat values.
      */
-    clearEdgeActivatedValues () {
+    clearEdgeActivatedValues() {
         this._edgeActivatedHatValues = {};
     }
 
@@ -92,14 +91,14 @@ class Target extends EventEmitter {
      * @param {object} data An object with sprite info data to set.
      * @abstract
      */
-    postSpriteInfo () {}
+    postSpriteInfo() {}
 
     /**
      * Retrieve custom state associated with this target and the provided state ID.
      * @param {string} stateId - specify which piece of state to retrieve.
      * @returns {*} the associated state, if any was found.
      */
-    getCustomState (stateId) {
+    getCustomState(stateId) {
         return this._customState[stateId];
     }
 
@@ -108,7 +107,7 @@ class Target extends EventEmitter {
      * @param {string} stateId - specify which piece of state to store on this target.
      * @param {*} newValue - the state value to store.
      */
-    setCustomState (stateId, newValue) {
+    setCustomState(stateId, newValue) {
         this._customState[stateId] = newValue;
     }
 
@@ -116,7 +115,7 @@ class Target extends EventEmitter {
      * Call to destroy a target.
      * @abstract
      */
-    dispose () {
+    dispose() {
         this._customState = {};
 
         if (this.runtime) {
@@ -143,7 +142,7 @@ class Target extends EventEmitter {
      * All blocks that reference the local variable will be updated to use the new name.
      */
     // TODO (#1360) This function is too long, add some helpers for the different chunks and cases...
-    fixUpVariableReferences () {
+    fixUpVariableReferences() {
         if (!this.runtime) return; // There's no runtime context to conflict with
         if (this.isStage) return; // Stage can't have variable conflicts with itself (and also can't be uploaded)
         const stage = this.runtime.getTargetForStage();
@@ -152,9 +151,7 @@ class Target extends EventEmitter {
         const renameConflictingLocalVar = (id, name, type) => {
             const conflict = stage.lookupVariableByNameAndType(name, type);
             if (conflict) {
-                const newName = StringUtil.unusedName(
-                    `${this.getName()}: ${name}`,
-                    this.getAllVariableNamesInScopeByType(type));
+                const newName = StringUtil.unusedName(`${this.getName()}: ${name}`, this.getAllVariableNamesInScopeByType(type));
                 this.renameVariable(id, newName);
                 return newName;
             }
@@ -175,7 +172,7 @@ class Target extends EventEmitter {
         // Cache the list of all variable names by type so that we don't need to
         // re-calculate this in every iteration of the following loop.
         const varNamesByType = {};
-        const allVarNames = type => {
+        const allVarNames = (type) => {
             const namesOfType = varNamesByType[type];
             if (namesOfType) return namesOfType;
             varNamesByType[type] = this.runtime.getAllVarNamesOfType(type);
@@ -200,7 +197,7 @@ class Target extends EventEmitter {
                         // We are not calling this.blocks.updateBlocksAfterVarRename
                         // here because it will search through all the blocks. We already
                         // have access to all the references for this var id.
-                        allReferences[varId].map(ref => {
+                        allReferences[varId].map((ref) => {
                             ref.referencingField.value = newVarName;
                             return ref;
                         });
@@ -234,8 +231,8 @@ class Target extends EventEmitter {
         // referenced by any blocks
         for (const id in unreferencedLocalVarIds) {
             const varId = unreferencedLocalVarIds[id];
-            const name = this.variables[varId].name;
-            const type = this.variables[varId].type;
+            const { name } = this.variables[varId];
+            const { type } = this.variables[varId];
             renameConflictingLocalVar(varId, name, type);
         }
         // Handle global var conflicts with existing global vars (e.g. a sprite is uploaded, and has
@@ -257,7 +254,7 @@ class Target extends EventEmitter {
         for (const conflictId in conflictNamesToReplace) {
             const newName = conflictNamesToReplace[conflictId];
             const referencesToUpdate = allReferences[conflictId];
-            referencesToUpdate.map(ref => {
+            referencesToUpdate.map((ref) => {
                 ref.referencingField.value = newName;
                 return ref;
             });

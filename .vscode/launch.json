@@ -1,0 +1,147 @@
+{
+    "version": "0.1.0",
+    // List of configurations. Add new configurations or edit existing ones.
+    // ONLY "node" and "mono" are supported, change "type" to switch.
+    "configurations": [
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/*.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration Move test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/*.mjs", "-g", "Move"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration Get X test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/*.mjs", "-g", "Get X"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Worker tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/worker/*.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Worker Get X test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/worker/*.mjs", "-g", "Get X"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Vm tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/scratch_vm/*.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Primitive tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/primitives/*.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Primitive If On Edge Bounce test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/primitives/*.mjs", "-g", "If On Edge Bounce"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Linker tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/linker/*.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Informal tests",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/**/informal.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        }
+    ]
+}
