@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.70](https://github.com/LLK/scratch-vm/compare/v1.5.69...v1.5.70) (2023-05-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-blocks to v0.1.0-prerelease.20230523084423 ([06cf588](https://github.com/LLK/scratch-vm/commit/06cf588bf01c332286d928d762ba832bf1ad1ea8))
+
 ## [1.5.69](https://github.com/LLK/scratch-vm/compare/v1.5.68...v1.5.69) (2023-05-23)
 
 
