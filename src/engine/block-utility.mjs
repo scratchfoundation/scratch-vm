@@ -11,13 +11,7 @@ export default class BlockUtility {
 
         this._thread = thread;
 
-        this.timerUtil = {};
-        this.timerUtil.timer = null;
-        this.timerUtil.duration = null;
-        this.timerUtil.startX = null;
-        this.timerUtil.startY = null;
-        this.timerUtil.endX = null;
-        this.timerUtil.endY = null;
+        this._context = {};
     }
 
     /**
@@ -72,6 +66,13 @@ export default class BlockUtility {
     }
 
     /**
+     * Get the execution context of the block utility
+     */
+    get context() {
+        return this._context;
+    }
+
+    /**
      * Query a named IO device.
      * @param {string} device The name of like the device, like keyboard.
      * @param {string} func The name of the device's function to query.
@@ -86,5 +87,10 @@ export default class BlockUtility {
             return devObject[func].apply(devObject, args);
         }
         return null;
+    }
+
+    startHats(hats) {
+        const startedHats = this._runtime.startHats(hats);
+        return startedHats;
     }
 }

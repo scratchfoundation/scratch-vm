@@ -1,11 +1,48 @@
 import Worker from "web-worker";
-import { isNode, isBrowser } from "browser-or-node";
 import WorkerMessages from "./worker-messages.mjs";
 
 class PyatchWorker {
     constructor(blockOPCallback) {
         this._worker = new Worker(new URL("./pyodide-web.worker.mjs", import.meta.url), { type: "module" });
+        this._worker.onmessage = this.handleWorkerMessage;
+        this._worker.onerror = this.handleWorkerError;
+
         this._blockOPCallback = blockOPCallback.bind(this);
+
+        this._pyodidePromiseResolve = null;
+        this._registerThreadsPromise = {
+            resolve: null,
+            reject: null,
+        };
+
+        this._eventMap = null;
+        this._eventPromiseResolveMap = {};
+    }
+
+    handleWorkerMessage(event) {
+        if (event.data.id === WorkerMessages.ToVM.PyodideLoaded) {
+            this._pyodidePromiseResolve();
+        } else if (event.data.id === WorkerMessages.ToVM.ThreadsRegistered) {
+            this._registerThreadsPromise.resolve();
+        } else if (event.data.id === WorkerMessages.ToVM.PythonCompileTimeError) {
+            this._registerThreadsPromise.reject(event.data.error);
+        } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
+            this._blockOPCallback(event.data);
+        } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
+            Object.keys(this._eventMap).forEach((eventId) => {
+                const eventThreads = this._eventMap[eventId];
+                eventThreads.includes(event.data.threadId);
+                delete this._eventMap[eventId];
+                if (!eventThreads.length) {
+                    const resolve = this._eventPromiseResolveMap[eventId];
+                    resolve();
+                }
+            });
+        }
+    }
+
+    handleWorkerError(event) {
+        throw new Error(`Worker error with event: ${event}`);
     }
 
     async loadPyodide() {
@@ -13,14 +50,7 @@ class PyatchWorker {
             id: WorkerMessages.FromVM.InitPyodide,
         };
         return new Promise((resolve, reject) => {
-            this._worker.onmessage = (event) => {
-                if (event.data.id === WorkerMessages.ToVM.PyodideLoaded) {
-                    resolve(WorkerMessages.ToVM.PyodideLoaded);
-                }
-            };
-            this._worker.onerror = (event) => {
-                reject(event);
-            };
+            this._pyodidePromiseResolve = resolve;
             this._worker.postMessage(initMessage);
             setTimeout(() => {
                 reject(new Error("Pyodide load timed out."));
@@ -28,46 +58,37 @@ class PyatchWorker {
         });
     }
 
-    async run(pythonScript, threads, token = "") {
+    async registerThreads(pythonScript, eventMap, token = "") {
         await this._worker;
+        this._eventMap = eventMap;
+
         const message = {
-            id: WorkerMessages.FromVM.AsyncRun,
+            id: WorkerMessages.FromVM.RegisterThreads,
             token: token,
             python: String(pythonScript),
-            threads: threads,
+            eventMap: eventMap,
         };
-        // console.log(message);
+
         return new Promise((resolve, reject) => {
-            let pythonRunning = false;
-            let resolvedThreads = 0;
-            this._worker.onmessage = (event) => {
-                // console.log('event', event);
-                if (event.data.id === WorkerMessages.ToVM.BlockOP) {
-                    this._blockOPCallback(event.data);
-                } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
-                    if (threads.includes(event.data.threadId)) {
-                        resolvedThreads++;
-                    }
-                    if (resolvedThreads === threads.length) {
-                        resolve();
-                    }
-                } else if (event.data.id === WorkerMessages.ToVM.PythonRunning) {
-                    pythonRunning = true;
-                } else if (event.data.id === WorkerMessages.ToVM.PythonError) {
-                    reject(event.data.error);
-                } else if (event.data.id !== WorkerMessages.ToVM.PythonLoading) {
-                    console.log("Unknown message from worker", event.data);
-                }
-            };
-            this._worker.onerror = (event) => {
-                reject(event.error);
-            };
             this._worker.postMessage(message);
             setTimeout(() => {
-                if (!pythonRunning) {
-                    reject(new Error("Python run timed out."));
-                }
+                reject(new Error("Python run timed out."));
             }, 10000);
+        });
+    }
+
+    async startHats(hat, option) {
+        if (!this._eventMap) {
+            throw new Error("Must register threads before running startHats");
+        }
+        const message = {
+            id: WorkerMessages.FromVM.StartHats,
+            eventId: hat,
+            options: option,
+        };
+        return new Promise((resolve) => {
+            this._eventPromiseResolveMap[hat] = resolve;
+            this._worker.postMessage(message);
         });
     }
 

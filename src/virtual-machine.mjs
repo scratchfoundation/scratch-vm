@@ -30,7 +30,7 @@ export default class VirtualMachine extends EventEmitter {
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime();
+        this.runtime = new Runtime(this.startHats.bind(this));
 
         this.pyatchWorker = new PyatchWorker(this._onWorkerMessage.bind(this));
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
@@ -483,6 +483,18 @@ export default class VirtualMachine extends EventEmitter {
             value: value,
             token: message.token,
         });
+    }
+
+    /**
+     * Start all relevant hats.
+     * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
+     * @param {object=} optMatchFields Optionally, fields to match on the hat.
+     * @param {Target=} optTarget Optionally, a target to restrict to.
+     * @return {Array.<Thread>} List of threads started by this function.
+     */
+    async startHats(hats) {
+        const startedHats = this.pyatchWorker.startHats(hats);
+        return startedHats;
     }
 
     async run(targetsAndCode) {

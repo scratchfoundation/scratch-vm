@@ -6,8 +6,8 @@ import chai from "chai";
 import sinon from "sinon";
 import sinonChai from "sinon-chai";
 
-import PyatchWorker from "../../src/worker/pyatch-worker.mjs";
-import WorkerMessages from "../../src/worker/worker-messages.mjs";
+import PyatchWorker from "../../../src/worker/pyatch-worker.mjs";
+import WorkerMessages from "../../../src/worker/worker-messages.mjs";
 
 const { expect } = chai;
 chai.use(sinonChai);

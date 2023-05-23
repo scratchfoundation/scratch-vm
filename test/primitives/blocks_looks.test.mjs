@@ -1,9 +1,13 @@
 import chai from "chai";
+import sinon from "sinon";
 import sinonChai from "sinon-chai";
+
 import Runtime from "../../src/engine/runtime.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
 import BlockUtility from "../../src/engine/block-utility.mjs";
+
+import extractCallsSpy from "../fixtures/extract-calls-spy.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -12,9 +16,11 @@ let costumeRT = null;
 let costumeSprite = null;
 let costumeTarget = null;
 
-let backdropRT = null;
+let backdropRuntime = null;
 let backdropSprite = null;
 let backdropTarget = null;
+
+let spy = null;
 
 // set up preset runtimes for costume and backdrop testing
 // each has three costumes or three backdrops, respectively
@@ -24,6 +30,8 @@ before(async () => {
     costumeSprite = new Sprite(null, costumeRT);
     costumeTarget = new RenderedTarget(costumeSprite, costumeRT);
     costumeRT.addTarget(costumeTarget);
+
+    spy = sinon.spy();
 
     const costumeCatWalk = {
         asset: null,
@@ -60,10 +68,10 @@ before(async () => {
     costumeTarget.addCostume(costumeCatFly);
 
     // BACKDROP RUNTIME
-    backdropRT = new Runtime();
-    backdropSprite = new Sprite(null, backdropRT);
-    backdropTarget = new RenderedTarget(backdropSprite, backdropRT);
-    backdropRT.addTarget(backdropTarget);
+    backdropRuntime = new Runtime();
+    backdropSprite = new Sprite(null, backdropRuntime);
+    backdropTarget = new RenderedTarget(backdropSprite, backdropRuntime);
+    backdropRuntime.addTarget(backdropTarget);
 
     const backdropGalaxy = {
         asset: null,
@@ -100,6 +108,10 @@ before(async () => {
     backdropTarget.addCostume(backdropNebula);
 
     backdropTarget.isStage = true;
+});
+
+beforeEach(() => {
+    spy.resetHistory();
 });
 
 describe("Runtime Exec Primitives", () => {
@@ -205,49 +217,65 @@ describe("Runtime Exec Primitives", () => {
         });
 
         it("Set Backdrop To From Index", async () => {
+            backdropRuntime.startHats = spy;
+
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 2 }, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            const retVal = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 2 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(1);
             expect(retVal).to.equal(undefined);
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "moon" });
         });
 
         it("Set Backdrop To From Name", async () => {
-            const retVal = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: "nebula" }, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            backdropRuntime.startHats = spy;
+
+            const retVal = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: "nebula" }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
 
             expect(backdropTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "nebula" });
         });
 
         it("Next Backdrop", async () => {
+            backdropRuntime.startHats = spy;
+
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 1 }, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            const retVal1 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 1 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            const retVal2 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
 
             expect(backdropTarget.currentCostume).to.equal(1);
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "moon" });
         });
 
         it("Next Backdrop Last Loops to First", async () => {
+            backdropRuntime.startHats = spy;
+
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 3 }, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            const retVal1 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 3 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await backdropRT.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRT), "test_token");
+            const retVal2 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+
+            const calls = extractCallsSpy(spy);
+
+            console.log(calls);
 
             expect(backdropTarget.currentCostume).to.equal(0);
-
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
+            expect(calls[0]).to.equal("event_whenbackdropswitchesto");
+            expect(calls[1]).to.equal("event_whenbackdropswitchesto");
         });
 
         it("Change Effect By", async () => {

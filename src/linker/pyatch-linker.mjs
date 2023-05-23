@@ -60,26 +60,28 @@ class PyatchLinker {
 
     /**
      * Generate the fully linked executable python code.
-     * @param {Object} threadsCode - Dict with thread id as key and code.
+     * @param {Object} execObj - Dict with thread id as key and code.
      *
      */
-    generatePython(threadsCode) {
+    generatePython(execObj) {
         let codeString = "";
 
-        const threadIds = [];
+        const eventThreadIds = {};
 
-        Object.keys(threadsCode).forEach((id) => {
-            threadIds.push(id);
-
-            const threadCode = threadsCode[id];
-
-            const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
-            const header = this.generateAsyncFuncHeader(id);
-            const registerPrimsCode = this.registerProxyPrims(threadCode);
-            codeString += `${header + registerPrimsCode + linkConstants.python_tab_char + code}\n\n`;
+        Object.keys(execObj).forEach((eventId) => {
+            eventThreadIds[eventId] = [];
+            const eventThreads = execObj[eventId];
+            Object.keys(eventThreads).forEach((threadId) => {
+                eventThreadIds[eventId].push(threadId);
+                const thread = eventThreads[threadId];
+                const code = thread.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+                const header = this.generateAsyncFuncHeader(threadId);
+                const registerPrimsCode = this.registerProxyPrims(thread);
+                codeString += `${header + registerPrimsCode + linkConstants.python_tab_char + code}\n\n`;
+            });
         });
 
-        return [threadIds, codeString];
+        return [eventThreadIds, codeString];
     }
 }
 export default PyatchLinker;

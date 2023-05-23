@@ -58,10 +58,10 @@ class PrimProxy {
         endThread: "core_endthread",
     };
 
-    constructor(targetId, postFunction) {
-        this.targetId = targetId;
+    constructor(threadId, postFunction) {
+        this.threadId = threadId;
         this.post = async function (opCode, args) {
-            const retVal = await postFunction(this.targetId, opCode, args);
+            const retVal = await postFunction(this.threadId, opCode, args);
             return retVal;
         };
     }
