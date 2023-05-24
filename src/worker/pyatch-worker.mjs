@@ -1,12 +1,13 @@
 import Worker from "web-worker";
+import _ from "lodash";
 import WorkerMessages from "./worker-messages.mjs";
 
 class PyatchWorker {
     constructor(blockOPCallback) {
         this._worker = new Worker(new URL("./pyodide-web.worker.mjs", import.meta.url), { type: "module" });
-        this._worker.onmessage = this.handleWorkerMessage;
-        this._worker.onerror = this.handleWorkerError;
 
+        this._worker.onmessage = this.handleWorkerMessage.bind(this);
+        this._worker.onerror = this.handleWorkerError.bind(this);
         this._blockOPCallback = blockOPCallback.bind(this);
 
         this._pyodidePromiseResolve = null;
@@ -17,6 +18,7 @@ class PyatchWorker {
 
         this._eventMap = null;
         this._eventPromiseResolveMap = {};
+        this._threadPromiseResolveMap = {};
     }
 
     handleWorkerMessage(event) {
@@ -29,15 +31,7 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
             this._blockOPCallback(event.data);
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
-            Object.keys(this._eventMap).forEach((eventId) => {
-                const eventThreads = this._eventMap[eventId];
-                eventThreads.includes(event.data.threadId);
-                delete this._eventMap[eventId];
-                if (!eventThreads.length) {
-                    const resolve = this._eventPromiseResolveMap[eventId];
-                    resolve();
-                }
-            });
+            this._threadPromiseResolveMap[event.data.threadId]();
         }
     }
 
@@ -60,20 +54,18 @@ class PyatchWorker {
 
     async registerThreads(pythonScript, eventMap, token = "") {
         await this._worker;
-        this._eventMap = eventMap;
+        this._eventMap = _.cloneDeep(eventMap);
 
         const message = {
             id: WorkerMessages.FromVM.RegisterThreads,
             token: token,
             python: String(pythonScript),
-            eventMap: eventMap,
         };
 
         return new Promise((resolve, reject) => {
+            this._registerThreadsPromise.resolve = resolve;
+            this._registerThreadsPromise.reject = reject;
             this._worker.postMessage(message);
-            setTimeout(() => {
-                reject(new Error("Python run timed out."));
-            }, 10000);
         });
     }
 
@@ -81,15 +73,27 @@ class PyatchWorker {
         if (!this._eventMap) {
             throw new Error("Must register threads before running startHats");
         }
-        const message = {
-            id: WorkerMessages.FromVM.StartHats,
-            eventId: hat,
-            options: option,
-        };
-        return new Promise((resolve) => {
-            this._eventPromiseResolveMap[hat] = resolve;
+        if (hat) {
+            let threadIds = this._eventMap[hat];
+            if (option) {
+                threadIds = threadIds[option];
+            }
+            const threadPromises = [];
+            threadIds.forEach((id) => {
+                threadPromises.push(
+                    new Promise((resolve) => {
+                        this._threadPromiseResolveMap[id] = resolve;
+                    })
+                );
+            });
+            const message = {
+                id: WorkerMessages.FromVM.StartThreads,
+                threadIds: threadIds,
+                options: option,
+            };
             this._worker.postMessage(message);
-        });
+            await Promise.all(threadPromises);
+        }
     }
 
     async terminate() {

@@ -40,10 +40,6 @@ class PrimProxy {
         getSize: "looks_size",
         getCostume: "looks_costumenumbername",
         getBackdrop: "looks_backdropnumbername",
-        whenTouchingObject: "event_whentouchingobject",
-        broadcast: "event_broadcast",
-        broadcastAndWait: "event_broadcastandwait",
-        whenGreaterThan: "event_whengreaterthan",
 
         playSound: "sound_play",
         playSoundUntilDone: "sound_playuntildone",
@@ -54,6 +50,11 @@ class PrimProxy {
         setVolumeTo: "sound_setvolumeto",
         changeVolumeBy: "sound_changevolumeby",
         getVolume: "sound_volume",
+
+        broadcast: "event_broadcast",
+        broadcastAndWait: "event_broadcastandwait",
+        whenTouchingObject: "event_whentouchingobject",
+        whenGreaterThan: "event_whengreaterthan",
 
         endThread: "core_endthread",
     };
@@ -286,6 +287,14 @@ class PrimProxy {
     async getVolume() {
         const volume = PrimProxy.post(this.opcodeMap.getVolume, {});
         return volume;
+    }
+
+    broadcast(messageName) {
+        this.post(PrimProxy.opcodeMap.broadcast, { BROADCAST_OPTION: { id: messageName, name: messageName } });
+    }
+
+    async broadcastAndWait(messageName) {
+        await this.post(PrimProxy.opcodeMap.broadcastAndWait, { BROADCAST_OPTION: { id: messageName, name: messageName } });
     }
 }
 

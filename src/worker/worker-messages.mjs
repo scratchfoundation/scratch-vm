@@ -17,7 +17,7 @@ const WorkerMessages = {
         InitPyodide: "InitPyodide",
         RegisterThreads: "RegisterThreads",
         ResultValue: "ResultValue",
-        StartHats: "StartHats",
+        StartThreads: "StartHats",
     },
 };
 

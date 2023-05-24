@@ -28,7 +28,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         it("Broadcast", async () => {
             const messageId = "message1";
             const steps = 10;
-            const execObj = {
+            const executionObject = {
                 target1: {
                     event_whenflagclicked: [`broadcast("${messageId}")`],
                     event_whenbroadcastreceived: {
@@ -37,7 +37,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(execObj);
+            await vm.registerThreads(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -47,7 +47,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         it("Broadcast and Wait", async () => {
             const messageId = "message1";
             const steps = 10;
-            const execObj = {
+            const executionObject = {
                 target1: {
                     event_whenflagclicked: [`await broadcastAndWait("${messageId}")\nx = await getX()\nsay(x)`],
                     event_whenbroadcastreceived: {
@@ -56,7 +56,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(execObj);
+            await vm.registerThreads(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);

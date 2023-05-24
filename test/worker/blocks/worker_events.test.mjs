@@ -8,6 +8,7 @@ import sinonChai from "sinon-chai";
 
 import PyatchWorker from "../../../src/worker/pyatch-worker.mjs";
 import WorkerMessages from "../../../src/worker/worker-messages.mjs";
+import extractCallsSpy from "../../fixtures/extract-calls-spy.mjs";
 
 const { expect } = chai;
 chai.use(sinonChai);
@@ -49,36 +50,36 @@ describe("Pyatch Worker Fucntionality", () => {
         describe("Event Primitive Functions", () => {
             it("Broadcast", async () => {
                 const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "single-target-broadcast.py"), "utf8");
-                const execObj = { event_whenflagclicked: ["id_0"] };
+                const executionObject = { event_whenflagclicked: ["id_0"] };
 
-                await pyatchWorker.registerThreads(pythonCode, execObj);
+                await pyatchWorker.registerThreads(pythonCode, executionObject);
                 await pyatchWorker.startHats("event_whenflagclicked");
 
                 expect(spy).to.be.calledTwice;
 
-                const blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
-                expect(blockOpCall.id).to.equal("BlockOP");
-                expect(blockOpCall.threadId).to.equal(execObj[0]);
-                expect(blockOpCall.opCode).to.equal("event_broadcast");
-                expect(blockOpCall.args).to.eql({ BROADCAST_OPTION: { id: "message1", name: "message1" } });
-                expect(blockOpCall.token).to.be.a("string");
+                const spyCalls = extractCallsSpy(spy);
+                expect(spyCalls[1].id).to.equal("BlockOP");
+                expect(spyCalls[1].threadId).to.equal("id_0");
+                expect(spyCalls[1].opCode).to.equal("event_broadcast");
+                expect(spyCalls[1].args).to.eql({ BROADCAST_OPTION: { id: "message1", name: "message1" } });
+                expect(spyCalls[1].token).to.be.a("string");
             });
 
             it("Broadcast and Wait", async () => {
                 const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "single-target-broadcast-and-wait.py"), "utf8");
-                const execObj = { event_whenflagclicked: ["id_0"] };
+                const executionObject = { event_whenflagclicked: ["id_0"] };
 
-                await pyatchWorker.registerThreads(pythonCode, execObj);
+                await pyatchWorker.registerThreads(pythonCode, executionObject);
                 await pyatchWorker.startHats("event_whenflagclicked");
 
                 expect(spy).to.be.calledTwice;
 
-                const blockOpCall = spy.getCalls().slice(-2)[0].firstArg;
-                expect(blockOpCall.id).to.equal("BlockOP");
-                expect(blockOpCall.threadId).to.equal(execObj[0]);
-                expect(blockOpCall.opCode).to.equal("event_broadcastandwait");
-                expect(blockOpCall.args).to.eql({ BROADCAST_OPTION: { id: "message1", name: "message1" } });
-                expect(blockOpCall.token).to.be.a("string");
+                const spyCalls = extractCallsSpy(spy);
+                expect(spyCalls[1].id).to.equal("BlockOP");
+                expect(spyCalls[1].threadId).to.equal("id_0");
+                expect(spyCalls[1].opCode).to.equal("event_broadcastandwait");
+                expect(spyCalls[1].args).to.eql({ BROADCAST_OPTION: { id: "message1", name: "message1" } });
+                expect(spyCalls[1].token).to.be.a("string");
             });
         });
     });

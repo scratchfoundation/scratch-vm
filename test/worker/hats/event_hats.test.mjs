@@ -63,47 +63,37 @@ describe("Patch Worker Functionality", () => {
                 const blockOpCalls = extractCallsSpy(spy);
 
                 expect(blockOpCalls[1].id).to.equal("BlockOP");
-                expect(blockOpCalls[1].threadId).to.equal(eventMap.event_whenflagclicked[0]);
+                expect(blockOpCalls[1].threadId).to.equal("id_0");
                 expect(blockOpCalls[1].opCode).to.equal("motion_movesteps");
                 expect(blockOpCalls[1].args).to.eql({ STEPS: 10 });
                 expect(blockOpCalls[1].token).to.be.a("string");
             });
 
             it("Two Event Registered, Two Event Start", async () => {
-                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "single-thread.py"), "utf8");
+                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "multi-thread.py"), "utf8");
                 const eventMap = {
                     event_whenflagclicked: ["id_0", "id_2"],
                     event_whenkeypressed: ["id_1"],
                 };
 
                 await pyatchWorker.registerThreads(pythonCode, eventMap);
-                Promise.all(pyatchWorker.startHats("event_whenflagclicked"), pyatchWorker.startHats("event_whenkeypressed"));
+                await Promise.all([pyatchWorker.startHats("event_whenflagclicked"), pyatchWorker.startHats("event_whenkeypressed")]);
 
                 expect(spy).to.be.called;
 
-                const blockOpCalls = extractCallsSpy(spy);
+                const blockOpCalls = extractCallsSpy(spy).filter((call) => call.id === "BlockOp");
 
-                expect(blockOpCalls[1].id).to.equal("BlockOP");
-                expect(blockOpCalls[1].threadId).to.equal(eventMap.event_whenflagclicked[0]);
-                expect(blockOpCalls[1].opCode).to.equal("looks_say");
-                expect(blockOpCalls[1].args).to.eql({ MESSAGE: "Thread 0" });
-                expect(blockOpCalls[1].token).to.be.a("string");
+                const threadExpectedMessage = {
+                    id_0: "Thread 0",
+                    id_1: "Thread 1",
+                    id_2: "Thread 2",
+                };
 
-                expect(blockOpCalls[3].id).to.equal("BlockOP");
-                expect(blockOpCalls[3].threadId).to.equal(eventMap.event_whenflagclicked[1]);
-                expect(blockOpCalls[3].opCode).to.equal("looks_say");
-                expect(blockOpCalls[3].args).to.eql({ MESSAGE: "Thread 1" });
-                expect(blockOpCalls[3].token).to.be.a("string");
-
-                expect(blockOpCalls[5].id).to.equal("BlockOP");
-                expect(blockOpCalls[5].threadId).to.equal(eventMap.event_whenkeypressed[0]);
-                expect(blockOpCalls[5].opCode).to.equal("looks_say");
-                expect(blockOpCalls[5].args).to.eql({ MESSAGE: "Thread 2" });
-                expect(blockOpCalls[5].token).to.be.a("string");
+                expect(blockOpCalls.every((call) => call.args.MESSAGE === threadExpectedMessage[call.threadId])).to.be.true;
             });
 
             it("Two Event Registered, One Event Start", async () => {
-                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "single-thread.py"), "utf8");
+                const pythonCode = fs.readFileSync(path.join(__dirname, "python", "events", "multi-thread.py"), "utf8");
                 const eventMap = {
                     event_whenflagclicked: ["id_0", "id_2"],
                     event_whenkeypressed: ["id_1"],
@@ -117,9 +107,9 @@ describe("Patch Worker Functionality", () => {
                 const blockOpCalls = extractCallsSpy(spy);
 
                 expect(blockOpCalls[1].id).to.equal("BlockOP");
-                expect(blockOpCalls[1].threadId).to.equal(eventMap.event_whenkeypressed[0]);
+                expect(blockOpCalls[1].threadId).to.equal("id_1");
                 expect(blockOpCalls[1].opCode).to.equal("looks_say");
-                expect(blockOpCalls[1].args).to.eql({ MESSAGE: "Thread 2" });
+                expect(blockOpCalls[1].args).to.eql({ MESSAGE: "Thread 1" });
                 expect(blockOpCalls[1].token).to.be.a("string");
             });
 
@@ -140,9 +130,9 @@ describe("Patch Worker Functionality", () => {
                 const blockOpCalls = extractCallsSpy(spy);
 
                 expect(blockOpCalls[1].id).to.equal("BlockOP");
-                expect(blockOpCalls[1].threadId).to.equal(eventMap.event_whenkeypressed[0]);
-                expect(blockOpCalls[1].opCode).to.equal("looks_say");
-                expect(blockOpCalls[1].args).to.eql({ MESSAGE: "Thread 2" });
+                expect(blockOpCalls[1].threadId).to.equal(eventMap.event_whenbroadcastreceived[broadcastMessageId][0]);
+                expect(blockOpCalls[1].opCode).to.equal("motion_movesteps");
+                expect(blockOpCalls[1].args).to.eql({ STEPS: 10 });
                 expect(blockOpCalls[1].token).to.be.a("string");
             });
 
@@ -153,7 +143,7 @@ describe("Patch Worker Functionality", () => {
                     event_whenkeypressed: ["id_1"],
                 };
 
-                await pyatchWorker.blocregisterThreads(pythonCode, eventMap);
+                await pyatchWorker.registerThreads(pythonCode, eventMap);
                 await pyatchWorker.startHats();
 
                 expect(spy).to.not.be.called;

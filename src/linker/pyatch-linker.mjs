@@ -60,17 +60,17 @@ class PyatchLinker {
 
     /**
      * Generate the fully linked executable python code.
-     * @param {Object} execObj - Dict with thread id as key and code.
+     * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
-    generatePython(execObj) {
+    generatePython(executionObject) {
         let codeString = "";
 
         const eventThreadIds = {};
 
-        Object.keys(execObj).forEach((eventId) => {
+        Object.keys(executionObject).forEach((eventId) => {
             eventThreadIds[eventId] = [];
-            const eventThreads = execObj[eventId];
+            const eventThreads = executionObject[eventId];
             Object.keys(eventThreads).forEach((threadId) => {
                 eventThreadIds[eventId].push(threadId);
                 const thread = eventThreads[threadId];
