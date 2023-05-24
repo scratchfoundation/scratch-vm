@@ -385,10 +385,7 @@ export default class Runtime extends EventEmitter {
      */
     _step() {
         const threadIds = Object.keys(this._threads);
-
         threadIds.forEach((id) => {
-            this._threads[id].step();
-
             if (this._threads[id].done()) {
                 delete this._threads[id];
             }
@@ -658,9 +655,10 @@ export default class Runtime extends EventEmitter {
         thread.setStatus(Thread.STATUS_DONE);
     }
 
-    pushBlockOp(threadId, primitiveOpcode, args, token) {
+    async executeThreadOperation(threadId, primitiveOpcode, args, token) {
         const thread = this.getThreadById(threadId);
         thread.pushOp(primitiveOpcode, args, token);
+        await thread.step();
     }
 
     registerThreads(targetsAndCode, returnValueCallback) {

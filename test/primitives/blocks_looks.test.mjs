@@ -225,7 +225,7 @@ describe("Runtime Exec Primitives", () => {
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(1);
             expect(retVal).to.equal(undefined);
-            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "moon" });
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "moon");
         });
 
         it("Set Backdrop To From Name", async () => {
@@ -235,7 +235,7 @@ describe("Runtime Exec Primitives", () => {
 
             expect(backdropTarget.currentCostume).to.equal(2);
             expect(retVal).to.equal(undefined);
-            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "nebula" });
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "nebula");
         });
 
         it("Next Backdrop", async () => {
@@ -253,7 +253,7 @@ describe("Runtime Exec Primitives", () => {
 
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
-            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", { BACKDROP: "moon" });
+            expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "moon");
         });
 
         it("Next Backdrop Last Loops to First", async () => {
@@ -269,13 +269,11 @@ describe("Runtime Exec Primitives", () => {
 
             const calls = extractCallsSpy(spy);
 
-            console.log(calls);
-
             expect(backdropTarget.currentCostume).to.equal(0);
             expect(retVal1).to.equal(undefined);
             expect(retVal2).to.equal(undefined);
-            expect(calls[0]).to.equal("event_whenbackdropswitchesto");
-            expect(calls[1]).to.equal("event_whenbackdropswitchesto");
+            expect(calls[0][0]).to.equal("event_whenbackdropswitchesto");
+            expect(calls[1][0]).to.equal("event_whenbackdropswitchesto");
         });
 
         it("Change Effect By", async () => {

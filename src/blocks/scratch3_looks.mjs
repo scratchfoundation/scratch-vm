@@ -454,9 +454,7 @@ export default class Scratch3LooksBlocks {
         }
 
         const newName = stage.getCostumes()[stage.currentCostume].name;
-        return this.runtime.startHats("event_whenbackdropswitchesto", {
-            BACKDROP: newName,
-        });
+        return this.runtime.startHats("event_whenbackdropswitchesto", newName);
     }
 
     switchCostume(args, util) {

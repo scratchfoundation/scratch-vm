@@ -9,6 +9,7 @@ import BlockUtility from "../../src/engine/block-utility.mjs";
 import Thread from "../../src/engine/thread.mjs";
 
 import simThreadExecution from "../fixtures/sim-thread-execution.mjs";
+import extractCallsSpy from "../fixtures/extract-calls-spy.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -35,23 +36,6 @@ beforeEach(async () => {
     spy.resetHistory();
 });
 
-/* End a mocked thread every interval
- * Meant to simulate threads ending
- */
-const endThreads = (threads, interval) =>
-    new Promise((resolve) => {
-        let i = 0;
-        const intervalId = setInterval(() => {
-            if (i < threads.length) {
-                threads[i].setStatus(Thread.STATUS_DONE);
-            } else {
-                clearInterval(intervalId);
-                resolve();
-            }
-            i += 1;
-        }, interval);
-    });
-
 describe("Runtime Exec Primitives", () => {
     describe("Event Blocks", () => {
         it("Broadcast", async () => {
@@ -63,25 +47,31 @@ describe("Runtime Exec Primitives", () => {
             expect(retVal).to.equal(undefined);
 
             expect(spy).to.be.calledOnce;
-            expect(spy).to.be.calledWith("event_whenbroadcastreceived", {
-                BROADCAST_OPTION: broadcastOption,
-            });
+            expect(spy).to.be.calledWith("event_whenbroadcastreceived", broadcastOption.id);
         });
 
         it("Broadcast and Wait", async () => {
-            const broadcastOption = { id: "test_id", name: "test_broadcast" };
+            const broadcastOption = { id: "test_broadcast", name: "test_broadcast" };
             const mockStartedThreads = [new Thread(target, null), new Thread(target, null)];
+            const interval = 300;
 
             rt.startHats = (...args) => {
                 spy(...args);
-                return mockStartedThreads;
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve();
+                    }, interval);
+                });
             };
 
-            const interval = 100;
+            const executionTime = await simThreadExecution(target, "event_broadcastandwait", { BROADCAST_OPTION: broadcastOption });
 
-            const [executionTime] = await Promise.all([simThreadExecution(target, "event_broadcastandwait", { BROADCAST_OPTION: broadcastOption }), endThreads(mockStartedThreads, interval)]);
-
-            expect(executionTime).to.be.closeTo((interval * mockStartedThreads.length) / 1000, 0.05);
+            const startHatsCall = extractCallsSpy(spy)[0];
+            expect(startHatsCall).to.be.an("array");
+            expect(startHatsCall.length).to.be.equal(2);
+            expect(startHatsCall[0]).to.be.equal("event_whenbroadcastreceived");
+            expect(startHatsCall[1]).to.be.equal(broadcastOption.id);
+            expect(executionTime).to.be.closeTo(interval / 1000, 0.05);
         });
     });
 });

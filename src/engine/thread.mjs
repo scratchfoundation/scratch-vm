@@ -32,21 +32,20 @@ class Thread {
         this.status = Thread.STATUS_RUNNING;
     }
 
-    step() {
+    async step() {
         if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
             this.status = Thread.STATUS_RUNNING;
-            while (this.blockOpQueue.length > 0) {
+            if (this.blockOpQueue.length > 0) {
                 const op = this.blockOpQueue[0];
 
-                const returnVal = this.runtime.execBlockPrimitive(op.targetId, op.primitiveOpcode, op.args, op.blockUtil);
+                const returnVal = await this.runtime.execBlockPrimitive(op.targetId, op.primitiveOpcode, op.args, op.blockUtil);
 
-                // If the thread has yielded then we need to stall until the next tick
-                if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_YIELD) return;
-
-                this.returnValueCallback({ token: op.token }, returnVal);
-                this.blockOpQueue.shift();
+                if (this.status !== Thread.STATUS_YIELD_TICK) {
+                    this.returnValueCallback({ token: op.token }, returnVal);
+                    this.blockOpQueue.shift();
+                }
             }
-            if (this.status === Thread.STATUS_RUNNING) {
+            if (this.blockOpQueue.length === 0) {
                 this.status = Thread.STATUS_IDLE;
             }
         }

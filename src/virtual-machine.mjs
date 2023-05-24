@@ -466,7 +466,7 @@ export default class VirtualMachine extends EventEmitter {
     _onWorkerMessage(message) {
         const { id, threadId, opCode, args, token } = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
-            this.runtime.pushBlockOp(threadId, opCode, args, token);
+            this.runtime.executeBlockOperation(threadId, opCode, args, token);
         }
     }
 
@@ -492,8 +492,8 @@ export default class VirtualMachine extends EventEmitter {
      * @param {Target=} optTarget Optionally, a target to restrict to.
      * @return {Array.<Thread>} List of threads started by this function.
      */
-    async startHats(hats) {
-        const startedHats = this.pyatchWorker.startHats(hats);
+    async startHats(hat, option) {
+        const startedHats = this.pyatchWorker.startHats(hat, option);
         return startedHats;
     }
 

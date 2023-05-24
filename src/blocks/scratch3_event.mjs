@@ -12,12 +12,8 @@ export default class Scratch3EventBlocks {
         this.runtime = runtime;
 
         this.runtime.on("KEY_PRESSED", (key) => {
-            this.runtime.startHats("event_whenkeypressed", {
-                KEY_OPTION: key,
-            });
-            this.runtime.startHats("event_whenkeypressed", {
-                KEY_OPTION: "any",
-            });
+            this.runtime.startHats("event_whenkeypressed", key);
+            this.runtime.startHats("event_whenkeypressed", "any");
         });
     }
 
@@ -82,23 +78,12 @@ export default class Scratch3EventBlocks {
     }
 
     broadcast(args, util) {
-        util.startHats("event_whenbroadcastreceived", args);
+        const messageId = args.BROADCAST_OPTION.id;
+        util.startHats("event_whenbroadcastreceived", messageId);
     }
 
-    _threadsDone = (threads) => {
-        const done = threads.every((thread) => thread.getStatus() === Thread.STATUS_DONE);
-        return done;
-    };
-
-    broadcastAndWait(args, util) {
-        if (!util.context.startedThreads) {
-            util.context.startedThreads = util.startHats("event_whenbroadcastreceived", {
-                args,
-            });
-        }
-
-        if (!this._threadsDone(util.context.startedThreads)) {
-            util.yieldTick();
-        }
+    async broadcastAndWait(args, util) {
+        const messageId = args.BROADCAST_OPTION.id;
+        await util.startHats("event_whenbroadcastreceived", messageId);
     }
 }

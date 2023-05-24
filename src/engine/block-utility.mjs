@@ -89,8 +89,7 @@ export default class BlockUtility {
         return null;
     }
 
-    startHats(hats) {
-        const startedHats = this._runtime.startHats(hats);
-        return startedHats;
+    async startHats(hat, option) {
+        await this._runtime.startHats(hat, option);
     }
 }
