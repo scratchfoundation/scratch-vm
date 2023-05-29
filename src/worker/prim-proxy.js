@@ -337,7 +337,7 @@ class PrimProxy {
     }
 
     async getAttributeOf(object, property) {
-        const value = await this.post(PrimProxy.opcodeMap.getAttributeOf, { OBJECT: object, PROPERTY: property});
+        const value = await this.post(PrimProxy.opcodeMap.getAttributeOf, { OBJECT: object, PROPERTY: property });
         return value;
     }
 

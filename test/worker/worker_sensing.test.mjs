@@ -56,9 +56,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = false;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -83,9 +83,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = false;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -110,9 +110,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = false;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -137,9 +137,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 14;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -164,9 +164,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 14.762;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -191,9 +191,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 70;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -201,7 +201,7 @@ describe("Patch Worker Functionality", () => {
                 expect(blockOpCalls[2].id).to.equal("BlockOP");
                 expect(blockOpCalls[2].threadId).to.equal(threads[0]);
                 expect(blockOpCalls[2].opCode).to.equal("sensing_of");
-                expect(blockOpCalls[2].args).to.eql({ OBJECT: "Cat", PROPERTY: "size"});
+                expect(blockOpCalls[2].args).to.eql({ OBJECT: "Cat", PROPERTY: "size" });
                 expect(blockOpCalls[2].token).to.be.a("string");
 
                 // The reason for this test is to ensure that the proper value was returned in the python env
@@ -218,9 +218,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = -70;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -245,9 +245,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 70;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -272,9 +272,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = true;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -299,9 +299,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = true;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -326,9 +326,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 10;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -353,9 +353,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 14876;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -380,9 +380,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = 87;
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
@@ -407,9 +407,9 @@ describe("Patch Worker Functionality", () => {
                 const mockedResult = "DuncanJohnson";
 
                 pyatchWorker._blockOPCallback = createBlockOPTestCallback(spy, mockedResult);
-                
+
                 await pyatchWorker.run(pythonCode, threads);
-                
+
                 expect(spy).to.be.calledThrice;
 
                 const blockOpCalls = extractCallsSpy(spy);
