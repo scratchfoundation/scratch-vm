@@ -18,7 +18,7 @@ async function simThreadExecution(target, opcode, args) {
                 clearInterval(interval);
                 resolve();
             }
-        }, Runtime.THREAD_STEP_INTERVAL);
+        }, Runtime.RENDER_INTERVAL);
     });
     const secs = (performance.now() - start) / 1000;
 

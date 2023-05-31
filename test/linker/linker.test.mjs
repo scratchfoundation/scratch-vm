@@ -18,7 +18,7 @@ describe("Pyatch File Linker", () => {
             const file = path.join(__dirname, "./", "expected/simple-expected.py");
             const expected = fs.readFileSync(file, "utf8", (err, data) => data);
 
-            const [threads, code] = linker.generatePython(executionObj);
+            const [code, threads] = linker.generatePython(executionObj);
 
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
             expect(code).to.equal(expected);
@@ -37,7 +37,7 @@ describe("Pyatch File Linker", () => {
             const file = path.join(__dirname, "./", "expected/multithread-expected.py");
             const expected = fs.readFileSync(file, "utf8", (err, data) => data);
 
-            const [threads, code] = linker.generatePython(executionObj);
+            const [code, threads] = linker.generatePython(executionObj);
 
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0", "id_1", "id_2", "id_3"] });
             expect(code).to.equal(expected);
@@ -58,7 +58,7 @@ describe("Pyatch File Linker", () => {
             const file = path.join(__dirname, "expected", "multithread-multievent-expected.py");
             const expected = fs.readFileSync(file, "utf8", (err, data) => data);
 
-            const [threads, code] = linker.generatePython(executionObj);
+            const [code, threads] = linker.generatePython(executionObj);
 
             expect(threads).to.deep.equal({
                 event_whenflagclicked: ["id_0", "id_1"],
@@ -76,7 +76,7 @@ describe("Pyatch File Linker", () => {
             const file = path.join(__dirname, "./", "expected/multiline-expected.py");
             const expected = fs.readFileSync(file, "utf8", (err, data) => data);
 
-            const [threads, code] = linker.generatePython(executionObj);
+            const [code, threads] = linker.generatePython(executionObj);
 
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
             expect(code).to.equal(expected);
@@ -93,7 +93,7 @@ describe("Pyatch File Linker", () => {
             const file = path.join(__dirname, "./", "expected", "while-loop-expected.py");
             const expected = fs.readFileSync(file, "utf8", (err, data) => data);
 
-            const [threads, code] = linker.generatePython(executionObj);
+            const [code, threads] = linker.generatePython(executionObj);
 
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
             expect(code).to.equal(expected);

@@ -15,6 +15,7 @@
     "scripts": {
         "build": "rollup -c",
         "test": "mocha test/**/*.mjs test/**/**/*.mjs --reporter spec",
+        "test:file": "mocha",
         "test:integration": "mocha test/integration/*.mjs --reporter spec",
         "test:linker": "mocha test/linker/*.mjs --reporter spec",
         "test:worker": "mocha test/worker/**/*.mjs --reporter spec",

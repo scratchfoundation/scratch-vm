@@ -66,13 +66,13 @@ class PyatchLinker {
     generatePython(executionObject) {
         let codeString = "";
 
-        const eventThreadIds = {};
+        const eventMap = {};
 
         Object.keys(executionObject).forEach((eventId) => {
-            eventThreadIds[eventId] = [];
+            eventMap[eventId] = [];
             const eventThreads = executionObject[eventId];
             Object.keys(eventThreads).forEach((threadId) => {
-                eventThreadIds[eventId].push(threadId);
+                eventMap[eventId].push(threadId);
                 const thread = eventThreads[threadId];
                 const code = thread.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
                 const header = this.generateAsyncFuncHeader(threadId);
@@ -81,7 +81,7 @@ class PyatchLinker {
             });
         });
 
-        return [eventThreadIds, codeString];
+        return [codeString, eventMap];
     }
 }
 export default PyatchLinker;
