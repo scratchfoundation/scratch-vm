@@ -25,65 +25,79 @@ before(async () => {
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Sound Blocks", () => {
         it("Play Sound", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['playSound("meow")'],
+                [target.id]: { [eventId]: ['playSound("meow")'] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
         });
 
         it("Play Sound Until Done", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['playSoundUntilDone("meow")'],
+                [target.id]: { [eventId]: ['playSoundUntilDone("meow")'] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
         });
 
         it("Stop All Sounds", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["stopAllSounds()"],
+                [target.id]: { [eventId]: ["stopAllSounds()"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
         });
 
         it("Set Effect To", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setSoundEffectTo("pitch", 135)'],
+                [target.id]: { [eventId]: ['setSoundEffectTo("pitch", 135)'] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.sound").effects.pitch).to.equal(135);
         });
 
         it("Change Effect By", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['changeSoundEffectBy("pan", -50)'],
+                [target.id]: { [eventId]: ['changeSoundEffectBy("pan", -50)'] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.sound").effects.pan).to.equal(-50);
         });
 
         it("Set Volume To", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setVolumeTo(70)"],
+                [target.id]: { [eventId]: ["setVolumeTo(70)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].volume).to.equal(70);
         });
 
         it("Change Volume By", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setVolumeTo(100)\nchangeVolumeBy(-40)"],
+                [target.id]: { [eventId]: ["setVolumeTo(100)\nchangeVolumeBy(-40)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].volume).to.equal(60);
         });
