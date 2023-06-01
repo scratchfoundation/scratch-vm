@@ -6,30 +6,46 @@ import Runtime from "../../src/engine/runtime.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
 import BlockUtility from "../../src/engine/block-utility.mjs";
+import Thread from "../../src/engine/thread.mjs";
 
 import extractCallsSpy from "../fixtures/extract-calls-spy.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
 
-let costumeRT = null;
+let defaultRuntime = null;
+let defaultSprite = null;
+let defaultTarget = null;
+let defaultThread = null;
+
+let costumeRuntime = null;
 let costumeSprite = null;
 let costumeTarget = null;
+let costumeThread = null;
 
 let backdropRuntime = null;
 let backdropSprite = null;
 let backdropTarget = null;
+let backdropThread = null;
 
 let spy = null;
 
 // set up preset runtimes for costume and backdrop testing
 // each has three costumes or three backdrops, respectively
 before(async () => {
+    // DEFAULT RUNTIME
+    defaultRuntime = new Runtime();
+    defaultSprite = new Sprite(null, defaultRuntime);
+    defaultTarget = new RenderedTarget(defaultSprite, defaultRuntime);
+    defaultRuntime.addTarget(defaultTarget);
+    defaultThread = new Thread(defaultTarget, () => {});
+
     // COSTUME RUNTIME
-    costumeRT = new Runtime();
-    costumeSprite = new Sprite(null, costumeRT);
-    costumeTarget = new RenderedTarget(costumeSprite, costumeRT);
-    costumeRT.addTarget(costumeTarget);
+    costumeRuntime = new Runtime();
+    costumeSprite = new Sprite(null, costumeRuntime);
+    costumeTarget = new RenderedTarget(costumeSprite, costumeRuntime);
+    costumeRuntime.addTarget(costumeTarget);
+    costumeThread = new Thread(costumeTarget, () => {});
 
     spy = sinon.spy();
 
@@ -72,6 +88,7 @@ before(async () => {
     backdropSprite = new Sprite(null, backdropRuntime);
     backdropTarget = new RenderedTarget(backdropSprite, backdropRuntime);
     backdropRuntime.addTarget(backdropTarget);
+    backdropThread = new Thread(backdropTarget, () => {});
 
     const backdropGalaxy = {
         asset: null,
@@ -117,124 +134,104 @@ beforeEach(() => {
 describe("Runtime Exec Primitives", () => {
     describe("Looks Blocks", () => {
         it("Say", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            const returnValue = await defaultThread.executeBlock("looks_say", { MESSAGE: "Hello World" }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_say", { MESSAGE: "Hello World" }, new BlockUtility(target, rt), "test_token");
-
-            // the Scratch.looks custom state get's a target's bubble-related state
-            expect(target.getCustomState("Scratch.looks").type).to.equal("say");
-            expect(target.getCustomState("Scratch.looks").text).to.equal("Hello World");
-            expect(retVal).to.equal(undefined);
+            // the Scratch.looks custom state get's a defaultTarget's bubble-related state
+            expect(defaultTarget.getCustomState("Scratch.looks").type).to.equal("say");
+            expect(defaultTarget.getCustomState("Scratch.looks").text).to.equal("Hello World");
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Think", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            const returnValue = await defaultThread.executeBlock("looks_think", { MESSAGE: "Hello World" }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_think", { MESSAGE: "Hello World" }, new BlockUtility(target, rt), new BlockUtility(target, rt), "test_token");
-
-            expect(target.getCustomState("Scratch.looks").type).to.equal("think");
-            expect(target.getCustomState("Scratch.looks").text).to.equal("Hello World");
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.getCustomState("Scratch.looks").type).to.equal("think");
+            expect(defaultTarget.getCustomState("Scratch.looks").text).to.equal("Hello World");
+            expect(returnValue).to.equal(undefined);
         });
 
         // TODO: Say and Think for Seconds
 
         it("Show", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            const returnValue = await defaultThread.executeBlock("looks_show", {}, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_show", {}, new BlockUtility(target, rt), "test_token");
-
-            expect(target.visible).to.equal(true);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.visible).to.equal(true);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Hide", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            const returnValue = await defaultThread.executeBlock("looks_hide", {}, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_hide", {}, new BlockUtility(target, rt), new BlockUtility(target, rt), "test_token");
-
-            expect(target.visible).to.equal(false);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.visible).to.equal(false);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Set Costume To From Index", async () => {
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_switchcostumeto", { COSTUME: 1 }, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue = await costumeThread.executeBlock("looks_switchcostumeto", { COSTUME: 1 }, "test_token");
 
             // but the current costume starts counting at 0
             expect(costumeTarget.currentCostume).to.equal(0);
-            expect(retVal).to.equal(undefined);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Set Costume To From Name", async () => {
             // NOTE: the setCostumeTo() function seems to start counting at 1
-            const retVal = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_switchcostumeto", { COSTUME: "cat-fly" }, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue = await costumeThread.executeBlock("looks_switchcostumeto", { COSTUME: "cat-fly" }, "test_token");
 
             expect(costumeTarget.currentCostume).to.equal(2);
-            expect(retVal).to.equal(undefined);
+            expect(returnValue).to.equal(undefined);
         });
 
         // TODO Set Backdrop To And Wait function
 
         it("Next Costume", async () => {
             // set to the walk costume
-            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_switchcostumeto", { COSTUME: "cat-walk" }, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue1 = await costumeThread.executeBlock("looks_switchcostumeto", { COSTUME: "cat-walk" }, "test_token");
 
             expect(costumeTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_nextcostume", {}, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue2 = await costumeThread.executeBlock("looks_nextcostume", {}, "test_token");
 
             expect(costumeTarget.currentCostume).to.equal(1);
 
-            expect(retVal1).to.equal(undefined);
-            expect(retVal2).to.equal(undefined);
+            expect(returnValue1).to.equal(undefined);
+            expect(returnValue2).to.equal(undefined);
         });
 
         it("Next Costume Last Loops to First", async () => {
             // set to the fly costume
-            const retVal1 = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_switchcostumeto", { COSTUME: "cat-fly" }, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue1 = await costumeThread.executeBlock("looks_switchcostumeto", { COSTUME: "cat-fly" }, "test_token");
 
             expect(costumeTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await costumeRT.execBlockPrimitive(costumeTarget.id, "looks_nextcostume", {}, new BlockUtility(costumeTarget, costumeRT), "test_token");
+            const returnValue2 = await costumeThread.executeBlock("looks_nextcostume", {}, "test_token");
 
             expect(costumeTarget.currentCostume).to.equal(0);
 
-            expect(retVal1).to.equal(undefined);
-            expect(retVal2).to.equal(undefined);
+            expect(returnValue1).to.equal(undefined);
+            expect(returnValue2).to.equal(undefined);
         });
 
         it("Set Backdrop To From Index", async () => {
             backdropRuntime.startHats = spy;
 
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 2 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue = await backdropThread.executeBlock("looks_switchbackdropto", { BACKDROP: 2 }, "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(1);
-            expect(retVal).to.equal(undefined);
+            expect(returnValue).to.equal(undefined);
             expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "moon");
         });
 
         it("Set Backdrop To From Name", async () => {
             backdropRuntime.startHats = spy;
 
-            const retVal = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: "nebula" }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue = await backdropThread.executeBlock("looks_switchbackdropto", { BACKDROP: "nebula" }, "test_token");
 
             expect(backdropTarget.currentCostume).to.equal(2);
-            expect(retVal).to.equal(undefined);
+            expect(returnValue).to.equal(undefined);
             expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "nebula");
         });
 
@@ -242,17 +239,17 @@ describe("Runtime Exec Primitives", () => {
             backdropRuntime.startHats = spy;
 
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 1 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue1 = await backdropThread.executeBlock("looks_switchbackdropto", { BACKDROP: 1 }, "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(0);
 
-            const retVal2 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue2 = await backdropThread.executeBlock("looks_nextbackdrop", {}, "test_token");
 
             expect(backdropTarget.currentCostume).to.equal(1);
 
-            expect(retVal1).to.equal(undefined);
-            expect(retVal2).to.equal(undefined);
+            expect(returnValue1).to.equal(undefined);
+            expect(returnValue2).to.equal(undefined);
             expect(spy).to.be.calledWith("event_whenbackdropswitchesto", "moon");
         });
 
@@ -260,126 +257,91 @@ describe("Runtime Exec Primitives", () => {
             backdropRuntime.startHats = spy;
 
             // NOTE: the setBackdropTo() function seems to start counting at 1
-            const retVal1 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_switchbackdropto", { BACKDROP: 3 }, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue1 = await backdropThread.executeBlock("looks_switchbackdropto", { BACKDROP: 3 }, "test_token");
 
             // but the current backdrop starts counting at 0
             expect(backdropTarget.currentCostume).to.equal(2);
 
-            const retVal2 = await backdropRuntime.execBlockPrimitive(backdropTarget.id, "looks_nextbackdrop", {}, new BlockUtility(backdropTarget, backdropRuntime), "test_token");
+            const returnValue2 = await backdropThread.executeBlock("looks_nextbackdrop", {}, "test_token");
 
             const calls = extractCallsSpy(spy);
 
             expect(backdropTarget.currentCostume).to.equal(0);
-            expect(retVal1).to.equal(undefined);
-            expect(retVal2).to.equal(undefined);
+            expect(returnValue1).to.equal(undefined);
+            expect(returnValue2).to.equal(undefined);
             expect(calls[0][0]).to.equal("event_whenbackdropswitchesto");
             expect(calls[1][0]).to.equal("event_whenbackdropswitchesto");
         });
 
         it("Change Effect By", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            expect(defaultTarget.effects.ghost).to.equal(0);
 
-            expect(target.effects.ghost).to.equal(0);
+            const returnValue = await defaultThread.executeBlock("looks_changeeffectby", { EFFECT: "ghost", CHANGE: 10 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_changeeffectby", { EFFECT: "ghost", CHANGE: 10 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.effects.ghost).to.equal(10);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.effects.ghost).to.equal(10);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Change Effect to be Out of Bounds", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            expect(defaultTarget.effects.brightness).to.equal(0);
 
-            expect(target.effects.brightness).to.equal(0);
+            const returnValue = await defaultThread.executeBlock("looks_changeeffectby", { EFFECT: "brightness", CHANGE: 8000 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_changeeffectby", { EFFECT: "brightness", CHANGE: 8000 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.effects.brightness).to.equal(100);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.effects.brightness).to.equal(100);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Set Effect To", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            defaultTarget.effects.ghost = 0;
 
-            expect(target.effects.ghost).to.equal(0);
+            const returnValue = await defaultThread.executeBlock("looks_seteffectto", { EFFECT: "ghost", VALUE: 10 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_seteffectto", { EFFECT: "ghost", VALUE: 10 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.effects.ghost).to.equal(10);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.effects.ghost).to.equal(10);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Set Effect to be Out of Bounds", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            defaultTarget.effects.brightness = 0;
 
-            expect(target.effects.brightness).to.equal(0);
+            const returnValue = await defaultThread.executeBlock("looks_seteffectto", { EFFECT: "brightness", VALUE: -8000 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_seteffectto", { EFFECT: "brightness", VALUE: -8000 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.effects.brightness).to.equal(-100);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.effects.brightness).to.equal(-100);
+            expect(returnValue).to.equal(undefined);
         });
 
         it("Clear Graphic Effects", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
-
             // add graphic effect of ghost 50
-            const retVal1 = await rt.execBlockPrimitive(target.id, "looks_seteffectto", { EFFECT: "ghost", VALUE: 50 }, new BlockUtility(target, rt), "test_token");
-            expect(target.effects.ghost).to.equal(50);
+            const returnValue1 = await defaultThread.executeBlock("looks_seteffectto", { EFFECT: "ghost", VALUE: 50 }, "test_token");
+            expect(defaultTarget.effects.ghost).to.equal(50);
 
             // clear graphic effects
-            const retVal2 = await rt.execBlockPrimitive(target.id, "looks_cleargraphiceffects", {}, new BlockUtility(target, rt), "test_token");
+            const returnValue2 = await defaultThread.executeBlock("looks_cleargraphiceffects", {}, "test_token");
 
-            expect(target.effects.ghost).to.equal(0);
+            expect(defaultTarget.effects.ghost).to.equal(0);
 
-            expect(retVal1).to.equal(undefined);
-            expect(retVal2).to.equal(undefined);
+            expect(returnValue1).to.equal(undefined);
+            expect(returnValue2).to.equal(undefined);
         });
 
         // possible range of sprite sizes depends on cosume and stage size
         // without defining these sizes, Sprite Size is limited to [100, 100]
         // I'm doing a simple 0 change function
         it("Change Size By", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            expect(defaultTarget.size).to.equal(100);
 
-            expect(target.size).to.equal(100);
+            const returnValue = await defaultThread.executeBlock("looks_changesizeby", { CHANGE: 0 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_changesizeby", { CHANGE: 0 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.size).to.equal(100);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.size).to.equal(100);
+            expect(returnValue).to.equal(undefined);
         });
 
         // similar to above, Sprite Size is limited to [100, 100]
         // Testing just a setSize(100)
         it("Set Size To", async () => {
-            const rt = new Runtime();
-            const sprite = new Sprite(null, rt);
-            const target = new RenderedTarget(sprite, rt);
-            rt.addTarget(target);
+            const returnValue = await defaultThread.executeBlock("looks_setsizeto", { SIZE: 100 }, "test_token");
 
-            const retVal = await rt.execBlockPrimitive(target.id, "looks_setsizeto", { SIZE: 100 }, new BlockUtility(target, rt), "test_token");
-
-            expect(target.size).to.equal(100);
-            expect(retVal).to.equal(undefined);
+            expect(defaultTarget.size).to.equal(100);
+            expect(returnValue).to.equal(undefined);
         });
 
         // NOTE: I can't unit test the layers functions since they
