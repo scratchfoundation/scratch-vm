@@ -45,18 +45,31 @@ class PyatchLinker {
      * Generates the line of python code to unpack all the pyatch api primitives
      * @returns {string} - the line of python
      */
-    registerProxyPrims(funcCode) {
-        // let prims = PyatchAPI.getPrimNames();
-        const prims = Object.keys(PrimProxy.opcodeMap);
-
+    registerProxyPrims(functionNames) {
         let registerPrimsCode = "";
-        prims.forEach((prim) => {
-            if (funcCode.includes(`${prim}(`)) {
-                registerPrimsCode += `${linkConstants.python_tab_char + prim} = ${linkConstants.vm_proxy}.${prim}\n`;
-            }
+        functionNames.forEach((name) => {
+            registerPrimsCode += `${linkConstants.python_tab_char + name} = ${linkConstants.vm_proxy}.${name}\n`;
         });
 
         return registerPrimsCode;
+    }
+
+    /**
+     * Checks if the given functions are called within the provided Python code.
+     *
+     * @param {string[]} functionNames - An array of function names to check.
+     * @param {string} pythonCode - A string containing the Python code to search for function calls.
+     * @returns {string[]} - An array of function names that were called within the Python code.
+     */
+    getFunctionCalls(functionNames, pythonCode) {
+        const calledFunctions = [];
+        functionNames.forEach((functionName) => {
+            const regex = new RegExp(`(^|\\W)${functionName}\\(`);
+            if (regex.test(pythonCode)) {
+                calledFunctions.push(functionName);
+            }
+        });
+        return calledFunctions;
     }
 
     /**
@@ -87,15 +100,32 @@ class PyatchLinker {
         return snippet;
     }
 
+    /**
+     * Adds the "await" keyword before certain function names in the provided Python code.
+     *
+     * @param {string} pythonCode - A string containing the Python code to modify.
+     * @param {string[]} functionNames - An array of function names to add "await" before.
+     * @returns {string} - The modified Python code with "await" added before specified function names.
+     */
+    addAwaitToPythonFunctions(pythonCode, functionNames) {
+        const regex = new RegExp(`(?<!\\bawait\\s*)\\b(${functionNames.join("|")})\\(`, "g");
+        return pythonCode.replace(regex, "await $&");
+    }
+
     wrapThreadCode(threadCode, threadId, globalVariables) {
         let variabelSnippet = "";
         if (globalVariables) {
             variabelSnippet = this.registerGlobalsImports(globalVariables);
         }
-        const code = threadCode ? threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`) : "pass";
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), threadCode);
+
+        const passedCode = threadCode || "pass";
+        const awaitedCode = this.addAwaitToPythonFunctions(passedCode, calledPatchPrimitiveFunctions);
+        const tabbedCode = awaitedCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+
         const header = this.generateAsyncFuncHeader(threadId);
-        const registerPrimsSnippet = this.registerProxyPrims(threadCode);
-        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;
+        const registerPrimsSnippet = this.registerProxyPrims(calledPatchPrimitiveFunctions);
+        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
     }
 
     handleEventOption(eventOptionThreads, globalVariables) {

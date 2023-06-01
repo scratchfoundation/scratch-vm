@@ -71,32 +71,32 @@ class PrimProxy {
         return Object.keys(PrimProxy.opcodeMap);
     }
 
-    move(steps) {
-        this.post(PrimProxy.opcodeMap.move, { STEPS: steps });
+    async move(steps) {
+        await this.post(PrimProxy.opcodeMap.move, { STEPS: steps });
     }
 
-    goToXY(x, y) {
-        this.post(PrimProxy.opcodeMap.goToXY, { X: x, Y: y });
+    async goToXY(x, y) {
+        await this.post(PrimProxy.opcodeMap.goToXY, { X: x, Y: y });
     }
 
-    goTo(targetName) {
-        this.post(PrimProxy.opcodeMap.goTo, { TO: targetName });
+    async goTo(targetName) {
+        await this.post(PrimProxy.opcodeMap.goTo, { TO: targetName });
     }
 
-    turnRight(degrees) {
-        this.post(PrimProxy.opcodeMap.turnRight, { DEGREES: degrees });
+    async turnRight(degrees) {
+        await this.post(PrimProxy.opcodeMap.turnRight, { DEGREES: degrees });
     }
 
-    turnLeft(degrees) {
-        this.post(PrimProxy.opcodeMap.turnLeft, { DEGREES: degrees });
+    async turnLeft(degrees) {
+        await this.post(PrimProxy.opcodeMap.turnLeft, { DEGREES: degrees });
     }
 
-    pointInDirection(degrees) {
-        this.post(PrimProxy.opcodeMap.pointInDirection, { DIRECTION: degrees });
+    async pointInDirection(degrees) {
+        await this.post(PrimProxy.opcodeMap.pointInDirection, { DIRECTION: degrees });
     }
 
-    pointTowards(targetName) {
-        this.post(PrimProxy.opcodeMap.pointTowards, { TOWARDS: targetName });
+    async pointTowards(targetName) {
+        await this.post(PrimProxy.opcodeMap.pointTowards, { TOWARDS: targetName });
     }
 
     async glide(seconds, x, y) {
@@ -110,28 +110,28 @@ class PrimProxy {
         });
     }
 
-    ifOnEdgeBounce() {
-        this.post(PrimProxy.opcodeMap.ifOnEdgeBounce, {});
+    async ifOnEdgeBounce() {
+        await this.post(PrimProxy.opcodeMap.ifOnEdgeBounce, {});
     }
 
-    setRotationStyle(style) {
-        this.post(PrimProxy.opcodeMap.setRotationStyle, { STYLE: style });
+    async setRotationStyle(style) {
+        await this.post(PrimProxy.opcodeMap.setRotationStyle, { STYLE: style });
     }
 
-    changeX(deltaX) {
-        this.post(PrimProxy.opcodeMap.changeX, { DX: deltaX });
+    async changeX(deltaX) {
+        await this.post(PrimProxy.opcodeMap.changeX, { DX: deltaX });
     }
 
-    setX(x) {
-        this.post(PrimProxy.opcodeMap.setX, { X: x });
+    async setX(x) {
+        await this.post(PrimProxy.opcodeMap.setX, { X: x });
     }
 
-    changeY(deltaY) {
-        this.post(PrimProxy.opcodeMap.changeY, { DY: deltaY });
+    async changeY(deltaY) {
+        await this.post(PrimProxy.opcodeMap.changeY, { DY: deltaY });
     }
 
-    setY(y) {
-        this.post(PrimProxy.opcodeMap.setY, { Y: y });
+    async setY(y) {
+        await this.post(PrimProxy.opcodeMap.setY, { Y: y });
     }
 
     async getX() {
@@ -149,148 +149,148 @@ class PrimProxy {
         return direction;
     }
 
-    say(message) {
-        this.post(PrimProxy.opcodeMap.say, { MESSAGE: message });
+    async say(message) {
+        await this.post(PrimProxy.opcodeMap.say, { MESSAGE: message });
     }
 
-    sayFor(message, secs) {
-        this.post(PrimProxy.opcodeMap.sayFor, { MESSAGE: message, SECS: secs });
+    async sayFor(message, secs) {
+        await this.post(PrimProxy.opcodeMap.sayFor, { MESSAGE: message, SECS: secs });
     }
 
-    think(message) {
-        this.post(PrimProxy.opcodeMap.think, { MESSAGE: message });
+    async think(message) {
+        await this.post(PrimProxy.opcodeMap.think, { MESSAGE: message });
     }
 
-    thinkFor(message, secs) {
-        this.post(PrimProxy.opcodeMap.thinkFor, {
+    async thinkFor(message, secs) {
+        await this.post(PrimProxy.opcodeMap.thinkFor, {
             MESSAGE: message,
             SECS: secs,
         });
     }
 
-    show() {
-        this.post(PrimProxy.opcodeMap.show, {});
+    async show() {
+        await this.post(PrimProxy.opcodeMap.show, {});
     }
 
-    hide() {
-        this.post(PrimProxy.opcodeMap.hide, {});
+    async hide() {
+        await this.post(PrimProxy.opcodeMap.hide, {});
     }
 
-    setCostumeTo(costume) {
-        this.post(PrimProxy.opcodeMap.setCostumeTo, { COSTUME: costume });
+    async setCostumeTo(costume) {
+        await this.post(PrimProxy.opcodeMap.setCostumeTo, { COSTUME: costume });
     }
 
-    setBackdropTo(backdrop) {
-        this.post(PrimProxy.opcodeMap.setBackdropTo, { BACKDROP: backdrop });
+    async setBackdropTo(backdrop) {
+        await this.post(PrimProxy.opcodeMap.setBackdropTo, { BACKDROP: backdrop });
     }
 
-    setBackdropToAndWait(backdrop) {
-        this.post(PrimProxy.opcodeMap.setBackdropToAndWait, {
+    async setBackdropToAndWait(backdrop) {
+        await this.post(PrimProxy.opcodeMap.setBackdropToAndWait, {
             BACKDROP: backdrop,
         });
     }
 
-    nextCostume() {
-        this.post(PrimProxy.opcodeMap.nextCostume, {});
+    async nextCostume() {
+        await this.post(PrimProxy.opcodeMap.nextCostume, {});
     }
 
-    nextBackdrop() {
-        this.post(PrimProxy.opcodeMap.nextBackdrop, {});
+    async nextBackdrop() {
+        await this.post(PrimProxy.opcodeMap.nextBackdrop, {});
     }
 
-    changeGraphicEffectBy(effect, change) {
-        this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, {
+    async changeGraphicEffectBy(effect, change) {
+        await this.post(PrimProxy.opcodeMap.changeGraphicEffectBy, {
             EFFECT: effect,
             CHANGE: change,
         });
     }
 
-    setGraphicEffectTo(effect, value) {
-        this.post(PrimProxy.opcodeMap.setGraphicEffectTo, {
+    async setGraphicEffectTo(effect, value) {
+        await this.post(PrimProxy.opcodeMap.setGraphicEffectTo, {
             EFFECT: effect,
             VALUE: value,
         });
     }
 
-    clearGraphicEffects() {
-        this.post(PrimProxy.opcodeMap.clearGraphicEffects, {});
+    async clearGraphicEffects() {
+        await this.post(PrimProxy.opcodeMap.clearGraphicEffects, {});
     }
 
-    changeSizeBy(change) {
-        this.post(PrimProxy.opcodeMap.changeSizeBy, { CHANGE: change });
+    async changeSizeBy(change) {
+        await this.post(PrimProxy.opcodeMap.changeSizeBy, { CHANGE: change });
     }
 
-    setSizeTo(size) {
-        this.post(PrimProxy.opcodeMap.setSizeTo, { SIZE: size });
+    async setSizeTo(size) {
+        await this.post(PrimProxy.opcodeMap.setSizeTo, { SIZE: size });
     }
 
-    setLayerTo(frontBack) {
-        this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: frontBack });
+    async setLayerTo(frontBack) {
+        await this.post(PrimProxy.opcodeMap.setLayerTo, { FRONT_BACK: frontBack });
     }
 
-    changeLayerBy(num) {
-        this.post(PrimProxy.opcodeMap.changeLayerBy, { NUM: num });
+    async changeLayerBy(num) {
+        await this.post(PrimProxy.opcodeMap.changeLayerBy, { NUM: num });
     }
 
     // as above, no tests for async functions
     async getSize() {
-        const size = PrimProxy.post(this.opcodeMap.getSize, {});
+        const size = await this.post(this.opcodeMap.getSize, {});
         return size;
     }
 
     async getCostume() {
-        const costume = await PrimProxy.post(this.opcodeMap.getCostume, {
+        const costume = await this.post(this.opcodeMap.getCostume, {
             NUMBER_NAME: "name",
         });
         return costume;
     }
 
     async getBackdrop() {
-        const backdrop = await PrimProxy.post(this.opcodeMap.getBackdrop, {
+        const backdrop = await this.post(this.opcodeMap.getBackdrop, {
             NUMBER_NAME: "name",
         });
         return backdrop;
     }
 
-    playSound(soundMenu) {
-        this.post(PrimProxy.opcodeMap.playSound, { SOUND_MENU: soundMenu });
+    async playSound(soundMenu) {
+        await this.post(PrimProxy.opcodeMap.playSound, { SOUND_MENU: soundMenu });
     }
 
-    playSoundUntilDone(soundMenu) {
-        this.post(PrimProxy.opcodeMap.playSoundUntilDone, { SOUND_MENU: soundMenu });
+    async playSoundUntilDone(soundMenu) {
+        await this.post(PrimProxy.opcodeMap.playSoundUntilDone, { SOUND_MENU: soundMenu });
     }
 
-    stopAllSounds() {
-        this.post(PrimProxy.opcodeMap.stopAllSounds, {});
+    async stopAllSounds() {
+        await this.post(PrimProxy.opcodeMap.stopAllSounds, {});
     }
 
-    setSoundEffectTo(effect, value) {
-        this.post(PrimProxy.opcodeMap.setSoundEffectTo, { EFFECT: effect, VALUE: value });
+    async setSoundEffectTo(effect, value) {
+        await this.post(PrimProxy.opcodeMap.setSoundEffectTo, { EFFECT: effect, VALUE: value });
     }
 
-    changeSoundEffectBy(effect, value) {
-        this.post(PrimProxy.opcodeMap.changeSoundEffectBy, { EFFECT: effect, VALUE: value });
+    async changeSoundEffectBy(effect, value) {
+        await this.post(PrimProxy.opcodeMap.changeSoundEffectBy, { EFFECT: effect, VALUE: value });
     }
 
-    clearSoundEffects() {
-        this.post(PrimProxy.opcodeMap.clearSoundEffects, {});
+    async clearSoundEffects() {
+        await this.post(PrimProxy.opcodeMap.clearSoundEffects, {});
     }
 
-    setVolumeTo(volume) {
-        this.post(PrimProxy.opcodeMap.setVolumeTo, { VOLUME: volume });
+    async setVolumeTo(volume) {
+        await this.post(PrimProxy.opcodeMap.setVolumeTo, { VOLUME: volume });
     }
 
-    changeVolumeBy(volume) {
-        this.post(PrimProxy.opcodeMap.changeVolumeBy, { VOLUME: volume });
+    async changeVolumeBy(volume) {
+        await this.post(PrimProxy.opcodeMap.changeVolumeBy, { VOLUME: volume });
     }
 
     async getVolume() {
-        const volume = PrimProxy.post(this.opcodeMap.getVolume, {});
+        const volume = await this.post(this.opcodeMap.getVolume, {});
         return volume;
     }
 
-    broadcast(messageName) {
-        this.post(PrimProxy.opcodeMap.broadcast, { BROADCAST_OPTION: { id: messageName, name: messageName } });
+    async broadcast(messageName) {
+        await this.post(PrimProxy.opcodeMap.broadcast, { BROADCAST_OPTION: { id: messageName, name: messageName } });
     }
 
     async broadcastAndWait(messageName) {
