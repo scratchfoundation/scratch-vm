@@ -5,7 +5,6 @@ import sinonChai from "sinon-chai";
 import Runtime from "../../src/engine/runtime.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
-import BlockUtility from "../../src/engine/block-utility.mjs";
 import Thread from "../../src/engine/thread.mjs";
 
 import extractCallsSpy from "../fixtures/extract-calls-spy.mjs";
