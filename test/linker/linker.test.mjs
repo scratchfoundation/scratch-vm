@@ -24,6 +24,23 @@ describe("Pyatch File Linker", () => {
             expect(code).to.equal(expected);
         });
 
+        it("1 target, 1 line of code, 1 thread w/ option", () => {
+            const executionObj = {
+                event_whenbroadcastreceived: {
+                    message1: {
+                        id_0: "move(10)",
+                    },
+                },
+            };
+            const file = path.join(__dirname, "./", "expected/simple-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const [code, threads] = linker.generatePython(executionObj);
+
+            expect(threads).to.deep.equal({ event_whenbroadcastreceived: { message1: ["id_0"] } });
+            expect(code).to.equal(expected);
+        });
+
         it("1 line of code, 4 threads", () => {
             const executionObj = {
                 event_whenflagclicked: {

@@ -26,7 +26,19 @@ before(async () => {
     target2.id = "target2";
     vm.runtime.addTarget(target2);
 
+    await vm.runtime.pyatchLoadPromise;
+
     vm.start();
+});
+
+const resetTarget = () => {
+    vm.runtime.targets[0].x = 0;
+    vm.runtime.targets[0].y = 0;
+    vm.runtime.targets[0].direction = 90;
+};
+
+afterEach(async () => {
+    resetTarget();
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
@@ -39,7 +51,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(executionObject);
+            await vm.loadScripts(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -54,7 +66,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(executionObject);
+            await vm.loadScripts(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
@@ -73,7 +85,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(executionObject);
+            await vm.loadScripts(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -88,12 +100,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const executionObject = {
                 target1: {
                     event_whenflagclicked: [`move(${steps})`],
-                    event_whenkeypressed: [`move(${steps})`],
+                    event_whenthisspriteclicked: [`move(${steps})`],
                 },
             };
 
-            await vm.registerThreads(executionObject);
-            await vm.startHats("event_whenflagclicked", "event_whenkeypressed");
+            await vm.loadScripts(executionObject);
+            await Promise.all([vm.startHats("event_whenflagclicked"), vm.startHats("event_whenthisspriteclicked")]);
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
@@ -104,14 +116,47 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const executionObject = {
                 target1: {
                     event_whenflagclicked: [`move(${steps})`],
-                    event_whenkeypressed: [`move(${steps})`],
+                    event_whenthisspriteclicked: [`move(${steps})`],
                 },
             };
 
-            await vm.registerThreads(executionObject);
-            await vm.startHats("event_whenkeypressed");
+            await vm.loadScripts(executionObject);
+            await vm.startHats("event_whenthisspriteclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
+            expect(vm.runtime.targets[0].y).to.equal(0);
+        });
+
+        it("One Event, Single Target, Single Thread, Single Start w/ Option", async () => {
+            const steps = 10;
+            const executionObject = {
+                target1: {
+                    event_whenkeypressed: { A: [`move(${steps})`] },
+                },
+            };
+
+            await vm.loadScripts(executionObject);
+            await vm.startHats("event_whenkeypressed", "A");
+
+            expect(vm.runtime.targets[0].x).to.equal(steps);
+            expect(vm.runtime.targets[0].y).to.equal(0);
+        });
+
+        it("One Event, Single Target, Single Thread, Single Start w/ Two Options", async () => {
+            const steps = 10;
+            const executionObject = {
+                target1: {
+                    event_whenkeypressed: {
+                        A: [`move(${steps})`],
+                        B: [`move(${steps})`],
+                    },
+                },
+            };
+
+            await vm.loadScripts(executionObject);
+            await Promise.all([vm.startHats("event_whenkeypressed", "A"), vm.startHats("event_whenkeypressed", "B")]);
+
+            expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
     });

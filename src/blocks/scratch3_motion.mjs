@@ -155,6 +155,8 @@ export default class Scratch3MotionBlocks {
             } else {
                 // Finished: move to final position.
                 util.target.setXY(util.context.endX, util.context.endY);
+                // Clean up our work
+                util.context.timer = null;
             }
         } else {
             // First time: save data for future use.

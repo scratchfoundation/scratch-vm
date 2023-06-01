@@ -1,4 +1,5 @@
 import EventEmitter from "events";
+import _ from "lodash";
 
 import StageLayering from "./stage-layering.mjs";
 
@@ -38,7 +39,7 @@ const defaultBlockPackages = {
  * @constructor
  */
 export default class Runtime extends EventEmitter {
-    constructor(startHatsCallback) {
+    constructor() {
         super();
 
         /**
@@ -648,7 +649,6 @@ export default class Runtime extends EventEmitter {
     async executeBlock(threadId, primitiveOpcode, args, token) {
         const thread = this.getThreadById(threadId);
         thread.executeBlock(primitiveOpcode, args, token);
-        await thread.step();
     }
 
     /**
@@ -690,6 +690,25 @@ export default class Runtime extends EventEmitter {
         return startedHats;
     }
 
+    registerTargetThread(target, returnValueCallback) {
+        const uid = safeUid();
+        this._threads[uid] = new Thread(target, returnValueCallback);
+        return uid;
+    }
+
+    handleEventOption(eventOptions, target, returnValueCallback) {
+        const eventOptionMap = {};
+        Object.keys(eventOptions).forEach((eventOptionId) => {
+            eventOptionMap[eventOptionId] = {};
+            const eventOptionThreads = eventOptions[eventOptionId];
+            eventOptionThreads.forEach((threadCode) => {
+                const uid = this.registerTargetThread(target, returnValueCallback);
+                eventOptionMap[eventOptionId][uid] = threadCode;
+            });
+        });
+        return eventOptionMap;
+    }
+
     registerTargets(targetCodeMap, returnValueCallback) {
         const eventMap = {};
 
@@ -701,20 +720,22 @@ export default class Runtime extends EventEmitter {
                 const targetEventMap = targetCodeMap[targetId];
                 const eventIds = Object.keys(targetEventMap);
                 eventIds.forEach((eventId) => {
-                    const targetEventThreads = targetEventMap[eventId];
-                    let eventThreads = eventMap[eventId];
-                    if (!eventThreads) {
+                    if (!eventMap[eventId]) {
                         eventMap[eventId] = {};
-                        eventThreads = eventMap[eventId];
                     }
-                    const threadIds = Object.keys(targetEventThreads);
-                    threadIds.forEach((threadId) => {
-                        const code = targetEventThreads[threadId];
-                        const uid = safeUid();
-
-                        this._threads[uid] = new Thread(target, returnValueCallback);
-                        eventThreads[uid] = code;
-                    });
+                    const targetEventThreads = targetEventMap[eventId];
+                    if (!_.isArray(targetEventThreads)) {
+                        const eventOptions = targetEventThreads;
+                        const optionsEventMap = this.handleEventOption(eventOptions, target, returnValueCallback);
+                        eventMap[eventId] = optionsEventMap;
+                    } else {
+                        const threadIds = Object.keys(targetEventThreads);
+                        threadIds.forEach((threadId) => {
+                            const code = targetEventThreads[threadId];
+                            const uid = this.registerTargetThread(target, returnValueCallback);
+                            eventMap[eventId][uid] = code;
+                        });
+                    }
                 });
             } else {
                 throw new Error(`Cannot find target with id ${targetId}`);

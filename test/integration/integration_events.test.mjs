@@ -20,7 +20,19 @@ before(async () => {
     target.id = "target1";
     vm.runtime.addTarget(target);
 
+    await vm.runtime.pyatchLoadPromise;
+
     vm.start();
+});
+
+const resetTarget = () => {
+    vm.runtime.targets[0].x = 0;
+    vm.runtime.targets[0].y = 0;
+    vm.runtime.targets[0].direction = 90;
+};
+
+afterEach(async () => {
+    resetTarget();
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
@@ -37,7 +49,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(executionObject);
+            await vm.loadScripts(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -56,7 +68,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.registerThreads(executionObject);
+            await vm.loadScripts(executionObject);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
