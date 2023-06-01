@@ -272,12 +272,21 @@ describe("Runtime Exec Primitives", () => {
             expect(calls[1][0]).to.equal("event_whenbackdropswitchesto");
         });
 
-        it("Change Effect By", async () => {
+        it("Change Ghost Effect By", async () => {
             expect(defaultTarget.effects.ghost).to.equal(0);
 
             const returnValue = await defaultThread.executeBlock("looks_changeeffectby", { EFFECT: "ghost", CHANGE: 10 }, "test_token");
 
             expect(defaultTarget.effects.ghost).to.equal(10);
+            expect(returnValue).to.equal(undefined);
+        });
+
+        it("Change Color Effect By", async () => {
+            expect(defaultTarget.effects.color).to.equal(0);
+
+            const returnValue = await defaultThread.executeBlock("looks_changeeffectby", { EFFECT: "color", CHANGE: 10 }, "test_token");
+
+            expect(defaultTarget.effects.color).to.equal(10);
             expect(returnValue).to.equal(undefined);
         });
 
