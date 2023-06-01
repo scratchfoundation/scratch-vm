@@ -40,10 +40,6 @@ class PrimProxy {
         getSize: "looks_size",
         getCostume: "looks_costumenumbername",
         getBackdrop: "looks_backdropnumbername",
-        whenTouchingObject: "event_whentouchingobject",
-        broadcast: "event_broadcast",
-        broadcastAndWait: "event_broadcastandwait",
-        whenGreaterThan: "event_whengreaterthan",
 
         playSound: "sound_play",
         playSoundUntilDone: "sound_playuntildone",
@@ -55,13 +51,18 @@ class PrimProxy {
         changeVolumeBy: "sound_changevolumeby",
         getVolume: "sound_volume",
 
+        broadcast: "event_broadcast",
+        broadcastAndWait: "event_broadcastandwait",
+        whenTouchingObject: "event_whentouchingobject",
+        whenGreaterThan: "event_whengreaterthan",
+
         endThread: "core_endthread",
     };
 
-    constructor(targetId, postFunction) {
-        this.targetId = targetId;
+    constructor(threadId, postFunction) {
+        this.threadId = threadId;
         this.post = async function (opCode, args) {
-            const retVal = await postFunction(this.targetId, opCode, args);
+            const retVal = await postFunction(this.threadId, opCode, args);
             return retVal;
         };
     }
@@ -98,12 +99,12 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.pointTowards, { TOWARDS: targetName });
     }
 
-    glide(seconds, x, y) {
-        this.post(PrimProxy.opcodeMap.glide, { SECS: seconds, X: x, Y: y });
+    async glide(seconds, x, y) {
+        await this.post(PrimProxy.opcodeMap.glide, { SECS: seconds, X: x, Y: y });
     }
 
-    glideTo(seconds, targetName) {
-        this.post(PrimProxy.opcodeMap.glideTo, {
+    async glideTo(seconds, targetName) {
+        await this.post(PrimProxy.opcodeMap.glideTo, {
             SECS: seconds,
             TO: targetName,
         });
@@ -286,6 +287,14 @@ class PrimProxy {
     async getVolume() {
         const volume = PrimProxy.post(this.opcodeMap.getVolume, {});
         return volume;
+    }
+
+    broadcast(messageName) {
+        this.post(PrimProxy.opcodeMap.broadcast, { BROADCAST_OPTION: { id: messageName, name: messageName } });
+    }
+
+    async broadcastAndWait(messageName) {
+        await this.post(PrimProxy.opcodeMap.broadcastAndWait, { BROADCAST_OPTION: { id: messageName, name: messageName } });
     }
 }
 

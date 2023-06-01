@@ -29,6 +29,8 @@ before(async () => {
 
     vm.runtime.addTarget(target2);
 
+    await vm.runtime.pyatchLoadPromise;
+
     vm.start();
 });
 
@@ -45,126 +47,170 @@ afterEach(async () => {
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Motion Blocks", () => {
         it("Move", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["move(10)"],
+                [target.id]: {
+                    [eventId]: ["move(10)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
 
         it("Go To XY", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["goToXY(10, 5)"],
+                [target.id]: {
+                    [eventId]: ["goToXY(10, 5)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Go To", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['goTo("target2")'],
+                [target.id]: {
+                    [eventId]: ['goTo("target2")'],
+                },
             };
 
             target2.x = 10;
             target2.y = 5;
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Turn Right", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["turnRight(90)"],
+                [target.id]: {
+                    [eventId]: ["turnRight(90)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(180);
         });
 
         it("Turn Left", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["turnLeft(90)"],
+                [target.id]: {
+                    [eventId]: ["turnLeft(90)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(0);
         });
 
         it("Point In Direction", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["pointInDirection(90)"],
+                [target.id]: {
+                    [eventId]: ["pointInDirection(90)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
         it("pointTowards", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['pointTowards("target2")'],
+                [target.id]: {
+                    [eventId]: ['pointTowards("target2")'],
+                },
             };
             const t2i = 1;
             vm.runtime.targets[t2i].x = 5;
             vm.runtime.targets[t2i].y = 5;
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(45);
         });
 
         it("Glide", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["glide(1, 10, 5)"],
+                [target.id]: {
+                    [eventId]: ["await glide(1, 10, 5)"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Glide To", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['glideTo(1, "target2")'],
+                [target.id]: {
+                    [eventId]: [`await glideTo(1, '${target2.id}')`],
+                },
             };
 
             target2.x = 10;
             target2.y = 5;
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("If On Edge Bounce", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["ifOnEdgeBounce()"],
+                [target.id]: {
+                    [eventId]: ["ifOnEdgeBounce()"],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             // Not on edge so angle will not change
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
         it("Set Rotation Style", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setRotationStyle("left-right")'],
+                [target.id]: {
+                    [eventId]: ['setRotationStyle("left-right")'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].rotationStyle).to.equal("left-right");
         });
@@ -174,11 +220,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const dx = 10;
             const oldY = target.y;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`changeX(${dx})`],
+                [target.id]: {
+                    [eventId]: [`changeX(${dx})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX + dx);
             expect(vm.runtime.targets[0].y).to.equal(oldY);
@@ -189,11 +239,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldY = target.y;
             const dy = 10;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`changeY(${dy})`],
+                [target.id]: {
+                    [eventId]: [`changeY(${dy})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(oldY + dy);
@@ -203,11 +257,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const eX = 10;
             const oldY = target.y;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`setX(${eX})`],
+                [target.id]: {
+                    [eventId]: [`setX(${eX})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(eX);
             expect(vm.runtime.targets[0].y).to.equal(oldY);
@@ -217,11 +275,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldX = target.x;
             const eY = 10;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`setY(${eY})`],
+                [target.id]: {
+                    [eventId]: [`setY(${eY})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(eY);
@@ -231,11 +293,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldX = target.x;
             const dX = 15;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`x = await getX()\nsetX(x + ${dX})`],
+                [target.id]: {
+                    [eventId]: [`x = await getX()\nsetX(x + ${dX})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX + dX);
         });
@@ -244,11 +310,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldY = target.y;
             const dY = 15;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`y = await getY()\nsetY(y + ${dY})`],
+                [target.id]: {
+                    [eventId]: [`y = await getY()\nsetY(y + ${dY})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].y).to.equal(oldY + dY);
         });
@@ -257,11 +327,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldDegrees = target.direction;
             const dDegrees = 15;
 
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: [`degrees = await getDirection()\npointInDirection(degrees + ${dDegrees})`],
+                [target.id]: {
+                    [eventId]: [`degrees = await getDirection()\npointInDirection(degrees + ${dDegrees})`],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(oldDegrees + dDegrees);
         });

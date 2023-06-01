@@ -1,3 +1,4 @@
+import _ from "lodash";
 import linkConstants from "./linker-constants.mjs";
 import PrimProxy from "../worker/prim-proxy.js";
 
@@ -86,37 +87,62 @@ class PyatchLinker {
         return snippet;
     }
 
+    wrapThreadCode(threadCode, threadId, globalVariables) {
+        let variabelSnippet = "";
+        if (globalVariables) {
+            variabelSnippet = this.registerGlobalsImports(globalVariables);
+        }
+        const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+        const header = this.generateAsyncFuncHeader(threadId);
+        const registerPrimsSnippet = this.registerProxyPrims(threadCode);
+        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;
+    }
+
+    handleEventOption(eventOptionThreads, globalVariables) {
+        let codeString = "";
+        Object.keys(eventOptionThreads).forEach((threadId) => {
+            const threadCode = eventOptionThreads[threadId];
+            codeString += this.wrapThreadCode(threadCode, threadId, globalVariables);
+        });
+        return codeString;
+    }
+
     /**
      * Generate the fully linked executable python code.
-     * @param {Object} threadsCode - Dict with thread id as key and code.
+     * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
-    generatePython(threadsCode, globalVars) {
+    generatePython(executionObject, globalVariables) {
         let codeString = "";
 
-        const threadIds = [];
+        const eventMap = {};
 
-        if (globalVars) {
-            const globalSnippet = this.registerGlobalsAssignments(globalVars);
+        if (globalVariables) {
+            const globalSnippet = this.registerGlobalsAssignments(globalVariables);
             codeString += globalSnippet;
         }
 
-        Object.keys(threadsCode).forEach((id) => {
-            threadIds.push(id);
-
-            const threadCode = threadsCode[id];
-
-            const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
-            const header = this.generateAsyncFuncHeader(id);
-            let variabelSnippet = "";
-            if (globalVars) {
-                variabelSnippet = this.registerGlobalsImports(globalVars);
-            }
-            const registerPrimsSnippet = this.registerProxyPrims(threadCode);
-            codeString += `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;
+        Object.keys(executionObject).forEach((eventId) => {
+            eventMap[eventId] = [];
+            const eventThreads = executionObject[eventId];
+            Object.keys(eventThreads).forEach((threadId) => {
+                const thread = eventThreads[threadId];
+                if (!_.isString(thread)) {
+                    const eventOptionId = threadId;
+                    const eventOptionThreads = eventThreads[threadId];
+                    codeString += this.handleEventOption(eventOptionThreads, globalVariables);
+                    eventMap[eventId] = {
+                        ...eventMap[eventId],
+                        [eventOptionId]: Object.keys(eventOptionThreads),
+                    };
+                } else {
+                    codeString += this.wrapThreadCode(thread, threadId, globalVariables);
+                    eventMap[eventId].push(threadId);
+                }
+            });
         });
 
-        return [threadIds, codeString];
+        return [codeString, eventMap];
     }
 }
 export default PyatchLinker;
