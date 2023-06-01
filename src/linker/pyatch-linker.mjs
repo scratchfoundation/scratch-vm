@@ -59,18 +59,50 @@ class PyatchLinker {
         return registerPrimsCode;
     }
 
-    wrapThreadCode(threadCode, threadId) {
-        const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
-        const header = this.generateAsyncFuncHeader(threadId);
-        const registerPrimsCode = this.registerProxyPrims(threadCode);
-        return `${header + registerPrimsCode + linkConstants.python_tab_char + code}\n\n`;
+    /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsAssignments(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            const value = globalVars[name];
+            const valueValidated = typeof value !== "number" ? `'${value}'` : `${value}`;
+            snippet += `${name} = ${valueValidated}\n`;
+        });
+
+        return snippet;
     }
 
-    handleEventOption(eventOptionThreads) {
+    /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsImports(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            snippet += `${linkConstants.python_tab_char}global ${name}\n`;
+        });
+
+        return snippet;
+    }
+
+    wrapThreadCode(threadCode, threadId, globalVariables) {
+        let variabelSnippet = "";
+        if (globalVariables) {
+            variabelSnippet = this.registerGlobalsImports(globalVariables);
+        }
+        const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+        const header = this.generateAsyncFuncHeader(threadId);
+        const registerPrimsSnippet = this.registerProxyPrims(threadCode);
+        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;
+    }
+
+    handleEventOption(eventOptionThreads, globalVariables) {
         let codeString = "";
         Object.keys(eventOptionThreads).forEach((threadId) => {
             const threadCode = eventOptionThreads[threadId];
-            codeString += this.wrapThreadCode(threadCode, threadId);
+            codeString += this.wrapThreadCode(threadCode, threadId, globalVariables);
         });
         return codeString;
     }
@@ -80,10 +112,15 @@ class PyatchLinker {
      * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
-    generatePython(executionObject) {
+    generatePython(executionObject, globalVariables) {
         let codeString = "";
 
         const eventMap = {};
+
+        if (globalVariables) {
+            const globalSnippet = this.registerGlobalsAssignments(globalVariables);
+            codeString += globalSnippet;
+        }
 
         Object.keys(executionObject).forEach((eventId) => {
             eventMap[eventId] = [];
@@ -93,13 +130,13 @@ class PyatchLinker {
                 if (!_.isString(thread)) {
                     const eventOptionId = threadId;
                     const eventOptionThreads = eventThreads[threadId];
-                    codeString += this.handleEventOption(eventOptionThreads);
+                    codeString += this.handleEventOption(eventOptionThreads, globalVariables);
                     eventMap[eventId] = {
                         ...eventMap[eventId],
                         [eventOptionId]: Object.keys(eventOptionThreads),
                     };
                 } else {
-                    codeString += this.wrapThreadCode(thread, threadId);
+                    codeString += this.wrapThreadCode(thread, threadId, globalVariables);
                     eventMap[eventId].push(threadId);
                 }
             });

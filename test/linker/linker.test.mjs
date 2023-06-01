@@ -115,5 +115,45 @@ describe("Pyatch File Linker", () => {
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
             expect(code).to.equal(expected);
         });
+
+        it("1 line of code, 1 thread and Global Variable String", () => {
+            const globalVariables = {
+                globalName1: "value",
+            };
+
+            const threadCode = {
+                event_whenflagclicked: {
+                    id_0: "move(10)",
+                },
+            };
+
+            const file = path.join(__dirname, "expected", "global-string-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const [code, threads] = linker.generatePython(threadCode, globalVariables);
+
+            expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
+            expect(code).to.equal(expected);
+        });
+
+        it("1 line of code, 1 thread and Global Variable Number", () => {
+            const globalVariables = {
+                globalName1: 12.1,
+            };
+
+            const threadCode = {
+                event_whenflagclicked: {
+                    id_0: "move(10)",
+                },
+            };
+
+            const file = path.join(__dirname, "expected", "global-number-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const [code, threads] = linker.generatePython(threadCode, globalVariables);
+
+            expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
+            expect(code).to.equal(expected);
+        });
     });
 });
