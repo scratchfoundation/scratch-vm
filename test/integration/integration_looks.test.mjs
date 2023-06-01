@@ -112,6 +112,8 @@ before(async () => {
 
     vm.runtime.addTarget(target2);
 
+    await vm.runtime.pyatchLoadPromise;
+
     vm.start();
 });
 
@@ -134,22 +136,30 @@ beforeEach(async () => {
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Looks Blocks", () => {
         it("Say", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['say("Hello friends")'],
+                [target.id]: {
+                    [eventId]: ['say("Hello friends")'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("Hello friends");
         });
 
         it("Think", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['think("Hello friends")'],
+                [target.id]: {
+                    [eventId]: ['think("Hello friends")'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("think");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("Hello friends");
@@ -158,113 +168,145 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // TODO: Say and think for seconds
 
         it("Show", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["show()"],
+                [target.id]: { [eventId]: ["show()"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].visible).to.equal(true);
         });
 
         it("Hide", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["hide()"],
+                [target.id]: { [eventId]: ["hide()"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].visible).to.equal(false);
         });
 
         it("Set Costume From Index", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setCostumeTo(2)"],
+                [target.id]: { [eventId]: ["setCostumeTo(2)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
         it("Set Costume From Name", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setCostumeTo("cat-fly")'],
+                [target.id]: {
+                    [eventId]: ['setCostumeTo("cat-fly")'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(2);
         });
 
         it("Next Costume", async () => {
             // set costume to 0th costume, next to costume 1
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setCostumeTo(1)\nnextCostume()"],
+                [target.id]: { [eventId]: ["setCostumeTo(1)\nnextCostume()"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
         it("Set Backdrop From Index", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setBackdropTo(1)"],
+                [target.id]: { [eventId]: ["setBackdropTo(1)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(0);
         });
 
         it("Set Backdrop From Name", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setBackdropTo("nebula")'],
+                [target.id]: {
+                    [eventId]: ['setBackdropTo("nebula")'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
         it("Next Backdrop", async () => {
             // set backdrop to 0th backdrop, next twice to backdrop 2
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setBackdropTo(1)\nnextBackdrop()\nnextBackdrop()"],
+                [target.id]: { [eventId]: ["setBackdropTo(1)\nnextBackdrop()\nnextBackdrop()"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
         it("Change Effect By", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['changeGraphicEffectBy("ghost", 50)'],
+                [target.id]: {
+                    [eventId]: ['changeGraphicEffectBy("ghost", 50)'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it("Set Effect To", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setGraphicEffectTo("ghost", 50)'],
+                [target.id]: {
+                    [eventId]: ['setGraphicEffectTo("ghost", 50)'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it("Clear Graphic Effects", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ['setGraphicEffectTo("ghost", 50)\nsetGraphicEffectTo("brightness", 100)\nclearGraphicEffects()'],
+                [target.id]: {
+                    [eventId]: ['setGraphicEffectTo("ghost", 50)\nsetGraphicEffectTo("brightness", 100)\nclearGraphicEffects()'],
+                },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(0);
             expect(vm.runtime.targets[0].effects.brightness).to.equal(0);
@@ -274,11 +316,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // without defining these sizes, Sprite Size is limited to [100, 100]
         // I'm doing a simple 0 change function
         it("Change Size By", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["changeSizeBy(0)"],
+                [target.id]: { [eventId]: ["changeSizeBy(0)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].size).to.equal(100);
         });
@@ -286,11 +330,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // similar to above, Sprite Size is limited to [100, 100]
         // Testing just a setSize(100)
         it("Set Size", async () => {
+            const eventId = "event_whenflagclicked";
             const targetAndCode = {
-                target1: ["setSizeTo(100)"],
+                [target.id]: { [eventId]: ["setSizeTo(100)"] },
             };
 
-            await vm.run(targetAndCode);
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
 
             expect(vm.runtime.targets[0].size).to.equal(100);
         });
