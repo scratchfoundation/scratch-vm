@@ -37,19 +37,19 @@ class Thread {
     }
 
     executeBlockFunction(blockFunction, args, util) {
-        async function tick(resolve) {
+        const tick = async (resolve) => {
             if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
                 this.status = Thread.STATUS_RUNNING;
                 const result = await blockFunction(args, util);
 
                 if (this.status === Thread.STATUS_YIELD_TICK) {
-                    setTimeout(tick, Thread.THREAD_STEP_INTERVAL);
+                    setTimeout(tick.bind(this, resolve), Thread.THREAD_STEP_INTERVAL);
                 } else {
                     resolve(result);
                 }
             }
-        }
-        return new Promise(tick.bind(this));
+        };
+        return new Promise(tick);
     }
 
     async executeBlock(opcode, args, token) {

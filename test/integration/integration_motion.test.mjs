@@ -29,6 +29,8 @@ before(async () => {
 
     vm.runtime.addTarget(target2);
 
+    await vm.runtime.pyatchLoadPromise;
+
     vm.start();
 });
 
@@ -155,7 +157,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const eventId = "event_whenflagclicked";
             const targetAndCode = {
                 [target.id]: {
-                    [eventId]: ["glide(1, 10, 5)"],
+                    [eventId]: ["await glide(1, 10, 5)"],
                 },
             };
 
@@ -170,7 +172,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const eventId = "event_whenflagclicked";
             const targetAndCode = {
                 [target.id]: {
-                    [eventId]: ['glideTo(1, "target2")'],
+                    [eventId]: [`await glideTo(1, '${target2.id}')`],
                 },
             };
 

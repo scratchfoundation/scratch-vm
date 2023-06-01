@@ -99,12 +99,12 @@ class PrimProxy {
         this.post(PrimProxy.opcodeMap.pointTowards, { TOWARDS: targetName });
     }
 
-    glide(seconds, x, y) {
-        this.post(PrimProxy.opcodeMap.glide, { SECS: seconds, X: x, Y: y });
+    async glide(seconds, x, y) {
+        await this.post(PrimProxy.opcodeMap.glide, { SECS: seconds, X: x, Y: y });
     }
 
-    glideTo(seconds, targetName) {
-        this.post(PrimProxy.opcodeMap.glideTo, {
+    async glideTo(seconds, targetName) {
+        await this.post(PrimProxy.opcodeMap.glideTo, {
             SECS: seconds,
             TO: targetName,
         });
