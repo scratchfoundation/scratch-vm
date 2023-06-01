@@ -92,7 +92,7 @@ class PyatchLinker {
         if (globalVariables) {
             variabelSnippet = this.registerGlobalsImports(globalVariables);
         }
-        const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+        const code = threadCode ? threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`) : "pass";
         const header = this.generateAsyncFuncHeader(threadId);
         const registerPrimsSnippet = this.registerProxyPrims(threadCode);
         return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + code}\n\n`;

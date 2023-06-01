@@ -155,5 +155,22 @@ describe("Pyatch File Linker", () => {
             expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
             expect(code).to.equal(expected);
         });
+        it("No code, 1 thread", () => {
+            const globalVariables = {};
+
+            const threadCode = {
+                event_whenflagclicked: {
+                    id_0: "",
+                },
+            };
+
+            const file = path.join(__dirname, "expected", "no-code-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const [code, threads] = linker.generatePython(threadCode, globalVariables);
+
+            expect(threads).to.deep.equal({ event_whenflagclicked: ["id_0"] });
+            expect(code).to.equal(expected);
+        });
     });
 });
