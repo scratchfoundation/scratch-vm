@@ -513,7 +513,7 @@ export default class Scratch3LooksBlocks {
                 clampedValue = MathUtil.clamp(value, Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.min, Scratch3LooksBlocks.EFFECT_BRIGHTNESS_LIMIT.max);
                 break;
             default:
-                throw new Error("Unexpected input");
+                break;
         }
         return clampedValue;
     }
