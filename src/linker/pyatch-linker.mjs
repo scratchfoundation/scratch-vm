@@ -1,3 +1,4 @@
+import _ from "lodash";
 import linkConstants from "./linker-constants.mjs";
 import PrimProxy from "../worker/prim-proxy.js";
 
@@ -44,42 +45,134 @@ class PyatchLinker {
      * Generates the line of python code to unpack all the pyatch api primitives
      * @returns {string} - the line of python
      */
-    registerProxyPrims(funcCode) {
-        // let prims = PyatchAPI.getPrimNames();
-        const prims = Object.keys(PrimProxy.opcodeMap);
-
+    registerProxyPrims(functionNames) {
         let registerPrimsCode = "";
-        prims.forEach((prim) => {
-            if (funcCode.includes(`${prim}(`)) {
-                registerPrimsCode += `${linkConstants.python_tab_char + prim} = ${linkConstants.vm_proxy}.${prim}\n`;
-            }
+        functionNames.forEach((name) => {
+            registerPrimsCode += `${linkConstants.python_tab_char + name} = ${linkConstants.vm_proxy}.${name}\n`;
         });
 
         return registerPrimsCode;
     }
 
     /**
-     * Generate the fully linked executable python code.
-     * @param {Object} threadsCode - Dict with thread id as key and code.
+     * Checks if the given functions are called within the provided Python code.
      *
+     * @param {string[]} functionNames - An array of function names to check.
+     * @param {string} pythonCode - A string containing the Python code to search for function calls.
+     * @returns {string[]} - An array of function names that were called within the Python code.
      */
-    generatePython(threadsCode) {
-        let codeString = "";
+    getFunctionCalls(functionNames, pythonCode) {
+        const calledFunctions = [];
+        functionNames.forEach((functionName) => {
+            const regex = new RegExp(`(^|\\W)${functionName}\\(`);
+            if (regex.test(pythonCode)) {
+                calledFunctions.push(functionName);
+            }
+        });
+        return calledFunctions;
+    }
 
-        const threadIds = [];
-
-        Object.keys(threadsCode).forEach((id) => {
-            threadIds.push(id);
-
-            const threadCode = threadsCode[id];
-
-            const code = threadCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
-            const header = this.generateAsyncFuncHeader(id);
-            const registerPrimsCode = this.registerProxyPrims(threadCode);
-            codeString += `${header + registerPrimsCode + linkConstants.python_tab_char + code}\n\n`;
+    /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsAssignments(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            const value = globalVars[name];
+            const valueValidated = typeof value !== "number" ? `'${value}'` : `${value}`;
+            snippet += `${name} = ${valueValidated}\n`;
         });
 
-        return [threadIds, codeString];
+        return snippet;
+    }
+
+    /**
+     * Generates the line of python code to unpack all the pyatch api primitives
+     * @returns {string} - the line of python
+     */
+    registerGlobalsImports(globalVars) {
+        let snippet = "";
+        Object.keys(globalVars).forEach((name) => {
+            snippet += `${linkConstants.python_tab_char}global ${name}\n`;
+        });
+
+        return snippet;
+    }
+
+    /**
+     * Adds the "await" keyword before certain function names in the provided Python code.
+     *
+     * @param {string} pythonCode - A string containing the Python code to modify.
+     * @param {string[]} functionNames - An array of function names to add "await" before.
+     * @returns {string} - The modified Python code with "await" added before specified function names.
+     */
+    addAwaitToPythonFunctions(pythonCode, functionNames) {
+        const regex = new RegExp(`(?<!\\bawait\\s*)\\b(${functionNames.join("|")})\\(`, "g");
+        return pythonCode.replace(regex, "await $&");
+    }
+
+    wrapThreadCode(threadCode, threadId, globalVariables) {
+        let variabelSnippet = "";
+        if (globalVariables) {
+            variabelSnippet = this.registerGlobalsImports(globalVariables);
+        }
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), threadCode);
+
+        const passedCode = threadCode || "pass";
+        const awaitedCode = this.addAwaitToPythonFunctions(passedCode, calledPatchPrimitiveFunctions);
+        const tabbedCode = awaitedCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
+
+        const header = this.generateAsyncFuncHeader(threadId);
+        const registerPrimsSnippet = this.registerProxyPrims(calledPatchPrimitiveFunctions);
+        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
+    }
+
+    handleEventOption(eventOptionThreads, globalVariables) {
+        let codeString = "";
+        Object.keys(eventOptionThreads).forEach((threadId) => {
+            const threadCode = eventOptionThreads[threadId];
+            codeString += this.wrapThreadCode(threadCode, threadId, globalVariables);
+        });
+        return codeString;
+    }
+
+    /**
+     * Generate the fully linked executable python code.
+     * @param {Object} executionObject - Dict with thread id as key and code.
+     *
+     */
+    generatePython(executionObject, globalVariables) {
+        let codeString = "";
+
+        const eventMap = {};
+
+        if (globalVariables) {
+            const globalSnippet = this.registerGlobalsAssignments(globalVariables);
+            codeString += globalSnippet;
+        }
+
+        Object.keys(executionObject).forEach((eventId) => {
+            eventMap[eventId] = [];
+            const eventThreads = executionObject[eventId];
+            Object.keys(eventThreads).forEach((threadId) => {
+                const thread = eventThreads[threadId];
+                if (!_.isString(thread)) {
+                    const eventOptionId = threadId;
+                    const eventOptionThreads = eventThreads[threadId];
+                    codeString += this.handleEventOption(eventOptionThreads, globalVariables);
+                    eventMap[eventId] = {
+                        ...eventMap[eventId],
+                        [eventOptionId]: Object.keys(eventOptionThreads),
+                    };
+                } else {
+                    codeString += this.wrapThreadCode(thread, threadId, globalVariables);
+                    eventMap[eventId].push(threadId);
+                }
+            });
+        });
+
+        return [codeString, eventMap];
     }
 }
 export default PyatchLinker;

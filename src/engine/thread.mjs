@@ -5,9 +5,14 @@ import BlockUtility from "./block-utility.mjs";
  * @constructor
  */
 class Thread {
-    constructor(target, returnValueCallback) {
-        this.blockOpQueue = [];
+    /**
+     * How rapidly we try to step threads by default, in ms.
+     */
+    static get THREAD_STEP_INTERVAL() {
+        return 1000 / 60;
+    }
 
+    constructor(target, returnValueCallback) {
         this.target = target;
 
         if (target.runtime) {
@@ -27,29 +32,34 @@ class Thread {
         const targetId = this.target.id;
         const blockUtil = this.blockUtility;
         const opObj = { targetId, primitiveOpcode, args, blockUtil, token };
-        this.blockOpQueue.push(opObj);
 
         this.status = Thread.STATUS_RUNNING;
     }
 
-    step() {
-        if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
-            this.status = Thread.STATUS_RUNNING;
-            while (this.blockOpQueue.length > 0) {
-                const op = this.blockOpQueue[0];
+    async executeBlockFunction(blockFunction, args, util) {
+        const tick = async (resolve) => {
+            if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
+                this.status = Thread.STATUS_RUNNING;
+                const result = await blockFunction(args, util);
 
-                const returnVal = this.runtime.execBlockPrimitive(op.targetId, op.primitiveOpcode, op.args, op.blockUtil);
-
-                // If the thread has yielded then we need to stall until the next tick
-                if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_YIELD) return;
-
-                this.returnValueCallback({ token: op.token }, returnVal);
-                this.blockOpQueue.shift();
+                if (this.status === Thread.STATUS_YIELD_TICK) {
+                    setTimeout(tick.bind(this, resolve), Thread.THREAD_STEP_INTERVAL);
+                } else {
+                    resolve(result);
+                }
             }
-            if (this.status === Thread.STATUS_RUNNING) {
-                this.status = Thread.STATUS_IDLE;
-            }
-        }
+        };
+        const returnValue = await new Promise(tick);
+        return returnValue;
+    }
+
+    async executeBlock(opcode, args, token) {
+        this.status = Thread.STATUS_RUNNING;
+
+        const blockFunction = this.runtime.getOpcodeFunction(opcode);
+        const result = await this.executeBlockFunction(blockFunction, args, this.blockUtility);
+
+        this.returnValueCallback({ token: token }, result);
     }
 
     done() {

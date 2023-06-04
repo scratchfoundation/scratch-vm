@@ -5,16 +5,19 @@ const WorkerMessages = {
         PythonLoading: "PythonLoading",
         PythonRunning: "PythonRunning",
         PythonFinished: "PythonFinished",
-        PythonError: "PythonError",
+        PythonRuntimeError: "PythonRuntimeError",
+        PythonCompileTimeError: "PythonCompileTimeError",
         BlockOP: "BlockOP",
         EndOfThread: "EndOfThread",
+        ThreadsRegistered: "ThreadsRegistered",
     },
 
     FromVM: {
         VMConnected: "VMConnected",
         InitPyodide: "InitPyodide",
-        AsyncRun: "AsyncRun",
+        RegisterThreads: "RegisterThreads",
         ResultValue: "ResultValue",
+        StartThreads: "StartHats",
     },
 };
 

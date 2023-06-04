@@ -21,7 +21,7 @@ class MouseWheel {
             return;
         }
 
-        this.runtime.startHats('event_whenkeypressed', matchFields);
+        this.runtime.startHats('event_whenkeypressed', matchFields.KEY_OPTION);
     }
 }
 

@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable default-case */
 import Cast from "../util/cast.mjs";
+import Thread from "../engine/thread.mjs";
 
 export default class Scratch3EventBlocks {
     constructor(runtime) {
@@ -11,12 +12,8 @@ export default class Scratch3EventBlocks {
         this.runtime = runtime;
 
         this.runtime.on("KEY_PRESSED", (key) => {
-            this.runtime.startHats("event_whenkeypressed", {
-                KEY_OPTION: key,
-            });
-            this.runtime.startHats("event_whenkeypressed", {
-                KEY_OPTION: "any",
-            });
+            this.runtime.startHats("event_whenkeypressed", key);
+            this.runtime.startHats("event_whenkeypressed", "any");
         });
     }
 
@@ -81,49 +78,12 @@ export default class Scratch3EventBlocks {
     }
 
     broadcast(args, util) {
-        const broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-        if (broadcastVar) {
-            const broadcastOption = broadcastVar.name;
-            util.startHats("event_whenbroadcastreceived", {
-                BROADCAST_OPTION: broadcastOption,
-            });
-        }
+        const messageId = args.BROADCAST_OPTION.id;
+        util.startHats("event_whenbroadcastreceived", messageId);
     }
 
-    broadcastAndWait(args, util) {
-        if (!util.stackFrame.broadcastVar) {
-            util.stackFrame.broadcastVar = util.runtime.getTargetForStage().lookupBroadcastMsg(args.BROADCAST_OPTION.id, args.BROADCAST_OPTION.name);
-        }
-        if (util.stackFrame.broadcastVar) {
-            const broadcastOption = util.stackFrame.broadcastVar.name;
-            // Have we run before, starting threads?
-            if (!util.stackFrame.startedThreads) {
-                // No - start hats for this broadcast.
-                util.stackFrame.startedThreads = util.startHats("event_whenbroadcastreceived", {
-                    BROADCAST_OPTION: broadcastOption,
-                });
-                if (util.stackFrame.startedThreads.length === 0) {
-                    // Nothing was started.
-                    return;
-                }
-            }
-            // We've run before; check if the wait is still going on.
-            const instance = this;
-            // Scratch 2 considers threads to be waiting if they are still in
-            // runtime.threads. Threads that have run all their blocks, or are
-            // marked done but still in runtime.threads are still considered to
-            // be waiting.
-            const waiting = util.stackFrame.startedThreads.some((thread) => instance.runtime.threads.indexOf(thread) !== -1);
-            if (waiting) {
-                // If all threads are waiting for the next tick or later yield
-                // for a tick as well. Otherwise yield until the next loop of
-                // the threads.
-                if (util.stackFrame.startedThreads.every((thread) => instance.runtime.isWaitingThread(thread))) {
-                    util.yieldTick();
-                } else {
-                    util.yield();
-                }
-            }
-        }
+    async broadcastAndWait(args, util) {
+        const messageId = args.BROADCAST_OPTION.id;
+        await util.startHats("event_whenbroadcastreceived", messageId);
     }
 }

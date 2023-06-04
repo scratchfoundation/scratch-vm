@@ -7,10 +7,6 @@ import Variable from "./engine/variable.mjs";
 
 import "canvas-toBlob";
 
-import PyatchLinker from "./linker/pyatch-linker.mjs";
-import PyatchWorker from "./worker/pyatch-worker.mjs";
-import WorkerMessages from "./worker/worker-messages.mjs";
-
 import sb3 from "./serialization/sb3.mjs";
 import sb2 from "./serialization/sb2.mjs";
 
@@ -30,12 +26,7 @@ export default class VirtualMachine extends EventEmitter {
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime();
-
-        this.pyatchWorker = new PyatchWorker(this._onWorkerMessage.bind(this));
-        this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
-
-        this.pyatchLinker = new PyatchLinker();
+        this.runtime = new Runtime(this.startHats.bind(this));
     }
 
     /**
@@ -458,40 +449,20 @@ export default class VirtualMachine extends EventEmitter {
         }
     }
 
-    /**
-     * Handles a message from the python worker.
-     * @param {object} message The message from the worker.
-     * @private
-     */
-    _onWorkerMessage(message) {
-        const { id, threadId, opCode, args, token } = message;
-        if (id === WorkerMessages.ToVM.BlockOP) {
-            this.runtime.pushBlockOp(threadId, opCode, args, token);
-        }
-    }
-
-    /**
-     * Post a ResultValue message to a worker in reply to a particular message.
-     * The outgoing message's reply token will be copied from the provided message.
-     * @param {object} message The originating message to which this is a reply.
-     * @param {*} value The value to send as a result.
-     * @private
-     */
-    _postResultValue(message, value) {
-        this.pyatchWorker.postMessage({
-            id: WorkerMessages.FromVM.ResultValue,
-            value: value,
-            token: message.token,
-        });
-    }
-
-    async run(targetsAndCode) {
-        const threadsCode = this.runtime.registerThreads(targetsAndCode, this._postResultValue.bind(this));
-        const [threadIds, pythonCode] = this.pyatchLinker.generatePython(threadsCode);
-        await this.pyatchLoadPromise;
-
-        const result = await this.pyatchWorker.run(pythonCode, threadIds);
-
+    async loadScripts(targetCodeMap) {
+        const result = await this.runtime.loadScripts(targetCodeMap);
         return result;
+    }
+
+    /**
+     * Start all relevant hats.
+     * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
+     * @param {object=} optMatchFields Optionally, fields to match on the hat.
+     * @param {Target=} optTarget Optionally, a target to restrict to.
+     * @return {Array.<Thread>} List of threads started by this function.
+     */
+    async startHats(hat, option) {
+        const startedHats = await this.runtime.startHats(hat, option);
+        return startedHats;
     }
 }

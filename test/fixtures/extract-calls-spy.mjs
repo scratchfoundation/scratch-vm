@@ -4,7 +4,11 @@
 function extractCallsSpy(spy) {
     const workerCalls = [];
     spy.getCalls().forEach((call) => {
-        workerCalls.unshift(call.firstArg);
+        if (call.args.length > 1) {
+            workerCalls.unshift(call.args);
+        } else {
+            workerCalls.unshift(call.firstArg);
+        }
     });
     return workerCalls;
 }
