@@ -462,7 +462,7 @@ export default class VirtualMachine extends EventEmitter {
      * @return {Array.<Thread>} List of threads started by this function.
      */
     async startHats(hat, option) {
-        const startedHats = await this.runtime.startHats(hat, option);
-        return startedHats;
+        const startedHat = await this.runtime.startHats(hat, option);
+        return startedHat;
     }
 }
