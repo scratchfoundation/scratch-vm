@@ -438,6 +438,10 @@ export default class VirtualMachine extends EventEmitter {
         return Promise.reject();
     }
 
+    serializeMachine() {
+        return sb3.serialize(this.runtime);
+    }
+
     /**
      * Post I/O data to the virtual devices.
      * @param {?string} device Name of virtual I/O device.
