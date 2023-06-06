@@ -122,6 +122,8 @@ export default class Runtime extends EventEmitter {
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
+
+        this.targetCodeMapGLB = null;
     }
 
     /**
@@ -747,6 +749,7 @@ export default class Runtime extends EventEmitter {
 
     async loadScripts(targetCodeMap) {
         const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
+        this.targetCodeMapGLB = targetCodeMap;
         const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode);
         await this.pyatchLoadPromise;
 

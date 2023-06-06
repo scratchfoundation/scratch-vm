@@ -448,14 +448,21 @@ export default class VirtualMachine extends EventEmitter {
      */
     serializeProject() {
         const vm = JSON.stringify(sb3.serialize(this.runtime));
-        console.log(this.runtime.threadsCode);
+        // console.log(this.runtime.threadsCode);
+
+        const targets = [];
+
+        console.log(this.runtime.targetCodeMapGLB);
+
+        const final = vm;
 
         /* TODO: add assets into this */
 
         // const zip = new JSZip();
 
         // zip.file("project.json", vm);
-        return vm;
+
+        return final;
     }
 
     /**
