@@ -442,6 +442,10 @@ export default class VirtualMachine extends EventEmitter {
         return sb3.serialize(this.runtime);
     }
 
+    restoreMachine(json) {
+        return sb3.deserialize(json, this.runtime);
+    }
+
     /**
      * Post I/O data to the virtual devices.
      * @param {?string} device Name of virtual I/O device.
