@@ -383,7 +383,7 @@ export default class VirtualMachine extends EventEmitter {
             }
             // Sprite object should be deleted by GC.
             this.emitTargetsUpdate();
-            return restoreSprite;
+            //return restoreSprite;
         }
 
         throw new Error("No target with the provided id.");
