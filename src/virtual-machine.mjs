@@ -363,14 +363,14 @@ export default class VirtualMachine extends EventEmitter {
                 throw new Error("No sprite associated with this target.");
             }
             //const spritePromise = this.exportSprite(targetId, "uint8array");
-            const restoreSprite = () => (spriteBuffer) => this.addSprite(spriteBuffer));
+            //const restoreSprite = () => (spriteBuffer) => this.addSprite(spriteBuffer);
             // Remove monitors from the runtime state and remove the
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
                 //this.runtime.stopForTarget(sprite.clones[i]);
-                this.runtime.disposeTarget(sprite.clones[i]);
+                //this.runtime.disposeTarget(sprite.clones[i]);
                 // Ensure editing target is switched if we are deleting it.
                 if (clone === currentEditingTarget) {
                     const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
@@ -386,7 +386,7 @@ export default class VirtualMachine extends EventEmitter {
             //return restoreSprite;
         }
 
-        throw new Error("No target with the provided id.");
+        //throw new Error("No target with the provided id.");
     }
 
     /**
