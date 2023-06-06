@@ -499,6 +499,7 @@ export default class VirtualMachine extends EventEmitter {
      */
     loadProject(projectData) {
         sb3.deserialize(projectData, this.runtime);
+        console.log("working");
     }
 
     /**
