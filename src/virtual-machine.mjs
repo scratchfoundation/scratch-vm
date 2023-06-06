@@ -354,6 +354,7 @@ export default class VirtualMachine extends EventEmitter {
         const target = this.runtime.getTargetById(targetId);
 
         if (target) {
+            
             const targetIndexBeforeDelete = this.runtime.targets.map((t) => t.id).indexOf(target.id);
             if (!target.isSprite()) {
                 throw new Error("Cannot delete non-sprite targets.");
@@ -375,7 +376,7 @@ export default class VirtualMachine extends EventEmitter {
                 if (clone === currentEditingTarget) {
                     const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
                     if (this.runtime.targets.length > 0) {
-                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                        //this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                     } else {
                         this.editingTarget = null;
                     }
