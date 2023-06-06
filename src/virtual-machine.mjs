@@ -362,11 +362,10 @@ export default class VirtualMachine extends EventEmitter {
             if (!sprite) {
                 throw new Error("No sprite associated with this target.");
             }
-            const spritePromise = this.exportSprite(targetId, "uint8array");
-            const restoreSprite = () => spritePromise.then((spriteBuffer) => this.addSprite(spriteBuffer));
+            //const spritePromise = this.exportSprite(targetId, "uint8array");
+            //const restoreSprite = () => spritePromise.then((spriteBuffer) => this.addSprite(spriteBuffer));
             // Remove monitors from the runtime state and remove the
             // target-specific monitored blocks (e.g. local variables)
-            target.deleteMonitors();
             const currentEditingTarget = this.editingTarget;
             for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
