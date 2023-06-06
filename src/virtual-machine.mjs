@@ -2,6 +2,8 @@ import EventEmitter from "events";
 
 import validate from "scratch-parser";
 
+import JSZip from "jszip";
+
 import Runtime from "./engine/runtime.mjs";
 import Variable from "./engine/variable.mjs";
 
@@ -438,13 +440,50 @@ export default class VirtualMachine extends EventEmitter {
         return Promise.reject();
     }
 
-    serializeMachine() {
-        return sb3.serialize(this.runtime);
+    /**
+     * Serializes the current state of the VM into a project.json file which is then
+     * then compressed into a zip file and returned as a Blob object
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    serializeProject() {
+        const vm = sb3.serialize(this.runtime);
+        console.log(this.runtime.threadsCode);
+
+        /* TODO: add assets into this */
+
+        // const zip = new JSZip();
+
+        // zip.file("project.json", vm);
+        return vm;
     }
 
-    restoreMachine(json) {
-        return sb3.deserialize(json, this.runtime);
+    /**
+     * Downloads a zip file containing all project data with the following
+     * naming template "[project name].ptch1"
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    downloadProject() {
+        const proj = this.serializeProject();
+
+        // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+        const element = document.createElement("a");
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(proj)}`);
+        /* TODO: project name as filename */
+        element.setAttribute("download", "project.ptch1");
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+
+        return proj;
     }
+
+    loadProject(proj) {}
 
     /**
      * Post I/O data to the virtual devices.
