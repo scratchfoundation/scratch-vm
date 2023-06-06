@@ -447,7 +447,7 @@ export default class VirtualMachine extends EventEmitter {
      * @returns {Blob} A Blob object representing the zip file
      */
     serializeProject() {
-        const vm = sb3.serialize(this.runtime);
+        const vm = JSON.stringify(sb3.serialize(this.runtime));
         console.log(this.runtime.threadsCode);
 
         /* TODO: add assets into this */
