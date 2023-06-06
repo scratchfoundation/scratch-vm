@@ -452,9 +452,9 @@ export default class VirtualMachine extends EventEmitter {
 
         const targets = [];
 
-        console.log(this.runtime.targetCodeMapGLB);
+        const codeMap = JSON.stringify(this.runtime.targetCodeMapGLB);
 
-        const final = vm;
+        const final = JSON.stringify([vm, codeMap]);
 
         /* TODO: add assets into this */
 
@@ -490,7 +490,16 @@ export default class VirtualMachine extends EventEmitter {
         return proj;
     }
 
-    loadProject(proj) {}
+    /**
+     * Restores the state of the VM from a Blob object that has been generated from a
+     * valid Patch Project .ptch1 file.
+     *
+     * @param {Blob} projectData - A Blob object generated from
+     * a valid Patch Project .ptch1 file
+     */
+    loadProject(projectData) {
+        sb3.deserialize(projectData, this.runtime);
+    }
 
     /**
      * Post I/O data to the virtual devices.
