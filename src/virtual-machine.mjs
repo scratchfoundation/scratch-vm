@@ -352,7 +352,7 @@ export default class VirtualMachine extends EventEmitter {
      */
     deleteSprite(targetId) {
         const target = this.runtime.getTargetById(targetId);
-        console.log(targetID + this.runtime.targets);
+        console.log(targetId + this.runtime.targets);
         if (target) {
             
             const targetIndexBeforeDelete = this.runtime.targets.map((t) => t.id).indexOf(target.id);
