@@ -537,10 +537,6 @@ const serialize = function (runtime, targetId) {
 
     obj.targets = serializedTargets;
 
-    // Plenjamin
-    // Has this not been implemented yet?
-    //obj.monitors = serializeMonitors(runtime.getMonitorState());
-
     // Assemble extension list
     obj.extensions = Array.from(extensions);
 
