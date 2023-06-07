@@ -4,6 +4,8 @@ import validate from "scratch-parser";
 
 import JSZip from "jszip";
 
+import { get } from "http";
+
 import Runtime from "./engine/runtime.mjs";
 import Variable from "./engine/variable.mjs";
 
@@ -447,14 +449,17 @@ export default class VirtualMachine extends EventEmitter {
      * @returns {Blob} A Blob object representing the zip file
      */
     serializeProject() {
-        const vm = JSON.stringify(sb3.serialize(this.runtime));
+        // const vm = JSON.stringify(sb3.serialize(this.runtime));
+        const vm = sb3.serialize(this.runtime);
+        console.log(vm);
+
         // console.log(this.runtime.threadsCode);
 
-        const targets = [];
-
-        const codeMap = JSON.stringify(this.runtime.targetCodeMapGLB);
-
-        const final = JSON.stringify([vm, codeMap]);
+        const object2 = {};
+        object2.vmstate = vm;
+        object2.code = this.runtime.targetCodeMapGLB;
+        // const final = JSON.stringify([vm, this.runtime.targetCodeMapGLB]);
+        const final = JSON.stringify(object2);
 
         /* TODO: add assets into this */
 
@@ -497,9 +502,74 @@ export default class VirtualMachine extends EventEmitter {
      * @param {Blob} projectData - A Blob object generated from
      * a valid Patch Project .ptch1 file
      */
-    loadProject(projectData) {
-        sb3.deserialize(projectData, this.runtime);
+    async loadProject(projectData) {
         console.log("working");
+        const jsonData = JSON.parse(projectData);
+        console.log(jsonData[0]);
+        // https://stackoverflow.com/questions/39322964/extracting-zipped-files-using-jszip-in-javascript
+        /* fs.readFile("/cat.sprite3", async function(err, data) {
+            if (!err) {
+                var zip = new JSZip();
+                await zip.loadAsync(data);
+                
+                await sb3.deserialize(jsonData[0], this.runtime, zip, false);
+            } else {
+                console.error("Couldn't open the assets file. If you are seeing this message, you shouldn't; this is debug only.");
+            }
+        }); */
+
+        const zip = new JSZip();
+
+        let blob;
+
+        // https://stackoverflow.com/questions/247483/http-get-request-in-javascript
+        await fetch("/cat.sprite3")
+            .then((response) => response.blob())
+            .then((data) => {
+                blob = new Blob([data], { type: "application/octetstream" });
+                /* var url = window.URL || window.webkitURL;
+            var link = url.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.setAttribute("download", "cat.sprite3.zip");
+            a.setAttribute("href", link);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a); */
+            })
+            .catch((err) => {
+                console.log("Fetch Error :-S", err);
+            });
+        console.log(blob);
+        await zip.loadAsync(blob);
+        // await sb3.deserialize(jsonData[0], this.runtime, zip, false);
+        console.log(jsonData.vmstate);
+        console.log(zip.files);
+        console.log(zip);
+
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
+
+        if (importedProject.extensionsInfo) {
+            await this.installTargets(importedProject.targets, importedProject.extensionsInfo, true);
+        } else {
+            await this.installTargets(importedProject.targets, { extensionIDs: [] }, true);
+        }
+
+        /* this.runtime.targets = importedProject.targets;
+        this.runtime.emitProjectChanged();
+        this.runtime.emitProjectLoaded(); */
+
+        /* var newTargetCount = importedProject.targets.length;
+        for (var i = 0; i < newTargetCount; i++) {
+            var target = importedProject.targets[i];
+        } */
+
+        console.log("working");
+
+        const returnVal = {};
+        returnVal.runtime = this.runtime;
+        returnVal.importedProject = importedProject;
+
+        return returnVal;
     }
 
     /**
