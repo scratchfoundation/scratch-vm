@@ -90,6 +90,13 @@ export default class Runtime extends EventEmitter {
         this._steppingInterval = null;
 
         /**
+         * Map to look up hat blocks' metadata.
+         * Keys are opcode for hat, values are metadata objects.
+         * @type {Object.<string, Object>}
+         */
+        this._hats = {};
+
+        /**
          * A dictionary of all threads running no the Patch vm. Dict keys
          * are thread id.
          * @type {Dictionary.<String, Thread>}
@@ -264,16 +271,16 @@ export default class Runtime extends EventEmitter {
                         }
                     }
                 }
-                /* Don't Need Hats Right Now (or ever?)
+
                 if (packageObject.getHats) {
                     const packageHats = packageObject.getHats();
+                    // eslint-disable-next-line no-restricted-syntax
                     for (const hatName in packageHats) {
                         if (packageHats.hasOwnProperty(hatName)) {
                             this._hats[hatName] = packageHats[hatName];
                         }
                     }
                 }
-                */
             }
         }
     }

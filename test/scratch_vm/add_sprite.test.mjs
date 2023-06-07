@@ -15,12 +15,9 @@ const { expect } = chai;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PATH_TO_PYODIDE = path.join(__dirname, "../../node_modules/pyodide");
-const PATH_TO_WORKER = path.join(__dirname, "../../src/worker/pyodide-web.worker.mjs");
-
 describe("Add Sprite", () => {
     it("From Sprite3 File", async () => {
-        const vm = new VirtualMachine(PATH_TO_PYODIDE, PATH_TO_WORKER);
+        const vm = new VirtualMachine();
 
         vm.attachStorage(makeTestStorage());
 
