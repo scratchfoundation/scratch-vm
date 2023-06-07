@@ -11,6 +11,7 @@ import sb3 from "./serialization/sb3.mjs";
 import sb2 from "./serialization/sb2.mjs";
 
 import StringUtil from "./util/string-util.mjs";
+import { KEY_NAME } from "./io/keyboard.mjs";
 
 const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
 
@@ -436,6 +437,45 @@ export default class VirtualMachine extends EventEmitter {
         }
         // If the target cannot be found by id, return a rejected promise
         return Promise.reject();
+    }
+
+    getEventLabels() {
+        const hats = this.runtime._hats;
+        const eventLabels = {};
+        Object.keys(hats).forEach((hatId) => {
+            eventLabels[hatId] = hats[hatId].label;
+        });
+        return eventLabels;
+    }
+
+    getBackdropNames() {
+        return ["none"];
+    }
+
+    getSpriteNames() {
+        const targetNames = this.runtime.targets.map((target) => target.sprite.name);
+        return targetNames;
+    }
+
+    getKeyboardOptions() {
+        const characterKeys = Array.from(Array(26), (e, i) => String.fromCharCode(65 + i));
+        const scratchKeys = Object.keys(KEY_NAME).map((keyId) => keyId);
+
+        return characterKeys.concat(scratchKeys);
+    }
+
+    // There is 100% a better way to implement this
+    getEventOptionsMap(eventId) {
+        return {
+            event_whenflagclicked: null,
+            event_whenkeypressed: this.getKeyboardOptions(),
+            event_whenthisspriteclicked: null,
+            event_whentouchingobject: this.getSpriteNames(),
+            event_whenstageclicked: null,
+            event_whenbackdropswitchesto: this.getBackdropNames(),
+            event_whengreaterthan: null,
+            event_whenbroadcastreceived: "Free Input",
+        }[eventId];
     }
 
     /**
