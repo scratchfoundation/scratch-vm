@@ -463,7 +463,14 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     getBackdropNames() {
-        return ["none"];
+        let target = this.runtime.targets[0]
+        let costumes = target.getCostumes();
+        let names = [];
+        for(let i = 0; i < costumes.length; i++){
+            names.push(costumes[i].name);
+        }
+        console.log(names);
+        return ['none'];
     }
 
     getSpriteNames() {
