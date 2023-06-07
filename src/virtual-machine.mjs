@@ -469,8 +469,7 @@ export default class VirtualMachine extends EventEmitter {
         for(let i = 0; i < costumes.length; i++){
             names.push(costumes[i].name);
         }
-        console.log(names);
-        return ['none'];
+        return names;
     }
 
     getSpriteNames() {
