@@ -4,7 +4,7 @@ import Cast from '../util/cast.mjs';
  * Names used internally for keys used in scratch, also known as "scratch keys".
  * @enum {string}
  */
-const KEY_NAME = {
+export const KEY_NAME = {
     SPACE: 'space',
     LEFT: 'left arrow',
     UP: 'up arrow',
