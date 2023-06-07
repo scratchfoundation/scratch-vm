@@ -302,7 +302,6 @@ export default class VirtualMachine extends EventEmitter {
 
     changeBackground(index){
         let target = this.runtime.targets[0];
-        console.log(target);
         target.setCostume(index);
     }
     /**
