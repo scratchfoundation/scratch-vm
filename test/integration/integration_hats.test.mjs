@@ -159,5 +159,20 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
+
+        it("One Event, Single Target, Single Thread, Different event than thread", async () => {
+            const steps = 10;
+            const executionObject = {
+                target1: {
+                    event_whenflagclicked: [`move(${steps})`],
+                },
+            };
+
+            await vm.loadScripts(executionObject);
+            await Promise.all([vm.startHats("event_whenkeypressed", "A"), vm.startHats("event_whenkeypressed", "B")]);
+
+            expect(vm.runtime.targets[0].x).to.equal(0);
+            expect(vm.runtime.targets[0].y).to.equal(0);
+        });
     });
 });

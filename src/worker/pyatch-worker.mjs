@@ -75,24 +75,26 @@ class PyatchWorker {
         }
         if (hat) {
             let threadIds = this._eventMap[hat];
-            if (option) {
-                threadIds = threadIds[option];
+            if (threadIds) {
+                if (option) {
+                    threadIds = threadIds[option];
+                }
+                const threadPromises = [];
+                threadIds.forEach((id) => {
+                    threadPromises.push(
+                        new Promise((resolve) => {
+                            this._threadPromiseResolveMap[id] = resolve;
+                        })
+                    );
+                });
+                const message = {
+                    id: WorkerMessages.FromVM.StartThreads,
+                    threadIds: threadIds,
+                    options: option,
+                };
+                this._worker.postMessage(message);
+                await Promise.all(threadPromises);
             }
-            const threadPromises = [];
-            threadIds.forEach((id) => {
-                threadPromises.push(
-                    new Promise((resolve) => {
-                        this._threadPromiseResolveMap[id] = resolve;
-                    })
-                );
-            });
-            const message = {
-                id: WorkerMessages.FromVM.StartThreads,
-                threadIds: threadIds,
-                options: option,
-            };
-            this._worker.postMessage(message);
-            await Promise.all(threadPromises);
         }
     }
 
