@@ -301,7 +301,7 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     changeBackground(index){
-        target = this.runtime.targets[0];
+        let target = this.runtime.targets[0];
         target.setCostume(index);
     }
     /**
@@ -463,7 +463,9 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     getBackdropNames() {
-        return ["none"];
+        let target = this.runtime.targets[0]
+        let names = target.getCostumes();
+        return ['none'];
     }
 
     getSpriteNames() {
