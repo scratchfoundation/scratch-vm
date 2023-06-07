@@ -300,6 +300,10 @@ export default class VirtualMachine extends EventEmitter {
             });
     }
 
+    changeBackground(index){
+        target = this.runtime.targets[0];
+        target.setCostume(index);
+    }
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {object} sprite Object representing 2.0 sprite to be added.
