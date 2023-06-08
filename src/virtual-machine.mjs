@@ -17,6 +17,7 @@ import sb2 from "./serialization/sb2.mjs";
 
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
+import RenderedTarget from "./sprites/rendered-target.mjs";
 
 const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
 
@@ -309,6 +310,11 @@ export default class VirtualMachine extends EventEmitter {
         target.setCostume(index);
     }
 
+    getBackground() {
+        const target = this.runtime.targets[0];
+        return target.currentCostume;
+    }
+
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {object} sprite Object representing 2.0 sprite to be added.
@@ -509,14 +515,19 @@ export default class VirtualMachine extends EventEmitter {
      *
      * @returns {Blob} A Blob object representing the zip file
      */
-    serializeProject() {
+    async serializeProject() {
         // const vm = JSON.stringify(sb3.serialize(this.runtime));
         const vm = sb3.serialize(this.runtime);
+
+        // remove background
+        vm.targets.splice(0, 1);
 
         const object2 = {};
         object2.vmstate = vm;
         object2.code = this.runtime.targetCodeMapGLB;
-        // const final = JSON.stringify([vm, this.runtime.targetCodeMapGLB]);
+        object2.background = this.getBackground();
+        object2.globalVariables = this.getGlobalVariables();
+
         const projectJson = JSON.stringify(object2);
 
         /* TODO: add assets into this */
@@ -529,7 +540,18 @@ export default class VirtualMachine extends EventEmitter {
          * zip.file("{scratch provided asset filename}", {the data});
          */
 
-        const final = zip.generateAsync({ type: "blob" }).then((content) => content);
+        this.runtime.targets.forEach((target) => {
+            if (target instanceof RenderedTarget) {
+                target.getCostumes().forEach((costume) => {
+                    console.log(costume);
+                    if (!zip.files[costume.md5]) {
+                        zip.file(costume.md5, new Blob([costume.asset.data]));
+                    }
+                });
+            }
+        });
+
+        const final = await zip.generateAsync({ type: "blob" }).then((content) => content);
         return final;
     }
 
@@ -539,13 +561,13 @@ export default class VirtualMachine extends EventEmitter {
      *
      * @returns {Blob} A Blob object representing the zip file
      */
-    downloadProject() {
-        const proj = this.serializeProject();
+    async downloadProject() {
+        const proj = await this.serializeProject();
 
-        // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+        /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
         const element = document.createElement("a");
-        element.setAttribute("href", `data:text/plain;charset=utf-8,${encodeURIComponent(proj)}`);
-        /* TODO: project name as filename */
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${proj}`);
+        /* TODO: project name as filename */ /*
         element.setAttribute("download", "project.ptch1");
 
         element.style.display = "none";
@@ -553,9 +575,17 @@ export default class VirtualMachine extends EventEmitter {
 
         element.click();
 
-        document.body.removeChild(element);
+        document.body.removeChild(element); */
 
-        return proj;
+        // https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        const url = window.URL.createObjectURL(proj);
+        a.href = url;
+        a.download = "project.ptch1";
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
     /**
@@ -576,7 +606,7 @@ export default class VirtualMachine extends EventEmitter {
         }
         const jsonData = JSON.parse(jsonDataString);
 
-        let blob;
+        /* let blob;
 
         const catZip = new JSZip();
 
@@ -584,7 +614,7 @@ export default class VirtualMachine extends EventEmitter {
         await fetch("/cat.sprite3")
             .then((response) => response.blob())
             .then((data) => {
-                blob = new Blob([data], { type: "application/octetstream" });
+                blob = new Blob([data], { type: "application/zip" });
                 /* var url = window.URL || window.webkitURL;
             var link = url.createObjectURL(blob);
             var a = document.createElement("a");
@@ -592,24 +622,31 @@ export default class VirtualMachine extends EventEmitter {
             a.setAttribute("href", link);
             document.body.appendChild(a);
             a.click();
-            document.body.removeChild(a); */
+            document.body.removeChild(a); */ /*
             })
             .catch((err) => {
                 console.log("Fetch Error :-S", err);
             });
-        await catZip.loadAsync(blob);
+        await catZip.loadAsync(blob); */
 
-        this.runtime.targets = [];
+        // moved this to GUI for reasons
+        /* this.runtime.targets = [];
         this.runtime.executableTargets = [];
         this.runtime.pyatchWorker._eventMap = null;
 
-        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj);
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj); */
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
 
         if (importedProject.extensionsInfo) {
             await this.installTargets(importedProject.targets, importedProject.extensionsInfo, true);
         } else {
             await this.installTargets(importedProject.targets, { extensionIDs: [] }, true);
         }
+
+        /* How fitting: on take 42, I finally got everything to work. */
+        jsonData.globalVariables.forEach((variable) => {
+            this.updateGlobalVariable(variable.name, variable.value);
+        });
 
         const returnVal = {};
         returnVal.runtime = this.runtime;
