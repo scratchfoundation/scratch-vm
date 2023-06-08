@@ -380,7 +380,8 @@ export default class VirtualMachine extends EventEmitter {
             // Remove monitors from the runtime state and remove the
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
-            this.runtime.disposeTarget(sprite);
+            this.runtime.disposeTarget(target);
+            console.log(this.runtime.getTargetById(target));
             if(sprite === currentEditingTarget){
                 const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
                     if (this.runtime.targets.length > 0){
