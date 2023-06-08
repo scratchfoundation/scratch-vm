@@ -368,7 +368,6 @@ export default class VirtualMachine extends EventEmitter {
     deleteSprite(targetId) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            console.log(target);
             const targetIndexBeforeDelete = this.runtime.targets.map((t) => t.id).indexOf(target.id);
             if (!target.isSprite()) {
                 throw new Error("Cannot delete non-sprite targets.");
