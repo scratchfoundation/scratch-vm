@@ -365,17 +365,26 @@ export default class VirtualMachine extends EventEmitter {
             // Remove monitors from the runtime state and remove the
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
-            for (let i = 0; i < sprite.clones.length; i++) {
-                const clone = sprite.clones[i];
-                // Ensure editing target is switched if we are deleting it.
-                if (clone === currentEditingTarget) {
-                    const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                    if (!this.runtime.targets.length > 0) {
+            this.runtime.disposeTarget(sprite);
+            const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+                    if (this.runtime.targets.length > 0){
+                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    } else {
                         this.editingTarget = null;
                     }
-                }
+            /*for (let i = 0; i < sprite.clones.length; i++) {
+                const clone = sprite.clones[i];
+                // Ensure editing target is switched if we are deleting it.
+                this.runtime.disposeTarget(sprite.clones[i]);
+                if (clone === currentEditingTarget) {
+                    const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+                    if (this.runtime.targets.length > 0){
+                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                    } else {
+                        this.editingTarget = null;
+                    }
+                }*/
             }
-            delete this.runtime.targets[targetId];
             // Sprite object should be deleted by GC.
             this.emitTargetsUpdate();
         }
