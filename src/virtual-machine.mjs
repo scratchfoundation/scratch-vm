@@ -6,7 +6,7 @@ import JSZip from "jszip";
 
 import { get } from "http";
 
-import { isUndefined } from "lodash";
+import lodash from "lodash";
 import Runtime from "./engine/runtime.mjs";
 import Variable from "./engine/variable.mjs";
 
@@ -18,6 +18,8 @@ import sb2 from "./serialization/sb2.mjs";
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
 import RenderedTarget from "./sprites/rendered-target.mjs";
+
+const { isUndefined } = lodash;
 
 const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
 

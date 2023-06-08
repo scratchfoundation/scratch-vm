@@ -80,7 +80,6 @@ class PyatchWorker {
                     threadIds = threadIds[option];
                 }
                 const threadPromises = [];
-                console.log(threadIds);
                 threadIds.forEach((id) => {
                     threadPromises.push(
                         new Promise((resolve) => {
