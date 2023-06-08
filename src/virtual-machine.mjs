@@ -505,4 +505,12 @@ export default class VirtualMachine extends EventEmitter {
         const startedHat = await this.runtime.startHats(hat, option);
         return startedHat;
     }
+
+    updateGlobalVariable(name, value) {
+        this.runtime.updateGlobalVariable(name, value);
+    }
+
+    removeGlobalVariable(name) {
+        this.runtime.removeGlobalVariable(name);
+    }
 }

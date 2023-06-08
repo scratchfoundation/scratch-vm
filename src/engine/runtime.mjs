@@ -768,7 +768,7 @@ export default class Runtime extends EventEmitter {
         return result;
     }
 
-    addGlobalVariable(name, value) {
+    updateGlobalVariable(name, value) {
         this._globalVariables[String(name)] = value;
     }
 
