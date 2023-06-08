@@ -353,7 +353,7 @@ export default class VirtualMachine extends EventEmitter {
     deleteSprite(targetId) {
         const target = this.runtime.getTargetById(targetId);
         if (target) {
-            
+            console.log(target);
             const targetIndexBeforeDelete = this.runtime.targets.map((t) => t.id).indexOf(target.id);
             if (!target.isSprite()) {
                 throw new Error("Cannot delete non-sprite targets.");
@@ -366,12 +366,14 @@ export default class VirtualMachine extends EventEmitter {
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
             this.runtime.disposeTarget(sprite);
-            /*const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+            if(sprite === currentEditingTarget){
+                const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
                     if (this.runtime.targets.length > 0){
                         this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                     } else {
                         this.editingTarget = null;
-                    }*/
+                    }
+            }
             /*for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
                 // Ensure editing target is switched if we are deleting it.
@@ -388,6 +390,29 @@ export default class VirtualMachine extends EventEmitter {
             // Sprite object should be deleted by GC.
             this.emitTargetsUpdate();
         }
+
+    /**
+         * Set an editing target. An editor UI can use this function to switch
+         * between editing different targets, sprites, etc.
+         * After switching the editing target, the VM may emit updates
+         * to the list of targets and any attached workspace blocks
+         * (see `emitTargetsUpdate` and `emitWorkspaceUpdate`).
+         * @param {string} targetId Id of target to set as editing.
+         */
+    setEditingTarget (targetId) {
+        // Has the target id changed? If not, exit.
+        if (this.editingTarget && targetId === this.editingTarget.id) {
+            return;
+        }
+        const target = this.runtime.getTargetById(targetId);
+        if (target) {
+            this.editingTarget = target;
+            // Emit appropriate UI updates.
+            this.emitTargetsUpdate(false /* Don't emit project change */);
+            this.emitWorkspaceUpdate();
+            this.runtime.setEditingTarget(target);
+        }
+    }
 
 
     /**
