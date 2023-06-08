@@ -74,6 +74,16 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime.attachAudioEngine(audioEngine);
     }
 
+       /**
+    * Set the bitmap adapter for the VM/runtime, which converts scratch 2
+    * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
+    * @param {!function} bitmapAdapter The adapter to attach
+    */
+    attachV2BitmapAdapter (bitmapAdapter) {
+        this.runtime.attachV2BitmapAdapter(bitmapAdapter);
+    }
+
+
     /**
      * Set the renderer for the VM/runtime
      * @param {!RenderWebGL} renderer The renderer to attach
@@ -290,6 +300,10 @@ export default class VirtualMachine extends EventEmitter {
             });
     }
 
+    changeBackground(index){
+        let target = this.runtime.targets[0];
+        target.setCostume(index);
+    }
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {object} sprite Object representing 2.0 sprite to be added.
@@ -449,7 +463,13 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     getBackdropNames() {
-        return ["none"];
+        let target = this.runtime.targets[0]
+        let costumes = target.getCostumes();
+        let names = [];
+        for(let i = 0; i < costumes.length; i++){
+            names.push(costumes[i].name);
+        }
+        return names;
     }
 
     getSpriteNames() {
