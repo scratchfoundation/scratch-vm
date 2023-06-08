@@ -1082,7 +1082,7 @@ class RenderedTarget extends Target {
      */
     dispose() {
         this.runtime.changeCloneCounter(-1);
-        this.runtime.stopForTarget(this);
+        //this.runtime.stopForTarget(this);
         this.runtime.removeExecutable(this);
         this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
