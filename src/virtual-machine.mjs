@@ -6,6 +6,7 @@ import JSZip from "jszip";
 
 import { get } from "http";
 
+import { isUndefined } from "lodash";
 import Runtime from "./engine/runtime.mjs";
 import Variable from "./engine/variable.mjs";
 
@@ -496,14 +497,19 @@ export default class VirtualMachine extends EventEmitter {
         object2.vmstate = vm;
         object2.code = this.runtime.targetCodeMapGLB;
         // const final = JSON.stringify([vm, this.runtime.targetCodeMapGLB]);
-        const final = JSON.stringify(object2);
+        const projectJson = JSON.stringify(object2);
 
         /* TODO: add assets into this */
 
-        // const zip = new JSZip();
+        const zip = new JSZip();
 
-        // zip.file("project.json", vm);
+        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
 
+        /** Example for adding in an asset:
+         * zip.file("{scratch provided asset filename}", {the data});
+         */
+
+        const final = zip.generateAsync({ type: "blob" }).then((content) => content);
         return final;
     }
 
@@ -540,11 +546,19 @@ export default class VirtualMachine extends EventEmitter {
      * a valid Patch Project .ptch1 file
      */
     async loadProject(projectData) {
-        const jsonData = JSON.parse(projectData);
+        const zip = await JSZip.loadAsync(projectData).then((newZip) => newZip);
 
-        const zip = new JSZip();
+        // https://stackoverflow.com/questions/40223259/jszip-get-content-of-file-in-zip-from-file-input
+        const jsonDataString = await zip.files["project.json"].async("text").then((text) => text);
+        if (!jsonDataString || isUndefined(jsonDataString)) {
+            console.warn("No project.json file. Is your project corrupted?");
+            return null;
+        }
+        const jsonData = JSON.parse(jsonDataString);
 
         let blob;
+
+        const catZip = new JSZip();
 
         // https://stackoverflow.com/questions/247483/http-get-request-in-javascript
         await fetch("/cat.sprite3")
@@ -563,13 +577,13 @@ export default class VirtualMachine extends EventEmitter {
             .catch((err) => {
                 console.log("Fetch Error :-S", err);
             });
-        await zip.loadAsync(blob);
+        await catZip.loadAsync(blob);
 
         this.runtime.targets = [];
         this.runtime.executableTargets = [];
         this.runtime.pyatchWorker._eventMap = null;
 
-        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj);
 
         if (importedProject.extensionsInfo) {
             await this.installTargets(importedProject.targets, importedProject.extensionsInfo, true);
