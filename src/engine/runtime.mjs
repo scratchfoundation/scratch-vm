@@ -320,7 +320,7 @@ export default class Runtime extends EventEmitter {
      * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
      * @param {!function} bitmapAdapter The adapter to attach
      */
-    attachV2BitmapAdapter (bitmapAdapter) {
+    attachV2BitmapAdapter(bitmapAdapter) {
         this.v2BitmapAdapter = bitmapAdapter;
     }
 
