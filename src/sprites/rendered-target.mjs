@@ -1084,7 +1084,7 @@ class RenderedTarget extends Target {
         this.runtime.changeCloneCounter(-1);
         //this.runtime.stopForTarget(this);
         this.runtime.removeExecutable(this);
-        this.sprite.removeClone(this);
+        //this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID, this.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
             if (this.visible) {
