@@ -2,6 +2,11 @@ import EventEmitter from "events";
 
 import validate from "scratch-parser";
 
+import JSZip from "jszip";
+
+import { get } from "http";
+
+import lodash from "lodash";
 import Runtime from "./engine/runtime.mjs";
 import Variable from "./engine/variable.mjs";
 
@@ -12,6 +17,9 @@ import sb2 from "./serialization/sb2.mjs";
 
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
+import RenderedTarget from "./sprites/rendered-target.mjs";
+
+const { isUndefined } = lodash;
 
 const RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
 
@@ -304,6 +312,11 @@ export default class VirtualMachine extends EventEmitter {
         target.setCostume(index);
     }
 
+    getBackground() {
+        const target = this.runtime.targets[0];
+        return target.currentCostume;
+    }
+
     /**
      * Add a single sprite from the "Sprite2" (i.e., SB2 sprite) format.
      * @param {object} sprite Object representing 2.0 sprite to be added.
@@ -380,15 +393,15 @@ export default class VirtualMachine extends EventEmitter {
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
             this.runtime.disposeTarget(target);
-            if(sprite === currentEditingTarget){
+            if (sprite === currentEditingTarget) {
                 const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
-                    if (this.runtime.targets.length > 0){
-                        this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
-                    } else {
-                        this.editingTarget = null;
-                    }
+                if (this.runtime.targets.length > 0) {
+                    this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
+                } else {
+                    this.editingTarget = null;
+                }
             }
-            /*for (let i = 0; i < sprite.clones.length; i++) {
+            /* for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
                 // Ensure editing target is switched if we are deleting it.
                 this.runtime.disposeTarget(sprite.clones[i]);
@@ -399,22 +412,22 @@ export default class VirtualMachine extends EventEmitter {
                     } else {
                         this.editingTarget = null;
                     }
-                }*/
-            }
-            // Sprite object should be deleted by GC.
-            target.updateAllDrawableProperties();
-            this.emitTargetsUpdate();
+                } */
         }
+        // Sprite object should be deleted by GC.
+        target.updateAllDrawableProperties();
+        this.emitTargetsUpdate();
+    }
 
     /**
-         * Set an editing target. An editor UI can use this function to switch
-         * between editing different targets, sprites, etc.
-         * After switching the editing target, the VM may emit updates
-         * to the list of targets and any attached workspace blocks
-         * (see `emitTargetsUpdate` and `emitWorkspaceUpdate`).
-         * @param {string} targetId Id of target to set as editing.
-         */
-    setEditingTarget (targetId) {
+     * Set an editing target. An editor UI can use this function to switch
+     * between editing different targets, sprites, etc.
+     * After switching the editing target, the VM may emit updates
+     * to the list of targets and any attached workspace blocks
+     * (see `emitTargetsUpdate` and `emitWorkspaceUpdate`).
+     * @param {string} targetId Id of target to set as editing.
+     */
+    setEditingTarget(targetId) {
         // Has the target id changed? If not, exit.
         if (this.editingTarget && targetId === this.editingTarget.id) {
             return;
@@ -428,7 +441,6 @@ export default class VirtualMachine extends EventEmitter {
             this.runtime.setEditingTarget(target);
         }
     }
-
 
     /**
      * Duplicate a sprite.
@@ -521,6 +533,154 @@ export default class VirtualMachine extends EventEmitter {
             event_whengreaterthan: null,
             event_whenbroadcastreceived: "Free Input",
         }[eventId];
+    }
+
+    /**
+     * Serializes the current state of the VM into a project.json file which is then
+     * then compressed into a zip file and returned as a Blob object
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    async serializeProject() {
+        // const vm = JSON.stringify(sb3.serialize(this.runtime));
+        const vm = sb3.serialize(this.runtime);
+
+        // remove background
+        vm.targets.splice(0, 1);
+
+        const object2 = {};
+        object2.vmstate = vm;
+        object2.code = this.runtime.targetCodeMapGLB;
+        object2.background = this.getBackground();
+        object2.globalVariables = this.getGlobalVariables();
+
+        const projectJson = JSON.stringify(object2);
+
+        /* TODO: add assets into this */
+
+        const zip = new JSZip();
+
+        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
+
+        /** Example for adding in an asset:
+         * zip.file("{scratch provided asset filename}", {the data});
+         */
+
+        // This may be needed once custom sprites are added.
+        /* this.runtime.targets.forEach((target) => {
+            if (target instanceof RenderedTarget) {
+                target.getCostumes().forEach((costume) => {
+                    console.log(costume);
+                    if (!zip.files[costume.md5]) {
+                        zip.file(costume.md5, new Blob([costume.asset.data]));
+                    }
+                });
+            }
+        }); */
+
+        const final = await zip.generateAsync({ type: "blob" }).then((content) => content);
+        return final;
+    }
+
+    /**
+     * Downloads a zip file containing all project data with the following
+     * naming template "[project name].ptch1"
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    async downloadProject() {
+        const proj = await this.serializeProject();
+
+        /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
+        const element = document.createElement("a");
+        element.setAttribute("href", `data:text/plain;charset=utf-8,${proj}`);
+        /* TODO: project name as filename */ /*
+        element.setAttribute("download", "project.ptch1");
+
+        element.style.display = "none";
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element); */
+
+        // https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
+        const a = document.createElement("a");
+        document.body.appendChild(a);
+        a.style = "display: none";
+        const url = window.URL.createObjectURL(proj);
+        a.href = url;
+        a.download = "project.ptch1";
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Restores the state of the VM from a Blob object that has been generated from a
+     * valid Patch Project .ptch1 file.
+     *
+     * @param {Blob} projectData - A Blob object generated from
+     * a valid Patch Project .ptch1 file
+     */
+    async loadProject(projectData) {
+        const zip = await JSZip.loadAsync(projectData).then((newZip) => newZip);
+
+        // https://stackoverflow.com/questions/40223259/jszip-get-content-of-file-in-zip-from-file-input
+        const jsonDataString = await zip.files["project.json"].async("text").then((text) => text);
+        if (!jsonDataString || isUndefined(jsonDataString)) {
+            console.warn("No project.json file. Is your project corrupted?");
+            return null;
+        }
+        const jsonData = JSON.parse(jsonDataString);
+
+        /* let blob;
+
+        const catZip = new JSZip();
+
+        // https://stackoverflow.com/questions/247483/http-get-request-in-javascript
+        await fetch("/cat.sprite3")
+            .then((response) => response.blob())
+            .then((data) => {
+                blob = new Blob([data], { type: "application/zip" });
+                /* var url = window.URL || window.webkitURL;
+            var link = url.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.setAttribute("download", "cat.sprite3.zip");
+            a.setAttribute("href", link);
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a); */ /*
+            })
+            .catch((err) => {
+                console.log("Fetch Error :-S", err);
+            });
+        await catZip.loadAsync(blob); */
+
+        // moved this to GUI for reasons
+        /* this.runtime.targets = [];
+        this.runtime.executableTargets = [];
+        this.runtime.pyatchWorker._eventMap = null;
+
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj); */
+        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
+
+        if (importedProject.extensionsInfo) {
+            await this.installTargets(importedProject.targets, importedProject.extensionsInfo, true);
+        } else {
+            await this.installTargets(importedProject.targets, { extensionIDs: [] }, true);
+        }
+
+        /* How fitting: on take 42, I finally got everything to work. */
+        jsonData.globalVariables.forEach((variable) => {
+            this.updateGlobalVariable(variable.name, variable.value);
+        });
+
+        const returnVal = {};
+        returnVal.runtime = this.runtime;
+        returnVal.importedProject = importedProject;
+        returnVal.json = jsonData;
+
+        return returnVal;
     }
 
     /**

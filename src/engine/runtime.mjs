@@ -135,6 +135,8 @@ export default class Runtime extends EventEmitter {
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
+
+        this.targetCodeMapGLB = null;
     }
 
     /**
@@ -334,31 +336,30 @@ export default class Runtime extends EventEmitter {
 
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
-
     /**
      * Remove a target from the execution set.
      * @param {Target} executableTarget target to remove
      */
-    removeExecutable (executableTarget) {
+    removeExecutable(executableTarget) {
         const oldIndex = this.executableTargets.indexOf(executableTarget);
         if (oldIndex > -1) {
             this.executableTargets.splice(oldIndex, 1);
         }
     }
-    
+
     /**
      * Dispose all targets. Return to clean state.
      */
     dispose() {
-        //this.stopAll();
+        // this.stopAll();
         // Deleting each target's variable's monitors.
-        /*this.targets.forEach((target) => {
+        /* this.targets.forEach((target) => {
             if (target.isOriginal) target.deleteMonitors();
-        });*/
+        }); */
 
         this.targets.map(this.disposeTarget, this);
         this.emit(Runtime.RUNTIME_DISPOSED);
-        //this.ioDevices.clock.resetProjectTimer();
+        // this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
     }
 
@@ -780,6 +781,7 @@ export default class Runtime extends EventEmitter {
 
     async loadScripts(targetCodeMap) {
         const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
+        this.targetCodeMapGLB = targetCodeMap;
         const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode, this._globalVariables);
         await this.pyatchLoadPromise;
 
