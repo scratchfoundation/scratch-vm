@@ -336,6 +336,17 @@ export default class Runtime extends EventEmitter {
     // -----------------------------------------------------------------------------
 
     /**
+     * Remove a target from the execution set.
+     * @param {Target} executableTarget target to remove
+     */
+    removeExecutable (executableTarget) {
+        const oldIndex = this.executableTargets.indexOf(executableTarget);
+        if (oldIndex > -1) {
+            this.executableTargets.splice(oldIndex, 1);
+        }
+    }
+    
+    /**
      * Dispose all targets. Return to clean state.
      */
     dispose() {
