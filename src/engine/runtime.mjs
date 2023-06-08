@@ -104,6 +104,12 @@ export default class Runtime extends EventEmitter {
         this._threads = {};
 
         /**
+         * A dictionary of all global variabls
+         * @type {Dictionary.<String, String|Number>}
+         */
+        this._globalVariables = {};
+
+        /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
          * after stepping each thread.
@@ -754,11 +760,19 @@ export default class Runtime extends EventEmitter {
 
     async loadScripts(targetCodeMap) {
         const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
-        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode);
+        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode, this._globalVariables);
         await this.pyatchLoadPromise;
 
         const result = await this.pyatchWorker.registerThreads(pythonCode, eventMap);
 
         return result;
+    }
+
+    addGlobalVariable(name, value) {
+        this._globalVariables[String(name)] = value;
+    }
+
+    removeGlobalVariable(name) {
+        delete this._globalVariables[String(name)];
     }
 }
