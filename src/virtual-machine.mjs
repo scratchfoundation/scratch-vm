@@ -388,6 +388,7 @@ export default class VirtualMachine extends EventEmitter {
                 }*/
             }
             // Sprite object should be deleted by GC.
+            target.updateAllDrawableProperties();
             this.emitTargetsUpdate();
         }
 
