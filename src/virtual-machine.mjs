@@ -375,6 +375,7 @@ export default class VirtualMachine extends EventEmitter {
                     }
                 }
             }
+            delete this.runtime.targets[targetId];
             // Sprite object should be deleted by GC.
             this.emitTargetsUpdate();
         }
