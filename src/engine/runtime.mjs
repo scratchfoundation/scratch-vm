@@ -339,15 +339,15 @@ export default class Runtime extends EventEmitter {
      * Dispose all targets. Return to clean state.
      */
     dispose() {
-        this.stopAll();
+        //this.stopAll();
         // Deleting each target's variable's monitors.
-        this.targets.forEach((target) => {
+        /*this.targets.forEach((target) => {
             if (target.isOriginal) target.deleteMonitors();
-        });
+        });*/
 
         this.targets.map(this.disposeTarget, this);
         this.emit(Runtime.RUNTIME_DISPOSED);
-        this.ioDevices.clock.resetProjectTimer();
+        //this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
     }
 
