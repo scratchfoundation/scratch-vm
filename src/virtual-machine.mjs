@@ -540,7 +540,8 @@ export default class VirtualMachine extends EventEmitter {
          * zip.file("{scratch provided asset filename}", {the data});
          */
 
-        this.runtime.targets.forEach((target) => {
+        // This may be needed once custom sprites are added.
+        /* this.runtime.targets.forEach((target) => {
             if (target instanceof RenderedTarget) {
                 target.getCostumes().forEach((costume) => {
                     console.log(costume);
@@ -549,7 +550,7 @@ export default class VirtualMachine extends EventEmitter {
                     }
                 });
             }
-        });
+        }); */
 
         const final = await zip.generateAsync({ type: "blob" }).then((content) => content);
         return final;
