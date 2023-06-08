@@ -53,6 +53,22 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("hello from the test!");
         });
+
+        it("Get", async () => {
+            const eventId = "event_whenflagclicked";
+            const targetAndCode = {
+                [target.id]: { [eventId]: ["say(globalVariable)"] },
+            };
+
+            vm.updateGlobalVariable("globalVariable", "hello from the test!");
+
+            await vm.loadScripts(targetAndCode);
+            await vm.startHats(eventId);
+
+            const result = vm.getGlobalVariables();
+
+            expect(result).to.eql([{ name: "globalVariable", value: "hello from the test!" }]);
+        });
         /*
         it("Remove", async () => {
             const eventId = "event_whenflagclicked";
