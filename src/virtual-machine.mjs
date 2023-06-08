@@ -389,7 +389,6 @@ export default class VirtualMachine extends EventEmitter {
             this.emitTargetsUpdate();
         }
 
-    }
 
     /**
      * Duplicate a sprite.
