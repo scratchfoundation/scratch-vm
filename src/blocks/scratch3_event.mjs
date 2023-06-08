@@ -33,29 +33,37 @@ export default class Scratch3EventBlocks {
     getHats() {
         return {
             event_whenflagclicked: {
+                label: "When Flag Clicked",
                 restartExistingThreads: true,
             },
             event_whenkeypressed: {
+                label: "When Key Pressed",
                 restartExistingThreads: false,
             },
             event_whenthisspriteclicked: {
+                label: "When This Sprite Clicked",
                 restartExistingThreads: true,
             },
             event_whentouchingobject: {
+                label: "When Touching",
                 restartExistingThreads: false,
                 edgeActivated: true,
             },
             event_whenstageclicked: {
+                label: "When Stage Clicked",
                 restartExistingThreads: true,
             },
             event_whenbackdropswitchesto: {
+                label: "When Backdrop Switches To",
                 restartExistingThreads: true,
             },
             event_whengreaterthan: {
+                label: "When Greater Than",
                 restartExistingThreads: false,
                 edgeActivated: true,
             },
             event_whenbroadcastreceived: {
+                label: "When Broadcast Received",
                 restartExistingThreads: true,
             },
         };
