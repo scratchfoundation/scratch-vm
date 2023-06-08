@@ -104,6 +104,12 @@ export default class Runtime extends EventEmitter {
         this._threads = {};
 
         /**
+         * A dictionary of all global variabls
+         * @type {Dictionary.<String, String|Number>}
+         */
+        this._globalVariables = {};
+
+        /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
          * after stepping each thread.
@@ -309,6 +315,15 @@ export default class Runtime extends EventEmitter {
     attachRenderer(renderer) {
         this.renderer = renderer;
         this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
+    }
+
+    /**
+     * Set the bitmap adapter for the VM/runtime, which converts scratch 2
+     * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
+     * @param {!function} bitmapAdapter The adapter to attach
+     */
+    attachV2BitmapAdapter(bitmapAdapter) {
+        this.v2BitmapAdapter = bitmapAdapter;
     }
 
     /**
@@ -757,11 +772,23 @@ export default class Runtime extends EventEmitter {
     async loadScripts(targetCodeMap) {
         const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
         this.targetCodeMapGLB = targetCodeMap;
-        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode);
+        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode, this._globalVariables);
         await this.pyatchLoadPromise;
 
         const result = await this.pyatchWorker.registerThreads(pythonCode, eventMap);
 
         return result;
+    }
+
+    updateGlobalVariable(name, value) {
+        this._globalVariables[String(name)] = value;
+    }
+
+    removeGlobalVariable(name) {
+        delete this._globalVariables[String(name)];
+    }
+
+    getGlobalVariables() {
+        return Object.keys(this._globalVariables).map((name) => ({ name, value: this._globalVariables[name] }));
     }
 }
