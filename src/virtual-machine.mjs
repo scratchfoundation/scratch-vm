@@ -513,4 +513,8 @@ export default class VirtualMachine extends EventEmitter {
     removeGlobalVariable(name) {
         this.runtime.removeGlobalVariable(name);
     }
+
+    getGlobalVariables() {
+        return this.runtime.getGlobalVariables();
+    }
 }

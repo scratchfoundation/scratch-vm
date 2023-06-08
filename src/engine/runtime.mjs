@@ -775,4 +775,8 @@ export default class Runtime extends EventEmitter {
     removeGlobalVariable(name) {
         delete this._globalVariables[String(name)];
     }
+
+    getGlobalVariables() {
+        return Object.keys(this._globalVariables).map((name) => ({ name, value: this._globalVariables[name] }));
+    }
 }
