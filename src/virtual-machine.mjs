@@ -366,12 +366,12 @@ export default class VirtualMachine extends EventEmitter {
             // target-specific monitored blocks (e.g. local variables)
             const currentEditingTarget = this.editingTarget;
             this.runtime.disposeTarget(sprite);
-            const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
+            /*const nextTargetIndex = Math.min(this.runtime.targets.length - 1, targetIndexBeforeDelete);
                     if (this.runtime.targets.length > 0){
                         this.setEditingTarget(this.runtime.targets[nextTargetIndex].id);
                     } else {
                         this.editingTarget = null;
-                    }
+                    }*/
             /*for (let i = 0; i < sprite.clones.length; i++) {
                 const clone = sprite.clones[i];
                 // Ensure editing target is switched if we are deleting it.
