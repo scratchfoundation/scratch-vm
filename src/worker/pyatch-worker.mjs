@@ -1,6 +1,8 @@
 import Worker from "web-worker";
 import _ from "lodash";
 import WorkerMessages from "./worker-messages.mjs";
+import InterruptError from "./errors/interruptError.mjs";
+import PrimProxy from "./prim-proxy.js";
 
 class PyatchWorker {
     constructor(blockOPCallback) {
@@ -10,6 +12,9 @@ class PyatchWorker {
         this._worker.onerror = this.handleWorkerError.bind(this);
         this._blockOPCallback = blockOPCallback.bind(this);
 
+        // eslint-disable-next-line no-undef
+        this._pythonInterruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
+
         this._pyodidePromiseResolve = null;
         this._registerThreadsPromise = {
             resolve: null,
@@ -18,7 +23,8 @@ class PyatchWorker {
 
         this._eventMap = null;
         this._eventPromiseResolveMap = {};
-        this._threadPromiseResolveMap = {};
+        this._threadPromiseMap = {};
+        this._threadInterruptBuffers = {};
     }
 
     handleWorkerMessage(event) {
@@ -31,7 +37,7 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
             this._blockOPCallback(event.data);
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
-            this._threadPromiseResolveMap[event.data.threadId]();
+            this._threadPromiseMap[event.data.threadId].resolve();
         }
     }
 
@@ -42,6 +48,7 @@ class PyatchWorker {
     async loadPyodide() {
         const initMessage = {
             id: WorkerMessages.FromVM.InitPyodide,
+            interruptBuffer: this._pythonInterruptBuffer,
         };
         return new Promise((resolve, reject) => {
             this._pyodidePromiseResolve = resolve;
@@ -74,6 +81,7 @@ class PyatchWorker {
             throw new Error("Must register threads before running startHats");
         }
         if (hat) {
+            this._pythonInterruptBuffer[0] = 0;
             let threadIds = this._eventMap[hat];
             if (threadIds) {
                 if (option) {
@@ -81,21 +89,42 @@ class PyatchWorker {
                 }
                 const threadPromises = [];
                 threadIds.forEach((id) => {
+                    // eslint-disable-next-line no-undef
+                    this._threadInterruptBuffers[id] = new Uint8Array(new SharedArrayBuffer(1));
                     threadPromises.push(
-                        new Promise((resolve) => {
-                            this._threadPromiseResolveMap[id] = resolve;
+                        new Promise((resolve, reject) => {
+                            this._threadPromiseMap[id] = { resolve, reject };
                         })
                     );
                 });
                 const message = {
                     id: WorkerMessages.FromVM.StartThreads,
-                    threadIds: threadIds,
+                    threadIds,
+                    threadInterruptBufferMap: this._threadInterruptBuffers,
                     options: option,
                 };
                 this._worker.postMessage(message);
                 await Promise.all(threadPromises);
             }
         }
+    }
+
+    // async stopAllThreads() {
+
+    // }
+
+    async stopAllThreads() {
+        await this.stopThreads(Object.keys(this._threadInterruptBuffers));
+    }
+
+    async stopThreads(threadIds) {
+        const endPromises = [];
+        threadIds.forEach((id) => {
+            this._threadInterruptBuffers[id][0] = 2;
+            endPromises.push(this._threadPromiseMap[id]);
+            delete this._threadInterruptBuffers[id];
+        });
+        await Promise.all(endPromises);
     }
 
     async terminate() {

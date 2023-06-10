@@ -18,6 +18,7 @@ const WorkerMessages = {
         RegisterThreads: "RegisterThreads",
         ResultValue: "ResultValue",
         StartThreads: "StartHats",
+        InterruptThreads: "InterruptThreads",
     },
 };
 

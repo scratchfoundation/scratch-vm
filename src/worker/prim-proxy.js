@@ -1,3 +1,5 @@
+import InterruptError from "./errors/interruptError.mjs";
+
 class PrimProxy {
     static opcodeMap = {
         move: "motion_movesteps",
@@ -78,9 +80,16 @@ class PrimProxy {
         endThread: "core_endthread",
     };
 
-    constructor(threadId, postFunction) {
+    static interruptMap = {};
+
+    constructor(threadId, interruptBuffer, interruptFunction, postFunction) {
         this.threadId = threadId;
-        this.post = async function (opCode, args) {
+        this.interruptBuffer = interruptBuffer;
+        this.post = async (opCode, args) => {
+            if (this.interruptBuffer[0] === 2) {
+                interruptFunction();
+                return null;
+            }
             const retVal = await postFunction(this.threadId, opCode, args);
             return retVal;
         };

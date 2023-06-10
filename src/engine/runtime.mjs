@@ -665,6 +665,7 @@ export default class Runtime extends EventEmitter {
      * @private
      */
     _onWorkerMessage(message) {
+        console.log(message);
         const { id, threadId, opCode, args, token } = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
             this.executeBlock(threadId, opCode, args, token);
