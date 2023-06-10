@@ -105,6 +105,12 @@ export default class Runtime extends EventEmitter {
         this._threads = {};
 
         /**
+         * A dictionary of all global variabls
+         * @type {Dictionary.<String, String|Number>}
+         */
+        this._globalVariables = {};
+
+        /**
          * Whether any primitive has requested a redraw.
          * Affects whether `Sequencer.stepThreads` will yield
          * after stepping each thread.
@@ -130,6 +136,8 @@ export default class Runtime extends EventEmitter {
         this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
 
         this.pyatchLinker = new PyatchLinker();
+
+        this.targetCodeMapGLB = null;
     }
 
     /**
@@ -311,6 +319,15 @@ export default class Runtime extends EventEmitter {
     }
 
     /**
+     * Set the bitmap adapter for the VM/runtime, which converts scratch 2
+     * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
+     * @param {!function} bitmapAdapter The adapter to attach
+     */
+    attachV2BitmapAdapter(bitmapAdapter) {
+        this.v2BitmapAdapter = bitmapAdapter;
+    }
+
+    /**
      * Attach the storage module
      * @param {!ScratchStorage} storage The storage module to attach
      */
@@ -320,20 +337,30 @@ export default class Runtime extends EventEmitter {
 
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
+    /**
+     * Remove a target from the execution set.
+     * @param {Target} executableTarget target to remove
+     */
+    removeExecutable(executableTarget) {
+        const oldIndex = this.executableTargets.indexOf(executableTarget);
+        if (oldIndex > -1) {
+            this.executableTargets.splice(oldIndex, 1);
+        }
+    }
 
     /**
      * Dispose all targets. Return to clean state.
      */
     dispose() {
-        this.stopAll();
+        // this.stopAll();
         // Deleting each target's variable's monitors.
-        this.targets.forEach((target) => {
+        /* this.targets.forEach((target) => {
             if (target.isOriginal) target.deleteMonitors();
-        });
+        }); */
 
         this.targets.map(this.disposeTarget, this);
         this.emit(Runtime.RUNTIME_DISPOSED);
-        this.ioDevices.clock.resetProjectTimer();
+        // this.ioDevices.clock.resetProjectTimer();
         // @todo clear out extensions? turboMode? etc.
     }
 
@@ -785,11 +812,24 @@ export default class Runtime extends EventEmitter {
 
     async loadScripts(targetCodeMap) {
         const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
-        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode);
+        this.targetCodeMapGLB = targetCodeMap;
+        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode, this._globalVariables);
         await this.pyatchLoadPromise;
 
         const result = await this.pyatchWorker.registerThreads(pythonCode, eventMap);
 
         return result;
+    }
+
+    updateGlobalVariable(name, value) {
+        this._globalVariables[String(name)] = value;
+    }
+
+    removeGlobalVariable(name) {
+        delete this._globalVariables[String(name)];
+    }
+
+    getGlobalVariables() {
+        return Object.keys(this._globalVariables).map((name) => ({ name, value: this._globalVariables[name] }));
     }
 }

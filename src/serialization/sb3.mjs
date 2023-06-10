@@ -537,8 +537,6 @@ const serialize = function (runtime, targetId) {
 
     obj.targets = serializedTargets;
 
-    obj.monitors = serializeMonitors(runtime.getMonitorState());
-
     // Assemble extension list
     obj.extensions = Array.from(extensions);
 
