@@ -92,4 +92,16 @@ export default class BlockUtility {
     async startHats(hat, option) {
         await this._runtime.startHats(hat, option);
     }
+
+    async stopAll() {
+        await this.runtime.stopAll();
+    }
+
+    async stopOtherTargetThreads() {
+        await this.runtime.stopOtherTargetThreads(this.target.id, this._thread.id);
+    }
+
+    async stopThisScript() {
+        await this.runtime.stopThread(this._thread.id);
+    }
 }

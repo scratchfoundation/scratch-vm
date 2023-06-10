@@ -138,12 +138,21 @@ class PyatchLinker {
     }
 
     /**
+     * BAD FUNCTION PLEASE REFACTOR FOR FALL MVP
+     */
+    registerInterruptSnippet() {
+        return `def throw_interrupt_error():\n${linkConstants.python_tab_char}raise RuntimeError("Thread Interrupted")\n\n`;
+    }
+
+    /**
      * Generate the fully linked executable python code.
      * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
     generatePython(executionObject, globalVariables) {
         let codeString = "";
+
+        codeString += this.registerInterruptSnippet();
 
         const eventMap = {};
 

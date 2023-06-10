@@ -1,9 +1,9 @@
 def throw_interrupt_error():
     raise RuntimeError("Thread Interrupted")
 
-globalName1 = 12.1
 async def thread_id_0(vm_proxy):
-    global globalName1
     move = vm_proxy.move
+    import asyncio
     await move(10)
-
+    await asyncio.sleep(0.1)
+    await move(10)

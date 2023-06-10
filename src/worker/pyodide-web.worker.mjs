@@ -4,6 +4,7 @@ import { loadPyodide, version as npmVersion } from "pyodide";
 import { detect } from "detect-browser";
 import PrimProxy from "./prim-proxy.js";
 import WorkerMessages from "./worker-messages.mjs";
+import InterruptError from "./errors/interruptError.mjs";
 
 const browser = detect();
 
@@ -33,10 +34,9 @@ let _initPyodideState = null;
 let _threads = {};
 
 /**
- * Dict of eventId to array of associated thread ids
- * @type {Object}
+ * Interrupt function to raise error in the python enviroment
  */
-let _eventMap = {};
+let _threadInterruptFunction = null;
 
 const _postWorkerMessage = postMessage;
 
@@ -76,18 +76,21 @@ function _postError(error) {
     _postMessageError(WorkerMessages.ToVM.PythonError, error);
 }
 
-async function _initPyodide() {
+async function _initPyodide(interruptBuffer) {
     _postStatusMessage(WorkerMessages.ToVM.PyodideLoading);
     if (browser.name === "node") {
         self.pyodide = await _nodePyodideLoader();
     } else {
         self.pyodide = await _webPyodideLoader();
     }
+    if (interruptBuffer) {
+        self.pyodide.setInterruptBuffer(interruptBuffer);
+    }
     _initPyodideState = self.pyodide._api.saveState();
     _postStatusMessage(WorkerMessages.ToVM.PyodideLoaded);
 }
 
-// This is a shit function for this purpose, but it works for now.
+// This is a bad function for this purpose, but it works for now.
 function _getToken() {
     return Math.random().toString(36).substring(2);
 }
@@ -116,8 +119,7 @@ function _postBlockOpMessage(threadId, opCode, args) {
     });
 }
 
-function _registerThreads(pythonScript, eventMap) {
-    _eventMap = eventMap;
+function _registerThreads(pythonScript) {
     // Don't need this line as we will be passing the bridge module in as a parameter as we execute
     // await self.pyodide.loadPackagesFromImports(python);
     // _postStatusMessage(WorkerMessages.ToVM.PythonLoading);
@@ -135,20 +137,22 @@ function _registerThreads(pythonScript, eventMap) {
         if (globalFunction.includes("thread")) {
             const threadId = globalFunction.substring("thread_".length, globalFunction.length);
             _threads[threadId] = self.pyodide.globals.get(globalFunction);
+        } else if (globalFunction.includes("interrupt_error")) {
+            _threadInterruptFunction = self.pyodide.globals.get(globalFunction);
         }
     }
     _postStatusMessage(WorkerMessages.ToVM.ThreadsRegistered);
 }
 
-function _startThreads(threadIds) {
+function _startThreads(threadIds, threadInterruptBufferMap) {
+    const endThreadPost = (_threadId) => {
+        _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
+    };
     if (threadIds) {
         threadIds.forEach((threadId) => {
             const runThread = _threads[threadId];
             if (runThread) {
-                const endThreadPost = (_threadId) => {
-                    _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
-                };
-                runThread(new PrimProxy(threadId, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId));
+                runThread(new PrimProxy(threadId, threadInterruptBufferMap[threadId], _threadInterruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
             } else {
                 throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
             }
@@ -166,12 +170,13 @@ function onVMMessage(event) {
         const { token, value } = event.data;
         _resolvePendingToken(token, value);
     } else if (id === WorkerMessages.FromVM.StartThreads) {
-        const { threadIds } = event.data;
-        _startThreads(threadIds);
+        const { threadIds, threadInterruptBufferMap } = event.data;
+        _startThreads(threadIds, threadInterruptBufferMap);
     } else if (id === WorkerMessages.FromVM.VMConnected) {
         console.log("Undefined Functionality");
     } else if (id === WorkerMessages.FromVM.InitPyodide) {
-        _initPyodide();
+        const { interruptBuffer } = event.data;
+        _initPyodide(interruptBuffer);
     } else {
         throw new Error(`${id} is not a valid worker message id`);
     }

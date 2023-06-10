@@ -47,6 +47,34 @@
         },
         {
             // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration Stop Current test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/*.mjs", "-g", "Interrupt Current Thread", "--timeout", "0"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration Stop Other test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/*.mjs", "-g", "Interrupt Other Thread", "--timeout", "0"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
             "name": "Integration Event tests",
             // Type of configuration. Possible values: "node", "mono".
             "type": "node",
@@ -112,6 +140,20 @@
             "stopOnEntry": false,
             // Command line arguments passed to the program.
             "args": ["test/worker/blocks/worker_events.test.mjs"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Thread Stop Test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/worker/control/worker_thread_control.test.mjs", "--timeout", "0"],
             // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
             "runtimeExecutable": null
         },

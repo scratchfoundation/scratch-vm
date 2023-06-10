@@ -19,6 +19,7 @@ describe("Event Info", () => {
     it("Get Event Labels", async () => {
         const vm = new VirtualMachine();
         const expected = {
+            control_start_as_clone: "When I Start As Clone",
             event_whenflagclicked: "When Flag Clicked",
             event_whenkeypressed: "When Key Pressed",
             event_whenthisspriteclicked: "When This Sprite Clicked",
