@@ -7,14 +7,6 @@ class Scratch3ControlBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
-
-        /**
-         * The "counter" block value. For compatibility with 2.0.
-         * @type {number}
-         */
-        this._counter = 0;
-
-        this.runtime.on("RUNTIME_DISPOSED", this.clearCounter.bind(this));
     }
 
     /**
@@ -35,6 +27,7 @@ class Scratch3ControlBlocks {
         return {
             control_start_as_clone: {
                 restartExistingThreads: false,
+                label: "When I Start As Clone",
             },
         };
     }

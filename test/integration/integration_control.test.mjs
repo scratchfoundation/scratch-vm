@@ -25,7 +25,7 @@ before(async () => {
     sprite2 = new Sprite(null, vm.runtime);
     target2 = new RenderedTarget(sprite2, vm.runtime);
     target2.id = "target2";
-    vm.runtime.addTarget(target);
+    vm.runtime.addTarget(target2);
 
     await vm.runtime.pyatchLoadPromise;
 
@@ -49,7 +49,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 const steps = 10;
                 const executionObject = {
                     target1: {
-                        event_whenflagclicked: [`move(${steps})\nstopAll()\nmove(${steps})`],
+                        event_whenflagclicked: [`move(${steps})\nstop("this")\nmove(${steps})`],
                     },
                 };
 
@@ -64,25 +64,25 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 const steps = 10;
                 const executionObject = {
                     target1: {
-                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstopAll()`, `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.5)\nmove(${steps})`],
+                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstop("other")\nmove(${steps / 2})`, `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.5)\nmove(${steps})`],
                     },
                 };
 
                 await vm.loadScripts(executionObject);
                 await vm.startHats("event_whenflagclicked");
 
-                expect(vm.runtime.targets[0].x).to.equal(steps);
+                expect(vm.runtime.targets[0].x).to.equal(steps + steps / 2);
                 expect(vm.runtime.targets[0].y).to.equal(0);
             });
 
-            it("Interrupt Other Target", async () => {
+            it("Interrupt All", async () => {
                 const steps = 10;
                 const executionObject = {
                     target1: {
                         event_whenflagclicked: [`import asyncio\nmove(${steps})\nawait asyncio.sleep(0.6)\nmove(${steps})`],
                     },
                     target2: {
-                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstopAll()`],
+                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstop("all")`],
                     },
                 };
 

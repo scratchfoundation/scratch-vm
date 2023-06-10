@@ -8,6 +8,7 @@ import scratch3LooksBlocks from "../blocks/scratch3_looks.mjs";
 import scratch3MotionBlocks from "../blocks/scratch3_motion.mjs";
 import scratch3SensingBlocks from "../blocks/scratch3_sensing.mjs";
 import scratch3SoundBlocks from "../blocks/scratch3_sound.mjs";
+import scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
 import patchCoreBlocks from "../blocks/patch_core.mjs";
 
 import Thread from "./thread.mjs";
@@ -23,7 +24,7 @@ import Mouse from "../io/mouse.mjs";
 import MouseWheel from "../io/mouseWheel.mjs";
 
 const defaultBlockPackages = {
-    // scratch3_control: require('../blocks/scratch3_control'),
+    scratch3_control: scratch3ControlBlocks,
     scratch3_event: scratch3EventBlocks,
     scratch3_looks: scratch3LooksBlocks,
     scratch3_motion: scratch3MotionBlocks,
@@ -695,7 +696,6 @@ export default class Runtime extends EventEmitter {
      * @private
      */
     _onWorkerMessage(message) {
-        console.log(message);
         const { id, threadId, opCode, args, token } = message;
         if (id === WorkerMessages.ToVM.BlockOP) {
             this.executeBlock(threadId, opCode, args, token);
