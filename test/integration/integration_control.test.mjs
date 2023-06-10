@@ -64,7 +64,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 const steps = 10;
                 const executionObject = {
                     target1: {
-                        event_whenflagclicked: [`import time\ntime.sleep(0.5)\nstopAll()`, `import time\nmove(${steps})\ntime.sleep(0.6)\nmove(${steps})`],
+                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstopAll()`, `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.5)\nmove(${steps})`],
                     },
                 };
 
@@ -79,10 +79,10 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 const steps = 10;
                 const executionObject = {
                     target1: {
-                        event_whenflagclicked: [`import time\nmove(${steps})\ntime.sleep(0.6)\nmove(${steps})\nstopAll()`],
+                        event_whenflagclicked: [`import asyncio\nmove(${steps})\nawait asyncio.sleep(0.6)\nmove(${steps})`],
                     },
                     target2: {
-                        event_whenflagclicked: [`import time\ntime.sleep(0.5)\nstopAll()`],
+                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstopAll()`],
                     },
                 };
 

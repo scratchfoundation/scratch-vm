@@ -12,7 +12,7 @@ class Thread {
         return 1000 / 60;
     }
 
-    constructor(target, returnValueCallback) {
+    constructor(target, returnValueCallback, id = null) {
         this.target = target;
 
         if (target.runtime) {
@@ -20,6 +20,8 @@ class Thread {
         } else {
             throw new Error("Targets must include a runtime to be used in threads");
         }
+
+        this.id = id;
 
         this.status = 0;
 

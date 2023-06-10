@@ -77,6 +77,12 @@ class PrimProxy {
         // askAndWait: "sensing_askandwait",
         // getAnswer: "sensing_answer",
 
+        wait: "control_wait",
+        waitUntil: "control_wait_until",
+        stop: "control_stop",
+        createClone: "control_create_clone_of",
+        deleteClone: "control_delete_this_clone",
+
         endThread: "core_endthread",
     };
 
@@ -414,6 +420,26 @@ class PrimProxy {
         return answer;
     }
     */
+
+    async wait(secs) {
+        await this.post(PrimProxy.opcodeMap.wait, { SECS: secs });
+    }
+
+    async waitUntil(condition) {
+        await this.post(PrimProxy.opcodeMap.waitUntil, { CONDITION: condition });
+    }
+
+    async stop(option) {
+        await this.post(PrimProxy.opcodeMap.stop, { STOP_OPTION: option });
+    }
+
+    async createClone(option) {
+        await this.post(PrimProxy.opcodeMap.createClone, { CLONE_OPTION: option });
+    }
+
+    async deleteClone() {
+        await this.post(PrimProxy.opcodeMap.deleteClone, {});
+    }
 }
 
 export default PrimProxy;

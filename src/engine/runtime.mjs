@@ -377,11 +377,12 @@ export default class Runtime extends EventEmitter {
     /**
      * Stop "everything."
      */
-    stopAll() {
+    async stopAll() {
         // Emit stop event to allow blocks to clean up any state.
         this.emit(Runtime.PROJECT_STOP_ALL);
 
         // Dispose all clones.
+        /*
         const newTargets = [];
         for (let i = 0; i < this.targets.length; i++) {
             this.targets[i].onStopAll();
@@ -392,6 +393,35 @@ export default class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
+        */
+        await this.pyatchWorker.stopAllThreads();
+    }
+
+    /**
+     * Gets all thread ids that are associated with a specified target
+     * @param {Number} targetId id of target
+     * @returns {Array<Number>} array of thread ids
+     */
+    getThreadsByTargetId(targetId) {
+        const threadIds = Object.keys(this._threads).filter((threadId) => this._threads[threadId].target.id === targetId);
+        return threadIds;
+    }
+
+    /**
+     * Stops all threads associated with a specifed target other than the thread id specified
+     * @param {Number} targetId id of target containing the threads to stop
+     */
+    async stopOtherTargetThreads(targetId, threadId) {
+        const targetThreadIds = this.getThreadsByTargetId(targetId).filter((id) => id !== threadId);
+        await this.pyatchWorker.stopThreads(targetThreadIds);
+    }
+
+    /**
+     * Stop specified thread's execution
+     * @param {Number} threadId thread id to stop
+     */
+    async stopThread(threadId) {
+        await this.pyatchWorker.stopThreads([threadId]);
     }
 
     /**
@@ -701,7 +731,7 @@ export default class Runtime extends EventEmitter {
 
     registerTargetThread(target, returnValueCallback) {
         const uid = safeUid();
-        this._threads[uid] = new Thread(target, returnValueCallback);
+        this._threads[uid] = new Thread(target, returnValueCallback, uid);
         return uid;
     }
 
