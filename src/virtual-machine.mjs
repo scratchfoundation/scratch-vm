@@ -15,6 +15,8 @@ import "canvas-toBlob";
 import sb3 from "./serialization/sb3.mjs";
 import sb2 from "./serialization/sb2.mjs";
 
+import { loadCostume } from "./import/load-costume.mjs";
+
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
 import RenderedTarget from "./sprites/rendered-target.mjs";
