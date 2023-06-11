@@ -678,7 +678,7 @@ class RenderedTarget extends Target {
                 this.runtime.requestRedraw();
             }
         }
-        this.runtime.requestTargetsUpdate(this);
+        // this.runtime.requestTargetsUpdate(this);
     }
 
     /**
@@ -889,8 +889,8 @@ class RenderedTarget extends Target {
             this.renderer.setDrawableOrder(this.drawableID, otherLayer, StageLayering.SPRITE_LAYER);
         }
 
-        const executionPosition = this.runtime.executableTargets.indexOf(other);
-        this.runtime.setExecutablePosition(this, executionPosition);
+        // const executionPosition = this.runtime.executableTargets.indexOf(other);
+        // this.runtime.setExecutablePosition(this, executionPosition);
     }
 
     /**
@@ -956,8 +956,7 @@ class RenderedTarget extends Target {
         newClone.currentCostume = this.currentCostume;
         newClone.rotationStyle = this.rotationStyle;
         newClone.effects = Clone.simple(this.effects);
-        newClone.variables = this.duplicateVariables();
-        newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
+        // newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
         return newClone;

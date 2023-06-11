@@ -421,14 +421,6 @@ class PrimProxy {
     }
     */
 
-    async wait(secs) {
-        await this.post(PrimProxy.opcodeMap.wait, { SECS: secs });
-    }
-
-    async waitUntil(condition) {
-        await this.post(PrimProxy.opcodeMap.waitUntil, { CONDITION: condition });
-    }
-
     async stop(option) {
         await this.post(PrimProxy.opcodeMap.stop, { STOP_OPTION: option });
     }
