@@ -112,29 +112,16 @@ class PyatchLinker {
         return pythonCode.replace(regex, "await $&");
     }
 
-    wrapThreadCode(threadCode, threadId, globalVariables) {
-        let variabelSnippet = "";
-        if (globalVariables) {
-            variabelSnippet = this.registerGlobalsImports(globalVariables);
-        }
-        const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), threadCode);
+    wrapThreadCode(threadId, script) {
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), script);
 
-        const passedCode = threadCode || "pass";
+        const passedCode = script || "pass";
         const awaitedCode = this.addAwaitToPythonFunctions(passedCode, calledPatchPrimitiveFunctions);
         const tabbedCode = awaitedCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
 
         const header = this.generateAsyncFuncHeader(threadId);
         const registerPrimsSnippet = this.registerProxyPrims(calledPatchPrimitiveFunctions);
-        return `${header + variabelSnippet + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
-    }
-
-    handleEventOption(eventOptionThreads, globalVariables) {
-        let codeString = "";
-        Object.keys(eventOptionThreads).forEach((threadId) => {
-            const threadCode = eventOptionThreads[threadId];
-            codeString += this.wrapThreadCode(threadCode, threadId, globalVariables);
-        });
-        return codeString;
+        return `${header + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
     }
 
     /**
@@ -149,39 +136,8 @@ class PyatchLinker {
      * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
-    generatePython(executionObject, globalVariables) {
-        let codeString = "";
-
-        codeString += this.registerInterruptSnippet();
-
-        const eventMap = {};
-
-        if (globalVariables) {
-            const globalSnippet = this.registerGlobalsAssignments(globalVariables);
-            codeString += globalSnippet;
-        }
-
-        Object.keys(executionObject).forEach((eventId) => {
-            eventMap[eventId] = [];
-            const eventThreads = executionObject[eventId];
-            Object.keys(eventThreads).forEach((threadId) => {
-                const thread = eventThreads[threadId];
-                if (!_.isString(thread)) {
-                    const eventOptionId = threadId;
-                    const eventOptionThreads = eventThreads[threadId];
-                    codeString += this.handleEventOption(eventOptionThreads, globalVariables);
-                    eventMap[eventId] = {
-                        ...eventMap[eventId],
-                        [eventOptionId]: Object.keys(eventOptionThreads),
-                    };
-                } else {
-                    codeString += this.wrapThreadCode(thread, threadId, globalVariables);
-                    eventMap[eventId].push(threadId);
-                }
-            });
-        });
-
-        return [codeString, eventMap];
+    generatePython(threadId, script) {
+        return this.wrapThreadCode(threadId, script);
     }
 }
 export default PyatchLinker;

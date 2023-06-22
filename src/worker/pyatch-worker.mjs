@@ -3,6 +3,7 @@ import _ from "lodash";
 import WorkerMessages from "./worker-messages.mjs";
 import InterruptError from "./errors/interruptError.mjs";
 import PrimProxy from "./prim-proxy.js";
+import PyatchLinker from "../linker/pyatch-linker.mjs";
 
 class PyatchWorker {
     constructor(blockOPCallback) {
@@ -16,28 +17,25 @@ class PyatchWorker {
         this._pythonInterruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
 
         this._pyodidePromiseResolve = null;
-        this._registerThreadsPromise = {
-            resolve: null,
-            reject: null,
-        };
-
-        this._eventMap = null;
-        this._eventPromiseResolveMap = {};
+        this._loadingThreadPromiseMap = {};
         this._threadPromiseMap = {};
-        this._threadInterruptBuffers = {};
+
+        this.pyatchLinker = new PyatchLinker();
     }
 
     handleWorkerMessage(event) {
         if (event.data.id === WorkerMessages.ToVM.PyodideLoaded) {
             this._pyodidePromiseResolve();
-        } else if (event.data.id === WorkerMessages.ToVM.ThreadsRegistered) {
-            this._registerThreadsPromise.resolve();
+        } else if (event.data.id === WorkerMessages.ToVM.ThreadLoaded) {
+            const { threadId } = event.data;
+            this._loadingThreadPromiseMap[threadId].resolve();
         } else if (event.data.id === WorkerMessages.ToVM.PythonCompileTimeError) {
-            this._registerThreadsPromise.reject(event.data.error);
+            this._loadingThreadPromiseMap.reject(event.data.error);
         } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
             this._blockOPCallback(event.data);
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
-            this._threadPromiseMap[event.data.threadId].resolve();
+            const { threadId } = event.data;
+            this._threadPromiseMap[threadId].resolve();
         }
     }
 
@@ -59,72 +57,59 @@ class PyatchWorker {
         });
     }
 
-    async registerThreads(pythonScript, eventMap, token = "") {
+    async loadThread(threadId, script) {
+        const wrappedScript = this.pyatchLinker.generatePython(threadId, script);
+
         await this._worker;
-        this._eventMap = _.cloneDeep(eventMap);
 
         const message = {
-            id: WorkerMessages.FromVM.RegisterThreads,
-            token: token,
-            python: String(pythonScript),
+            id: WorkerMessages.FromVM.LoadThread,
+            script: wrappedScript,
+            threadId: threadId,
         };
 
         return new Promise((resolve, reject) => {
-            this._registerThreadsPromise.resolve = resolve;
-            this._registerThreadsPromise.reject = reject;
+            this._loadingThreadPromiseMap[threadId] = { resolve, reject };
             this._worker.postMessage(message);
         });
     }
 
-    async startHats(hat, option) {
-        if (!this._eventMap) {
-            throw new Error("Must register threads before running startHats");
-        }
-        if (hat) {
-            this._pythonInterruptBuffer[0] = 0;
-            let threadIds = this._eventMap[hat];
-            if (threadIds) {
-                if (option) {
-                    threadIds = threadIds[option];
-                }
-                const threadPromises = [];
-                threadIds.forEach((id) => {
-                    // eslint-disable-next-line no-undef
-                    this._threadInterruptBuffers[id] = new Uint8Array(new SharedArrayBuffer(1));
-                    threadPromises.push(
-                        new Promise((resolve, reject) => {
-                            this._threadPromiseMap[id] = { resolve, reject };
-                        })
-                    );
-                });
-                const message = {
-                    id: WorkerMessages.FromVM.StartThreads,
-                    threadIds,
-                    threadInterruptBufferMap: this._threadInterruptBuffers,
-                    options: option,
-                };
-                this._worker.postMessage(message);
-                await Promise.all(threadPromises);
-            }
-        }
-    }
-
-    // async stopAllThreads() {
-
-    // }
-
-    async stopAllThreads() {
-        await this.stopThreads(Object.keys(this._threadInterruptBuffers));
-    }
-
-    async stopThreads(threadIds) {
-        const endPromises = [];
-        threadIds.forEach((id) => {
-            this._threadInterruptBuffers[id][0] = 2;
-            endPromises.push(this._threadPromiseMap[id]);
-            delete this._threadInterruptBuffers[id];
+    async startThread(threadId, threadInterruptBuffer) {
+        // eslint-disable-next-line no-param-reassign
+        threadInterruptBuffer[0] = 0;
+        const threadPromise = new Promise((resolve, reject) => {
+            this._threadPromiseMap[threadId] = { resolve, reject };
         });
-        await Promise.all(endPromises);
+
+        const message = {
+            id: WorkerMessages.FromVM.StartThread,
+            threadId,
+            threadInterruptBuffer: threadInterruptBuffer,
+        };
+        this._worker.postMessage(message);
+        await threadPromise;
+    }
+
+    async stopThread(threadId, threadInterruptBuffer) {
+        // eslint-disable-next-line no-param-reassign
+        threadInterruptBuffer[0] = 2;
+        const endThreadPromise = this._threadPromiseMap[threadId];
+        await endThreadPromise;
+    }
+
+    /**
+     * Post a ResultValue message to a worker in reply to a particular message.
+     * The outgoing message's reply token will be copied from the provided message.
+     * @param {object} message The originating message to which this is a reply.
+     * @param {*} value The value to send as a result.
+     * @private
+     */
+    postResultValue(message, value) {
+        this._worker.postMessage({
+            id: WorkerMessages.FromVM.ResultValue,
+            value: value,
+            token: message.token,
+        });
     }
 
     async terminate() {

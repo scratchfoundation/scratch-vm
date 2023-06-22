@@ -45,13 +45,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Hats", () => {
         it("Single Event, Single Target, Single Thread", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`move(${steps})`],
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -60,13 +59,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("Single Event, Single Target, Two Threads", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`move(${steps})`, `move(${steps})`],
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.addThread(targetId, script, triggerEventId);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
@@ -75,17 +74,14 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("Single Event, Two Targets, Single Thread", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`move(${steps})`],
-                },
 
-                target2: {
-                    event_whenflagclicked: [`move(${steps})`],
-                },
-            };
+            const target1Id = "target1";
+            const target2Id = "target2";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(executionObject);
+            await vm.addThread(target1Id, script, triggerEventId);
+            await vm.addThread(target2Id, script, triggerEventId);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -104,7 +100,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 },
             };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEvent1Id = "event_whenflagclicked";
+            const triggerEvent2Id = "event_whenthisspriteclicked";
+
+            await vm.addThread(targetId, script, triggerEvent1Id);
+            await vm.addThread(targetId, script, triggerEvent2Id);
             await Promise.all([vm.startHats("event_whenflagclicked"), vm.startHats("event_whenthisspriteclicked")]);
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
@@ -113,14 +115,14 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("Two Events, Single Target, Single Thread, Single Start", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`move(${steps})`],
-                    event_whenthisspriteclicked: [`move(${steps})`],
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEvent1Id = "event_whenflagclicked";
+            const triggerEvent2Id = "event_whenthisspriteclicked";
+
+            await vm.addThread(targetId, script, triggerEvent1Id);
+            await vm.addThread(targetId, script, triggerEvent2Id);
             await vm.startHats("event_whenthisspriteclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -129,13 +131,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("One Event, Single Target, Single Thread, Single Start w/ Option", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenkeypressed: { A: [`move(${steps})`] },
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenkeypressed";
+            const triggerEventOption = "A";
+
+            await vm.addThread(targetId, script, triggerEventId, triggerEventOption);
             await vm.startHats("event_whenkeypressed", "A");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -144,16 +146,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("One Event, Single Target, Single Thread, Single Start w/ Two Options", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenkeypressed: {
-                        A: [`move(${steps})`],
-                        B: [`move(${steps})`],
-                    },
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenkeypressed";
+            const triggerEvent1Option = "A";
+            const triggerEvent2Option = "B";
+
+            await vm.addThread(targetId, script, triggerEventId, triggerEvent1Option);
+            await vm.addThread(targetId, script, triggerEventId, triggerEvent2Option);
             await Promise.all([vm.startHats("event_whenkeypressed", "A"), vm.startHats("event_whenkeypressed", "B")]);
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
@@ -162,13 +163,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("One Event, Single Target, Single Thread, Different event than thread", async () => {
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`move(${steps})`],
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+
             await Promise.all([vm.startHats("event_whenkeypressed", "A"), vm.startHats("event_whenkeypressed", "B")]);
 
             expect(vm.runtime.targets[0].x).to.equal(0);

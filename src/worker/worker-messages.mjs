@@ -9,16 +9,16 @@ const WorkerMessages = {
         PythonCompileTimeError: "PythonCompileTimeError",
         BlockOP: "BlockOP",
         EndOfThread: "EndOfThread",
-        ThreadsRegistered: "ThreadsRegistered",
+        ThreadLoaded: "ThreadsRegistered",
     },
 
     FromVM: {
         VMConnected: "VMConnected",
         InitPyodide: "InitPyodide",
-        RegisterThreads: "RegisterThreads",
+        LoadThread: "LoadThread",
         ResultValue: "ResultValue",
-        StartThreads: "StartHats",
-        InterruptThreads: "InterruptThreads",
+        StartThread: "StartThread",
+        InterruptThread: "InterruptThread",
     },
 };
 

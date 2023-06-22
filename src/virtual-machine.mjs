@@ -696,11 +696,6 @@ export default class VirtualMachine extends EventEmitter {
         }
     }
 
-    async loadScripts(targetCodeMap) {
-        const result = await this.runtime.loadScripts(targetCodeMap);
-        return result;
-    }
-
     /**
      * Start all relevant hats.
      * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
@@ -711,6 +706,23 @@ export default class VirtualMachine extends EventEmitter {
     async startHats(hat, option) {
         const startedHat = await this.runtime.startHats(hat, option);
         return startedHat;
+    }
+
+    addThread(targetId) {
+        const newThreadId = this.runtime.addThread(targetId);
+        return newThreadId;
+    }
+
+    updateThreadScript(threadId, script) {
+        this.runtime.updateThreadScript(threadId, script);
+    }
+
+    updateThreadTriggerEvent(threadId, eventTrigger) {
+        this.runtime.updateThreadTriggerEvent(threadId, eventTrigger);
+    }
+
+    updateThreadTriggerEventOption(threadId, eventTriggerOption) {
+        this.runtime.updateThreadTriggerEventOption(threadId, eventTriggerOption);
     }
 
     updateGlobalVariable(name, value) {

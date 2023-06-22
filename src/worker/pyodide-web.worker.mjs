@@ -119,61 +119,48 @@ function _postBlockOpMessage(threadId, opCode, args) {
     });
 }
 
-function _registerThreads(pythonScript) {
-    // Don't need this line as we will be passing the bridge module in as a parameter as we execute
-    // await self.pyodide.loadPackagesFromImports(python);
-    // _postStatusMessage(WorkerMessages.ToVM.PythonLoading);
-
-    // This will load the initial state of pyodide and reset the globals of pyodide. This is so previously added global functions are not re-run
-    self.pyodide._api.restoreState(_initPyodideState);
-
+function _loadThread(script, threadId) {
     // This is load each async function into the global scope of the pyodide instance
-    self.pyodide.runPython(pythonScript);
-    // _postStatusMessage(WorkerMessages.ToVM.PythonRunning);
+    self.pyodide.runPython(script);
 
     _threads = {};
 
     for (const globalFunction of self.pyodide.globals) {
         if (globalFunction.includes("thread")) {
-            const threadId = globalFunction.substring("thread_".length, globalFunction.length);
             _threads[threadId] = self.pyodide.globals.get(globalFunction);
         } else if (globalFunction.includes("interrupt_error")) {
             _threadInterruptFunction = self.pyodide.globals.get(globalFunction);
         }
     }
-    _postStatusMessage(WorkerMessages.ToVM.ThreadsRegistered);
+    _postThreadStatusMessage(WorkerMessages.ToVM.ThreadLoaded, threadId);
 }
 
-function _startThreads(threadIds, threadInterruptBufferMap) {
+function _startThread(threadId, threadInterruptBufferMap) {
     const endThreadPost = (_threadId) => {
         _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
     };
-    if (threadIds) {
-        threadIds.forEach((threadId) => {
-            const runThread = _threads[threadId];
-            if (runThread) {
-                runThread(new PrimProxy(threadId, threadInterruptBufferMap[threadId], _threadInterruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
-            } else {
-                throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
-            }
-        });
+    if (threadId) {
+        const runThread = _threads[threadId];
+        if (runThread) {
+            runThread(new PrimProxy(threadId, threadInterruptBufferMap[threadId], _threadInterruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
+        } else {
+            throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
+        }
     }
 }
 
 function onVMMessage(event) {
     const id = event.data?.id;
 
-    if (id === WorkerMessages.FromVM.RegisterThreads) {
-        const { python } = event.data;
-        _registerThreads(python);
+    if (id === WorkerMessages.FromVM.LoadThread) {
+        const { script, threadId } = event.data;
+        _loadThread(script, threadId);
     } else if (id === WorkerMessages.FromVM.ResultValue) {
         const { token, value } = event.data;
         _resolvePendingToken(token, value);
-    } else if (id === WorkerMessages.FromVM.StartThreads) {
-        const { threadIds, threadInterruptBufferMap } = event.data;
-        _startThreads(threadIds, threadInterruptBufferMap);
-    } else if (id === WorkerMessages.FromVM.VMConnected) {
-        console.log("Undefined Functionality");
+    } else if (id === WorkerMessages.FromVM.StartThread) {
+        const { threadId, threadInterruptBufferMap } = event.data;
+        _startThread(threadId, threadInterruptBufferMap);
     } else if (id === WorkerMessages.FromVM.InitPyodide) {
         const { interruptBuffer } = event.data;
         _initPyodide(interruptBuffer);

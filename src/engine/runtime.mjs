@@ -700,13 +700,6 @@ export default class Runtime extends EventEmitter {
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
 
-    getThreadById(threadId) {
-        if (this._threads[threadId]) {
-            return this._threads[threadId];
-        }
-        throw new Error(`Cannot find thread ${threadId}`);
-    }
-
     endThread(threadId) {
         const thread = this.getThreadById(threadId);
         thread.setStatus(Thread.STATUS_DONE);
@@ -730,21 +723,6 @@ export default class Runtime extends EventEmitter {
     }
 
     /**
-     * Post a ResultValue message to a worker in reply to a particular message.
-     * The outgoing message's reply token will be copied from the provided message.
-     * @param {object} message The originating message to which this is a reply.
-     * @param {*} value The value to send as a result.
-     * @private
-     */
-    postResultValue(message, value) {
-        this.pyatchWorker.postMessage({
-            id: WorkerMessages.FromVM.ResultValue,
-            value: value,
-            token: message.token,
-        });
-    }
-
-    /**
      * Start all relevant hats.
      * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
      * @param {object=} optMatchFields Optionally, fields to match on the hat.
@@ -752,73 +730,42 @@ export default class Runtime extends EventEmitter {
      * @return {Array.<Thread>} List of threads started by this function.
      */
     async startHats(hat, option) {
-        const startedHats = await this.pyatchWorker.startHats(hat, option);
-        return startedHats;
-    }
-
-    registerTargetThread(target, returnValueCallback) {
-        const uid = safeUid();
-        this._threads[uid] = new Thread(target, returnValueCallback, uid);
-        return uid;
-    }
-
-    handleEventOption(eventOptions, target, returnValueCallback) {
-        const eventOptionMap = {};
-        Object.keys(eventOptions).forEach((eventOptionId) => {
-            eventOptionMap[eventOptionId] = {};
-            const eventOptionThreads = eventOptions[eventOptionId];
-            eventOptionThreads.forEach((threadCode) => {
-                const uid = this.registerTargetThread(target, returnValueCallback);
-                eventOptionMap[eventOptionId][uid] = threadCode;
-            });
+        const executionPromises = [];
+        this.targets.forEach((target) => {
+            executionPromises.push(target.startHat(hat, option));
         });
-        return eventOptionMap;
+        await Promise.all(executionPromises);
     }
 
-    registerTargets(targetCodeMap, returnValueCallback) {
-        const eventMap = {};
-
-        const targetIds = Object.keys(targetCodeMap);
-
-        targetIds.forEach((targetId) => {
-            const target = this.getTargetById(targetId);
-            if (target) {
-                const targetEventMap = targetCodeMap[targetId];
-                const eventIds = Object.keys(targetEventMap);
-                eventIds.forEach((eventId) => {
-                    if (!eventMap[eventId]) {
-                        eventMap[eventId] = {};
-                    }
-                    const targetEventThreads = targetEventMap[eventId];
-                    if (!_.isArray(targetEventThreads)) {
-                        const eventOptions = targetEventThreads;
-                        const optionsEventMap = this.handleEventOption(eventOptions, target, returnValueCallback);
-                        eventMap[eventId] = optionsEventMap;
-                    } else {
-                        const threadIds = Object.keys(targetEventThreads);
-                        threadIds.forEach((threadId) => {
-                            const code = targetEventThreads[threadId];
-                            const uid = this.registerTargetThread(target, returnValueCallback);
-                            eventMap[eventId][uid] = code;
-                        });
-                    }
-                });
-            } else {
-                throw new Error(`Cannot find target with id ${targetId}`);
+    getThreadById(threadId) {
+        let foundThread = null;
+        this.targets.forEach((target) => {
+            if (target.hasThread(threadId)) {
+                foundThread = target.getThreadThread(threadId);
             }
         });
-        return eventMap;
+        return foundThread;
     }
 
-    async loadScripts(targetCodeMap) {
-        const threadsCode = this.registerTargets(targetCodeMap, this.postResultValue.bind(this));
-        this.targetCodeMapGLB = targetCodeMap;
-        const [pythonCode, eventMap] = this.pyatchLinker.generatePython(threadsCode, this._globalVariables);
-        await this.pyatchLoadPromise;
+    updateThreadScript(threadId, script) {
+        const thread = this.getThreadById(threadId);
+        thread.updateThreadScript(script);
+    }
 
-        const result = await this.pyatchWorker.registerThreads(pythonCode, eventMap);
+    updateThreadTriggerEvent(threadId, eventTrigger) {
+        const thread = this.getThreadById(threadId);
+        thread.updateThreadTriggerEvent(eventTrigger);
+    }
 
-        return result;
+    updateThreadTriggerEventOption(threadId, eventTriggerOption) {
+        const thread = this.getThreadById(threadId);
+        thread.updateThreadTriggerEventOption(eventTriggerOption);
+    }
+
+    addThread(targetId) {
+        const target = this.getTargetById(targetId);
+        const newThreadId = target.addThread();
+        return newThreadId;
     }
 
     updateGlobalVariable(name, value) {
