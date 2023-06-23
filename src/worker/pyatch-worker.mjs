@@ -6,12 +6,12 @@ import PrimProxy from "./prim-proxy.js";
 import PyatchLinker from "../linker/pyatch-linker.mjs";
 
 class PyatchWorker {
-    constructor(blockOPCallback) {
+    constructor() {
         this._worker = new Worker(new URL("./pyodide-web.worker.mjs", import.meta.url), { type: "module" });
 
         this._worker.onmessage = this.handleWorkerMessage.bind(this);
         this._worker.onerror = this.handleWorkerError.bind(this);
-        this._blockOPCallback = blockOPCallback.bind(this);
+        this._blockOPCallbackMap = {};
 
         // eslint-disable-next-line no-undef
         this._pythonInterruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
@@ -32,7 +32,8 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.PythonCompileTimeError) {
             this._loadingThreadPromiseMap.reject(event.data.error);
         } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
-            this._blockOPCallback(event.data);
+            const { threadId, opCode, args, token } = event.data;
+            this._blockOPCallbackMap[threadId](opCode, args, token);
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
             const { threadId } = event.data;
             this._threadPromiseMap[threadId].resolve();
@@ -74,17 +75,19 @@ class PyatchWorker {
         });
     }
 
-    async startThread(threadId, threadInterruptBuffer) {
+    async startThread(threadId, threadInterruptBuffer, blockOpertationCallback) {
         // eslint-disable-next-line no-param-reassign
         threadInterruptBuffer[0] = 0;
         const threadPromise = new Promise((resolve, reject) => {
             this._threadPromiseMap[threadId] = { resolve, reject };
         });
 
+        this._blockOPCallbackMap[threadId] = blockOpertationCallback;
+
         const message = {
             id: WorkerMessages.FromVM.StartThread,
             threadId,
-            threadInterruptBuffer: threadInterruptBuffer,
+            threadInterruptBuffer,
         };
         this._worker.postMessage(message);
         await threadPromise;

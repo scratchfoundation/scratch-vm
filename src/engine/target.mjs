@@ -270,7 +270,7 @@ class Target extends EventEmitter {
      * Adds a new thread to the associated threads of the target
      */
     addThread(script = "", triggerEventId = "event_whenflagclicked", triggerEventOption = "") {
-        const newThread = new Thread(this, this.runtime.postResultValue, script, triggerEventId, triggerEventOption);
+        const newThread = new Thread(this, script, triggerEventId, triggerEventOption);
         const threadId = newThread.id;
         this.threads[threadId] = newThread;
         return threadId;
@@ -303,6 +303,18 @@ class Target extends EventEmitter {
 
     getThread(threadId) {
         return this.threads[threadId];
+    }
+
+    deleteThread(threadId) {
+        if (this.threads[threadId]) {
+            delete this.threads[threadId];
+        }
+    }
+
+    deleteAllThreads() {
+        Object.keys(this.threads).forEach((threadId) => {
+            this.deleteThread(threadId);
+        });
     }
 
     /**

@@ -1,4 +1,4 @@
-import uid from "../util/uid.mjs";
+import safeUid from "../util/safe-uid.mjs";
 import BlockUtility from "./block-utility.mjs";
 import WorkerMessages from "../worker/worker-messages.mjs";
 
@@ -26,6 +26,12 @@ class Thread {
 
         this.status = 0;
 
+        /**
+         * A unique ID for this target.
+         * @type {string}
+         */
+        this.id = safeUid();
+
         this.blockUtility = new BlockUtility(this.target, this.runtime, this);
 
         this.script = script;
@@ -33,7 +39,7 @@ class Thread {
         this.triggerEventOption = triggerEventOption;
 
         if (this.script && this.script !== "") {
-            this.loadThread(this.script);
+            this.loadPromise = this.loadThread(this.script);
         }
 
         // eslint-disable-next-line no-undef
@@ -45,7 +51,8 @@ class Thread {
     }
 
     async startThread() {
-        await this.worker.startThread(this.id, this.interruptBuffer);
+        await this.loadPromise;
+        await this.worker.startThread(this.id, this.interruptBuffer, this.executeBlock);
     }
 
     async stopThread() {
@@ -82,14 +89,14 @@ class Thread {
         return returnValue;
     }
 
-    async executeBlock(opcode, args, token) {
+    executeBlock = async (opcode, args, token) => {
         this.status = Thread.STATUS_RUNNING;
 
         const blockFunction = this.runtime.getOpcodeFunction(opcode);
         const result = await this.executePrimitive(blockFunction, args, this.blockUtility);
 
         this.worker.postResultValue({ token: token }, result);
-    }
+    };
 
     done() {
         return this.status === Thread.STATUS_DONE;

@@ -31,7 +31,7 @@ let _initPyodideState = null;
  * Dict of threadId and threadFunc
  * @type {Object}
  */
-let _threads = {};
+const _threads = {};
 
 /**
  * Interrupt function to raise error in the python enviroment
@@ -123,8 +123,6 @@ function _loadThread(script, threadId) {
     // This is load each async function into the global scope of the pyodide instance
     self.pyodide.runPython(script);
 
-    _threads = {};
-
     for (const globalFunction of self.pyodide.globals) {
         if (globalFunction.includes("thread")) {
             _threads[threadId] = self.pyodide.globals.get(globalFunction);
@@ -135,14 +133,14 @@ function _loadThread(script, threadId) {
     _postThreadStatusMessage(WorkerMessages.ToVM.ThreadLoaded, threadId);
 }
 
-function _startThread(threadId, threadInterruptBufferMap) {
+function _startThread(threadId, threadInterruptBuffer) {
     const endThreadPost = (_threadId) => {
         _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
     };
     if (threadId) {
         const runThread = _threads[threadId];
         if (runThread) {
-            runThread(new PrimProxy(threadId, threadInterruptBufferMap[threadId], _threadInterruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
+            runThread(new PrimProxy(threadId, threadInterruptBuffer, console.log, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
         } else {
             throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
         }
@@ -159,8 +157,8 @@ function onVMMessage(event) {
         const { token, value } = event.data;
         _resolvePendingToken(token, value);
     } else if (id === WorkerMessages.FromVM.StartThread) {
-        const { threadId, threadInterruptBufferMap } = event.data;
-        _startThread(threadId, threadInterruptBufferMap);
+        const { threadId, threadInterruptBuffer } = event.data;
+        _startThread(threadId, threadInterruptBuffer);
     } else if (id === WorkerMessages.FromVM.InitPyodide) {
         const { interruptBuffer } = event.data;
         _initPyodide(interruptBuffer);

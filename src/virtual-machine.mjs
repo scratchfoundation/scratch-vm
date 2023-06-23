@@ -708,8 +708,8 @@ export default class VirtualMachine extends EventEmitter {
         return startedHat;
     }
 
-    addThread(targetId) {
-        const newThreadId = this.runtime.addThread(targetId);
+    addThread(targetId, script, triggerEventId, option) {
+        const newThreadId = this.runtime.addThread(targetId, script, triggerEventId, option);
         return newThreadId;
     }
 

@@ -35,6 +35,7 @@ const resetTarget = () => {
     vm.runtime.targets[0].x = 0;
     vm.runtime.targets[0].y = 0;
     vm.runtime.targets[0].direction = 90;
+    vm.runtime.targets[0].deleteAllThreads();
 };
 
 afterEach(async () => {
