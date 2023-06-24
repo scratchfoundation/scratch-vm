@@ -724,4 +724,8 @@ export default class VirtualMachine extends EventEmitter {
     getGlobalVariables() {
         return this.runtime.getGlobalVariables();
     }
+
+    loadCostumeWrap(md5ext, costume, runtime, optVersion) {
+        return loadCostume(md5ext, costume, runtime, optVersion);
+    }
 }
