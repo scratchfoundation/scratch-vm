@@ -9,7 +9,7 @@ const WorkerMessages = {
         PythonCompileTimeError: "PythonCompileTimeError",
         BlockOP: "BlockOP",
         EndOfThread: "EndOfThread",
-        ThreadLoaded: "ThreadsRegistered",
+        PromiseLoaded: "ThreadsRegistered",
     },
 
     FromVM: {

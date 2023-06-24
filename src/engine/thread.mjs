@@ -47,7 +47,7 @@ class Thread {
     }
 
     async loadThread(script) {
-        await this.worker.loadThread(this.id, script, this.interruptBuffer);
+        await this.worker.loadThread(this.id, script, this.interruptBuffer, this.runtime.globalVariables);
     }
 
     async startThread() {
@@ -89,13 +89,12 @@ class Thread {
         return returnValue;
     }
 
-    executeBlock = async (opcode, args, token) => {
+    executeBlock = async (opcode, args) => {
         this.status = Thread.STATUS_RUNNING;
 
         const blockFunction = this.runtime.getOpcodeFunction(opcode);
         const result = await this.executePrimitive(blockFunction, args, this.blockUtility);
-
-        this.worker.postResultValue({ token: token }, result);
+        return result;
     };
 
     done() {

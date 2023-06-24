@@ -76,7 +76,7 @@ class PyatchLinker {
      * Generates the line of python code to unpack all the pyatch api primitives
      * @returns {string} - the line of python
      */
-    registerGlobalsAssignments(globalVars) {
+    generateGlobalsAssignments(globalVars) {
         let snippet = "";
         Object.keys(globalVars).forEach((name) => {
             const value = globalVars[name];
@@ -93,9 +93,11 @@ class PyatchLinker {
      */
     registerGlobalsImports(globalVars) {
         let snippet = "";
-        Object.keys(globalVars).forEach((name) => {
-            snippet += `${linkConstants.python_tab_char}global ${name}\n`;
-        });
+        if (globalVars) {
+            Object.keys(globalVars).forEach((name) => {
+                snippet += `${linkConstants.python_tab_char}global ${name}\n`;
+            });
+        }
 
         return snippet;
     }
@@ -112,7 +114,7 @@ class PyatchLinker {
         return pythonCode.replace(regex, "await $&");
     }
 
-    wrapThreadCode(threadId, script) {
+    wrapThreadCode(threadId, script, globalVariables) {
         const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), script);
 
         const passedCode = script || "pass";
@@ -121,13 +123,15 @@ class PyatchLinker {
 
         const header = this.generateAsyncFuncHeader(threadId);
         const registerPrimsSnippet = this.registerProxyPrims(calledPatchPrimitiveFunctions);
-        return `${header + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
+        const registerGlobalsImports = this.registerGlobalsImports(globalVariables);
+
+        return `${header + registerGlobalsImports + registerPrimsSnippet + linkConstants.python_tab_char + tabbedCode}\n\n`;
     }
 
     /**
      * BAD FUNCTION PLEASE REFACTOR FOR FALL MVP
      */
-    registerInterruptSnippet() {
+    generateInterruptSnippet() {
         return `def throw_interrupt_error():\n${linkConstants.python_tab_char}raise RuntimeError("Thread Interrupted")\n\n`;
     }
 
@@ -136,8 +140,8 @@ class PyatchLinker {
      * @param {Object} executionObject - Dict with thread id as key and code.
      *
      */
-    generatePython(threadId, script) {
-        return this.wrapThreadCode(threadId, script);
+    generatePython(threadId, script, globalVariables) {
+        return this.wrapThreadCode(threadId, script, globalVariables);
     }
 }
 export default PyatchLinker;

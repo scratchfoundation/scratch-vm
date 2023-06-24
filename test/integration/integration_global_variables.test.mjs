@@ -19,55 +19,61 @@ before(async () => {
     target.id = "target1";
     vm.runtime.addTarget(target);
 
+    await vm.runtime.workerLoadPromise;
+
     vm.start();
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Global Variables", () => {
         it("Number", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["move(globalVariable)"] },
-            };
-
             const steps = 10;
+            const globalName = "globalVariable";
             vm.updateGlobalVariable("globalVariable", steps);
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `move(${globalName})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
         });
 
         it("String", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["say(globalVariable)"] },
-            };
+            const message = "hello from the test!";
+            const globalName = "globalVariable";
 
-            vm.updateGlobalVariable("globalVariable", "hello from the test!");
+            vm.updateGlobalVariable(globalName, message);
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `say(${globalName})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("hello from the test!");
         });
 
         it("Get", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["say(globalVariable)"] },
-            };
+            const message = "hello from the test!";
+            const globalName = "globalVariable";
 
-            vm.updateGlobalVariable("globalVariable", "hello from the test!");
+            vm.updateGlobalVariable(globalName, message);
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `say(${globalName})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             const result = vm.getGlobalVariables();
 
-            expect(result).to.eql([{ name: "globalVariable", value: "hello from the test!" }]);
+            expect(result).to.eql([{ name: globalName, value: message }]);
         });
         /*
         it("Remove", async () => {

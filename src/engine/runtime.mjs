@@ -132,8 +132,8 @@ export default class Runtime extends EventEmitter {
             mouseWheel: new MouseWheel(this),
         };
 
-        this.pyatchWorker = new PyatchWorker(this._onWorkerMessage.bind(this));
-        this.pyatchLoadPromise = this.pyatchWorker.loadPyodide();
+        this.pyatchWorker = new PyatchWorker();
+        this.workerLoadPromise = this.pyatchWorker.loadWorker();
 
         this.pyatchLinker = new PyatchLinker();
 
@@ -422,17 +422,9 @@ export default class Runtime extends EventEmitter {
         }
         this.targets = newTargets;
         */
-        await this.pyatchWorker.stopAllThreads();
-    }
-
-    /**
-     * Gets all thread ids that are associated with a specified target
-     * @param {Number} targetId id of target
-     * @returns {Array<Number>} array of thread ids
-     */
-    getThreadsByTargetId(targetId) {
-        const threadIds = Object.keys(this._threads).filter((threadId) => this._threads[threadId].target.id === targetId);
-        return threadIds;
+        this.targets.forEach((target) => {
+            target.stopAllThreads();
+        });
     }
 
     /**
@@ -440,8 +432,9 @@ export default class Runtime extends EventEmitter {
      * @param {Number} targetId id of target containing the threads to stop
      */
     async stopOtherTargetThreads(targetId, threadId) {
-        const targetThreadIds = this.getThreadsByTargetId(targetId).filter((id) => id !== threadId);
-        await this.pyatchWorker.stopThreads(targetThreadIds);
+        const target = this.getTargetById(targetId);
+        if (!target) return;
+        target.stopAllThreads([threadId]);
     }
 
     /**
@@ -705,23 +698,6 @@ export default class Runtime extends EventEmitter {
         thread.setStatus(Thread.STATUS_DONE);
     }
 
-    async executeBlock(threadId, primitiveOpcode, args, token) {
-        const thread = this.getThreadById(threadId);
-        thread.executeBlock(primitiveOpcode, args, token);
-    }
-
-    /**
-     * Handles a message from the python worker.
-     * @param {object} message The message from the worker.
-     * @private
-     */
-    _onWorkerMessage(message) {
-        const { id, threadId, opCode, args, token } = message;
-        if (id === WorkerMessages.ToVM.BlockOP) {
-            this.executeBlock(threadId, opCode, args, token);
-        }
-    }
-
     /**
      * Start all relevant hats.
      * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
@@ -770,6 +746,7 @@ export default class Runtime extends EventEmitter {
 
     updateGlobalVariable(name, value) {
         this._globalVariables[String(name)] = value;
+        this.pyatchWorker.loadGlobalVariable(String(name), value);
     }
 
     removeGlobalVariable(name) {

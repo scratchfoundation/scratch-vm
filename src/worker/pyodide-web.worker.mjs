@@ -36,7 +36,7 @@ const _threads = {};
 /**
  * Interrupt function to raise error in the python enviroment
  */
-let _threadInterruptFunction = null;
+const _threadInterruptFunction = null;
 
 const _postWorkerMessage = postMessage;
 
@@ -68,8 +68,12 @@ function _postStatusMessage(id) {
     _postMessage(id, null, null, null, null);
 }
 
+function _postLoadStatusMessage(id, loadPromiseId) {
+    _postWorkerMessage({ id, loadPromiseId });
+}
+
 function _postThreadStatusMessage(id, threadId) {
-    _postMessage(id, threadId, null, null, null);
+    _postWorkerMessage({ id, threadId });
 }
 
 function _postError(error) {
@@ -119,18 +123,32 @@ function _postBlockOpMessage(threadId, opCode, args) {
     });
 }
 
-function _loadThread(script, threadId) {
-    // This is load each async function into the global scope of the pyodide instance
+function _loadGlobal(script, loadPromiseId) {
     self.pyodide.runPython(script);
 
-    for (const globalFunction of self.pyodide.globals) {
-        if (globalFunction.includes("thread")) {
-            _threads[threadId] = self.pyodide.globals.get(globalFunction);
-        } else if (globalFunction.includes("interrupt_error")) {
-            _threadInterruptFunction = self.pyodide.globals.get(globalFunction);
-        }
-    }
-    _postThreadStatusMessage(WorkerMessages.ToVM.ThreadLoaded, threadId);
+    _postLoadStatusMessage(WorkerMessages.ToVM.PromiseLoaded, loadPromiseId);
+}
+
+// function _loadThread(script, threadId) {
+//     // This is load each async function into the global scope of the pyodide instance
+//     self.pyodide.runPython(script);
+
+//     for (const globalFunction of self.pyodide.globals) {
+//         if (globalFunction.includes("thread")) {
+//             _threads[threadId] = self.pyodide.globals.get(globalFunction);
+//         } else if (globalFunction.includes("interrupt_error")) {
+//             _threadInterruptFunction = self.pyodide.globals.get(globalFunction);
+//         }
+//     }
+//     _postThreadStatusMessage(WorkerMessages.ToVM.ThreadLoaded, threadId);
+// }
+
+function _getThreadFunction(threadId) {
+    return self.pyodide.globals.get(`thread_${threadId}`);
+}
+
+function _getInterruptFunction() {
+    return self.pyodide.globals.get("throw_interrupt_error");
 }
 
 function _startThread(threadId, threadInterruptBuffer) {
@@ -138,9 +156,10 @@ function _startThread(threadId, threadInterruptBuffer) {
         _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
     };
     if (threadId) {
-        const runThread = _threads[threadId];
+        const runThread = _getThreadFunction(threadId);
+        const interruptThread = _getInterruptFunction();
         if (runThread) {
-            runThread(new PrimProxy(threadId, threadInterruptBuffer, console.log, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
+            runThread(new PrimProxy(threadId, threadInterruptBuffer, interruptThread, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
         } else {
             throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
         }
@@ -150,10 +169,7 @@ function _startThread(threadId, threadInterruptBuffer) {
 function onVMMessage(event) {
     const id = event.data?.id;
 
-    if (id === WorkerMessages.FromVM.LoadThread) {
-        const { script, threadId } = event.data;
-        _loadThread(script, threadId);
-    } else if (id === WorkerMessages.FromVM.ResultValue) {
+    if (id === WorkerMessages.FromVM.ResultValue) {
         const { token, value } = event.data;
         _resolvePendingToken(token, value);
     } else if (id === WorkerMessages.FromVM.StartThread) {
@@ -162,6 +178,9 @@ function onVMMessage(event) {
     } else if (id === WorkerMessages.FromVM.InitPyodide) {
         const { interruptBuffer } = event.data;
         _initPyodide(interruptBuffer);
+    } else if (id === WorkerMessages.FromVM.LoadGlobal) {
+        const { script, loadPromiseId } = event.data;
+        _loadGlobal(script, loadPromiseId);
     } else {
         throw new Error(`${id} is not a valid worker message id`);
     }

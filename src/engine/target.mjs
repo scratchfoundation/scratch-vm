@@ -317,6 +317,21 @@ class Target extends EventEmitter {
         });
     }
 
+    stopThread(threadId) {
+        if (this.threads[threadId]) {
+            this.threads[threadId].stopThread();
+        }
+    }
+
+    stopAllThreads(excludedThreadIds = []) {
+        Object.keys(this.threads).forEach((threadId) => {
+            if (!excludedThreadIds.includes(threadId)) {
+                this.stopThread(threadId);
+            }
+        });
+    }
+
+
     /**
      * Starts all threads with a matching tiggerEventId and triggerEventOptionId
      */

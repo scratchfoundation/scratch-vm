@@ -3,6 +3,7 @@ import chai from "chai";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
+import resetTarget from "../fixtures/reset-target.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -26,20 +27,13 @@ before(async () => {
     target2.id = "target2";
     vm.runtime.addTarget(target2);
 
-    await vm.runtime.pyatchLoadPromise;
+    await vm.runtime.workerLoadPromise;
 
     vm.start();
 });
 
-const resetTarget = () => {
-    vm.runtime.targets[0].x = 0;
-    vm.runtime.targets[0].y = 0;
-    vm.runtime.targets[0].direction = 90;
-    vm.runtime.targets[0].deleteAllThreads();
-};
-
 afterEach(async () => {
-    resetTarget();
+    resetTarget(vm.runtime.targets[0]);
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
