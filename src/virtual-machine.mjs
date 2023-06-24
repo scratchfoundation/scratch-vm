@@ -558,6 +558,18 @@ export default class VirtualMachine extends EventEmitter {
 
         const projectJson = JSON.stringify(object2);
 
+        return projectJson;
+    }
+
+    /**
+     * Downloads a zip file containing all project data with the following
+     * naming template "[project name].ptch1"
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    async downloadProject() {
+        const projectJson = await this.serializeProject();
+
         /* TODO: add assets into this */
 
         const zip = new JSZip();
@@ -570,28 +582,17 @@ export default class VirtualMachine extends EventEmitter {
 
         // This may be needed once custom sprites are added.
         /* this.runtime.targets.forEach((target) => {
-            if (target instanceof RenderedTarget) {
-                target.getCostumes().forEach((costume) => {
-                    console.log(costume);
-                    if (!zip.files[costume.md5]) {
-                        zip.file(costume.md5, new Blob([costume.asset.data]));
+                    if (target instanceof RenderedTarget) {
+                        target.getCostumes().forEach((costume) => {
+                            console.log(costume);
+                            if (!zip.files[costume.md5]) {
+                                zip.file(costume.md5, new Blob([costume.asset.data]));
+                            }
+                        });
                     }
-                });
-            }
-        }); */
+                }); */
 
-        const final = await zip.generateAsync({ type: "blob" }).then((content) => content);
-        return final;
-    }
-
-    /**
-     * Downloads a zip file containing all project data with the following
-     * naming template "[project name].ptch1"
-     *
-     * @returns {Blob} A Blob object representing the zip file
-     */
-    async downloadProject() {
-        const proj = await this.serializeProject();
+        const zippedProject = await zip.generateAsync({ type: "blob" }).then((content) => content);
 
         /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
         const element = document.createElement("a");
@@ -610,7 +611,7 @@ export default class VirtualMachine extends EventEmitter {
         const a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
-        const url = window.URL.createObjectURL(proj);
+        const url = window.URL.createObjectURL(zippedProject);
         a.href = url;
         a.download = "project.ptch1";
         a.click();
@@ -618,10 +619,10 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Restores the state of the VM from a Blob object that has been generated from a
+     * Restores the state of the VM from a ArrayBuffer object that has been generated from a
      * valid Patch Project .ptch1 file.
      *
-     * @param {Blob} projectData - A Blob object generated from
+     * @param {ArrayBuffer} projectData - A ArrayBuffer object generated from
      * a valid Patch Project .ptch1 file
      */
     async loadProject(projectData) {
