@@ -91,10 +91,10 @@ class PyatchLinker {
      * Generates the line of python code to unpack all the pyatch api primitives
      * @returns {string} - the line of python
      */
-    registerGlobalsImports(globalVars) {
+    registerGlobalsImports(globalVariables) {
         let snippet = "";
-        if (globalVars) {
-            Object.keys(globalVars).forEach((name) => {
+        if (globalVariables) {
+            Object.keys(globalVariables).forEach((name) => {
                 snippet += `${linkConstants.python_tab_char}global ${name}\n`;
             });
         }

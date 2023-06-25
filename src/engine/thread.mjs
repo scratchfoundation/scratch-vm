@@ -38,16 +38,15 @@ class Thread {
         this.triggerEvent = triggerEventId;
         this.triggerEventOption = triggerEventOption;
 
-        if (this.script && this.script !== "") {
-            this.loadPromise = this.loadThread(this.script);
-        }
+        this.loadPromise = this.loadThread(this.script);
 
         // eslint-disable-next-line no-undef
         this.interruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
     }
 
     async loadThread(script) {
-        await this.worker.loadThread(this.id, script, this.interruptBuffer, this.runtime.globalVariables);
+        await this.runtime.workerLoadPromise;
+        await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
     }
 
     async startThread() {
@@ -60,7 +59,8 @@ class Thread {
     }
 
     async updateThreadScript(script) {
-        this.loadThread(this.id, script);
+        console.log("updating thread", this.id, "with script", script);
+        this.loadThread(script);
         this.script = script;
     }
 

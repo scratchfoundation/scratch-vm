@@ -38,6 +38,9 @@ export default class VirtualMachine extends EventEmitter {
          * @type {!Runtime}
          */
         this.runtime = new Runtime(this.startHats.bind(this));
+        this.runtime.on("WORKER READY", () => {
+            this.emit("VM READY");
+        });
     }
 
     /**
@@ -439,7 +442,7 @@ export default class VirtualMachine extends EventEmitter {
             this.editingTarget = target;
             // Emit appropriate UI updates.
             this.emitTargetsUpdate(false /* Don't emit project change */);
-            this.emitWorkspaceUpdate();
+            // this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
         }
     }
@@ -561,20 +564,9 @@ export default class VirtualMachine extends EventEmitter {
         return projectJson;
     }
 
-    /**
-     * Downloads a zip file containing all project data with the following
-     * naming template "[project name].ptch1"
-     *
-     * @returns {Blob} A Blob object representing the zip file
-     */
-    async downloadProject() {
+    async zipProject() {
         const projectJson = await this.serializeProject();
-
-        /* TODO: add assets into this */
-
         const zip = new JSZip();
-
-        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
 
         /** Example for adding in an asset:
          * zip.file("{scratch provided asset filename}", {the data});
@@ -592,7 +584,19 @@ export default class VirtualMachine extends EventEmitter {
                     }
                 }); */
 
+        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
         const zippedProject = await zip.generateAsync({ type: "blob" }).then((content) => content);
+        return zippedProject;
+    }
+
+    /**
+     * Downloads a zip file containing all project data with the following
+     * naming template "[project name].ptch1"
+     *
+     * @returns {Blob} A Blob object representing the zip file
+     */
+    async downloadProject() {
+        const zippedProject = await this.zipProject();
 
         /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
         const element = document.createElement("a");
@@ -675,6 +679,7 @@ export default class VirtualMachine extends EventEmitter {
 
         /* How fitting: on take 42, I finally got everything to work. */
         jsonData.globalVariables.forEach((variable) => {
+            console.log(variable);
             this.updateGlobalVariable(variable.name, variable.value);
         });
 
@@ -714,6 +719,14 @@ export default class VirtualMachine extends EventEmitter {
         return newThreadId;
     }
 
+    deleteThread(threadId) {
+        this.runtime.deleteThread(threadId);
+    }
+
+    getThreadsForTarget(targetId) {
+        return this.runtime.getThreadsForTarget(targetId);
+    }
+
     updateThreadScript(threadId, script) {
         this.runtime.updateThreadScript(threadId, script);
     }
@@ -740,5 +753,13 @@ export default class VirtualMachine extends EventEmitter {
 
     loadCostumeWrap(md5ext, costume, runtime, optVersion) {
         return loadCostume(md5ext, costume, runtime, optVersion);
+    }
+
+    isLoaded() {
+        return this.runtime.workerLoaded;
+    }
+
+    getAllRenderedTargets() {
+        return this.runtime.targets;
     }
 }

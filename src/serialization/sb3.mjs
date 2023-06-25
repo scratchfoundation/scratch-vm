@@ -1048,6 +1048,9 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
         object.threads.forEach((thread) => {
             target.addThread(thread.script, thread.triggerEventId, thread.triggerEventOption);
         });
+    } else {
+        // If there are no threads, add the default thread
+        target.addThread("");
     }
     Promise.all(costumePromises).then((costumes) => {
         sprite.costumes = costumes;

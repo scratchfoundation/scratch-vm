@@ -133,7 +133,11 @@ export default class Runtime extends EventEmitter {
         };
 
         this.pyatchWorker = new PyatchWorker();
-        this.workerLoadPromise = this.pyatchWorker.loadWorker();
+        this.workerLoaded = false;
+        this.workerLoadPromise = this.pyatchWorker.loadWorker().then(() => {
+            this.workerLoaded = true;
+            this.emit("WORKER READY");
+        });
 
         this.pyatchLinker = new PyatchLinker();
 
@@ -450,12 +454,6 @@ export default class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step() {
-        const threadIds = Object.keys(this._threads);
-        threadIds.forEach((id) => {
-            if (this._threads[id].done()) {
-                delete this._threads[id];
-            }
-        });
         this.draw();
     }
 
@@ -675,7 +673,7 @@ export default class Runtime extends EventEmitter {
         const interval = Runtime.RENDER_INTERVAL;
         this.currentStepTime = interval;
         this._steppingInterval = setInterval(() => {
-            this._step();
+            this.draw();
         }, interval);
         this.emit(Runtime.RUNTIME_STARTED);
     }
@@ -717,13 +715,14 @@ export default class Runtime extends EventEmitter {
         let foundThread = null;
         this.targets.forEach((target) => {
             if (target.hasThread(threadId)) {
-                foundThread = target.getThreadThread(threadId);
+                foundThread = target.getThread(threadId);
             }
         });
         return foundThread;
     }
 
     updateThreadScript(threadId, script) {
+        console.log("updateThreadScript", threadId, script);
         const thread = this.getThreadById(threadId);
         thread.updateThreadScript(script);
     }
@@ -742,6 +741,21 @@ export default class Runtime extends EventEmitter {
         const target = this.getTargetById(targetId);
         const newThreadId = target.addThread(script, triggerEventId, option);
         return newThreadId;
+    }
+
+    getTargetByThreadId(threadId) {
+        const thread = this.getThreadById(threadId);
+        return thread.target;
+    }
+
+    deleteThread(threadId) {
+        const target = this.getTargetByThreadId(threadId);
+        target.deleteThread(threadId);
+    }
+
+    getThreadsForTarget(targetId) {
+        const target = this.getTargetById(targetId);
+        return target.threads;
     }
 
     updateGlobalVariable(name, value) {
