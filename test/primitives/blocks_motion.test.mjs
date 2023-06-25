@@ -241,11 +241,7 @@ describe("Runtime Exec Primitives", () => {
         it("Get X", async () => {
             const eX = target.x;
 
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("motion_xposition", {}, "test_token");
+            const returnValue = await thread.executeBlock("motion_xposition", {}, "test_token");
             thread.returnValueCallback = null;
 
             expect(returnValue).to.equal(eX);
@@ -254,12 +250,7 @@ describe("Runtime Exec Primitives", () => {
         it("Get Y", async () => {
             const eY = target.y;
 
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("motion_yposition", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("motion_yposition", {}, "test_token");
 
             expect(returnValue).to.equal(eY);
         });
@@ -267,12 +258,7 @@ describe("Runtime Exec Primitives", () => {
         it("Get Direction", async () => {
             const eDirection = target.direction;
 
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("motion_direction", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("motion_direction", {}, "test_token");
 
             expect(returnValue).to.equal(eDirection);
         });

@@ -3,6 +3,7 @@ import chai from "chai";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
+import resetTarget from "../fixtures/reset-target.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -29,188 +30,150 @@ before(async () => {
 
     vm.runtime.addTarget(target2);
 
-    await vm.runtime.pyatchLoadPromise;
+    await vm.runtime.workerLoadPromise;
 
     vm.start();
 });
 
-const resetTarget = () => {
-    vm.runtime.targets[0].x = 0;
-    vm.runtime.targets[0].y = 0;
-    vm.runtime.targets[0].direction = 90;
-};
-
 afterEach(async () => {
-    resetTarget();
+    resetTarget(vm.runtime.targets[0]);
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Motion Blocks", () => {
         it("Move", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["move(10)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `move(10)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
 
         it("Go To XY", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["goToXY(10, 5)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `goToXY(10, 5)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Go To", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['goTo("target2")'],
-                },
-            };
-
             target2.x = 10;
             target2.y = 5;
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `goTo("${target2.id}")`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Turn Right", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["turnRight(90)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `turnRight(90)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(180);
         });
 
         it("Turn Left", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["turnLeft(90)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `turnLeft(90)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(0);
         });
 
         it("Point In Direction", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["pointInDirection(90)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `pointInDirection(90)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
         it("pointTowards", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['pointTowards("target2")'],
-                },
-            };
             const t2i = 1;
             vm.runtime.targets[t2i].x = 5;
             vm.runtime.targets[t2i].y = 5;
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `pointTowards("target2")`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(45);
         });
 
         it("Glide", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["await glide(1, 10, 5)"],
-                },
-            };
+            const targetId = "target1";
+            const script = `glide(1, 10, 5)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("Glide To", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`await glideTo(1, '${target2.id}')`],
-                },
-            };
-
             target2.x = 10;
             target2.y = 5;
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            const targetId = "target1";
+            const script = `await glideTo(1, '${target2.id}')`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(10);
             expect(vm.runtime.targets[0].y).to.equal(5);
         });
 
         it("If On Edge Bounce", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ["ifOnEdgeBounce()"],
-                },
-            };
+            const targetId = "target1";
+            const script = `ifOnEdgeBounce()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             // Not on edge so angle will not change
             expect(vm.runtime.targets[0].direction).to.equal(90);
         });
 
         it("Set Rotation Style", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['setRotationStyle("left-right")'],
-                },
-            };
+            const targetId = "target1";
+            const script = `setRotationStyle("left-right")`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].rotationStyle).to.equal("left-right");
         });
@@ -220,15 +183,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const dx = 10;
             const oldY = target.y;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`changeX(${dx})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `changeX(${dx})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX + dx);
             expect(vm.runtime.targets[0].y).to.equal(oldY);
@@ -239,15 +199,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldY = target.y;
             const dy = 10;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`changeY(${dy})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `changeY(${dy})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(oldY + dy);
@@ -256,16 +213,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         it("Set X", async () => {
             const eX = 10;
             const oldY = target.y;
+            const targetId = "target1";
+            const script = `setX(${eX})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`setX(${eX})`],
-                },
-            };
-
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(eX);
             expect(vm.runtime.targets[0].y).to.equal(oldY);
@@ -275,15 +228,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldX = target.x;
             const eY = 10;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`setY(${eY})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `setY(${eY})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX);
             expect(vm.runtime.targets[0].y).to.equal(eY);
@@ -293,15 +243,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldX = target.x;
             const dX = 15;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`x = await getX()\nsetX(x + ${dX})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `x = await getX()\nsetX(x + ${dX})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].x).to.equal(oldX + dX);
         });
@@ -310,15 +257,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldY = target.y;
             const dY = 15;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`y = await getY()\nsetY(y + ${dY})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `x = await getY()\nsetY(x + ${dY})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].y).to.equal(oldY + dY);
         });
@@ -327,15 +271,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const oldDegrees = target.direction;
             const dDegrees = 15;
 
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: [`degrees = await getDirection()\npointInDirection(degrees + ${dDegrees})`],
-                },
-            };
+            const targetId = "target1";
+            const script = `degrees = await getDirection()\npointInDirection(degrees + ${dDegrees})`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].direction).to.equal(oldDegrees + dDegrees);
         });

@@ -37,44 +37,24 @@ before(async () => {
 describe("Runtime Exec Primitives", () => {
     describe("Sensing Blocks", () => {
         it("Is Touching", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_touchingobject", { TOUCHINGOBJECTMENU: "Sprite 2" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_touchingobject", { TOUCHINGOBJECTMENU: "Sprite 2" }, "test_token");
 
             expect(returnValue).to.equal(false);
         });
         it("Touching Color", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_touchingcolor", { COLOR: "blue" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_touchingcolor", { COLOR: "blue" }, "test_token");
 
             expect(returnValue).to.equal(false);
         });
         it("Color Touching Color", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_coloristouchingcolor", { COLOR: "blue", COLOR2: "red" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_coloristouchingcolor", { COLOR: "blue", COLOR2: "red" }, "test_token");
 
             expect(returnValue).to.equal(false);
         });
         it("Distance To", async () => {
             target2.setXY(10, 0);
 
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_distanceto", { DISTANCETOMENU: "Sprite 2" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_distanceto", { DISTANCETOMENU: "Sprite 2" }, "test_token");
 
             expect(returnValue).to.equal(10);
         });
@@ -82,74 +62,39 @@ describe("Runtime Exec Primitives", () => {
         it("Get Attribute Of", async () => {
             target.setXY(10, 0);
 
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_of", { OBJECT: "Sprite 1", PROPERTY: "x position" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_of", { OBJECT: "Sprite 1", PROPERTY: "x position" }, "test_token");
 
             expect(returnValue).to.equal(10);
         });
         it("Get Mouse X", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_mousex", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_mousex", {}, "test_token");
 
             expect(returnValue).to.equal(undefined);
         });
         it("Get Mouse Y", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_mousey", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_mousey", {}, "test_token");
 
             expect(returnValue).to.equal(undefined);
         });
         it("Is Mouse Down", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_mousedown", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_mousedown", {}, "test_token");
 
             expect(returnValue).to.equal(false);
         });
         it("Is Key Pressed", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_keypressed", { KEY_OPTION: "space" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_keypressed", { KEY_OPTION: "space" }, "test_token");
 
             expect(returnValue).to.equal(false);
         });
         it("Current DateTime", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_current", { CURRENTMENU: "date" }, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_current", { CURRENTMENU: "date" }, "test_token");
 
             const date = new Date();
 
             expect(returnValue).to.equal(date.getDate());
         });
         it("Days Since 2000", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_dayssince2000", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_dayssince2000", {}, "test_token");
 
             const msPerDay = 24 * 60 * 60 * 1000;
             const today = new Date();
@@ -162,25 +107,13 @@ describe("Runtime Exec Primitives", () => {
             expect(returnValue).to.equal(daysSince2000);
         });
         it("Get Loudness", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-
-            await thread.executeBlock("sensing_loudness", {}, "test_token");
-
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_loudness", {}, "test_token");
 
             // not initializing an audioEngine so loudness will be -1
             expect(returnValue).to.equal(-1);
         });
         it("Get Username", async () => {
-            let returnValue = null;
-            thread.returnValueCallback = (token, result) => {
-                returnValue = result;
-            };
-            await thread.executeBlock("sensing_username", {}, "test_token");
-            thread.returnValueCallback = null;
+            const returnValue = await thread.executeBlock("sensing_username", {}, "test_token");
 
             expect(returnValue).to.equal(null);
         });

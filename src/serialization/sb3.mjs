@@ -471,6 +471,12 @@ const serializeTarget = function (target, extensions) {
     targetExtensions.forEach((extensionId) => {
         extensions.add(extensionId);
     });
+
+    //Add Patch thread data to the target
+    obj.threads = Object.keys(target.threads).map((threadId) => {
+        const thread = target.threads[threadId];
+        return { script: thread.script, triggerEventId: thread.triggerEvent, triggerEventOption: thread.triggerEventOption };
+    });
     return obj;
 };
 
@@ -1036,6 +1042,15 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     }
     if (object.hasOwnProperty("draggable")) {
         target.draggable = object.draggable;
+    }
+    // Patch Deserialization of threads
+    if (object.hasOwnProperty("threads")) {
+        object.threads.forEach((thread) => {
+            target.addThread(thread.script, thread.triggerEventId, thread.triggerEventOption);
+        });
+    } else {
+        // If there are no threads, add the default thread
+        target.addThread("");
     }
     Promise.all(costumePromises).then((costumes) => {
         sprite.costumes = costumes;

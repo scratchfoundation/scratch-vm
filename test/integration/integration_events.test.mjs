@@ -3,6 +3,7 @@ import chai from "chai";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
+import resetTarget from "../fixtures/reset-target.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -20,19 +21,13 @@ before(async () => {
     target.id = "target1";
     vm.runtime.addTarget(target);
 
-    await vm.runtime.pyatchLoadPromise;
+    await vm.runtime.workerLoadPromise;
 
     vm.start();
 });
 
-const resetTarget = () => {
-    vm.runtime.targets[0].x = 0;
-    vm.runtime.targets[0].y = 0;
-    vm.runtime.targets[0].direction = 90;
-};
-
 afterEach(async () => {
-    resetTarget();
+    resetTarget(vm.runtime.targets[0]);
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
@@ -40,16 +35,17 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         it("Broadcast", async () => {
             const messageId = "message1";
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`broadcast("${messageId}")`],
-                    event_whenbroadcastreceived: {
-                        [messageId]: [`move(${steps})`],
-                    },
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const broadcastScript = `broadcast("${messageId}")`;
+            const triggerEventId = "event_whenflagclicked";
+
+            const moveScript = `move(${steps})`;
+            const broadcastTriggerEventId = "event_whenbroadcastreceived";
+            const broadcastTriggerEventOption = messageId;
+
+            await vm.addThread(targetId, broadcastScript, triggerEventId);
+            await vm.addThread(targetId, moveScript, broadcastTriggerEventId, broadcastTriggerEventOption);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
@@ -59,16 +55,17 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         it("Broadcast and Wait", async () => {
             const messageId = "message1";
             const steps = 10;
-            const executionObject = {
-                target1: {
-                    event_whenflagclicked: [`await broadcastAndWait("${messageId}")\nx = await getX()\nsay(x)`],
-                    event_whenbroadcastreceived: {
-                        [messageId]: [`move(${steps})`],
-                    },
-                },
-            };
 
-            await vm.loadScripts(executionObject);
+            const targetId = "target1";
+            const broadcastScript = `await broadcastAndWait("${messageId}")\nx = await getX()\nsay(x)`;
+            const triggerEventId = "event_whenflagclicked";
+
+            const moveScript = `move(${steps})`;
+            const broadcastTriggerEventId = "event_whenbroadcastreceived";
+            const broadcastTriggerEventOption = messageId;
+
+            await vm.addThread(targetId, broadcastScript, triggerEventId);
+            await vm.addThread(targetId, moveScript, broadcastTriggerEventId, broadcastTriggerEventOption);
             await vm.startHats("event_whenflagclicked");
 
             expect(vm.runtime.targets[0].x).to.equal(steps);
