@@ -3,6 +3,7 @@ import chai from "chai";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
+import resetTarget from "../fixtures/reset-target.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
@@ -35,83 +36,58 @@ before(async () => {
     targetClone.id = "targetClone";
     vm.runtime.addTarget(targetClone);
 
-    await vm.runtime.pyatchLoadPromise;
+    await vm.runtime.workerLoadPromise;
 
     vm.start();
 });
 
-const resetTarget = () => {
-    vm.runtime.targets[0].x = 0;
-    vm.runtime.targets[0].y = 0;
-    vm.runtime.targets[0].direction = 90;
-};
-
 afterEach(async () => {
-    resetTarget();
+    resetTarget(vm.runtime.targets[0]);
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Control Blocks", () => {
         describe("Clone", () => {
-            it("Myself", async () => {
-                const steps = 10;
-                const executionObject = {
-                    target1: {
-                        event_whenflagclicked: [`createClone('myself')`],
-                        control_start_as_clone: [`move(${steps})`],
-                    },
-                };
+            it("Self", async () => {
+                const targetId = "target1";
+                const script = `clone("self")`;
+                const triggerEventId = "event_whenflagclicked";
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("event_whenflagclicked");
-
-                expect(vm.runtime.targets[0].x).to.equal(steps);
-                expect(vm.runtime.targets[0].y).to.equal(0);
+                await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
             });
 
             it("Other", async () => {
-                const steps = 10;
-                const executionObject = {
-                    target1: {
-                        control_start_as_clone: [`move(${steps})`],
-                    },
-                    target2: {
-                        event_whenflagclicked: [`createClone('myself')`],
-                    },
-                };
+                const targetId = "target1";
+                const script = `clone("targetClone")`;
+                const triggerEventId = "event_whenflagclicked";
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("event_whenflagclicked");
-
-                expect(vm.runtime.targets[0].x).to.equal(steps);
-                expect(vm.runtime.targets[0].y).to.equal(0);
+                await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
             });
 
             it("Delete", async () => {
-                const targetCount = vm.runtime.targets.length;
-                const executionObject = {
-                    targetClone: {
-                        control_start_as_clone: [`deleteClone()`],
-                    },
-                };
+                const targetId = "targetClone";
+                const cloneScript = `deleteClone()`;
+                const originalScript = `clone("self")`;
+                const originalTriggerEventId = "event_whenflagclicked";
+                const cloneTriggerEventId = "control_whenistartasclone";
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("control_start_as_clone", "targetClone");
-
-                expect(vm.runtime.targets.length).to.equal(targetCount - 1);
+                await vm.addThread(targetId, originalScript, originalTriggerEventId);
+                await vm.addThread(targetId, cloneScript, cloneTriggerEventId);
+                await vm.startHats(originalTriggerEventId);
+                expect(vm.runtime.targets.length).to.equal(1);
             });
         });
         describe("Stop All", () => {
             it("Interrupt Current Thread", async () => {
                 const steps = 10;
-                const executionObject = {
-                    target1: {
-                        event_whenflagclicked: [`move(${steps})\nstop("this")\nmove(${steps})`],
-                    },
-                };
+                const targetId = "target1";
+                const script = `move(${steps})\nstop("this")\nmove(${steps})`;
+                const triggerEventId = "event_whenflagclicked";
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("event_whenflagclicked");
+                await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
 
                 expect(vm.runtime.targets[0].x).to.equal(steps);
                 expect(vm.runtime.targets[0].y).to.equal(0);
@@ -119,14 +95,14 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
             it("Interrupt Other Thread", async () => {
                 const steps = 10;
-                const executionObject = {
-                    target1: {
-                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstop("other")\nmove(${steps / 2})`, `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.5)\nmove(${steps})`],
-                    },
-                };
+                const targetId = "target1";
+                const script1 = `import asyncio\nawait asyncio.sleep(0.25)\nstop("other")\nmove(${steps / 2})`;
+                const script2 = `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.5)\nmove(${steps})`;
+                const triggerEventId = "event_whenflagclicked";
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("event_whenflagclicked");
+                await vm.addThread(targetId, script1, triggerEventId);
+                await vm.addThread(targetId, script2, triggerEventId);
+                await vm.startHats(triggerEventId);
 
                 expect(vm.runtime.targets[0].x).to.equal(steps + steps / 2);
                 expect(vm.runtime.targets[0].y).to.equal(0);
@@ -134,17 +110,16 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
             it("Interrupt All", async () => {
                 const steps = 10;
-                const executionObject = {
-                    target1: {
-                        event_whenflagclicked: [`import asyncio\nmove(${steps})\nawait asyncio.sleep(0.6)\nmove(${steps})`],
-                    },
-                    target2: {
-                        event_whenflagclicked: [`import asyncio\nawait asyncio.sleep(0.25)\nstop("all")`],
-                    },
-                };
 
-                await vm.loadScripts(executionObject);
-                await vm.startHats("event_whenflagclicked");
+                const target1Id = "target1";
+                const target2Id = "target2";
+                const script1 = `import asyncio\nmove(${steps})\nawait asyncio.sleep(0.6)\nmove(${steps})`;
+                const script2 = `import asyncio\nawait asyncio.sleep(0.25)\nstop("all")`;
+                const triggerEventId = "event_whenflagclicked";
+
+                await vm.addThread(target1Id, script1, triggerEventId);
+                await vm.addThread(target2Id, script2, triggerEventId);
+                await vm.startHats(triggerEventId);
 
                 expect(vm.runtime.targets[0].x).to.equal(steps);
                 expect(vm.runtime.targets[0].y).to.equal(0);
