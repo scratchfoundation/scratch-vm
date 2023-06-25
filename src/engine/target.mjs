@@ -1,5 +1,5 @@
 import EventEmitter from "events";
-
+import Thread from "./thread.mjs";
 import uid from "../util/uid.mjs";
 
 /**
@@ -45,6 +45,11 @@ class Target extends EventEmitter {
          * @type {Object.<string, *>}
          */
         this._edgeActivatedHatValues = {};
+
+        /**
+         * Threads currently associated with a target
+         */
+        this.threads = {}
     }
 
     /**
@@ -259,6 +264,88 @@ class Target extends EventEmitter {
                 return ref;
             });
         }
+    }
+
+    /**
+     * Adds a new thread to the associated threads of the target
+     */
+    addThread(script = "", triggerEventId = "event_whenflagclicked", triggerEventOption = "") {
+        const newThread = new Thread(this, script, triggerEventId, triggerEventOption);
+        const threadId = newThread.id;
+        this.threads[threadId] = newThread;
+        return threadId;
+    }
+
+    /**
+     * Updates the script of a thread specified by threadId
+     */
+    updateThreadScript(threadId, script) {
+        this.threads[threadId].updateThreadScript(script);
+    }
+
+    /**
+     * Updates the tiggerEvent of a thread specified by threadId
+     */
+    updateThreadTriggerEvent(threadId, triggerEvent) {
+        this.threads[threadId].updateThreadTriggerEvent(triggerEvent);
+    }
+
+    /**
+     * Updates the tiggerEventOption of a thread specified by threadId
+     */
+    updateThreadTriggerEventOption(threadId, triggerEventOption) {
+        this.threads[threadId].updateThreadTriggerEventOption(triggerEventOption);
+    }
+
+    hasThread(threadId) {
+        return Object.keys(this.threads).includes(threadId);
+    }
+
+    getThread(threadId) {
+        return this.threads[threadId];
+    }
+
+    deleteThread(threadId) {
+        if (this.threads[threadId]) {
+            delete this.threads[threadId];
+        }
+    }
+
+    deleteAllThreads() {
+        Object.keys(this.threads).forEach((threadId) => {
+            this.deleteThread(threadId);
+        });
+    }
+
+    stopThread(threadId) {
+        if (this.threads[threadId]) {
+            this.threads[threadId].stopThread();
+        }
+    }
+
+    stopAllThreads(excludedThreadIds = []) {
+        Object.keys(this.threads).forEach((threadId) => {
+            if (!excludedThreadIds.includes(threadId)) {
+                this.stopThread(threadId);
+            }
+        });
+    }
+
+
+    /**
+     * Starts all threads with a matching tiggerEventId and triggerEventOptionId
+     */
+    async startHat(eventId, option) {
+        const threadPromises = [];
+        Object.keys(this.threads).forEach((threadId) => {
+            const thread = this.threads[threadId];
+            if (thread.triggerEvent === eventId) {
+                if (thread.triggerEventOption === "" || thread.triggerEventOption === option) {
+                    threadPromises.push(thread.startThread());
+                }
+            }
+        });
+        await Promise.all(threadPromises);
     }
 }
 

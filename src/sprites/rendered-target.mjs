@@ -1074,6 +1074,7 @@ class RenderedTarget extends Target {
             volume: this.volume,
             videoTransparency: this.videoTransparency,
             videoState: this.videoState,
+            threads: this.threads,
         };
     }
 

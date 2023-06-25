@@ -112,7 +112,7 @@ before(async () => {
 
     vm.runtime.addTarget(target2);
 
-    await vm.runtime.pyatchLoadPromise;
+    await vm.runtime.workerLoadPromise;
 
     vm.start();
 });
@@ -136,30 +136,26 @@ beforeEach(async () => {
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Looks Blocks", () => {
         it("Say", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['say("Hello friends")'],
-                },
-            };
+            const message = "Hello friends";
+            const targetId = "target1";
+            const script = `say("${message}")`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("Hello friends");
         });
 
         it("Think", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['think("Hello friends")'],
-                },
-            };
+            const message = "Hello friends";
+            const targetId = "target1";
+            const script = `think("${message}")`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("think");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("Hello friends");
@@ -168,145 +164,122 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // TODO: Say and think for seconds
 
         it("Show", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["show()"] },
-            };
+            const targetId = "target1";
+            const script = `hide()\nshow()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].visible).to.equal(true);
         });
 
         it("Hide", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["hide()"] },
-            };
+            const targetId = "target1";
+            const script = `show()\nhide()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].visible).to.equal(false);
         });
 
         it("Set Costume From Index", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["setCostumeTo(2)"] },
-            };
+            const targetId = "target1";
+            const script = `setCostumeTo(2)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
         it("Set Costume From Name", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['setCostumeTo("cat-fly")'],
-                },
-            };
+            const targetId = "target1";
+            const script = `setCostumeTo("cat-fly")`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(2);
         });
 
         it("Next Costume", async () => {
-            // set costume to 0th costume, next to costume 1
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["setCostumeTo(1)\nnextCostume()"] },
-            };
+            const targetId = "target1";
+            const script = `setCostumeTo(1)\nnextCostume()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].currentCostume).to.equal(1);
         });
 
         it("Set Backdrop From Index", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["setBackdropTo(1)"] },
-            };
+            const targetId = "target1";
+            const script = `setBackdropTo(1)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(0);
         });
 
         it("Set Backdrop From Name", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['setBackdropTo("nebula")'],
-                },
-            };
+            const targetId = "target1";
+            const script = `setBackdropTo("nebula")`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
         it("Next Backdrop", async () => {
-            // set backdrop to 0th backdrop, next twice to backdrop 2
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["setBackdropTo(1)\nnextBackdrop()\nnextBackdrop()"] },
-            };
+            const targetId = "target1";
+            const script = `setBackdropTo(1)\nnextBackdrop()\nnextBackdrop()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.getTargetForStage().currentCostume).to.equal(2);
         });
 
         it("Change Effect By", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['changeGraphicEffectBy("ghost", 50)'],
-                },
-            };
+            const targetId = "target1";
+            const script = `changeGraphicEffectBy("ghost", 50)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it("Set Effect To", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['setGraphicEffectTo("ghost", 50)'],
-                },
-            };
+            const targetId = "target1";
+            const script = `setGraphicEffectTo("ghost", 50)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(50);
         });
 
         it("Clear Graphic Effects", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: {
-                    [eventId]: ['setGraphicEffectTo("ghost", 50)\nsetGraphicEffectTo("brightness", 100)\nclearGraphicEffects()'],
-                },
-            };
+            const targetId = "target1";
+            const script = `setGraphicEffectTo("ghost", 50)\nsetGraphicEffectTo("brightness", 100)\nclearGraphicEffects()`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].effects.ghost).to.equal(0);
             expect(vm.runtime.targets[0].effects.brightness).to.equal(0);
@@ -316,13 +289,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // without defining these sizes, Sprite Size is limited to [100, 100]
         // I'm doing a simple 0 change function
         it("Change Size By", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["changeSizeBy(0)"] },
-            };
+            const targetId = "target1";
+            const script = `changeSizeBy(0)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].size).to.equal(100);
         });
@@ -330,13 +302,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         // similar to above, Sprite Size is limited to [100, 100]
         // Testing just a setSize(100)
         it("Set Size", async () => {
-            const eventId = "event_whenflagclicked";
-            const targetAndCode = {
-                [target.id]: { [eventId]: ["setSizeTo(100)"] },
-            };
+            const targetId = "target1";
+            const script = `setSizeTo(100)`;
+            const triggerEventId = "event_whenflagclicked";
 
-            await vm.loadScripts(targetAndCode);
-            await vm.startHats(eventId);
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
 
             expect(vm.runtime.targets[0].size).to.equal(100);
         });

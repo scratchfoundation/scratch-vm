@@ -38,6 +38,9 @@ export default class VirtualMachine extends EventEmitter {
          * @type {!Runtime}
          */
         this.runtime = new Runtime(this.startHats.bind(this));
+        this.runtime.on("WORKER READY", () => {
+            this.emit("VM READY");
+        });
     }
 
     /**
@@ -439,7 +442,7 @@ export default class VirtualMachine extends EventEmitter {
             this.editingTarget = target;
             // Emit appropriate UI updates.
             this.emitTargetsUpdate(false /* Don't emit project change */);
-            this.emitWorkspaceUpdate();
+            // this.emitWorkspaceUpdate();
             this.runtime.setEditingTarget(target);
         }
     }
@@ -558,11 +561,12 @@ export default class VirtualMachine extends EventEmitter {
 
         const projectJson = JSON.stringify(object2);
 
-        /* TODO: add assets into this */
+        return projectJson;
+    }
 
+    async zipProject() {
+        const projectJson = await this.serializeProject();
         const zip = new JSZip();
-
-        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
 
         /** Example for adding in an asset:
          * zip.file("{scratch provided asset filename}", {the data});
@@ -570,18 +574,19 @@ export default class VirtualMachine extends EventEmitter {
 
         // This may be needed once custom sprites are added.
         /* this.runtime.targets.forEach((target) => {
-            if (target instanceof RenderedTarget) {
-                target.getCostumes().forEach((costume) => {
-                    console.log(costume);
-                    if (!zip.files[costume.md5]) {
-                        zip.file(costume.md5, new Blob([costume.asset.data]));
+                    if (target instanceof RenderedTarget) {
+                        target.getCostumes().forEach((costume) => {
+                            console.log(costume);
+                            if (!zip.files[costume.md5]) {
+                                zip.file(costume.md5, new Blob([costume.asset.data]));
+                            }
+                        });
                     }
-                });
-            }
-        }); */
+                }); */
 
-        const final = await zip.generateAsync({ type: "blob" }).then((content) => content);
-        return final;
+        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
+        const zippedProject = await zip.generateAsync({ type: "blob" }).then((content) => content);
+        return zippedProject;
     }
 
     /**
@@ -591,7 +596,7 @@ export default class VirtualMachine extends EventEmitter {
      * @returns {Blob} A Blob object representing the zip file
      */
     async downloadProject() {
-        const proj = await this.serializeProject();
+        const zippedProject = await this.zipProject();
 
         /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
         const element = document.createElement("a");
@@ -610,7 +615,7 @@ export default class VirtualMachine extends EventEmitter {
         const a = document.createElement("a");
         document.body.appendChild(a);
         a.style = "display: none";
-        const url = window.URL.createObjectURL(proj);
+        const url = window.URL.createObjectURL(zippedProject);
         a.href = url;
         a.download = "project.ptch1";
         a.click();
@@ -618,10 +623,10 @@ export default class VirtualMachine extends EventEmitter {
     }
 
     /**
-     * Restores the state of the VM from a Blob object that has been generated from a
+     * Restores the state of the VM from a ArrayBuffer object that has been generated from a
      * valid Patch Project .ptch1 file.
      *
-     * @param {Blob} projectData - A Blob object generated from
+     * @param {ArrayBuffer} projectData - A ArrayBuffer object generated from
      * a valid Patch Project .ptch1 file
      */
     async loadProject(projectData) {
@@ -674,6 +679,7 @@ export default class VirtualMachine extends EventEmitter {
 
         /* How fitting: on take 42, I finally got everything to work. */
         jsonData.globalVariables.forEach((variable) => {
+            console.log(variable);
             this.updateGlobalVariable(variable.name, variable.value);
         });
 
@@ -696,11 +702,6 @@ export default class VirtualMachine extends EventEmitter {
         }
     }
 
-    async loadScripts(targetCodeMap) {
-        const result = await this.runtime.loadScripts(targetCodeMap);
-        return result;
-    }
-
     /**
      * Start all relevant hats.
      * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
@@ -711,6 +712,31 @@ export default class VirtualMachine extends EventEmitter {
     async startHats(hat, option) {
         const startedHat = await this.runtime.startHats(hat, option);
         return startedHat;
+    }
+
+    addThread(targetId, script, triggerEventId, option) {
+        const newThreadId = this.runtime.addThread(targetId, script, triggerEventId, option);
+        return newThreadId;
+    }
+
+    deleteThread(threadId) {
+        this.runtime.deleteThread(threadId);
+    }
+
+    getThreadsForTarget(targetId) {
+        return this.runtime.getThreadsForTarget(targetId);
+    }
+
+    updateThreadScript(threadId, script) {
+        this.runtime.updateThreadScript(threadId, script);
+    }
+
+    updateThreadTriggerEvent(threadId, eventTrigger) {
+        this.runtime.updateThreadTriggerEvent(threadId, eventTrigger);
+    }
+
+    updateThreadTriggerEventOption(threadId, eventTriggerOption) {
+        this.runtime.updateThreadTriggerEventOption(threadId, eventTriggerOption);
     }
 
     updateGlobalVariable(name, value) {
@@ -727,5 +753,13 @@ export default class VirtualMachine extends EventEmitter {
 
     loadCostumeWrap(md5ext, costume, runtime, optVersion) {
         return loadCostume(md5ext, costume, runtime, optVersion);
+    }
+
+    isLoaded() {
+        return this.runtime.workerLoaded;
+    }
+
+    getAllRenderedTargets() {
+        return this.runtime.targets;
     }
 }

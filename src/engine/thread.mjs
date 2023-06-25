@@ -1,4 +1,6 @@
+import safeUid from "../util/safe-uid.mjs";
 import BlockUtility from "./block-utility.mjs";
+import WorkerMessages from "../worker/worker-messages.mjs";
 
 /**
  * A thread is just a queue of all the block operations requested by the worker
@@ -12,33 +14,65 @@ class Thread {
         return 1000 / 60;
     }
 
-    constructor(target, returnValueCallback, id = null) {
+    constructor(target, script, triggerEventId, triggerEventOption) {
         this.target = target;
 
         if (target.runtime) {
             this.runtime = target.runtime;
+            this.worker = target.runtime.pyatchWorker;
         } else {
             throw new Error("Targets must include a runtime to be used in threads");
         }
 
-        this.id = id;
-
         this.status = 0;
+
+        /**
+         * A unique ID for this target.
+         * @type {string}
+         */
+        this.id = safeUid();
 
         this.blockUtility = new BlockUtility(this.target, this.runtime, this);
 
-        this.returnValueCallback = returnValueCallback;
+        this.script = script;
+        this.triggerEvent = triggerEventId;
+        this.triggerEventOption = triggerEventOption;
+
+        this.loadPromise = this.loadThread(this.script);
+
+        // eslint-disable-next-line no-undef
+        this.interruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
     }
 
-    pushOp(primitiveOpcode, args, token) {
-        const targetId = this.target.id;
-        const blockUtil = this.blockUtility;
-        const opObj = { targetId, primitiveOpcode, args, blockUtil, token };
-
-        this.status = Thread.STATUS_RUNNING;
+    async loadThread(script) {
+        await this.runtime.workerLoadPromise;
+        await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
     }
 
-    async executeBlockFunction(blockFunction, args, util) {
+    async startThread() {
+        await this.loadPromise;
+        await this.worker.startThread(this.id, this.interruptBuffer, this.executeBlock);
+    }
+
+    async stopThread() {
+        await this.worker.stopThread(this.id, this.interruptBuffer);
+    }
+
+    async updateThreadScript(script) {
+        console.log("updating thread", this.id, "with script", script);
+        this.loadThread(script);
+        this.script = script;
+    }
+
+    async updateThreadTriggerEvent(triggerEventId) {
+        this.triggerEvent = triggerEventId;
+    }
+
+    async updateThreadTriggerEventOption(triggerEventOption) {
+        this.triggerEventOption = triggerEventOption;
+    }
+
+    async executePrimitive(blockFunction, args, util) {
         const tick = async (resolve) => {
             if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
                 this.status = Thread.STATUS_RUNNING;
@@ -55,14 +89,13 @@ class Thread {
         return returnValue;
     }
 
-    async executeBlock(opcode, args, token) {
+    executeBlock = async (opcode, args) => {
         this.status = Thread.STATUS_RUNNING;
 
         const blockFunction = this.runtime.getOpcodeFunction(opcode);
-        const result = await this.executeBlockFunction(blockFunction, args, this.blockUtility);
-
-        this.returnValueCallback({ token: token }, result);
-    }
+        const result = await this.executePrimitive(blockFunction, args, this.blockUtility);
+        return result;
+    };
 
     done() {
         return this.status === Thread.STATUS_DONE;
