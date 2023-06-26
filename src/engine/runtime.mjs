@@ -9,6 +9,7 @@ import scratch3MotionBlocks from "../blocks/scratch3_motion.mjs";
 import scratch3SensingBlocks from "../blocks/scratch3_sensing.mjs";
 import scratch3SoundBlocks from "../blocks/scratch3_sound.mjs";
 import scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
+import scratch3PenBlocks from "../blocks/scratch3_ext_pen.mjs";
 import patchCoreBlocks from "../blocks/patch_core.mjs";
 
 import Thread from "./thread.mjs";
@@ -33,6 +34,7 @@ const defaultBlockPackages = {
     scratch3_sensing: scratch3SensingBlocks,
     // scratch3_data: require('../blocks/scratch3_data'),
     // scratch3_procedures: require('../blocks/scratch3_procedures')
+    scratch3_ext_pen: scratch3PenBlocks,
     patch_core: patchCoreBlocks,
 };
 

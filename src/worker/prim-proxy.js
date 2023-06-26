@@ -83,6 +83,16 @@ class PrimProxy {
         createClone: "control_create_clone_of",
         deleteClone: "control_delete_this_clone",
 
+        erasePen: "pen_clear",
+        stampPen: "pen_stamp",
+        penDown: "pen_pendown",
+        penUp: "pen_penup",
+        setPenColor: "pen_setpencolortocolor",
+        changePenEffect: "pen_changepencolorparamby",
+        setPenEffect: "pen_setpencolorparamto",
+        changePenSize: "pen_changepensizeby",
+        setPenSize: "pen_setpensizeto",
+
         endThread: "core_endthread",
     };
 
@@ -433,6 +443,42 @@ class PrimProxy {
 
     async deleteClone() {
         await this.post(PrimProxy.opcodeMap.deleteClone, {});
+    }
+
+    async erasePen() {
+        await this.post(PrimProxy.opcodeMap.erasePen, {});
+    }
+
+    async stampPen() {
+        await this.post(PrimProxy.opcodeMap.stampPen, {});
+    }
+
+    async penDown() {
+        await this.post(PrimProxy.opcodeMap.penDown, {});
+    }
+
+    async penUp() {
+        await this.post(PrimProxy.opcodeMap.penUp, {});
+    }
+
+    async setPenColor(color) {
+        await this.post(PrimProxy.opcodeMap.setPenColor, { COLOR: color });
+    }
+
+    async changePenEffect(effect, change) {
+        await this.post(PrimProxy.opcodeMap.changePenEffect, { COLOR_PARAM: effect, VALUE: change });
+    }
+
+    async setPenEffect(effect, value) {
+        await this.post(PrimProxy.opcodeMap.setPenEffect, { COLOR_PARAM: effect, VALUE: value });
+    }
+
+    async changePenSize(size) {
+        await this.post(PrimProxy.opcodeMap.changePenSize, { SIZE: size });
+    }
+
+    async setPenSize(size) {
+        await this.post(PrimProxy.opcodeMap.setPenSize, { SIZE: size });
     }
 }
 
