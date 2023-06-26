@@ -398,11 +398,11 @@ export default class Runtime extends EventEmitter {
      */
     greenFlag() {
         this.stopAll();
-        this.emit(Runtime.PROJECT_START);
-        this.targets.forEach((target) => target.clearEdgeActivatedValues());
+        // this.emit(Runtime.PROJECT_START);
+        // this.targets.forEach((target) => target.clearEdgeActivatedValues());
         // Inform all targets of the green flag.
         for (let i = 0; i < this.targets.length; i++) {
-            this.targets[i].onGreenFlag();
+            this.targets[i].startHat("event_whenflagclicked");
         }
     }
 
@@ -414,10 +414,9 @@ export default class Runtime extends EventEmitter {
         this.emit(Runtime.PROJECT_STOP_ALL);
 
         // Dispose all clones.
-        /*
         const newTargets = [];
         for (let i = 0; i < this.targets.length; i++) {
-            this.targets[i].onStopAll();
+            this.targets[i].stopAllThreads();
             if (this.targets[i].hasOwnProperty("isOriginal") && !this.targets[i].isOriginal) {
                 this.targets[i].dispose();
             } else {
@@ -425,10 +424,6 @@ export default class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
-        */
-        this.targets.forEach((target) => {
-            target.stopAllThreads();
-        });
     }
 
     /**

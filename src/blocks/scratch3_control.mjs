@@ -15,8 +15,6 @@ class Scratch3ControlBlocks {
      */
     getPrimitives() {
         return {
-            control_wait: this.wait,
-            control_wait_until: this.waitUntil,
             control_stop: this.stop,
             control_create_clone_of: this.createClone,
             control_delete_this_clone: this.deleteClone,
@@ -30,19 +28,6 @@ class Scratch3ControlBlocks {
                 label: "When I Start As Clone",
             },
         };
-    }
-
-    waitUntil(args, util) {
-        const condition = Cast.toBoolean(args.CONDITION);
-        if (!condition) {
-            util.yield();
-        }
-    }
-
-    wait(args, util) {
-        return Promise((resolve) => {
-            setTimeout(resolve, args.SECS);
-        });
     }
 
     async stop(args, util) {
@@ -63,7 +48,7 @@ class Scratch3ControlBlocks {
 
         // Set clone target
         let cloneTarget;
-        if (args.CLONE_OPTION === "_myself_") {
+        if (args.CLONE_OPTION === "myself" || args.CLONE_OPTION === "this" || args.CLONE_OPTION === "_myself_") {
             cloneTarget = util.target;
         } else {
             cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);

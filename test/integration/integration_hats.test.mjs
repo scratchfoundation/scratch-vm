@@ -170,5 +170,30 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].x).to.equal(0);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
+
+        it("When I Start as a Clone", async () => {
+            const steps = 10;
+
+            const targetId = "target1";
+            const cloneScript = `move(${steps})`;
+            const cloneTriggerEventId = "control_start_as_clone";
+            const originalScript = `createClone("_myself_")`;
+            const originalTriggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, cloneScript, cloneTriggerEventId);
+            await vm.addThread(targetId, originalScript, originalTriggerEventId);
+
+            await vm.startHats("event_whenflagclicked");
+
+            const originalTarget = vm.runtime.getTargetById(targetId);
+            const clonedTarget = vm.runtime.targets[vm.runtime.targets.length - 1];
+
+            expect(clonedTarget.isOriginal).to.equal(false);
+            expect(clonedTarget.x).to.equal(steps);
+            expect(clonedTarget.y).to.equal(0);
+
+            expect(originalTarget.x).to.equal(0);
+            expect(originalTarget.y).to.equal(0);
+        });
     });
 });

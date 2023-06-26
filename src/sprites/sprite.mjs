@@ -105,11 +105,11 @@ class Sprite {
         newClone.initAudio();
         if (newClone.isOriginal) {
             // Default to the sprite layer group if optLayerGroup is not provided
-            const layerGroup = typeof optLayerGroup === "string" ? optLayerGroup : StageLayering.SPRITE_LAYER;
+            const layerGroup = typeof optLayerGroup === 'string' ? optLayerGroup : StageLayering.SPRITE_LAYER;
             newClone.initDrawable(layerGroup);
-            this.runtime.fireTargetWasCreated(newClone);
+            // this.runtime.fireTargetWasCreated(newClone);
         } else {
-            this.runtime.fireTargetWasCreated(newClone, this.clones[0]);
+            // this.runtime.fireTargetWasCreated(newClone, this.clones[0]);
         }
         return newClone;
     }
