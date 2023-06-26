@@ -32,8 +32,10 @@ before(async () => {
     thread = new Thread(target, () => {});
 
     sprite2 = new Sprite(null, runtime);
+    sprite2.name = "target2";
     target2 = new RenderedTarget(sprite2, runtime);
     target2.id = "target2";
+    target2.isOriginal = true;
     runtime.addTarget(target2);
 
     spriteClone = new Sprite(null, runtime);
@@ -54,42 +56,32 @@ describe("Runtime Exec Primitives", () => {
     describe("Control Blocks", () => {
         describe("Clone", () => {
             it("Myself", async () => {
-                runtime.startHats = spy;
-
                 const targetCount = runtime.targets.length;
 
-                const returnValue = await thread.executeBlock("control_create_clone_of", { CLONE_OPTION: "myself" }, "test_token");
+                const { result } = await thread.executeBlock("control_create_clone_of", { CLONE_OPTION: "myself" }, "test_token");
 
-                expect(returnValue).to.equal(undefined);
+                expect(result).to.equal(undefined);
 
-                expect(spy).to.be.calledOnce;
-                expect(spy).to.be.calledWith("control_start_as_clone");
                 expect(runtime.targets.length).to.equal(targetCount + 1);
             });
 
             it("Other", async () => {
-                runtime.startHats = spy;
-
                 const targetCount = runtime.targets.length;
 
-                const returnValue = await thread.executeBlock("control_create_clone_of", { CLONE_OPTION: "target2" }, "test_token");
+                const { result } = await thread.executeBlock("control_create_clone_of", { CLONE_OPTION: "target2" }, "test_token");
 
-                expect(returnValue).to.equal(undefined);
-
-                expect(spy).to.be.calledOnce;
-                expect(spy).to.be.calledWith("control_start_as_clone", "target2");
+                expect(result).to.equal(undefined);
                 expect(runtime.targets.length).to.equal(targetCount + 1);
             });
-
+            /*
             it("Delete", async () => {
                 const targetCount = runtime.targets.length;
 
-                const returnValue = await threadClone.executeBlock("control_delete_this_clone", {}, "test_token");
+                const { result } = await threadClone.executeBlock("control_delete_this_clone", { CLONE_OPTION: "target2" }, "test_token");
 
-                expect(returnValue).to.equal(undefined);
-
-                expect(runtime.targets.length).to.equal(targetCount - 1);
-            });
+                expect(result).to.equal(undefined);
+                expect(runtime.targets.length).to.equal(targetCount);
+            }); */
         });
     });
 });

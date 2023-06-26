@@ -39,9 +39,9 @@ describe("Runtime Exec Primitives", () => {
             const broadcastOption = { id: "test_id", name: "test_broadcast" };
             runtime.startHats = spy;
 
-            const returnValue = await thread.executeBlock("event_broadcast", { BROADCAST_OPTION: broadcastOption }, "test_token");
+            const { result } = await thread.executeBlock("event_broadcast", { BROADCAST_OPTION: broadcastOption }, "test_token");
 
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
 
             expect(spy).to.be.calledOnce;
             expect(spy).to.be.calledWith("event_whenbroadcastreceived", broadcastOption.id);

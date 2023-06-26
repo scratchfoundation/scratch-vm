@@ -14,8 +14,7 @@ class PyatchWorker {
         this._worker.onerror = this.handleWorkerError.bind(this);
         this._blockOPCallbackMap = {};
 
-        // eslint-disable-next-line no-undef
-        this._pythonInterruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
+        this._threadInterruptMap = {};
 
         this._pyodidePromiseResolve = null;
         this._loadingPromiseMap = {};
@@ -96,9 +95,7 @@ class PyatchWorker {
         await this.loadGlobal(script);
     }
 
-    async startThread(threadId, threadInterruptBuffer, blockOpertationCallback) {
-        // eslint-disable-next-line no-param-reassign
-        threadInterruptBuffer[0] = 0;
+    async startThread(threadId, blockOpertationCallback) {
         const threadPromise = new Promise((resolve, reject) => {
             this._threadPromiseMap[threadId] = { resolve, reject };
         });
@@ -108,15 +105,12 @@ class PyatchWorker {
         const message = {
             id: WorkerMessages.FromVM.StartThread,
             threadId,
-            threadInterruptBuffer,
         };
         this._worker.postMessage(message);
         await threadPromise;
     }
 
-    async stopThread(threadId, threadInterruptBuffer) {
-        // eslint-disable-next-line no-param-reassign
-        threadInterruptBuffer[0] = 2;
+    async stopThread(threadId) {
         const endThreadPromise = this._threadPromiseMap[threadId];
         await endThreadPromise;
     }
