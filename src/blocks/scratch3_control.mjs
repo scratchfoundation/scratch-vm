@@ -48,7 +48,7 @@ class Scratch3ControlBlocks {
 
         // Set clone target
         let cloneTarget;
-        if (args.CLONE_OPTION === "myself" || args.CLONE_OPTION === "this") {
+        if (args.CLONE_OPTION === "myself" || args.CLONE_OPTION === "this" || args.CLONE_OPTION === "_myself_") {
             cloneTarget = util.target;
         } else {
             cloneTarget = this.runtime.getSpriteTargetByName(args.CLONE_OPTION);
@@ -64,6 +64,7 @@ class Scratch3ControlBlocks {
 
             // Place behind the original target.
             newClone.goBehindOther(cloneTarget);
+            newClone.isOriginal = false;
         }
     }
 

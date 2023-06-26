@@ -88,7 +88,6 @@ class PyatchWorker {
 
     async loadThread(threadId, script, globalVaraibles) {
         const wrappedScript = this.pyatchLinker.generatePython(threadId, script, globalVaraibles);
-
         await this.loadGlobal(wrappedScript);
     }
 
