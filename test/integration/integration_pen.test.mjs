@@ -73,7 +73,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
         it("Change Pen Color Param By", async () => {
             const targetId = "target1";
-            const script = `changePenEffect("saturation", 100")`;
+            const script = `changePenEffect("saturation", 100)`;
             const triggerEventId = "event_whenflagclicked";
 
             await vm.addThread(targetId, script, triggerEventId);
