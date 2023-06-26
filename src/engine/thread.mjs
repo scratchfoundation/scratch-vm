@@ -40,8 +40,7 @@ class Thread {
 
         this.loadPromise = this.loadThread(this.script);
 
-        // eslint-disable-next-line no-undef
-        this.interruptBuffer = new Uint8Array(new SharedArrayBuffer(1));
+        this.interruptThread = false;
     }
 
     async loadThread(script) {
@@ -51,15 +50,16 @@ class Thread {
 
     async startThread() {
         await this.loadPromise;
-        await this.worker.startThread(this.id, this.interruptBuffer, this.executeBlock);
+        this.interruptThread = false;
+        await this.worker.startThread(this.id, this.executeBlock);
     }
 
     async stopThread() {
-        await this.worker.stopThread(this.id, this.interruptBuffer);
+        this.interruptThread = true;
+        await this.worker.stopThread(this.id);
     }
 
     async updateThreadScript(script) {
-        console.log("updating thread", this.id, "with script", script);
         this.loadThread(script);
         this.script = script;
     }
@@ -90,11 +90,13 @@ class Thread {
     }
 
     executeBlock = async (opcode, args) => {
+        if (this.interruptThread) {
+            return { id: "InterruptThread" };
+        }
         this.status = Thread.STATUS_RUNNING;
-
         const blockFunction = this.runtime.getOpcodeFunction(opcode);
         const result = await this.executePrimitive(blockFunction, args, this.blockUtility);
-        return result;
+        return { id: "ResultValue", result };
     };
 
     done() {

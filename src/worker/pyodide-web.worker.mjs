@@ -157,9 +157,9 @@ function _startThread(threadId, threadInterruptBuffer) {
     };
     if (threadId) {
         const runThread = _getThreadFunction(threadId);
-        const interruptThread = _getInterruptFunction();
+        const interruptFunction = _getInterruptFunction();
         if (runThread) {
-            runThread(new PrimProxy(threadId, threadInterruptBuffer, interruptThread, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
+            runThread(new PrimProxy(threadId, interruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
         } else {
             throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
         }
@@ -173,8 +173,8 @@ function onVMMessage(event) {
         const { token, value } = event.data;
         _resolvePendingToken(token, value);
     } else if (id === WorkerMessages.FromVM.StartThread) {
-        const { threadId, threadInterruptBuffer } = event.data;
-        _startThread(threadId, threadInterruptBuffer);
+        const { threadId } = event.data;
+        _startThread(threadId);
     } else if (id === WorkerMessages.FromVM.InitPyodide) {
         const { interruptBuffer } = event.data;
         _initPyodide(interruptBuffer);

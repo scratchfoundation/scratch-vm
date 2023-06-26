@@ -88,16 +88,18 @@ class PrimProxy {
 
     static interruptMap = {};
 
-    constructor(threadId, interruptBuffer, interruptFunction, postFunction) {
+    constructor(threadId, interruptFunction, postFunction) {
         this.threadId = threadId;
-        this.interruptBuffer = interruptBuffer;
         this.post = async (opCode, args) => {
-            if (this.interruptBuffer[0] === 2) {
+            const retVal = await postFunction(this.threadId, opCode, args);
+            if (retVal.id === "InterruptThread") {
                 interruptFunction();
                 return null;
             }
-            const retVal = await postFunction(this.threadId, opCode, args);
-            return retVal;
+            if (retVal.id === "ResultValue") {
+                return retVal.result;
+            }
+            return null;
         };
     }
 

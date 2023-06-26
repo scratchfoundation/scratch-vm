@@ -53,27 +53,27 @@ afterEach(async () => {
 describe("Runtime Exec Primitives", () => {
     describe("Motion Blocks", () => {
         it("Move", async () => {
-            const returnValue = await thread.executeBlock("motion_movesteps", { STEPS: 10 }, "test_token");
+            const { result } = await thread.executeBlock("motion_movesteps", { STEPS: 10 }, "test_token");
 
             expect(target.x).to.equal(10);
             expect(target.y).to.equal(0);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Go To XY", async () => {
-            const returnValue = await thread.executeBlock("motion_gotoxy", { X: 10, Y: 5 }, "test_token");
+            const { result } = await thread.executeBlock("motion_gotoxy", { X: 10, Y: 5 }, "test_token");
 
             expect(target.x).to.equal(10);
             expect(target.y).to.equal(5);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Go To", async () => {
-            const returnValue = await thread.executeBlock("motion_goto", { TO: target2.sprite.name }, "test_token");
+            const { result } = await thread.executeBlock("motion_goto", { TO: target2.sprite.name }, "test_token");
 
             expect(target.x).to.equal(target2.x);
             expect(target.y).to.equal(target2.y);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Turn Right", async () => {
@@ -86,11 +86,11 @@ describe("Runtime Exec Primitives", () => {
 
             const direction = 90;
 
-            const returnValue = await thread.executeBlock("motion_turnright", { DEGREES: direction }, "test_token");
+            const { result } = await thread.executeBlock("motion_turnright", { DEGREES: direction }, "test_token");
             target.renderer = null;
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 180, [100, 100]);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Turn Left", async () => {
@@ -103,11 +103,11 @@ describe("Runtime Exec Primitives", () => {
 
             const direction = 90;
 
-            const returnValue = await thread.executeBlock("motion_turnleft", { DEGREES: direction }, "test_token");
+            const { result } = await thread.executeBlock("motion_turnleft", { DEGREES: direction }, "test_token");
             target.renderer = null;
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 0, [100, 100]);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Point In Direction", async () => {
@@ -118,11 +118,11 @@ describe("Runtime Exec Primitives", () => {
             target.renderer = mockRenderer;
             const direction = 180;
 
-            const returnValue = await thread.executeBlock("motion_pointindirection", { DIRECTION: direction }, "test_token");
+            const { result } = await thread.executeBlock("motion_pointindirection", { DIRECTION: direction }, "test_token");
             target.renderer = null;
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 180, [100, 100]);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Point Towards", async () => {
@@ -133,11 +133,11 @@ describe("Runtime Exec Primitives", () => {
 
             target.renderer = mockRenderer;
 
-            const returnValue = await thread.executeBlock("motion_pointtowards", { TOWARDS: target2.sprite.name }, "test_token");
+            const { result } = await thread.executeBlock("motion_pointtowards", { TOWARDS: target2.sprite.name }, "test_token");
             target.renderer = null;
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, 68.19859051364818, [100, 100]);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Glide", async () => {
@@ -178,18 +178,18 @@ describe("Runtime Exec Primitives", () => {
             target.renderer = mockRenderer;
 
             // eslint-disable-next-line no-unused-vars
-            const returnValue = await thread.executeBlock("motion_ifonedgebounce", {}, "test_token");
+            const { result } = await thread.executeBlock("motion_ifonedgebounce", {}, "test_token");
             target.renderer = null;
 
             expect(spy).to.have.been.calledWithExactly(target.drawableID, -90, [100, 100]);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Set Rotation Style", async () => {
-            const returnValue = await thread.executeBlock("motion_setrotationstyle", { STYLE: RenderedTarget.ROTATION_STYLE_LEFT_RIGHT }, "test_token");
+            const { result } = await thread.executeBlock("motion_setrotationstyle", { STYLE: RenderedTarget.ROTATION_STYLE_LEFT_RIGHT }, "test_token");
 
             expect(target.rotationStyle).to.equal(RenderedTarget.ROTATION_STYLE_LEFT_RIGHT);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Change X", async () => {
@@ -197,11 +197,11 @@ describe("Runtime Exec Primitives", () => {
             const dx = 10;
             const oldY = target.y;
 
-            const returnValue = await thread.executeBlock("motion_changexby", { DX: dx }, "test_token");
+            const { result } = await thread.executeBlock("motion_changexby", { DX: dx }, "test_token");
 
             expect(target.x).to.equal(oldX + dx);
             expect(target.y).to.equal(oldY);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Change Y", async () => {
@@ -209,58 +209,58 @@ describe("Runtime Exec Primitives", () => {
             const oldY = target.y;
             const dy = 10;
 
-            const returnValue = await thread.executeBlock("motion_changeyby", { DY: dy }, "test_token");
+            const { result } = await thread.executeBlock("motion_changeyby", { DY: dy }, "test_token");
 
             expect(target.x).to.equal(oldX);
             expect(target.y).to.equal(oldY + dy);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Set X", async () => {
             const eX = 10;
             const oldY = target.y;
 
-            const returnValue = await thread.executeBlock("motion_setx", { X: eX }, "test_token");
+            const { result } = await thread.executeBlock("motion_setx", { X: eX }, "test_token");
 
             expect(target.x).to.equal(eX);
             expect(target.y).to.equal(oldY);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Set Y", async () => {
             const eY = 10;
             const oldX = target.x;
 
-            const returnValue = await thread.executeBlock("motion_sety", { Y: eY }, "test_token");
+            const { result } = await thread.executeBlock("motion_sety", { Y: eY }, "test_token");
 
             expect(target.x).to.equal(oldX);
             expect(target.y).to.equal(eY);
-            expect(returnValue).to.equal(undefined);
+            expect(result).to.equal(undefined);
         });
 
         it("Get X", async () => {
             const eX = target.x;
 
-            const returnValue = await thread.executeBlock("motion_xposition", {}, "test_token");
-            thread.returnValueCallback = null;
+            const { result } = await thread.executeBlock("motion_xposition", {}, "test_token");
+            thread.resultCallback = null;
 
-            expect(returnValue).to.equal(eX);
+            expect(result).to.equal(eX);
         });
 
         it("Get Y", async () => {
             const eY = target.y;
 
-            const returnValue = await thread.executeBlock("motion_yposition", {}, "test_token");
+            const { result } = await thread.executeBlock("motion_yposition", {}, "test_token");
 
-            expect(returnValue).to.equal(eY);
+            expect(result).to.equal(eY);
         });
 
         it("Get Direction", async () => {
             const eDirection = target.direction;
 
-            const returnValue = await thread.executeBlock("motion_direction", {}, "test_token");
+            const { result } = await thread.executeBlock("motion_direction", {}, "test_token");
 
-            expect(returnValue).to.equal(eDirection);
+            expect(result).to.equal(eDirection);
         });
     });
 });
