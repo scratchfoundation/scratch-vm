@@ -64,7 +64,6 @@ class Scratch3ControlBlocks {
 
             // Place behind the original target.
             newClone.goBehindOther(cloneTarget);
-            newClone.isOriginal = false;
         }
     }
 

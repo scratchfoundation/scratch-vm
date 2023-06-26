@@ -5,6 +5,7 @@ import Clone from "../util/clone.mjs";
 import Target from "../engine/target.mjs";
 import StageLayering from "../engine/stage-layering.mjs";
 import _ from "lodash";
+import Thread from "../engine/thread.mjs";
 
 /**
  * Rendered target: instance of a sprite (clone), or the stage.
@@ -174,7 +175,7 @@ class RenderedTarget extends Target {
         }
         // If we're a clone, start the hats.
         if (!this.isOriginal) {
-            this.startHats("control_start_as_clone");
+            this.startHat("control_start_as_clone");
         }
     }
 
@@ -957,8 +958,15 @@ class RenderedTarget extends Target {
         newClone.currentCostume = this.currentCostume;
         newClone.rotationStyle = this.rotationStyle;
         newClone.effects = Clone.simple(this.effects);
-        newClone.threads = Object.keys(this.threads).map((key) => this.threads[key].clone());
+        newClone.threads = {};
+        newClone.runtime = this.runtime;
+        Object.keys(this.threads).forEach((key) =>  {
+            const thread = this.threads[key];
+            const clonedThread = new Thread(newClone, thread.script, thread.triggerEvent, thread.triggerEventOption);
+            newClone.threads[key] = clonedThread;
+        });
         // newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
+        newClone.isOriginal = false;
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
         return newClone;

@@ -180,15 +180,6 @@ class Thread {
     endThread() {
         this.setStatus(Thread.STATUS_DONE);
     }
-
-    /**
-     * Returns a deep copy of this thread.
-     */
-    clone() {
-        const newThread = new Thread(this.target, this.script, this.triggerEvent, this.triggerEventOption);
-        newThread.status = this.status;
-        return newThread;
-    }
 }
 
 export default Thread;

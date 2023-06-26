@@ -32,6 +32,7 @@ before(async () => {
     vm.runtime.addTarget(target2);
 
     spriteClone = new Sprite(null, vm.runtime);
+    spriteClone.name = "spriteClone";
     targetClone = new RenderedTarget(spriteClone, vm.runtime);
     targetClone.id = "targetClone";
     vm.runtime.addTarget(targetClone);
@@ -42,7 +43,9 @@ before(async () => {
 });
 
 afterEach(async () => {
-    resetTarget(vm.runtime.targets[0]);
+    vm.runtime.targets.forEach((tempTarget) => {
+        resetTarget(tempTarget);
+    });
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
@@ -72,11 +75,11 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 expect(cloneTargetScripts).to.eql(targetScripts);
             });
 
-            it("Other", async () => {
+            it("Clone Other", async () => {
                 const preCloneTargetCount = vm.runtime.targets.length;
 
                 const targetId = "target1";
-                const script = `createClone("targetClone")`;
+                const script = `createClone("spriteClone")`;
                 const triggerEventId = "event_whenflagclicked";
 
                 await vm.addThread(targetId, script, triggerEventId);
@@ -99,7 +102,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
                 const cloneScript = `deleteClone()`;
                 const originalScript = `createClone("_myself_")`;
                 const originalTriggerEventId = "event_whenflagclicked";
-                const cloneTriggerEventId = "control_whenistartasclone";
+                const cloneTriggerEventId = "control_start_as_clone";
 
                 await vm.addThread(targetId, originalScript, originalTriggerEventId);
                 await vm.addThread(targetId, cloneScript, cloneTriggerEventId);

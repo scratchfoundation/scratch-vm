@@ -185,14 +185,15 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
             await vm.startHats("event_whenflagclicked");
 
-            const originalTarget = vm.runtime.targets[0];
-            const clonedTarget = vm.runtime.targets[1];
+            const originalTarget = vm.runtime.getTargetById(targetId);
+            const clonedTarget = vm.runtime.targets[vm.runtime.targets.length - 1];
+
+            expect(clonedTarget.isOriginal).to.equal(false);
+            expect(clonedTarget.x).to.equal(steps);
+            expect(clonedTarget.y).to.equal(0);
 
             expect(originalTarget.x).to.equal(0);
             expect(originalTarget.y).to.equal(0);
-
-            expect(clonedTarget.x).to.equal(steps);
-            expect(clonedTarget.y).to.equal(0);
         });
     });
 });
