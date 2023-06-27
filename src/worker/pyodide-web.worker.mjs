@@ -116,7 +116,7 @@ function _postBlockOpMessage(threadId, opCode, args) {
     const id = WorkerMessages.ToVM.BlockOP;
     return new Promise((resolve) => {
         _pendingTokens[token] = resolve;
-        if (opCode === PrimProxy.opcodeMap.endThread) {
+        if (opCode === PrimProxy.patchApi.endThread.opcode) {
             _lastTokens[token] = threadId;
         }
         _postMessage(id, threadId, opCode, args, token);
@@ -153,7 +153,7 @@ function _getInterruptFunction() {
 
 function _startThread(threadId, threadInterruptBuffer) {
     const endThreadPost = (_threadId) => {
-        _postBlockOpMessage(_threadId, PrimProxy.opcodeMap.endThread, {});
+        _postBlockOpMessage(_threadId, PrimProxy.patchApi.endThread.opcode, {});
     };
     if (threadId) {
         const runThread = _getThreadFunction(threadId);
