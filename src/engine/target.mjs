@@ -305,6 +305,10 @@ class Target extends EventEmitter {
         return this.threads[threadId];
     }
 
+    getThreads() {
+        return Object.keys(this.threads).map((threadId) => this.threads[threadId]);
+    }
+
     deleteThread(threadId) {
         if (this.threads[threadId]) {
             delete this.threads[threadId];

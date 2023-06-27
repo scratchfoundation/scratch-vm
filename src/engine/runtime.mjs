@@ -688,11 +688,6 @@ export default class Runtime extends EventEmitter {
     // -----------------------------------------------------------------------------
     // -----------------------------------------------------------------------------
 
-    endThread(threadId) {
-        const thread = this.getThreadById(threadId);
-        thread.setStatus(Thread.STATUS_DONE);
-    }
-
     /**
      * Start all relevant hats.
      * @param {Array.<string>} requestedHatOpcode Opcode of hats to start.
