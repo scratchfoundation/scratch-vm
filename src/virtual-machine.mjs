@@ -723,6 +723,10 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime.deleteThread(threadId);
     }
 
+    getThreadById(threadId) {
+        return this.runtime.getThreadById(threadId);
+    }
+
     getThreadsForTarget(targetId) {
         return this.runtime.getThreadsForTarget(targetId);
     }
