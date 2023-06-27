@@ -20,6 +20,7 @@ import { loadCostume } from "./import/load-costume.mjs";
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
 import RenderedTarget from "./sprites/rendered-target.mjs";
+import PrimProxy from "./worker/prim-proxy.js";
 
 const { isUndefined } = lodash;
 
@@ -765,5 +766,9 @@ export default class VirtualMachine extends EventEmitter {
 
     getAllRenderedTargets() {
         return this.runtime.targets;
+    }
+
+    getPatchPythonApiInfo() {
+        return PrimProxy.patchApi;
     }
 }

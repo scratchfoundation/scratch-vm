@@ -115,7 +115,7 @@ class PyatchLinker {
     }
 
     wrapThreadCode(threadId, script, globalVariables) {
-        const calledPatchPrimitiveFunctions = this.getFunctionCalls(Object.keys(PrimProxy.opcodeMap), script);
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
 
         const passedCode = script || "pass";
         const awaitedCode = this.addAwaitToPythonFunctions(passedCode, calledPatchPrimitiveFunctions);
