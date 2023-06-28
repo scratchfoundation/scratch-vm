@@ -51,6 +51,7 @@ class Thread {
     async startThread() {
         await this.loadPromise;
         this.interruptThread = false;
+        this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
         await this.worker.startThread(this.id, this.executeBlock);
     }
 

@@ -96,5 +96,23 @@ describe("Pyatch File Linker", () => {
 
             expect(code).to.equal(expected);
         });
+
+        it("1 target, 1 line of NameError code, 1 thread", () => {
+            const file = path.join(__dirname, "expected", "nameerror-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const code = linker.generatePython("id_0", "mov(10)");
+
+            expect(code).to.equal(expected);
+        });
+
+        it("1 target, 1 line of NameError code & 1 Regular, 1 thread", () => {
+            const file = path.join(__dirname, "expected", "nameerror-with-real-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const code = linker.generatePython("id_0", `mov(10)\nsay("Hello, world!")`);
+
+            expect(code).to.equal(expected);
+        });
     });
 });

@@ -7,12 +7,12 @@ import PyatchLinker from "../linker/pyatch-linker.mjs";
 import uid from "../util/uid.mjs";
 
 class PyatchWorker {
-    constructor() {
+    constructor(errorCallback) {
         this._worker = new Worker(new URL("./pyodide-web.worker.mjs", import.meta.url), { type: "module" });
 
         this._worker.onmessage = this.handleWorkerMessage.bind(this);
-        this._worker.onerror = this.handleWorkerError.bind(this);
         this._blockOPCallbackMap = {};
+        this._errorCallback = errorCallback;
 
         this._threadInterruptMap = {};
 
@@ -39,11 +39,10 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
             const { threadId } = event.data;
             this._threadPromiseMap[threadId].resolve();
+        } else if (event.data.id === WorkerMessages.ToVM.PythonRuntimeError) {
+            const { threadId, message, lineNumber } = event.data;
+            this._errorCallback(threadId, message, lineNumber);
         }
-    }
-
-    handleWorkerError(event) {
-        throw new Error(`Worker error with event: ${event}`);
     }
 
     async loadPyodide() {
