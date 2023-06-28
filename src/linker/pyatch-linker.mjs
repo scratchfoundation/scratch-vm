@@ -103,6 +103,24 @@ class PyatchLinker {
     }
 
     /**
+     * Adds the "async" keyword before all function definitions in python and returns a list
+     * of function names that is did this proccess to.
+     *
+     * @param {string} pythonCode - A string containing the Python code to modify.
+     * @returns {string[]} - The names of the functions that the async keyword was added to in their definitions.
+     */
+    addAsyncToFunctionDefinitions(pythonCode) {
+        // eslint-disable-next-line prefer-regex-literals
+        const regex = new RegExp(`(?<!\\basync\\s*)def\\s+(\\w+)`, "g");
+        const newAwaitFunctions = [];
+        const asyncedCode = pythonCode.replace(regex, (match, functionName) => {
+            newAwaitFunctions.push(functionName);
+            return `async def ${functionName}`;
+        });
+        return { asyncedCode, newAwaitFunctions };
+    }
+
+    /**
      * Adds the "await" keyword before certain function names in the provided Python code.
      *
      * @param {string} pythonCode - A string containing the Python code to modify.
@@ -112,7 +130,7 @@ class PyatchLinker {
     addAwaitToPythonFunctions(pythonCode, functionNames) {
         let modifiedCode = pythonCode;
         if (functionNames.length !== 0) {
-            const regex = new RegExp(`(?<!\\bawait\\s*)\\b(${functionNames.join("|")})(?=\\()`, "g");
+            const regex = new RegExp(`(?<!\\b(await|def)\\s*)\\b(${functionNames.join("|")})(?=\\()`, "g");
             modifiedCode = pythonCode.replace(regex, "await $&");
         }
         return modifiedCode;
@@ -122,7 +140,8 @@ class PyatchLinker {
         const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
 
         const passedCode = script || "pass";
-        const awaitedCode = this.addAwaitToPythonFunctions(passedCode, calledPatchPrimitiveFunctions);
+        const { asyncedCode, newAwaitFunctions } = this.addAsyncToFunctionDefinitions(passedCode);
+        const awaitedCode = this.addAwaitToPythonFunctions(asyncedCode, calledPatchPrimitiveFunctions.concat(newAwaitFunctions));
         const tabbedCode = awaitedCode.replaceAll("\n", `\n${linkConstants.python_tab_char}`);
 
         const header = this.generateAsyncFuncHeader(threadId);
