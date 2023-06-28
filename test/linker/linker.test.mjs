@@ -114,5 +114,17 @@ describe("Pyatch File Linker", () => {
 
             expect(code).to.equal(expected);
         });
+
+        it("Function Definition", () => {
+            const inputFile = path.join(__dirname, "./", "input", "function-def.py");
+            const script = fs.readFileSync(inputFile, "utf8", (err, data) => data);
+
+            const file = path.join(__dirname, "./", "expected", "function-def-expected.py");
+            const expected = fs.readFileSync(file, "utf8", (err, data) => data);
+
+            const code = linker.generatePython("id_0", script);
+
+            expect(code).to.equal(expected);
+        });
     });
 });
