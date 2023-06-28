@@ -15,6 +15,7 @@ class Scratch3ControlBlocks {
      */
     getPrimitives() {
         return {
+            control_wait: this.wait,
             control_stop: this.stop,
             control_create_clone_of: this.createClone,
             control_delete_this_clone: this.deleteClone,
@@ -28,6 +29,13 @@ class Scratch3ControlBlocks {
                 label: "When I Start As Clone",
             },
         };
+    }
+
+    async wait(args) {
+        const duration = Cast.toNumber(args.DURATION);
+        await new Promise((resolve) => {
+            setTimeout(resolve, duration * 1000);
+        });
     }
 
     async stop(args, util) {

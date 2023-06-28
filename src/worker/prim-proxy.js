@@ -342,10 +342,11 @@ class PrimProxy {
         // opcode: "sensing_answer"
         // },
 
-        // wait: {
-        //     opcode: "control_wait",
-        //     parameters: ["seconds"],
-        // },
+        wait: {
+            opcode: "control_wait",
+            parameters: ["seconds"],
+            exampleParameters: { seconds: 1 },
+        },
         // waitUntil: {
         //     opcode: "control_wait_until",
         //     parameters: ["condition"],
@@ -755,6 +756,10 @@ class PrimProxy {
         return answer;
     }
     */
+
+    async wait(seconds) {
+        await this.post(PrimProxy.patchApi.wait.opcode, { DURATION: seconds });
+    }
 
     async stop(option) {
         await this.post(PrimProxy.patchApi.stop.opcode, { STOP_OPTION: option });
