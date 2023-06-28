@@ -202,7 +202,7 @@ class PrimProxy {
         playSound: {
             opcode: "sound_play",
             parameters: ["soundName"],
-            exampleParameters: { soundName: "'meow'" },
+            exampleParameters: { soundName: "'Meow'" },
         },
         playSoundUntilDone: {
             opcode: "sound_playuntildone",
