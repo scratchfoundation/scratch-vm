@@ -50,6 +50,22 @@ afterEach(async () => {
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Control Blocks", () => {
+        it("Wait", async () => {
+            const steps = 10;
+            const targetId = "target1";
+            const script = `move(${steps})\nwait(0.5)\nmove(${steps})`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            const startTime = performance.now();
+            await vm.startHats(triggerEventId);
+            const endTime = performance.now();
+
+            // Check that the time elapsed is the wait time within 0.02 seconds
+            expect(endTime - startTime).to.be.within(0.5 * 1000 - 20, 0.5 * 1000 + 20);
+            expect(vm.runtime.targets[0].x).to.equal(steps * 2);
+            expect(vm.runtime.targets[0].y).to.equal(0);
+        });
         describe("Clone", () => {
             it("Self", async () => {
                 const preCloneTargetCount = vm.runtime.targets.length;
