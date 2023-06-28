@@ -134,7 +134,11 @@ export default class Runtime extends EventEmitter {
             mouseWheel: new MouseWheel(this),
         };
 
-        this.pyatchWorker = new PyatchWorker();
+        this.runtimeErrors = [];
+        this.pyatchWorker = new PyatchWorker((threadId, message, lineNumber) => {
+            this.runtimeErrors.push({ threadId, message, lineNumber });
+            this.emit("RUNTIME ERROR", threadId, message, lineNumber);
+        });
         this.workerLoaded = false;
         this.workerLoadPromise = this.pyatchWorker.loadWorker().then(() => {
             this.workerLoaded = true;

@@ -42,6 +42,9 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime.on("WORKER READY", () => {
             this.emit("VM READY");
         });
+        this.runtime.on("RUNTIME ERROR", (threadId, message, lineNumber) => {
+            this.emit("RUNTIME ERROR", threadId, message, lineNumber);
+        });
     }
 
     /**
@@ -770,5 +773,9 @@ export default class VirtualMachine extends EventEmitter {
 
     getPatchPythonApiInfo() {
         return PrimProxy.patchApi;
+    }
+
+    getRuntimeErrors() {
+        return this.runtime.runtimeErrors;
     }
 }

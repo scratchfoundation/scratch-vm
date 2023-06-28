@@ -110,8 +110,12 @@ class PyatchLinker {
      * @returns {string} - The modified Python code with "await" added before specified function names.
      */
     addAwaitToPythonFunctions(pythonCode, functionNames) {
-        const regex = new RegExp(`(?<!\\bawait\\s*)\\b(${functionNames.join("|")})\\(`, "g");
-        return pythonCode.replace(regex, "await $&");
+        let modifiedCode = pythonCode;
+        if (functionNames.length !== 0) {
+            const regex = new RegExp(`(?<!\\bawait\\s*)\\b(${functionNames.join("|")})(?=\\()`, "g");
+            modifiedCode = pythonCode.replace(regex, "await $&");
+        }
+        return modifiedCode;
     }
 
     wrapThreadCode(threadId, script, globalVariables) {

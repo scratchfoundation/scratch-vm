@@ -60,10 +60,6 @@ function _postMessage(id, threadId, opCode, args, token) {
     _postWorkerMessage({ id, threadId, opCode, args, token });
 }
 
-function _postMessageError(id, error) {
-    _postWorkerMessage({ id, error });
-}
-
 function _postStatusMessage(id) {
     _postMessage(id, null, null, null, null);
 }
@@ -76,8 +72,8 @@ function _postThreadStatusMessage(id, threadId) {
     _postWorkerMessage({ id, threadId });
 }
 
-function _postError(error) {
-    _postMessageError(WorkerMessages.ToVM.PythonError, error);
+function _postError(threadId, lineNumber, message) {
+    _postWorkerMessage({ id: WorkerMessages.ToVM.PythonRuntimeError, threadId, lineNumber, message });
 }
 
 async function _initPyodide(interruptBuffer) {
@@ -151,15 +147,38 @@ function _getInterruptFunction() {
     return self.pyodide.globals.get("throw_interrupt_error");
 }
 
+function parsePythonError(error) {
+    const errorMessage = error.message;
+    // Extract line number using regex
+    const lineRegex = /line (\d+)/;
+    const lineNumberMatch = errorMessage.match(lineRegex);
+    const lineNumber = lineNumberMatch ? lineNumberMatch[1] : "";
+
+    // Extract error message using regex
+    const messageRegex = /\b[A-Za-z]+Error: .+/;
+    const messageMatch = errorMessage.match(messageRegex);
+    const errorLineMessage = messageMatch ? messageMatch[0] : "";
+
+    return {
+        lineNumber,
+        errorLineMessage,
+    };
+}
+
 function _startThread(threadId, threadInterruptBuffer) {
     const endThreadPost = (_threadId) => {
         _postBlockOpMessage(_threadId, PrimProxy.patchApi.endThread.opcode, {});
+    };
+    const handleRuntimeError = (_threadId) => (error) => {
+        const { lineNumber, errorLineMessage } = parsePythonError(error);
+        endThreadPost(_threadId);
+        _postError(_threadId, lineNumber, errorLineMessage);
     };
     if (threadId) {
         const runThread = _getThreadFunction(threadId);
         const interruptFunction = _getInterruptFunction();
         if (runThread) {
-            runThread(new PrimProxy(threadId, interruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), endThreadPost.bind(null, threadId));
+            runThread(new PrimProxy(threadId, interruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), handleRuntimeError(threadId));
         } else {
             throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
         }
