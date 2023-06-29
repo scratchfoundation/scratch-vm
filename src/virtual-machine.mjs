@@ -316,14 +316,23 @@ export default class VirtualMachine extends EventEmitter {
             });
     }
 
-    changeBackground(index) {
-        const target = this.runtime.targets[0];
-        target.setCostume(index);
-    }
-
-    getBackground() {
-        const target = this.runtime.targets[0];
-        return target.currentCostume;
+    /**
+     * Add a backdrop to the stage.
+     * @param {string} md5ext - the MD5 and extension of the backdrop to be loaded.
+     * @param {!object} backdropObject Object representing the backdrop.
+     * @property {int} skinId - the ID of the backdrop's render skin, once installed.
+     * @property {number} rotationCenterX - the X component of the backdrop's origin.
+     * @property {number} rotationCenterY - the Y component of the backdrop's origin.
+     * @property {number} [bitmapResolution] - the resolution scale for a bitmap backdrop.
+     * @returns {?Promise} - a promise that resolves when the backdrop has been added
+     */
+    addBackdrop(md5ext, backdropObject) {
+        return loadCostume(md5ext, backdropObject, this.runtime).then(() => {
+            const stage = this.runtime.getTargetForStage();
+            stage.addCostume(backdropObject);
+            stage.setCostume(stage.getCostumes().length - 1);
+            this.runtime.emitProjectChanged();
+        });
     }
 
     /**
@@ -554,13 +563,8 @@ export default class VirtualMachine extends EventEmitter {
         // const vm = JSON.stringify(sb3.serialize(this.runtime));
         const vm = sb3.serialize(this.runtime);
 
-        // remove background
-        vm.targets.splice(0, 1);
-
         const object2 = {};
         object2.vmstate = vm;
-        object2.code = this.runtime.targetCodeMapGLB;
-        object2.background = this.getBackground();
         object2.globalVariables = this.getGlobalVariables();
 
         const projectJson = JSON.stringify(object2);
@@ -673,6 +677,7 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime.pyatchWorker._eventMap = null;
 
         const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj); */
+        this.clear();
         const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
 
         if (importedProject.extensionsInfo) {
@@ -683,7 +688,6 @@ export default class VirtualMachine extends EventEmitter {
 
         /* How fitting: on take 42, I finally got everything to work. */
         jsonData.globalVariables.forEach((variable) => {
-            console.log(variable);
             this.updateGlobalVariable(variable.name, variable.value);
         });
 
