@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.5.78](https://github.com/LLK/scratch-vm/compare/v1.5.77...v1.5.78) (2023-07-01)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-semantic-release-config to v1.0.8 ([e6156f6](https://github.com/LLK/scratch-vm/commit/e6156f630e1dc88d3db7e9726d951a5b73ab70f1))
+
 ## [1.5.77](https://github.com/LLK/scratch-vm/compare/v1.5.76...v1.5.77) (2023-07-01)
 
 
