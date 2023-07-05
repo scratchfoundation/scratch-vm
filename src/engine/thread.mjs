@@ -61,7 +61,7 @@ class Thread {
     }
 
     async updateThreadScript(script) {
-        this.loadThread(script);
+        await this.loadThread(script);
         this.script = script;
     }
 
