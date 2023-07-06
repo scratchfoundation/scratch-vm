@@ -16,6 +16,7 @@ import sb3 from "./serialization/sb3.mjs";
 import sb2 from "./serialization/sb2.mjs";
 
 import { loadCostume } from "./import/load-costume.mjs";
+import { loadSound } from "./import/load-sound.mjs";
 
 import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
@@ -502,6 +503,25 @@ export default class VirtualMachine extends EventEmitter {
                 target.addCostume(costumeObject);
                 target.setCostume(target.getCostumes().length - 1);
                 this.runtime.emitProjectChanged();
+            });
+        }
+        // If the target cannot be found by id, return a rejected promise
+        return Promise.reject();
+    }
+
+    /**
+     * Add a sound to the current editing target.
+     * @param {!object} soundObject Object representing the costume.
+     * @param {string} optTargetId - the id of the target to add to, if not the editing target.
+     * @returns {?Promise} - a promise that resolves when the sound has been decoded and added
+     */
+    addSound(soundObject, optTargetId) {
+        const target = optTargetId ? this.runtime.getTargetById(optTargetId) : this.editingTarget;
+        if (target) {
+            // eslint-disable-next-line no-undef
+            return loadSound(soundObject, this.runtime, target.sprite.soundBank).then(() => {
+                target.addSound(soundObject);
+                this.emitTargetsUpdate();
             });
         }
         // If the target cannot be found by id, return a rejected promise
