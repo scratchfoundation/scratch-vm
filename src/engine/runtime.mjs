@@ -447,7 +447,7 @@ export default class Runtime extends EventEmitter {
      * @param {Number} threadId thread id to stop
      */
     async stopThread(threadId) {
-        await this.pyatchWorker.stopThreads([threadId]);
+        await this.pyatchWorker.stopThread(threadId);
     }
 
     /**
