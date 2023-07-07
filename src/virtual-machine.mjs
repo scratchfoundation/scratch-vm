@@ -785,4 +785,8 @@ export default class VirtualMachine extends EventEmitter {
     getRuntimeErrors() {
         return this.runtime.runtimeErrors;
     }
+
+    getCompileTimeErrors() {
+        return this.runtime.compileTimeErrors;
+    }
 }
