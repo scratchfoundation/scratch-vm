@@ -47,6 +47,7 @@ class Thread {
     async loadThread(script) {
         await this.runtime.workerLoadPromise;
         this.runtime.compileTimeErrors = this.runtime.compileTimeErrors.filter((error) => error.threadId !== this.id);
+        this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
         this.loadPromise = this.worker.loadThread(this.id, script, this.runtime.globalVariables);
         await this.loadPromise;
     }
