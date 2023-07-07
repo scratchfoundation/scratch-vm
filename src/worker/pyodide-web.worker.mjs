@@ -72,8 +72,12 @@ function _postThreadStatusMessage(id, threadId) {
     _postWorkerMessage({ id, threadId });
 }
 
-function _postError(threadId, lineNumber, message) {
-    _postWorkerMessage({ id: WorkerMessages.ToVM.PythonRuntimeError, threadId, lineNumber, message });
+function _postRuntimeError(threadId, lineNumber, message) {
+    _postWorkerMessage({ id: WorkerMessages.ToVM.PythonError, threadId, lineNumber, message, type: "RuntimeError" });
+}
+
+function _postCompileTimeError(threadId, lineNumber, message, loadPromiseId) {
+    _postWorkerMessage({ id: WorkerMessages.ToVM.PythonError, threadId, lineNumber, message, type: "CompileTimeError", loadPromiseId });
 }
 
 async function _initPyodide(interruptBuffer) {
@@ -119,8 +123,49 @@ function _postBlockOpMessage(threadId, opCode, args) {
     });
 }
 
-function _loadGlobal(script, loadPromiseId) {
-    self.pyodide.runPython(script);
+function parseRuntimePythonError(error) {
+    const errorMessage = error.message;
+    // Extract line number using regex
+    const lineRegex = /line (\d+)/;
+    const lineNumberMatch = errorMessage.match(lineRegex);
+    const lineNumber = lineNumberMatch ? lineNumberMatch[1] : "";
+
+    // Extract error message using regex
+    const messageRegex = /\b[A-Za-z]+Error: .+/;
+    const messageMatch = errorMessage.match(messageRegex);
+    const errorLineMessage = messageMatch ? messageMatch[0] : "";
+
+    return {
+        lineNumber,
+        errorLineMessage,
+    };
+}
+
+function parseCompileTimePythonError(error) {
+    const errorMessage = error.message;
+    // Extract line number using regex
+    const lineRegex = /File "<exec>", line (\d+)/;
+    const lineNumberMatch = errorMessage.match(lineRegex);
+    const lineNumber = lineNumberMatch ? lineNumberMatch[1] : "";
+
+    // Extract error message using regex
+    const messageRegex = /\b[A-Za-z]+Error: .+/;
+    const messageMatch = errorMessage.match(messageRegex);
+    const errorLineMessage = messageMatch ? messageMatch[0] : "";
+
+    return {
+        lineNumber,
+        errorLineMessage,
+    };
+}
+
+function _loadGlobal(script, loadPromiseId, threadId) {
+    try {
+        self.pyodide.runPython(script);
+    } catch (error) {
+        const { lineNumber, errorLineMessage } = parseCompileTimePythonError(error);
+        _postCompileTimeError(threadId, lineNumber, errorLineMessage, loadPromiseId);
+    }
 
     _postLoadStatusMessage(WorkerMessages.ToVM.PromiseLoaded, loadPromiseId);
 }
@@ -147,32 +192,14 @@ function _getInterruptFunction() {
     return self.pyodide.globals.get("throw_interrupt_error");
 }
 
-function parsePythonError(error) {
-    const errorMessage = error.message;
-    // Extract line number using regex
-    const lineRegex = /line (\d+)/;
-    const lineNumberMatch = errorMessage.match(lineRegex);
-    const lineNumber = lineNumberMatch ? lineNumberMatch[1] : "";
-
-    // Extract error message using regex
-    const messageRegex = /\b[A-Za-z]+Error: .+/;
-    const messageMatch = errorMessage.match(messageRegex);
-    const errorLineMessage = messageMatch ? messageMatch[0] : "";
-
-    return {
-        lineNumber,
-        errorLineMessage,
-    };
-}
-
 function _startThread(threadId, threadInterruptBuffer) {
     const endThreadPost = (_threadId) => {
         _postBlockOpMessage(_threadId, PrimProxy.patchApi.endThread.opcode, {});
     };
     const handleRuntimeError = (_threadId) => (error) => {
-        const { lineNumber, errorLineMessage } = parsePythonError(error);
+        const { lineNumber, errorLineMessage } = parseRuntimePythonError(error);
         endThreadPost(_threadId);
-        _postError(_threadId, lineNumber, errorLineMessage);
+        _postRuntimeError(_threadId, lineNumber, errorLineMessage);
     };
     if (threadId) {
         const runThread = _getThreadFunction(threadId);
@@ -180,7 +207,8 @@ function _startThread(threadId, threadInterruptBuffer) {
         if (runThread) {
             runThread(new PrimProxy(threadId, interruptFunction, _postBlockOpMessage)).then(endThreadPost.bind(null, threadId), handleRuntimeError(threadId));
         } else {
-            throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
+            // throw new Error(`Trying to start non existent thread with threadid ${threadId}`);
+            console.warn(`Trying to start non existent thread with threadid ${threadId}`);
         }
     }
 }
@@ -198,8 +226,8 @@ function onVMMessage(event) {
         const { interruptBuffer } = event.data;
         _initPyodide(interruptBuffer);
     } else if (id === WorkerMessages.FromVM.LoadGlobal) {
-        const { script, loadPromiseId } = event.data;
-        _loadGlobal(script, loadPromiseId);
+        const { script, loadPromiseId, threadId } = event.data;
+        _loadGlobal(script, loadPromiseId, threadId);
     } else {
         throw new Error(`${id} is not a valid worker message id`);
     }

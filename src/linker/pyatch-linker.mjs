@@ -136,9 +136,7 @@ class PyatchLinker {
         return modifiedCode;
     }
 
-    wrapThreadCode(threadId, script, globalVariables) {
-        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
-
+    wrapThreadCode(threadId, script, globalVariables, calledPatchPrimitiveFunctions) {
         const passedCode = script || "pass";
         const { asyncedCode, newAwaitFunctions } = this.addAsyncToFunctionDefinitions(passedCode);
         const awaitedCode = this.addAwaitToPythonFunctions(asyncedCode, calledPatchPrimitiveFunctions.concat(newAwaitFunctions));
@@ -164,7 +162,11 @@ class PyatchLinker {
      *
      */
     generatePython(threadId, script, globalVariables) {
-        return this.wrapThreadCode(threadId, script, globalVariables);
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
+        const primitiveFunctionLines = (calledPatchPrimitiveFunctions ?? []).length;
+        const globalVariableLines = Object.keys(globalVariables ?? {}).length;
+        const headerLine = 1;
+        return [this.wrapThreadCode(threadId, script, globalVariables, calledPatchPrimitiveFunctions), (_threadId, _message, _lineNumber) => [_threadId, _message, _lineNumber - primitiveFunctionLines - globalVariableLines - headerLine]];
     }
 }
 export default PyatchLinker;

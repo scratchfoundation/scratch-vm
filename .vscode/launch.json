@@ -117,6 +117,34 @@
         },
         {
             // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration SyntaxError Single Line test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/integration_errors.test.mjs", "--timeout", "0", "-g", "SyntaxError Single Line"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
+            "name": "Integration Compile Time test",
+            // Type of configuration. Possible values: "node", "mono".
+            "type": "node",
+            // Workspace relative or absolute path to the program.
+            "program": "/Users/elliotroe/Documents/GitHub/pyatch-vm/node_modules/mocha/bin/_mocha",
+            // Automatically stop program after launch.
+            "stopOnEntry": false,
+            // Command line arguments passed to the program.
+            "args": ["test/integration/integration_errors.test.mjs", "--timeout", "0", "-g", "Compile Time"],
+            // Workspace relative or absolute path to the runtime executable to be used. Default is the runtime executable on the PATH.
+            "runtimeExecutable": null
+        },
+        {
+            // Name of configuration; appears in the launch configuration drop down menu.
             "name": "Integration Glide test",
             // Type of configuration. Possible values: "node", "mono".
             "type": "node",

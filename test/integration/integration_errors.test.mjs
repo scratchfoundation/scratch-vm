@@ -46,23 +46,121 @@ afterEach(async () => {
     vm.runtime.targets.forEach((tempTarget) => {
         resetTarget(tempTarget);
     });
+    vm.runtime.runtimeErrors = [];
+    vm.runtime.compileTimeErrors = [];
 });
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Error Handling", () => {
-        it("NameError", async () => {
-            const targetId = "target1";
-            const script = `notafunction()`;
-            const triggerEventId = "event_whenflagclicked";
+        describe("Compile Time", () => {
+            it("SyntaxError Single Line", async () => {
+                const targetId = "target1";
+                const script = `move(10,`;
+                const triggerEventId = "event_whenflagclicked";
 
-            const threadId = await vm.addThread(targetId, script, triggerEventId);
-            let error = {};
-            vm.on("RUNTIME ERROR", (...args) => {
-                error = args;
+                let error = {};
+                vm.on("COMPILE TIME ERROR", (message) => {
+                    error = message;
+                });
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 1, message: "SyntaxError: '(' was never closed", type: "CompileTimeError" };
+
+                expect(vm.runtime.compileTimeErrors).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
             });
-            await vm.startHats(triggerEventId);
 
-            expect(vm.getRuntimeErrors()).to.eql([{ threadId, lineNumber: "2", message: "NameError: name 'notafunction' is not defined" }]);
+            it("SyntaxError Multi Line", async () => {
+                const targetId = "target1";
+                const script = `move(10)\nmove(10, 10`;
+                const triggerEventId = "event_whenflagclicked";
+
+                let error = {};
+                vm.on("COMPILE TIME ERROR", (message) => {
+                    error = message;
+                });
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 2, message: "SyntaxError: '(' was never closed", type: "CompileTimeError" };
+
+                expect(vm.runtime.compileTimeErrors).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
+            });
+
+            it("If statement", async () => {
+                const targetId = "target1";
+                const script = `if True\n    move(10)`;
+                const triggerEventId = "event_whenflagclicked";
+
+                let error = {};
+                vm.on("COMPILE TIME ERROR", (message) => {
+                    error = message;
+                });
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 1, message: "SyntaxError: expected ':'", type: "CompileTimeError" };
+
+                expect(vm.runtime.compileTimeErrors).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
+            });
+        });
+        describe("Runtime", () => {
+            it("NameError Single Line", async () => {
+                const targetId = "target1";
+                const script = `notafunction()`;
+                const triggerEventId = "event_whenflagclicked";
+
+                let error = {};
+                vm.on("RUNTIME ERROR", (message) => {
+                    error = message;
+                });
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 1, message: "NameError: name 'notafunction' is not defined", type: "RuntimeError" };
+
+                expect(vm.getRuntimeErrors()).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
+            });
+
+            it("NameError Multi Line", async () => {
+                const targetId = "target1";
+                const script = `move(10)\nsay()\nnotafunction()`;
+                const triggerEventId = "event_whenflagclicked";
+
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                let error = {};
+                vm.on("RUNTIME ERROR", (message) => {
+                    error = message;
+                });
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 3, message: "NameError: name 'notafunction' is not defined", type: "RuntimeError" };
+
+                expect(vm.getRuntimeErrors()).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
+            });
+
+            it("Double Runtime Multi Line", async () => {
+                const targetId = "target1";
+                const script = `mov(10)\nnotafunction()`;
+                const triggerEventId = "event_whenflagclicked";
+
+                const threadId = await vm.addThread(targetId, script, triggerEventId);
+                let error = {};
+                vm.on("RUNTIME ERROR", (message) => {
+                    error = message;
+                });
+                await vm.startHats(triggerEventId);
+
+                const expectedErrorMessage = { threadId, lineNumber: 1, message: "NameError: name 'mov' is not defined", type: "RuntimeError" };
+
+                expect(vm.getRuntimeErrors()).to.eql([expectedErrorMessage]);
+                expect(error).to.eql(expectedErrorMessage);
+            });
         });
     });
 });
