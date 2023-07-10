@@ -129,6 +129,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
         });
         describe("Stop All", () => {
             it("Interrupt Current Thread", async () => {
+                const expectedErrorCount = vm.runtime.runtimeErrors.length;
                 const steps = 10;
                 const targetId = "target1";
                 const script = `move(${steps})\nstop("this")\nmove(${steps})`;
@@ -139,9 +140,12 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
                 expect(vm.runtime.targets[0].x).to.equal(steps);
                 expect(vm.runtime.targets[0].y).to.equal(0);
+                // Stop all should not generate an error in the vm
+                expect(vm.runtime.runtimeErrors.length).to.equal(expectedErrorCount);
             });
 
             it("Interrupt Other Thread", async () => {
+                const expectedErrorCount = vm.runtime.runtimeErrors.length;
                 const steps = 10;
                 const targetId = "target1";
                 const script1 = `import asyncio\nawait asyncio.sleep(0.25)\nstop("other")\nmove(${steps / 2})`;
@@ -154,9 +158,13 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
                 expect(vm.runtime.targets[0].x).to.equal(steps + steps / 2);
                 expect(vm.runtime.targets[0].y).to.equal(0);
+                // Stop all should not generate an error in the vm
+                expect(vm.runtime.runtimeErrors.length).to.equal(expectedErrorCount);
             });
 
             it("Interrupt All", async () => {
+                const expectedErrorCount = vm.runtime.runtimeErrors.length;
+
                 const steps = 10;
 
                 const target1Id = "target1";
@@ -171,6 +179,8 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
                 expect(vm.runtime.targets[0].x).to.equal(steps);
                 expect(vm.runtime.targets[0].y).to.equal(0);
+                // Stop all should not generate an error in the vm
+                expect(vm.runtime.runtimeErrors.length).to.equal(expectedErrorCount);
             });
         });
     });
