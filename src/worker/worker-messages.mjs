@@ -5,7 +5,7 @@ const WorkerMessages = {
         PythonLoading: "PythonLoading",
         PythonRunning: "PythonRunning",
         PythonFinished: "PythonFinished",
-        PythonRuntimeError: "PythonRuntimeError",
+        PythonError: "PythonRuntimeError",
         PythonCompileTimeError: "PythonCompileTimeError",
         BlockOP: "BlockOP",
         EndOfThread: "EndOfThread",

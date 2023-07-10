@@ -136,9 +136,7 @@ class PyatchLinker {
         return modifiedCode;
     }
 
-    wrapThreadCode(threadId, script, globalVariables) {
-        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
-
+    wrapThreadCode(threadId, script, globalVariables, calledPatchPrimitiveFunctions) {
         const passedCode = script || "pass";
         const { asyncedCode, newAwaitFunctions } = this.addAsyncToFunctionDefinitions(passedCode);
         const awaitedCode = this.addAwaitToPythonFunctions(asyncedCode, calledPatchPrimitiveFunctions.concat(newAwaitFunctions));
@@ -160,11 +158,29 @@ class PyatchLinker {
 
     /**
      * Generate the fully linked executable python code.
-     * @param {Object} executionObject - Dict with thread id as key and code.
+     * @param {String} threadId - the id of the thread.
+     * @param {String} script - the python code to be executed.
+     * @param {Object} globalVariables - the global variables to be passed to the thread.
      *
      */
     generatePython(threadId, script, globalVariables) {
-        return this.wrapThreadCode(threadId, script, globalVariables);
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
+        return this.wrapThreadCode(threadId, script, globalVariables, calledPatchPrimitiveFunctions);
+    }
+
+    /**
+     * Generate the error transform function for a thread. This will be used to calculate the correct user facing line numbers.
+     * @param {String} threadId - the id of the thread.
+     * @param {String} script - the python code to be executed.
+     * @param {Object} globalVariables - the global variables to be passed to the thread.
+     *
+     */
+    generateErrorTransform(script, globalVariables) {
+        const calledPatchPrimitiveFunctions = this.getFunctionCalls(PrimProxy.getPrimNames(), script);
+        const primitiveFunctionLines = (calledPatchPrimitiveFunctions ?? []).length;
+        const globalVariableLines = Object.keys(globalVariables ?? {}).length;
+        const headerLine = 1;
+        return (_threadId, _message, _lineNumber) => [_threadId, _message, _lineNumber - primitiveFunctionLines - globalVariableLines - headerLine];
     }
 }
 export default PyatchLinker;

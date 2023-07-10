@@ -135,9 +135,15 @@ export default class Runtime extends EventEmitter {
         };
 
         this.runtimeErrors = [];
-        this.pyatchWorker = new PyatchWorker((threadId, message, lineNumber) => {
-            this.runtimeErrors.push({ threadId, message, lineNumber });
-            this.emit("RUNTIME ERROR", threadId, message, lineNumber);
+        this.compileTimeErrors = [];
+        this.pyatchWorker = new PyatchWorker((threadId, message, lineNumber, type) => {
+            if (type === "RuntimeError") {
+                this.runtimeErrors.push({ threadId, message, lineNumber, type });
+                this.emit("RUNTIME ERROR", { threadId, message, lineNumber, type });
+            } else if (type === "CompileTimeError") {
+                this.compileTimeErrors.push({ threadId, message, lineNumber, type });
+                this.emit("COMPILE TIME ERROR", { threadId, message, lineNumber, type });
+            }
         });
         this.workerLoaded = false;
         this.workerLoadPromise = this.pyatchWorker.loadWorker().then(() => {
@@ -733,9 +739,9 @@ export default class Runtime extends EventEmitter {
         thread.updateThreadTriggerEventOption(eventTriggerOption);
     }
 
-    addThread(targetId, script, triggerEventId, option) {
+    async addThread(targetId, script, triggerEventId, option) {
         const target = this.getTargetById(targetId);
-        const newThreadId = target.addThread(script, triggerEventId, option);
+        const newThreadId = await target.addThread(script, triggerEventId, option);
         return newThreadId;
     }
 

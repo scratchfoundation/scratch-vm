@@ -45,14 +45,19 @@ class Thread {
 
     async loadThread(script) {
         await this.runtime.workerLoadPromise;
-        await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
+        this.runtime.compileTimeErrors = this.runtime.compileTimeErrors.filter((error) => error.threadId !== this.id);
+        this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
+        const success = await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
+        return success;
     }
 
     async startThread() {
-        await this.loadPromise;
-        this.interruptThread = false;
-        this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
-        await this.worker.startThread(this.id, this.executeBlock);
+        const success = await this.loadPromise;
+        if (success) {
+            this.interruptThread = false;
+            this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
+            await this.worker.startThread(this.id, this.executeBlock);
+        }
     }
 
     async stopThread() {

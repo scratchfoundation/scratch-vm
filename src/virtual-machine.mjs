@@ -43,8 +43,11 @@ export default class VirtualMachine extends EventEmitter {
         this.runtime.on("WORKER READY", () => {
             this.emit("VM READY");
         });
-        this.runtime.on("RUNTIME ERROR", (threadId, message, lineNumber) => {
-            this.emit("RUNTIME ERROR", threadId, message, lineNumber);
+        this.runtime.on("RUNTIME ERROR", (threadId, message, lineNumber, type) => {
+            this.emit("RUNTIME ERROR", threadId, message, lineNumber, type);
+        });
+        this.runtime.on("COMPILE TIME ERROR", (threadId, message, lineNumber, type) => {
+            this.emit("COMPILE TIME ERROR", threadId, message, lineNumber, type);
         });
     }
 
@@ -742,8 +745,8 @@ export default class VirtualMachine extends EventEmitter {
         return startedHat;
     }
 
-    addThread(targetId, script, triggerEventId, option) {
-        const newThreadId = this.runtime.addThread(targetId, script, triggerEventId, option);
+    async addThread(targetId, script, triggerEventId, option) {
+        const newThreadId = await this.runtime.addThread(targetId, script, triggerEventId, option);
         return newThreadId;
     }
 
@@ -801,5 +804,9 @@ export default class VirtualMachine extends EventEmitter {
 
     getRuntimeErrors() {
         return this.runtime.runtimeErrors;
+    }
+
+    getCompileTimeErrors() {
+        return this.runtime.compileTimeErrors;
     }
 }

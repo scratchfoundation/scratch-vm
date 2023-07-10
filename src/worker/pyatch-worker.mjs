@@ -13,6 +13,7 @@ class PyatchWorker {
         this._worker.onmessage = this.handleWorkerMessage.bind(this);
         this._blockOPCallbackMap = {};
         this._errorCallback = errorCallback;
+        this._threadErrorCallbackMap = {};
 
         this._threadInterruptMap = {};
 
@@ -29,8 +30,6 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.PromiseLoaded) {
             const { loadPromiseId } = event.data;
             this._loadingPromiseMap[loadPromiseId].resolve();
-        } else if (event.data.id === WorkerMessages.ToVM.PythonCompileTimeError) {
-            this._loadingPromiseMap.reject(event.data.error);
         } else if (event.data.id === WorkerMessages.ToVM.BlockOP) {
             const { threadId, opCode, args, token } = event.data;
             this._blockOPCallbackMap[threadId](opCode, args).then((result) => {
@@ -39,9 +38,17 @@ class PyatchWorker {
         } else if (event.data.id === WorkerMessages.ToVM.ThreadDone) {
             const { threadId } = event.data;
             this._threadPromiseMap[threadId].resolve();
-        } else if (event.data.id === WorkerMessages.ToVM.PythonRuntimeError) {
-            const { threadId, message, lineNumber } = event.data;
-            this._errorCallback(threadId, message, lineNumber);
+        } else if (event.data.id === WorkerMessages.ToVM.PythonError) {
+            const { threadId, message, lineNumber, type } = event.data;
+            if (this._threadErrorCallbackMap[threadId]) {
+                this._threadErrorCallbackMap[threadId](threadId, message, lineNumber, type);
+                if (type === "CompileTimeError") {
+                    const { loadPromiseId } = event.data;
+                    this._loadingPromiseMap[loadPromiseId].reject();
+                }
+            } else {
+                this._errorCallback(threadId, message, lineNumber);
+            }
         }
     }
 
@@ -64,13 +71,14 @@ class PyatchWorker {
         await this.loadInterruptFunction();
     }
 
-    async loadGlobal(script) {
+    async loadGlobal(script, threadId = "") {
         await this._worker;
         const loadPromiseId = uid();
         const message = {
             id: WorkerMessages.FromVM.LoadGlobal,
             script,
             loadPromiseId,
+            threadId,
         };
 
         return new Promise((resolve, reject) => {
@@ -86,7 +94,15 @@ class PyatchWorker {
 
     async loadThread(threadId, script, globalVaraibles) {
         const wrappedScript = this.pyatchLinker.generatePython(threadId, script, globalVaraibles);
-        await this.loadGlobal(wrappedScript);
+        const transformError = this.pyatchLinker.generateErrorTransform(script, globalVaraibles);
+        this._threadErrorCallbackMap[threadId] = (...args) => this._errorCallback(...transformError(args[0], args[1], args[2]), args[3]);
+        let success = true;
+        try {
+            await this.loadGlobal(wrappedScript, threadId);
+        } catch (e) {
+            success = false;
+        }
+        return success;
     }
 
     async loadGlobalVariable(name, value) {
