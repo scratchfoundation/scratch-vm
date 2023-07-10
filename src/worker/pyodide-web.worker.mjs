@@ -199,7 +199,10 @@ function _startThread(threadId, threadInterruptBuffer) {
     const handleRuntimeError = (_threadId) => (error) => {
         const { lineNumber, errorLineMessage } = parseRuntimePythonError(error);
         endThreadPost(_threadId);
-        _postRuntimeError(_threadId, lineNumber, errorLineMessage);
+        // Filter out interrupt errors
+        if (!error.message.includes("throw_interrupt_error")) {
+            _postRuntimeError(_threadId, lineNumber, errorLineMessage);
+        }
     };
     if (threadId) {
         const runThread = _getThreadFunction(threadId);
