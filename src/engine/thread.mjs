@@ -38,8 +38,7 @@ class Thread {
         this.triggerEvent = triggerEventId;
         this.triggerEventOption = triggerEventOption;
 
-        this.loadPromise = null;
-        this.loadThread(this.script);
+        this.loadPromise = this.loadThread(this.script);
 
         this.interruptThread = false;
     }
@@ -48,13 +47,13 @@ class Thread {
         await this.runtime.workerLoadPromise;
         this.runtime.compileTimeErrors = this.runtime.compileTimeErrors.filter((error) => error.threadId !== this.id);
         this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
-        this.loadPromise = this.worker.loadThread(this.id, script, this.runtime.globalVariables);
-        await this.loadPromise;
+        const success = await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
+        return success;
     }
 
     async startThread() {
-        const result = await this.loadPromise;
-        if (result) {
+        const success = await this.loadPromise;
+        if (success) {
             this.interruptThread = false;
             this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
             await this.worker.startThread(this.id, this.executeBlock);

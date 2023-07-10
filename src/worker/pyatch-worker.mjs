@@ -93,7 +93,8 @@ class PyatchWorker {
     }
 
     async loadThread(threadId, script, globalVaraibles) {
-        const [wrappedScript, transformError] = this.pyatchLinker.generatePython(threadId, script, globalVaraibles);
+        const wrappedScript = this.pyatchLinker.generatePython(threadId, script, globalVaraibles);
+        const transformError = this.pyatchLinker.generateErrorTransform(script, globalVaraibles);
         this._threadErrorCallbackMap[threadId] = (...args) => this._errorCallback(...transformError(args[0], args[1], args[2]), args[3]);
         let success = true;
         try {
