@@ -342,11 +342,14 @@ class Target extends EventEmitter {
      */
     async startHat(eventId, option) {
         const threadPromises = [];
+        const restartThread = this.runtime.getHatMetadata(eventId).restartExistingThreads;
         Object.keys(this.threads).forEach((threadId) => {
             const thread = this.threads[threadId];
             if (thread.triggerEvent === eventId) {
                 if (thread.triggerEventOption === "" || thread.triggerEventOption === option) {
-                    threadPromises.push(thread.startThread());
+                    if (restartThread || !thread.running) {
+                        threadPromises.push(thread.startThread());
+                    }
                 }
             }
         });

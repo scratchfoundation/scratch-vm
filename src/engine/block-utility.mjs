@@ -101,7 +101,7 @@ export default class BlockUtility {
         await this.runtime.stopOtherTargetThreads(this.target.id, this._thread.id);
     }
 
-    async stopThisScript() {
-        await this._thread.stopThread();
+    stopThisScript() {
+        this._thread.stopThread();
     }
 }

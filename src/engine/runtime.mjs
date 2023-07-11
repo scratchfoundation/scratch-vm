@@ -318,6 +318,13 @@ export default class Runtime extends EventEmitter {
     }
 
     /**
+     * Retrieve metadata associtated with a specific hat.
+     */
+    getHatMetadata(hatOpcode) {
+        return this._hats[hatOpcode];
+    }
+
+    /**
      * Attach the audio engine
      * @param {!AudioEngine} audioEngine The audio engine to attach
      */

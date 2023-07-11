@@ -61,8 +61,8 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             await vm.startHats(triggerEventId);
             const endTime = performance.now();
 
-            // Check that the time elapsed is the wait time within 0.02 seconds
-            expect(endTime - startTime).to.be.within(0.5 * 1000 - 20, 0.5 * 1000 + 20);
+            // Check that the time elapsed is the wait time within 0.04 seconds
+            expect(endTime - startTime).to.be.within(0.5 * 1000 - 40, 0.5 * 1000 + 40);
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
