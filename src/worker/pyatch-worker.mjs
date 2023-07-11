@@ -112,8 +112,9 @@ class PyatchWorker {
 
     async startThread(threadId, blockOpertationCallback) {
         const threadPromise = new Promise((resolve, reject) => {
-            this._threadPromiseMap[threadId] = { resolve, reject };
+            this._threadPromiseMap[threadId] = { ...this._threadPromiseMap[threadId], threadPromise: null, resolve, reject };
         });
+        this._threadPromiseMap[threadId] = { ...this._threadPromiseMap[threadId], threadPromise };
 
         this._blockOPCallbackMap[threadId] = blockOpertationCallback;
 
@@ -126,8 +127,10 @@ class PyatchWorker {
     }
 
     async stopThread(threadId) {
-        const endThreadPromise = this._threadPromiseMap[threadId];
-        await endThreadPromise;
+        if (this._threadPromiseMap[threadId]) {
+            const endThreadPromise = this._threadPromiseMap[threadId].threadPromise;
+            await endThreadPromise;
+        }
     }
 
     /**

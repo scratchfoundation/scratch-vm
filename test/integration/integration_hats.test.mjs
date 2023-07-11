@@ -1,5 +1,8 @@
 import sinonChai from "sinon-chai";
 import chai from "chai";
+import * as url from "url";
+import fs from "fs";
+import path from "path";
 import VirtualMachine from "../../src/virtual-machine.mjs";
 import Sprite from "../../src/sprites/sprite.mjs";
 import RenderedTarget from "../../src/sprites/rendered-target.mjs";
@@ -7,6 +10,8 @@ import resetTarget from "../fixtures/reset-target.mjs";
 
 chai.use(sinonChai);
 const { expect } = chai;
+
+const __dirname = url.fileURLToPath(new URL(".", import.meta.url));
 
 let vm = null;
 let sprite1 = null;
@@ -194,6 +199,28 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
             expect(originalTarget.x).to.equal(0);
             expect(originalTarget.y).to.equal(0);
+        });
+        // When flag clicked event should restart running threads
+        it("When Flag Clicked Restart", async () => {
+            const steps = 10;
+
+            const runningInputFile = path.join(__dirname, "./", "input", "running-thread.py");
+            const runningScript = fs.readFileSync(runningInputFile, "utf8", (err, data) => data);
+
+            const targetId = "target1";
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, runningScript, triggerEventId);
+            vm.startHats("event_whenflagclicked");
+            setTimeout(() => vm.startHats("event_whenflagclicked"), 100);
+
+            // Wait 200ms to ensure the thread has restarted
+            await new Promise((resolve) => {
+                setTimeout(resolve, 200);
+            });
+
+            expect(vm.runtime.targets[0].x).to.equal(steps * 2);
+            expect(vm.runtime.targets[0].y).to.equal(0);
         });
     });
 });

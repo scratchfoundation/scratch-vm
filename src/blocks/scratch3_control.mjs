@@ -45,7 +45,7 @@ class Scratch3ControlBlocks {
         } else if (option === "other") {
             await util.stopOtherTargetThreads();
         } else if (option === "this") {
-            await util.stopThisScript();
+            util.stopThisScript();
         }
     }
 

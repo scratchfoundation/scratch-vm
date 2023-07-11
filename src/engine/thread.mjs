@@ -41,28 +41,52 @@ class Thread {
         this.loadPromise = this.loadThread(this.script);
 
         this.interruptThread = false;
+        this.running = false;
     }
 
     async loadThread(script) {
+        // Confirm worker is loaded
         await this.runtime.workerLoadPromise;
+
+        // Reset Error Messages
         this.runtime.compileTimeErrors = this.runtime.compileTimeErrors.filter((error) => error.threadId !== this.id);
         this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
+
+        // Stop the current running thread
+        const wasRunning = this.running;
+        if (this.running) {
+            await this.stopThread();
+        }
+
         const success = await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
+
+        // Restart the thread if it was running
+        if (wasRunning) {
+            await this.startThread();
+        }
+
         return success;
     }
 
     async startThread() {
         const success = await this.loadPromise;
+        // If the thread is already running, restart it
+        if (this.running) {
+            await this.stopThread();
+        }
         if (success) {
             this.interruptThread = false;
             this.runtime.runtimeErrors = this.runtime.runtimeErrors.filter((error) => error.threadId !== this.id);
+            this.running = true;
             await this.worker.startThread(this.id, this.executeBlock);
+            this.running = false;
         }
     }
 
     async stopThread() {
         this.interruptThread = true;
         await this.worker.stopThread(this.id);
+        this.running = false;
     }
 
     async updateThreadScript(script) {
