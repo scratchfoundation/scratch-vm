@@ -413,8 +413,8 @@ class PrimProxy {
         },
         changePenEffect: {
             opcode: "pen_changepencolorparamby",
-            parameters: ["change"],
-            exampleParameters: { change: 10 },
+            parameters: ["effect", "change"],
+            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: 10 },
         },
         setPenEffect: {
             opcode: "pen_setpencolorparamto",

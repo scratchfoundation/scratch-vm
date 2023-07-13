@@ -809,4 +809,21 @@ export default class VirtualMachine extends EventEmitter {
     getCompileTimeErrors() {
         return this.runtime.compileTimeErrors;
     }
+
+    /**
+     * Get all messagesIds that are currently being listened for by threads
+     */
+    getAllBroadcastMessages() {
+        const messages = [];
+        this.getAllRenderedTargets().forEach((target) => {
+            const { threads } = target;
+            Object.keys(threads).forEach((threadId) => {
+                const thread = threads[threadId];
+                if (thread.triggerEvent === "event_whenbroadcastreceived") {
+                    messages.push(thread.triggerEventOption);
+                }
+            });
+        });
+        return messages;
+    }
 }
