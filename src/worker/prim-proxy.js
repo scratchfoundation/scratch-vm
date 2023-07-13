@@ -1,6 +1,25 @@
 import InterruptError from "./errors/interruptError.mjs";
+import Scratch3SoundBlocks from "../blocks/scratch3_sound.mjs";
+import Scratch3LooksBlocks from "../blocks/scratch3_looks.mjs";
+import Scratch3MotionBlocks from "../blocks/scratch3_motion.mjs";
+import Scratch3SensingBlocks from "../blocks/scratch3_sensing.mjs";
+import Scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
+import Scratch3PenBlocks from "../blocks/scratch3_ext_pen.mjs";
 
 class PrimProxy {
+    /**
+     * Dynamic lists of targets, backdrops, costumes, sounds, and messages that need to be generated at runtime.
+     */
+    static TARGET_NAMES = "TARGET_NAMES";
+
+    static BACKDROP_NAMES = "BACKDROP_NAMES";
+
+    static COSTUME_NAMES = "COSTUME_NAMES";
+
+    static SOUND_NAMES = "SOUND_NAMES";
+
+    static MESSAGE_NAMES = "MESSAGE_NAMES";
+
     static patchApi = {
         move: {
             opcode: "motion_movesteps",
@@ -15,7 +34,7 @@ class PrimProxy {
         goTo: {
             opcode: "motion_goto",
             parameters: ["name"],
-            exampleParameters: { name: "'spriteName'" },
+            exampleParameters: { name: PrimProxy.TARGET_NAMES },
         },
         turnRight: {
             opcode: "motion_turnright",
@@ -35,7 +54,7 @@ class PrimProxy {
         pointTowards: {
             opcode: "motion_pointtowards",
             parameters: ["name"],
-            exampleParameters: { name: "'spriteName'" },
+            exampleParameters: { name: PrimProxy.TARGET_NAMES },
         },
         glide: {
             opcode: "motion_glidesecstoxy",
@@ -45,7 +64,7 @@ class PrimProxy {
         glideTo: {
             opcode: "motion_glideto",
             parameters: ["seconds", "name"],
-            exampleParameters: { seconds: 1, name: "'spriteName'" },
+            exampleParameters: { seconds: 1, name: PrimProxy.TARGET_NAMES },
         },
         ifOnEdgeBounce: {
             opcode: "motion_ifonedgebounce",
@@ -55,7 +74,7 @@ class PrimProxy {
         setRotationStyle: {
             opcode: "motion_setrotationstyle",
             parameters: ["style"],
-            exampleParameters: { style: "'left-right'" },
+            exampleParameters: { style: Scratch3MotionBlocks.ROTATION_STYLES },
         },
         changeX: {
             opcode: "motion_changexby",
@@ -96,22 +115,22 @@ class PrimProxy {
         say: {
             opcode: "looks_say",
             parameters: ["message"],
-            exampleParameters: { message: "'Hello!'" },
+            exampleParameters: { message: "Hello!" },
         },
         sayFor: {
             opcode: "looks_sayforsecs",
             parameters: ["message"],
-            exampleParameters: { message: "'Hello!'" },
+            exampleParameters: { message: "Hello!" },
         },
         think: {
             opcode: "looks_think",
             parameters: ["message"],
-            exampleParameters: { message: "'Hello!'" },
+            exampleParameters: { message: "Hello!" },
         },
         thinkFor: {
             opcode: "looks_thinkforsecs",
             parameters: ["message"],
-            exampleParameters: { message: "'Hello!'" },
+            exampleParameters: { message: "Hello!" },
         },
         show: {
             opcode: "looks_show",
@@ -126,17 +145,17 @@ class PrimProxy {
         setCostumeTo: {
             opcode: "looks_switchcostumeto",
             parameters: ["name"],
-            exampleParameters: { name: "'costumeName'" },
+            exampleParameters: { name: PrimProxy.COSTUME_NAMES },
         },
         setBackdropTo: {
             opcode: "looks_switchbackdropto",
             parameters: ["name"],
-            exampleParameters: { name: "'backdropName'" },
+            exampleParameters: { name: PrimProxy.BACKDROP_NAMES },
         },
         setBackdropToAndWait: {
             opcode: "looks_switchbackdroptoandwait",
             parameters: ["name"],
-            exampleParameters: { name: "'backdropName'" },
+            exampleParameters: { name: PrimProxy.BACKDROP_NAMES },
         },
         nextCostume: {
             opcode: "looks_nextcostume",
@@ -151,12 +170,12 @@ class PrimProxy {
         changeGraphicEffectBy: {
             opcode: "looks_changeeffectby",
             parameters: ["effect", "value"],
-            exampleParameters: { effect: "'color'", value: 25 },
+            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, value: 25 },
         },
         setGraphicEffectTo: {
             opcode: "looks_seteffectto",
             parameters: ["effect", "value"],
-            exampleParameters: { effect: "'color'", value: 25 },
+            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, value: 25 },
         },
         clearGraphicEffects: {
             opcode: "looks_cleargraphiceffects",
@@ -176,7 +195,7 @@ class PrimProxy {
         setLayerTo: {
             opcode: "looks_gotofrontback",
             parameters: ["layer"],
-            exampleParameters: { layer: "'front'" },
+            exampleParameters: { layer: ["front", "back"] },
         },
         changeLayerBy: {
             opcode: "looks_goforwardbackwardlayers",
@@ -202,12 +221,12 @@ class PrimProxy {
         playSound: {
             opcode: "sound_play",
             parameters: ["soundName"],
-            exampleParameters: { soundName: "'Meow'" },
+            exampleParameters: { soundName: PrimProxy.SOUND_NAMES },
         },
         playSoundUntilDone: {
             opcode: "sound_playuntildone",
             parameters: ["sound name"],
-            exampleParameters: { soundName: "'meow'" },
+            exampleParameters: { soundName: PrimProxy.SOUND_NAMES },
         },
         stopAllSounds: {
             opcode: "sound_stopallsounds",
@@ -217,12 +236,12 @@ class PrimProxy {
         setSoundEffectTo: {
             opcode: "sound_seteffectto",
             parameters: ["effect", "value"],
-            exampleParameters: { effect: "'pitch'", value: 100 },
+            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, value: 100 },
         },
         changeSoundEffectBy: {
             opcode: "sound_changeeffectby",
             parameters: ["effect", "change"],
-            exampleParameters: { effect: "'pitch'", change: 10 },
+            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, change: 10 },
         },
         clearSoundEffects: {
             opcode: "sound_cleareffects",
@@ -248,12 +267,12 @@ class PrimProxy {
         broadcast: {
             opcode: "event_broadcast",
             parameters: ["message"],
-            exampleParameters: { message: "'message'" },
+            exampleParameters: { message: PrimProxy.MESSAGE_NAMES },
         },
         broadcastAndWait: {
             opcode: "event_broadcastandwait",
             parameters: ["message"],
-            exampleParameters: { message: "'message'" },
+            exampleParameters: { message: PrimProxy.MESSAGE_NAMES },
         },
 
         isTouching: {
@@ -274,7 +293,7 @@ class PrimProxy {
         distanceTo: {
             opcode: "sensing_distanceto",
             parameters: ["name"],
-            exampleParameters: { name: "'spriteName'" },
+            exampleParameters: { name: PrimProxy.TARGET_NAMES },
         },
         getTimer: {
             opcode: "sensing_timer",
@@ -289,7 +308,7 @@ class PrimProxy {
         getAttributeOf: {
             opcode: "sensing_of",
             parameters: ["object", "property"],
-            exampleParameters: { object: "'Sprite1'", property: "'x position'" },
+            exampleParameters: { object: PrimProxy.TARGET_NAMES, property: "x position" },
         },
         getMouseX: {
             opcode: "sensing_mousex",
@@ -318,7 +337,7 @@ class PrimProxy {
         current: {
             opcode: "sensing_current",
             parameters: ["timeIncrement"],
-            exampleParameters: { timeIncrement: "'year'" },
+            exampleParameters: { timeIncrement: Scratch3SensingBlocks.CURRENT_INCREMENT_OPTIONS },
         },
         daysSince2000: {
             opcode: "sensing_dayssince2000",
@@ -354,12 +373,12 @@ class PrimProxy {
         stop: {
             opcode: "control_stop",
             parameters: ["option"],
-            exampleParameters: { option: "'self'" },
+            exampleParameters: { option: Scratch3ControlBlocks.STOP_OPTIONS },
         },
         createClone: {
             opcode: "control_create_clone_of",
             parameters: ["option"],
-            exampleParameters: { option: "'myself'" },
+            exampleParameters: { option: PrimProxy.TARGET_NAMES },
         },
         deleteClone: {
             opcode: "control_delete_this_clone",
@@ -394,13 +413,13 @@ class PrimProxy {
         },
         changePenEffect: {
             opcode: "pen_changepencolorparamby",
-            parameters: ["change"],
-            exampleParameters: { change: 10 },
+            parameters: ["effect", "change"],
+            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: 10 },
         },
         setPenEffect: {
             opcode: "pen_setpencolorparamto",
             parameters: ["effect", "change"],
-            exampleParameters: { effect: "'color'", change: 10 },
+            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: 10 },
         },
         changePenSize: {
             opcode: "pen_changepensizeby",

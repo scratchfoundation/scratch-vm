@@ -39,6 +39,14 @@ export default class Scratch3LooksBlocks {
     }
 
     /**
+     * List of all visual effect names, for use in the "looks_changeeffectby" block.
+     * @type {Array.<string>}
+     */
+    static get EFFECT_LIST() {
+        return RenderedTarget.EFFECTS;
+    }
+
+    /**
      * The default bubble state, to be used when a target has no existing bubble state.
      * @type {BubbleState}
      */

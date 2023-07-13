@@ -107,6 +107,13 @@ class Scratch3PenBlocks {
     }
 
     /**
+     * List of all options for pen color param blocks.
+     */
+    static get PEN_EFFECT_LIST() {
+        return Object.keys(ColorParam).map((key) => ColorParam[key]);
+    }
+
+    /**
      * The minimum and maximum allowed pen size.
      * The maximum is twice the diagonal of the stage, so that even an
      * off-stage sprite can fill it.
