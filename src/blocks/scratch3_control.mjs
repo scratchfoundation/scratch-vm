@@ -31,6 +31,14 @@ class Scratch3ControlBlocks {
         };
     }
 
+    /**
+     * List of all options for stop block.
+     * @type
+     */
+    static get STOP_OPTIONS() {
+        return ["all", "other", "this"];
+    }
+
     async wait(args) {
         const duration = Cast.toNumber(args.DURATION);
         await new Promise((resolve) => {

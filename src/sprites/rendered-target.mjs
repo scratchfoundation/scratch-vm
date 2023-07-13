@@ -225,7 +225,7 @@ class RenderedTarget extends Target {
      * @type {string}
      */
     static get ROTATION_STYLE_ALL_AROUND() {
-        return "all around";
+        return "all-around";
     }
 
     /**
@@ -241,7 +241,15 @@ class RenderedTarget extends Target {
      * @type {string}
      */
     static get ROTATION_STYLE_NONE() {
-        return "don't rotate";
+        return "none";
+    }
+
+    /**
+     * Effect map keys for graphic effects.
+     * @type {List<string>}
+     */
+    static get EFFECTS() {
+        return ["color", "fisheye", "whirl", "pixelate", "mosaic", "brightness", "ghost"];
     }
 
     /**

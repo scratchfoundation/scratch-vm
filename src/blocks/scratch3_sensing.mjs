@@ -58,6 +58,14 @@ export default class Scratch3SensingBlocks {
         };
     }
 
+    /**
+     * List of cases for the current block.
+     * @type {Array.<String>}
+     */
+    static get CURRENT_INCREMENT_OPTIONS() {
+        return ["year", "month", "date", "dayofweek", "hour", "minute", "second"];
+    }
+
     getMonitored() {
         return {
             sensing_loudness: {

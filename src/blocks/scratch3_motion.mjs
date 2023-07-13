@@ -2,6 +2,7 @@
 import Cast from "../util/cast.mjs";
 import MathUtil from "../util/math-util.mjs";
 import Timer from "../util/timer.mjs";
+import RenderedTarget from "../sprites/rendered-target.mjs";
 
 export default class Scratch3MotionBlocks {
     constructor(runtime) {
@@ -43,6 +44,14 @@ export default class Scratch3MotionBlocks {
             motion_xscroll: () => {},
             motion_yscroll: () => {},
         };
+    }
+
+    /**
+     * List of rotations styles from the Scratch 3.0 spec.
+     * @type {Array.<string>}
+     */
+    static get ROTATION_STYLES() {
+        return [RenderedTarget.ROTATION_STYLE_ALL_AROUND, RenderedTarget.ROTATION_STYLE_LEFT_RIGHT, RenderedTarget.ROTATION_STYLE_NONE];
     }
 
     getMonitored() {

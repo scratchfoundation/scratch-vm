@@ -57,6 +57,14 @@ export default class Scratch3SoundBlocks {
     }
 
     /**
+     * List of all possible sound effects.
+     * @type {Array.<string>}
+     */
+    static get EFFECT_LIST() {
+        return ["pitch", "pan"];
+    }
+
+    /**
      * The minimum and maximum MIDI note numbers, for clamping the input to play note.
      * @type {{min: number, max: number}}
      */
