@@ -58,7 +58,8 @@ class Thread {
             await this.stopThread();
         }
 
-        const success = await this.worker.loadThread(this.id, script, this.runtime.globalVariables);
+        console.warn(this.runtime.globalVariables);
+        const success = await this.worker.loadThread(this.id, script, this.runtime._globalVariables);
 
         // Restart the thread if it was running
         if (wasRunning) {
