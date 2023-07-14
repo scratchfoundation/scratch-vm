@@ -354,9 +354,11 @@ class PrimProxy {
             parameters: [],
             exampleParameters: {},
         },
-        // askAndWait: {
-        // opcode: "sensing_askandwait"
-        // },
+        ask: {
+            opcode: "sensing_askandwait",
+            parameters: ["question"],
+            exampleParameters: { question: "What's your name?" },
+        },
         // getAnswer: {
         // opcode: "sensing_answer"
         // },
@@ -684,6 +686,11 @@ class PrimProxy {
 
     async broadcastAndWait(messageName) {
         await this.post(PrimProxy.patchApi.broadcastAndWait.opcode, { BROADCAST_OPTION: { id: messageName, name: messageName } });
+    }
+
+    async ask(message) {
+        const answer = await this.post(PrimProxy.patchApi.ask.opcode, { QUESTION: message });
+        return answer;
     }
 
     async isTouching(object) {
