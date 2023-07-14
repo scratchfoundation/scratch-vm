@@ -29,6 +29,16 @@ export default class Scratch3SensingBlocks {
          * @type {number}
          */
         this._cachedLoudnessTimestamp = 0;
+
+        /**
+         * The list of queued questions and respective `resolve` callbacks.
+         * @type {!Array}
+         */
+        this._questionList = [];
+
+        this.runtime.on("ANSWER", this._onAnswer.bind(this));
+        this.runtime.on("PROJECT_STOP_ALL", this._clearAllQuestions.bind(this));
+        this.runtime.on("STOP_FOR_TARGET", this._clearTargetQuestions.bind(this));
     }
 
     /**
@@ -37,6 +47,7 @@ export default class Scratch3SensingBlocks {
      */
     getPrimitives() {
         return {
+            sensing_askandwait: this.askAndWait,
             sensing_touchingobject: this.touchingObject,
             sensing_touchingcolor: this.touchingColor,
             sensing_coloristouchingcolor: this.colorTouchingColor,
@@ -81,6 +92,69 @@ export default class Scratch3SensingBlocks {
                 getId: (_, fields) => getMonitorIdForBlockWithArgs("current", fields), // _${param}`
             },
         };
+    }
+
+    _onAnswer(answer) {
+        const questionObj = this._questionList.shift();
+        if (questionObj) {
+            const [_question, resolve, target, wasVisible, wasStage] = questionObj;
+            // If the target was visible when asked, hide the say bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
+                this.runtime.emit("SAY", target, "say", "");
+            }
+            resolve(answer);
+            this._askNextQuestion();
+        }
+    }
+
+    _enqueueAsk(question, resolve, target, wasVisible, wasStage) {
+        this._questionList.push([question, resolve, target, wasVisible, wasStage]);
+    }
+
+    _askNextQuestion() {
+        if (this._questionList.length > 0) {
+            const [question, _resolve, target, wasVisible, wasStage] = this._questionList[0];
+            // If the target is visible, emit a blank question and use the
+            // say event to trigger a bubble unless the target was the stage.
+            if (wasVisible && !wasStage) {
+                this.runtime.emit("SAY", target, "say", question);
+                this.runtime.emit("QUESTION", "");
+            } else {
+                this.runtime.emit("QUESTION", question);
+            }
+        } else {
+            this.runtime.emit("QUESTION", null);
+        }
+    }
+
+    _clearAllQuestions() {
+        this._questionList = [];
+        this.runtime.emit("QUESTION", null);
+    }
+
+    _clearTargetQuestions(stopTarget) {
+        const currentlyAsking = this._questionList.length > 0 && this._questionList[0][2] === stopTarget;
+        this._questionList = this._questionList.filter((question) => question[2] !== stopTarget);
+
+        if (currentlyAsking) {
+            this.runtime.emit("SAY", stopTarget, "say", "");
+            if (this._questionList.length > 0) {
+                this._askNextQuestion();
+            } else {
+                this.runtime.emit("QUESTION", null);
+            }
+        }
+    }
+
+    askAndWait(args, util) {
+        const _target = util.target;
+        return new Promise((resolve) => {
+            const isQuestionAsked = this._questionList.length > 0;
+            this._enqueueAsk(String(args.QUESTION), resolve, _target, _target.visible, _target.isStage);
+            if (!isQuestionAsked) {
+                this._askNextQuestion();
+            }
+        });
     }
 
     touchingObject(args, util) {

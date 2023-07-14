@@ -36,6 +36,20 @@ before(async () => {
 
 describe("Pyatch VM Linker & Worker Integration", () => {
     describe("Sensing Blocks", () => {
+        it("Ask", async () => {
+            vm.runtime.on("QUESTION", (text) => {
+                vm.runtime.emit("ANSWER", "good");
+            });
+            const targetId = "target1";
+            const script = `answer = ask("How are you?")\nsay(answer)\n`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.startHats(triggerEventId);
+
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("good");
+        });
         it("Is Touching", async () => {
             const targetId = "target1";
             const script = `touchBool = await isTouching('target2')\nif not touchBool:\n   setX(100)\n`;
