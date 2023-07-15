@@ -322,18 +322,33 @@ class Target extends EventEmitter {
         });
     }
 
-    stopThread(threadId) {
+    async stopThread(threadId) {
         if (this.threads[threadId]) {
-            this.threads[threadId].stopThread();
+            await this.threads[threadId].stopThread();
         }
     }
 
-    stopAllThreads(excludedThreadIds = []) {
+    async stopAllThreads(excludedThreadIds = []) {
+        const threadPromises = [];
         Object.keys(this.threads).forEach((threadId) => {
             if (!excludedThreadIds.includes(threadId)) {
-                this.stopThread(threadId);
+                threadPromises.push(this.stopThread(threadId));
             }
         });
+        await Promise.all(threadPromises);
+    }
+
+    needsRestart = (thread, restartRunningThread, eventId, option) => {
+        if (eventId !== thread.triggerEvent) {
+            return false;
+        }
+        if (thread.triggerEventOption !== "" && thread.triggerEventOption !== option) {
+            return false;
+        }
+        if (!restartRunningThread && thread.running) {
+            return false;
+        }
+        return true;
     }
 
 
@@ -345,12 +360,8 @@ class Target extends EventEmitter {
         const restartThread = this.runtime.getHatMetadata(eventId).restartExistingThreads;
         Object.keys(this.threads).forEach((threadId) => {
             const thread = this.threads[threadId];
-            if (thread.triggerEvent === eventId) {
-                if (thread.triggerEventOption === "" || thread.triggerEventOption === option) {
-                    if (restartThread || !thread.running) {
-                        threadPromises.push(thread.startThread());
-                    }
-                }
+            if (this.needsRestart(thread, restartThread, eventId, option)) {
+                threadPromises.push(thread.startThread());
             }
         });
         await Promise.all(threadPromises);

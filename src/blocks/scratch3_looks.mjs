@@ -29,6 +29,7 @@ export default class Scratch3LooksBlocks {
         this._onResetBubbles = this._onResetBubbles.bind(this);
         this._onTargetWillExit = this._onTargetWillExit.bind(this);
         this._updateBubble = this._updateBubble.bind(this);
+        this._bubbleTimeoutFunction = () => {};
 
         // Reset all bubbles on start/stop
         this.runtime.on("PROJECT_STOP_ALL", this._onResetBubbles);
@@ -157,6 +158,7 @@ export default class Scratch3LooksBlocks {
             this._onTargetWillExit(this.runtime.targets[n]);
         }
         clearTimeout(this._bubbleTimeout);
+        this._bubbleTimeoutFunction();
     }
 
     /**
@@ -343,14 +345,16 @@ export default class Scratch3LooksBlocks {
         const { target } = util;
         const { usageId } = this._getBubbleState(target);
         return new Promise((resolve) => {
-            this._bubbleTimeout = setTimeout(() => {
+            this._bubbleTimeoutFunction = () => {
                 this._bubbleTimeout = null;
+                this._bubbleTimeoutFunction = () => {};
                 // Clear say bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
                     this._updateBubble(target, "say", "");
                 }
                 resolve();
-            }, 1000 * args.SECS);
+            };
+            this._bubbleTimeout = setTimeout(this._bubbleTimeoutFunction, 1000 * args.SECS);
         });
     }
 
@@ -363,14 +367,16 @@ export default class Scratch3LooksBlocks {
         const { target } = util;
         const { usageId } = this._getBubbleState(target);
         return new Promise((resolve) => {
-            this._bubbleTimeout = setTimeout(() => {
+            this._bubbleTimeoutFunction = () => {
                 this._bubbleTimeout = null;
-                // Clear think bubble if it hasn't been changed and proceed.
+                this._bubbleTimeoutFunction = () => {};
+                // Clear say bubble if it hasn't been changed and proceed.
                 if (this._getBubbleState(target).usageId === usageId) {
                     this._updateBubble(target, "think", "");
                 }
                 resolve();
-            }, 1000 * args.SECS);
+            };
+            this._bubbleTimeout = setTimeout(this._bubbleTimeoutFunction, 1000 * args.SECS);
         });
     }
 

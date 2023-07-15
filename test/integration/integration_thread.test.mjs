@@ -49,7 +49,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const runningInputFile = path.join(__dirname, "./", "input", "running-thread.py");
             const runningScript = fs.readFileSync(runningInputFile, "utf8", (err, data) => data);
 
-            const shrinkingInputFile = path.join(__dirname, "./", "input", "shrinking-thread.py");
+            const shrinkingInputFile = path.join(__dirname, "./", "input", "flying-thread.py");
             const shrinkingScript = fs.readFileSync(shrinkingInputFile, "utf8", (err, data) => data);
 
             const targetId = "target1";
@@ -69,6 +69,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].x).to.equal(steps);
             expect(vm.runtime.targets[0].y).to.equal(10);
         });
+
         it("Stop infinite loop", async () => {
             const steps = 10;
 
@@ -91,6 +92,36 @@ describe("Pyatch VM Linker & Worker Integration", () => {
 
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
+        });
+
+        it("SayFor Stop", async () => {
+            const runningInputFile = path.join(__dirname, "./", "input", "sayfor-thread.py");
+            const runningScript = fs.readFileSync(runningInputFile, "utf8", (err, data) => data);
+
+            const targetId = "target1";
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, runningScript, triggerEventId);
+            vm.runtime.greenFlag();
+
+            // Wait 200ms to ensure thread has started
+            await new Promise((resolve) => {
+                setTimeout(resolve, 200);
+            });
+
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("0");
+
+            await new Promise((resolve) => {
+                setTimeout(vm.runtime.greenFlag, 100);
+                setTimeout(vm.runtime.greenFlag, 200);
+                setTimeout(() => {
+                    resolve();
+                }, 300);
+            });
+
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("0");
         });
     });
 });
