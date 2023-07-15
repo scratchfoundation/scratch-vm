@@ -162,7 +162,6 @@ function parseCompileTimePythonError(error) {
 function _loadGlobal(script, loadPromiseId, threadId) {
     try {
         self.pyodide.globals.set(`thread_${threadId}`, null);
-        console.warn("LOADING SCRIPT", script);
         self.pyodide.runPython(script);
     } catch (error) {
         const { lineNumber, errorLineMessage } = parseCompileTimePythonError(error);
