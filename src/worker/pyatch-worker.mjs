@@ -106,7 +106,6 @@ class PyatchWorker {
     }
 
     async loadGlobalVariable(name, value) {
-        console.warn("Loading global variable", name, value);
         const script = this.pyatchLinker.generateGlobalsAssignments({ [name]: value });
         await this.loadGlobal(script);
     }

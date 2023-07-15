@@ -84,9 +84,12 @@ class Thread {
     }
 
     async stopThread() {
-        this.interruptThread = true;
-        await this.worker.stopThread(this.id);
-        this.running = false;
+        if (this.running) {
+            this.interruptThread = true;
+            await this.worker.stopThread(this.id);
+            this.running = false;
+            this.interruptThread = false;
+        }
     }
 
     async updateThreadScript(script) {
@@ -104,29 +107,37 @@ class Thread {
 
     async executePrimitive(blockFunction, args, util) {
         const tick = async (resolve) => {
-            if (this.status === Thread.STATUS_YIELD_TICK || this.status === Thread.STATUS_RUNNING) {
-                this.status = Thread.STATUS_RUNNING;
-                const result = await blockFunction(args, util);
-
-                if (this.status === Thread.STATUS_YIELD_TICK) {
-                    setTimeout(tick.bind(this, resolve), Thread.THREAD_STEP_INTERVAL);
-                } else {
-                    resolve(result);
-                }
+            if (this.interruptThread) {
+                resolve({ id: "InterruptThread" });
+                return;
             }
+            if (this.status !== Thread.STATUS_YIELD_TICK && this.status !== Thread.STATUS_RUNNING) {
+                resolve({ id: "ResultValue", result: null });
+                return;
+            }
+
+            this.status = Thread.STATUS_RUNNING;
+            const result = await blockFunction(args, util);
+
+            if (this.interruptThread) {
+                resolve({ id: "InterruptThread" });
+                return;
+            }
+            if (this.status !== Thread.STATUS_YIELD_TICK) {
+                resolve({ id: "ResultValue", result });
+                return;
+            }
+            setTimeout(tick.bind(this, resolve), Thread.THREAD_STEP_INTERVAL);
         };
         const returnValue = await new Promise(tick);
         return returnValue;
     }
 
     executeBlock = async (opcode, args) => {
-        if (this.interruptThread) {
-            return { id: "InterruptThread" };
-        }
         this.status = Thread.STATUS_RUNNING;
         const blockFunction = this.runtime.getOpcodeFunction(opcode);
         const result = await this.executePrimitive(blockFunction, args, this.blockUtility);
-        return { id: "ResultValue", result };
+        return result;
     };
 
     done() {

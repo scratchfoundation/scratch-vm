@@ -69,8 +69,8 @@ export default class VirtualMachine extends EventEmitter {
     /**
      * "Green flag" handler - start all threads starting with a green flag.
      */
-    greenFlag() {
-        this.runtime.greenFlag();
+    async greenFlag() {
+        await this.runtime.greenFlag();
     }
 
     /**
