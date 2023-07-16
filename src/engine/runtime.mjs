@@ -733,7 +733,6 @@ export default class Runtime extends EventEmitter {
     }
 
     updateThreadScript(threadId, script) {
-        console.log("updateThreadScript", threadId, script);
         const thread = this.getThreadById(threadId);
         thread.updateThreadScript(script);
     }
