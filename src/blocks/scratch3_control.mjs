@@ -49,7 +49,7 @@ class Scratch3ControlBlocks {
     async stop(args, util) {
         const option = args.STOP_OPTION.toLowerCase();
         if (option === "all") {
-            await util.stopAll();
+            util.stopAll();
         } else if (option === "other") {
             await util.stopOtherTargetThreads();
         } else if (option === "this") {
