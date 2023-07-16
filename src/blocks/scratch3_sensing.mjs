@@ -128,6 +128,10 @@ export default class Scratch3SensingBlocks {
     }
 
     _clearAllQuestions() {
+        this._questionList.forEach((question) => {
+            const [_question, resolve] = question;
+            resolve(null);
+        });
         this._questionList = [];
         this.runtime.emit("QUESTION", null);
     }

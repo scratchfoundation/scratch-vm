@@ -50,6 +50,24 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
             expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("good");
         });
+        it("Ask Interrupt", async () => {
+            vm.runtime.on("QUESTION", (text) => {});
+            const targetId = "target1";
+            const script = `answer = ask("How are you?")\n`;
+            const triggerEventId = "event_whenflagclicked";
+
+            await vm.addThread(targetId, script, triggerEventId);
+            await vm.greenFlag();
+
+            await new Promise((resolve) => {
+                setTimeout(async () => {
+                    await vm.greenFlag();
+                    resolve();
+                }, 100);
+            });
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").type).to.equal("say");
+            expect(vm.runtime.targets[0].getCustomState("Scratch.looks").text).to.equal("");
+        });
         it("Is Touching", async () => {
             const targetId = "target1";
             const script = `touchBool = await isTouching('target2')\nif not touchBool:\n   setX(100)\n`;
