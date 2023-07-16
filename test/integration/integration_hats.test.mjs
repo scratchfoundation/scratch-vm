@@ -222,5 +222,19 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             expect(vm.runtime.targets[0].x).to.equal(steps * 2);
             expect(vm.runtime.targets[0].y).to.equal(0);
         });
+        it("When This Sprite Clicked", async () => {
+            const steps = 10;
+
+            const targetId = "target1";
+            const script = `move(${steps})`;
+            const triggerEventId = "event_whenthisspriteclicked";
+            const triggerEventOption = "target1";
+
+            await vm.addThread(targetId, script, triggerEventId, triggerEventOption);
+            await vm.startHats("event_whenthisspriteclicked", "target1");
+
+            expect(vm.runtime.targets[0].x).to.equal(steps);
+            expect(vm.runtime.targets[0].y).to.equal(0);
+        });
     });
 });
