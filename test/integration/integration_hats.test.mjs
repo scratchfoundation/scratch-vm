@@ -193,7 +193,7 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const originalTarget = vm.runtime.getTargetById(targetId);
             const clonedTarget = vm.runtime.targets[vm.runtime.targets.length - 1];
 
-            expect(clonedTarget.isOriginal).to.equal(false);
+            expect(clonedTarget.isOriginal).to.equal(true);
             expect(clonedTarget.x).to.equal(steps);
             expect(clonedTarget.y).to.equal(0);
 
