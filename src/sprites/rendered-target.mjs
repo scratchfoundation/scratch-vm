@@ -171,7 +171,9 @@ class RenderedTarget extends Target {
      */
     initDrawable(layerGroup) {
         if (this.renderer) {
+            console.warn("Drawble create start");
             this.drawableID = this.renderer.createDrawable(layerGroup);
+            console.warn("Drawble create end");
         }
         // If we're a clone, start the hats.
         if (!this.isOriginal) {
@@ -974,7 +976,6 @@ class RenderedTarget extends Target {
             newClone.threads[key] = clonedThread;
         });
         // newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
-        newClone.isOriginal = false;
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
         return newClone;
@@ -1100,9 +1101,9 @@ class RenderedTarget extends Target {
      */
     dispose() {
         this.runtime.changeCloneCounter(-1);
-        //this.runtime.stopForTarget(this);
+        this.stopAllThreads();
         this.runtime.removeExecutable(this);
-        //this.sprite.removeClone(this);
+        this.sprite.removeClone(this);
         if (this.renderer && this.drawableID !== null) {
             this.renderer.destroyDrawable(this.drawableID, this.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
             if (this.visible) {
