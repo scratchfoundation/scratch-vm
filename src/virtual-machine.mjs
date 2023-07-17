@@ -557,7 +557,7 @@ export default class VirtualMachine extends EventEmitter {
 
     getKeyboardOptions() {
         const characterKeys = Array.from(Array(26), (e, i) => String.fromCharCode(65 + i));
-        const scratchKeys = Object.keys(KEY_NAME).map((keyId) => keyId);
+        const scratchKeys = Object.keys(KEY_NAME).map((keyId) => KEY_NAME[keyId].toUpperCase());
 
         return characterKeys.concat(scratchKeys);
     }
