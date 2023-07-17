@@ -798,8 +798,12 @@ export default class VirtualMachine extends EventEmitter {
         return this.runtime.targets;
     }
 
-    getPatchPythonApiInfo() {
+    getApiInfo() {
         return PrimProxy.patchApi;
+    }
+
+    getDynamicFunctionInfo(functionName) {
+        return PrimProxy.getDynamicFunctionInfo(functionName, this);
     }
 
     getRuntimeErrors() {

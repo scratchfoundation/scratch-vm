@@ -12,6 +12,14 @@ class PrimProxy {
      */
     static TARGET_NAMES = "TARGET_NAMES";
 
+    static RESERVED_NAMES = ["_mouse_", "_stage_", "_edge_", "_myself_", "_random_"];
+
+    static LOCATION_OPTIONS = [PrimProxy.TARGET_NAMES, PrimProxy.RESERVED_NAMES[0], PrimProxy.RESERVED_NAMES[4]];
+
+    static CLONE_OPTIONS = [PrimProxy.TARGET_NAMES, PrimProxy.RESERVED_NAMES[3]];
+
+    static TOUCHING_OPTIONS = [PrimProxy.TARGET_NAMES, PrimProxy.RESERVED_NAMES[0], PrimProxy.RESERVED_NAMES[2]];
+
     static BACKDROP_NAMES = "BACKDROP_NAMES";
 
     static COSTUME_NAMES = "COSTUME_NAMES";
@@ -20,51 +28,83 @@ class PrimProxy {
 
     static MESSAGE_NAMES = "MESSAGE_NAMES";
 
+    static ALPHABET = Array.from(Array(26))
+        .map((e, i) => i + 65)
+        .map((x) => String.fromCharCode(x));
+
+    static KEYS = ["space", "left arrow", "right arrow", "up arrow", "down arrow", "any"];
+
+    static KEY_DOWN_OPTIONS = PrimProxy.ALPHABET.concat(PrimProxy.KEYS);
+
+    static DEFAULT_X = 0;
+
+    static DEFAULT_Y = 0;
+
+    static DEFAULT_DIRECTION = 90;
+
+    static DEFAULT_SIZE = 100;
+
+    static DEFAULT_VOLUME = 100;
+
+    static DEFAULT_LAYER = "front";
+
+    static DEFAULT_EFFECT = 0;
+
+    static DEFAULT_CHANGE = 25;
+
+    static DEFAULT_SECONDS = 1;
+
+    static DEFAULT_MESSAGE = "Hello!";
+
+    static DEFAULT_QUESTION = "How are you?";
+
+    static DEFAULT_STEPS = 10;
+
     static patchApi = {
         move: {
             opcode: "motion_movesteps",
             parameters: ["steps"],
-            exampleParameters: { steps: 10 },
+            exampleParameters: { steps: PrimProxy.DEFAULT_STEPS },
         },
         goToXY: {
             opcode: "motion_gotoxy",
             parameters: ["x", "y"],
-            exampleParameters: { x: 10, y: 5 },
+            exampleParameters: { x: PrimProxy.DEFAULT_X, y: PrimProxy.DEFAULT_Y },
         },
         goTo: {
             opcode: "motion_goto",
             parameters: ["name"],
-            exampleParameters: { name: PrimProxy.TARGET_NAMES },
+            exampleParameters: { name: PrimProxy.LOCATION_OPTIONS },
         },
         turnRight: {
             opcode: "motion_turnright",
             parameters: ["degrees"],
-            exampleParameters: { degrees: 90 },
+            exampleParameters: { degrees: PrimProxy.DEFAULT_DIRECTION },
         },
         turnLeft: {
             opcode: "motion_turnleft",
             parameters: ["degrees"],
-            exampleParameters: { degrees: 90 },
+            exampleParameters: { degrees: PrimProxy.DEFAULT_DIRECTION },
         },
         pointInDirection: {
             opcode: "motion_pointindirection",
             parameters: ["degrees"],
-            exampleParameters: { degrees: 90 },
+            exampleParameters: { degrees: PrimProxy.DEFAULT_DIRECTION },
         },
         pointTowards: {
             opcode: "motion_pointtowards",
             parameters: ["name"],
-            exampleParameters: { name: PrimProxy.TARGET_NAMES },
+            exampleParameters: { name: PrimProxy.LOCATION_OPTIONS },
         },
         glide: {
             opcode: "motion_glidesecstoxy",
             parameters: ["seconds", "x", "y"],
-            exampleParameters: { seconds: 1, x: 10, y: 5 },
+            exampleParameters: { seconds: PrimProxy.DEFAULT_SECONDS, x: PrimProxy.DEFAULT_X, y: PrimProxy.DEFAULT_Y },
         },
         glideTo: {
             opcode: "motion_glideto",
             parameters: ["seconds", "name"],
-            exampleParameters: { seconds: 1, name: PrimProxy.TARGET_NAMES },
+            exampleParameters: { seconds: PrimProxy.DEFAULT_SECONDS, name: PrimProxy.LOCATION_OPTIONS },
         },
         ifOnEdgeBounce: {
             opcode: "motion_ifonedgebounce",
@@ -79,22 +119,22 @@ class PrimProxy {
         changeX: {
             opcode: "motion_changexby",
             parameters: ["x"],
-            exampleParameters: { x: 10 },
+            exampleParameters: { x: PrimProxy.DEFAULT_CHANGE },
         },
         setX: {
             opcode: "motion_setx",
             parameters: ["x"],
-            exampleParameters: { x: 10 },
+            exampleParameters: { x: PrimProxy.DEFAULT_X },
         },
         changeY: {
             opcode: "motion_changeyby",
             parameters: ["y"],
-            exampleParameters: { y: 10 },
+            exampleParameters: { y: PrimProxy.DEFAULT_CHANGE },
         },
         setY: {
             opcode: "motion_sety",
             parameters: ["y"],
-            exampleParameters: { y: 10 },
+            exampleParameters: { y: PrimProxy.DEFAULT_Y },
         },
         getX: {
             opcode: "motion_xposition",
@@ -115,22 +155,22 @@ class PrimProxy {
         say: {
             opcode: "looks_say",
             parameters: ["message"],
-            exampleParameters: { message: "Hello!" },
+            exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         sayFor: {
             opcode: "looks_sayforsecs",
             parameters: ["message"],
-            exampleParameters: { message: "Hello!" },
+            exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         think: {
             opcode: "looks_think",
             parameters: ["message"],
-            exampleParameters: { message: "Hello!" },
+            exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         thinkFor: {
             opcode: "looks_thinkforsecs",
             parameters: ["message"],
-            exampleParameters: { message: "Hello!" },
+            exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         show: {
             opcode: "looks_show",
@@ -169,13 +209,13 @@ class PrimProxy {
         },
         changeGraphicEffectBy: {
             opcode: "looks_changeeffectby",
-            parameters: ["effect", "value"],
-            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, value: 25 },
+            parameters: ["effect", "change"],
+            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, change: PrimProxy.DEFAULT_CHANGE },
         },
         setGraphicEffectTo: {
             opcode: "looks_seteffectto",
             parameters: ["effect", "value"],
-            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, value: 25 },
+            exampleParameters: { effect: Scratch3LooksBlocks.EFFECT_LIST, value: PrimProxy.DEFAULT_EFFECT },
         },
         clearGraphicEffects: {
             opcode: "looks_cleargraphiceffects",
@@ -185,12 +225,12 @@ class PrimProxy {
         changeSizeBy: {
             opcode: "looks_changesizeby",
             parameters: ["change"],
-            exampleParameters: { change: 10 },
+            exampleParameters: { change: PrimProxy.DEFAULT_CHANGE },
         },
         setSizeTo: {
             opcode: "looks_setsizeto",
             parameters: ["size"],
-            exampleParameters: { size: 100 },
+            exampleParameters: { size: PrimProxy.DEFAULT_SIZE },
         },
         setLayerTo: {
             opcode: "looks_gotofrontback",
@@ -236,12 +276,12 @@ class PrimProxy {
         setSoundEffectTo: {
             opcode: "sound_seteffectto",
             parameters: ["effect", "value"],
-            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, value: 100 },
+            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, value: PrimProxy.DEFAULT_EFFECT },
         },
         changeSoundEffectBy: {
             opcode: "sound_changeeffectby",
             parameters: ["effect", "change"],
-            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, change: 10 },
+            exampleParameters: { effect: Scratch3SoundBlocks.EFFECT_LIST, change: PrimProxy.DEFAULT_CHANGE },
         },
         clearSoundEffects: {
             opcode: "sound_cleareffects",
@@ -251,12 +291,12 @@ class PrimProxy {
         setVolumeTo: {
             opcode: "sound_setvolumeto",
             parameters: ["volume"],
-            exampleParameters: { volume: 100 },
+            exampleParameters: { volume: PrimProxy.DEFAULT_VOLUME },
         },
         changeVolumeBy: {
             opcode: "sound_changevolumeby",
             parameters: ["change"],
-            exampleParameters: { change: 10 },
+            exampleParameters: { change: PrimProxy.DEFAULT_CHANGE },
         },
         getVolume: {
             opcode: "sound_volume",
@@ -277,23 +317,23 @@ class PrimProxy {
 
         isTouching: {
             opcode: "sensing_touchingobject",
-            parameters: [],
-            exampleParameters: {},
+            parameters: ["name"],
+            exampleParameters: { name: PrimProxy.TOUCHING_OPTIONS },
         },
         isTouchingColor: {
             opcode: "sensing_touchingcolor",
-            parameters: [],
-            exampleParameters: {},
+            parameters: ["color"],
+            exampleParameters: { color: PrimProxy.DEFAULT_EFFECT },
         },
         isColorTouchingColor: {
             opcode: "sensing_coloristouchingcolor",
-            parameters: [],
-            exampleParameters: {},
+            parameters: ["color1", "color2"],
+            exampleParameters: { color1: PrimProxy.DEFAULT_EFFECT, color2: PrimProxy.DEFAULT_EFFECT },
         },
         distanceTo: {
             opcode: "sensing_distanceto",
             parameters: ["name"],
-            exampleParameters: { name: PrimProxy.TARGET_NAMES },
+            exampleParameters: { name: PrimProxy.LOCATION_OPTIONS },
         },
         getTimer: {
             opcode: "sensing_timer",
@@ -331,8 +371,8 @@ class PrimProxy {
         // },
         isKeyPressed: {
             opcode: "sensing_keypressed",
-            parameters: [],
-            exampleParameters: {},
+            parameters: ["key"],
+            exampleParameters: { key: PrimProxy.KEY_DOWN_OPTIONS },
         },
         current: {
             opcode: "sensing_current",
@@ -357,7 +397,7 @@ class PrimProxy {
         ask: {
             opcode: "sensing_askandwait",
             parameters: ["question"],
-            exampleParameters: { question: "What's your name?" },
+            exampleParameters: { question: PrimProxy.DEFAULT_QUESTION },
         },
         // getAnswer: {
         // opcode: "sensing_answer"
@@ -366,7 +406,7 @@ class PrimProxy {
         wait: {
             opcode: "control_wait",
             parameters: ["seconds"],
-            exampleParameters: { seconds: 1 },
+            exampleParameters: { seconds: PrimProxy.DEFAULT_SECONDS },
         },
         // waitUntil: {
         //     opcode: "control_wait_until",
@@ -380,7 +420,7 @@ class PrimProxy {
         createClone: {
             opcode: "control_create_clone_of",
             parameters: ["option"],
-            exampleParameters: { option: PrimProxy.TARGET_NAMES },
+            exampleParameters: { option: PrimProxy.CLONE_OPTIONS },
         },
         deleteClone: {
             opcode: "control_delete_this_clone",
@@ -411,27 +451,27 @@ class PrimProxy {
         setPenColor: {
             opcode: "pen_setpencolortocolor",
             parameters: ["color"],
-            exampleParameters: { color: 10 },
+            exampleParameters: { color: PrimProxy.DEFAULT_EFFECT },
         },
         changePenEffect: {
             opcode: "pen_changepencolorparamby",
             parameters: ["effect", "change"],
-            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: 10 },
+            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: PrimProxy.DEFAULT_CHANGE },
         },
         setPenEffect: {
             opcode: "pen_setpencolorparamto",
-            parameters: ["effect", "change"],
-            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, change: 10 },
+            parameters: ["effect", "value"],
+            exampleParameters: { effect: Scratch3PenBlocks.PEN_EFFECT_LIST, value: PrimProxy.DEFAULT_EFFECT },
         },
         changePenSize: {
             opcode: "pen_changepensizeby",
             parameters: ["change"],
-            exampleParameters: { change: 10 },
+            exampleParameters: { change: PrimProxy.DEFAULT_CHANGE },
         },
         setPenSize: {
             opcode: "pen_setpensizeto",
             parameters: ["size"],
-            exampleParameters: { size: 10 },
+            exampleParameters: { size: PrimProxy.DEFAULT_SIZE },
         },
 
         endThread: {
@@ -460,6 +500,50 @@ class PrimProxy {
 
     static getPrimNames() {
         return Object.keys(PrimProxy.patchApi);
+    }
+
+    static fillDynamicOptions(parameterOptions, vm) {
+        const dynamicOptions = [];
+        parameterOptions.forEach((option) => {
+            if (option === PrimProxy.TARGET_NAMES) {
+                const targets = vm.getAllRenderedTargets().filter((target) => !target.isStage);
+                const targetNames = targets.map((target) => target.getName());
+                dynamicOptions.push(...targetNames);
+            } else if (option === PrimProxy.BACKDROP_NAMES) {
+                const backdropNames = vm.runtime.getTargetForStage().sprite.costumes.map((costume) => costume.name);
+                dynamicOptions.push(...backdropNames);
+            } else if (option === PrimProxy.COSTUME_NAMES) {
+                const costumeNames = vm.editingTarget.sprite.costumes.map((costume) => costume.name);
+                dynamicOptions.push(...costumeNames);
+            } else if (option === PrimProxy.SOUND_NAMES) {
+                const soundNames = vm.editingTarget.getSounds().map((sound) => sound.name);
+                dynamicOptions.push(...soundNames);
+            } else if (option === PrimProxy.MESSAGE_NAMES) {
+                const broadcastMessages = vm.getAllBroadcastMessages();
+                dynamicOptions.push(...broadcastMessages);
+            } else {
+                dynamicOptions.push(option);
+            }
+        });
+        return dynamicOptions;
+    }
+
+    static getDynamicFunctionInfo(functionName, vm) {
+        const functionInfo = PrimProxy.patchApi[functionName];
+        if (!functionInfo) {
+            console.warn(`Function ${functionName} not found`);
+        }
+        functionInfo.parameters.forEach((param) => {
+            let parameterOptions = functionInfo.exampleParameters[param];
+            // Check if parameterOptions is a list
+            if (Array.isArray(parameterOptions)) {
+                parameterOptions = PrimProxy.fillDynamicOptions(parameterOptions, vm);
+            } else if (typeof parameterOptions === "string") {
+                parameterOptions = `'${parameterOptions}'`;
+            }
+            functionInfo.exampleParameters[param] = parameterOptions;
+        });
+        return functionInfo;
     }
 
     async move(steps) {
