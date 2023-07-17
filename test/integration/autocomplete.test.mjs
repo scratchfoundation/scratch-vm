@@ -51,7 +51,20 @@ describe("Pyatch VM Linker & Worker Integration", () => {
             const { opcode, parameters, exampleParameters } = PrimProxy.getDynamicFunctionInfo("goTo", vm);
             expect(opcode).to.equal("motion_goto");
             expect(parameters).to.deep.equal(["name"]);
-            expect(exampleParameters).to.deep.equal({ name: ["target1", "_mouse_", "_stage_", "_edge_", "_myself_", "_random_"] });
+            expect(exampleParameters).to.deep.equal({ name: ["target1", "_mouse_", "_random_"] });
+        });
+        it("say", async () => {
+            const { opcode, parameters, exampleParameters } = PrimProxy.getDynamicFunctionInfo("say", vm);
+            expect(opcode).to.equal("looks_say");
+            expect(parameters).to.deep.equal(["message"]);
+            expect(exampleParameters).to.deep.equal({ message: "'Hello!'" });
+        });
+        it("say called twice", async () => {
+            PrimProxy.getDynamicFunctionInfo("say", vm);
+            const { opcode, parameters, exampleParameters } = PrimProxy.getDynamicFunctionInfo("say", vm);
+            expect(opcode).to.equal("looks_say");
+            expect(parameters).to.deep.equal(["message"]);
+            expect(exampleParameters).to.deep.equal({ message: "'Hello!'" });
         });
     });
 });
