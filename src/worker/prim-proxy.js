@@ -1,3 +1,4 @@
+import _ from "lodash";
 import InterruptError from "./errors/interruptError.mjs";
 import Scratch3SoundBlocks from "../blocks/scratch3_sound.mjs";
 import Scratch3LooksBlocks from "../blocks/scratch3_looks.mjs";
@@ -529,7 +530,7 @@ class PrimProxy {
     }
 
     static getDynamicFunctionInfo(functionName, vm) {
-        const functionInfo = PrimProxy.patchApi[functionName];
+        const functionInfo = _.cloneDeep(PrimProxy.patchApi[functionName]);
         if (!functionInfo) {
             console.warn(`Function ${functionName} not found`);
         }
