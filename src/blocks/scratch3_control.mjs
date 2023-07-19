@@ -57,7 +57,7 @@ class Scratch3ControlBlocks {
         }
     }
 
-    createClone(args, util) {
+    async createClone(args, util) {
         // Cast argument to string
         // eslint-disable-next-line no-param-reassign
         args.CLONE_OPTION = Cast.toString(args.CLONE_OPTION);
@@ -74,7 +74,7 @@ class Scratch3ControlBlocks {
         if (!cloneTarget) return;
 
         // Create clone
-        const newClone = cloneTarget.makeClone();
+        const newClone = await cloneTarget.makeClone();
         if (newClone) {
             this.runtime.addTarget(newClone);
 
