@@ -952,7 +952,7 @@ class RenderedTarget extends Target {
      * If we've hit the global clone limit, returns null.
      * @return {RenderedTarget} New clone.
      */
-    makeClone() {
+    async makeClone() {
         if (!this.runtime.clonesAvailable() || this.isStage) {
             return null; // Hit max clone limit, or this is the stage.
         }
@@ -970,11 +970,14 @@ class RenderedTarget extends Target {
         newClone.effects = Clone.simple(this.effects);
         newClone.threads = {};
         newClone.runtime = this.runtime;
+        const threadLoadPromises = [];
         Object.keys(this.threads).forEach((key) =>  {
             const thread = this.threads[key];
             const clonedThread = new Thread(newClone, thread.script, thread.triggerEvent, thread.triggerEventOption);
+            threadLoadPromises.push(clonedThread.loadPromise);
             newClone.threads[key] = clonedThread;
         });
+        await Promise.all(threadLoadPromises);
         // newClone._edgeActivatedHatValues = Clone.simple(this._edgeActivatedHatValues);
         newClone.initDrawable(StageLayering.SPRITE_LAYER);
         newClone.updateAllDrawableProperties();
