@@ -22,6 +22,7 @@ import StringUtil from "./util/string-util.mjs";
 import { KEY_NAME } from "./io/keyboard.mjs";
 import RenderedTarget from "./sprites/rendered-target.mjs";
 import PrimProxy from "./worker/prim-proxy.js";
+import ScratchConverter from "./conversion/scratch-conversion.mjs";
 
 const { isUndefined } = lodash;
 
@@ -629,19 +630,6 @@ export default class VirtualMachine extends EventEmitter {
     async downloadProject() {
         const zippedProject = await this.zipProject();
 
-        /* // https://stackoverflow.com/questions/3665115/how-to-create-a-file-in-memory-for-user-to-download-but-not-through-server
-        const element = document.createElement("a");
-        element.setAttribute("href", `data:text/plain;charset=utf-8,${proj}`);
-        /* TODO: project name as filename */ /*
-        element.setAttribute("download", "project.ptch1");
-
-        element.style.display = "none";
-        document.body.appendChild(element);
-
-        element.click();
-
-        document.body.removeChild(element); */
-
         // https://stackoverflow.com/questions/19327749/javascript-blob-filename-without-link
         const a = document.createElement("a");
         document.body.appendChild(a);
@@ -651,6 +639,18 @@ export default class VirtualMachine extends EventEmitter {
         a.download = "project.ptch1";
         a.click();
         window.URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Converts a .sb3 scratch project to a .ptch1 patch project
+     *
+     * @param {ArrayBuffer} scratchData - An ArrayBuffer object generated from
+     * a valid Scratch (.sb3) project file
+     * @returns {ArrayBuffer} An ArrayBuffer object representing a Patch (.ptch1) project file
+     */
+    async scratchToPatch(scratchData) {
+        const converter = new ScratchConverter(scratchData);
+        return converter.getPatchArrayBuffer().then((buf) => buf);
     }
 
     /**
@@ -671,35 +671,6 @@ export default class VirtualMachine extends EventEmitter {
         }
         const jsonData = JSON.parse(jsonDataString);
 
-        /* let blob;
-
-        const catZip = new JSZip();
-
-        // https://stackoverflow.com/questions/247483/http-get-request-in-javascript
-        await fetch("/cat.sprite3")
-            .then((response) => response.blob())
-            .then((data) => {
-                blob = new Blob([data], { type: "application/zip" });
-                /* var url = window.URL || window.webkitURL;
-            var link = url.createObjectURL(blob);
-            var a = document.createElement("a");
-            a.setAttribute("download", "cat.sprite3.zip");
-            a.setAttribute("href", link);
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a); */ /*
-            })
-            .catch((err) => {
-                console.log("Fetch Error :-S", err);
-            });
-        await catZip.loadAsync(blob); */
-
-        // moved this to GUI for reasons
-        /* this.runtime.targets = [];
-        this.runtime.executableTargets = [];
-        this.runtime.pyatchWorker._eventMap = null;
-
-        const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, catZip, false).then((proj) => proj); */
         this.clear();
         const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
 
@@ -709,7 +680,6 @@ export default class VirtualMachine extends EventEmitter {
             await this.installTargets(importedProject.targets, { extensionIDs: [] }, true);
         }
 
-        /* How fitting: on take 42, I finally got everything to work. */
         jsonData.globalVariables.forEach((variable) => {
             this.updateGlobalVariable(variable.name, variable.value);
         });

@@ -1,0 +1,135 @@
+/* there are hats in: scratch3_control, scratch3_event */
+
+control_repeat: this.repeat,
+control_repeat_until: this.repeatUntil,
+control_while: this.repeatWhile,
+control_for_each: this.forEach,
+control_forever: this.forever, // Done
+/*control_wait: this.wait,*/
+/* this next line is commented out in prim_proxy, ill have to ask about implementating it. */
+control_wait_until: this.waitUntil,
+control_if: this.if, // Done
+control_if_else: this.ifElse, // Done
+/*control_stop: this.stop,
+control_create_clone_of: this.createClone,
+control_delete_this_clone: this.deleteClone,*/
+control_get_counter: this.getCounter,
+control_incr_counter: this.incrCounter,
+control_clear_counter: this.clearCounter,
+control_all_at_once: this.allAtOnce,
+data_variable: this.getVariable,
+data_setvariableto: this.setVariableTo,
+data_changevariableby: this.changeVariableBy,
+data_hidevariable: this.hideVariable,
+data_showvariable: this.showVariable,
+data_listcontents: this.getListContents,
+data_addtolist: this.addToList,
+data_deleteoflist: this.deleteOfList,
+data_deletealloflist: this.deleteAllOfList,
+data_insertatlist: this.insertAtList,
+data_replaceitemoflist: this.replaceItemOfList,
+data_itemoflist: this.getItemOfList,
+data_itemnumoflist: this.getItemNumOfList,
+data_lengthoflist: this.lengthOfList,
+data_listcontainsitem: this.listContainsItem,
+data_hidelist: this.hideList,
+data_showlist: this.showList,
+event_whentouchingobject: this.touchingObject,
+//event_broadcast: this.broadcast,
+//event_broadcastandwait: this.broadcastAndWait,
+event_whengreaterthan: this.hatGreaterThanPredicate,
+/*looks_say: this.say,
+looks_sayforsecs: this.sayforsecs,
+looks_think: this.think,
+looks_thinkforsecs: this.thinkforsecs,
+looks_show: this.show,
+looks_hide: this.hide,*/
+looks_hideallsprites: () => {}, // legacy no-op block
+/*looks_switchcostumeto: this.switchCostume,
+looks_switchbackdropto: this.switchBackdrop,
+looks_switchbackdroptoandwait: this.switchBackdropAndWait,
+looks_nextcostume: this.nextCostume,
+looks_nextbackdrop: this.nextBackdrop,
+looks_changeeffectby: this.changeEffect,
+looks_seteffectto: this.setEffect,
+looks_cleargraphiceffects: this.clearEffects,
+looks_changesizeby: this.changeSize,
+looks_setsizeto: this.setSize,*/
+looks_changestretchby: () => {}, // legacy no-op blocks
+looks_setstretchto: () => {},
+/*looks_gotofrontback: this.goToFrontBack,
+looks_goforwardbackwardlayers: this.goForwardBackwardLayers,
+looks_size: this.getSize,
+looks_costumenumbername: this.getCostumeNumberName,
+looks_backdropnumbername: this.getBackdropNumberName,*/
+/*motion_movesteps: this.moveSteps,
+motion_gotoxy: this.goToXY,
+motion_goto: this.goTo,
+motion_turnright: this.turnRight,
+motion_turnleft: this.turnLeft,
+motion_pointindirection: this.pointInDirection,
+motion_pointtowards: this.pointTowards,
+motion_glidesecstoxy: this.glide,
+motion_glideto: this.glideTo,
+motion_ifonedgebounce: this.ifOnEdgeBounce,
+motion_setrotationstyle: this.setRotationStyle,
+motion_changexby: this.changeX,
+motion_setx: this.setX,
+motion_changeyby: this.changeY,
+motion_sety: this.setY,
+motion_xposition: this.getX,
+motion_yposition: this.getY,
+motion_direction: this.getDirection,*/
+operator_add: this.add, // Done
+operator_subtract: this.subtract,  // Done
+operator_multiply: this.multiply,  // Done
+operator_divide: this.divide,  // Done
+operator_lt: this.lt, // Done
+operator_equals: this.equals, // Done
+operator_gt: this.gt, // Done
+operator_and: this.and, // Done
+operator_or: this.or, // Done
+operator_not: this.not, // Done
+operator_random: this.random, // Done
+operator_join: this.join, // Done
+operator_letter_of: this.letterOf, // Done
+operator_length: this.length, // Done
+operator_contains: this.contains, // Done
+operator_mod: this.mod, // Done
+operator_round: this.round, // Done
+operator_mathop: this.mathop, // TODO: implement this (this could take some time)
+procedures_definition: this.definition, // This is not implemented bc I'm not doing myblocks rn
+procedures_call: this.call, // This is not implemented bc I'm not doing myblocks rn
+argument_reporter_string_number: this.argumentReporterStringNumber, // Idk what this does but I don't think it's necessary
+argument_reporter_boolean: this.argumentReporterBoolean, // Idk what this does but I don't think it's necessary
+/*sensing_touchingobject: this.touchingObject,
+sensing_touchingcolor: this.touchingColor,
+sensing_coloristouchingcolor: this.colorTouchingColor,
+sensing_distanceto: this.distanceTo,
+sensing_timer: this.getTimer,
+sensing_resettimer: this.resetTimer,
+sensing_of: this.getAttributeOf,
+sensing_mousex: this.getMouseX,
+sensing_mousey: this.getMouseY,*/
+sensing_setdragmode: this.setDragMode,
+/*sensing_mousedown: this.getMouseDown,
+sensing_keypressed: this.getKeyPressed,
+sensing_current: this.current,
+sensing_dayssince2000: this.daysSince2000,
+sensing_loudness: this.getLoudness,
+sensing_loud: this.isLoud,
+sensing_askandwait: this.askAndWait,
+sensing_answer: this.getAnswer,
+sensing_username: this.getUsername,*/
+/*sound_play: this.playSound,
+sound_playuntildone: this.playSoundAndWait,
+sound_stopallsounds: this.stopAllSounds,
+sound_seteffectto: this.setEffect,
+sound_changeeffectby: this.changeEffect,
+sound_cleareffects: this.clearEffects,*/
+sound_sounds_menu: this.soundsMenu,
+sound_beats_menu: this.beatsMenu,
+sound_effects_menu: this.effectsMenu,
+/*sound_setvolumeto: this.setVolume,
+sound_changevolumeby: this.changeVolume,
+sound_volume: this.getVolume*/

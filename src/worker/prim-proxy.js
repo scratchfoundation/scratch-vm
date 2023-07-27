@@ -160,7 +160,7 @@ class PrimProxy {
         },
         sayFor: {
             opcode: "looks_sayforsecs",
-            parameters: ["message"],
+            parameters: ["message", "secs"],
             exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         think: {
@@ -170,7 +170,7 @@ class PrimProxy {
         },
         thinkFor: {
             opcode: "looks_thinkforsecs",
-            parameters: ["message"],
+            parameters: ["message", "secs"],
             exampleParameters: { message: PrimProxy.DEFAULT_MESSAGE },
         },
         show: {
@@ -240,8 +240,8 @@ class PrimProxy {
         },
         changeLayerBy: {
             opcode: "looks_goforwardbackwardlayers",
-            parameters: ["change"],
-            exampleParameters: { change: 1 },
+            parameters: ["direction", "change"],
+            exampleParameters: { direction: "forward", change: 1 },
         },
         getSize: {
             opcode: "looks_size",
