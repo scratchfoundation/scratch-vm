@@ -47,14 +47,20 @@ export default class ScratchConverter {
 
       const scratchFilesKeys = Object.keys(scratchZip.files);
 
+      const filePromises = [];
+
       // eslint-disable-next-line no-restricted-syntax
       for (const key of scratchFilesKeys) {
          if (key !== "project.json") {
             // TODO: consider checking if the file is an actual media file?
-            // eslint-disable-next-line no-await-in-loop
-            zip.file(key, await scratchZip.files[key].async("arraybuffer").then((arrayBuffer) => arrayBuffer));
+            filePromises.push(scratchZip.files[key].async("arraybuffer").then((arrayBuffer) => ({key: key, arrayBuffer: arrayBuffer})));
          }
       }
+
+      const files = await Promise.all(filePromises);
+      files.forEach(file => {
+         zip.file(file.key, file.arrayBuffer);
+      });
 
       const zippedProject = await zip.generateAsync({ type: "arraybuffer" }).then((content) => content);
       return zippedProject;
@@ -313,8 +319,8 @@ export default class ScratchConverter {
             returnValPart.script = `import math\n\n${ returnValPart.script }`;
          }
 
-         if (returnValPart.script.includes("random.")) {
-            returnValPart.script = `import random\n\n${ returnValPart.script }`;
+         if (returnValPart.script.includes("patch_random(")) {
+            returnValPart.script = `import random\n\n# This mimics the behavior of Scratch's random block\ndef patch_random(num1, num2):\n  if ((num1 % 1) == 0) and ((num2 % 1) == 0):\n    return random.randint(num1, num2)\n  else:\n    return round(random.uniform(num1, num2), 2)\n\n${ returnValPart.script }`;
          }
 
          returnVal.push(returnValPart);

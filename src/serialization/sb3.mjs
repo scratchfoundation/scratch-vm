@@ -472,7 +472,7 @@ const serializeTarget = function (target, extensions) {
         extensions.add(extensionId);
     });
 
-    //Add Patch thread data to the target
+    // Add Patch thread data to the target
     obj.threads = Object.keys(target.threads).map((threadId) => {
         const thread = target.threads[threadId];
         return { script: thread.script, triggerEventId: thread.triggerEvent, triggerEventOption: thread.triggerEventOption };

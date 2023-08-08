@@ -84,7 +84,7 @@ export default class ScratchConversionOperator {
          case "operator_random": {
             const { FROM, TO } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true, true);
          
-            script += `random.randint(${FROM}, ${TO})`;
+            script += `patch_random(${FROM}, ${TO})`;
             break;
          }
          case "operator_join": {
