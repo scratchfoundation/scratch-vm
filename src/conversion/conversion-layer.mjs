@@ -374,32 +374,39 @@ export default class ConversionLayer {
             parameters: [],
         },
         penDown: {
-            opcode: "pen_pendown",
+            opcode: "pen_penDown",
             parameters: [],
         },
         penUp: {
-            opcode: "pen_penup",
+            opcode: "pen_penUp",
             parameters: [],
         },
         setPenColor: {
-            opcode: "pen_setpencolortocolor",
-            parameters: ["color"],
+            opcode: "pen_setPenColorToColor",
+            parameters: ["COLOR"],
         },
         changePenEffect: {
-            opcode: "pen_changepencolorparamby",
-            parameters: ["effect", "change"],
+            opcode: "pen_changePenColorParamBy",
+            parameters: ["COLOR_PARAM", "VALUE"],
         },
         setPenEffect: {
-            opcode: "pen_setpencolorparamto",
-            parameters: ["effect", "value"],
+            opcode: "pen_setPenColorParamTo",
+            parameters: ["COLOR_PARAM", "VALUE"],
         },
         changePenSize: {
-            opcode: "pen_changepensizeby",
-            parameters: ["change"],
+            opcode: "pen_changePenSizeBy",
+            parameters: ["SIZE"],
         },
         setPenSize: {
-            opcode: "pen_setpensizeto",
-            parameters: ["size"],
+            opcode: "pen_setPenSizeTo",
+            parameters: ["SIZE"],
+        },
+        penEffectMenu: {
+            opcode: "pen_menu_colorParam",
+            // The opcode should be camelcase; this isn't a mistake (unless it isn't camelcase, in which case it shouls
+            // be made camelcase).
+            parameters: ["colorParam"],
+            returnParametersInstead: ["colorParam"],
         },
 
         endThread: {

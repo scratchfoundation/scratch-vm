@@ -54,4 +54,15 @@ describe("Project Serialization", () => {
 
         expect(result.vmState.targets.length).to.equal(1);
     });
+    it("Deserialize SB3 Project", async () => {
+        const scratchProjectUri = path.resolve(__dirname, "../fixtures/scratch-project.sb3");
+        const scratchProject = readFileToBuffer(scratchProjectUri);
+
+        await vm.loadProject(await vm.scratchToPatch(scratchProject).then((proj) => proj));
+        const result = JSON.parse(await vm.serializeProject());
+
+        console.log(result.vmState);
+
+        expect(result.vmState.targets.length).to.equal(1);
+    });
 });

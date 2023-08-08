@@ -37,6 +37,45 @@ export function indentLines(lines) {
    return newLines;
 }
 
+/**
+ * 
+ * @param {String} code 
+ * @returns {Boolean}
+ */
+function needsParentheses(code) {
+   // First, check if code is just a string
+   if (code[0] === "\"" && code[code.length - 1] === "\"") {
+      // double quotes string
+      // yes, the for loop should start at 1 not 0 and it should go until 1 before the end
+      for (let i = 1; i < code.length - 1; i++) {
+         if (code[i] === "\"" && code[i - 1] !== "\\") {
+            // this isn't just one continuous string
+            return true;
+         }
+      }
+
+      return false;
+   }
+   if ((code[0] === "'" && code[code.length - 1] === "'")) {
+      // single quotes string
+      // yes, the for loop should start at 1 not 0 and it should go until 1 before the end
+      for (let i = 1; i < code.length - 1; i++) {
+         if (code[i] === "'" && code[i - 1] !== "\\") {
+            // this isn't just one continuous string
+            return true;
+         }
+      }
+
+      return false;
+   }
+
+   /* const forbiddenChars = ["<", ">", "=", "{", "}", ":", "+", "-", "*", "/", "^", "%", "!", "and", "or", "not", "[", "]", "|"]
+   if (code.includes("<") || code.includes(">") || code.includes("="))
+   return false; */
+
+   return true;
+}
+
 export function processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, autoParentheses = false, tryMakeNum = false) {
    const returnVal = {};
    
@@ -54,12 +93,13 @@ export function processInputs(blocks, currentBlockId, currentBlock, patchApi, pa
       } else if (argType === 2) {
          arg = convertBlocksPart(blocks, currentBlockId, currentBlock.inputs[inputsKey][1], patchApi, patchApiKeys).script;
          arg = arg.substring(0, arg.length - 1);
-         if (autoParentheses) {
+         if (autoParentheses && needsParentheses(arg)) {
             arg = `(${arg})`;
          }
       }
 
-      if (tryMakeNum && argType === 1 && arg.length >= 3 && !Number.isNaN(arg.substring(1, arg.length - 1))) {
+      // eslint-disable-next-line no-restricted-globals
+      if (tryMakeNum && argType === 1 && arg.length >= 3 && !isNaN(arg.substring(1, arg.length - 1))) {
          arg = arg.substring(1, arg.length - 1);
       }
 

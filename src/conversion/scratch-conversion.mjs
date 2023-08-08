@@ -4,12 +4,11 @@ import ConversionLayer from "./conversion-layer.mjs";
 import Scratch3EventBlocks from "../blocks/scratch3_event.mjs";
 
 import PatchTargetThread from "./patch-target-thread.mjs";
-import ScratchBlock from "./scratch-block.mjs";
 
 import ScratchConversionControl from "./scratch-conversion-control.mjs";
 import ScratchConversionOperator from "./scratch-conversion-operator.mjs";
 
-import { getArgType, processInputs } from "./scratch-conversion-helper.mjs";
+import { processInputs } from "./scratch-conversion-helper.mjs";
 import Scratch3ControlBlocks from "../blocks/scratch3_control.mjs";
 
 export default class ScratchConverter {
@@ -35,22 +34,38 @@ export default class ScratchConverter {
     * @returns {ArrayBuffer} The Patch project (.ptch1) represented as an array buffer
     */
    async getPatchArrayBuffer() {
-      const projectJson = await this.getPatchProjectJsonBlob().then((blob) => blob);
+      const scratchZip = await JSZip.loadAsync(this.data).then((newZip) => newZip);
+
+      const projectJson = await this.getPatchProjectJsonBlob(scratchZip).then((blob) => blob);
       if (!projectJson) {
          return null;
       }
 
-      // TODO: implement asset handling
-
       const zip = new JSZip();
 
       zip.file("project.json", projectJson);
+
+      const scratchFilesKeys = Object.keys(scratchZip.files);
+
+      // eslint-disable-next-line no-restricted-syntax
+      for (const key of scratchFilesKeys) {
+         if (key !== "project.json") {
+            // TODO: consider checking if the file is an actual media file?
+            // eslint-disable-next-line no-await-in-loop
+            zip.file(key, await scratchZip.files[key].async("arraybuffer").then((arrayBuffer) => arrayBuffer));
+         }
+      }
+
       const zippedProject = await zip.generateAsync({ type: "arraybuffer" }).then((content) => content);
       return zippedProject;
    }
 
-   async getPatchProjectJsonBlob() {
-      const zip = await JSZip.loadAsync(this.data).then((newZip) => newZip);
+   /**
+    * 
+    * @param {JSZip} zip 
+    * @returns {Blob}
+    */
+   async getPatchProjectJsonBlob(zip) {
       if (!zip.files["project.json"]) {
          console.error("Couldn't find the project.json file in the scratch project. Abort.");
          return null;
@@ -89,8 +104,6 @@ export default class ScratchConverter {
       // TODO: global variables
       const baseJson = { vmstate: vmState, globalVariables: [] };
 
-      console.warn(baseJson);
-
       // Step 4: convert this back to a blob, make everything a child of "vmstate", and return it.
       const newJsonBlob = new Blob([JSON.stringify(baseJson)], { type: "application/json" });
       return newJsonBlob;
@@ -103,10 +116,9 @@ export default class ScratchConverter {
       // TODO: triggerEventOption
       const hatFieldsKeys = Object.keys(blocks[hatId].fields);
       if (hatFieldsKeys && hatFieldsKeys.length > 0) {
-         console.warn("test2");
-
          if (blocks[hatId].opcode === "event_whenkeypressed") {
-            thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0].toUpperCase();
+            // eslint-disable-next-line prefer-destructuring
+            thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0];// .toUpperCase();
          } else {
             // eslint-disable-next-line prefer-destructuring
             thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0];
@@ -207,7 +219,7 @@ export default class ScratchConverter {
             } else if (conversionLayerResult.hasOwnProperty("returnParametersInstead")) {
                let patchArgs = "";
                for (let i = 0; i < conversionLayerResult.returnParametersInstead.length; i++) {
-                  const parameter = conversionLayerResult.returnParametersInstead[i].toUpperCase();
+                  const parameter = conversionLayerResult.returnParametersInstead[i];// .toUpperCase();
 
                   // Add options to change this based on language later.
                   if (patchArgs !== "") {
@@ -226,7 +238,7 @@ export default class ScratchConverter {
             } else {
                let patchArgs = "";
                for (let i = 0; i < conversionLayerResult.parameters.length; i++) {
-                  const parameter = conversionLayerResult.parameters[i].toUpperCase();
+                  const parameter = conversionLayerResult.parameters[i];// .toUpperCase();
 
                   // Add options to change this based on language later.
                   if (patchArgs !== "") {
@@ -294,7 +306,19 @@ export default class ScratchConverter {
       const { patchApi } = ConversionLayer;
       const patchApiKeys = Object.keys(patchApi);
 
-      hatLocations.forEach(hatId => { returnVal.push(this.convertBlocksPart(blocks, hatId, blocks[hatId].next, patchApi, patchApiKeys)) });
+      hatLocations.forEach(hatId => {
+         const returnValPart = this.convertBlocksPart(blocks, hatId, blocks[hatId].next, patchApi, patchApiKeys);
+
+         if (returnValPart.script.includes("math.")) {
+            returnValPart.script = `import math\n\n${ returnValPart.script }`;
+         }
+
+         if (returnValPart.script.includes("random.")) {
+            returnValPart.script = `import random\n\n${ returnValPart.script }`;
+         }
+
+         returnVal.push(returnValPart);
+      });
 
       return returnVal;
    }

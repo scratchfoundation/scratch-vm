@@ -84,9 +84,7 @@ export default class ScratchConversionOperator {
          case "operator_random": {
             const { FROM, TO } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true, true);
          
-            // TODO: get randoms working in Python
-            // script += `randint(${FROM}, ${TO})`;
-            script += "\"# Randoms not implemented yet\""
+            script += `random.randint(${FROM}, ${TO})`;
             break;
          }
          case "operator_join": {
@@ -100,7 +98,7 @@ export default class ScratchConversionOperator {
             const { STRING } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true, false);
             const { LETTER } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true, true);
 
-            script += `${STRING}[${LETTER - 1}]`
+            script += `${STRING}[${LETTER - 1}]`;
             break;
          }
          case "operator_length": {
@@ -124,7 +122,37 @@ export default class ScratchConversionOperator {
          case "operator_round": {
             const { NUM } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true);
             
-            script += `round(${NUM})`
+            script += `round(${NUM})`;
+            break;
+         }
+         case "operator_mathop": {
+            const { OPERATOR } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true);
+            const { NUM } = processInputs(blocks, currentBlockId, currentBlock, patchApi, patchApiKeys, convertBlocksPart, true, true);
+
+            // Remove the quotation marks that processInputs adds
+            const formattedOperator = OPERATOR.substring(1, OPERATOR.length - 1);
+
+            const mathOpsDict = {
+               "abs": `abs(${ NUM })`,
+               "ceiling": `math.ceil(${  NUM  })`,
+               "sqrt": `math.sqrt(${  NUM  })`,
+               "floor": `math.floor(${  NUM  })`,
+               /* Trig in scratch uses degrees. To keep this consistent, we must convert the inputs of
+                  trig (but not inverse trig) */
+               "sin": `math.sin(math.radians(${  NUM  }))`,
+               "cos": `math.cos(math.radians(${  NUM  }))`,
+               "tan": `math.tan(math.radians(${  NUM  }))`,
+               "asin": `math.degrees(math.asin(${  NUM  }))`,
+               "acos": `math.degrees(math.acos(${  NUM  }))`,
+               "atan": `math.degrees(math.atan(${  NUM  }))`,
+               /* in Python, math.log defaults to base e, not base 10 */
+               "ln": `math.log(${  NUM  })`,
+               "log": `math.log(${  NUM  }, 10)`,
+               "e ^": `pow(math.e, ${ NUM })`, /* `math.exp(${ NUM })`, */
+               "10 ^": `pow(10, ${ NUM })`
+            };
+
+            script += mathOpsDict[formattedOperator];
             break;
          }
          default: {
