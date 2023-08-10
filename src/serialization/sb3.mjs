@@ -475,7 +475,7 @@ const serializeTarget = function (target, extensions) {
     //Add Patch thread data to the target
     obj.threads = Object.keys(target.threads).map((threadId) => {
         const thread = target.threads[threadId];
-        return { ...thread };
+        return { script: thread.script, triggerEventId: thread.triggerEvent, triggerEventOption: thread.triggerEventOption, displayName: thread.displayName };
     });
     return obj;
 };
@@ -1046,7 +1046,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     // Patch Deserialization of threads
     if (object.hasOwnProperty("threads")) {
         object.threads.forEach((thread) => {
-            target.addThread(thread.script, thread.triggerEventId, thread.triggerEventOption);
+            target.addThread(thread.script, thread.triggerEventId, thread.triggerEventOption, thread.displayName);
         });
     } else {
         // If there are no threads, add the default thread
