@@ -50,8 +50,19 @@ describe("Project Serialization", () => {
         await vm.loadProject(patchProject);
         const result = JSON.parse(await vm.serializeProject());
 
-        console.log(result.vmState);
+        console.log(result.vmstate);
 
-        expect(result.vmState.targets.length).to.equal(1);
+        expect(result.vmstate.targets.length).to.equal(1);
+    });
+    it("Deserialize SB3 Project", async () => {
+        const scratchProjectUri = path.resolve(__dirname, "../fixtures/scratch-project.sb3");
+        const scratchProject = readFileToBuffer(scratchProjectUri);
+
+        const newProj = await vm.scratchToPatch(scratchProject);
+        const result = JSON.parse(await vm.serializeProject());
+
+        console.log(result.vmstate);
+
+        expect(result.vmstate.targets.length).to.equal(1);
     });
 });

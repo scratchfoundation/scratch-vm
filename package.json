@@ -46,7 +46,7 @@
         "format-message": "6.2.1",
         "htmlparser2": "4.0.0",
         "immutable": "^3.8.2",
-        "jszip": "^3.1.5",
+        "jszip": "^3.10.1",
         "lodash": "^4.17.21",
         "minilog": "^3.1.0",
         "mocha": "^10.2.0",
