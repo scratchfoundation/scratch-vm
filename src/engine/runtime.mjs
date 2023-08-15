@@ -747,9 +747,9 @@ export default class Runtime extends EventEmitter {
         thread.updateThreadTriggerEventOption(eventTriggerOption);
     }
 
-    async addThread(targetId, script, triggerEventId, option) {
+    async addThread(targetId, script, triggerEventId, option, displayName) {
         const target = this.getTargetById(targetId);
-        const newThreadId = await target.addThread(script, triggerEventId, option);
+        const newThreadId = await target.addThread(script, triggerEventId, option, displayName);
         return newThreadId;
     }
 

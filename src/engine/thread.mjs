@@ -14,7 +14,7 @@ class Thread {
         return 1000 / 60;
     }
 
-    constructor(target, script, triggerEventId, triggerEventOption) {
+    constructor(target, script, triggerEventId, triggerEventOption, displayName) {
         this.target = target;
 
         if (target.runtime) {
@@ -37,6 +37,7 @@ class Thread {
         this.script = script;
         this.triggerEvent = triggerEventId;
         this.triggerEventOption = triggerEventOption;
+        this.displayName = displayName;
 
         this.loadPromise = this.loadThread(this.script);
 

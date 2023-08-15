@@ -269,8 +269,8 @@ class Target extends EventEmitter {
     /**
      * Adds a new thread to the associated threads of the target
      */
-    async addThread(script = "", triggerEventId = "event_whenflagclicked", triggerEventOption = "") {
-        const newThread = new Thread(this, script, triggerEventId, triggerEventOption);
+    async addThread(script = "", triggerEventId = "event_whenflagclicked", triggerEventOption = "", displayName = "") {
+        const newThread = new Thread(this, script, triggerEventId, triggerEventOption, displayName);
         const threadId = newThread.id;
         this.threads[threadId] = newThread;
         await newThread.loadPromise;
