@@ -659,14 +659,13 @@ export default class VirtualMachine extends EventEmitter {
      * @param {ArrayBuffer | JSON} projectData - A ArrayBuffer object generated from
      * a valid Patch Project .ptch1 file
      */
-    async loadProject(projectData) {
-        const isJsonObject = (param) => typeof param === "object" && param !== null && !Array.isArray(param) && JSON.stringify(param)
+    async loadProject(projectData, isJson = false) {
 
         let zip;
         let jsonData = projectData;
 
         // Check if project data is a json object
-        if (!isJsonObject(projectData)) {
+        if (!isJson) {
             zip = await JSZip.loadAsync(projectData).then((newZip) => newZip);
 
             // https://stackoverflow.com/questions/40223259/jszip-get-content-of-file-in-zip-from-file-input
@@ -806,5 +805,16 @@ export default class VirtualMachine extends EventEmitter {
             });
         });
         return messages;
+    }
+
+        /*
+     * @type {Array<object>} Array of all costumes and sounds currently in the runtime
+     */
+    get assets () {
+        return this.runtime.targets.reduce((acc, target) => (
+            acc
+                .concat(target.sprite.sounds.map(sound => sound.asset))
+                .concat(target.sprite.costumes.map(costume => costume.asset))
+        ), []);
     }
 }
