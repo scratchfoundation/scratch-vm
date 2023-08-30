@@ -19,7 +19,7 @@ class Sprite {
          * @type {string}
          */
         this.name = "";
-        /**
+        /**`
          * List of costumes for this sprite.
          * Each entry is an object, e.g.,
          * {

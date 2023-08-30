@@ -587,17 +587,16 @@ export default class VirtualMachine extends EventEmitter {
         // const vm = JSON.stringify(sb3.serialize(this.runtime));
         const vm = sb3.serialize(this.runtime);
 
-        const object2 = {};
-        object2.vmstate = vm;
-        object2.globalVariables = this.getGlobalVariables();
+        const projectJSON = {};
+        projectJSON.vmstate = vm;
+        projectJSON.globalVariables = this.getGlobalVariables();
 
-        const projectJson = JSON.stringify(object2);
-
-        return projectJson;
+        return projectJSON;
     }
-
+    
     async zipProject() {
         const projectJson = await this.serializeProject();
+        const projectJsonString = JSON.stringify(projectJson);
         const zip = new JSZip();
 
         /** Example for adding in an asset:
@@ -616,7 +615,7 @@ export default class VirtualMachine extends EventEmitter {
                     }
                 }); */
 
-        zip.file("project.json", new Blob([projectJson], { type: "text/plain" }));
+        zip.file("project.json", new Blob([projectJsonString], { type: "text/plain" }));
         const zippedProject = await zip.generateAsync({ type: "blob" }).then((content) => content);
         return zippedProject;
     }
@@ -657,19 +656,26 @@ export default class VirtualMachine extends EventEmitter {
      * Restores the state of the VM from a ArrayBuffer object that has been generated from a
      * valid Patch Project .ptch1 file.
      *
-     * @param {ArrayBuffer} projectData - A ArrayBuffer object generated from
+     * @param {ArrayBuffer | JSON} projectData - A ArrayBuffer object generated from
      * a valid Patch Project .ptch1 file
      */
-    async loadProject(projectData) {
-        const zip = await JSZip.loadAsync(projectData).then((newZip) => newZip);
+    async loadProject(projectData, isJson = false) {
 
-        // https://stackoverflow.com/questions/40223259/jszip-get-content-of-file-in-zip-from-file-input
-        const jsonDataString = await zip.files["project.json"].async("text").then((text) => text);
-        if (!jsonDataString || isUndefined(jsonDataString)) {
-            console.warn("No project.json file. Is your project corrupted?");
-            return null;
+        let zip;
+        let jsonData = projectData;
+
+        // Check if project data is a json object
+        if (!isJson) {
+            zip = await JSZip.loadAsync(projectData).then((newZip) => newZip);
+
+            // https://stackoverflow.com/questions/40223259/jszip-get-content-of-file-in-zip-from-file-input
+            const jsonDataString = await zip.files["project.json"].async("text").then((text) => text);
+            if (!jsonDataString || isUndefined(jsonDataString)) {
+                console.warn("No project.json file. Is your project corrupted?");
+                return null;
+            }
+            jsonData = JSON.parse(jsonDataString);
         }
-        const jsonData = JSON.parse(jsonDataString);
 
         this.clear();
         const importedProject = await sb3.deserialize(jsonData.vmstate, this.runtime, zip, false).then((proj) => proj);
@@ -799,5 +805,16 @@ export default class VirtualMachine extends EventEmitter {
             });
         });
         return messages;
+    }
+
+        /*
+     * @type {Array<object>} Array of all costumes and sounds currently in the runtime
+     */
+    get assets () {
+        return this.runtime.targets.reduce((acc, target) => (
+            acc
+                .concat(target.sprite.sounds.map(sound => sound.asset))
+                .concat(target.sprite.costumes.map(costume => costume.asset))
+        ), []);
     }
 }
