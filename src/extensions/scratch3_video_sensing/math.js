@@ -69,8 +69,4 @@ const scratchAtan2 = function (y, x) {
     return scratchDegrees(Math.atan2(y, x) * TO_DEGREE);
 };
 
-module.exports = {
-    motionVector,
-    scratchDegrees,
-    scratchAtan2
-};
+export { motionVector, scratchDegrees, scratchAtan2 };

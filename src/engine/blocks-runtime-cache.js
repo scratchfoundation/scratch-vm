@@ -60,19 +60,20 @@ class RuntimeScriptCache {
     }
 }
 
-/**
- * Get an array of scripts from a block container prefiltered to match opcode.
- * @param {Blocks} container - Container of blocks
- * @param {string} opcode - Opcode to filter top blocks by
- */
-exports.getScripts = function () {
-    throw new Error('blocks.js has not initialized BlocksRuntimeCache');
+export default {
+    /**
+     * Get an array of scripts from a block container prefiltered to match opcode.
+     * @param {Blocks} container - Container of blocks
+     * @param {string} opcode - Opcode to filter top blocks by
+     */
+    getScripts() {
+        throw new Error("blocks.js has not initialized BlocksRuntimeCache");
+    },
+    /**
+     * Exposed RuntimeScriptCache class used by integration in blocks.js.
+     * @private
+     */
+    _RuntimeScriptCache: RuntimeScriptCache
 };
 
-/**
- * Exposed RuntimeScriptCache class used by integration in blocks.js.
- * @private
- */
-exports._RuntimeScriptCache = RuntimeScriptCache;
-
-require('./blocks');
+import "./blocks";

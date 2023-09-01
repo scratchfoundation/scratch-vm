@@ -119,4 +119,4 @@ class MathUtil {
     }
 }
 
-module.exports = MathUtil;
+export default MathUtil;

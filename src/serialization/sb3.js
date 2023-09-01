@@ -1,25 +1,18 @@
-/**
- * @fileoverview
- * An SB3 serializer and deserializer. Parses provided
- * JSON and then generates all needed scratch-vm runtime structures.
- */
-
-const vmPackage = require('../../package.json');
-const Blocks = require('../engine/blocks');
-const Sprite = require('../sprites/sprite');
-const Variable = require('../engine/variable');
-const Comment = require('../engine/comment');
-const MonitorRecord = require('../engine/monitor-record');
-const StageLayering = require('../engine/stage-layering');
-const log = require('../util/log');
-const uid = require('../util/uid');
-const MathUtil = require('../util/math-util');
-const StringUtil = require('../util/string-util');
-const VariableUtil = require('../util/variable-util');
-
-const {loadCostume} = require('../import/load-costume.js');
-const {loadSound} = require('../import/load-sound.js');
-const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
+import vmPackage from "../../package.json";
+import Blocks from "../engine/blocks";
+import Sprite from "../sprites/sprite";
+import Variable from "../engine/variable";
+import Comment from "../engine/comment";
+import MonitorRecord from "../engine/monitor-record";
+import StageLayering from "../engine/stage-layering";
+import log from "../util/log";
+import uid from "../util/uid";
+import MathUtil from "../util/math-util";
+import StringUtil from "../util/string-util";
+import VariableUtil from "../util/variable-util";
+import { loadCostume } from "../import/load-costume.js";
+import { loadSound } from "../import/load-sound.js";
+import { deserializeCostume, deserializeSound } from "./deserialize-assets.js";
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -1301,10 +1294,4 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         }));
 };
 
-module.exports = {
-    serialize: serialize,
-    deserialize: deserialize,
-    deserializeBlocks: deserializeBlocks,
-    serializeBlocks: serializeBlocks,
-    getExtensionIdForOpcode: getExtensionIdForOpcode
-};
+export { serialize, deserialize, deserializeBlocks, serializeBlocks, getExtensionIdForOpcode };

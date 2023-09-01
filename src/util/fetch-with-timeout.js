@@ -25,4 +25,4 @@ const fetchWithTimeout = (resource, init, timeout) => {
     ]);
 };
 
-module.exports = fetchWithTimeout;
+export default fetchWithTimeout;

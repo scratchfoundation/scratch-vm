@@ -1,13 +1,4 @@
-/**
- * @file library.js
- *
- * Tony Hwang and John Maloney, January 2011
- * Michael "Z" Goddard, March 2018
- *
- * Video motion sensing primitives.
- */
-
-const {motionVector, scratchAtan2} = require('./math');
+import { motionVector, scratchAtan2 } from "./math";
 
 /**
  * The width of the intended resolution to analyze for motion.
@@ -381,4 +372,4 @@ class VideoMotion {
     }
 }
 
-module.exports = VideoMotion;
+export default VideoMotion;

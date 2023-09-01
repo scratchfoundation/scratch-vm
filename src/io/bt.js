@@ -1,4 +1,4 @@
-const JSONRPC = require('../util/jsonrpc');
+import JSONRPC from "../util/jsonrpc";
 
 class BT extends JSONRPC {
 
@@ -199,4 +199,4 @@ class BT extends JSONRPC {
     }
 }
 
-module.exports = BT;
+export default BT;

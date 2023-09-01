@@ -1,13 +1,12 @@
-const formatMessage = require('format-message');
-const languageNames = require('scratch-translate-extension-languages');
-
-const ArgumentType = require('../../extension-support/argument-type');
-const BlockType = require('../../extension-support/block-type');
-const Cast = require('../../util/cast');
-const MathUtil = require('../../util/math-util');
-const Clone = require('../../util/clone');
-const log = require('../../util/log');
-const fetchWithTimeout = require('../../util/fetch-with-timeout');
+import formatMessage from "format-message";
+import languageNames from "scratch-translate-extension-languages";
+import ArgumentType from "../../extension-support/argument-type";
+import BlockType from "../../extension-support/block-type";
+import Cast from "../../util/cast";
+import MathUtil from "../../util/math-util";
+import Clone from "../../util/clone";
+import log from "../../util/log";
+import fetchWithTimeout from "../../util/fetch-with-timeout";
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -763,4 +762,4 @@ class Scratch3Text2SpeechBlocks {
             });
     }
 }
-module.exports = Scratch3Text2SpeechBlocks;
+export default Scratch3Text2SpeechBlocks;
