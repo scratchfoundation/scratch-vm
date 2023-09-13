@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.6.10](https://github.com/LLK/scratch-vm/compare/v1.6.9...v1.6.10) (2023-09-13)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-render to v0.1.0-prerelease.20230913153807 ([5bb1fc0](https://github.com/LLK/scratch-vm/commit/5bb1fc0d887d3d288103fcbf6ba9264ec273e19b))
+
 ## [1.6.9](https://github.com/LLK/scratch-vm/compare/v1.6.8...v1.6.9) (2023-09-09)
 
 
