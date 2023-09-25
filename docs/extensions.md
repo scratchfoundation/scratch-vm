@@ -79,7 +79,11 @@ class SomeBlocks {
     getInfo () {
         return {
             id: 'someBlocks',
-            name: 'Some Blocks',
+            name: formatMessage({
+                id: 'someBlocks',
+                default: 'Some Blocks',
+                description: 'The name of the "Some Blocks" extension'
+            }),
             blocks: [
                 {
                     opcode: 'myReporter',
@@ -324,7 +328,7 @@ class SomeBlocks {
             // See also: https://github.com/yahoo/react-intl/wiki/API#formatmessage
             name: formatMessage({
                 id: 'extensionName',
-                defaultMessage: 'Some Blocks',
+                default: 'Some Blocks',
                 description: 'The name of the "Some Blocks" extension'
             }),
 
@@ -342,7 +346,7 @@ class SomeBlocks {
 
             // Optional: Link to documentation content for this extension.
             // If not present, offer no link.
-            docsURI: 'https://....',
+            // docsURI: 'https://....',
 
             // Required: the list of blocks implemented by this extension,
             // in the order intended for display.
@@ -392,7 +396,7 @@ class SomeBlocks {
                     // must be [ENCLOSED_WITHIN_SQUARE_BRACKETS].
                     text: formatMessage({
                         id: 'myReporter',
-                        defaultMessage: 'letter [LETTER_NUM] of [TEXT]',
+                        default: 'letter [LETTER_NUM] of [TEXT]',
                         description: 'Label on the "myReporter" block'
                     }),
 
@@ -422,7 +426,7 @@ class SomeBlocks {
                                 // Optional: the default value of the argument
                             default: formatMessage({
                                 id: 'myReporter.TEXT_default',
-                                defaultMessage: 'text',
+                                default: 'text',
                                 description: 'Default for "TEXT" argument of "someBlocks.myReporter"'
                             })
                         }
@@ -455,7 +459,7 @@ class SomeBlocks {
                         // Use `value` as the text if this is absent.
                         text: formatMessage({
                             id: 'menuA_item1',
-                            defaultMessage: 'Item One',
+                            default: 'Item One',
                             description: 'Label for item 1 of menu A in "Some Blocks" extension'
                         })
                     },
@@ -510,7 +514,7 @@ class SomeBlocks {
         // This message contains ICU placeholders, not Scratch placeholders
         const message = formatMessage({
             id: 'myReporter.result',
-            defaultMessage: 'Letter {LETTER_NUM} of {TEXT} is {LETTER}.',
+            default: 'Letter {LETTER_NUM} of {TEXT} is {LETTER}.',
             description: 'The text template for the "myReporter" block result'
         });
 
@@ -524,4 +528,40 @@ class SomeBlocks {
         });
     };
 }
+
+module.exports = SomeBlocks;
+```
+
+
+## Registering a new extension
+After placing the script at the extensions folder (scratch-vm/src/extensions) you have to
+* modify the extension-manager
+* the scratch-gui
+
+### Registering the extension at scratch-vm
+Add the extension to the extension-manager (scratch-vm/src/extension-support/extension-manager.js)
+at this modified line to `const builtinExtensions`
+```
+someBlocks : () => require('../extensions/someBlocks')
+```
+
+### Registering the extension at scratch-gui
+Open the index.jsx file (scratch-gui/src/lib/libraries/extensions/index.jsx)
+Import the two graphics for the extension (icon and inset)
+
+```
+import someBlocksIconUrl from './someBlocks/someBlocks.png';
+import someBlocksInsetUrl from './someBlocks/someBlocks-small.svg';
+```
+
+Add this block to `export default`
+```
+    {
+        name: "Some Blocks",
+        extensionId: 'someBlocks',
+        iconURL: "someBlocksIconUrl",
+        insetIconURL: "someBlocksInsetUrl",
+        description: "a truly some Blocks extension",
+        featured: true (or false if it shouldnt be featured)
+    },   
 ```
