@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.0.0](https://github.com/LLK/scratch-vm/compare/v1.6.19...v2.0.0) (2023-09-26)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-storage to v2.2.1 ([c2ee02b](https://github.com/LLK/scratch-vm/commit/c2ee02bc2806ecb2acd8e618ad1cbc58732e0d3e))
+* don't set run ID until storage exists (also add tests) ([e696e35](https://github.com/LLK/scratch-vm/commit/e696e3548b542f37fe800d7564c1d908777a0935))
+* tell fetchWithTimeout to use scratchFetch from storage instance ([829ae1d](https://github.com/LLK/scratch-vm/commit/829ae1dface2890e6dc8d8f39b62a3180d006853))
+
+
+### Features
+
+* use scratchFetch ([9fca9ee](https://github.com/LLK/scratch-vm/commit/9fca9ee5839a8eec60b1adb6ec3a11638ada0b17))
+
+
+### BREAKING CHANGES
+
+* servers must accept new header x-projectid
+
 ## [1.6.19](https://github.com/LLK/scratch-vm/compare/v1.6.18...v1.6.19) (2023-09-25)
 
 
