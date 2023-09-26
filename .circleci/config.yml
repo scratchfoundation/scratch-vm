@@ -1,7 +1,7 @@
 version: 2.1
 orbs:
   commitlint: conventional-changelog/commitlint@1.0.0
-  node: circleci/node@5
+  node: circleci/node@5.1.0
 aliases:
   - &release-branches
     - develop
@@ -68,6 +68,8 @@ workflows:
   build_and_release:
     jobs:
       - build_and_release:
+          context:
+            - scratch-npm-creds
           filters:
             branches:
               only: *release-branches

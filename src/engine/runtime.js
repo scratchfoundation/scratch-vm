@@ -1447,17 +1447,19 @@ class Runtime extends EventEmitter {
      * One-time initialization for Scratch Link support.
      */
     _initScratchLink () {
-        /* global globalThis */
         // Check that we're actually in a real browser, not Node.js or JSDOM, and we have a valid-looking origin.
-        if (globalThis.document &&
-            globalThis.document.getElementById &&
-            globalThis.origin &&
-            globalThis.origin !== 'null' &&
-            globalThis.navigator &&
-            globalThis.navigator.userAgent &&
-            globalThis.navigator.userAgent.includes &&
-            !globalThis.navigator.userAgent.includes('Node.js') &&
-            !globalThis.navigator.userAgent.includes('jsdom')
+        // note that `if (self?....)` will throw if `self` is undefined, so check for that first!
+        if (typeof self !== 'undefined' &&
+            typeof document !== 'undefined' &&
+            document.getElementById &&
+            self.origin &&
+            self.origin !== 'null' && // note this is a string comparison, not a null check
+            self.navigator &&
+            self.navigator.userAgent &&
+            !(
+                self.navigator.userAgent.includes('Node.js') ||
+                self.navigator.userAgent.includes('jsdom')
+            )
         ) {
             // Create a script tag for the Scratch Link browser extension, unless one already exists
             const scriptElement = document.getElementById('scratch-link-extension-script');
@@ -1468,7 +1470,7 @@ class Runtime extends EventEmitter {
 
                 // Tell the browser extension to inject its script.
                 // If the extension isn't present or isn't active, this will do nothing.
-                globalThis.postMessage('inject-scratch-link-script', globalThis.origin);
+                self.postMessage('inject-scratch-link-script', self.origin);
             }
         }
     }
