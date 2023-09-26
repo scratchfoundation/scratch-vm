@@ -7,7 +7,7 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
-const fetchWithTimeout = require('../../util/fetch-with-timeout');
+const {fetchWithTimeout} = require('../../util/fetch-with-timeout');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.

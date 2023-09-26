@@ -1,5 +1,6 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
+const uuid = require('uuid');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
@@ -17,6 +18,7 @@ const StageLayering = require('./stage-layering');
 const Variable = require('./variable');
 const xmlEscape = require('../util/xml-escape');
 const ScratchLinkWebSocket = require('../util/scratch-link-websocket');
+const fetchWithTimeout = require('../util/fetch-with-timeout');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -401,6 +403,8 @@ class Runtime extends EventEmitter {
         this.origin = null;
 
         this._initScratchLink();
+
+        this.resetRunId();
     }
 
     /**
@@ -1626,6 +1630,8 @@ class Runtime extends EventEmitter {
      */
     attachStorage (storage) {
         this.storage = storage;
+        fetchWithTimeout.setFetch(storage.scratchFetch.scratchFetch);
+        this.resetRunId();
     }
 
     // -----------------------------------------------------------------------------
@@ -2018,6 +2024,19 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Reset the Run ID. Call this any time the project logically starts, stops, or changes identity.
+     */
+    resetRunId () {
+        if (!this.storage) {
+            // see also: attachStorage
+            return;
+        }
+
+        const newRunId = uuid.v1();
+        this.storage.scratchFetch.setMetadata(this.storage.scratchFetch.RequestMetadata.RunId, newRunId);
+    }
+
+    /**
      * Start all threads that start with the green flag.
      */
     greenFlag () {
@@ -2057,6 +2076,8 @@ class Runtime extends EventEmitter {
         }
         // Remove all remaining threads from executing in the next tick.
         this.threads = [];
+
+        this.resetRunId();
     }
 
     /**
@@ -2460,10 +2481,11 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Report that the project has loaded in the Virtual Machine.
+     * Handle that the project has loaded in the Virtual Machine.
      */
-    emitProjectLoaded () {
+    handleProjectLoaded () {
         this.emit(Runtime.PROJECT_LOADED);
+        this.resetRunId();
     }
 
     /**

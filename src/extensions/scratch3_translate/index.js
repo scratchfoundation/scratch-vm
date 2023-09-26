@@ -2,7 +2,7 @@ const ArgumentType = require('../../extension-support/argument-type');
 const BlockType = require('../../extension-support/block-type');
 const Cast = require('../../util/cast');
 const log = require('../../util/log');
-const fetchWithTimeout = require('../../util/fetch-with-timeout');
+const {fetchWithTimeout} = require('../../util/fetch-with-timeout');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
 
