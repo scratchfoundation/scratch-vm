@@ -9,11 +9,14 @@ concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  pages: write
+  packages: write
+
 jobs:
   ci-cd:
     runs-on: ubuntu-latest
-    env:
-      SCRATCH_SHOULD_DEPLOY: ${{ github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/hotfix/') }}
     steps:
       - uses: actions/checkout@v4
       - uses: wagoid/commitlint-github-action@v5
@@ -24,10 +27,12 @@ jobs:
           node-version-file: '.nvmrc'
       - name: Info
         run: |
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "GitHub ref: ${{ github.ref }}"
-          echo "GitHub head ref: ${{ github.head_ref }}"
+          cat <<EOF
+          Node version: $(node --version)
+          NPM version: $(npm --version)
+          GitHub ref: ${{ github.ref }}
+          GitHub head ref: ${{ github.head_ref }}
+          EOF
       - name: Setup
         run: |
           npm ci
@@ -35,14 +40,10 @@ jobs:
       - run: npm test
       - run: npm run build
       - name: Deploy to GH Pages
-        if: vars.GH_PAGES_REPO != ''
-        env:
-          GH_PAGES_REPO: ${{ vars.GH_PAGES_REPO }}
-        run: |
-          export GIT_AUTHOR_EMAIL="$(git log --pretty=format:"%ae" -n1)"
-          export GIT_AUTHOR_NAME="$(git log --pretty=format:"%an" -n1)"
-          export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
-          export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
-          npm run deploy -x -r $GH_PAGES_REPO
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playground
+          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
       - name: semantic-release
         run: npx --no -- semantic-release
