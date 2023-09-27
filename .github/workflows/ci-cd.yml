@@ -1,0 +1,48 @@
+name: CI/CD
+
+on:
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+  pull_request: # Runs whenever a pull request is created or updated
+  push: # Runs whenever a commit is pushed to the repository
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  ci-cd:
+    runs-on: ubuntu-latest
+    env:
+      SCRATCH_SHOULD_DEPLOY: ${{ github.ref == 'refs/heads/develop' || startsWith(github.ref, 'refs/heads/hotfix/') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wagoid/commitlint-github-action@v5
+        if: github.event_name == 'pull_request'
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+          node-version-file: '.nvmrc'
+      - name: Info
+        run: |
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "GitHub ref: ${{ github.ref }}"
+          echo "GitHub head ref: ${{ github.head_ref }}"
+      - name: Setup
+        run: |
+          npm ci
+          mkdir -p ./test/results
+      - run: npm test
+      - run: npm run build
+      - name: Deploy to GH Pages
+        if: vars.GH_PAGES_REPO != ''
+        env:
+          GH_PAGES_REPO: ${{ vars.GH_PAGES_REPO }}
+        run: |
+          export GIT_AUTHOR_EMAIL="$(git log --pretty=format:"%ae" -n1)"
+          export GIT_AUTHOR_NAME="$(git log --pretty=format:"%an" -n1)"
+          export GIT_COMMITTER_EMAIL="${GIT_AUTHOR_EMAIL}"
+          export GIT_COMMITTER_NAME="${GIT_AUTHOR_NAME}"
+          npm run deploy -x -r $GH_PAGES_REPO
+      - name: semantic-release
+        run: npx --no -- semantic-release
