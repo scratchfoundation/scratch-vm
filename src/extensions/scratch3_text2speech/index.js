@@ -198,7 +198,7 @@ class Scratch3Text2SpeechBlocks {
      *
      * SCRATCH LOCALE
      *      Set by the editor, and used to store the language state in the project.
-     *      Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+     *      Listed in l10n: https://github.com/scratchfoundation/scratch-l10n/blob/master/src/supported-locales.js
      * SUPPORTED LOCALE
      *      A Scratch locale that has a corresponding extension locale.
      * EXTENSION LOCALE

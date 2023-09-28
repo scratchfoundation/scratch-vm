@@ -250,7 +250,7 @@ class Scratch3LooksBlocks {
 
         // Non-integers should be rounded to 2 decimal places (no more, no less), unless they're small enough that
         // rounding would display them as 0.00. This matches 2.0's behavior:
-        // https://github.com/LLK/scratch-flash/blob/2e4a402ceb205a042887f54b26eebe1c2e6da6c0/src/scratch/ScratchSprite.as#L579-L585
+        // https://github.com/scratchfoundation/scratch-flash/blob/2e4a402ceb205a042887f54b26eebe1c2e6da6c0/src/scratch/ScratchSprite.as#L579-L585
         if (typeof text === 'number' &&
             Math.abs(text) >= 0.01 && text % 1 !== 0) {
             text = text.toFixed(2);

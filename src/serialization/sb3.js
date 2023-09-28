@@ -351,16 +351,16 @@ const serializeCostume = function (costume) {
 
     obj.bitmapResolution = costumeToSerialize.bitmapResolution;
     obj.dataFormat = costumeToSerialize.dataFormat.toLowerCase();
-    
+
     obj.assetId = costumeToSerialize.assetId;
-    
+
     // serialize this property with the name 'md5ext' because that's
     // what it's actually referring to. TODO runtime objects need to be
     // updated to actually refer to this as 'md5ext' instead of 'md5'
     // but that change should be made carefully since it is very
     // pervasive
     obj.md5ext = costumeToSerialize.md5;
-    
+
     obj.rotationCenterX = costumeToSerialize.rotationCenterX;
     obj.rotationCenterY = costumeToSerialize.rotationCenterY;
 
@@ -375,7 +375,7 @@ const serializeCostume = function (costume) {
 const serializeSound = function (sound) {
     const obj = Object.create(null);
     obj.name = sound.name;
-    
+
     const soundToSerialize = sound.broken || sound;
 
     obj.assetId = soundToSerialize.assetId;
@@ -1115,7 +1115,7 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // This will be undefined for extension blocks
     const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
 
-    // Due to a bug (see https://github.com/LLK/scratch-vm/pull/2322), renamed list monitors may have been serialized
+    // Due to a bug (see https://github.com/scratchfoundation/scratch-vm/pull/2322), renamed list monitors may have been serialized
     // with an outdated/incorrect LIST parameter. Fix it up to use the current name of the actual corresponding list.
     if (monitorData.opcode === 'data_listcontents') {
         const listTarget = monitorData.targetId ?

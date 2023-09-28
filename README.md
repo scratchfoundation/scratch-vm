@@ -1,8 +1,7 @@
 ## scratch-vm
-#### Scratch VM is a library for representing, running, and maintaining the state of computer programs written using [Scratch Blocks](https://github.com/LLK/scratch-blocks).
+#### Scratch VM is a library for representing, running, and maintaining the state of computer programs written using [Scratch Blocks](https://github.com/scratchfoundation/scratch-blocks).
 
-[![Build Status](https://travis-ci.org/LLK/scratch-vm.svg?branch=develop)](https://travis-ci.org/LLK/scratch-vm)
-[![Coverage Status](https://coveralls.io/repos/github/LLK/scratch-vm/badge.svg?branch=develop)](https://coveralls.io/github/LLK/scratch-vm?branch=develop)
+[![CI/CD](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml)
 
 ## Installation
 This requires you to have Git and Node.js installed.
@@ -13,7 +12,7 @@ npm install scratch-vm
 ```
 To set up a development environment to edit scratch-vm yourself:
 ```bash
-git clone https://github.com/LLK/scratch-vm.git
+git clone https://github.com/scratchfoundation/scratch-vm.git
 cd scratch-vm
 npm install
 ```
@@ -21,7 +20,7 @@ npm install
 ## Development Server
 This requires Node.js to be installed.
 
-For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server). If you would like to use your modified VM with the full Scratch 3.0 GUI, [follow the instructions to link the VM to the GUI](https://github.com/LLK/scratch-gui/wiki/Getting-Started).
+For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server). If you would like to use your modified VM with the full Scratch 3.0 GUI, [follow the instructions to link the VM to the GUI](https://github.com/scratchfoundation/scratch-gui/wiki/Getting-Started).
 
 ## Running the Development Server
 Open a Command Prompt or Terminal in the repository and run:
@@ -64,7 +63,7 @@ vm.start();
 ## Abstract Syntax Tree
 
 #### Overview
-The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) by listening to events emitted by the [scratch-blocks](https://github.com/LLK/scratch-blocks) workspace via the `blockListener`. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the `vm.runtime.targets[...].blocks` object.
+The Virtual Machine constructs and maintains the state of an [Abstract Syntax Tree](https://en.wikipedia.org/wiki/Abstract_syntax_tree) (AST) by listening to events emitted by the [scratch-blocks](https://github.com/scratchfoundation/scratch-blocks) workspace via the `blockListener`. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the `vm.runtime.targets[...].blocks` object.
 
 #### Anatomy of a Block
 The VM's block representation contains all the important information for execution and storage. Here's an example representing the "when key pressed" script on a workspace:

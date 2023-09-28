@@ -15,7 +15,7 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
 
 /**
  * Enum for micro:bit BLE command protocol.
- * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
+ * https://github.com/scratchfoundation/scratch-microbit-firmware/blob/master/protocol.md
  * @readonly
  * @enum {number}
  */
@@ -46,7 +46,7 @@ const BLEDataStoppedError = 'micro:bit extension stopped receiving data';
 
 /**
  * Enum for micro:bit protocol.
- * https://github.com/LLK/scratch-microbit-firmware/blob/master/protocol.md
+ * https://github.com/scratchfoundation/scratch-microbit-firmware/blob/master/protocol.md
  * @readonly
  * @enum {string}
  */

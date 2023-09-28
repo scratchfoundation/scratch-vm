@@ -5,16 +5,16 @@ The development of Scratch is an ongoing process, and we love to have people in 
 
 * **Documenting bugs**
   * If you've identified a bug in Scratch you should first check to see if it's been filed as an issue, if not you can file one.  Make sure you follow the issue template.
-  * It's important that we can consistently reproduce issues. When writing an issue, be sure to follow our [reproduction step guidelines](https://github.com/LLK/scratch-gui/wiki/Writing-good-repro-steps).
+  * It's important that we can consistently reproduce issues. When writing an issue, be sure to follow our [reproduction step guidelines](https://github.com/scratchfoundation/scratch-gui/wiki/Writing-good-repro-steps).
     * Some issues are marked "Needs Repro". Adding a comment with good reproduction steps to those issues is a great way to help.
-  * If you don't have an issue in mind already, you can look through the [Bugs & Glitches forum.](https://scratch.mit.edu/discuss/3/) Look for users reporting problems, reproduce the problem yourself, and file new issues following our guidelines. 
+  * If you don't have an issue in mind already, you can look through the [Bugs & Glitches forum.](https://scratch.mit.edu/discuss/3/) Look for users reporting problems, reproduce the problem yourself, and file new issues following our guidelines.
 
 * **Fixing bugs**
   * You can request to fix a bug in a comment on the issue if you at mention the repo coordinator, who for this repo is @ericrosenbaum.
     * If the issue is marked "Help Wanted" you can go ahead and start working on it!
-  * **We will only accept Pull Requests for bugs that have an issue filed that has a priority label** 
+  * **We will only accept Pull Requests for bugs that have an issue filed that has a priority label**
     * If you're interested in fixing a bug with no issue, file the issue first and wait for it to have a priority added to it.
-  
+
   * We are not looking for Pull Requests ("PR") for every issue and may deny a PR if it doesn't fit our criteria.
     * We are far more likely to accept a PR if it is for an issue marked with Help Wanted.
     * We will not accept PRs for issues marked with "Needs Discussion" or "Needs Design."
@@ -60,7 +60,7 @@ We welcome suggestions! If you want to suggest a feature, please post in our [su
 
 ### Other resources
 Beyond this repo, there are also some other resources that you might want to take a look at:
-* [Community Guidelines](https://github.com/LLK/scratch-www/wiki/Community-Guidelines) (we find it important to maintain a constructive and welcoming community, just like on Scratch)
+* [Community Guidelines](https://github.com/scratchfoundation/scratch-www/wiki/Community-Guidelines) (we find it important to maintain a constructive and welcoming community, just like on Scratch)
 * [Open Source forum](https://scratch.mit.edu/discuss/49/) on Scratch
 * [Suggestions forum](https://scratch.mit.edu/discuss/1/) on Scratch
 * [Bugs & Glitches forum](https://scratch.mit.edu/discuss/3/) on Scratch

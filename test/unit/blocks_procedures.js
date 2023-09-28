@@ -8,7 +8,7 @@ test('getPrimitives', t => {
     t.end();
 });
 
-// Originally inspired by https://github.com/LLK/scratch-gui/issues/809
+// Originally inspired by https://github.com/scratchfoundation/scratch-gui/issues/809
 test('calling a custom block with no definition does not throw', t => {
     const args = {
         mutation: {
