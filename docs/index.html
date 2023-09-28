@@ -58,22 +58,21 @@
 
     <section class="readme usertext">
         <article><h2>scratch-vm</h2>
-<h4>Scratch VM is a library for representing, running, and maintaining the state of computer programs written using <a href="https://github.com/LLK/scratch-blocks">Scratch Blocks</a>.</h4>
-<p><a href="https://travis-ci.org/LLK/scratch-vm"><img src="https://travis-ci.org/LLK/scratch-vm.svg?branch=develop" alt="Build Status"></a>
-<a href="https://coveralls.io/github/LLK/scratch-vm?branch=develop"><img src="https://coveralls.io/repos/github/LLK/scratch-vm/badge.svg?branch=develop" alt="Coverage Status"></a></p>
+<h4>Scratch VM is a library for representing, running, and maintaining the state of computer programs written using <a href="https://github.com/scratchfoundation/scratch-blocks">Scratch Blocks</a>.</h4>
+<p><a href="https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml"><img src="https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml/badge.svg" alt="CI/CD"></a></p>
 <h2>Installation</h2>
 <p>This requires you to have Git and Node.js installed.</p>
 <p>To install as a dependency for your own application:</p>
 <pre class="prettyprint source lang-bash"><code>npm install scratch-vm
 </code></pre>
 <p>To set up a development environment to edit scratch-vm yourself:</p>
-<pre class="prettyprint source lang-bash"><code>git clone https://github.com/LLK/scratch-vm.git
+<pre class="prettyprint source lang-bash"><code>git clone https://github.com/scratchfoundation/scratch-vm.git
 cd scratch-vm
 npm install
 </code></pre>
 <h2>Development Server</h2>
 <p>This requires Node.js to be installed.</p>
-<p>For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server). If you would like to use your modified VM with the full Scratch 3.0 GUI, <a href="https://github.com/LLK/scratch-gui/wiki/Getting-Started">follow the instructions to link the VM to the GUI</a>.</p>
+<p>For convenience, we've included a development server with the VM. This is sometimes useful when running in an environment that's loading remote resources (e.g., SVGs from the Scratch server). If you would like to use your modified VM with the full Scratch 3.0 GUI, <a href="https://github.com/scratchfoundation/scratch-gui/wiki/Getting-Started">follow the instructions to link the VM to the GUI</a>.</p>
 <h2>Running the Development Server</h2>
 <p>Open a Command Prompt or Terminal in the repository and run:</p>
 <pre class="prettyprint source lang-bash"><code>npm start
@@ -103,7 +102,7 @@ vm.start();
 </code></pre>
 <h2>Abstract Syntax Tree</h2>
 <h4>Overview</h4>
-<p>The Virtual Machine constructs and maintains the state of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree</a> (AST) by listening to events emitted by the <a href="https://github.com/LLK/scratch-blocks">scratch-blocks</a> workspace via the <code>blockListener</code>. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the <code>vm.runtime.targets[...].blocks</code> object.</p>
+<p>The Virtual Machine constructs and maintains the state of an <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree">Abstract Syntax Tree</a> (AST) by listening to events emitted by the <a href="https://github.com/scratchfoundation/scratch-blocks">scratch-blocks</a> workspace via the <code>blockListener</code>. Each target (code-running object, for example, a sprite) keeps an AST for its blocks. At any time, the current state of an AST can be viewed by inspecting the <code>vm.runtime.targets[...].blocks</code> object.</p>
 <h4>Anatomy of a Block</h4>
 <p>The VM's block representation contains all the important information for execution and storage. Here's an example representing the &quot;when key pressed&quot; script on a workspace:</p>
 <pre class="prettyprint source lang-json"><code>{
@@ -1173,13 +1172,13 @@ Notably:</p>
 Keep this up-to-date as 3.0 blocks are renamed, changed, etc.
 Originally this was generated largely by a hand-guided scripting process.
 The relevant data lives here:
-https://github.com/LLK/scratch-flash/blob/master/src/Specs.as
+https://github.com/scratchfoundation/scratch-flash/blob/master/src/Specs.as
 (for the old opcode and argument order).
 and here:
-https://github.com/LLK/scratch-blocks/tree/develop/blocks_vertical
+https://github.com/scratchfoundation/scratch-blocks/tree/develop/blocks_vertical
 (for the new opcodes and argument names).
 and here:
-https://github.com/LLK/scratch-blocks/blob/develop/tests/
+https://github.com/scratchfoundation/scratch-blocks/blob/develop/tests/
 (for the shadow blocks created for each block).
 I started with the <code>commands</code> array in Specs.as, and discarded irrelevant
 properties. By hand, I matched the opcode name to the 3.0 opcode.
