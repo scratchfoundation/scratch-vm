@@ -46,4 +46,7 @@ jobs:
           publish_dir: playground
           full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
       - name: semantic-release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx --no -- semantic-release
