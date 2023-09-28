@@ -15,7 +15,6 @@
   "scripts": {
     "build": "npm run docs && webpack --progress --colors --bail",
     "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
-    "deploy": "touch playground/.nojekyll && gh-pages -t -d playground -m \"Build for $(git log -n1 --pretty=format:\"%h %s\") [skip ci]\"",
     "docs": "jsdoc -c .jsdoc.json",
     "i18n:src": "mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js",
     "i18n:push": "tx-push-src scratch-editor extensions translations/core/en.json",
@@ -80,7 +79,6 @@
     "expose-loader": "0.7.5",
     "file-loader": "2.0.0",
     "format-message-cli": "6.2.0",
-    "gh-pages": "1.2.0",
     "husky": "8.0.1",
     "in-publish": "2.0.1",
     "js-md5": "0.7.3",
