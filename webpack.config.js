@@ -25,8 +25,8 @@ const base = {
             }
         },
         {
-            test: /\.mp3$/,
-            loader: 'file-loader'
+            test: /\.(mp3|png|svg|wav)$/,
+            loader: 'arraybuffer-loader'
         }]
     },
     optimization: {
