@@ -1,6 +1,6 @@
 const EventEmitter = require('events');
 const {OrderedMap} = require('immutable');
-// const uuid = require('uuid');
+const uuid = require('uuid');
 
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
@@ -2032,9 +2032,8 @@ class Runtime extends EventEmitter {
             return;
         }
 
-        // TODO: re-enable metadata
-        // const newRunId = uuid.v1();
-        // this.storage.scratchFetch.setMetadata(this.storage.scratchFetch.RequestMetadata.RunId, newRunId);
+        const newRunId = uuid.v1();
+        this.storage.scratchFetch.setMetadata(this.storage.scratchFetch.RequestMetadata.RunId, newRunId);
     }
 
     /**
