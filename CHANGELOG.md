@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.0.5](https://github.com/scratchfoundation/scratch-vm/compare/v2.0.4...v2.0.5) (2023-10-03)
+
+
+### Bug Fixes
+
+* disable metadata for now ([9591296](https://github.com/scratchfoundation/scratch-vm/commit/95912963ceb22e044a13de4540f0fc7cc20d3cf5))
+
 ## [2.0.4](https://github.com/scratchfoundation/scratch-vm/compare/v2.0.3...v2.0.4) (2023-10-03)
 
 
