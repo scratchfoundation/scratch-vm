@@ -92,7 +92,7 @@
     "scratch-render": "0.1.0-prerelease.20231013160004",
     "scratch-render-fonts": "1.0.0-prerelease.20221102164332",
     "scratch-semantic-release-config": "1.0.8",
-    "scratch-storage": "2.2.1",
+    "scratch-storage": "2.3.1",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
