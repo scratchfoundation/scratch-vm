@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [2.1.0](https://github.com/scratchfoundation/scratch-vm/compare/v2.0.15...v2.1.0) (2023-10-13)
+
+
+### Features
+
+* **deps:** update dependency scratch-storage to v2.3.1 ([a4f978e](https://github.com/scratchfoundation/scratch-vm/commit/a4f978e996b00024e8782be4c9c9c5b8869e1d91))
+
 ## [2.0.15](https://github.com/scratchfoundation/scratch-vm/compare/v2.0.14...v2.0.15) (2023-10-13)
 
 
