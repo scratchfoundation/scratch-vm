@@ -8,7 +8,7 @@
  * ... pass some time ...
  * var timeDifference = timer.timeElapsed();
  * ---
- * Or, you can use the `time` and `relativeTime`
+ * Or, you can use the `time` function
  * to do some measurement yourself.
  */
 
@@ -65,17 +65,6 @@ class Timer {
      * @returns {number} ms elapsed since 1 January 1970 00:00:00 UTC.
      */
     time () {
-        return this.nowObj.now();
-    }
-
-    /**
-     * Returns a time accurate relative to other times produced by this function.
-     * If possible, will use sub-millisecond precision.
-     * If not, will use millisecond precision.
-     * Not guaranteed to produce the same absolute values per-system.
-     * @returns {number} ms-scale accurate time relative to other relative times.
-     */
-    relativeTime () {
         return this.nowObj.now();
     }
 
