@@ -61,7 +61,7 @@ class PyatchWorker {
             this._pyodidePromiseResolve = resolve;
             this._worker.postMessage(initMessage);
             setTimeout(() => {
-                reject(new Error("Pyodide load timed out."));
+                console.warn("Pyodide is taking long to load. This may be due to a slow network connection. Please try again.");
             }, 10000);
         });
     }
