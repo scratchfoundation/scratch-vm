@@ -6,6 +6,7 @@ const cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const BLE = require('../../io/ble');
 const Base64Util = require('../../util/base64-util');
+const { Console } = require('minilog');
 
 /**
  * Icon png to be displayed at the left edge of each extension block, encoded as a data URI.
@@ -21,9 +22,19 @@ const blockIconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAABQCAYA
  * @enum {number}
  */
 const BLECommand = {
-    CMD_PIN_CONFIG: 0x80,
-    CMD_DISPLAY_TEXT: 0x81,
-    CMD_DISPLAY_LED: 0x82
+    CMD_TASK: 0x81,
+};
+
+/**
+ * Enum for esp32 BLE func protocol.
+ * 
+ * @readonly
+ * @enum {number}
+ */
+const PramFunc = {
+    FUNC_DISPLAY_TEXT: 0xC1,
+    FUNC_LOOP: 0xC2,
+    FUNC_WAIT: 0xC3,
 };
 
 /**
@@ -115,14 +126,48 @@ class Esp32 {
 
 	/**
      * @param {string} text - the text to display.
-     * @return {Promise} - a Promise that resolves when writing to peripheral.
+     * @return {string} - a string contains func and data.
      */
     displayText (text) {
         const output = new Uint8Array(text.length);
         for (let i = 0; i < text.length; i++) {
             output[i] = text.charCodeAt(i);
         }
-        return this.send(BLECommand.CMD_DISPLAY_TEXT, output);
+        const cmd = this._funcPrefix(PramFunc.FUNC_DISPLAY_TEXT, output, null);
+        return cmd;
+    }
+
+    /**
+     * @param {number} loop - the text to display.
+     * @param {string} func - func script string
+     * @return {string} - a string contains func and data.
+     */
+    loop (loop, func) {
+        const output = new Uint8Array(1);
+        output[0] = loop;
+        const cmd = this._funcPrefix(PramFunc.FUNC_LOOP, output, func);
+        return cmd;
+    }
+    
+    /**
+     * @param {number} sec - the text to display.
+     * @param {string} func - func script string
+     * @return {string} - a string contains func and data.
+     */
+    wait (sec, func) {
+        const output = new Uint8Array(1);
+        output[0] = sec;
+        const cmd = this._funcPrefix(PramFunc.FUNC_WAIT, output, func);
+        return cmd;
+    }
+
+    /**
+     * @param {string} func - the func to run.
+     * @return {Promise} - a Promise that resolves when writing to peripheral.
+     */
+    runTask (func) {
+        const output = Base64Util.base64ToUint8Array(func);
+        return this.send(BLECommand.CMD_TASK, output);
     }
 
 	/**
@@ -211,6 +256,8 @@ class Esp32 {
         }
         const data = Base64Util.uint8ArrayToBase64(output);
 
+        console.log(output.toString());
+
         this._ble.write(BLEUUID.service, BLEUUID.txChar, data, 'base64', true).then(
             () => {
                 this._busy = false;
@@ -260,6 +307,43 @@ class Esp32 {
             () => this._ble.handleDisconnectError(BLEDataStoppedError),
             BLETimeout
         );
+    }
+
+    /**
+     * Process to make the func to prefix.
+     * data structure
+     * [func code:1byte][data...]
+     * @returns {string} func string
+     * @param {number} funcCode - the func hex.
+     * @param {Uint8Array} data - the data
+     * @param {string} func
+     */
+    _funcPrefix(funcCode, data, func)
+    {
+        let output = null;
+        if (func != null)
+        {
+            const suffix = Base64Util.base64ToUint8Array(func);
+            output = new Uint8Array(data.length + 1 + suffix.length);
+            
+            output[0] = funcCode; // attach command to beginning of message
+            let i = 0;
+            for (; i < data.length; i++) {
+                output[i + 1] = data[i];
+            }
+            for (let j = 0; j < suffix.length; j++, i++) {
+                output[i + 1] = suffix[j];
+            }
+        }
+        else
+        {
+            output = new Uint8Array(data.length + 1);
+            output[0] = funcCode; // attach command to beginning of message
+            for (let i = 0; i < data.length; i++) {
+                output[i + 1] = data[i];
+            }
+        }
+        return Base64Util.uint8ArrayToBase64(output);
     }
 }
 
@@ -348,12 +432,12 @@ class Scratch3Esp32Blocks {
 						default: 'display text [TEXT]',
 						description: 'display text on esp32 board display'
 					}),
-					blockType: BlockType.COMMAND,
+					blockType: BlockType.REPORTER,
 					arguments: {
 						TEXT: {
 							type: ArgumentType.STRING,
 							defaultValue: formatMessage({
-								id: 'esp32.defaultTExtToDisplay',
+								id: 'esp32.textToDisplay',
 								default: 'Hello world!',
 								description: 'display text by i2c'
 							})
@@ -368,7 +452,80 @@ class Scratch3Esp32Blocks {
 						description: 'clear esp32 display'
 					}),
 					blockType: BlockType.COMMAND
-				}
+				},
+                {
+                    opcode: 'task',
+                    text: formatMessage({
+                        id: 'esp32.task',
+                        default: 'Execute Task [FUNC]',
+                        description: 'send task to board'
+                    }),
+                    blockType : BlockType.COMMAND,
+                    arguments: {
+						FUNC: {
+							type: ArgumentType.STRING,
+							defaultValue: formatMessage({
+								id: 'esp32.funcData',
+								default: '',
+								description: 'func to execute'
+							})
+                        }
+					}
+                },
+                {
+                    opcode: 'loop',
+                    text: formatMessage({
+                        id: 'esp32.loop',
+                        default: 'repeat [LOOP] times [FUNC]',
+                        description: 'repeat func'
+                    }),
+                    blockType : BlockType.REPORTER,
+                    arguments: {
+						LOOP: {
+							type: ArgumentType.NUMBER,
+							defaultValue: formatMessage({
+								id: 'esp32.loopCnt',
+								default: 0,
+								description: 'loop times'
+							})
+						},
+                        FUNC: {
+							type: ArgumentType.STRING,
+							defaultValue: formatMessage({
+								id: 'esp32.func',
+								default: '',
+								description: 'func to execute'
+							})
+						}
+					}
+                },
+                {
+                    opcode: 'wait',
+                    text: formatMessage({
+                        id: 'esp32.wait',
+                        default: 'wait [TIME] seconds before [FUNC]',
+                        description: 'wait before execute func'
+                    }),
+                    blockType : BlockType.REPORTER,
+                    arguments: {
+						TIME: {
+							type: ArgumentType.NUMBER,
+							defaultValue: formatMessage({
+								id: 'esp32.ms',
+								default: 0,
+								description: 'miliSecond'
+							})
+						},
+                        FUNC: {
+							type: ArgumentType.STRING,
+							defaultValue: formatMessage({
+								id: 'esp32.func',
+								default: '',
+								description: 'func to execute'
+							})
+						}
+					}
+                }
 			],
 			menus: {
 				pinState: {
@@ -381,19 +538,28 @@ class Scratch3Esp32Blocks {
 	
 	/**
      * @param {object} args - the block's arguments.
-     * @return {Promise} - a Promise that resolves after the text is done printing.
+     * @return {string} - a
 	 *
 	 */
 	displayText (args) {
         const text = String(args.TEXT).substring(0, 19);
-        if (text.length > 0) this._peripheral.displayText(text);
-        const yieldDelay = 120 * ((6 * text.length) + 6);
+        return this._peripheral.displayText(text);
+    }
 
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve();
-            }, yieldDelay);
-        });
+    /**
+     * @param {object} args - the block's arguments.
+     * @return {string} - a
+	 */
+	loop (args) {
+        return this._peripheral.loop(args.LOOP, args.FUNC);
+    }
+
+    /**
+     * @param {object} args - the block's arguments.
+     * @return {string} - a
+	 */
+	wait (args) {
+        return this._peripheral.wait(args.TIME, args.FUNC);
     }
 
     /**
@@ -411,6 +577,24 @@ class Scratch3Esp32Blocks {
             setTimeout(() => {
                 resolve();
             }, BLESendInterval);
+        });
+    }
+    
+    /**
+     * @param {object} args - the block's arguments.
+     * @return {Promise} - a Promise that resolves after the task is done.
+	 *
+	 */ 
+    task(args)
+    {
+        const func = String(args.FUNC);
+        if (func.length > 0) this._peripheral.runTask(func);
+        const yieldDelay = 120 * ((6 * func.length) + 6);
+
+        return new Promise(resolve => {
+            setTimeout(() => {
+                resolve();
+            }, yieldDelay);
         });
     }
 
