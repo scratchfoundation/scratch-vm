@@ -71,6 +71,7 @@ class Scratch3myExtension {
      */
     cameraUp () {
         // example implementation to return a string
+        console.log('working');
         fetch("http://192.168.4.1/state?cmd=H")
   .then((response) => response.json())
   .then((json) => console.log(json));
