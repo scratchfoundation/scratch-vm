@@ -81,7 +81,7 @@
     "format-message-cli": "6.2.0",
     "husky": "8.0.1",
     "in-publish": "2.0.1",
-    "js-md5": "0.7.3",
+    "js-md5": "0.8.0",
     "jsdoc": "3.6.6",
     "json": "^9.0.4",
     "lodash.defaultsdeep": "4.6.1",
