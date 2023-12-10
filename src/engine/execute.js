@@ -157,39 +157,21 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
  * in the editor.
  *
  * @param {Blocks} blockContainer the related Blocks instance
- * @param {object} cached default set of cached values
+ * @param {object} block the block information to cache
  */
 class BlockCached {
-    constructor (blockContainer, cached) {
+    constructor (blockContainer, block) {
         /**
          * Block id in its parent set of blocks.
          * @type {string}
          */
-        this.id = cached.id;
+        this.id = block.id;
 
         /**
          * Block operation code for this block.
          * @type {string}
          */
-        this.opcode = cached.opcode;
-
-        /**
-         * Original block object containing argument values for static fields.
-         * @type {object}
-         */
-        this.fields = cached.fields;
-
-        /**
-         * Original block object containing argument values for executable inputs.
-         * @type {object}
-         */
-        this.inputs = cached.inputs;
-
-        /**
-         * Procedure mutation.
-         * @type {?object}
-         */
-        this.mutation = cached.mutation;
+        this.opcode = block.opcode;
 
         /**
          * The profiler the block is configured with.
@@ -216,16 +198,10 @@ class BlockCached {
         this._blockFunction = null;
 
         /**
-         * Is the block function defined for this opcode?
-         * @type {boolean}
-         */
-        this._definedBlockFunction = false;
-
-        /**
          * Is this block a block with no function but a static value to return.
          * @type {boolean}
          */
-        this._isShadowBlock = false;
+        this._isShadowBlock = block.shadow;
 
         /**
          * The static value of this block if it is a shadow block.
@@ -234,24 +210,12 @@ class BlockCached {
         this._shadowValue = null;
 
         /**
-         * A copy of the block's fields that may be modified.
-         * @type {object}
-         */
-        this._fields = Object.assign({}, this.fields);
-
-        /**
-         * A copy of the block's inputs that may be modified.
-         * @type {object}
-         */
-        this._inputs = Object.assign({}, this.inputs);
-
-        /**
          * An arguments object for block implementations. All executions of this
          * specific block will use this objecct.
          * @type {object}
          */
         this._argValues = {
-            mutation: this.mutation
+            mutation: block.mutation
         };
 
         /**
@@ -279,20 +243,14 @@ class BlockCached {
 
         const {runtime} = blockUtility.sequencer;
 
-        const {opcode, fields, inputs} = this;
+        const {opcode, fields} = block;
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
         this._blockFunction = runtime.getOpcodeFunction(opcode);
-        this._definedBlockFunction = typeof this._blockFunction !== 'undefined';
 
         // Store the current shadow value if there is a shadow value.
         const fieldKeys = Object.keys(fields);
-        this._isShadowBlock = (
-            !this._definedBlockFunction &&
-            fieldKeys.length === 1 &&
-            Object.keys(inputs).length === 0
-        );
         this._shadowValue = this._isShadowBlock && fields[fieldKeys[0]].value;
 
         // Store the static fields onto _argValues.
@@ -311,10 +269,13 @@ class BlockCached {
             }
         }
 
+        // NOTE: because we modify `inputs` in-place, this relies on getNonBranchInputs returning a new object each
+        // time it's called.
+        const inputs = blockContainer.getNonBranchInputs(block);
         // Remove custom_block. It is not part of block execution.
-        delete this._inputs.custom_block;
+        delete inputs.custom_block;
 
-        if ('BROADCAST_INPUT' in this._inputs) {
+        if ('BROADCAST_INPUT' in inputs) {
             // BROADCAST_INPUT is called BROADCAST_OPTION in the args and is an
             // object with an unchanging shape.
             this._argValues.BROADCAST_OPTION = {
@@ -324,7 +285,7 @@ class BlockCached {
 
             // We can go ahead and compute BROADCAST_INPUT if it is a shadow
             // value.
-            const broadcastInput = this._inputs.BROADCAST_INPUT;
+            const broadcastInput = inputs.BROADCAST_INPUT;
             if (broadcastInput.block === broadcastInput.shadow) {
                 // Shadow dropdown menu is being used.
                 // Get the appropriate information out of it.
@@ -335,16 +296,16 @@ class BlockCached {
 
                 // Evaluating BROADCAST_INPUT here we do not need to do so
                 // later.
-                delete this._inputs.BROADCAST_INPUT;
+                delete inputs.BROADCAST_INPUT;
             }
         }
 
         // Cache all input children blocks in the operation lists. The
         // operations can later be run in the order they appear in correctly
         // executing the operations quickly in a flat loop instead of needing to
-        // recursivly iterate them.
-        for (const inputName in this._inputs) {
-            const input = this._inputs[inputName];
+        // recursively iterate them.
+        for (const inputName in inputs) {
+            const input = inputs[inputName];
             if (input.block) {
                 const inputCached = BlocksExecuteCache.getCached(blockContainer, input.block, BlockCached);
 
@@ -366,7 +327,7 @@ class BlockCached {
 
         // The final operation is this block itself. At the top most block is a
         // command block or a block that is being run as a monitor.
-        if (this._definedBlockFunction) {
+        if (typeof this._blockFunction !== 'undefined') {
             this._ops.push(this);
         }
     }

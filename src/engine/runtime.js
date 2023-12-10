@@ -1835,7 +1835,7 @@ class Runtime extends EventEmitter {
         this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
             const {
                 blockId: topBlockId,
-                fieldsOfInputs: hatFields
+                fields: hatFields
             } = script;
 
             // Match any requested fields.
