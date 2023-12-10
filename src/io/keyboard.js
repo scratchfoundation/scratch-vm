@@ -131,10 +131,19 @@ class Keyboard {
     postData (data) {
         if (!data.key) return;
         const scratchKey = this._keyStringToScratchKey(data.key);
+
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
+
         if (data.isDown) {
+            // Emit a generic event indicating which key was pressed.
             this.runtime.emit('KEY_PRESSED', scratchKey);
+
+            // Emit a specific event indicating that some key valid for "any" was pressed.
+            if (!KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED.includes(scratchKey)) {
+                this.runtime.emit('KEY_ANY_PRESSED');
+            }
+
             // If not already present, add to the list.
             if (index < 0) {
                 this._keysPressed.push(scratchKey);
