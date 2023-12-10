@@ -159,10 +159,8 @@ class Keyboard {
      */
     getKeyIsDown (keyArg) {
         if (keyArg === 'any') {
-            const validKeysPressed = this._keysPressed.filter(key =>
+            return this._keysPressed.some(key =>
                 !KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED.includes(key));
-
-            return validKeysPressed.length > 0;
         }
         const scratchKey = this._keyArgToScratchKey(keyArg);
         return this._keysPressed.indexOf(scratchKey) > -1;
