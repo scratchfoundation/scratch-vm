@@ -17,6 +17,16 @@ const KEY_NAME = {
 };
 
 /**
+ * Names which don't count for the key "any" pressed? block. Items match the
+ * values for KEY_NAME listed above. If a key isn't mentioned here, then it
+ * does count for "any", provided Scratch detects that key at all.
+ * @type {Array<string>}
+ */
+const KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED = [
+    'shift'
+];
+
+/**
  * An array of the names of scratch keys.
  * @type {Array<string>}
  */
@@ -142,7 +152,10 @@ class Keyboard {
      */
     getKeyIsDown (keyArg) {
         if (keyArg === 'any') {
-            return this._keysPressed.length > 0;
+            const validKeysPressed = this._keysPressed.filter(key =>
+                !KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED.includes(key));
+
+            return validKeysPressed.length > 0;
         }
         const scratchKey = this._keyArgToScratchKey(keyArg);
         return this._keysPressed.indexOf(scratchKey) > -1;
