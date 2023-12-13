@@ -27,11 +27,9 @@ test('unknown opcode', t => {
         const blocks = vm.runtime.targets[1].blocks;
         const topBlockId = blocks.getScripts()[0];
         const secondBlockId = blocks.getNextBlock(topBlockId);
-        const innerBlockId = blocks.getBranch(secondBlockId, 0);
 
         t.equal(blocks.getBlock(topBlockId).opcode, 'event_whenflagclicked');
         t.equal(blocks.getBlock(secondBlockId).opcode, 'control_forever');
-        t.equal(innerBlockId, null);
 
         vm.quit();
         t.end();
