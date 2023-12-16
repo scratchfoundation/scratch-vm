@@ -502,6 +502,8 @@ class VirtualMachine extends EventEmitter {
                 const sb3 = require('./serialization/sb3');
                 return sb3.deserialize(projectJSON, runtime, zip);
             }
+            // TODO: reject with an Error (possible breaking API change!)
+            // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject('Unable to verify Scratch Project version.');
         };
         return deserializePromise()
@@ -606,6 +608,8 @@ class VirtualMachine extends EventEmitter {
                 if (projectVersion === 3) {
                     return this._addSprite3(validatedInput[0], validatedInput[1]);
                 }
+                // TODO: reject with an Error (possible breaking API change!)
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
             .then(() => this.runtime.emitProjectChanged())
@@ -614,6 +618,8 @@ class VirtualMachine extends EventEmitter {
                 if (Object.prototype.hasOwnProperty.call(error, 'validationError')) {
                     return Promise.reject(JSON.stringify(error));
                 }
+                // TODO: reject with an Error (possible breaking API change!)
+                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} ${error}`);
             });
     }
@@ -672,6 +678,8 @@ class VirtualMachine extends EventEmitter {
             });
         }
         // If the target cannot be found by id, return a rejected promise
+        // TODO: reject with an Error (possible breaking API change!)
+        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject();
     }
 
@@ -686,6 +694,8 @@ class VirtualMachine extends EventEmitter {
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
     addCostumeFromLibrary (md5ext, costumeObject) {
+        // TODO: reject with an Error (possible breaking API change!)
+        // eslint-disable-next-line prefer-promise-reject-errors
         if (!this.editingTarget) return Promise.reject();
         return this.addCostume(md5ext, costumeObject, this.editingTarget.id, 2 /* optVersion */);
     }

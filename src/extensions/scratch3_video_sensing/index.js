@@ -167,7 +167,6 @@ class Scratch3VideoSensingBlocks {
         if (stage) {
             stage.videoTransparency = transparency;
         }
-        return transparency;
     }
 
     /**
@@ -191,7 +190,6 @@ class Scratch3VideoSensingBlocks {
         if (stage) {
             stage.videoState = state;
         }
-        return state;
     }
 
     /**

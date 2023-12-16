@@ -55,7 +55,7 @@ class TaskQueue {
         if (this._maxTotalCost < Infinity) {
             const currentTotalCost = this._pendingTaskRecords.reduce((t, r) => t + r.cost, 0);
             if (currentTotalCost + cost > this._maxTotalCost) {
-                return Promise.reject('Maximum total cost exceeded');
+                return Promise.reject(new Error('Maximum total cost exceeded'));
             }
         }
         const newRecord = {

@@ -50,6 +50,8 @@ class CentralDispatch extends SharedDispatch {
                 throw new Error(`Cannot use 'callSync' on remote provider for service ${service}.`);
             }
 
+            // TODO: verify correct `this` after switching from apply to spread
+            // eslint-disable-next-line prefer-spread
             return provider[method].apply(provider, args);
         }
         throw new Error(`Provider not found for service: ${service}`);
