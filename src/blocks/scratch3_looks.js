@@ -540,7 +540,7 @@ class Scratch3LooksBlocks {
     changeEffect (args, util) {
         const effect = Cast.toString(args.EFFECT).toLowerCase();
         const change = Cast.toNumber(args.CHANGE);
-        if (!util.target.effects.hasOwnProperty(effect)) return;
+        if (!Object.prototype.hasOwnProperty.call(util.target.effects, effect)) return;
         let newValue = change + util.target.effects[effect];
         newValue = this.clampEffect(effect, newValue);
         util.target.setEffect(effect, newValue);

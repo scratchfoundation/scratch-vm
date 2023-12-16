@@ -58,7 +58,7 @@ class WorkerDispatch extends SharedDispatch {
      * @returns {Promise} - a promise which will resolve once the service is registered.
      */
     setService (service, provider) {
-        if (this.services.hasOwnProperty(service)) {
+        if (Object.prototype.hasOwnProperty.call(this.services, service)) {
             log.warn(`Worker dispatch replacing existing service provider for ${service}`);
         }
         this.services[service] = provider;

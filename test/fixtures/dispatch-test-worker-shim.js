@@ -6,6 +6,8 @@ const path = require('path');
 const oldRequire = Module.prototype.require;
 Module.prototype.require = function (target) {
     if (target.indexOf('/') === -1) {
+        // we really do just want to forward the arguments here
+        // eslint-disable-next-line prefer-rest-params
         return oldRequire.apply(this, arguments);
     }
 
