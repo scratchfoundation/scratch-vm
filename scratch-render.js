@@ -17609,6 +17609,8 @@ class BitmapAdapter {
                 }
             };
             image.onerror = () => {
+                // TODO: reject with an Error (breaking API change!)
+                // eslint-disable-next-line prefer-promise-reject-errors
                 reject('Image load failed');
             };
         });
