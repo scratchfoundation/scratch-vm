@@ -21,8 +21,10 @@ class TaskQueue {
         this._maxTokens = maxTokens;
         this._refillRate = refillRate;
         this._pendingTaskRecords = [];
-        this._tokenCount = options.hasOwnProperty('startingTokens') ? options.startingTokens : maxTokens;
-        this._maxTotalCost = options.hasOwnProperty('maxTotalCost') ? options.maxTotalCost : Infinity;
+        this._tokenCount = Object.prototype.hasOwnProperty.call(options, 'startingTokens') ?
+            options.startingTokens : maxTokens;
+        this._maxTotalCost = Object.prototype.hasOwnProperty.call(options, 'maxTotalCost') ?
+            options.maxTotalCost : Infinity;
         this._timer = new Timer();
         this._timer.start();
         this._timeout = null;

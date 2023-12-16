@@ -40,7 +40,7 @@ test('blocks get new id on duplicate', t => {
     rt.blocks.createBlock(block);
 
     return rt.duplicate().then(duplicate => {
-        t.notOk(duplicate.blocks._blocks.hasOwnProperty(block.id));
+        t.notOk(Object.prototype.hasOwnProperty.call(duplicate.blocks._blocks, block.id));
         t.end();
     });
 });

@@ -44,7 +44,7 @@ class RuntimeScriptCache {
         if (Object.keys(fields).length === 0) {
             const inputs = container.getInputs(block);
             for (const input in inputs) {
-                if (!inputs.hasOwnProperty(input)) continue;
+                if (!Object.prototype.hasOwnProperty.call(inputs, input)) continue;
                 const id = inputs[input].block;
                 const inputBlock = container.getBlock(id);
                 const inputFields = container.getFields(inputBlock);

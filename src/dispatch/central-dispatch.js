@@ -62,7 +62,7 @@ class CentralDispatch extends SharedDispatch {
      * @param {object} provider - a local object which provides this service.
      */
     setServiceSync (service, provider) {
-        if (this.services.hasOwnProperty(service)) {
+        if (Object.prototype.hasOwnProperty.call(this.services, service)) {
             log.warn(`Central dispatch replacing existing service provider for ${service}`);
         }
         this.services[service] = provider;

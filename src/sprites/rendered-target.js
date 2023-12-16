@@ -395,7 +395,7 @@ class RenderedTarget extends Target {
      * @param {!number} value Numerical magnitude of effect.
      */
     setEffect (effectName, value) {
-        if (!this.effects.hasOwnProperty(effectName)) return;
+        if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) return;
         this.effects[effectName] = value;
         if (this.renderer) {
             this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
@@ -411,12 +411,12 @@ class RenderedTarget extends Target {
      */
     clearEffects () {
         for (const effectName in this.effects) {
-            if (!this.effects.hasOwnProperty(effectName)) continue;
+            if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
             this.effects[effectName] = 0;
         }
         if (this.renderer) {
             for (const effectName in this.effects) {
-                if (!this.effects.hasOwnProperty(effectName)) continue;
+                if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, 0);
             }
             if (this.visible) {
@@ -682,7 +682,7 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             for (const effectName in this.effects) {
-                if (!this.effects.hasOwnProperty(effectName)) continue;
+                if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, this.effects[effectName]);
             }
 
@@ -1020,25 +1020,25 @@ class RenderedTarget extends Target {
      * @param {object} data An object with sprite info data to set.
      */
     postSpriteInfo (data) {
-        const force = data.hasOwnProperty('force') ? data.force : null;
-        const isXChanged = data.hasOwnProperty('x');
-        const isYChanged = data.hasOwnProperty('y');
+        const force = Object.prototype.hasOwnProperty.call(data, 'force') ? data.force : null;
+        const isXChanged = Object.prototype.hasOwnProperty.call(data, 'x');
+        const isYChanged = Object.prototype.hasOwnProperty.call(data, 'y');
         if (isXChanged || isYChanged) {
             this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
         }
-        if (data.hasOwnProperty('direction')) {
+        if (Object.prototype.hasOwnProperty.call(data, 'direction')) {
             this.setDirection(data.direction);
         }
-        if (data.hasOwnProperty('draggable')) {
+        if (Object.prototype.hasOwnProperty.call(data, 'draggable')) {
             this.setDraggable(data.draggable);
         }
-        if (data.hasOwnProperty('rotationStyle')) {
+        if (Object.prototype.hasOwnProperty.call(data, 'rotationStyle')) {
             this.setRotationStyle(data.rotationStyle);
         }
-        if (data.hasOwnProperty('visible')) {
+        if (Object.prototype.hasOwnProperty.call(data, 'visible')) {
             this.setVisible(data.visible);
         }
-        if (data.hasOwnProperty('size')) {
+        if (Object.prototype.hasOwnProperty.call(data, 'size')) {
             this.setSize(data.size);
         }
     }
