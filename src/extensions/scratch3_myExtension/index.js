@@ -59,7 +59,70 @@ class Scratch3myExtension {
                     filter: [ TargetType.SPRITE, TargetType.STAGE ],
 
                     
+                },
+
+                {
+                
+                    opcode: 'moveForward',
+
+                   
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'move Forward',
+
+                   
+                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
+
+                    
+                },
+                {
+                
+                    opcode: 'moveBackward',
+
+                   
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'move Backward',
+
+                   
+                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
+
+                    
+                },
+                {
+                
+                    opcode: 'rotateLeft',
+
+                   
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'rotate Left',
+
+                   
+                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
+
+                    
+                },
+                {
+                
+                    opcode: 'rotateRight',
+
+                   
+                    blockType: BlockType.COMMAND,
+
+                    // label to display on the block
+                    text: 'rotate Right',
+
+                   
+                    filter: [ TargetType.SPRITE, TargetType.STAGE ],
+
+                    
                 }
+
+
             ]
         };
     }
@@ -70,7 +133,7 @@ class Scratch3myExtension {
      *  this will be called when the block is used
      */
     cameraUp () {
-        // example implementation to return a string
+        
         console.log('working');
         fetch("http://192.168.4.1/state?cmd=H")
   .then((response) => response.json())
@@ -80,8 +143,44 @@ class Scratch3myExtension {
     }
 
     cameraDown () {
-        // example implementation to return a string
+      
         fetch("http://192.168.4.1/state?cmd=G")
+  .then((response) => response.json())
+  .then((json) => console.log(json));
+
+  
+    }
+
+   moveForward () {
+      
+        fetch("http://192.168.4.1/state?cmd=F")
+  .then((response) => response.json())
+  .then((json) => console.log(json));
+
+  
+    }
+
+   moveBackward () {
+      
+        fetch("http://192.168.4.1/state?cmd=B")
+  .then((response) => response.json())
+  .then((json) => console.log(json));
+
+  
+    }
+
+    rotateLeft () {
+      
+        fetch("http://192.168.4.1/state?cmd=L")
+  .then((response) => response.json())
+  .then((json) => console.log(json));
+
+  
+    }
+
+    rotateRight () {
+      
+        fetch("http://192.168.4.1/state?cmd=R")
   .then((response) => response.json())
   .then((json) => console.log(json));
 
