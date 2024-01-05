@@ -98,8 +98,8 @@
     "semantic-release": "19.0.5",
     "stats.js": "0.17.0",
     "tap": "16.2.0",
+    "terser-webpack-plugin": "^1.4.5",
     "tiny-worker": "2.3.0",
-    "uglifyjs-webpack-plugin": "1.2.7",
     "webpack": "4.46.0",
     "webpack-cli": "3.1.0",
     "webpack-dev-server": "3.11.2"
