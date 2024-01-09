@@ -68,7 +68,7 @@
     "@babel/preset-env": "7.14.8",
     "@commitlint/cli": "17.0.2",
     "@commitlint/config-conventional": "17.0.2",
-    "adm-zip": "0.4.11",
+    "adm-zip": "0.5.2",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.2.2",
     "callsite": "1.0.0",
