@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.1.53](https://github.com/scratchfoundation/scratch-vm/compare/v2.1.52...v2.1.53) (2024-01-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-translate-extension-languages to v1 ([781d711](https://github.com/scratchfoundation/scratch-vm/commit/781d711a2586c8c9cdfd5006790fbeec8e55d667))
+
 ## [2.1.52](https://github.com/scratchfoundation/scratch-vm/compare/v2.1.51...v2.1.52) (2024-01-09)
 
 
