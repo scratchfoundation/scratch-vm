@@ -88,7 +88,7 @@
     "pngjs": "3.3.3",
     "scratch-audio": "1.0.0",
     "scratch-blocks": "1.0.8",
-    "scratch-l10n": "3.16.20240116031928",
+    "scratch-l10n": "3.18.0",
     "scratch-render": "1.0.0",
     "scratch-render-fonts": "1.0.0-prerelease.20231017225105",
     "scratch-semantic-release-config": "1.0.8",
