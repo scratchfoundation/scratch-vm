@@ -567,7 +567,7 @@ class Scratch3VideoSensingBlocks {
      */
     videoToggle (args) {
         const state = args.VIDEO_STATE;
-        this.globalVideoState = state;
+        this.globalVideoState = Object.values(VideoState).includes(state) ? state : VideoState.OFF;
         if (state === VideoState.OFF) {
             this.runtime.ioDevices.video.disableVideo();
         } else {
