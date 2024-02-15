@@ -7,10 +7,10 @@
 
   "packageRules": [
     {
-      "packagePatterns": [
+      "matchPackagePatterns": [
         "@vernier/godirect"
       ],
-      "rangeStrategy": "widen"
+      "rangeStrategy": "auto"
     }
   ]
 }
