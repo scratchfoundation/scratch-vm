@@ -1,16 +1,14 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-
-  "extends": [
-    "github>LLK/scratch-renovate-config:conservative"
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  extends: [
+    'github>LLK/scratch-renovate-config:conservative',
   ],
-
-  "packageRules": [
+  packageRules: [
     {
-      "packagePatterns": [
-        "@vernier/godirect"
+      matchPackagePatterns: [
+        '@vernier/godirect',
       ],
-      "rangeStrategy": "widen"
-    }
-  ]
+      rangeStrategy: 'widen',
+    },
+  ],
 }
