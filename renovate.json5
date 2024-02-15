@@ -3,5 +3,14 @@
 
   "extends": [
     "github>LLK/scratch-renovate-config:conservative"
+  ],
+
+  "packageRules": [
+    {
+      "packagePatterns": [
+        "@vernier/godirect"
+      ],
+      "rangeStrategy": "widen"
+    }
   ]
 }
