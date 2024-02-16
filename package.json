@@ -89,7 +89,7 @@
     "scratch-audio": "1.0.0",
     "scratch-blocks": "1.1.5",
     "scratch-l10n": "3.18.5",
-    "scratch-render": "1.0.0",
+    "scratch-render": "1.0.1",
     "scratch-render-fonts": "1.0.0-prerelease.20231017225105",
     "scratch-semantic-release-config": "1.0.8",
     "scratch-storage": "2.3.1",
