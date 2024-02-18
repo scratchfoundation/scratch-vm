@@ -4,7 +4,7 @@
         "editor.formatOnSave": false
     },
     "editor.codeActionsOnSave": {
-        "source.fixAll": true
+        "source.fixAll": "explicit"
     },
     "files.eol": "\n",
     "prettier.printWidth": 999999
