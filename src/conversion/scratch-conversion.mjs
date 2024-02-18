@@ -119,12 +119,13 @@ export default class ScratchConverter {
       const thread = new PatchTargetThread();
 
       thread.triggerEventId = blocks[hatId].opcode;
+      console.log("blocks[hatId].opcode", blocks[hatId].opcode);
       // TODO: triggerEventOption
       const hatFieldsKeys = Object.keys(blocks[hatId].fields);
       if (hatFieldsKeys && hatFieldsKeys.length > 0) {
          if (blocks[hatId].opcode === "event_whenkeypressed") {
             // eslint-disable-next-line prefer-destructuring
-            thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0];// .toUpperCase();
+            thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0].toUpperCase();
          } else {
             // eslint-disable-next-line prefer-destructuring
             thread.triggerEventOption = blocks[hatId].fields[hatFieldsKeys[0]][0];
