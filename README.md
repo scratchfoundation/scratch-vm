@@ -3,6 +3,10 @@
 
 [![CI/CD](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/scratchfoundation/scratch-vm/actions/workflows/ci-cd.yml)
 
+To open current build of Scratch VM from Github Pages in your browser:
+
+https://scratchfoundation.github.io/scratch-vm/
+
 ## Installation
 This requires you to have Git and Node.js installed.
 
