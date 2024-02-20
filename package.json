@@ -83,7 +83,7 @@
     "in-publish": "2.0.1",
     "js-md5": "0.7.3",
     "jsdoc": "3.6.6",
-    "json": "^9.0.4",
+    "json": "^10.0.0",
     "lodash.defaultsdeep": "4.6.1",
     "pngjs": "3.3.3",
     "scratch-audio": "1.0.0",
