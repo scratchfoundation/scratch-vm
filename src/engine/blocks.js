@@ -10,6 +10,8 @@ const log = require('../util/log');
 const Variable = require('./variable');
 const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
 
+const { Repo } = require('@automerge/automerge-repo')
+
 /**
  * @fileoverview
  * Store and mutate the VM block representation,
@@ -24,6 +26,11 @@ const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
  */
 class Blocks {
     constructor (runtime, optNoGlow) {
+        const repo = new Repo({});
+        console.log(repo);
+        const handle = repo.create();
+        console.log("We are alive", handle);
+
         this.runtime = runtime;
 
         /**

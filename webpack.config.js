@@ -21,8 +21,12 @@ const base = {
             loader: 'babel-loader',
             include: path.resolve(__dirname, 'src'),
             query: {
-                presets: [['@babel/preset-env', {targets: {browsers: ['last 3 versions', 'Safari >= 8', 'iOS >= 8']}}]]
+                presets: [['@babel/preset-env', {targets: {browsers: ['last 3 versions']}}]]
             }
+        },
+        {
+            test: /\.wasm$/,
+            loaders: ['wasm-loader']
         },
         {
             test: /\.mp3$/,
