@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.12](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.11...v2.3.12) (2024-02-21)
+
+
+### Bug Fixes
+
+* **deps:** fix scratch-svg-renderer peer dep ([bcdaadf](https://github.com/scratchfoundation/scratch-vm/commit/bcdaadf905a8ebbb3f7640255c52e31ca8151f21))
+
 ## [2.3.11](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.10...v2.3.11) (2024-02-21)
 
 
