@@ -72,7 +72,7 @@
     "adm-zip": "0.4.11",
     "babel-loader": "8.3.0",
     "callsite": "1.0.0",
-    "copy-webpack-plugin": "4.5.4",
+    "copy-webpack-plugin": "4.6.0",
     "docdash": "1.2.0",
     "eslint": "8.56.0",
     "eslint-config-scratch": "9.0.3",
