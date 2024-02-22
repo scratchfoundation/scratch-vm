@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.17](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.16...v2.3.17) (2024-02-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-audio to v1.0.3 ([7e08aff](https://github.com/scratchfoundation/scratch-vm/commit/7e08aff61a6bb24b753d4a31cb6ee1333b9c3863))
+
 ## [2.3.16](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.15...v2.3.16) (2024-02-22)
 
 
