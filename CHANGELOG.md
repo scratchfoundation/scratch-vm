@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.18](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.17...v2.3.18) (2024-02-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-render to v1.0.7 ([dfb6172](https://github.com/scratchfoundation/scratch-vm/commit/dfb6172b21a0fbb49bf83af89f862398885b3869))
+
 ## [2.3.17](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.16...v2.3.17) (2024-02-22)
 
 
