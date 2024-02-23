@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.29](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.28...v2.3.29) (2024-02-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-sb1-converter to v1 ([cfc7cea](https://github.com/scratchfoundation/scratch-vm/commit/cfc7cea5f2a2cb74ef32839a08d4f4b771db37fd))
+
 ## [2.3.28](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.27...v2.3.28) (2024-02-23)
 
 
