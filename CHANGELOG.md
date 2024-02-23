@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.28](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.27...v2.3.28) (2024-02-23)
+
+
+### Bug Fixes
+
+* **deps:** clarify dependencies vs. devDependencies ([df5c59c](https://github.com/scratchfoundation/scratch-vm/commit/df5c59cd935d0be1596341fda5198207de58a489))
+
 ## [2.3.27](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.26...v2.3.27) (2024-02-23)
 
 
