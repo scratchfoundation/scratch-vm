@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.27](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.26...v2.3.27) (2024-02-23)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-storage to v2.3.5 ([f12d530](https://github.com/scratchfoundation/scratch-vm/commit/f12d530bd2d33636f7463ca6200828f3d1b983e4))
+
 ## [2.3.26](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.25...v2.3.26) (2024-02-23)
 
 
