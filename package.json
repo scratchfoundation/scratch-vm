@@ -90,7 +90,7 @@
     "scratch-blocks": "1.1.10",
     "scratch-l10n": "3.18.14",
     "scratch-render": "1.0.13",
-    "scratch-render-fonts": "1.0.2",
+    "scratch-render-fonts": "1.0.6",
     "scratch-semantic-release-config": "1.0.13",
     "scratch-storage": "2.3.1",
     "scratch-svg-renderer": "0.2.0-prerelease.20210727023023",
