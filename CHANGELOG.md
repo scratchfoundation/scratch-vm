@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.54](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.53...v2.3.54) (2024-02-28)
+
+
+### Bug Fixes
+
+* **deps:** use terser-webpack-plugin instead of uglifyjs-webpack-plugin ([fba9e33](https://github.com/scratchfoundation/scratch-vm/commit/fba9e3323504c58758ec8799e6c49ba89e314f63))
+
 ## [2.3.53](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.52...v2.3.53) (2024-02-28)
 
 
