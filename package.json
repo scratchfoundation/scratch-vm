@@ -13,7 +13,7 @@
   "main": "./dist/node/scratch-vm.js",
   "browser": "./src/index.js",
   "scripts": {
-    "build": "npm run docs && webpack --progress --colors --bail",
+    "build": "npm run docs && webpack --progress",
     "coverage": "tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov",
     "docs": "jsdoc -c .jsdoc.json",
     "i18n:src": "mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js",
@@ -21,12 +21,12 @@
     "lint": "eslint . && format-message lint src/**/*.js",
     "prepare": "husky install",
     "prepublish": "in-publish && npm run build || not-in-publish",
-    "start": "webpack-dev-server",
+    "start": "webpack serve",
     "tap": "tap ./test/{unit,integration}/*.js",
     "tap:unit": "tap ./test/unit/*.js",
     "tap:integration": "tap ./test/integration/*.js",
     "test": "npm run lint && npm run tap",
-    "watch": "webpack --progress --colors --watch",
+    "watch": "webpack --progress --watch",
     "version": "json -f package.json -I -e \"this.repository.sha = '$(git log -n1 --pretty=format:%H)'\""
   },
   "config": {
@@ -98,7 +98,7 @@
     "terser-webpack-plugin": "4.2.3",
     "tiny-worker": "2.3.0",
     "webpack": "4.47.0",
-    "webpack-cli": "3.3.12",
+    "webpack-cli": "4.10.0",
     "webpack-dev-server": "3.11.3"
   }
 }

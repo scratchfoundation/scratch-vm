@@ -5,11 +5,6 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
-    devServer: {
-        contentBase: false,
-        host: '0.0.0.0',
-        port: process.env.PORT || 8073
-    },
     devtool: 'cheap-module-source-map',
     output: {
         library: 'VirtualMachine',
@@ -85,6 +80,11 @@ module.exports = [
     // Playground
     defaultsDeep({}, base, {
         target: 'web',
+        devServer: {
+            contentBase: false,
+            host: '0.0.0.0',
+            port: process.env.PORT || 8073
+        },
         entry: {
             'benchmark': './src/playground/benchmark',
             'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
