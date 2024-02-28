@@ -55,7 +55,7 @@ module.exports = [
             rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose-loader?VirtualMachine'
+                    loader: 'expose-loader?exposes=VirtualMachine'
                 }
             ])
         }
@@ -97,11 +97,11 @@ module.exports = [
             rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose-loader?VirtualMachine'
+                    loader: 'expose-loader?exposes=VirtualMachine'
                 },
                 {
                     test: require.resolve('./src/extensions/scratch3_video_sensing/debug.js'),
-                    loader: 'expose-loader?Scratch3VideoSensingDebug'
+                    loader: 'expose-loader?exposes=Scratch3VideoSensingDebug'
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
@@ -109,19 +109,19 @@ module.exports = [
                 },
                 {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
-                    loader: 'expose-loader?Blockly'
+                    loader: 'expose-loader?exposes=Blockly'
                 },
                 {
                     test: require.resolve('scratch-audio/src/index.js'),
-                    loader: 'expose-loader?AudioEngine'
+                    loader: 'expose-loader?exposes=AudioEngine'
                 },
                 {
                     test: require.resolve('scratch-storage/src/index.js'),
-                    loader: 'expose-loader?ScratchStorage'
+                    loader: 'expose-loader?exposes=ScratchStorage'
                 },
                 {
                     test: require.resolve('scratch-render/src/index.js'),
-                    loader: 'expose-loader?ScratchRender'
+                    loader: 'expose-loader?exposes=ScratchRender'
                 }
             ])
         },
