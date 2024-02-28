@@ -82,10 +82,55 @@ var VirtualMachine =
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/extensions/scratch3_video_sensing/debug.js-exposed");
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/extensions/scratch3_video_sensing/debug-exposed.js");
 /******/ })
 /************************************************************************/
 /******/ ({
+
+/***/ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/expose-loader/dist/runtime/getGlobalThis.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+
+// eslint-disable-next-line func-names
+module.exports = function () {
+  if (typeof globalThis === "object") {
+    return globalThis;
+  }
+
+  var g;
+
+  try {
+    // This works if eval is allowed (see CSP)
+    // eslint-disable-next-line no-new-func
+    g = this || new Function("return this")();
+  } catch (e) {
+    // This works if the window reference is available
+    if (typeof window === "object") {
+      return window;
+    } // This works if the self reference is available
+
+
+    if (typeof self === "object") {
+      return self;
+    } // This works if the global reference is available
+
+
+    if (typeof global !== "undefined") {
+      return global;
+    }
+  }
+
+  return g;
+}();
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
 
 /***/ "./node_modules/webpack/buildin/global.js":
 /*!***********************************!*\
@@ -118,6 +163,21 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./src/extensions/scratch3_video_sensing/debug-exposed.js":
+/*!****************************************************************!*\
+  !*** ./src/extensions/scratch3_video_sensing/debug-exposed.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+var ___EXPOSE_LOADER_IMPORT___ = __webpack_require__(/*! -!./debug.js */ "./src/extensions/scratch3_video_sensing/debug.js");
+var ___EXPOSE_LOADER_GET_GLOBAL_THIS___ = __webpack_require__(/*! ../../../node_modules/expose-loader/dist/runtime/getGlobalThis.js */ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js");
+var ___EXPOSE_LOADER_GLOBAL_THIS___ = ___EXPOSE_LOADER_GET_GLOBAL_THIS___;
+if (typeof ___EXPOSE_LOADER_GLOBAL_THIS___["Scratch3VideoSensingDebug"] === 'undefined') ___EXPOSE_LOADER_GLOBAL_THIS___["Scratch3VideoSensingDebug"] = ___EXPOSE_LOADER_IMPORT___;else throw new Error('[exposes-loader] The "Scratch3VideoSensingDebug" value exists in the global scope, it may not be safe to overwrite it, use the "override" option');
+module.exports = ___EXPOSE_LOADER_IMPORT___;
+
+/***/ }),
+
 /***/ "./src/extensions/scratch3_video_sensing/debug.js":
 /*!********************************************************!*\
   !*** ./src/extensions/scratch3_video_sensing/debug.js ***!
@@ -139,18 +199,6 @@ module.exports = {
     VideoMotionView
 };
 
-
-/***/ }),
-
-/***/ "./src/extensions/scratch3_video_sensing/debug.js-exposed":
-/*!****************************************************************!*\
-  !*** ./src/extensions/scratch3_video_sensing/debug.js-exposed ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(global) {module.exports = global["Scratch3VideoSensingDebug"] = __webpack_require__(/*! -!./debug.js */ "./src/extensions/scratch3_video_sensing/debug.js");
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
