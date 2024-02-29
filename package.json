@@ -97,7 +97,7 @@
     "tap": "16.3.10",
     "terser-webpack-plugin": "4.2.3",
     "tiny-worker": "2.3.0",
-    "webpack": "4.47.0",
+    "webpack": "5.90.3",
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "3.11.3"
   }
