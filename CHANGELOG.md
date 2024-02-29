@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.57](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.56...v2.3.57) (2024-02-29)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-blocks to v1.1.22 ([bda0c7b](https://github.com/scratchfoundation/scratch-vm/commit/bda0c7be328ff09b7c93f0ddc2c931f7c1b35da0))
+
 ## [2.3.56](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.55...v2.3.56) (2024-02-29)
 
 
