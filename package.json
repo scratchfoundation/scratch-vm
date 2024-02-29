@@ -88,7 +88,7 @@
     "lodash.defaultsdeep": "4.6.1",
     "pngjs": "3.4.0",
     "scratch-blocks": "1.1.23",
-    "scratch-l10n": "3.18.32",
+    "scratch-l10n": "3.18.34",
     "scratch-render-fonts": "1.0.14",
     "scratch-semantic-release-config": "1.0.14",
     "script-loader": "0.7.2",
