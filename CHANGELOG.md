@@ -3,6 +3,22 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [3.0.0](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.78...v3.0.0) (2024-03-04)
+
+
+### Bug Fixes
+
+* **build:** misc webpack 5 build fixes ([64d1709](https://github.com/scratchfoundation/scratch-vm/commit/64d17098a17c8e94b879ebcc7d5a29cab7befbbe))
+* use web-worker to replace tiny-worker and worker-loader ([058685f](https://github.com/scratchfoundation/scratch-vm/commit/058685f41ea950e789aa5c9cad133a86fa8bf963))
+
+
+* build!: tell webpack to output UMD in all cases ([0f3a847](https://github.com/scratchfoundation/scratch-vm/commit/0f3a8476892760b9d7de375c6d8e2350cf8ab78f))
+
+
+### BREAKING CHANGES
+
+* this could affect compatibility with library consumers
+
 ## [2.3.78](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.77...v2.3.78) (2024-03-04)
 
 
