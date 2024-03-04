@@ -1,5 +1,14 @@
-var VirtualMachine;
-/******/ (() => { // webpackBootstrap
+(function webpackUniversalModuleDefinition(root, factory) {
+	if(typeof exports === 'object' && typeof module === 'object')
+		module.exports = factory();
+	else if(typeof define === 'function' && define.amd)
+		define([], factory);
+	else if(typeof exports === 'object')
+		exports["VirtualMachine"] = factory();
+	else
+		root["VirtualMachine"] = factory();
+})(self, () => {
+return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
 /***/ "./src/extensions/scratch3_video_sensing/debug-exposed.js":
@@ -1136,8 +1145,9 @@ module.exports = {
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __webpack_require__("./src/extensions/scratch3_video_sensing/debug-exposed.js");
-/******/ 	VirtualMachine = __webpack_exports__;
 /******/ 	
+/******/ 	return __webpack_exports__;
 /******/ })()
 ;
+});
 //# sourceMappingURL=video-sensing-extension-debug.js.map
