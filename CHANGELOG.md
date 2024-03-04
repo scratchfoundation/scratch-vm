@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [3.0.2](https://github.com/scratchfoundation/scratch-vm/compare/v3.0.1...v3.0.2) (2024-03-04)
+
+
+### Bug Fixes
+
+* **build:** polyfill Buffer internally ([b8371ad](https://github.com/scratchfoundation/scratch-vm/commit/b8371aded1f03d467f523fb6cfa16942790914a9))
+
 ## [3.0.1](https://github.com/scratchfoundation/scratch-vm/compare/v3.0.0...v3.0.1) (2024-03-04)
 
 
