@@ -2,6 +2,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const defaultsDeep = require('lodash.defaultsdeep');
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
+const webpack = require('webpack');
 
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
@@ -10,6 +11,11 @@ const base = {
         library: 'VirtualMachine',
         libraryTarget: 'umd',
         filename: '[name].js'
+    },
+    resolve: {
+        fallback: {
+            Buffer: require.resolve('buffer/')
+        }
     },
     module: {
         rules: [{
@@ -32,7 +38,11 @@ const base = {
             })
         ]
     },
-    plugins: []
+    plugins: [
+        new webpack.ProvidePlugin({
+            Buffer: ['buffer', 'Buffer']
+        })
+    ]
 };
 
 module.exports = [
