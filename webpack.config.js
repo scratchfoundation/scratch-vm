@@ -8,6 +8,7 @@ const base = {
     devtool: 'cheap-module-source-map',
     output: {
         library: 'VirtualMachine',
+        libraryTarget: 'umd',
         filename: '[name].js'
     },
     module: {
@@ -15,7 +16,7 @@ const base = {
             test: /\.js$/,
             loader: 'babel-loader',
             include: path.resolve(__dirname, 'src'),
-            query: {
+            options: {
                 presets: [['@babel/preset-env', {targets: {browsers: ['last 3 versions', 'Safari >= 8', 'iOS >= 8']}}]]
             }
         },
@@ -43,14 +44,16 @@ module.exports = [
             'scratch-vm.min': './src/index.js'
         },
         output: {
-            libraryTarget: 'umd',
             path: path.resolve('dist', 'web')
         },
         module: {
             rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose-loader?exposes=VirtualMachine'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'VirtualMachine'
+                    }
                 }
             ])
         }
@@ -62,7 +65,6 @@ module.exports = [
             'scratch-vm': './src/index.js'
         },
         output: {
-            libraryTarget: 'commonjs2',
             path: path.resolve('dist', 'node')
         },
         externals: {
@@ -97,11 +99,17 @@ module.exports = [
             rules: base.module.rules.concat([
                 {
                     test: require.resolve('./src/index.js'),
-                    loader: 'expose-loader?exposes=VirtualMachine'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'VirtualMachine'
+                    }
                 },
                 {
                     test: require.resolve('./src/extensions/scratch3_video_sensing/debug.js'),
-                    loader: 'expose-loader?exposes=Scratch3VideoSensingDebug'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'Scratch3VideoSensingDebug'
+                    }
                 },
                 {
                     test: require.resolve('stats.js/build/stats.min.js'),
@@ -109,19 +117,31 @@ module.exports = [
                 },
                 {
                     test: require.resolve('scratch-blocks/dist/vertical.js'),
-                    loader: 'expose-loader?exposes=Blockly'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'Blockly'
+                    }
                 },
                 {
                     test: require.resolve('scratch-audio/src/index.js'),
-                    loader: 'expose-loader?exposes=AudioEngine'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'AudioEngine'
+                    }
                 },
                 {
                     test: require.resolve('scratch-storage/src/index.js'),
-                    loader: 'expose-loader?exposes=ScratchStorage'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'ScratchStorage'
+                    }
                 },
                 {
                     test: require.resolve('scratch-render/src/index.js'),
-                    loader: 'expose-loader?exposes=ScratchRender'
+                    loader: 'expose-loader',
+                    options: {
+                        exposes: 'ScratchRender'
+                    }
                 }
             ])
         },
