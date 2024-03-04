@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [2.3.76](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.75...v2.3.76) (2024-03-04)
+
+
+### Bug Fixes
+
+* **deps:** lock file maintenance ([5cf2853](https://github.com/scratchfoundation/scratch-vm/commit/5cf2853718ee8e262117a3aa501da9c6d336b82c))
+
 ## [2.3.75](https://github.com/scratchfoundation/scratch-vm/compare/v2.3.74...v2.3.75) (2024-03-04)
 
 
