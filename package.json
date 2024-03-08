@@ -89,7 +89,7 @@
     "pngjs": "3.4.0",
     "scratch-blocks": "1.1.41",
     "scratch-l10n": "3.18.53",
-    "scratch-render-fonts": "1.0.19",
+    "scratch-render-fonts": "1.0.20",
     "scratch-semantic-release-config": "1.0.14",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
