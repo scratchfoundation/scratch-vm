@@ -96,7 +96,7 @@
     "scratch-l10n": "3.18.53",
     "scratch-render-fonts": "1.0.20",
     "scratch-semantic-release-config": "1.0.14",
-    "scratch-webpack-configuration": "1.0.0",
+    "scratch-webpack-configuration": "1.1.0",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
     "stats.js": "0.17.0",

@@ -10,15 +10,14 @@ const common = {
     rootPath: path.resolve(__dirname)
 };
 
-const nodeConfig = new ScratchWebpackConfigBuilder(common)
+const nodeBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('node')
     .addModuleRule({
         test: /\.mp3$/,
         type: 'asset'
-    })
-    .get();
+    });
 
-const webConfig = new ScratchWebpackConfigBuilder(common)
+const webBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('browserslist')
     .merge({
         resolve: {
@@ -40,11 +39,9 @@ const webConfig = new ScratchWebpackConfigBuilder(common)
     })
     .addPlugin(new webpack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer']
-    }))
-    .get();
+    }));
 
-const playgroundConfig = new ScratchWebpackConfigBuilder(common)
-    .setTarget('browserslist')
+const playgroundBuilder = webBuilder.clone()
     .merge({
         devServer: {
             contentBase: false,
@@ -60,23 +57,11 @@ const playgroundConfig = new ScratchWebpackConfigBuilder(common)
         },
         output: {
             path: path.resolve(__dirname, 'playground')
-        },
-        resolve: {
-            fallback: {
-                Buffer: require.resolve('buffer/')
-            }
         }
     })
     .addModuleRule({
-        test: /\.mp3$/,
-        type: 'asset'
-    })
-    .addModuleRule({
-        test: require.resolve('./src/index.js'),
-        loader: 'expose-loader',
-        options: {
-            exposes: 'VirtualMachine'
-        }
+        test: require.resolve('stats.js/build/stats.min.js'),
+        loader: 'script-loader'
     })
     .addModuleRule({
         test: require.resolve('./src/extensions/scratch3_video_sensing/debug.js'),
@@ -84,10 +69,6 @@ const playgroundConfig = new ScratchWebpackConfigBuilder(common)
         options: {
             exposes: 'Scratch3VideoSensingDebug'
         }
-    })
-    .addModuleRule({
-        test: require.resolve('stats.js/build/stats.min.js'),
-        loader: 'script-loader'
     })
     .addModuleRule({
         test: require.resolve('scratch-blocks/dist/vertical.js'),
@@ -117,9 +98,6 @@ const playgroundConfig = new ScratchWebpackConfigBuilder(common)
             exposes: 'ScratchRender'
         }
     })
-    .addPlugin(new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer']
-    }))
     .addPlugin(new CopyWebpackPlugin([
         {
             from: 'node_modules/scratch-blocks/media',
@@ -137,11 +115,10 @@ const playgroundConfig = new ScratchWebpackConfigBuilder(common)
         {
             from: 'src/playground'
         }
-    ]))
-    .get();
+    ]));
 
 module.exports = [
-    nodeConfig,
-    webConfig,
-    playgroundConfig
+    nodeBuilder.get(),
+    webBuilder.get(),
+    playgroundBuilder.get()
 ];
