@@ -34,6 +34,12 @@
       "path": "cz-conventional-changelog"
     }
   },
+  "browserslist": [
+    "Chrome >= 63",
+    "Edge >= 15",
+    "Firefox >= 57",
+    "Safari >= 11"
+  ],
   "tap": {
     "branches": 60,
     "functions": 70,
@@ -85,17 +91,16 @@
     "js-md5": "0.7.3",
     "jsdoc": "3.6.11",
     "json": "^9.0.4",
-    "lodash.defaultsdeep": "4.6.1",
     "pngjs": "3.4.0",
     "scratch-blocks": "1.1.41",
     "scratch-l10n": "3.18.53",
     "scratch-render-fonts": "1.0.20",
     "scratch-semantic-release-config": "1.0.14",
+    "scratch-webpack-configuration": "1.0.0",
     "script-loader": "0.7.2",
     "semantic-release": "19.0.5",
     "stats.js": "0.17.0",
     "tap": "16.3.10",
-    "terser-webpack-plugin": "4.2.3",
     "webpack": "5.90.3",
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "3.11.3"
