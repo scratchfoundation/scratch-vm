@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [4.0.0](https://github.com/scratchfoundation/scratch-vm/compare/v3.0.21...v4.0.0) (2024-03-09)
+
+
+### Bug Fixes
+
+* **build:** simplify webpack config using clone() ([e7962b1](https://github.com/scratchfoundation/scratch-vm/commit/e7962b101d669f70146dc9cc455a7925523fb8d2))
+
+
+* fix(build)!: use scratch-webpack-configuration ([9261909](https://github.com/scratchfoundation/scratch-vm/commit/9261909f90a18d7f4f0d1a5ad449102e395d428d))
+
+
+### BREAKING CHANGES
+
+* changes compatibility, especially for the web build
+
 ## [3.0.21](https://github.com/scratchfoundation/scratch-vm/compare/v3.0.20...v3.0.21) (2024-03-08)
 
 
