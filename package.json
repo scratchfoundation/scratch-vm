@@ -11,9 +11,9 @@
     "sha": "1214f70b40476a2aa85fd68f26d1855c701a99ae"
   },
   "exports": {
+    "webpack": "./src/index.js",
     "browser": "./dist/web/scratch-vm.js",
-    "node": "./dist/node/scratch-vm.js",
-    "webpack": "./src/index.js"
+    "node": "./dist/node/scratch-vm.js"
   },
   "scripts": {
     "build": "npm run docs && webpack --progress",
