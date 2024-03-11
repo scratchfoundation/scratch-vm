@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.1.8](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.7...v4.1.8) (2024-03-11)
+
+
+### Bug Fixes
+
+* make sure webpack its export, not the web one ([830ef63](https://github.com/scratchfoundation/scratch-vm/commit/830ef63f10f3463b8fe95e59f1b8544c48831534))
+
 ## [4.1.7](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.6...v4.1.7) (2024-03-11)
 
 
