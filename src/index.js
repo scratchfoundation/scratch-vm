@@ -1,3 +1,10 @@
-const VirtualMachine = require('./virtual-machine');
+import VirtualMachine from './virtual-machine.js';
 
-module.exports = VirtualMachine;
+import ArgumentType from './extension-support/argument-type.js';
+import BlockType from './extension-support/block-type.js';
+
+export default VirtualMachine;
+export {
+    ArgumentType,
+    BlockType
+};
