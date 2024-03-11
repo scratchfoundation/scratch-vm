@@ -21,6 +21,7 @@ class Scratch3OperatorsBlocks {
             operator_multiply: this.multiply,
             operator_divide: this.divide,
             operator_lt: this.lt,
+            operator_exponent: this.exponent,
             operator_equals: this.equals,
             operator_gt: this.gt,
             operator_and: this.and,
