@@ -13,7 +13,8 @@
   "exports": {
     "webpack": "./src/index.js",
     "browser": "./dist/web/scratch-vm.js",
-    "node": "./dist/node/scratch-vm.js"
+    "node": "./dist/node/scratch-vm.js",
+    "default": "./src/index.js"
   },
   "scripts": {
     "build": "npm run docs && webpack --progress",
