@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.1.15](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.14...v4.1.15) (2024-03-13)
+
+
+### Bug Fixes
+
+* add a default export for tool compatibility ([9176da8](https://github.com/scratchfoundation/scratch-vm/commit/9176da8332d1b7433437d7549bd0bb43ac6be4b9))
+* export ArgumentType and BlockType ([9355432](https://github.com/scratchfoundation/scratch-vm/commit/9355432337f21e1a26305f115517201e9e67e6fd))
+
 ## [4.1.14](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.13...v4.1.14) (2024-03-13)
 
 
