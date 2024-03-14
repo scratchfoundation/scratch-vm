@@ -25,44 +25,6 @@ module.exports = ___EXPOSE_LOADER_IMPORT___;
 
 /***/ }),
 
-/***/ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/expose-loader/dist/runtime/getGlobalThis.js ***!
-  \******************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-"use strict";
-
-
-// eslint-disable-next-line func-names
-module.exports = function () {
-  if (typeof globalThis === "object") {
-    return globalThis;
-  }
-  var g;
-  try {
-    // This works if eval is allowed (see CSP)
-    // eslint-disable-next-line no-new-func
-    g = this || new Function("return this")();
-  } catch (e) {
-    // This works if the window reference is available
-    if (typeof window === "object") {
-      return window;
-    } // This works if the self reference is available
-
-    if (typeof self === "object") {
-      return self;
-    } // This works if the global reference is available
-
-    if (typeof __webpack_require__.g !== "undefined") {
-      return __webpack_require__.g;
-    }
-  }
-  return g;
-}();
-
-/***/ }),
-
 /***/ "./src/extensions/scratch3_video_sensing/library.js":
 /*!**********************************************************!*\
   !*** ./src/extensions/scratch3_video_sensing/library.js ***!
@@ -1046,6 +1008,49 @@ class VideoMotionView {
   }
 }
 module.exports = VideoMotionView;
+
+/***/ }),
+
+/***/ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/expose-loader/dist/runtime/getGlobalThis.js ***!
+  \******************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+// eslint-disable-next-line func-names
+module.exports = function () {
+  if (typeof globalThis === "object") {
+    return globalThis;
+  }
+
+  var g;
+
+  try {
+    // This works if eval is allowed (see CSP)
+    // eslint-disable-next-line no-new-func
+    g = this || new Function("return this")();
+  } catch (e) {
+    // This works if the window reference is available
+    if (typeof window === "object") {
+      return window;
+    } // This works if the self reference is available
+
+
+    if (typeof self === "object") {
+      return self;
+    } // This works if the global reference is available
+
+
+    if (typeof __webpack_require__.g !== "undefined") {
+      return __webpack_require__.g;
+    }
+  }
+
+  return g;
+}();
 
 /***/ }),
 
