@@ -10,6 +10,8 @@
     "url": "https://github.com/scratchfoundation/scratch-vm.git",
     "sha": "aa445c3256b8f97a6da49dfb5a8cb7039dcf03fa"
   },
+  "main": "./dist/node/scratch-vm.js",
+  "browser": "./dist/web/scratch-vm.js",
   "exports": {
     "webpack": "./src/index.js",
     "browser": "./dist/web/scratch-vm.js",
