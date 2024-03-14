@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.1.18](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.17...v4.1.18) (2024-03-14)
+
+
+### Bug Fixes
+
+* **build:** add main & browser back for compatibility ([7381425](https://github.com/scratchfoundation/scratch-vm/commit/73814257481377384e659b2f3611847ae40e0846))
+
 ## [4.1.17](https://github.com/scratchfoundation/scratch-vm/compare/v4.1.16...v4.1.17) (2024-03-14)
 
 
