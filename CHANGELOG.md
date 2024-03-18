@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [4.4.0](https://github.com/scratchfoundation/scratch-vm/compare/v4.3.14...v4.4.0) (2024-03-18)
+
+
+### Features
+
+* **deps:** update dependency scratch-webpack-configuration to v1.3.0 ([8ab1c51](https://github.com/scratchfoundation/scratch-vm/commit/8ab1c517e0672ffb6073eaa575c766bd43f7eb94))
+
 ## [4.3.14](https://github.com/scratchfoundation/scratch-vm/compare/v4.3.13...v4.3.14) (2024-03-18)
 
 
