@@ -524,4 +524,12 @@ class SomeBlocks {
         });
     };
 }
+
+module.exports = SomeBlocks;
+```
+
+## Linking a extension
+To enable your custom written extension we need to add it to the extension-manager (src/extension-support/extension-manager.js) in the builtinExtensions list
+```
+someBlocks: () => require('.../extensions/someBlocks');
 ```
