@@ -91,7 +91,9 @@ class Scratch3OperatorsBlocks {
     }
 
     join (args) {
-        return Cast.toString(args.STRING1) + Cast.toString(args.STRING2);
+        // Limit result to 10240 characters: https://github.com/LLK/scratch-vm/issues/922
+        return (Cast.toString(args.STRING1) + Cast.toString(args.STRING2))
+            .slice(0, 10240);
     }
 
     letterOf (args) {
