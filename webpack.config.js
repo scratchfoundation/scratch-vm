@@ -53,6 +53,7 @@ const playgroundBuilder = webBuilder.clone()
         },
         entry: {
             'benchmark': './src/playground/benchmark',
+            'standalone-player': './src/playground/standalone-player',
             'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
         },
         output: {
