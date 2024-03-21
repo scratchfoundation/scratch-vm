@@ -60,7 +60,7 @@ class MathUtil {
         case 270:
             return -Infinity;
         default:
-            return parseFloat(Math.tan((Math.PI * angle) / 180).toFixed(10));
+            return Math.round(Math.tan(angle / 180 * Math.PI) * 1e10) / 1e10;
         }
     }
 
