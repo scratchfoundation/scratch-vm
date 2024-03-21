@@ -59,19 +59,13 @@ class Mouse {
     postData (data) {
         if (data.x) {
             this._clientX = data.x;
-            this._scratchX = Math.round(MathUtil.clamp(
-                480 * ((data.x / data.canvasWidth) - 0.5),
-                -240,
-                240
-            ));
+            this._rawScratchX = 480 * ((data.x / data.canvasWidth) - 0.5);
+            this._scratchX = Math.round(MathUtil.clamp(this._rawScratchX, -240, 240));
         }
         if (data.y) {
             this._clientY = data.y;
-            this._scratchY = Math.round(MathUtil.clamp(
-                -360 * ((data.y / data.canvasHeight) - 0.5),
-                -180,
-                180
-            ));
+            this._rawScratchY = -360 * ((data.y / data.canvasHeight) - 0.5);
+            this._scratchY = Math.round(MathUtil.clamp(this._rawScratchY, -180, 180));
         }
         if (typeof data.isDown !== 'undefined') {
             const previousDownState = this._isDown;
@@ -131,6 +125,19 @@ class Mouse {
      */
     getScratchY () {
         return this._scratchY;
+    }
+
+    /**
+     * Check if the mouse is outside the stage.
+     * @return {boolean} Is the mouse outside the stage?
+     */
+    getIsOutside () {
+        return !(
+            this._rawScratchX >= -240 &&
+            this._rawScratchX <= 240 &&
+            this._rawScratchY >= -180 &&
+            this._rawScratchY <= 180
+        );
     }
 
     /**
