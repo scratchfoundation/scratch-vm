@@ -43,13 +43,11 @@ const isPromise = function (value) {
  * @param {!Sequencer} sequencer Sequencer stepping the thread for the ran
  * primitive.
  * @param {!Thread} thread Thread containing the primitive.
- * @param {!string} currentBlockId Id of the block in its thread for value from
- * the primitive.
- * @param {!string} opcode opcode used to identify a block function primitive.
- * @param {!boolean} isHat Is the current block a hat?
+ * @param {!BlockCached} blockCached The reporter block.
+ * @param {!boolean} lastOperation Whether this is the last operation in the sequence of operations.
+ * @todo move this to callback attached to the thread when we have performance
+ * metrics (dd)
  */
-// @todo move this to callback attached to the thread when we have performance
-// metrics (dd)
 const handleReport = function (resolvedValue, sequencer, thread, blockCached, lastOperation) {
     const currentBlockId = blockCached.id;
     const opcode = blockCached.opcode;
