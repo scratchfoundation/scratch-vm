@@ -822,6 +822,14 @@ class Blocks {
             }
         }
 
+        // Delete comments attached to the block.
+        if (block.comment) {
+            const editingTarget = this.runtime.getEditingTarget();
+            if (editingTarget && editingTarget.comments.hasOwnProperty(block.comment)) {
+                delete editingTarget.comments[block.comment];
+            }
+        }
+
         // Delete any script starting with this block.
         this._deleteScript(blockId);
 

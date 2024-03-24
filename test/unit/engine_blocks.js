@@ -600,6 +600,25 @@ test('delete inputs', t => {
     t.end();
 });
 
+test('delete block with comment', t => {
+    const b = new Blocks(new Runtime());
+    const fakeTarget = {
+        comments: {
+            bar: {
+                blockId: 'foo'
+            }
+        }
+    };
+    b.runtime.getEditingTarget = () => fakeTarget;
+    b.createBlock({
+        id: 'foo',
+        comment: 'bar'
+    });
+    b.deleteBlock('foo');
+    t.notOk(fakeTarget.comments.hasOwnProperty('bar'));
+    t.end();
+});
+
 test('updateAssetName function updates name in sound field', t => {
     const b = new Blocks(new Runtime());
     b.createBlock({
