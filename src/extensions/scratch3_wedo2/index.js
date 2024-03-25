@@ -1375,7 +1375,11 @@ class Scratch3WeDo2Blocks {
         this._forEachMotor(args.MOTOR_ID, motorIndex => {
             const motor = this._peripheral.motor(motorIndex);
             if (motor) {
-                motor.power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
+                const power = MathUtil.clamp(Cast.toNumber(args.POWER), 0, 100);
+                if (power === 0) {
+                    motor.turnOff();
+                }
+                motor.power = power;
                 motor.turnOn();
             }
         });
