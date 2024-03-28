@@ -11,6 +11,46 @@ test('divide: (1) / (0) = Infinity', t => {
     t.end();
 });
 
+test('exponent: exponentiation with Infinity', t => {
+  t.strictEqual(
+    blocks.exponent({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" ^ 111 = Infinity'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 'INFINITY', NUM2: 222}), 0, '"INFINITY" ^ 222 = 0'
+  );
+  t.strictEqual(
+   blocks.exponent({NUM1: Infinity, NUM2: 333}), Infinity, 'Infinity ^ 333 = Infinity'
+   );
+  t.strictEqual(
+    blocks.exponent({NUM1: 111, NUM2: 'Infinity'}), Infinity, '111 ^ "Infinity" = Infinity'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 222, NUM2: 'INFINITY'}), 1, '222 ^ "INFINITY" = 1'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 333, NUM2: Infinity}), Infinity, '333 ^ Infinity = Infinity'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: '-Infinity', NUM2: 111}), -Infinity, '"-Infinity" ^ 111 = -Infinity'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: '-INFINITY', NUM2: 222}), 0, '"-INFINITY" ^ 222 = 0'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: -Infinity, NUM2: 333}), -Infinity, '-Infinity ^ 333 = -Infinity'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 111, NUM2: '-Infinity'}), 0, '111 ^ "-Infinity" = 0'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 222, NUM2: '-INFINITY'}), 1, '222 ^ "-INFINITY" = 1'
+  );
+  t.strictEqual(
+    blocks.exponent({NUM1: 333, NUM2: -Infinity}), 0, '333 ^ -Infinity = 0'
+  );
+  t.end();
+});
+
 test('divide: division with Infinity', t => {
     t.strictEqual(
         blocks.divide({NUM1: 'Infinity', NUM2: 111}), Infinity, '"Infinity" / 111 = Infinity'
