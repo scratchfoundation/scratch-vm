@@ -1,5 +1,5 @@
 const DispatchTestService = require('../fixtures/dispatch-test-service');
-const Worker = require('web-worker');
+const Worker = require('tiny-worker');
 
 const dispatch = require('../../src/dispatch/central-dispatch');
 const path = require('path');

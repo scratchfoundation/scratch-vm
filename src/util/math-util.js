@@ -103,7 +103,7 @@ class MathUtil {
 
         return randInt;
     }
- 
+
     /**
      * Scales a number from one range to another.
      * @param {number} i number to be scaled

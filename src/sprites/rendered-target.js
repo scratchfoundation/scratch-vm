@@ -1,3 +1,4 @@
+const log = require('../util/log');
 const MathUtil = require('../util/math-util');
 const StringUtil = require('../util/string-util');
 const Cast = require('../util/cast');
@@ -19,7 +20,7 @@ class RenderedTarget extends Target {
 
         /**
          * Reference to the sprite that this is a render of.
-         * @type {!Sprite}
+         * @type {!import("./sprite")}
          */
         this.sprite = sprite;
         /**
@@ -341,6 +342,23 @@ class RenderedTarget extends Target {
     }
 
     /**
+     * Set a say bubble.
+     * @param {?string} type Type of say bubble: "say", "think", or null.
+     * @param {?string} message Message to put in say bubble.
+     */
+    setSay (type, message) {
+        if (this.isStage) {
+            return;
+        }
+        // @todo: Render to stage.
+        if (!type || !message) {
+            log.info('Clearing say bubble');
+            return;
+        }
+        log.info('Setting say bubble:', type, message);
+    }
+
+    /**
      * Set visibility; i.e., whether it's shown or hidden.
      * @param {!boolean} visible True if should be shown.
      */
@@ -395,7 +413,7 @@ class RenderedTarget extends Target {
      * @param {!number} value Numerical magnitude of effect.
      */
     setEffect (effectName, value) {
-        if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) return;
+        if (!this.effects.hasOwnProperty(effectName)) return;
         this.effects[effectName] = value;
         if (this.renderer) {
             this.renderer.updateDrawableEffect(this.drawableID, effectName, value);
@@ -411,12 +429,12 @@ class RenderedTarget extends Target {
      */
     clearEffects () {
         for (const effectName in this.effects) {
-            if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
+            if (!this.effects.hasOwnProperty(effectName)) continue;
             this.effects[effectName] = 0;
         }
         if (this.renderer) {
             for (const effectName in this.effects) {
-                if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
+                if (!this.effects.hasOwnProperty(effectName)) continue;
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, 0);
             }
             if (this.visible) {
@@ -440,7 +458,19 @@ class RenderedTarget extends Target {
         );
         if (this.renderer) {
             const costume = this.getCostumes()[this.currentCostume];
-            this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
+            if (
+                typeof costume.rotationCenterX !== 'undefined' &&
+                typeof costume.rotationCenterY !== 'undefined'
+            ) {
+                const scale = costume.bitmapResolution || 2;
+                const rotationCenter = [
+                    costume.rotationCenterX / scale,
+                    costume.rotationCenterY / scale
+                ];
+                this.renderer.updateDrawableSkinIdRotationCenter(this.drawableID, costume.skinId, rotationCenter);
+            } else {
+                this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
+            }
 
             if (this.visible) {
                 this.emit(RenderedTarget.EVENT_TARGET_VISUAL_CHANGE, this);
@@ -682,7 +712,7 @@ class RenderedTarget extends Target {
             this.renderer.updateDrawableSkinId(this.drawableID, costume.skinId);
 
             for (const effectName in this.effects) {
-                if (!Object.prototype.hasOwnProperty.call(this.effects, effectName)) continue;
+                if (!this.effects.hasOwnProperty(effectName)) continue;
                 this.renderer.updateDrawableEffect(this.drawableID, effectName, this.effects[effectName]);
             }
 
@@ -1020,25 +1050,25 @@ class RenderedTarget extends Target {
      * @param {object} data An object with sprite info data to set.
      */
     postSpriteInfo (data) {
-        const force = Object.prototype.hasOwnProperty.call(data, 'force') ? data.force : null;
-        const isXChanged = Object.prototype.hasOwnProperty.call(data, 'x');
-        const isYChanged = Object.prototype.hasOwnProperty.call(data, 'y');
+        const force = data.hasOwnProperty('force') ? data.force : null;
+        const isXChanged = data.hasOwnProperty('x');
+        const isYChanged = data.hasOwnProperty('y');
         if (isXChanged || isYChanged) {
             this.setXY(isXChanged ? data.x : this.x, isYChanged ? data.y : this.y, force);
         }
-        if (Object.prototype.hasOwnProperty.call(data, 'direction')) {
+        if (data.hasOwnProperty('direction')) {
             this.setDirection(data.direction);
         }
-        if (Object.prototype.hasOwnProperty.call(data, 'draggable')) {
+        if (data.hasOwnProperty('draggable')) {
             this.setDraggable(data.draggable);
         }
-        if (Object.prototype.hasOwnProperty.call(data, 'rotationStyle')) {
+        if (data.hasOwnProperty('rotationStyle')) {
             this.setRotationStyle(data.rotationStyle);
         }
-        if (Object.prototype.hasOwnProperty.call(data, 'visible')) {
+        if (data.hasOwnProperty('visible')) {
             this.setVisible(data.visible);
         }
-        if (Object.prototype.hasOwnProperty.call(data, 'size')) {
+        if (data.hasOwnProperty('size')) {
             this.setSize(data.size);
         }
     }

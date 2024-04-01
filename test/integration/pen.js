@@ -1,4 +1,4 @@
-const Worker = require('web-worker');
+const Worker = require('tiny-worker');
 const path = require('path');
 const test = require('tap').test;
 

@@ -16,7 +16,7 @@ class RuntimeScriptCache {
     constructor (container, blockId) {
         /**
          * Container with block data for blockId.
-         * @type {Blocks}
+         * @type {import("./blocks")}
          */
         this.container = container;
 
@@ -44,7 +44,7 @@ class RuntimeScriptCache {
         if (Object.keys(fields).length === 0) {
             const inputs = container.getInputs(block);
             for (const input in inputs) {
-                if (!Object.prototype.hasOwnProperty.call(inputs, input)) continue;
+                if (!inputs.hasOwnProperty(input)) continue;
                 const id = inputs[input].block;
                 const inputBlock = container.getBlock(id);
                 const inputFields = container.getFields(inputBlock);

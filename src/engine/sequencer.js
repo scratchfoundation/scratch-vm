@@ -48,7 +48,7 @@ class Sequencer {
 
         /**
          * Reference to the runtime owning this sequencer.
-         * @type {!Runtime}
+         * @type {!import("./runtime")}
          */
         this.runtime = runtime;
 

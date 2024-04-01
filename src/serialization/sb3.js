@@ -173,7 +173,7 @@ const serializeFields = function (fields) {
     for (const fieldName in fields) {
         if (!hasOwnProperty.call(fields, fieldName)) continue;
         obj[fieldName] = [fields[fieldName].value];
-        if (Object.prototype.hasOwnProperty.call(fields[fieldName], 'id')) {
+        if (fields[fieldName].hasOwnProperty('id')) {
             obj[fieldName].push(fields[fieldName].id);
         }
     }
@@ -301,7 +301,7 @@ const serializeBlocks = function (blocks) {
     const obj = Object.create(null);
     const extensionIDs = new Set();
     for (const blockID in blocks) {
-        if (!Object.prototype.hasOwnProperty.call(blocks, blockID)) continue;
+        if (!blocks.hasOwnProperty(blockID)) continue;
         obj[blockID] = serializeBlock(blocks[blockID], blocks);
         const extensionID = getExtensionIdForOpcode(blocks[blockID].opcode);
         if (extensionID) {
@@ -351,16 +351,16 @@ const serializeCostume = function (costume) {
 
     obj.bitmapResolution = costumeToSerialize.bitmapResolution;
     obj.dataFormat = costumeToSerialize.dataFormat.toLowerCase();
-
+    
     obj.assetId = costumeToSerialize.assetId;
-
+    
     // serialize this property with the name 'md5ext' because that's
     // what it's actually referring to. TODO runtime objects need to be
     // updated to actually refer to this as 'md5ext' instead of 'md5'
     // but that change should be made carefully since it is very
     // pervasive
     obj.md5ext = costumeToSerialize.md5;
-
+    
     obj.rotationCenterX = costumeToSerialize.rotationCenterX;
     obj.rotationCenterY = costumeToSerialize.rotationCenterY;
 
@@ -375,7 +375,7 @@ const serializeCostume = function (costume) {
 const serializeSound = function (sound) {
     const obj = Object.create(null);
     obj.name = sound.name;
-
+    
     const soundToSerialize = sound.broken || sound;
 
     obj.assetId = soundToSerialize.assetId;
@@ -428,7 +428,7 @@ const serializeVariables = function (variables) {
 const serializeComments = function (comments) {
     const obj = Object.create(null);
     for (const commentId in comments) {
-        if (!Object.prototype.hasOwnProperty.call(comments, commentId)) continue;
+        if (!comments.hasOwnProperty(commentId)) continue;
         const comment = comments[commentId];
 
         const serializedComment = Object.create(null);
@@ -473,21 +473,13 @@ const serializeTarget = function (target, extensions) {
     obj.currentCostume = target.currentCostume;
     obj.costumes = target.costumes.map(serializeCostume);
     obj.sounds = target.sounds.map(serializeSound);
-    if (Object.prototype.hasOwnProperty.call(target, 'volume')) obj.volume = target.volume;
-    if (Object.prototype.hasOwnProperty.call(target, 'layerOrder')) obj.layerOrder = target.layerOrder;
+    if (target.hasOwnProperty('volume')) obj.volume = target.volume;
+    if (target.hasOwnProperty('layerOrder')) obj.layerOrder = target.layerOrder;
     if (obj.isStage) { // Only the stage should have these properties
-        if (Object.prototype.hasOwnProperty.call(target, 'tempo')) {
-            obj.tempo = target.tempo;
-        }
-        if (Object.prototype.hasOwnProperty.call(target, 'videoTransparency')) {
-            obj.videoTransparency = target.videoTransparency;
-        }
-        if (Object.prototype.hasOwnProperty.call(target, 'videoState')) {
-            obj.videoState = target.videoState;
-        }
-        if (Object.prototype.hasOwnProperty.call(target, 'textToSpeechLanguage')) {
-            obj.textToSpeechLanguage = target.textToSpeechLanguage;
-        }
+        if (target.hasOwnProperty('tempo')) obj.tempo = target.tempo;
+        if (target.hasOwnProperty('videoTransparency')) obj.videoTransparency = target.videoTransparency;
+        if (target.hasOwnProperty('videoState')) obj.videoState = target.videoState;
+        if (target.hasOwnProperty('textToSpeechLanguage')) obj.textToSpeechLanguage = target.textToSpeechLanguage;
     } else { // The stage does not need the following properties, but sprites should
         obj.visible = target.visible;
         obj.x = target.x;
@@ -538,9 +530,10 @@ const serializeMonitors = function (monitors) {
  * Serializes the specified VM runtime.
  * @param {!Runtime} runtime VM runtime instance to be serialized.
  * @param {string=} targetId Optional target id if serializing only a single target
+ * @param {import("../extension-support/extension-manager")} extensionManager Reference to VM's extension manager.
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime, targetId) {
+const serialize = function (runtime, targetId, extensionManager) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
@@ -572,8 +565,16 @@ const serialize = function (runtime, targetId) {
 
     obj.monitors = serializeMonitors(runtime.getMonitorState());
 
+    extensionManager.getLoadedExtensionIDs().forEach(id => {
+        const instance = extensionManager.getExtensionInstance(id);
+        instance["save"]?.(obj, extensions);
+    });
+
     // Assemble extension list
     obj.extensions = Array.from(extensions);
+    
+    // Save training data for the text classifier model
+    obj.textModel = runtime.modelData ? runtime.modelData.classifierData : undefined;
 
     // Assemble metadata
     const meta = Object.create(null);
@@ -860,7 +861,7 @@ const deserializeBlocks = function (blocks) {
  * SoundBank for the sound assets. null for unsupported objects.
  */
 const parseScratchAssets = function (object, runtime, zip) {
-    if (!Object.prototype.hasOwnProperty.call(object, 'name')) {
+    if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
         return Promise.resolve(null);
@@ -890,7 +891,7 @@ const parseScratchAssets = function (object, runtime, zip) {
             costumeSource.dataFormat ||
             (costumeSource.assetType && costumeSource.assetType.runtimeFormat) || // older format
             'png'; // if all else fails, guess that it might be a PNG
-        const costumeMd5Ext = Object.prototype.hasOwnProperty.call(costumeSource, 'md5ext') ?
+        const costumeMd5Ext = costumeSource.hasOwnProperty('md5ext') ?
             costumeSource.md5ext : `${costumeSource.assetId}.${dataFormat}`;
         costume.md5 = costumeMd5Ext;
         costume.dataFormat = dataFormat;
@@ -944,7 +945,7 @@ const parseScratchAssets = function (object, runtime, zip) {
  * @return {!Promise.<Target>} Promise for the target created (stage or sprite), or null for unsupported objects.
  */
 const parseScratchObject = function (object, runtime, extensions, zip, assets) {
-    if (!Object.prototype.hasOwnProperty.call(object, 'name')) {
+    if (!object.hasOwnProperty('name')) {
         // Watcher/monitor - skip this object until those are implemented in VM.
         // @todo
         return Promise.resolve(null);
@@ -956,14 +957,14 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     const sprite = new Sprite(blocks, runtime);
 
     // Sprite/stage name from JSON.
-    if (Object.prototype.hasOwnProperty.call(object, 'name')) {
+    if (object.hasOwnProperty('name')) {
         sprite.name = object.name;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'blocks')) {
+    if (object.hasOwnProperty('blocks')) {
         deserializeBlocks(object.blocks);
         // Take a second pass to create objects and add extensions
         for (const blockId in object.blocks) {
-            if (!Object.prototype.hasOwnProperty.call(object.blocks, blockId)) continue;
+            if (!object.blocks.hasOwnProperty(blockId)) continue;
             const blockJSON = object.blocks[blockId];
             blocks.createBlock(blockJSON);
 
@@ -981,22 +982,22 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
     // Create the first clone, and load its run-state from JSON.
     const target = sprite.createClone(object.isStage ? StageLayering.BACKGROUND_LAYER : StageLayering.SPRITE_LAYER);
     // Load target properties from JSON.
-    if (Object.prototype.hasOwnProperty.call(object, 'tempo')) {
+    if (object.hasOwnProperty('tempo')) {
         target.tempo = object.tempo;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'volume')) {
+    if (object.hasOwnProperty('volume')) {
         target.volume = object.volume;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'videoTransparency')) {
+    if (object.hasOwnProperty('videoTransparency')) {
         target.videoTransparency = object.videoTransparency;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'videoState')) {
+    if (object.hasOwnProperty('videoState')) {
         target.videoState = object.videoState;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'textToSpeechLanguage')) {
+    if (object.hasOwnProperty('textToSpeechLanguage')) {
         target.textToSpeechLanguage = object.textToSpeechLanguage;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'variables')) {
+    if (object.hasOwnProperty('variables')) {
         for (const varId in object.variables) {
             const variable = object.variables[varId];
             // A variable is a cloud variable if:
@@ -1016,7 +1017,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
             target.variables[newVariable.id] = newVariable;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'lists')) {
+    if (object.hasOwnProperty('lists')) {
         for (const listId in object.lists) {
             const list = object.lists[listId];
             const newList = new Variable(
@@ -1029,7 +1030,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
             target.variables[newList.id] = newList;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'broadcasts')) {
+    if (object.hasOwnProperty('broadcasts')) {
         for (const broadcastId in object.broadcasts) {
             const broadcast = object.broadcasts[broadcastId];
             const newBroadcast = new Variable(
@@ -1043,7 +1044,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
             target.variables[newBroadcast.id] = newBroadcast;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'comments')) {
+    if (object.hasOwnProperty('comments')) {
         for (const commentId in object.comments) {
             const comment = object.comments[commentId];
             const newComment = new Comment(
@@ -1061,39 +1062,37 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
             target.comments[newComment.id] = newComment;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'x')) {
+    if (object.hasOwnProperty('x')) {
         target.x = object.x;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'y')) {
+    if (object.hasOwnProperty('y')) {
         target.y = object.y;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'direction')) {
-        // Sometimes the direction can be outside of the range: LLK/scratch-gui#5806
-        // wrapClamp it (like we do on RenderedTarget.setDirection)
-        target.direction = MathUtil.wrapClamp(object.direction, -179, 180);
+    if (object.hasOwnProperty('direction')) {
+        target.direction = object.direction;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'size')) {
+    if (object.hasOwnProperty('size')) {
         target.size = object.size;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'visible')) {
+    if (object.hasOwnProperty('visible')) {
         target.visible = object.visible;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'currentCostume')) {
+    if (object.hasOwnProperty('currentCostume')) {
         target.currentCostume = MathUtil.clamp(object.currentCostume, 0, object.costumes.length - 1);
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'rotationStyle')) {
+    if (object.hasOwnProperty('rotationStyle')) {
         target.rotationStyle = object.rotationStyle;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'isStage')) {
+    if (object.hasOwnProperty('isStage')) {
         target.isStage = object.isStage;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'targetPaneOrder')) {
+    if (object.hasOwnProperty('targetPaneOrder')) {
         // Temporarily store the 'targetPaneOrder' property
         // so that we can correctly order sprites in the target pane.
         // This will be deleted after we are done parsing and ordering the targets list.
         target.targetPaneOrder = object.targetPaneOrder;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'draggable')) {
+    if (object.hasOwnProperty('draggable')) {
         target.draggable = object.draggable;
     }
     Promise.all(costumePromises).then(costumes => {
@@ -1125,7 +1124,7 @@ const deserializeMonitor = function (monitorData, runtime, targets, extensions) 
     // This will be undefined for extension blocks
     const monitorBlockInfo = runtime.monitorBlockInfo[monitorData.opcode];
 
-    // Due to a bug (see https://github.com/scratchfoundation/scratch-vm/pull/2322), renamed list monitors may have been serialized
+    // Due to a bug (see https://github.com/LLK/scratch-vm/pull/2322), renamed list monitors may have been serialized
     // with an outdated/incorrect LIST parameter. Fix it up to use the current name of the actual corresponding list.
     if (monitorData.opcode === 'data_listcontents') {
         const listTarget = monitorData.targetId ?
@@ -1257,6 +1256,23 @@ const deserialize = function (json, runtime, zip, isSingleSprite) {
         extensionIDs: new Set(),
         extensionURLs: new Map()
     };
+
+    json["extensions"]?.forEach(id => extensions.extensionIDs.add(id));
+    
+    // Unpack the data for the text model
+    runtime.modelData = {"textData": {}, "classifierData": {}, "nextLabelNumber": 1};
+    if (json.hasOwnProperty("textModel")) {
+        // RANDI should make sure this works
+        for (let label of Object.keys(json.textModel)) {
+            runtime.modelData.textData[label] = [];
+            runtime.modelData.classifierData[label] = [];
+            runtime.modelData.nextLabelNumber++;
+            for (let example of json.textModel[label]) {
+                runtime.modelData.textData[label].push(example);
+                runtime.modelData.classifierData[label].push(example);
+            }
+        }
+    }
 
     // Store the origin field (e.g. project originated at CSFirst) so that we can save it again.
     if (json.meta && json.meta.origin) {

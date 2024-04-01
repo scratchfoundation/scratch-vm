@@ -14,6 +14,8 @@ const {extractAsset, readFileToBuffer} = require('../fixtures/readProjectFile');
 const VirtualMachine = require('../../src/index');
 const {serializeSounds} = require('../../src/serialization/serialize-assets');
 
+require("../helper/defineWindowGlobals");
+
 const projectUri = path.resolve(__dirname, '../fixtures/corrupt_sound.sb3');
 const project = readFileToBuffer(projectUri);
 const soundFileName = '78618aadd225b1db7bf837fa17dc0568.wav';

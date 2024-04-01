@@ -49,37 +49,37 @@ class Blocks {
         this._cache = {
             /**
              * Cache block inputs by block id
-             * @type {object.<string, !Array.<object>>}
+             * @type {Object.<string, !Array.<object>>}
              */
             inputs: {},
             /**
              * Cache procedure Param Names by block id
-             * @type {object.<string, ?Array.<string>>}
+             * @type {Object.<string, ?Array.<string>>}
              */
             procedureParamNames: {},
             /**
              * Cache procedure definitions by block id
-             * @type {object.<string, ?string>}
+             * @type {Object.<string, ?string>}
              */
             procedureDefinitions: {},
 
             /**
              * A cache for execute to use and store on. Only available to
              * execute.
-             * @type {object.<string, object>}
+             * @type {Object.<string, object>}
              */
             _executeCached: {},
 
             /**
              * A cache of block IDs and targets to start threads on as they are
              * actively monitored.
-             * @type {Array<{blockId: string, target: Target}>}
+             * @type {Array<{blockId: string, target: import("./target")}>}
              */
             _monitored: null,
 
             /**
              * A cache of hat opcodes to collection of theads to execute.
-             * @type {object.<string, object>}
+             * @type {Object.<string, object>}
              */
             scripts: {}
         };
@@ -231,7 +231,7 @@ class Blocks {
         }
 
         for (const id in this._blocks) {
-            if (!Object.prototype.hasOwnProperty.call(this._blocks, id)) continue;
+            if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
             if (block.opcode === 'procedures_definition') {
                 const internal = this._getCustomBlockInternal(block);
@@ -267,7 +267,7 @@ class Blocks {
         }
 
         for (const id in this._blocks) {
-            if (!Object.prototype.hasOwnProperty.call(this._blocks, id)) continue;
+            if (!this._blocks.hasOwnProperty(id)) continue;
             const block = this._blocks[id];
             if (block.opcode === 'procedures_prototype' &&
                 block.mutation.proccode === name) {
@@ -357,7 +357,7 @@ class Blocks {
         case 'delete':
             // Don't accept delete events for missing blocks,
             // or shadow blocks being obscured.
-            if (!Object.prototype.hasOwnProperty.call(this._blocks, e.blockId) ||
+            if (!this._blocks.hasOwnProperty(e.blockId) ||
                 this._blocks[e.blockId].shadow) {
                 return;
             }
@@ -397,7 +397,7 @@ class Blocks {
             }
             break;
         case 'var_rename':
-            if (editingTarget && Object.prototype.hasOwnProperty.call(editingTarget.variables, e.varId)) {
+            if (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) {
                 // This is a local variable, rename on the current target
                 editingTarget.renameVariable(e.varId, e.newName);
                 // Update all the blocks on the current target that use
@@ -416,7 +416,7 @@ class Blocks {
             this.emitProjectChanged();
             break;
         case 'var_delete': {
-            const target = (editingTarget && Object.prototype.hasOwnProperty.call(editingTarget.variables, e.varId)) ?
+            const target = (editingTarget && editingTarget.variables.hasOwnProperty(e.varId)) ?
                 editingTarget : stage;
             target.deleteVariable(e.varId);
             this.emitProjectChanged();
@@ -445,21 +445,20 @@ class Blocks {
         case 'comment_change':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
-                if (!Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
                     log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
                     return;
                 }
                 const comment = currTarget.comments[e.commentId];
                 const change = e.newContents_;
-                if (Object.prototype.hasOwnProperty.call(change, 'minimized')) {
+                if (change.hasOwnProperty('minimized')) {
                     comment.minimized = change.minimized;
                 }
-                if (Object.prototype.hasOwnProperty.call(change, 'width') &&
-                    Object.prototype.hasOwnProperty.call(change, 'height')) {
+                if (change.hasOwnProperty('width') && change.hasOwnProperty('height')){
                     comment.width = change.width;
                     comment.height = change.height;
                 }
-                if (Object.prototype.hasOwnProperty.call(change, 'text')) {
+                if (change.hasOwnProperty('text')) {
                     comment.text = change.text;
                 }
                 this.emitProjectChanged();
@@ -468,7 +467,7 @@ class Blocks {
         case 'comment_move':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
-                if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+                if (currTarget && !currTarget.comments.hasOwnProperty(e.commentId)) {
                     log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
                     return;
                 }
@@ -483,7 +482,7 @@ class Blocks {
         case 'comment_delete':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
-                if (!Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+                if (!currTarget.comments.hasOwnProperty(e.commentId)) {
                     // If we're in this state, we have probably received
                     // a delete event from a workspace that we switched from
                     // (e.g. a delete event for a comment on sprite a's workspace
@@ -537,7 +536,7 @@ class Blocks {
     createBlock (block) {
         // Does the block already exist?
         // Could happen, e.g., for an unobscured shadow.
-        if (Object.prototype.hasOwnProperty.call(this._blocks, block.id)) {
+        if (this._blocks.hasOwnProperty(block.id)) {
             return;
         }
         // Create new block.
@@ -651,7 +650,7 @@ class Blocks {
             }
 
             const isSpriteSpecific = isSpriteLocalVariable ||
-                (Object.prototype.hasOwnProperty.call(this.runtime.monitorBlockInfo, block.opcode) &&
+                (this.runtime.monitorBlockInfo.hasOwnProperty(block.opcode) &&
                 this.runtime.monitorBlockInfo[block.opcode].isSpriteSpecific);
             if (isSpriteSpecific) {
                 // If creating a new sprite specific monitor, the only possible target is
@@ -693,7 +692,7 @@ class Blocks {
      * @param {!object} e Blockly move event to be processed
      */
     moveBlock (e) {
-        if (!Object.prototype.hasOwnProperty.call(this._blocks, e.id)) {
+        if (!this._blocks.hasOwnProperty(e.id)) {
             return;
         }
 
@@ -741,7 +740,7 @@ class Blocks {
                 // Moved to the new parent's input.
                 // Don't obscure the shadow block.
                 let oldShadow = null;
-                if (Object.prototype.hasOwnProperty.call(this._blocks[e.newParent].inputs, e.newInput)) {
+                if (this._blocks[e.newParent].inputs.hasOwnProperty(e.newInput)) {
                     oldShadow = this._blocks[e.newParent].inputs[e.newInput].shadow;
                 }
 
@@ -830,14 +829,6 @@ class Blocks {
 
         this.resetCache();
         this.emitProjectChanged();
-    }
-
-    /**
-     * Delete all blocks and their associated scripts.
-     */
-    deleteAllBlocks () {
-        const blockIds = Object.keys(this._blocks);
-        blockIds.forEach(blockId => this.deleteBlock(blockId));
     }
 
     /**
@@ -991,7 +982,7 @@ class Blocks {
      */
     _getCostumeField (blockId) {
         const block = this.getBlock(blockId);
-        if (block && Object.prototype.hasOwnProperty.call(block.fields, 'COSTUME')) {
+        if (block && block.fields.hasOwnProperty('COSTUME')) {
             return block.fields.COSTUME;
         }
         return null;
@@ -1006,7 +997,7 @@ class Blocks {
      */
     _getSoundField (blockId) {
         const block = this.getBlock(blockId);
-        if (block && Object.prototype.hasOwnProperty.call(block.fields, 'SOUND_MENU')) {
+        if (block && block.fields.hasOwnProperty('SOUND_MENU')) {
             return block.fields.SOUND_MENU;
         }
         return null;
@@ -1021,7 +1012,7 @@ class Blocks {
      */
     _getBackdropField (blockId) {
         const block = this.getBlock(blockId);
-        if (block && Object.prototype.hasOwnProperty.call(block.fields, 'BACKDROP')) {
+        if (block && block.fields.hasOwnProperty('BACKDROP')) {
             return block.fields.BACKDROP;
         }
         return null;
@@ -1043,7 +1034,7 @@ class Blocks {
             'DISTANCETOMENU', 'TOUCHINGOBJECTMENU', 'CLONE_OPTION'];
         for (let i = 0; i < spriteMenuNames.length; i++) {
             const menuName = spriteMenuNames[i];
-            if (Object.prototype.hasOwnProperty.call(block.fields, menuName)) {
+            if (block.fields.hasOwnProperty(menuName)) {
                 return block.fields[menuName];
             }
         }
@@ -1086,7 +1077,7 @@ class Blocks {
         const commentId = block.comment;
         if (commentId) {
             if (comments) {
-                if (Object.prototype.hasOwnProperty.call(comments, commentId)) {
+                if (comments.hasOwnProperty(commentId)) {
                     xmlString += comments[commentId].toXML();
                 } else {
                     log.warn(`Could not find comment with id: ${commentId} in provided comment descriptions.`);
@@ -1101,7 +1092,7 @@ class Blocks {
         }
         // Add any inputs on this block.
         for (const input in block.inputs) {
-            if (!Object.prototype.hasOwnProperty.call(block.inputs, input)) continue;
+            if (!block.inputs.hasOwnProperty(input)) continue;
             const blockInput = block.inputs[input];
             // Only encode a value tag if the value input is occupied.
             if (blockInput.block || blockInput.shadow) {
@@ -1118,7 +1109,7 @@ class Blocks {
         }
         // Add any fields on this block.
         for (const field in block.fields) {
-            if (!Object.prototype.hasOwnProperty.call(block.fields, field)) continue;
+            if (!block.fields.hasOwnProperty(field)) continue;
             const blockField = block.fields[field];
             xmlString += `<field name="${blockField.name}"`;
             const fieldId = blockField.id;

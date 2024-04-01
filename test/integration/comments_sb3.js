@@ -6,6 +6,7 @@ const VirtualMachine = require('../../src/index');
 
 const projectUri = path.resolve(__dirname, '../fixtures/comments.sb3');
 const project = readFileToBuffer(projectUri);
+require("../helper/defineWindowGlobals");
 
 test('load an sb3 project with comments', t => {
     const vm = new VirtualMachine();

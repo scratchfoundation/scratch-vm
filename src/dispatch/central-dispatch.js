@@ -50,8 +50,6 @@ class CentralDispatch extends SharedDispatch {
                 throw new Error(`Cannot use 'callSync' on remote provider for service ${service}.`);
             }
 
-            // TODO: verify correct `this` after switching from apply to spread
-            // eslint-disable-next-line prefer-spread
             return provider[method].apply(provider, args);
         }
         throw new Error(`Provider not found for service: ${service}`);
@@ -64,7 +62,7 @@ class CentralDispatch extends SharedDispatch {
      * @param {object} provider - a local object which provides this service.
      */
     setServiceSync (service, provider) {
-        if (Object.prototype.hasOwnProperty.call(this.services, service)) {
+        if (this.services.hasOwnProperty(service)) {
             log.warn(`Central dispatch replacing existing service provider for ${service}`);
         }
         this.services[service] = provider;

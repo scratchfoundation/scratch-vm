@@ -14,6 +14,8 @@ const cloudVarLimit = readFileToBuffer(cloudVarLimitUri);
 const cloudVarExceededLimit = readFileToBuffer(cloudVarExceededLimitUri);
 const cloudVarLocal = readFileToBuffer(cloudVarLocalUri);
 
+require("../helper/defineWindowGlobals");
+
 test('importing an sb3 project with cloud variables', t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());

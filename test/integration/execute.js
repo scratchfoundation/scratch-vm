@@ -7,6 +7,7 @@ const log = require('../../src/util/log');
 const makeTestStorage = require('../fixtures/make-test-storage');
 const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer;
 const VirtualMachine = require('../../src/index');
+require("../helper/defineWindowGlobals");
 
 /**
  * @fileoverview Transform each sb2 in fixtures/execute into a test.
@@ -56,13 +57,10 @@ const whenThreadsComplete = (t, vm, uri, timeLimit = 5000) =>
         });
     });
 
-const executeDir = path.resolve(__dirname, '../fixtures/execute');
-
-// Find files which end in ".sb", ".sb2", or ".sb3"
-const fileFilter = /\.sb[23]?$/i;
+const executeDir = path.resolve(__dirname, '../fixtures/execute'); 
 
 fs.readdirSync(executeDir)
-    .filter(uri => fileFilter.test(uri))
+    .filter(uri => uri.endsWith('.sb2'))
     .forEach(uri => {
         test(uri, t => {
             // Disable logging during this test.

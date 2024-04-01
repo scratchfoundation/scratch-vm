@@ -153,7 +153,7 @@ const domToBlocks = function (blocksDOM) {
     // Flatten blocks object into a list.
     const blocksList = [];
     for (const b in blocks) {
-        if (!Object.prototype.hasOwnProperty.call(blocks, b)) continue;
+        if (!blocks.hasOwnProperty(b)) continue;
         blocksList.push(blocks[b]);
     }
     return blocksList;

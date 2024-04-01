@@ -15,6 +15,8 @@ const originSB3ProjectPath = path.resolve(__dirname, '../fixtures/origin.sb3');
 const originAbsentSB3ProjectPath = path.resolve(__dirname, '../fixtures/origin-absent.sb3');
 const FakeRenderer = require('../fixtures/fake-renderer');
 
+require("../helper/defineWindowGlobals");
+
 test('serialize', t => {
     const vm = new VirtualMachine();
     vm.loadProject(readFileToBuffer(exampleProjectPath))

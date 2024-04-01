@@ -288,7 +288,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
     let target = null;
     // List blocks don't come in with their target name set.
     // Find the target by searching for a target with matching variable name/type.
-    if (!Object.prototype.hasOwnProperty.call(object, 'target')) {
+    if (!object.hasOwnProperty('target')) {
         for (let i = 0; i < targets.length; i++) {
             const currTarget = targets[i];
             const listVariables = Object.keys(currTarget.variables).filter(key => {
@@ -326,7 +326,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
         block.id = getVariableId(object.param, Variable.SCALAR_TYPE);
     } else if (object.cmd === 'contentsOfList:') {
         block.id = getVariableId(object.param, Variable.LIST_TYPE);
-    } else if (Object.prototype.hasOwnProperty.call(runtime.monitorBlockInfo, block.opcode)) {
+    } else if (runtime.monitorBlockInfo.hasOwnProperty(block.opcode)) {
         block.id = runtime.monitorBlockInfo[block.opcode].getId(target.id, block.fields);
     } else {
         // If the opcode can't be found in the runtime monitorBlockInfo,
@@ -405,7 +405,7 @@ const parseMonitorObject = (object, runtime, targets, extensions) => {
  *   objects.
  */
 const parseScratchAssets = function (object, runtime, topLevel, zip) {
-    if (!Object.prototype.hasOwnProperty.call(object, 'objName')) {
+    if (!object.hasOwnProperty('objName')) {
         // Skip parsing monitors. Or any other objects missing objName.
         return null;
     }
@@ -419,7 +419,7 @@ const parseScratchAssets = function (object, runtime, topLevel, zip) {
 
     // Costumes from JSON.
     const costumePromises = assets.costumePromises;
-    if (Object.prototype.hasOwnProperty.call(object, 'costumes')) {
+    if (object.hasOwnProperty('costumes')) {
         for (let i = 0; i < object.costumes.length; i++) {
             const costumeSource = object.costumes[i];
             const bitmapResolution = costumeSource.bitmapResolution || 1;
@@ -464,7 +464,7 @@ const parseScratchAssets = function (object, runtime, topLevel, zip) {
     }
     // Sounds from JSON
     const {soundBank, soundPromises} = assets;
-    if (Object.prototype.hasOwnProperty.call(object, 'sounds')) {
+    if (object.hasOwnProperty('sounds')) {
         for (let s = 0; s < object.sounds.length; s++) {
             const soundSource = object.sounds[s];
             const sound = {
@@ -523,8 +523,8 @@ const parseScratchAssets = function (object, runtime, topLevel, zip) {
  * @return {!Promise.<Array.<Target>>} Promise for the loaded targets when ready, or null for unsupported objects.
  */
 const parseScratchObject = function (object, runtime, extensions, topLevel, zip, assets) {
-    if (!Object.prototype.hasOwnProperty.call(object, 'objName')) {
-        if (Object.prototype.hasOwnProperty.call(object, 'listName')) {
+    if (!object.hasOwnProperty('objName')) {
+        if (object.hasOwnProperty('listName')) {
             // Shim these objects so they can be processed as monitors
             object.cmd = 'contentsOfList:';
             object.param = object.listName;
@@ -540,10 +540,10 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
     // @todo: For now, load all Scratch objects (stage/sprites) as a Sprite.
     const sprite = new Sprite(blocks, runtime);
     // Sprite/stage name from JSON.
-    if (Object.prototype.hasOwnProperty.call(object, 'objName')) {
+    if (object.hasOwnProperty('objName')) {
         if (topLevel && object.objName !== 'Stage') {
             for (const child of object.children) {
-                if (!Object.prototype.hasOwnProperty.call(child, 'objName') && child.target === object.objName) {
+                if (!child.hasOwnProperty('objName') && child.target === object.objName) {
                     child.target = 'Stage';
                 }
             }
@@ -566,7 +566,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
     const addBroadcastMsg = globalBroadcastMsgObj.broadcastMsgMapUpdater;
 
     // Load target properties from JSON.
-    if (Object.prototype.hasOwnProperty.call(object, 'variables')) {
+    if (object.hasOwnProperty('variables')) {
         for (let j = 0; j < object.variables.length; j++) {
             const variable = object.variables[j];
             // A variable is a cloud variable if:
@@ -589,7 +589,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
     // If included, parse any and all comments on the object (this includes top-level
     // workspace comments as well as comments attached to specific blocks)
     const blockComments = {};
-    if (Object.prototype.hasOwnProperty.call(object, 'scriptComments')) {
+    if (object.hasOwnProperty('scriptComments')) {
         const comments = object.scriptComments.map(commentDesc => {
             const [
                 commentX,
@@ -624,7 +624,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
                 newComment.blockId = flattenedBlockIndex;
                 // Add this comment to the block comments object with its script index
                 // as the key
-                if (Object.prototype.hasOwnProperty.call(blockComments, flattenedBlockIndex)) {
+                if (blockComments.hasOwnProperty(flattenedBlockIndex)) {
                     blockComments[flattenedBlockIndex].push(newComment);
                 } else {
                     blockComments[flattenedBlockIndex] = [newComment];
@@ -641,7 +641,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
     }
 
     // If included, parse any and all scripts/blocks on the object.
-    if (Object.prototype.hasOwnProperty.call(object, 'scripts')) {
+    if (object.hasOwnProperty('scripts')) {
         parseScripts(object.scripts, blocks, addBroadcastMsg, getVariableId, extensions, blockComments);
     }
 
@@ -664,7 +664,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
     // Update stage specific blocks (e.g. sprite clicked <=> stage clicked)
     blocks.updateTargetSpecificBlocks(topLevel); // topLevel = isStage
 
-    if (Object.prototype.hasOwnProperty.call(object, 'lists')) {
+    if (object.hasOwnProperty('lists')) {
         for (let k = 0; k < object.lists.length; k++) {
             const list = object.lists[k];
             const newVariable = new Variable(
@@ -677,34 +677,32 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
             target.variables[newVariable.id] = newVariable;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'scratchX')) {
+    if (object.hasOwnProperty('scratchX')) {
         target.x = object.scratchX;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'scratchY')) {
+    if (object.hasOwnProperty('scratchY')) {
         target.y = object.scratchY;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'direction')) {
-        // Sometimes the direction can be outside of the range: LLK/scratch-gui#5806
-        // wrapClamp it (like we do on RenderedTarget.setDirection)
-        target.direction = MathUtil.wrapClamp(object.direction, -179, 180);
+    if (object.hasOwnProperty('direction')) {
+        target.direction = object.direction;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'isDraggable')) {
+    if (object.hasOwnProperty('isDraggable')) {
         target.draggable = object.isDraggable;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'scale')) {
+    if (object.hasOwnProperty('scale')) {
         // SB2 stores as 1.0 = 100%; we use % in the VM.
         target.size = object.scale * 100;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'visible')) {
+    if (object.hasOwnProperty('visible')) {
         target.visible = object.visible;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'currentCostumeIndex')) {
+    if (object.hasOwnProperty('currentCostumeIndex')) {
         // Current costume index can sometimes be a floating
         // point number, use Math.floor to come up with an appropriate index
         // and clamp it to the actual number of costumes the object has for good measure.
         target.currentCostume = MathUtil.clamp(Math.floor(object.currentCostumeIndex), 0, object.costumes.length - 1);
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'rotationStyle')) {
+    if (object.hasOwnProperty('rotationStyle')) {
         if (object.rotationStyle === 'none') {
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_NONE;
         } else if (object.rotationStyle === 'leftRight') {
@@ -713,16 +711,16 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
             target.rotationStyle = RenderedTarget.ROTATION_STYLE_ALL_AROUND;
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'tempoBPM')) {
+    if (object.hasOwnProperty('tempoBPM')) {
         target.tempo = object.tempoBPM;
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'videoAlpha')) {
+    if (object.hasOwnProperty('videoAlpha')) {
         // SB2 stores alpha as opacity, where 1.0 is opaque.
         // We convert to a percentage, and invert it so 100% is full transparency.
         target.videoTransparency = 100 - (100 * object.videoAlpha);
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'info')) {
-        if (Object.prototype.hasOwnProperty.call(object.info, 'videoOn')) {
+    if (object.hasOwnProperty('info')) {
+        if (object.info.hasOwnProperty('videoOn')) {
             if (object.info.videoOn) {
                 target.videoState = RenderedTarget.VIDEO_STATE.ON;
             } else {
@@ -730,7 +728,7 @@ const parseScratchObject = function (object, runtime, extensions, topLevel, zip,
             }
         }
     }
-    if (Object.prototype.hasOwnProperty.call(object, 'indexInLibrary')) {
+    if (object.hasOwnProperty('indexInLibrary')) {
         // Temporarily store the 'indexInLibrary' property from the sb2 file
         // so that we can correctly order sprites in the target pane.
         // This will be deleted after we are done parsing and ordering the targets list.

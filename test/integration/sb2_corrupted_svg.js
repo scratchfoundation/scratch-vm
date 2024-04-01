@@ -16,6 +16,8 @@ const {extractAsset, readFileToBuffer} = require('../fixtures/readProjectFile');
 const VirtualMachine = require('../../src/index');
 const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
+require("../helper/defineWindowGlobals");
+
 const projectUri = path.resolve(__dirname, '../fixtures/corrupt_svg.sb2');
 const project = readFileToBuffer(projectUri);
 const costumeFileName = '1.svg';
@@ -33,15 +35,6 @@ global.Image = function () {
 
     setTimeout(() => image.onload(), 1000);
     return image;
-};
-
-global.document = {
-    createElement: () => ({
-        // Create mock canvas
-        getContext: () => ({
-            drawImage: () => ({})
-        })
-    })
 };
 
 let vm;

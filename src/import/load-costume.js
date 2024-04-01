@@ -10,7 +10,7 @@ const loadVector_ = function (costume, runtime, rotationCenter, optVersion) {
             // scratch-svg-renderer fixes syntax that causes loading issues,
             // and if optVersion is 2, fixes "quirks" associated with Scratch 2 SVGs,
             const fixedSvgString = serializeSvgToString(loadSvgString(svgString, true /* fromVersion2 */));
-
+        
             // If the string changed, put back into storage
             if (svgString !== fixedSvgString) {
                 svgString = fixedSvgString;
@@ -100,13 +100,9 @@ const canvasPool = (function () {
  */
 const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
     if (!costume || !costume.asset) { // TODO: We can probably remove this check...
-        // TODO: reject with an Error (breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject('Costume load failed. Assets were missing.');
     }
     if (!runtime.v2BitmapAdapter) {
-        // TODO: reject with an Error (breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject('No V2 Bitmap adapter present.');
     }
 
@@ -129,8 +125,6 @@ const fetchBitmapCanvas_ = function (costume, runtime, rotationCenter) {
                 image.onerror = null;
             };
             image.onerror = function () {
-                // TODO: reject with an Error (breaking API change!)
-                // eslint-disable-next-line prefer-promise-reject-errors
                 reject('Costume load failed. Asset could not be read.');
                 image.onload = null;
                 image.onerror = null;
@@ -200,8 +194,6 @@ const loadBitmap_ = function (costume, runtime, _rotationCenter) {
                     // somewhere and act on that error (like logging).
                     //
                     // Return a rejection to stop executing updateCostumeAsset.
-                    // TODO: reject with an Error (breaking API change!)
-                    // eslint-disable-next-line prefer-promise-reject-errors
                     return Promise.reject('No V2 Bitmap adapter present.');
                 }
 
@@ -269,14 +261,14 @@ const handleCostumeLoadError = function (costume, runtime) {
 
     const AssetType = runtime.storage.AssetType;
     const isVector = costume.dataFormat === AssetType.ImageVector.runtimeFormat;
-
+                
     // Use default asset if original fails to load
     costume.assetId = isVector ?
         runtime.storage.defaultAssetId.ImageVector :
         runtime.storage.defaultAssetId.ImageBitmap;
     costume.asset = runtime.storage.get(costume.assetId);
     costume.md5 = `${costume.assetId}.${costume.asset.dataFormat}`;
-
+    
     const defaultCostumePromise = (isVector) ?
         loadVector_(costume, runtime) : loadBitmap_(costume, runtime);
 
@@ -288,7 +280,7 @@ const handleCostumeLoadError = function (costume, runtime) {
         // Should be null if we got here because the costume was missing
         loadedCostume.broken.asset = oldAsset;
         loadedCostume.broken.dataFormat = oldDataFormat;
-
+        
         loadedCostume.broken.rotationCenterX = oldRotationX;
         loadedCostume.broken.rotationCenterY = oldRotationY;
         loadedCostume.broken.bitmapResolution = oldBitmapResolution;
@@ -314,7 +306,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
     costume.assetId = costume.asset.assetId;
     const renderer = runtime.renderer;
     if (!renderer) {
-        log.warn('No rendering module present; cannot load costume: ', costume.name);
+        log.error('No rendering module present; cannot load costume: ', costume.name);
         return Promise.resolve(costume);
     }
     const AssetType = runtime.storage.AssetType;
@@ -330,7 +322,7 @@ const loadCostumeFromAsset = function (costume, runtime, optVersion) {
             .catch(error => {
                 log.warn(`Error loading vector image: ${error}`);
                 return handleCostumeLoadError(costume, runtime);
-
+                
             });
     }
     return loadBitmap_(costume, runtime, rotationCenter, optVersion)
@@ -362,18 +354,18 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     costume.dataFormat = ext;
 
     if (costume.asset) {
-        // Costume comes with asset. It could be coming from image upload, drag and drop, or file
+        // Costume comes with asset. It could be coming from camera, image upload, drag and drop, or file
         return loadCostumeFromAsset(costume, runtime, optVersion);
     }
 
     // Need to load the costume from storage. The server should have a reference to this md5.
     if (!runtime.storage) {
-        log.warn('No storage module present; cannot load costume asset: ', md5ext);
+        log.error('No storage module present; cannot load costume asset: ', md5ext);
         return Promise.resolve(costume);
     }
 
     if (!runtime.storage.defaultAssetId) {
-        log.warn(`No default assets found`);
+        log.error(`No default assets found`);
         return Promise.resolve(costume);
     }
 
@@ -381,6 +373,10 @@ const loadCostume = function (md5ext, costume, runtime, optVersion) {
     const assetType = (ext === 'svg') ? AssetType.ImageVector : AssetType.ImageBitmap;
 
     const costumePromise = runtime.storage.load(assetType, md5, ext);
+    if (!costumePromise) {
+        log.error(`Couldn't fetch costume asset: ${md5ext}`);
+        return;
+    }
 
     let textLayerPromise;
     if (costume.textLayerMD5) {

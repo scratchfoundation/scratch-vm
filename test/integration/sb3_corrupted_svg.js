@@ -15,6 +15,8 @@ const {extractAsset, readFileToBuffer} = require('../fixtures/readProjectFile');
 const VirtualMachine = require('../../src/index');
 const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
+require("../helper/defineWindowGlobals");
+
 const projectUri = path.resolve(__dirname, '../fixtures/corrupt_svg.sb3');
 const project = readFileToBuffer(projectUri);
 const costumeFileName = 'a267f8b97ee9cf8aa9832aa0b4cfd9eb.svg';

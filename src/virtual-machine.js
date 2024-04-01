@@ -2,11 +2,13 @@ let _TextEncoder;
 if (typeof TextEncoder === 'undefined') {
     _TextEncoder = require('text-encoding').TextEncoder;
 } else {
+    /* global TextEncoder */
     _TextEncoder = TextEncoder;
 }
 const EventEmitter = require('events');
 const JSZip = require('jszip');
 
+const nets = require('nets');
 const Buffer = require('buffer').Buffer;
 const centralDispatch = require('./dispatch/central-dispatch');
 const ExtensionManager = require('./extension-support/extension-manager');
@@ -27,6 +29,8 @@ require('canvas-toBlob');
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 const CORE_EXTENSIONS = [
+    // 'teachableMachine',
+    // 'textClassification'
     // 'motion',
     // 'looks',
     // 'sound',
@@ -37,6 +41,197 @@ const CORE_EXTENSIONS = [
     // 'variables',
     // 'myBlocks'
 ];
+
+class ScratchCanvasRecorder {
+    constructor(canvas) {
+        this.mediaSource = new MediaSource();
+        this.mediaSource.addEventListener('sourceopen', this.handleSourceOpen.bind(this), false);
+        this.mediaRecorder = undefined;
+        this.recordedBlobs = undefined;
+        this.sourceBuffer = undefined;
+        this.recording = false;
+        this.canvas = canvas;
+        this.video = document.createElement('video');
+        this.video.width=500;
+        this.video.height=500;
+        this.video.style.pointerEvents = 'none';
+        this.video.style.position = 'fixed';
+        this.video.style.top = '0';
+        this.video.style.left = '0';
+        this.video.style.opacity = '0';
+        document.body.appendChild(this.video);
+        this.stream = canvas ? canvas.captureStream() : undefined; // frames per second
+        console.log('Started stream capture from canvas element: ', this.stream);
+    }
+
+    handleSourceOpen(event) {
+        console.log('MediaSource opened');
+        this.sourceBuffer = this.mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+        console.log('Source buffer: ', this.sourceBuffer);
+    }
+
+    handleDataAvailable(event) {
+        if (event.data && event.data.size > 0) {
+            this.recordedBlobs.push(event.data);
+        }
+    }
+
+    handleStop(event) {
+        console.log('Recorder stopped: ', event);
+        const superBuffer = new Blob(this.recordedBlobs, {type: 'video/webm'});
+        this.video.src = window.URL.createObjectURL(superBuffer);
+    }
+
+    toggleRecording() {
+        if (recordButton.textContent === 'Start Recording') {
+            startRecording();
+        } else {
+            stopRecording();
+            recordButton.textContent = 'Start Recording';
+            playButton.disabled = false;
+            downloadButton.disabled = false;
+        }
+    }
+
+    // The nested try blocks will be simplified when Chrome 47 moves to Stable
+    startRecording() {
+        this.recording = true;
+        let options = {mimeType: 'video/webm'};
+        this.recordedBlobs = [];
+        try {
+            this.mediaRecorder = new MediaRecorder(this.stream, options);
+        } catch (e0) {
+            console.log('Unable to create MediaRecorder with options Object: ', e0);
+            try {
+                options = {mimeType: 'video/webm,codecs=vp9'};
+                this.mediaRecorder = new MediaRecorder(this.stream, options);
+            } catch (e1) {
+                console.log('Unable to create MediaRecorder with options Object: ', e1);
+                try {
+                    options = 'video/vp8'; // Chrome 47
+                    this.mediaRecorder = new MediaRecorder(this.stream, options);
+                } catch (e2) {
+                    alert('MediaRecorder is not supported by this browser.\n\n' +
+                        'Try Firefox 29 or later, or Chrome 47 or later, ' +
+                        'with Enable experimental Web Platform features enabled from chrome://flags.');
+                    console.error('Exception while creating MediaRecorder:', e2);
+                    return;
+                }
+            }
+        }
+        console.log('Created MediaRecorder', this.mediaRecorder, 'with options', options);
+        // TODO: Toggle turn off state
+        // recordButton.textContent = 'Stop Recording';
+        // playButton.disabled = true;
+        // downloadButton.disabled = true;
+        this.mediaRecorder.onstop = this.handleStop.bind(this);
+        this.mediaRecorder.ondataavailable = this.handleDataAvailable.bind(this);
+        this.mediaRecorder.start(100); // collect 100ms of data
+        console.log('MediaRecorder started', this.mediaRecorder);
+    }
+
+    stopRecording() {
+        this.mediaRecorder.stop();
+        console.log('Recorded Blobs: ', this.recordedBlobs);
+        this.video.controls = true;
+        this.recording = false;
+    }
+
+    play() {
+        this.video.play();
+    }
+
+    isRecording() {
+        return this.recording;
+    }
+
+    sendLastClipToGfy() {
+        if (this.lastBlob) {
+            this.sendBlobAsBase64(this.lastBlob);
+        }
+    }
+
+    loadLastClipOnGfy() {
+        if (this.lastGfy) {
+            this.loadPage(this.lastGfy);
+        }
+    }
+
+    sendBlobAsBase64(blob) {
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+            const dataUrl = reader.result;
+            const base64EncodedData = dataUrl.split(',')[1];
+            console.log(base64EncodedData)
+            this.sendDataToBackend(base64EncodedData);
+        });
+        reader.readAsDataURL(blob);
+    }
+
+    sendDataToBackend(base64EncodedData) {
+        const body = JSON.stringify({
+            data: base64EncodedData
+        });
+        nets({
+            url: 'https://project-clip-train.glitch.me/gfy',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            encoding: undefined,
+            body
+        },(err, resp, body) => {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log("Got a response!");
+            console.log(resp);
+            const url = JSON.parse(body).url;
+            this.lastGfy = url;
+            console.log(url);
+        })
+    }
+
+
+    loadPage(url) {
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.target = "_blank";
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+        }, 100);
+    }
+
+    download() {
+        const blob = new Blob(this.recordedBlobs, {type: 'video/webm'});
+        this.lastBlob = blob;
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.target = "_blank";
+
+        const a2 = document.createElement('a');
+        a2.style.display = 'none';
+        a2.href = url;
+        a2.download = 'MyRecording.webm';
+
+        document.body.appendChild(a2);
+        document.body.appendChild(a);
+
+        a.click();
+        a2.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            document.body.removeChild(a2);
+            // window.URL.revokeObjectURL(url);
+        }, 100);
+    }
+}
 
 /**
  * Handles connections between blocks, stage, and extensions.
@@ -189,6 +384,24 @@ class VirtualMachine extends EventEmitter {
         this.runtime.greenFlag();
     }
 
+    startRecording() {
+        this.setRecordingMode(true);
+        this.mediaRecorder.startRecording();
+    }
+
+    stopRecording() {
+        this.setRecordingMode(false);
+        this.mediaRecorder.stopRecording();
+    }
+
+    downloadRecording() {
+        this.mediaRecorder.download();
+    }
+
+    isRecording() {
+        return this.mediaRecorder && this.mediaRecorder.isRecording();
+    }
+
     /**
      * Set whether the VM is in "turbo mode."
      * When true, loops don't yield to redraw.
@@ -200,6 +413,15 @@ class VirtualMachine extends EventEmitter {
             this.emit(Runtime.TURBO_MODE_ON);
         } else {
             this.emit(Runtime.TURBO_MODE_OFF);
+        }
+    }
+
+    setRecordingMode (recordingOn) {
+        this.runtime.recording = !!recordingOn;
+        if (this.runtime.recording) {
+            this.emit(Runtime.RECORDING_ON);
+        } else {
+            this.emit(Runtime.RECORDING_OFF);
         }
     }
 
@@ -216,7 +438,18 @@ class VirtualMachine extends EventEmitter {
      * Stop all threads and running activities.
      */
     stopAll () {
+        if (this.runtime.recording) {
+            this.stopRecording();
+        }
         this.runtime.stopAll();
+    }
+
+    sendLastClipToGfy() {
+        this.mediaRecorder.sendLastClipToGfy();
+    }
+
+    loadLastClipOnGfy() {
+        this.mediaRecorder.loadLastClipOnGfy();
     }
 
     /**
@@ -350,10 +583,10 @@ class VirtualMachine extends EventEmitter {
 
         return validationPromise
             .then(validatedInput => this.deserializeProject(validatedInput[0], validatedInput[1]))
-            .then(() => this.runtime.handleProjectLoaded())
+            .then(() => this.runtime.emitProjectLoaded())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
-                if (Object.prototype.hasOwnProperty.call(error, 'validationError')) {
+                if (error.hasOwnProperty('validationError')) {
                     return Promise.reject(JSON.stringify(error));
                 }
                 return Promise.reject(error);
@@ -373,12 +606,74 @@ class VirtualMachine extends EventEmitter {
         const vm = this;
         const promise = storage.load(storage.AssetType.Project, id);
         promise.then(projectAsset => {
-            if (!projectAsset) {
-                log.error(`Failed to fetch project with id: ${id}`);
-                return null;
-            }
-            return vm.loadProject(projectAsset.data);
+            vm.loadProject(projectAsset.data);
         });
+    }
+
+    uploadProjectToURL(url) {
+        // get authToken using regex
+        const delimiter = url.indexOf(";");
+        const authToken = url.substr(delimiter+1);
+        url = url.substr(0, delimiter);
+        
+        this.saveProjectSb3().then(content => {
+            nets({
+                url: url,
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': content.type,
+                    'Authorization': 'Bearer ' + authToken,
+                },
+                encoding: undefined,
+                body: content
+            },(err, resp, body) => {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                // resp.statusCode
+            })
+        });
+    }
+
+    downloadProjectFromURLDirect(url) {
+        // Handle loading google drive files
+        if (url.includes("googleapis.com")) {
+            // get authToken using regex
+            const delimiter = url.indexOf(";");
+            const authToken = url.substr(delimiter+1);
+            url = url.substr(0, delimiter);
+            return new Promise((resolve, reject) => {
+                nets({
+                    url: url,
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                    },
+                }, (err, resp, body) => {
+                    resolve(this.loadProject(body));
+                })
+            })
+        } else if (url.includes("dropbox.com")) {        
+            // Handle loading dropbox links
+            const dropboxRegex = /\/(s|scl)(\/fi)?\/[A-Za-z0-9]+\/.*.sb3(\?rlkey=[A-Za-z0-9]*)?/;
+            const found = url.match(dropboxRegex);
+            if (found.length > 0) url = 'https://dl.dropboxusercontent.com' + found[0];
+        }
+
+        return new Promise((resolve, reject) => {
+            nets({ url: url }, (err, resp, body) => {
+                if (err) {
+                    console.log(err);
+                    resolve();
+                }
+
+                if (resp.statusCode !== 200) {
+                    console.log(resp.statusCode);
+                    resolve();
+                } else 
+                    resolve(this.loadProject(body));
+            })
+        })
     }
 
     /**
@@ -438,9 +733,11 @@ class VirtualMachine extends EventEmitter {
      * specified by optZipType or blob by default.
      */
     exportSprite (targetId, optZipType) {
+        const sb3 = require('./serialization/sb3');
+
         const soundDescs = serializeSounds(this.runtime, targetId);
         const costumeDescs = serializeCostumes(this.runtime, targetId);
-        const spriteJson = this.toJSON(targetId);
+        const spriteJson = StringUtil.stringify(sb3.serialize(this.runtime, targetId, this.extensionManager));
 
         const zip = new JSZip();
         zip.file('sprite.json', spriteJson);
@@ -463,7 +760,7 @@ class VirtualMachine extends EventEmitter {
      */
     toJSON (optTargetId) {
         const sb3 = require('./serialization/sb3');
-        return StringUtil.stringify(sb3.serialize(this.runtime, optTargetId));
+        return StringUtil.stringify(sb3.serialize(this.runtime, optTargetId, this.extensionManager));
     }
 
     // TODO do we still need this function? Keeping it here so as not to introduce
@@ -492,6 +789,7 @@ class VirtualMachine extends EventEmitter {
             performance.mark('scratch-vm-deserialize-start');
         }
         const runtime = this.runtime;
+
         const deserializePromise = function () {
             const projectVersion = projectJSON.projectVersion;
             if (projectVersion === 2) {
@@ -502,8 +800,6 @@ class VirtualMachine extends EventEmitter {
                 const sb3 = require('./serialization/sb3');
                 return sb3.deserialize(projectJSON, runtime, zip);
             }
-            // TODO: reject with an Error (possible breaking API change!)
-            // eslint-disable-next-line prefer-promise-reject-errors
             return Promise.reject('Unable to verify Scratch Project version.');
         };
         return deserializePromise()
@@ -513,7 +809,7 @@ class VirtualMachine extends EventEmitter {
                     performance.measure('scratch-vm-deserialize',
                         'scratch-vm-deserialize-start', 'scratch-vm-deserialize-end');
                 }
-                return this.installTargets(targets, extensions, true);
+                return this.installTargets(targets, extensions, true, projectJSON);
             });
     }
 
@@ -522,16 +818,17 @@ class VirtualMachine extends EventEmitter {
      * @param {Array.<Target>} targets - the targets to be installed
      * @param {ImportedExtensionsInfo} extensions - metadata about extensions used by these targets
      * @param {boolean} wholeProject - set to true if installing a whole project, as opposed to a single sprite.
+     * @param {object} fullJSON - the entire saved contents
      * @returns {Promise} resolved once targets have been installed
      */
-    installTargets (targets, extensions, wholeProject) {
-        const extensionPromises = [];
+    installTargets (targets, extensions, wholeProject, fullJSON) {
+        const { extensionManager } = this;
 
-        extensions.extensionIDs.forEach(extensionID => {
-            if (!this.extensionManager.isExtensionLoaded(extensionID)) {
-                const extensionURL = extensions.extensionURLs.get(extensionID) || extensionID;
-                extensionPromises.push(this.extensionManager.loadExtensionURL(extensionURL));
-            }
+        const extensionPromises = Array.from(extensions.extensionIDs).map(async extensionID => {
+            if (!extensionManager.isExtensionLoaded(extensionID)) await extensionManager.loadExtensionURL(extensionID);
+            const instance = this.extensionManager.getExtensionInstance(extensionID);
+            instance?.["load"]?.(fullJSON); // TODO: Verify that this is okay to do on already loaded extensions
+            return instance;
         });
 
         targets = targets.filter(target => !!target);
@@ -608,18 +905,14 @@ class VirtualMachine extends EventEmitter {
                 if (projectVersion === 3) {
                     return this._addSprite3(validatedInput[0], validatedInput[1]);
                 }
-                // TODO: reject with an Error (possible breaking API change!)
-                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} Unable to verify sprite version.`);
             })
             .then(() => this.runtime.emitProjectChanged())
             .catch(error => {
                 // Intentionally rejecting here (want errors to be handled by caller)
-                if (Object.prototype.hasOwnProperty.call(error, 'validationError')) {
+                if (error.hasOwnProperty('validationError')) {
                     return Promise.reject(JSON.stringify(error));
                 }
-                // TODO: reject with an Error (possible breaking API change!)
-                // eslint-disable-next-line prefer-promise-reject-errors
                 return Promise.reject(`${errorPrefix} ${error}`);
             });
     }
@@ -678,8 +971,6 @@ class VirtualMachine extends EventEmitter {
             });
         }
         // If the target cannot be found by id, return a rejected promise
-        // TODO: reject with an Error (possible breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
         return Promise.reject();
     }
 
@@ -694,8 +985,6 @@ class VirtualMachine extends EventEmitter {
      * @returns {?Promise} - a promise that resolves when the costume has been added
      */
     addCostumeFromLibrary (md5ext, costumeObject) {
-        // TODO: reject with an Error (possible breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
         if (!this.editingTarget) return Promise.reject();
         return this.addCostume(md5ext, costumeObject, this.editingTarget.id, 2 /* optVersion */);
     }
@@ -1113,6 +1402,7 @@ class VirtualMachine extends EventEmitter {
      */
     attachRenderer (renderer) {
         this.runtime.attachRenderer(renderer);
+        this.mediaRecorder = new ScratchCanvasRecorder(renderer.canvas)
     }
 
     /**
@@ -1205,13 +1495,6 @@ class VirtualMachine extends EventEmitter {
         if (['var_create', 'var_rename', 'var_delete'].indexOf(e.type) !== -1) {
             this.runtime.getTargetForStage().blocks.blocklyListen(e);
         }
-    }
-
-    /**
-     * Delete all of the flyout blocks.
-     */
-    clearFlyoutBlocks () {
-        this.runtime.flyoutBlocks.deleteAllBlocks();
     }
 
     /**
@@ -1347,7 +1630,7 @@ class VirtualMachine extends EventEmitter {
             targetList: this.runtime.targets
                 .filter(
                     // Don't report clones.
-                    target => !Object.prototype.hasOwnProperty.call(target, 'isOriginal') || target.isOriginal
+                    target => !target.hasOwnProperty('isOriginal') || target.isOriginal
                 ).map(
                     target => target.toJSON()
                 ),
@@ -1423,10 +1706,7 @@ class VirtualMachine extends EventEmitter {
      */
     getTargetIdForDrawableId (drawableId) {
         const target = this.runtime.getTargetByDrawableId(drawableId);
-        if (target &&
-            Object.prototype.hasOwnProperty.call(target, 'id') &&
-            Object.prototype.hasOwnProperty.call(target, 'isStage') &&
-            !target.isStage) {
+        if (target && target.hasOwnProperty('id') && target.hasOwnProperty('isStage') && !target.isStage) {
             return target.id;
         }
         return null;

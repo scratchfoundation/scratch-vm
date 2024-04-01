@@ -87,13 +87,12 @@ class Cast {
     /**
      * Cast any Scratch argument to an RGB color object to be used for the renderer.
      * @param {*} value Value to convert to RGB color object.
-     * @return {RGBOject} [r,g,b], values between 0-255.
+     * @return {import("../typescript-support/types").RGBObject} [r,g,b], values between 0-255.
      */
     static toRgbColorObject (value) {
         let color;
         if (typeof value === 'string' && value.substring(0, 1) === '#') {
             color = Color.hexToRgb(value);
-
             // If the color wasn't *actually* a hex color, cast to black
             if (!color) color = {r: 0, g: 0, b: 0, a: 255};
         } else {

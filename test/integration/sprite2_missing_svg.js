@@ -15,6 +15,8 @@ const readFileToBuffer = require('../fixtures/readProjectFile').readFileToBuffer
 const VirtualMachine = require('../../src/index');
 const {serializeCostumes} = require('../../src/serialization/serialize-assets');
 
+require("../helper/defineWindowGlobals");
+
 // The particular project that we're loading doesn't matter for this test
 const projectUri = path.resolve(__dirname, '../fixtures/default.sb3');
 const project = readFileToBuffer(projectUri);
@@ -31,15 +33,6 @@ global.Image = function () {
     };
     setTimeout(() => image.onload(), 1000);
     return image;
-};
-
-global.document = {
-    createElement: () => ({
-        // Create mock canvas
-        getContext: () => ({
-            drawImage: () => ({})
-        })
-    })
 };
 
 let vm;

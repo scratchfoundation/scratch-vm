@@ -1,5 +1,5 @@
 const test = require('tap').test;
-const Worker = require('web-worker');
+const Worker = require('tiny-worker');
 
 const BlockType = require('../../src/extension-support/block-type');
 

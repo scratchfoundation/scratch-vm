@@ -7,6 +7,8 @@ const VirtualMachine = require('../../src/index');
 const projectUri = path.resolve(__dirname, '../fixtures/block-to-workspace-comments.sb2');
 const project = readFileToBuffer(projectUri);
 
+require("../helper/defineWindowGlobals");
+
 test('importing sb2 project where block comment is converted to workspace comment and block is deleted', t => {
     const vm = new VirtualMachine();
     vm.attachStorage(makeTestStorage());

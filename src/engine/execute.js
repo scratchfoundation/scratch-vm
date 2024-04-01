@@ -2,8 +2,9 @@ const BlockUtility = require('./block-utility');
 const BlocksExecuteCache = require('./blocks-execute-cache');
 const log = require('../util/log');
 const Thread = require('./thread');
-const {Map} = require('immutable');
+const { Map } = require('immutable');
 const cast = require('../util/cast');
+const { blockIDKey } = require("../dist/globals");
 
 /**
  * Single BlockUtility instance reused by execute for every pritimive ran.
@@ -160,7 +161,7 @@ const handlePromise = (primitiveReportedValue, sequencer, thread, blockCached, l
  * @param {object} cached default set of cached values
  */
 class BlockCached {
-    constructor (blockContainer, cached) {
+    constructor(blockContainer, cached) {
         /**
          * Block id in its parent set of blocks.
          * @type {string}
@@ -268,6 +269,13 @@ class BlockCached {
         this._parentValues = null;
 
         /**
+         * A sequence of shadow value operations that can be performed in any
+         * order and are easier to perform given that they are static.
+         * @type {Array<BlockCached>}
+         */
+        this._shadowOps = [];
+
+        /**
          * A sequence of non-shadow operations that can must be performed. This
          * list recreates the order this block and its children are executed.
          * Since the order is always the same we can safely store that order
@@ -277,9 +285,9 @@ class BlockCached {
          */
         this._ops = [];
 
-        const {runtime} = blockUtility.sequencer;
+        const { runtime } = blockUtility.sequencer;
 
-        const {opcode, fields, inputs} = this;
+        const { opcode, fields, inputs } = this;
 
         // Assign opcode isHat and blockFunction data to avoid dynamic lookups.
         this._isHat = runtime.getIsHat(opcode);
@@ -352,6 +360,7 @@ class BlockCached {
                     continue;
                 }
 
+                this._shadowOps.push(...inputCached._shadowOps);
                 this._ops.push(...inputCached._ops);
                 inputCached._parentKey = inputName;
                 inputCached._parentValues = this._argValues;
@@ -366,7 +375,9 @@ class BlockCached {
 
         // The final operation is this block itself. At the top most block is a
         // command block or a block that is being run as a monitor.
-        if (this._definedBlockFunction) {
+        if (!this._isHat && this._isShadowBlock) {
+            this._shadowOps.push(this);
+        } else if (this._definedBlockFunction) {
             this._ops.push(this);
         }
     }
@@ -393,7 +404,7 @@ const _prepareBlockProfiling = function (profiler, blockCached) {
 
 /**
  * Execute a block.
- * @param {!Sequencer} sequencer Which sequencer is executing.
+ * @param {!import("./sequencer")} sequencer Which sequencer is executing.
  * @param {!Thread} thread Thread which to read and execute.
  */
 const execute = function (sequencer, thread) {
@@ -429,7 +440,7 @@ const execute = function (sequencer, thread) {
         const reported = currentStackFrame.reported;
         // Reinstate all the previous values.
         for (; i < reported.length; i++) {
-            const {opCached: oldOpCached, inputValue} = reported[i];
+            const { opCached: oldOpCached, inputValue } = reported[i];
 
             const opCached = ops.find(op => op.id === oldOpCached);
 
@@ -510,6 +521,7 @@ const execute = function (sequencer, thread) {
 
         // Inputs are set during previous steps in the loop.
 
+        blockUtility[blockIDKey] = opCached.id;
         const primitiveReportedValue = blockFunction(argValues, blockUtility);
 
         // If it's a promise, wait until promise resolves.
