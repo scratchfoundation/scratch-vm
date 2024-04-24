@@ -92,12 +92,43 @@ class Sprite {
     }
 
     /**
-     * Delete a costume by index.
+     * Delete a costume by index, and optionally update current costume for all clones.
      * @param {number} index Costume index to be deleted
+     * @param {boolean} [optUpdateCurrentCostume] Whether or not to update current costume for all clones
      * @return {?object} The deleted costume
      */
-    deleteCostumeAt (index) {
-        return this.costumes.splice(index, 1)[0];
+    deleteCostumeAt (index, optUpdateCurrentCostume) {
+        const isLastCostume = index === this.costumes.length - 1;
+        const deletedCostume = this.costumes.splice(index, 1)[0];
+        if (optUpdateCurrentCostume) {
+            for (const target of this.clones) {
+                target.shiftCurrentCostume(index, isLastCostume);
+            }
+        }
+        return deletedCostume;
+    }
+
+    /**
+     * Save current costume temporarliy during reordering, for all clones.
+     */
+    saveCurrentCostumeName () {
+        for (const target of this.clones) {
+            target._currentCostumeName = target.getCurrentCostume().name;
+        }
+    }
+
+    /**
+     * Restore current costume from saved name.
+     */
+    restoreCurrentCostume () {
+        for (const target of this.clones) {
+            if (typeof target._currentCostumeName === 'undefined') continue;
+            const costumeIndex = this.costumes.findIndex(c => c.name === target._currentCostumeName);
+            delete target._currentCostumeName;
+            if (costumeIndex !== target.currentCostume) {
+                target.setCostume(costumeIndex);
+            }
+        }
     }
 
     /**
