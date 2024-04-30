@@ -1429,7 +1429,7 @@ class Runtime extends EventEmitter {
 
             return {
                 id: categoryInfo.id,
-                xml: `<category name="${name}" id="${categoryInfo.id}" ${statusButtonXML} ${colorXML} ${menuIconXML}>${
+                xml: `<category name="${name}" toolboxitemid="${categoryInfo.id}" ${statusButtonXML} ${colorXML} ${menuIconXML}>${
                     paletteBlocks.map(block => block.xml).join('')}</category>`
             };
         });
