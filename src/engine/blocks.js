@@ -854,7 +854,7 @@ class Blocks {
     getAllVariableAndListReferences (optBlocks, optIncludeBroadcast) {
         const blocks = optBlocks ? optBlocks : this._blocks;
         const allReferences = Object.create(null);
-        for (const blockId in blocks) {
+        Object.keys(blocks).forEach(blockId => {
             let varOrListField = null;
             let varType = null;
             if (blocks[blockId].fields.VARIABLE) {
@@ -881,7 +881,7 @@ class Blocks {
                     }];
                 }
             }
-        }
+        });
         return allReferences;
     }
 
