@@ -888,7 +888,7 @@ onload();
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module depends on other loaded chunks and execution need to be delayed
-/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["vendors-node_modules_vernier_godirect_dist_godirect_min_cjs_js-node_modules_atob_browser-atob-2c027f","vendors-node_modules_scratch-audio_src_index-exposed_js-node_modules_scratch-render_src_index-35ce81","src_extensions_scratch3_video_sensing_library_js","src_index-exposed_js"], () => (__webpack_require__("./src/playground/benchmark.js")))
+/******/ 	var __webpack_exports__ = __webpack_require__.O(undefined, ["vendors-node_modules_vernier_godirect_dist_godirect_min_cjs_js-node_modules_atob_browser-atob-7f0f5d","vendors-node_modules_scratch-audio_src_index-exposed_js-node_modules_scratch-render_src_index-35ce81","src_extensions_scratch3_video_sensing_library_js","src_index-exposed_js"], () => (__webpack_require__("./src/playground/benchmark.js")))
 /******/ 	__webpack_exports__ = __webpack_require__.O(__webpack_exports__);
 /******/ 	
 /******/ 	return __webpack_exports__;
