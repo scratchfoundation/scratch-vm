@@ -92,7 +92,7 @@ const playgroundBuilder = webBuilder.clone()
         }
     })
     .addModuleRule({
-        test: require.resolve('scratch-render/src/index.js'),
+        test: require.resolve('scratch-render'),
         loader: 'expose-loader',
         options: {
             exposes: 'ScratchRender'
