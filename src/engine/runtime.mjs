@@ -260,7 +260,7 @@ export default class Runtime extends EventEmitter {
      * @const {number}
      */
     static get MAX_CLONES() {
-        return 300;
+        return 50;
     }
 
     /**

@@ -480,6 +480,17 @@ class PrimProxy {
             parameters: [],
             exampleParameters: {},
         },
+
+        fetch: {
+            opcode: "core_fetch",
+            parameters: ["url", "method", "headers", "body"],
+            exampleParameters: {
+                url: "https://api.scratch.mit.edu",
+                method: "GET",
+                headers: "",
+                body: "",
+            },
+        }
     };
 
     static interruptMap = {};
@@ -918,6 +929,11 @@ class PrimProxy {
 
     async setPenSize(size) {
         await this.post(PrimProxy.patchApi.setPenSize.opcode, { SIZE: size });
+    }
+
+    async fetch(url, method, headers, body) {
+        const response = await this.post(PrimProxy.patchApi.fetch.opcode, { URL: url, METHOD: method, HEADERS: headers, BODY: body });
+        return response;
     }
 }
 
