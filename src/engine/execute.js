@@ -408,18 +408,18 @@ const execute = function (sequencer, thread) {
             // Resume thread after the promise resolves
             const generation = thread.generation;
             primitiveReportedValue
-                .catch(rejectionReason => {
-                    // Promise rejected: the primitive had some error.
-                    // Log it and proceed.
-                    log.warn('Primitive rejected promise: ', rejectionReason);
-                    // Return an empty string
-                    return '';
-                }).then(resolvedValue => {
+                .then(resolvedValue => {
                     // The thread has either been stopped or restarted while we were waiting for the promise. Don't do
                     // anything since we're working with stale state.
                     if (thread.status === Thread.STATUS_DONE || thread.generation !== generation) return;
 
                     thread.resume(resolvedValue);
+                }, rejectionReason => {
+                    // Promise rejected: the primitive had some error.
+                    // Log it and proceed.
+                    log.warn('Primitive rejected promise: ', rejectionReason);
+                    // Return an empty string
+                    return '';
                 });
 
             // Store the values from the blocks that we *did* run to completion. We store them by block ID because the
