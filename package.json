@@ -100,7 +100,7 @@
     "pngjs": "3.4.0",
     "scratch-blocks": "1.1.151",
     "scratch-l10n": "3.18.185",
-    "scratch-render-fonts": "1.0.59",
+    "scratch-render-fonts": "1.0.60",
     "scratch-semantic-release-config": "1.0.14",
     "scratch-webpack-configuration": "1.3.0",
     "script-loader": "0.7.2",
