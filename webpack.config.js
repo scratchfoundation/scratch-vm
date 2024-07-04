@@ -12,6 +12,13 @@ const common = {
 
 const nodeBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('node')
+    .merge({
+        output: {
+            library: {
+                name: 'VirtualMachine'
+            }
+        }
+    })
     .addModuleRule({
         test: /\.mp3$/,
         type: 'asset'
@@ -23,6 +30,11 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         resolve: {
             fallback: {
                 Buffer: require.resolve('buffer/')
+            }
+        },
+        output: {
+            library: {
+                name: 'VirtualMachine'
             }
         }
     })
@@ -56,7 +68,10 @@ const playgroundBuilder = webBuilder.clone()
             'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
         },
         output: {
-            path: path.resolve(__dirname, 'playground')
+            path: path.resolve(__dirname, 'playground'),
+            library: {
+                name: 'VirtualMachine'
+            }
         }
     })
     .addModuleRule({
@@ -92,7 +107,7 @@ const playgroundBuilder = webBuilder.clone()
         }
     })
     .addModuleRule({
-        test: require.resolve('scratch-render/src/index.js'),
+        test: require.resolve('scratch-render'),
         loader: 'expose-loader',
         options: {
             exposes: 'ScratchRender'
