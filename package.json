@@ -70,7 +70,7 @@
     "scratch-render": "^1.0.13",
     "scratch-sb1-converter": "^1.0.0",
     "scratch-storage": "^2.3.5",
-    "scratch-svg-renderer": "2.3.83",
+    "scratch-svg-renderer": "2.3.84",
     "scratch-translate-extension-languages": "^1.0.0",
     "text-encoding": "^0.7.0",
     "uuid": "^8.3.2",
