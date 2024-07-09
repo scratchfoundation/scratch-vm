@@ -416,10 +416,11 @@ class Blocks {
             this.emitProjectChanged();
             break;
         }
+        case 'block_comment_create':
         case 'comment_create':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
-                currTarget.createComment(e.commentId, null, '',
+                currTarget.createComment(e.commentId, e.blockId, '',
                     e.json.x, e.json.y, e.json.width, e.json.height, false);
 
                 if (currTarget.comments[e.commentId].x === null &&
@@ -436,6 +437,7 @@ class Blocks {
             }
             this.emitProjectChanged();
             break;
+        case 'block_comment_change':
         case 'comment_change':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
@@ -448,11 +450,12 @@ class Blocks {
                 this.emitProjectChanged();
             }
             break;
+        case 'block_comment_move':
         case 'comment_move':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
                 if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
-                    log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
+                    log.warn(`Cannot move comment with id ${e.commentId} because it does not exist.`);
                     return;
                 }
                 const comment = currTarget.comments[e.commentId];
@@ -463,11 +466,12 @@ class Blocks {
                 this.emitProjectChanged();
             }
             break;
+        case 'block_comment_collapse':
         case 'comment_collapse':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
                 if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
-                    log.warn(`Cannot change comment with id ${e.commentId} because it does not exist.`);
+                    log.warn(`Cannot collapse comment with id ${e.commentId} because it does not exist.`);
                     return;
                 }
                 const comment = currTarget.comments[e.commentId];
@@ -475,6 +479,21 @@ class Blocks {
                 this.emitProjectChanged();
             }
             break;
+        case 'block_comment_resize':
+        case 'comment_resize':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+                    log.warn(`Cannot resize comment with id ${e.commentId} because it does not exist.`);
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                comment.width = e.newSize.width;
+                comment.height = e.newSize.height;
+                this.emitProjectChanged();
+            }
+            break;
+        case 'block_comment_delete':
         case 'comment_delete':
             if (this.runtime.getEditingTarget()) {
                 const currTarget = this.runtime.getEditingTarget();
