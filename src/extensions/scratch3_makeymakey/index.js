@@ -368,7 +368,7 @@ class Scratch3MakeyMakeyBlocks {
      */
     addSequence (sequenceString, sequenceArray) {
         // If we already have this sequence string, return.
-        if (this.sequences.hasOwnProperty(sequenceString)) {
+        if (Object.prototype.hasOwnProperty.call(this.sequences, sequenceString)) {
             return;
         }
         this.sequences[sequenceString] = {

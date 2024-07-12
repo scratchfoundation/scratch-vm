@@ -1,0 +1,54 @@
+name: CI/CD
+
+on:
+  pull_request: # Runs whenever a pull request is created or updated
+  push: # Runs whenever a commit is pushed to the repository...
+    branches: [main, develop, hotfix/*] # ...on any of these branches
+  workflow_dispatch: # Allows you to run this workflow manually from the Actions tab
+
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+permissions:
+  contents: write # publish a GitHub release
+  pages: write # deploy to GitHub Pages
+  issues: write # comment on released issues
+  pull-requests: write # comment on released pull requests
+
+jobs:
+  ci-cd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: wagoid/commitlint-github-action@5ce82f5d814d4010519d15f0552aec4f17a1e1fe # v5
+        if: github.event_name == 'pull_request'
+      - uses: actions/setup-node@1a4442cacd436585916779262731d5b162bc6ec7 # v3
+        with:
+          cache: 'npm'
+          node-version-file: '.nvmrc'
+      - name: Info
+        run: |
+          cat <<EOF
+          Node version: $(node --version)
+          NPM version: $(npm --version)
+          GitHub ref: ${{ github.ref }}
+          GitHub head ref: ${{ github.head_ref }}
+          EOF
+      - name: Setup
+        run: |
+          npm ci
+          mkdir -p ./test/results
+      - run: npm test
+      - run: npm run build
+      - name: Deploy to GH Pages
+        uses: peaceiris/actions-gh-pages@373f7f263a76c20808c831209c920827a82a2847 # v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playground
+          full_commit_message: "Build for ${{ github.sha }} ${{ github.event.head_commit.message }}"
+      - name: semantic-release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx --no -- semantic-release

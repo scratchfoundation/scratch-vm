@@ -290,8 +290,8 @@ test('wait', t => {
     t.equal(yields, 1, 'Second call after timeElapsed does not yield');
     t.equal(waitTime, mockUtil.stackFrame.duration);
     t.ok(timeElapsed >= (waitTime - thresholdSmall),
-        'Wait block ended too early: ${timeElapsed} < ${waitTime} - ${thresholdSmall}');
+        `Wait block ended too early: ${timeElapsed} < ${waitTime} - ${thresholdSmall}`);
     t.ok(timeElapsed <= (waitTime + thresholdLarge),
-        'Wait block ended too late: ${timeElapsed} > ${waitTime} + ${thresholdLarge}');
+        `Wait block ended too late: ${timeElapsed} > ${waitTime} + ${thresholdLarge}`);
     t.end();
 });

@@ -7,7 +7,7 @@ const Cast = require('../../util/cast');
 const MathUtil = require('../../util/math-util');
 const Clone = require('../../util/clone');
 const log = require('../../util/log');
-const fetchWithTimeout = require('../../util/fetch-with-timeout');
+const {fetchWithTimeout} = require('../../util/fetch-with-timeout');
 
 /**
  * Icon svg to be displayed in the blocks category menu, encoded as a data URI.
@@ -198,7 +198,7 @@ class Scratch3Text2SpeechBlocks {
      *
      * SCRATCH LOCALE
      *      Set by the editor, and used to store the language state in the project.
-     *      Listed in l10n: https://github.com/LLK/scratch-l10n/blob/master/src/supported-locales.js
+     *      Listed in l10n: https://github.com/scratchfoundation/scratch-l10n/blob/master/src/supported-locales.js
      * SUPPORTED LOCALE
      *      A Scratch locale that has a corresponding extension locale.
      * EXTENSION LOCALE

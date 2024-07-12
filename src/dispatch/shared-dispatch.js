@@ -82,6 +82,8 @@ class SharedDispatch {
                     return this._remoteTransferCall(provider, service, method, transfer, ...args);
                 }
 
+                // TODO: verify correct `this` after switching from apply to spread
+                // eslint-disable-next-line prefer-spread
                 const result = provider[method].apply(provider, args);
                 return Promise.resolve(result);
             }

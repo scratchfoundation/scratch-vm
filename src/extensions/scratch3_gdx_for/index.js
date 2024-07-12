@@ -4,7 +4,7 @@ const log = require('../../util/log');
 const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
 const BLE = require('../../io/ble');
-const godirect = require('@vernier/godirect/dist/godirect.min.umd.js');
+const godirect = require('@vernier/godirect');
 const ScratchLinkDeviceAdapter = require('./scratch-link-device-adapter');
 
 /**

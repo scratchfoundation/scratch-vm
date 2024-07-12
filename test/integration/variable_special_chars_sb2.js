@@ -55,12 +55,12 @@ test('importing sb2 project with special chars in variable names', t => {
         // There should be 3 fields, 2 on the stage, and one on the cat
         t.equal(allVarListFields[abVarId].length, 3);
         const stageBlocks = Object.keys(stage.blocks._blocks).map(blockId => stage.blocks._blocks[blockId]);
-        const stageListBlocks = stageBlocks.filter(block => block.fields.hasOwnProperty('LIST'));
+        const stageListBlocks = stageBlocks.filter(block => Object.prototype.hasOwnProperty.call(block.fields, 'LIST'));
         t.equal(stageListBlocks.length, 2);
         t.equal(stageListBlocks[0].fields.LIST.id, abVarId);
         t.equal(stageListBlocks[1].fields.LIST.id, abVarId);
         const catBlocks = Object.keys(cat.blocks._blocks).map(blockId => cat.blocks._blocks[blockId]);
-        const catListBlocks = catBlocks.filter(block => block.fields.hasOwnProperty('LIST'));
+        const catListBlocks = catBlocks.filter(block => Object.prototype.hasOwnProperty.call(block.fields, 'LIST'));
         t.equal(catListBlocks.length, 1);
         t.equal(catListBlocks[0].fields.LIST.id, abVarId);
 
@@ -83,10 +83,12 @@ test('importing sb2 project with special chars in variable names', t => {
         // Find all the references for this variable, and verify they have the correct ID
         // There should be only two, one on the stage and one on bananas
         t.equal(allVarListFields[fooVarId].length, 2);
-        const stageVarBlocks = stageBlocks.filter(block => block.fields.hasOwnProperty('VARIABLE'));
+        const stageVarBlocks = stageBlocks.filter(
+            block => Object.prototype.hasOwnProperty.call(block.fields, 'VARIABLE')
+        );
         t.equal(stageVarBlocks.length, 1);
         t.equal(stageVarBlocks[0].fields.VARIABLE.id, fooVarId);
-        const catVarBlocks = catBlocks.filter(block => block.fields.hasOwnProperty('VARIABLE'));
+        const catVarBlocks = catBlocks.filter(block => Object.prototype.hasOwnProperty.call(block.fields, 'VARIABLE'));
         t.equal(catVarBlocks.length, 1);
         t.equal(catVarBlocks[0].fields.VARIABLE.id, fooVarId);
 
@@ -110,7 +112,9 @@ test('importing sb2 project with special chars in variable names', t => {
         // There should be one
         t.equal(allVarListFields[ltPerfectVarId].length, 1);
         const bananasBlocks = Object.keys(bananas.blocks._blocks).map(blockId => bananas.blocks._blocks[blockId]);
-        const bananasVarBlocks = bananasBlocks.filter(block => block.fields.hasOwnProperty('VARIABLE'));
+        const bananasVarBlocks = bananasBlocks.filter(
+            block => Object.prototype.hasOwnProperty.call(block.fields, 'VARIABLE')
+        );
         t.equal(bananasVarBlocks.length, 1);
         t.equal(bananasVarBlocks[0].fields.VARIABLE.id, ltPerfectVarId);
 

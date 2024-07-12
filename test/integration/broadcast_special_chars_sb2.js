@@ -57,7 +57,9 @@ test('importing sb2 project with special chars in message names', t => {
         t.equal(allBroadcastFields[ltPerfectMessageId].length, 1);
         t.equal(allBroadcastFields[abMessageId].length, 1);
         const catBlocks = Object.keys(cat.blocks._blocks).map(blockId => cat.blocks._blocks[blockId]);
-        const catMessageBlocks = catBlocks.filter(block => block.fields.hasOwnProperty('BROADCAST_OPTION'));
+        const catMessageBlocks = catBlocks.filter(
+            block => Object.prototype.hasOwnProperty.call(block.fields, 'BROADCAST_OPTION')
+        );
         t.equal(catMessageBlocks.length, 2);
         t.equal(catMessageBlocks[0].fields.BROADCAST_OPTION.id, ltPerfectMessageId);
         t.equal(catMessageBlocks[1].fields.BROADCAST_OPTION.id, abMessageId);

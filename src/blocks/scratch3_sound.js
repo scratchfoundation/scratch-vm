@@ -267,7 +267,7 @@ class Scratch3SoundBlocks {
         const value = Cast.toNumber(args.VALUE);
 
         const soundState = this._getSoundState(util.target);
-        if (!soundState.effects.hasOwnProperty(effect)) return;
+        if (!Object.prototype.hasOwnProperty.call(soundState.effects, effect)) return;
 
         if (change) {
             soundState.effects[effect] += value;
@@ -297,7 +297,7 @@ class Scratch3SoundBlocks {
     _clearEffectsForTarget (target) {
         const soundState = this._getSoundState(target);
         for (const effect in soundState.effects) {
-            if (!soundState.effects.hasOwnProperty(effect)) continue;
+            if (!Object.prototype.hasOwnProperty.call(soundState.effects, effect)) continue;
             soundState.effects[effect] = 0;
         }
         this._syncEffectsForTarget(target);

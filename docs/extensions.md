@@ -48,7 +48,7 @@ ways.
 ## Defining an Extension
 
 Scratch extensions are defined as a single Javascript class which accepts either a reference to the Scratch
-[VM](https://github.com/llk/scratch-vm) runtime or a "runtime proxy" which handles communication with the Scratch VM
+[VM](https://github.com/scratchfoundation/scratch-vm) runtime or a "runtime proxy" which handles communication with the Scratch VM
 across a well defined worker boundary (i.e. the sandbox).
 
 ```js

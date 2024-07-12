@@ -117,7 +117,7 @@ class ExtensionManager {
      * @param {string} extensionId - the ID of an internal extension
      */
     loadExtensionIdSync (extensionId) {
-        if (!builtinExtensions.hasOwnProperty(extensionId)) {
+        if (!Object.prototype.hasOwnProperty.call(builtinExtensions, extensionId)) {
             log.warn(`Could not find extension ${extensionId} in the built in extensions.`);
             return;
         }
@@ -141,7 +141,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-        if (builtinExtensions.hasOwnProperty(extensionURL)) {
+        if (Object.prototype.hasOwnProperty.call(builtinExtensions, extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
@@ -158,10 +158,10 @@ class ExtensionManager {
 
         return new Promise((resolve, reject) => {
             // If we `require` this at the global level it breaks non-webpack targets, including tests
-            const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+            const worker = new Worker('./extension-worker.js');
 
             this.pendingExtensions.push({extensionURL, resolve, reject});
-            dispatch.addWorker(new ExtensionWorker());
+            dispatch.addWorker(worker);
         });
     }
 
