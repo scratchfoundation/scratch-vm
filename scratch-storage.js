@@ -103,10 +103,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _arrayLikeToArray(r, a) {
-  (null == a || a > r.length) && (a = r.length);
-  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-  return n;
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+  return arr2;
 }
 module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -119,8 +119,8 @@ module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exp
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _arrayWithHoles(r) {
-  if (Array.isArray(r)) return r;
+function _arrayWithHoles(arr) {
+  if (Array.isArray(arr)) return arr;
 }
 module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -133,9 +133,11 @@ module.exports = _arrayWithHoles, module.exports.__esModule = true, module.expor
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _assertThisInitialized(e) {
-  if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  return e;
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+  return self;
 }
 module.exports = _assertThisInitialized, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -148,8 +150,10 @@ module.exports = _assertThisInitialized, module.exports.__esModule = true, modul
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _classCallCheck(a, n) {
-  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
+function _classCallCheck(instance, Constructor) {
+  if (!(instance instanceof Constructor)) {
+    throw new TypeError("Cannot call a class as a function");
+  }
 }
 module.exports = _classCallCheck, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -163,16 +167,22 @@ module.exports = _classCallCheck, module.exports.__esModule = true, module.expor
 /***/ (function(module, exports, __webpack_require__) {
 
 var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ "./node_modules/@babel/runtime/helpers/toPropertyKey.js");
-function _defineProperties(e, r) {
-  for (var t = 0; t < r.length; t++) {
-    var o = r[t];
-    o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, toPropertyKey(o.key), o);
+function _defineProperties(target, props) {
+  for (var i = 0; i < props.length; i++) {
+    var descriptor = props[i];
+    descriptor.enumerable = descriptor.enumerable || false;
+    descriptor.configurable = true;
+    if ("value" in descriptor) descriptor.writable = true;
+    Object.defineProperty(target, toPropertyKey(descriptor.key), descriptor);
   }
 }
-function _createClass(e, r, t) {
-  return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
-    writable: !1
-  }), e;
+function _createClass(Constructor, protoProps, staticProps) {
+  if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+  if (staticProps) _defineProperties(Constructor, staticProps);
+  Object.defineProperty(Constructor, "prototype", {
+    writable: false
+  });
+  return Constructor;
 }
 module.exports = _createClass, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -185,10 +195,11 @@ module.exports = _createClass, module.exports.__esModule = true, module.exports[
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _getPrototypeOf(t) {
-  return (module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
-    return t.__proto__ || Object.getPrototypeOf(t);
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _getPrototypeOf(t);
+function _getPrototypeOf(o) {
+  module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) {
+    return o.__proto__ || Object.getPrototypeOf(o);
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
+  return _getPrototypeOf(o);
 }
 module.exports = _getPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -202,17 +213,21 @@ module.exports = _getPrototypeOf, module.exports.__esModule = true, module.expor
 /***/ (function(module, exports, __webpack_require__) {
 
 var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ "./node_modules/@babel/runtime/helpers/setPrototypeOf.js");
-function _inherits(t, e) {
-  if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
-  t.prototype = Object.create(e && e.prototype, {
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
     constructor: {
-      value: t,
-      writable: !0,
-      configurable: !0
+      value: subClass,
+      writable: true,
+      configurable: true
     }
-  }), Object.defineProperty(t, "prototype", {
-    writable: !1
-  }), e && setPrototypeOf(t, e);
+  });
+  Object.defineProperty(subClass, "prototype", {
+    writable: false
+  });
+  if (superClass) setPrototypeOf(subClass, superClass);
 }
 module.exports = _inherits, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -278,16 +293,20 @@ module.exports = _nonIterableRest, module.exports.__esModule = true, module.expo
 /***/ (function(module, exports, __webpack_require__) {
 
 var objectWithoutPropertiesLoose = __webpack_require__(/*! ./objectWithoutPropertiesLoose.js */ "./node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js");
-function _objectWithoutProperties(e, t) {
-  if (null == e) return {};
-  var o,
-    r,
-    i = objectWithoutPropertiesLoose(e, t);
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+  var target = objectWithoutPropertiesLoose(source, excluded);
+  var key, i;
   if (Object.getOwnPropertySymbols) {
-    var s = Object.getOwnPropertySymbols(e);
-    for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
+    }
   }
-  return i;
+  return target;
 }
 module.exports = _objectWithoutProperties, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -300,14 +319,17 @@ module.exports = _objectWithoutProperties, module.exports.__esModule = true, mod
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _objectWithoutPropertiesLoose(r, e) {
-  if (null == r) return {};
-  var t = {};
-  for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
-    if (e.includes(n)) continue;
-    t[n] = r[n];
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
   }
-  return t;
+  return target;
 }
 module.exports = _objectWithoutPropertiesLoose, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -322,10 +344,13 @@ module.exports = _objectWithoutPropertiesLoose, module.exports.__esModule = true
 
 var _typeof = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runtime/helpers/typeof.js")["default"];
 var assertThisInitialized = __webpack_require__(/*! ./assertThisInitialized.js */ "./node_modules/@babel/runtime/helpers/assertThisInitialized.js");
-function _possibleConstructorReturn(t, e) {
-  if (e && ("object" == _typeof(e) || "function" == typeof e)) return e;
-  if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
-  return assertThisInitialized(t);
+function _possibleConstructorReturn(self, call) {
+  if (call && (_typeof(call) === "object" || typeof call === "function")) {
+    return call;
+  } else if (call !== void 0) {
+    throw new TypeError("Derived constructors may only return object or undefined");
+  }
+  return assertThisInitialized(self);
 }
 module.exports = _possibleConstructorReturn, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -338,10 +363,12 @@ module.exports = _possibleConstructorReturn, module.exports.__esModule = true, m
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-function _setPrototypeOf(t, e) {
-  return (module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
-    return t.__proto__ = e, t;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _setPrototypeOf(t, e);
+function _setPrototypeOf(o, p) {
+  module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  }, module.exports.__esModule = true, module.exports["default"] = module.exports;
+  return _setPrototypeOf(o, p);
 }
 module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -358,8 +385,8 @@ var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ "./node_modu
 var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ "./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js");
 var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ "./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js");
 var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ "./node_modules/@babel/runtime/helpers/nonIterableRest.js");
-function _slicedToArray(r, e) {
-  return arrayWithHoles(r) || iterableToArrayLimit(r, e) || unsupportedIterableToArray(r, e) || nonIterableRest();
+function _slicedToArray(arr, i) {
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
 }
 module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -398,7 +425,7 @@ var _typeof = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runt
 var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ "./node_modules/@babel/runtime/helpers/toPrimitive.js");
 function toPropertyKey(t) {
   var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
+  return "symbol" == _typeof(i) ? i : String(i);
 }
 module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -432,12 +459,13 @@ module.exports = _typeof, module.exports.__esModule = true, module.exports["defa
 /***/ (function(module, exports, __webpack_require__) {
 
 var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ "./node_modules/@babel/runtime/helpers/arrayLikeToArray.js");
-function _unsupportedIterableToArray(r, a) {
-  if (r) {
-    if ("string" == typeof r) return arrayLikeToArray(r, a);
-    var t = {}.toString.call(r).slice(8, -1);
-    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? arrayLikeToArray(r, a) : void 0;
-  }
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
 }
 module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
 
@@ -4824,7 +4852,7 @@ var Asset = /*#__PURE__*/function () {
     /** @type {Asset[]} */
     this.dependencies = [];
   }
-  return _createClass(Asset, [{
+  _createClass(Asset, [{
     key: "setData",
     value: function setData(data, dataFormat, generateId) {
       if (data && !dataFormat) {
@@ -4877,6 +4905,7 @@ var Asset = /*#__PURE__*/function () {
       return "data:".concat(contentType, ";base64,").concat(memoizedToString(this.assetId, this.data));
     }
   }]);
+  return Asset;
 }();
 module.exports = Asset;
 
@@ -4996,6 +5025,7 @@ var BuiltinAssets = DefaultAssets.concat([]);
 var BuiltinHelper = /*#__PURE__*/function (_Helper) {
   "use strict";
 
+  _inherits(BuiltinHelper, _Helper);
   function BuiltinHelper(parent) {
     var _this;
     _classCallCheck(this, BuiltinHelper);
@@ -5016,8 +5046,7 @@ var BuiltinHelper = /*#__PURE__*/function (_Helper) {
   /**
    * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
    */
-  _inherits(BuiltinHelper, _Helper);
-  return _createClass(BuiltinHelper, [{
+  _createClass(BuiltinHelper, [{
     key: "registerDefaultAssets",
     value: function registerDefaultAssets() {
       var numAssets = DefaultAssets.length;
@@ -5121,6 +5150,7 @@ var BuiltinHelper = /*#__PURE__*/function (_Helper) {
       return Promise.resolve(this.get(assetId));
     }
   }]);
+  return BuiltinHelper;
 }(Helper);
 module.exports = BuiltinHelper;
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
@@ -5180,7 +5210,7 @@ var FetchTool = /*#__PURE__*/function () {
   function FetchTool() {
     _classCallCheck(this, FetchTool);
   }
-  return _createClass(FetchTool, [{
+  _createClass(FetchTool, [{
     key: "isGetSupported",
     get:
     /**
@@ -5244,6 +5274,7 @@ var FetchTool = /*#__PURE__*/function () {
       });
     }
   }]);
+  return FetchTool;
 }();
 module.exports = FetchTool;
 
@@ -5260,9 +5291,9 @@ var _objectWithoutProperties = __webpack_require__(/*! @babel/runtime/helpers/ob
 var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
 var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
 var _excluded = ["url"];
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 var _require = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js"),
   Headers = _require.Headers,
   applyMetadata = _require.applyMetadata;
@@ -5347,7 +5378,7 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
    * guess that it does if the window does until the worker can inform us.
    * @returns {boolean} Is get supported?
    */
-  return _createClass(PrivateFetchWorkerTool, [{
+  _createClass(PrivateFetchWorkerTool, [{
     key: "isGetSupported",
     get: function get() {
       return typeof Worker !== 'undefined' && this._workerSupport.fetch && !this._supportError;
@@ -5428,6 +5459,7 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
       return this._instance;
     }
   }]);
+  return PrivateFetchWorkerTool;
 }();
 /**
  * Get and send assets with a worker that uses fetch.
@@ -5449,7 +5481,7 @@ var PublicFetchWorkerTool = /*#__PURE__*/function () {
    * Is get supported?
    * @returns {boolean} Is get supported?
    */
-  return _createClass(PublicFetchWorkerTool, [{
+  _createClass(PublicFetchWorkerTool, [{
     key: "isGetSupported",
     get: function get() {
       return this.inner.isGetSupported;
@@ -5486,6 +5518,7 @@ var PublicFetchWorkerTool = /*#__PURE__*/function () {
       throw new Error('Not implemented.');
     }
   }]);
+  return PublicFetchWorkerTool;
 }();
 module.exports = PublicFetchWorkerTool;
 
@@ -5519,12 +5552,13 @@ var Helper = /*#__PURE__*/function () {
    * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
    * @return {Promise.<Asset>} A promise for the contents of the asset.
    */
-  return _createClass(Helper, [{
+  _createClass(Helper, [{
     key: "load",
     value: function load(assetType, assetId, dataFormat) {
       return Promise.reject(new Error("No asset of type ".concat(assetType, " for ID ").concat(assetId, " with format ").concat(dataFormat)));
     }
   }]);
+  return Helper;
 }();
 module.exports = Helper;
 
@@ -5577,7 +5611,7 @@ var ProxyTool = /*#__PURE__*/function () {
    * Is get supported? false if all proxied tool return false.
    * @returns {boolean} Is get supported?
    */
-  return _createClass(ProxyTool, [{
+  _createClass(ProxyTool, [{
     key: "isGetSupported",
     get: function get() {
       return this.tools.some(function (tool) {
@@ -5643,6 +5677,7 @@ var ProxyTool = /*#__PURE__*/function () {
       return nextTool();
     }
   }]);
+  return ProxyTool;
 }();
 /**
  * Constant values that filter the set of tools in a ProxyTool instance.
@@ -5700,7 +5735,7 @@ var ScratchStorage = /*#__PURE__*/function () {
    * @return {Asset} - the `Asset` class constructor.
    * @constructor
    */
-  return _createClass(ScratchStorage, [{
+  _createClass(ScratchStorage, [{
     key: "Asset",
     get: function get() {
       return _Asset;
@@ -5945,6 +5980,7 @@ var ScratchStorage = /*#__PURE__*/function () {
       return _AssetType;
     }
   }]);
+  return ScratchStorage;
 }();
 module.exports = ScratchStorage;
 
@@ -5986,6 +6022,7 @@ var ensureRequestConfig = function ensureRequestConfig(reqConfig) {
 var WebHelper = /*#__PURE__*/function (_Helper) {
   "use strict";
 
+  _inherits(WebHelper, _Helper);
   function WebHelper(parent) {
     var _this;
     _classCallCheck(this, WebHelper);
@@ -6024,8 +6061,7 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
    * @param {Array.<AssetType>} types - The types of asset provided by this source.
    * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
    */
-  _inherits(WebHelper, _Helper);
-  return _createClass(WebHelper, [{
+  _createClass(WebHelper, [{
     key: "addSource",
     value: function addSource(types, urlFunction) {
       log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
@@ -6160,6 +6196,7 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
       });
     }
   }]);
+  return WebHelper;
 }(Helper);
 module.exports = WebHelper;
 
@@ -6236,9 +6273,9 @@ module.exports = minilog('storage');
 /***/ (function(module, exports, __webpack_require__) {
 
 var _slicedToArray = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 var crossFetch = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetch/dist/browser-ponyfill.js");
 
 /**
