@@ -13,6 +13,9 @@ const common = {
 const nodeBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('node')
     .merge({
+        entry: {
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
+        },
         output: {
             library: {
                 name: 'VirtualMachine'
@@ -27,6 +30,9 @@ const nodeBuilder = new ScratchWebpackConfigBuilder(common)
 const webBuilder = new ScratchWebpackConfigBuilder(common)
     .setTarget('browserslist')
     .merge({
+        entry: {
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
+        },
         resolve: {
             fallback: {
                 Buffer: require.resolve('buffer/')
@@ -65,7 +71,8 @@ const playgroundBuilder = webBuilder.clone()
         },
         entry: {
             'benchmark': './src/playground/benchmark',
-            'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug'
+            'video-sensing-extension-debug': './src/extensions/scratch3_video_sensing/debug',
+            'extension-worker': path.join(__dirname, 'src/extension-support/extension-worker.js')
         },
         output: {
             path: path.resolve(__dirname, 'playground'),
