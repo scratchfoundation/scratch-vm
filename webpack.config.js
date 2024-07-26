@@ -1,7 +1,6 @@
 const path = require('path');
 
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const webpack = require('webpack');
 
 const ScratchWebpackConfigBuilder = require('scratch-webpack-configuration');
 
@@ -54,10 +53,7 @@ const webBuilder = new ScratchWebpackConfigBuilder(common)
         options: {
             exposes: 'VirtualMachine'
         }
-    })
-    .addPlugin(new webpack.ProvidePlugin({
-        Buffer: ['buffer', 'Buffer']
-    }));
+    });
 
 const playgroundBuilder = webBuilder.clone()
     .merge({
