@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.5.379](https://github.com/scratchfoundation/scratch-vm/compare/v4.5.378...v4.5.379) (2024-07-29)
+
+
+### Bug Fixes
+
+* [UEPR-27] Added missing entry point ([4f146d6](https://github.com/scratchfoundation/scratch-vm/commit/4f146d6290dad94b37d3ee32a9f86aea551e396e))
+
 ## [4.5.378](https://github.com/scratchfoundation/scratch-vm/compare/v4.5.377...v4.5.378) (2024-07-28)
 
 
