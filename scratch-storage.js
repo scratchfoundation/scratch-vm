@@ -331,6 +331,20 @@ module.exports = _possibleConstructorReturn, module.exports.__esModule = true, m
 
 /***/ }),
 
+/***/ "./node_modules/@babel/runtime/helpers/readOnlyError.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/@babel/runtime/helpers/readOnlyError.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+function _readOnlyError(r) {
+  throw new TypeError('"' + r + '" is read-only');
+}
+module.exports = _readOnlyError, module.exports.__esModule = true, module.exports["default"] = module.exports;
+
+/***/ }),
+
 /***/ "./node_modules/@babel/runtime/helpers/setPrototypeOf.js":
 /*!***************************************************************!*\
   !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
@@ -5595,17 +5609,17 @@ var ProxyTool = /*#__PURE__*/function () {
     value: function get(reqConfig) {
       var _this = this;
       var toolIndex = 0;
-      var nextTool = function nextTool(err) {
+      var _nextTool = function nextTool(err) {
         var tool = _this.tools[toolIndex++];
         if (!tool) {
           throw err;
         }
         if (!tool.isGetSupported) {
-          return nextTool(err);
+          return _nextTool(err);
         }
-        return tool.get(reqConfig).catch(nextTool);
+        return tool.get(reqConfig).catch(_nextTool);
       };
-      return nextTool();
+      return _nextTool();
     }
 
     /**
@@ -5630,17 +5644,17 @@ var ProxyTool = /*#__PURE__*/function () {
     value: function send(reqConfig) {
       var _this2 = this;
       var toolIndex = 0;
-      var nextTool = function nextTool(err) {
+      var _nextTool2 = function nextTool(err) {
         var tool = _this2.tools[toolIndex++];
         if (!tool) {
           throw err;
         }
         if (!tool.isSendSupported) {
-          return nextTool(err);
+          return _nextTool2(err);
         }
-        return tool.send(reqConfig).catch(nextTool);
+        return tool.send(reqConfig).catch(_nextTool2);
       };
-      return nextTool();
+      return _nextTool2();
     }
   }]);
 }();
@@ -5879,7 +5893,7 @@ var ScratchStorage = /*#__PURE__*/function () {
       dataFormat = dataFormat || assetType.runtimeFormat;
       var helperIndex = 0;
       var helper;
-      var tryNextHelper = function tryNextHelper(err) {
+      var _tryNextHelper = function tryNextHelper(err) {
         if (err) {
           // Track the error, but continue looking
           errors.push(err);
@@ -5888,12 +5902,12 @@ var ScratchStorage = /*#__PURE__*/function () {
         if (helper) {
           var loading = helper.load(assetType, assetId, dataFormat);
           if (loading === null) {
-            return tryNextHelper();
+            return _tryNextHelper();
           }
           // Note that other attempts may have logged errors; if this succeeds they will be suppressed.
           return loading
           // TODO: maybe some types of error should prevent trying the next helper?
-          .catch(tryNextHelper);
+          .catch(_tryNextHelper);
         } else if (errors.length > 0) {
           // We looked through all the helpers and couldn't find the asset, AND
           // at least one thing went wrong while we were looking.
@@ -5903,7 +5917,7 @@ var ScratchStorage = /*#__PURE__*/function () {
         // Nothing went wrong but we couldn't find the asset.
         return Promise.resolve(null);
       };
-      return tryNextHelper();
+      return _tryNextHelper();
     }
 
     /**
@@ -5957,6 +5971,7 @@ module.exports = ScratchStorage;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+var _readOnlyError = __webpack_require__(/*! @babel/runtime/helpers/readOnlyError */ "./node_modules/@babel/runtime/helpers/readOnlyError.js");
 var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
 var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
 var _possibleConstructorReturn = __webpack_require__(/*! @babel/runtime/helpers/possibleConstructorReturn */ "./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js");
@@ -6075,7 +6090,7 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
         tool = this.projectTool;
       }
       var storeIndex = 0;
-      var tryNextSource = function tryNextSource(err) {
+      var _tryNextSource = function tryNextSource(err) {
         if (err) {
           errors.push(err);
         }
@@ -6086,15 +6101,15 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
         if (reqConfigFunction) {
           var reqConfig = ensureRequestConfig(reqConfigFunction(asset));
           if (reqConfig === false) {
-            return tryNextSource();
+            return _tryNextSource();
           }
           return tool.get(reqConfig).then(function (body) {
             if (body) {
               asset.setData(body, dataFormat);
               return asset;
             }
-            return tryNextSource();
-          }).catch(tryNextSource);
+            return _tryNextSource();
+          }).catch(_tryNextSource);
         } else if (errors.length > 0) {
           return Promise.reject(errors);
         }
@@ -6102,7 +6117,7 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
         // no stores matching asset
         return Promise.resolve(null);
       };
-      return tryNextSource();
+      return _tryNextSource();
     }
 
     /**
