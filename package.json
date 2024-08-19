@@ -99,7 +99,7 @@
     "json": "^9.0.4",
     "pngjs": "3.4.0",
     "scratch-blocks": "1.1.206",
-    "scratch-l10n": "3.18.270",
+    "scratch-l10n": "3.18.271",
     "scratch-render-fonts": "1.0.87",
     "scratch-semantic-release-config": "1.0.14",
     "scratch-webpack-configuration": "1.4.0",
