@@ -256,6 +256,12 @@ class Runtime extends EventEmitter {
         this._nonMonitorThreadCount = 0;
 
         /**
+         * Number of threads of edge-activated blocks that executes condition check.
+         * @type {number}
+        */
+        this._edgeActivatedThreadCount = 0;
+
+        /**
          * All threads that finished running and were removed from this.threads
          * by behaviour in Sequencer.stepThreads.
          * @type {Array<Thread>}
@@ -1882,6 +1888,10 @@ class Runtime extends EventEmitter {
         // For compatibility with Scratch 2, edge triggered hats need to be processed before
         // threads are stepped. See ScratchRuntime.as for original implementation
         newThreads.forEach(thread => {
+            // This is used to count how many edge-activated block condition check threads will exist
+            if (hatMeta.edgeActivated) {
+                this._edgeActivatedThreadCount++;
+            }
             execute(this.sequencer, thread);
             thread.goToNextBlock();
         });
@@ -2094,6 +2104,7 @@ class Runtime extends EventEmitter {
 
         // Clean up threads that were told to stop during or since the last step
         this.threads = this.threads.filter(thread => !thread.isKilled);
+        this._edgeActivatedThreadCount = 0;
 
         // Find all edge-activated hats, and add them to threads to be evaluated.
         for (const hatType in this._hats) {
@@ -2118,9 +2129,11 @@ class Runtime extends EventEmitter {
         this._updateGlows(doneThreads);
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
+        const projectRunStatusThreads = [...this.threads, ...doneThreads];
         this._emitProjectRunStatus(
             this.threads.length + doneThreads.length -
-                this._getMonitorThreadCount([...this.threads, ...doneThreads]));
+                this._getMonitorThreadCount(projectRunStatusThreads) -
+                this._edgeActivatedThreadCount);
         // Store threads that completed this iteration for testing and other
         // internal purposes.
         this._lastStepDoneThreads = doneThreads;
@@ -2262,7 +2275,8 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Emit run start/stop after each tick. Emits when `this.threads.length` goes
+     * Emit run start/stop after each tick. Emits when `this.threads.length`
+     * (exclusing monitor threads and "edge activation checking threads") goes
      * between non-zero and zero
      *
      * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
