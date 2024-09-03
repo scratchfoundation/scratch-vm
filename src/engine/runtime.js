@@ -1293,7 +1293,10 @@ class Runtime extends EventEmitter {
 
         if (blockInfo.blockType === BlockType.REPORTER) {
             if (!blockInfo.disableMonitor && context.inputList.length === 0) {
-                blockJSON.checkboxInFlyout = true;
+                if (!blockJSON.extensions) {
+                    blockJSON.extensions = [];
+                }
+                blockJSON.extensions.push("monitor_block");
             }
         } else if (blockInfo.blockType === BlockType.LOOP) {
             // Add icon to the bottom right of a loop block
