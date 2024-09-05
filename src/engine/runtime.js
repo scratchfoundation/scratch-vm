@@ -1049,9 +1049,7 @@ class Runtime extends EventEmitter {
                 type: menuId,
                 inputsInline: true,
                 output: "String",
-                colour: categoryInfo.color1,
-                colourSecondary: categoryInfo.color2,
-                colourTertiary: categoryInfo.color3,
+                style: categoryInfo.id,
                 outputShape: menuInfo.acceptReporters
                     ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND
                     : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
@@ -1108,9 +1106,7 @@ class Runtime extends EventEmitter {
                 message0: "%1",
                 inputsInline: true,
                 output: output,
-                colour: categoryInfo.color1,
-                colourSecondary: categoryInfo.color2,
-                colourTertiary: categoryInfo.color3,
+                style: categoryInfo.id,
                 outputShape: outputShape,
                 args0: [
                     {
@@ -1155,9 +1151,8 @@ class Runtime extends EventEmitter {
             type: extendedOpcode,
             inputsInline: true,
             category: categoryInfo.name,
-            colour: categoryInfo.color1,
-            colourSecondary: categoryInfo.color2,
-            colourTertiary: categoryInfo.color3,
+            style: categoryInfo.id,
+            extensions: [],
         };
         const context = {
             // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -1177,7 +1172,7 @@ class Runtime extends EventEmitter {
         const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
 
         if (iconURI) {
-            blockJSON.extensions = ["scratch_extension"];
+            blockJSON.extensions.push("scratch_extension");
             blockJSON.message0 = "%1 %2";
             const iconJSON = {
                 type: "field_image",
@@ -1224,9 +1219,6 @@ class Runtime extends EventEmitter {
                 blockJSON.outputShape =
                     ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
                 blockJSON.nextStatement = null; // null = available connection; undefined = terminal
-                if (!blockJSON.extensions) {
-                    blockJSON.extensions = [];
-                }
                 blockJSON.extensions.push("shape_hat");
                 break;
             case BlockType.CONDITIONAL:
@@ -1293,9 +1285,6 @@ class Runtime extends EventEmitter {
 
         if (blockInfo.blockType === BlockType.REPORTER) {
             if (!blockInfo.disableMonitor && context.inputList.length === 0) {
-                if (!blockJSON.extensions) {
-                    blockJSON.extensions = [];
-                }
                 blockJSON.extensions.push("monitor_block");
             }
         } else if (blockInfo.blockType === BlockType.LOOP) {
