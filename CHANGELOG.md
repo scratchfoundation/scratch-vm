@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.5.471](https://github.com/scratchfoundation/scratch-vm/compare/v4.5.470...v4.5.471) (2024-09-07)
+
+
+### Bug Fixes
+
+* music extension sounds were not loading correctly ([c3759e8](https://github.com/scratchfoundation/scratch-vm/commit/c3759e8e99fc2ae369e8d0c23b4989392fa1ef4e))
+
 ## [4.5.470](https://github.com/scratchfoundation/scratch-vm/compare/v4.5.469...v4.5.470) (2024-09-06)
 
 
