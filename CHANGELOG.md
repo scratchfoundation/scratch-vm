@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.6.7](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.6...v4.6.7) (2024-09-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-semantic-release-config to v1.0.15 ([1c32ee4](https://github.com/scratchfoundation/scratch-vm/commit/1c32ee4af0df9294d8955a69419b267e36100ac3))
+
 ## [4.6.6](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.5...v4.6.6) (2024-09-10)
 
 
