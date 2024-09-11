@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.6.10](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.9...v4.6.10) (2024-09-11)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-webpack-configuration to v1.5.1 ([f4aba10](https://github.com/scratchfoundation/scratch-vm/commit/f4aba1023b61061ce878e27fe9c2f83d400e6554))
+
 ## [4.6.9](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.8...v4.6.9) (2024-09-11)
 
 
