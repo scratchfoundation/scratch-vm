@@ -88,7 +88,7 @@
     "copy-webpack-plugin": "4.6.0",
     "docdash": "1.2.0",
     "eslint": "8.57.0",
-    "eslint-config-scratch": "9.0.8",
+    "eslint-config-scratch": "9.0.9",
     "expose-loader": "1.0.3",
     "file-loader": "6.2.0",
     "format-message-cli": "6.2.4",
