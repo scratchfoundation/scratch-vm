@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.6.35](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.34...v4.6.35) (2024-09-22)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-l10n to v3.18.315 ([2cf01f6](https://github.com/scratchfoundation/scratch-vm/commit/2cf01f6ecb79c1e0350803c3ef75c21d92976191))
+
 ## [4.6.34](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.33...v4.6.34) (2024-09-21)
 
 
