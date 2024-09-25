@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.6.41](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.40...v4.6.41) (2024-09-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-svg-renderer to v2.4.19 ([fb885a5](https://github.com/scratchfoundation/scratch-vm/commit/fb885a54ff53f6d2df6ed786c6d312652fe3ab7c))
+
 ## [4.6.40](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.39...v4.6.40) (2024-09-24)
 
 
