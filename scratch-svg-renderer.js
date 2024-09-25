@@ -11,6 +11,51 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./node_modules/scratch-render-fonts/src/index.js":
+/*!********************************************************!*\
+  !*** ./node_modules/scratch-render-fonts/src/index.js ***!
+  \********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+// Synchronously load TTF fonts.
+// First, have Webpack load their data as Base 64 strings.
+let FONTS;
+const getFonts = function getFonts() {
+  if (FONTS) return FONTS;
+  /* eslint-disable global-require */
+  FONTS = {
+    'Sans Serif': __webpack_require__(/*! base64-loader!./NotoSans-Medium.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/NotoSans-Medium.ttf"),
+    'Serif': __webpack_require__(/*! base64-loader!./SourceSerifPro-Regular.otf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/SourceSerifPro-Regular.otf"),
+    'Handwriting': __webpack_require__(/*! base64-loader!./handlee-regular.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/handlee-regular.ttf"),
+    'Marker': __webpack_require__(/*! base64-loader!./Knewave.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Knewave.ttf"),
+    'Curly': __webpack_require__(/*! base64-loader!./Griffy-Regular.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Griffy-Regular.ttf"),
+    'Pixel': __webpack_require__(/*! base64-loader!./Grand9K-Pixel.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Grand9K-Pixel.ttf"),
+    'Scratch': __webpack_require__(/*! base64-loader!./Scratch.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Scratch.ttf")
+  };
+  /* eslint-enable global-require */
+
+  // For each Base 64 string,
+  // 1. Replace each with a usable @font-face tag that points to a Data URI.
+  // 2. Inject the font into a style on `document.body`, so measurements
+  //    can be accurately taken in SvgRenderer._transformMeasurements.
+  for (const fontName in FONTS) {
+    const fontData = FONTS[fontName];
+    FONTS[fontName] = '@font-face {' + "font-family: \"".concat(fontName, "\";src: url(\"data:application/x-font-ttf;charset=utf-8;base64,").concat(fontData, "\");}");
+  }
+  if (!document.getElementById('scratch-font-styles')) {
+    const documentStyleTag = document.createElement('style');
+    documentStyleTag.id = 'scratch-font-styles';
+    for (const fontName in FONTS) {
+      documentStyleTag.textContent += FONTS[fontName];
+    }
+    document.body.insertBefore(documentStyleTag, document.body.firstChild);
+  }
+  return FONTS;
+};
+module.exports = getFonts;
+
+/***/ }),
+
 /***/ "./src/bitmap-adapter.js":
 /*!*******************************!*\
   !*** ./src/bitmap-adapter.js ***!
@@ -15550,57 +15595,6 @@ logger.write = function(name, level, args) {
 };
 
 module.exports = logger;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render-fonts/src/index.js":
-/*!********************************************************!*\
-  !*** ./node_modules/scratch-render-fonts/src/index.js ***!
-  \********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-// Synchronously load TTF fonts.
-// First, have Webpack load their data as Base 64 strings.
-let FONTS;
-
-const getFonts = function () {
-    if (FONTS) return FONTS;
-    /* eslint-disable global-require */
-    FONTS = {
-        'Sans Serif': __webpack_require__(/*! base64-loader!./NotoSans-Medium.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/NotoSans-Medium.ttf"),
-        'Serif': __webpack_require__(/*! base64-loader!./SourceSerifPro-Regular.otf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/SourceSerifPro-Regular.otf"),
-        'Handwriting': __webpack_require__(/*! base64-loader!./handlee-regular.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/handlee-regular.ttf"),
-        'Marker': __webpack_require__(/*! base64-loader!./Knewave.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Knewave.ttf"),
-        'Curly': __webpack_require__(/*! base64-loader!./Griffy-Regular.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Griffy-Regular.ttf"),
-        'Pixel': __webpack_require__(/*! base64-loader!./Grand9K-Pixel.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Grand9K-Pixel.ttf"),
-        'Scratch': __webpack_require__(/*! base64-loader!./Scratch.ttf */ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Scratch.ttf")
-    };
-    /* eslint-enable global-require */
-
-    // For each Base 64 string,
-    // 1. Replace each with a usable @font-face tag that points to a Data URI.
-    // 2. Inject the font into a style on `document.body`, so measurements
-    //    can be accurately taken in SvgRenderer._transformMeasurements.
-    for (const fontName in FONTS) {
-        const fontData = FONTS[fontName];
-        FONTS[fontName] = '@font-face {' +
-            `font-family: "${fontName}";src: url("data:application/x-font-ttf;charset=utf-8;base64,${fontData}");}`;
-    }
-
-    if (!document.getElementById('scratch-font-styles')) {
-        const documentStyleTag = document.createElement('style');
-        documentStyleTag.id = 'scratch-font-styles';
-        for (const fontName in FONTS) {
-            documentStyleTag.textContent += FONTS[fontName];
-        }
-        document.body.insertBefore(documentStyleTag, document.body.firstChild);
-    }
-
-    return FONTS;
-};
-
-module.exports = getFonts;
-
 
 /***/ }),
 
