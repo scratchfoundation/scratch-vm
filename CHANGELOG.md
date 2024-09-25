@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [4.7.0](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.41...v4.7.0) (2024-09-25)
+
+
+### Bug Fixes
+
+* **deps:** update dependency scratch-l10n to v3.18.319 ([f26ce63](https://github.com/scratchfoundation/scratch-vm/commit/f26ce6384b33937793c59a187dba4a485dabe9bd))
+
+
+### Features
+
+* **deps:** update dependency scratch-webpack-configuration to v1.6.0 ([d01ac57](https://github.com/scratchfoundation/scratch-vm/commit/d01ac57f3c1e5076cf2ea805deaa953b347c75ff))
+
 ## [4.6.41](https://github.com/scratchfoundation/scratch-vm/compare/v4.6.40...v4.6.41) (2024-09-25)
 
 
