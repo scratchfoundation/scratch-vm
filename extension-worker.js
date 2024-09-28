@@ -1156,6 +1156,8 @@ module.exports = logger;
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+(() => {
 /*!***************************************************!*\
   !*** ./src/extension-support/extension-worker.js ***!
   \***************************************************/
@@ -1208,6 +1210,8 @@ const extensionWorker = new ExtensionWorker();
 __webpack_require__.g.Scratch.extensions = {
   register: extensionWorker.register.bind(extensionWorker)
 };
+})();
+
 /******/ 	return __webpack_exports__;
 /******/ })()
 ;
