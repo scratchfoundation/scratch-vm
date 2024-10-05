@@ -122,6 +122,18 @@ test('random - reverse', t => {
 test('join', t => {
     t.strictEqual(blocks.join({STRING1: 'foo', STRING2: 'bar'}), 'foobar');
     t.strictEqual(blocks.join({STRING1: '1', STRING2: '2'}), '12');
+    t.strictEqual(blocks.join({STRING1: '1', STRING2: '2'}), '12');
+    t.end();
+});
+
+test('join result length does not exceed 10240', t => {
+    const sixThousandCharacterString = Array(6000)
+        .fill('a')
+        .join('');
+    t.strictEqual(blocks.join({
+        STRING1: sixThousandCharacterString,
+        STRING2: sixThousandCharacterString
+    }).length, 10240);
     t.end();
 });
 
