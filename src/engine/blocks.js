@@ -886,23 +886,32 @@ class Blocks {
                 typeof e.oldInput !== "undefined" &&
                 oldParent.inputs[e.oldInput].block === e.id
             ) {
-                // This block was connected to the old parent's input. We either
-                // want to restore the shadow block that previously occupied
-                // this input, or set it to null (which `.shadow` will be if
-                // there was no shadow previously)
-                oldParent.inputs[e.oldInput].block =
-                    oldParent.inputs[e.oldInput].shadow;
+                // This block was connected to an input. We either want to
+                // restore the shadow block that previously occupied
+                // this input, or null out the input's block.
+                const shadow = oldParent.inputs[e.oldInput].shadow;
+                if (shadow && e.id !== shadow) {
+                    oldParent.inputs[e.oldInput].block = shadow;
+                    this._blocks[shadow].parent = oldParent.id;
+                } else {
+                    oldParent.inputs[e.oldInput].block = null;
+                    if (e.id !== shadow) {
+                        this._blocks[e.id].parent = null;
+                    }
+                }
             } else if (oldParent.next === e.id) {
                 // This block was connected to the old parent's next connection.
                 oldParent.next = null;
+                this._blocks[e.id].parent = null;
             }
-            this._blocks[e.id].parent = null;
             didChange = true;
         }
 
         // Is this block a top-level block?
         if (typeof e.newParent === "undefined") {
-            this._addScript(e.id);
+            if (!this._blocks[e.id].shadow) {
+                this._addScript(e.id);
+            }
         } else {
             // Remove script, if one exists.
             this._deleteScript(e.id);
