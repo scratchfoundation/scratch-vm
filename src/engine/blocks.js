@@ -770,12 +770,12 @@ class Blocks {
             ) {
                 // This block has an argument which needs to get separated out into
                 // multiple monitor blocks with ids based on the selected argument
+                // Note: we're not just constantly creating a longer and longer id everytime we check
+                // the checkbox because we're using the id of the block in the flyout as the base
                 const newId = getMonitorIdForBlockWithArgs(
                     block.id,
                     block.fields
                 );
-                    // Note: we're not just constantly creating a longer and longer id everytime we check
-                    // the checkbox because we're using the id of the block in the flyout as the base
 
                 // check if a block with the new id already exists, otherwise create
                 let newBlock = this.runtime.monitorBlocks.getBlock(newId);
