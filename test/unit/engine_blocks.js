@@ -23,7 +23,6 @@ test('spec', t => {
     t.type(b.getBlock, 'function');
     t.type(b.getScripts, 'function');
     t.type(b.getNextBlock, 'function');
-    t.type(b.getBranch, 'function');
     t.type(b.getOpcode, 'function');
     t.type(b.mutationToXML, 'function');
     t.type(b.updateSensingOfReference, 'function');
@@ -121,103 +120,6 @@ test('getNextBlock', t => {
     const noBlock = b.getNextBlock('?');
     t.equals(noBlock, null);
 
-    t.end();
-});
-
-test('getBranch', t => {
-    const b = new Blocks(new Runtime());
-    // Single branch
-    b.createBlock({
-        id: 'foo',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {
-            SUBSTACK: {
-                name: 'SUBSTACK',
-                block: 'foo2',
-                shadow: null
-            }
-        },
-        topLevel: true
-    });
-    b.createBlock({
-        id: 'foo2',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {},
-        topLevel: false
-    });
-
-    const branch = b.getBranch('foo');
-    t.equals(branch, 'foo2');
-
-    const notBranch = b.getBranch('?');
-    t.equals(notBranch, null);
-
-    t.end();
-});
-
-test('getBranch2', t => {
-    const b = new Blocks(new Runtime());
-    // Second branch
-    b.createBlock({
-        id: 'foo',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {
-            SUBSTACK: {
-                name: 'SUBSTACK',
-                block: 'foo2',
-                shadow: null
-            },
-            SUBSTACK2: {
-                name: 'SUBSTACK2',
-                block: 'foo3',
-                shadow: null
-            }
-        },
-        topLevel: true
-    });
-    b.createBlock({
-        id: 'foo2',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {},
-        topLevel: false
-    });
-    b.createBlock({
-        id: 'foo3',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {},
-        topLevel: false
-    });
-
-    const branch1 = b.getBranch('foo', 1);
-    const branch2 = b.getBranch('foo', 2);
-    t.equals(branch1, 'foo2');
-    t.equals(branch2, 'foo3');
-
-    t.end();
-});
-
-test('getBranch with none', t => {
-    const b = new Blocks(new Runtime());
-    b.createBlock({
-        id: 'foo',
-        opcode: 'TEST_BLOCK',
-        next: null,
-        fields: {},
-        inputs: {},
-        topLevel: true
-    });
-    const noBranch = b.getBranch('foo');
-    t.equals(noBranch, null);
     t.end();
 });
 

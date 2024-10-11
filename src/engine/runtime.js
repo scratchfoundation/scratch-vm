@@ -8,7 +8,6 @@ const BlocksRuntimeCache = require('./blocks-runtime-cache');
 const BlockType = require('../extension-support/block-type');
 const Profiler = require('./profiler');
 const Sequencer = require('./sequencer');
-const execute = require('./execute.js');
 const ScratchBlocksConstants = require('./scratch-blocks-constants');
 const TargetType = require('../extension-support/target-type');
 const Thread = require('./thread');
@@ -207,7 +206,7 @@ class Runtime extends EventEmitter {
          * These will execute on `_editingTarget.`
          * @type {!Blocks}
          */
-        this.flyoutBlocks = new Blocks(this, true /* force no glow */);
+        this.flyoutBlocks = new Blocks(this, false /* force no glow */);
 
         /**
          * Storage container for monitor blocks.
@@ -244,16 +243,22 @@ class Runtime extends EventEmitter {
         this._hats = {};
 
         /**
-         * A list of script block IDs that were glowing during the previous frame.
-         * @type {!Array.<!string>}
+         * List of all edge-activated hats' opcodes.
+         * @type {Array<string>}
          */
-        this._scriptGlowsPreviousFrame = [];
+        this._edgeActivatedHats = [];
 
         /**
-         * Number of non-monitor threads running during the previous frame.
-         * @type {number}
+         * A list of script block IDs that were glowing during the previous frame.
+         * @type {!Set.<string>}
          */
-        this._nonMonitorThreadCount = 0;
+        this._scriptGlowsPreviousFrame = new Set();
+
+        /**
+         * Whether any non-monitor threads ran during the previous frame.
+         * @type {boolean}
+         */
+        this._projectRanLastFrame = false;
 
         /**
          * All threads that finished running and were removed from this.threads
@@ -758,6 +763,18 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Register a hat block to this runtime.
+     * @param {string} hatOpcode Opcode for the hat block.
+     * @param {{restartExistingThreads: (boolean|undefined), edgeActivated: (boolean|undefined)}} hatMeta Hat metadata.
+     */
+    _addHat (hatOpcode, hatMeta) {
+        this._hats[hatOpcode] = hatMeta;
+        if (hatMeta.edgeActivated) {
+            this._edgeActivatedHats.push(hatOpcode);
+        }
+    }
+
+    /**
      * Register default block packages with this runtime.
      * @todo Prefix opcodes with package name.
      * @private
@@ -771,7 +788,7 @@ class Runtime extends EventEmitter {
                 if (packageObject.getPrimitives) {
                     const packagePrimitives = packageObject.getPrimitives();
                     for (const op in packagePrimitives) {
-                        if (Object.prototype.hasOwnProperty.call(packagePrimitives, op)) {
+                        if (typeof packagePrimitives[op] === 'function') {
                             this._primitives[op] =
                                 packagePrimitives[op].bind(packageObject);
                         }
@@ -782,7 +799,7 @@ class Runtime extends EventEmitter {
                     const packageHats = packageObject.getHats();
                     for (const hatName in packageHats) {
                         if (Object.prototype.hasOwnProperty.call(packageHats, hatName)) {
-                            this._hats[hatName] = packageHats[hatName];
+                            this._addHat(hatName, packageHats[hatName]);
                         }
                     }
                 }
@@ -925,10 +942,10 @@ class Runtime extends EventEmitter {
                         this._primitives[opcode] = convertedBlock.info.func;
                     }
                     if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
-                        this._hats[opcode] = {
+                        this._addHat(opcode, {
                             edgeActivated: blockInfo.isEdgeActivated,
                             restartExistingThreads: blockInfo.shouldRestartExistingThreads
-                        };
+                        });
                     }
                 }
             } catch (e) {
@@ -1644,67 +1661,33 @@ class Runtime extends EventEmitter {
      * @param {?object} opts optional arguments
      * @param {?boolean} opts.stackClick true if the script was activated by clicking on the stack
      * @param {?boolean} opts.updateMonitor true if the script should update a monitor value
-     * @return {!Thread} The newly created thread.
+     * @return {?Thread} The newly created thread, if the top block exists.
      */
     _pushThread (id, target, opts) {
+        const updateMonitor = Boolean(opts && opts.updateMonitor);
+
+        // If no top block can be found, don't try to start the thread.
+        let blockContainer;
+        if (updateMonitor) {
+            if (!this.monitorBlocks.getBlock(id)) return null;
+            blockContainer = this.monitorBlocks;
+        } else {
+            // Fall back to flyout blocks if the target blocks don't contain the block ID.
+            blockContainer = target.blocks;
+            if (!target.blocks.getBlock(id)) {
+                if (!this.flyoutBlocks.getBlock(id)) return null;
+                blockContainer = this.flyoutBlocks;
+            }
+        }
+
         const thread = new Thread(id);
         thread.target = target;
         thread.stackClick = Boolean(opts && opts.stackClick);
-        thread.updateMonitor = Boolean(opts && opts.updateMonitor);
-        thread.blockContainer = thread.updateMonitor ?
-            this.monitorBlocks :
-            target.blocks;
+        thread.updateMonitor = updateMonitor;
+        thread.blockContainer = blockContainer;
 
-        thread.pushStack(id);
         this.threads.push(thread);
         return thread;
-    }
-
-    /**
-     * Stop a thread: stop running it immediately, and remove it from the thread list later.
-     * @param {!Thread} thread Thread object to remove from actives
-     */
-    _stopThread (thread) {
-        // Mark the thread for later removal
-        thread.isKilled = true;
-        // Inform sequencer to stop executing that thread.
-        this.sequencer.retireThread(thread);
-    }
-
-    /**
-     * Restart a thread in place, maintaining its position in the list of threads.
-     * This is used by `startHats` to and is necessary to ensure 2.0-like execution order.
-     * Test project: https://scratch.mit.edu/projects/130183108/
-     * @param {!Thread} thread Thread object to restart.
-     * @return {Thread} The restarted thread.
-     */
-    _restartThread (thread) {
-        const newThread = new Thread(thread.topBlock);
-        newThread.target = thread.target;
-        newThread.stackClick = thread.stackClick;
-        newThread.updateMonitor = thread.updateMonitor;
-        newThread.blockContainer = thread.blockContainer;
-        newThread.pushStack(thread.topBlock);
-        const i = this.threads.indexOf(thread);
-        if (i > -1) {
-            this.threads[i] = newThread;
-            return newThread;
-        }
-        this.threads.push(thread);
-        return thread;
-    }
-
-    /**
-     * Return whether a thread is currently active/running.
-     * @param {?Thread} thread Thread object to check.
-     * @return {boolean} True if the thread is active/running.
-     */
-    isActiveThread (thread) {
-        return (
-            (
-                thread.stack.length > 0 &&
-                thread.status !== Thread.STATUS_DONE) &&
-            this.threads.indexOf(thread) > -1);
     }
 
     /**
@@ -1716,7 +1699,7 @@ class Runtime extends EventEmitter {
         return (
             thread.status === Thread.STATUS_PROMISE_WAIT ||
             thread.status === Thread.STATUS_YIELD_TICK ||
-            !this.isActiveThread(thread)
+            thread.status === Thread.STATUS_DONE
         );
     }
 
@@ -1745,67 +1728,12 @@ class Runtime extends EventEmitter {
                     // edge activated hat thread that runs every frame
                     continue;
                 }
-                this._stopThread(this.threads[i]);
+                this.threads[i].retire();
                 return;
             }
         }
         // Otherwise add it.
         this._pushThread(topBlockId, opts.target, opts);
-    }
-
-    /**
-     * Enqueue a script that when finished will update the monitor for the block.
-     * @param {!string} topBlockId ID of block that starts the script.
-     * @param {?Target} optTarget target Target to run script on. If not supplied, uses editing target.
-     */
-    addMonitorScript (topBlockId, optTarget) {
-        if (!optTarget) optTarget = this._editingTarget;
-        for (let i = 0; i < this.threads.length; i++) {
-            // Don't re-add the script if it's already running
-            if (this.threads[i].topBlock === topBlockId && this.threads[i].status !== Thread.STATUS_DONE &&
-                    this.threads[i].updateMonitor) {
-                return;
-            }
-        }
-        // Otherwise add it.
-        this._pushThread(topBlockId, optTarget, {updateMonitor: true});
-    }
-
-    /**
-     * Run a function `f` for all scripts in a workspace.
-     * `f` will be called with two parameters:
-     *  - the top block ID of the script.
-     *  - the target that owns the script.
-     * @param {!Function} f Function to call for each script.
-     * @param {Target=} optTarget Optionally, a target to restrict to.
-     */
-    allScriptsDo (f, optTarget) {
-        let targets = this.executableTargets;
-        if (optTarget) {
-            targets = [optTarget];
-        }
-        for (let t = targets.length - 1; t >= 0; t--) {
-            const target = targets[t];
-            const scripts = target.blocks.getScripts();
-            for (let j = 0; j < scripts.length; j++) {
-                const topBlockId = scripts[j];
-                f(topBlockId, target);
-            }
-        }
-    }
-
-    allScriptsByOpcodeDo (opcode, f, optTarget) {
-        let targets = this.executableTargets;
-        if (optTarget) {
-            targets = [optTarget];
-        }
-        for (let t = targets.length - 1; t >= 0; t--) {
-            const target = targets[t];
-            const scripts = BlocksRuntimeCache.getScripts(target.blocks, opcode);
-            for (let j = 0; j < scripts.length; j++) {
-                f(scripts[j], target);
-            }
-        }
     }
 
     /**
@@ -1821,10 +1749,9 @@ class Runtime extends EventEmitter {
             // No known hat with this opcode.
             return;
         }
-        const instance = this;
         const newThreads = [];
         // Look up metadata for the relevant hat.
-        const hatMeta = instance._hats[requestedHatOpcode];
+        const hatMeta = this._hats[requestedHatOpcode];
 
         for (const opts in optMatchFields) {
             if (!Object.prototype.hasOwnProperty.call(optMatchFields, opts)) continue;
@@ -1832,59 +1759,79 @@ class Runtime extends EventEmitter {
         }
 
         // Consider all scripts, looking for hats with opcode `requestedHatOpcode`.
-        this.allScriptsByOpcodeDo(requestedHatOpcode, (script, target) => {
-            const {
-                blockId: topBlockId,
-                fieldsOfInputs: hatFields
-            } = script;
+        const targets = optTarget ? [optTarget] : this.executableTargets;
+        for (let t = targets.length - 1; t >= 0; t--) {
+            const target = targets[t];
+            const scripts = BlocksRuntimeCache.getScripts(target.blocks, requestedHatOpcode);
+            eachScript:
+            for (let s = 0; s < scripts.length; s++) {
+                const {
+                    blockId: topBlockId,
+                    fields: hatFields
+                } = scripts[s];
 
-            // Match any requested fields.
-            // For example: ensures that broadcasts match.
-            // This needs to happen before the block is evaluated
-            // (i.e., before the predicate can be run) because "broadcast and wait"
-            // needs to have a precise collection of started threads.
-            for (const matchField in optMatchFields) {
-                if (hatFields[matchField].value !== optMatchFields[matchField]) {
-                    // Field mismatch.
-                    return;
-                }
-            }
-
-            if (hatMeta.restartExistingThreads) {
-                // If `restartExistingThreads` is true, we should stop
-                // any existing threads starting with the top block.
-                for (let i = 0; i < this.threads.length; i++) {
-                    if (this.threads[i].target === target &&
-                        this.threads[i].topBlock === topBlockId &&
-                        // stack click threads and hat threads can coexist
-                        !this.threads[i].stackClick) {
-                        newThreads.push(this._restartThread(this.threads[i]));
-                        return;
+                // Match any requested fields.
+                // For example: ensures that broadcasts match.
+                // This needs to happen before the block is evaluated
+                // (i.e., before the predicate can be run) because "broadcast and wait"
+                // needs to have a precise collection of started threads.
+                for (const matchField in optMatchFields) {
+                    if (hatFields[matchField].value !== optMatchFields[matchField]) {
+                        // Field mismatch.
+                        continue eachScript;
                     }
                 }
-            } else {
-                // If `restartExistingThreads` is false, we should
-                // give up if any threads with the top block are running.
-                for (let j = 0; j < this.threads.length; j++) {
-                    if (this.threads[j].target === target &&
-                        this.threads[j].topBlock === topBlockId &&
-                        // stack click threads and hat threads can coexist
-                        !this.threads[j].stackClick &&
-                        this.threads[j].status !== Thread.STATUS_DONE) {
-                        // Some thread is already running.
-                        return;
+
+                if (hatMeta.restartExistingThreads) {
+                    // If `restartExistingThreads` is true, we should stop
+                    // any existing threads starting with the top block.
+                    for (let i = 0; i < this.threads.length; i++) {
+                        const thread = this.threads[i];
+                        if (thread.target === target &&
+                            thread.topBlock === topBlockId &&
+                            // stack click threads and hat threads can coexist
+                            !thread.stackClick) {
+                            thread.restart();
+                            newThreads.push(thread);
+                            continue eachScript;
+                        }
+                    }
+                } else {
+                    // If `restartExistingThreads` is false, we should
+                    // give up if any threads with the top block are running.
+                    for (let j = 0; j < this.threads.length; j++) {
+                        if (this.threads[j].target === target &&
+                            this.threads[j].topBlock === topBlockId &&
+                            // stack click threads and hat threads can coexist
+                            !this.threads[j].stackClick &&
+                            this.threads[j].status !== Thread.STATUS_DONE) {
+                            // Some thread is already running.
+                            continue eachScript;
+                        }
                     }
                 }
+
+                // Start the thread with this top block.
+                const thread = this._pushThread(topBlockId, target);
+                if (thread) newThreads.push(thread);
             }
-            // Start the thread with this top block.
-            newThreads.push(this._pushThread(topBlockId, target));
-        }, optTarget);
-        // For compatibility with Scratch 2, edge triggered hats need to be processed before
-        // threads are stepped. See ScratchRuntime.as for original implementation
-        newThreads.forEach(thread => {
-            execute(this.sequencer, thread);
-            thread.goToNextBlock();
-        });
+        }
+
+        // For compatibility with Scratch 2, edge-activated hats need to be processed before threads are
+        // stepped. See ScratchRuntime.as for original implementation.
+        // Note that *only* edge-activated hats should be stepped--"broadcast and wait", for example, expects
+        // empty "when I receive" stacks to take one tick to execute.
+        if (this.getIsEdgeActivatedHat(requestedHatOpcode)) {
+            newThreads.forEach(thread => {
+                this.sequencer.stepOnce(thread);
+                // Change YIELD to RUNNING, so that these threads will be run again in stepThreads.
+                // Otherwise, they would be stuck in STATUS_YIELD forever.
+                if (thread.status === Thread.STATUS_YIELD) {
+                    thread.status = Thread.STATUS_RUNNING;
+                }
+            });
+        }
+
         return newThreads;
     }
 
@@ -2018,7 +1965,7 @@ class Runtime extends EventEmitter {
                 continue;
             }
             if (this.threads[i].target === target) {
-                this._stopThread(this.threads[i]);
+                this.threads[i].retire();
             }
         }
     }
@@ -2070,10 +2017,6 @@ class Runtime extends EventEmitter {
             }
         }
         this.targets = newTargets;
-        // Dispose of the active thread.
-        if (this.sequencer.activeThread !== null) {
-            this._stopThread(this.sequencer.activeThread);
-        }
         // Remove all remaining threads from executing in the next tick.
         this.threads = [];
 
@@ -2092,16 +2035,9 @@ class Runtime extends EventEmitter {
             this.profiler.start(stepProfilerId);
         }
 
-        // Clean up threads that were told to stop during or since the last step
-        this.threads = this.threads.filter(thread => !thread.isKilled);
-
         // Find all edge-activated hats, and add them to threads to be evaluated.
-        for (const hatType in this._hats) {
-            if (!Object.prototype.hasOwnProperty.call(this._hats, hatType)) continue;
-            const hat = this._hats[hatType];
-            if (hat.edgeActivated) {
-                this.startHats(hatType);
-            }
+        for (const hatOpcode of this._edgeActivatedHats) {
+            this.startHats(hatOpcode);
         }
         this.redrawRequested = false;
         this._pushMonitors();
@@ -2116,11 +2052,12 @@ class Runtime extends EventEmitter {
             this.profiler.stop();
         }
         this._updateGlows(doneThreads);
+
+        const threadNonMonitor = thread => !thread.updateMonitor;
         // Add done threads so that even if a thread finishes within 1 frame, the green
         // flag will still indicate that a script ran.
-        this._emitProjectRunStatus(
-            this.threads.length + doneThreads.length -
-                this._getMonitorThreadCount([...this.threads, ...doneThreads]));
+        const anyNonMonitorThreadsRunning = this.threads.some(threadNonMonitor) || doneThreads.some(threadNonMonitor);
+        this._emitProjectRunStatus(anyNonMonitorThreadsRunning);
         // Store threads that completed this iteration for testing and other
         // internal purposes.
         this._lastStepDoneThreads = doneThreads;
@@ -2155,24 +2092,24 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Get the number of threads in the given array that are monitor threads (threads
-     * that update monitor values, and don't count as running a script).
-     * @param {!Array.<Thread>} threads The set of threads to look through.
-     * @return {number} The number of monitor threads in threads.
-     */
-    _getMonitorThreadCount (threads) {
-        let count = 0;
-        threads.forEach(thread => {
-            if (thread.updateMonitor) count++;
-        });
-        return count;
-    }
-
-    /**
      * Queue monitor blocks to sequencer to be run.
      */
     _pushMonitors () {
-        this.monitorBlocks.runAllMonitored(this);
+        const monitored = this.monitorBlocks.getMonitored();
+        allMonitors:
+        for (let i = 0; i < monitored.length; i++) {
+            let {blockId, target} = monitored[i];
+            if (!target) target = this._editingTarget;
+
+            for (let j = 0; j < this.threads.length; j++) {
+                // Don't re-add the script if it's already running
+                if (this.threads[j].topBlock === blockId && this.threads[j].updateMonitor) {
+                    continue allMonitors;
+                }
+            }
+            // Otherwise add it.
+            this._pushThread(blockId, target, {updateMonitor: true});
+        }
     }
 
     /**
@@ -2183,7 +2120,7 @@ class Runtime extends EventEmitter {
         const oldEditingTarget = this._editingTarget;
         this._editingTarget = editingTarget;
         // Script glows must be cleared.
-        this._scriptGlowsPreviousFrame = [];
+        this._scriptGlowsPreviousFrame = new Set();
         this._updateGlows();
 
         if (oldEditingTarget !== this._editingTarget) {
@@ -2216,65 +2153,56 @@ class Runtime extends EventEmitter {
             searchThreads.push(...optExtraThreads);
         }
         // Set of scripts that request a glow this frame.
-        const requestedGlowsThisFrame = [];
+        const requestedGlowsThisFrame = new Set();
         // Final set of scripts glowing during this frame.
-        const finalScriptGlows = [];
+        const finalScriptGlows = new Set();
         // Find all scripts that should be glowing.
         for (let i = 0; i < searchThreads.length; i++) {
             const thread = searchThreads[i];
             const target = thread.target;
-            if (target === this._editingTarget) {
-                const blockForThread = thread.blockGlowInFrame;
-                if (thread.requestScriptGlowInFrame || thread.stackClick) {
-                    let script = target.blocks.getTopLevelScript(blockForThread);
-                    if (!script) {
-                        // Attempt to find in flyout blocks.
-                        script = this.flyoutBlocks.getTopLevelScript(
-                            blockForThread
-                        );
-                    }
-                    if (script) {
-                        requestedGlowsThisFrame.push(script);
-                    }
-                }
-            }
+            if (target !== this._editingTarget) continue;
+
+            const blockForThread = thread.blockGlowInFrame;
+            if (blockForThread === null) continue;
+
+            const blockContainer = thread.blockContainer;
+            const script = blockContainer.getTopLevelScript(blockForThread);
+
+            if (!script || blockContainer.forceNoGlow) continue;
+            requestedGlowsThisFrame.add(script);
         }
         // Compare to previous frame.
-        for (let j = 0; j < this._scriptGlowsPreviousFrame.length; j++) {
-            const previousFrameGlow = this._scriptGlowsPreviousFrame[j];
-            if (requestedGlowsThisFrame.indexOf(previousFrameGlow) < 0) {
+        for (const previousFrameGlow of this._scriptGlowsPreviousFrame.values()) {
+            if (requestedGlowsThisFrame.has(previousFrameGlow)) {
+                // Still glowing.
+                finalScriptGlows.add(previousFrameGlow);
+            } else {
                 // Glow turned off.
                 this.glowScript(previousFrameGlow, false);
-            } else {
-                // Still glowing.
-                finalScriptGlows.push(previousFrameGlow);
             }
         }
-        for (let k = 0; k < requestedGlowsThisFrame.length; k++) {
-            const currentFrameGlow = requestedGlowsThisFrame[k];
-            if (this._scriptGlowsPreviousFrame.indexOf(currentFrameGlow) < 0) {
+        for (const currentFrameGlow of requestedGlowsThisFrame.values()) {
+            if (!this._scriptGlowsPreviousFrame.has(currentFrameGlow)) {
                 // Glow turned on.
                 this.glowScript(currentFrameGlow, true);
-                finalScriptGlows.push(currentFrameGlow);
+                finalScriptGlows.add(currentFrameGlow);
             }
         }
         this._scriptGlowsPreviousFrame = finalScriptGlows;
     }
 
     /**
-     * Emit run start/stop after each tick. Emits when `this.threads.length` goes
-     * between non-zero and zero
-     *
-     * @param {number} nonMonitorThreadCount The new nonMonitorThreadCount
+     * Emit run start/stop after each tick. Emits when `this.threads.length` goes between non-zero and zero
+     * @param {boolean} projectRunning Whether the project is running (threads.length > 0)
      */
-    _emitProjectRunStatus (nonMonitorThreadCount) {
-        if (this._nonMonitorThreadCount === 0 && nonMonitorThreadCount > 0) {
+    _emitProjectRunStatus (projectRunning) {
+        if (!this._projectRanLastFrame && projectRunning) {
             this.emit(Runtime.PROJECT_RUN_START);
         }
-        if (this._nonMonitorThreadCount > 0 && nonMonitorThreadCount === 0) {
+        if (this._projectRanLastFrame && !projectRunning) {
             this.emit(Runtime.PROJECT_RUN_STOP);
         }
-        this._nonMonitorThreadCount = nonMonitorThreadCount;
+        this._projectRanLastFrame = projectRunning;
     }
 
     /**
@@ -2284,10 +2212,7 @@ class Runtime extends EventEmitter {
      * @param {!string} scriptBlockId Id of top-level block in script to quiet.
      */
     quietGlow (scriptBlockId) {
-        const index = this._scriptGlowsPreviousFrame.indexOf(scriptBlockId);
-        if (index > -1) {
-            this._scriptGlowsPreviousFrame.splice(index, 1);
-        }
+        this._scriptGlowsPreviousFrame.delete(scriptBlockId);
     }
 
     /**

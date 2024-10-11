@@ -48,11 +48,6 @@ class Blocks {
         Object.defineProperty(this, '_cache', {writable: true, enumerable: false});
         this._cache = {
             /**
-             * Cache block inputs by block id
-             * @type {object.<string, !Array.<object>>}
-             */
-            inputs: {},
-            /**
              * Cache procedure Param Names by block id
              * @type {object.<string, ?Array.<string>>}
              */
@@ -133,27 +128,6 @@ class Blocks {
     }
 
     /**
-     * Get the branch for a particular C-shaped block.
-     * @param {?string} id ID for block to get the branch for.
-     * @param {?number} branchNum Which branch to select (e.g. for if-else).
-     * @return {?string} ID of block in the branch.
-     */
-    getBranch (id, branchNum) {
-        const block = this._blocks[id];
-        if (typeof block === 'undefined') return null;
-        if (!branchNum) branchNum = 1;
-
-        let inputName = Blocks.BRANCH_INPUT_PREFIX;
-        if (branchNum > 1) {
-            inputName += branchNum;
-        }
-
-        // Empty C-block?
-        const input = block.inputs[inputName];
-        return (typeof input === 'undefined') ? null : input.block;
-    }
-
-    /**
      * Get the opcode for a particular block
      * @param {?object} block The block to query
      * @return {?string} the opcode corresponding to that block
@@ -172,27 +146,18 @@ class Blocks {
     }
 
     /**
-     * Get all non-branch inputs for a block.
+     * Get all inputs for a block.
      * @param {?object} block the block to query.
-     * @return {?Array.<object>} All non-branch inputs and their associated blocks.
+     * @return {?Array.<object>} All inputs and their associated blocks.
      */
     getInputs (block) {
         if (typeof block === 'undefined') return null;
-        let inputs = this._cache.inputs[block.id];
-        if (typeof inputs !== 'undefined') {
-            return inputs;
-        }
 
-        inputs = {};
+        const inputs = {};
         for (const input in block.inputs) {
-            // Ignore blocks prefixed with branch prefix.
-            if (input.substring(0, Blocks.BRANCH_INPUT_PREFIX.length) !==
-                Blocks.BRANCH_INPUT_PREFIX) {
-                inputs[input] = block.inputs[input];
-            }
+            inputs[input] = block.inputs[input];
         }
 
-        this._cache.inputs[block.id] = inputs;
         return inputs;
     }
 
@@ -213,7 +178,7 @@ class Blocks {
     getTopLevelScript (id) {
         let block = this._blocks[id];
         if (typeof block === 'undefined') return null;
-        while (block.parent !== null) {
+        while (block.parent) {
             block = this._blocks[block.parent];
         }
         return block.id;
@@ -512,7 +477,6 @@ class Blocks {
      * Reset all runtime caches.
      */
     resetCache () {
-        this._cache.inputs = {};
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
         this._cache._executeCached = {};
@@ -764,12 +728,12 @@ class Blocks {
         if (didChange) this.emitProjectChanged();
     }
 
-
     /**
-     * Block management: run all blocks.
-     * @param {!object} runtime Runtime to run all blocks in.
+     * Get all monitored blocks in this container.
+     * @returns {Array<{blockId: string, target: Target}>} A list of monitored blocks and their corresponding targets
+     * (e.g. for monitors of sprite-local variables).
      */
-    runAllMonitored (runtime) {
+    getMonitored () {
         if (this._cache._monitored === null) {
             this._cache._monitored = Object.keys(this._blocks)
                 .filter(blockId => this.getBlock(blockId).isMonitored)
@@ -777,16 +741,11 @@ class Blocks {
                     const targetId = this.getBlock(blockId).targetId;
                     return {
                         blockId,
-                        target: targetId ? runtime.getTargetById(targetId) : null
+                        target: targetId ? this.runtime.getTargetById(targetId) : null
                     };
                 });
         }
-
-        const monitored = this._cache._monitored;
-        for (let i = 0; i < monitored.length; i++) {
-            const {blockId, target} = monitored[i];
-            runtime.addMonitorScript(blockId, target);
-        }
+        return this._cache._monitored;
     }
 
     /**
@@ -1232,9 +1191,11 @@ class Blocks {
  * @param {Blocks} blocks Blocks containing the expected blockId
  * @param {string} blockId blockId for the desired execute cache
  * @param {function} CacheType constructor for cached block information
+ * @param {boolean} topLevel True if the block is top-level (not nested in
+ * another block). Defaults to false.
  * @return {object} execute cache object
  */
-BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
+BlocksExecuteCache.getCached = function (blocks, blockId, CacheType, topLevel = false) {
     let cached = blocks._cache._executeCached[blockId];
     if (typeof cached !== 'undefined') {
         return cached;
@@ -1243,23 +1204,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     const block = blocks.getBlock(blockId);
     if (typeof block === 'undefined') return null;
 
-    if (typeof CacheType === 'undefined') {
-        cached = {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        };
-    } else {
-        cached = new CacheType(blocks, {
-            id: blockId,
-            opcode: blocks.getOpcode(block),
-            fields: blocks.getFields(block),
-            inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block)
-        });
-    }
+    cached = new CacheType(blocks, block, topLevel /* topLevel */);
 
     blocks._cache._executeCached[blockId] = cached;
     return cached;

@@ -60,11 +60,7 @@ class BlockUtility {
      * @type {object}
      */
     get stackFrame () {
-        const frame = this.thread.peekStackFrame();
-        if (frame.executionContext === null) {
-            frame.executionContext = {};
-        }
-        return frame.executionContext;
+        return this.thread.getExecutionContext();
     }
 
     /**
@@ -116,18 +112,41 @@ class BlockUtility {
     }
 
     /**
+     * Yield until the given threads have finished running.
+     * @param {Array<Thread>} threads The threads to wait on.
+     */
+    waitForThreads (threads) {
+        // Scratch 2 considers threads to be waiting if they are still in runtime.threads. Threads that have run all
+        // their blocks, or are marked done but still in runtime.threads, are still considered to be waiting.
+        const waiting = threads.some(thread => this.runtime.threads.indexOf(thread) !== -1);
+        if (waiting) {
+            // If all threads are waiting for the next tick or later, yield for a tick as well. Otherwise, yield until
+            // the next loop over the threads.
+            if (threads.every(thread => this.runtime.isWaitingThread(thread))
+            ) {
+                this.yieldTick();
+            } else {
+                this.yield();
+            }
+        }
+    }
+
+    /**
      * Start a branch in the current block.
-     * @param {number} branchNum Which branch to step to (i.e., 1, 2).
+     * @param {?string} branchID ID of the first block in the branch, or null/undefined if the branch is empty.
      * @param {boolean} isLoop Whether this block is a loop.
      */
-    startBranch (branchNum, isLoop) {
-        this.sequencer.stepToBranch(this.thread, branchNum, isLoop);
+    startBranch (branchID, isLoop) {
+        this.sequencer.stepToBranch(this.thread, branchID, isLoop);
     }
 
     /**
      * Stop all threads.
      */
     stopAll () {
+        // Stop the currently running thread without considering any further blocks.
+        this.thread.retire();
+        // Allow remaining threads to execute for one more tick.
         this.sequencer.runtime.stopAll();
     }
 
