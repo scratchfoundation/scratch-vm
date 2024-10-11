@@ -31,7 +31,7 @@ class Comment {
     toXML () {
         return `<comment id="${this.id}" x="${this.x}" y="${
             this.y}" w="${this.width}" h="${this.height}" pinned="${
-            this.blockId !== null}" minimized="${this.minimized}">${xmlEscape(this.text)}</comment>`;
+            !this.minimized}" collapsed="${this.minimized}">${xmlEscape(this.text)}</comment>`;
     }
 
     // TODO choose min and defaults for width and height
