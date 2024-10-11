@@ -1,14 +1,14 @@
-const adapter = require("./adapter");
-const mutationAdapter = require("./mutation-adapter");
-const xmlEscape = require("../util/xml-escape");
-const MonitorRecord = require("./monitor-record");
-const Clone = require("../util/clone");
-const { Map } = require("immutable");
-const BlocksExecuteCache = require("./blocks-execute-cache");
-const BlocksRuntimeCache = require("./blocks-runtime-cache");
-const log = require("../util/log");
-const Variable = require("./variable");
-const getMonitorIdForBlockWithArgs = require("../util/get-monitor-id");
+const adapter = require('./adapter');
+const mutationAdapter = require('./mutation-adapter');
+const xmlEscape = require('../util/xml-escape');
+const MonitorRecord = require('./monitor-record');
+const Clone = require('../util/clone');
+const {Map} = require('immutable');
+const BlocksExecuteCache = require('./blocks-execute-cache');
+const BlocksRuntimeCache = require('./blocks-runtime-cache');
+const log = require('../util/log');
+const Variable = require('./variable');
+const getMonitorIdForBlockWithArgs = require('../util/get-monitor-id');
 
 /**
  * @fileoverview
@@ -23,7 +23,7 @@ const getMonitorIdForBlockWithArgs = require("../util/get-monitor-id");
  * should not request glows. This does not affect glows when clicking on a block to execute it.
  */
 class Blocks {
-    constructor(runtime, optNoGlow) {
+    constructor (runtime, optNoGlow) {
         this.runtime = runtime;
 
         /**
@@ -45,9 +45,9 @@ class Blocks {
          * @type {{inputs: {}, procedureParamNames: {}, procedureDefinitions: {}}}
          * @private
          */
-        Object.defineProperty(this, "_cache", {
+        Object.defineProperty(this, '_cache', {
             writable: true,
-            enumerable: false,
+            enumerable: false
         });
         this._cache = {
             /**
@@ -84,7 +84,7 @@ class Blocks {
              * A cache of hat opcodes to collection of theads to execute.
              * @type {object.<string, object>}
              */
-            scripts: {},
+            scripts: {}
         };
 
         /**
@@ -104,8 +104,8 @@ class Blocks {
      * are prefixed with this string.
      * @const{string}
      */
-    static get BRANCH_INPUT_PREFIX() {
-        return "SUBSTACK";
+    static get BRANCH_INPUT_PREFIX () {
+        return 'SUBSTACK';
     }
 
     /**
@@ -113,7 +113,7 @@ class Blocks {
      * @param {!string} blockId ID of block we have stored.
      * @return {?object} Metadata about the block, if it exists.
      */
-    getBlock(blockId) {
+    getBlock (blockId) {
         return this._blocks[blockId];
     }
 
@@ -121,7 +121,7 @@ class Blocks {
      * Get all known top-level blocks that start scripts.
      * @return {Array.<string>} List of block IDs.
      */
-    getScripts() {
+    getScripts () {
         return this._scripts;
     }
 
@@ -130,9 +130,9 @@ class Blocks {
      * @param {?string} id ID of block to get the next block for
      * @return {?string} ID of next block in the sequence
      */
-    getNextBlock(id) {
+    getNextBlock (id) {
         const block = this._blocks[id];
-        return typeof block === "undefined" ? null : block.next;
+        return typeof block === 'undefined' ? null : block.next;
     }
 
     /**
@@ -141,9 +141,9 @@ class Blocks {
      * @param {?number} branchNum Which branch to select (e.g. for if-else).
      * @return {?string} ID of block in the branch.
      */
-    getBranch(id, branchNum) {
+    getBranch (id, branchNum) {
         const block = this._blocks[id];
-        if (typeof block === "undefined") return null;
+        if (typeof block === 'undefined') return null;
         if (!branchNum) branchNum = 1;
 
         let inputName = Blocks.BRANCH_INPUT_PREFIX;
@@ -153,7 +153,7 @@ class Blocks {
 
         // Empty C-block?
         const input = block.inputs[inputName];
-        return typeof input === "undefined" ? null : input.block;
+        return typeof input === 'undefined' ? null : input.block;
     }
 
     /**
@@ -161,8 +161,8 @@ class Blocks {
      * @param {?object} block The block to query
      * @return {?string} the opcode corresponding to that block
      */
-    getOpcode(block) {
-        return typeof block === "undefined" ? null : block.opcode;
+    getOpcode (block) {
+        return typeof block === 'undefined' ? null : block.opcode;
     }
 
     /**
@@ -170,8 +170,8 @@ class Blocks {
      * @param {?object} block The block to query.
      * @return {?object} All fields and their values.
      */
-    getFields(block) {
-        return typeof block === "undefined" ? null : block.fields;
+    getFields (block) {
+        return typeof block === 'undefined' ? null : block.fields;
     }
 
     /**
@@ -179,10 +179,10 @@ class Blocks {
      * @param {?object} block the block to query.
      * @return {?Array.<object>} All non-branch inputs and their associated blocks.
      */
-    getInputs(block) {
-        if (typeof block === "undefined") return null;
+    getInputs (block) {
+        if (typeof block === 'undefined') return null;
         let inputs = this._cache.inputs[block.id];
-        if (typeof inputs !== "undefined") {
+        if (typeof inputs !== 'undefined') {
             return inputs;
         }
 
@@ -206,8 +206,8 @@ class Blocks {
      * @param {?object} block The block to query.
      * @return {?object} Mutation for the block.
      */
-    getMutation(block) {
-        return typeof block === "undefined" ? null : block.mutation;
+    getMutation (block) {
+        return typeof block === 'undefined' ? null : block.mutation;
     }
 
     /**
@@ -215,9 +215,9 @@ class Blocks {
      * @param {?string} id ID of block to query.
      * @return {?string} ID of top-level script block.
      */
-    getTopLevelScript(id) {
+    getTopLevelScript (id) {
         let block = this._blocks[id];
-        if (typeof block === "undefined") return null;
+        if (typeof block === 'undefined') return null;
         while (block.parent !== null) {
             block = this._blocks[block.parent];
         }
@@ -229,17 +229,18 @@ class Blocks {
      * @param {?string} name Name of procedure to query.
      * @return {?string} ID of procedure definition.
      */
-    getProcedureDefinition(name) {
+    getProcedureDefinition (name) {
         const blockID = this._cache.procedureDefinitions[name];
-        if (typeof blockID !== "undefined") {
+        if (typeof blockID !== 'undefined') {
             return blockID;
         }
 
         for (const id in this._blocks) {
-            if (!Object.prototype.hasOwnProperty.call(this._blocks, id))
+            if (!Object.prototype.hasOwnProperty.call(this._blocks, id)) {
                 continue;
+            }
             const block = this._blocks[id];
-            if (block.opcode === "procedures_definition") {
+            if (block.opcode === 'procedures_definition') {
                 const internal = this._getCustomBlockInternal(block);
                 if (internal && internal.mutation.proccode === name) {
                     this._cache.procedureDefinitions[name] = id; // The outer define block id
@@ -257,7 +258,7 @@ class Blocks {
      * @param {?string} name Name of procedure to query.
      * @return {?Array.<string>} List of param names for a procedure.
      */
-    getProcedureParamNamesAndIds(name) {
+    getProcedureParamNamesAndIds (name) {
         return this.getProcedureParamNamesIdsAndDefaults(name).slice(0, 2);
     }
 
@@ -266,18 +267,19 @@ class Blocks {
      * @param {?string} name Name of procedure to query.
      * @return {?Array.<string>} List of param names for a procedure.
      */
-    getProcedureParamNamesIdsAndDefaults(name) {
+    getProcedureParamNamesIdsAndDefaults (name) {
         const cachedNames = this._cache.procedureParamNames[name];
-        if (typeof cachedNames !== "undefined") {
+        if (typeof cachedNames !== 'undefined') {
             return cachedNames;
         }
 
         for (const id in this._blocks) {
-            if (!Object.prototype.hasOwnProperty.call(this._blocks, id))
+            if (!Object.prototype.hasOwnProperty.call(this._blocks, id)) {
                 continue;
+            }
             const block = this._blocks[id];
             if (
-                block.opcode === "procedures_prototype" &&
+                block.opcode === 'procedures_prototype' &&
                 block.mutation.proccode === name
             ) {
                 const names = JSON.parse(block.mutation.argumentnames);
@@ -293,7 +295,7 @@ class Blocks {
         return null;
     }
 
-    duplicate() {
+    duplicate () {
         const newBlocks = new Blocks(this.runtime, this.forceNoGlow);
         newBlocks._blocks = Clone.simple(this._blocks);
         newBlocks._scripts = Clone.simple(this._scripts);
@@ -307,13 +309,13 @@ class Blocks {
      * runtime interface.
      * @param {object} e Blockly "block" or "variable" event
      */
-    blocklyListen(e) {
+    blocklyListen (e) {
         // Validate event
-        if (typeof e !== "object") return;
+        if (typeof e !== 'object') return;
         if (
-            typeof e.blockId !== "string" &&
-            typeof e.varId !== "string" &&
-            typeof e.commentId !== "string"
+            typeof e.blockId !== 'string' &&
+            typeof e.varId !== 'string' &&
+            typeof e.commentId !== 'string'
         ) {
             return;
         }
@@ -322,315 +324,315 @@ class Blocks {
 
         // Block create/update/destroy
         switch (e.type) {
-            case "create": {
-                const newBlocks = adapter(e);
-                // A create event can create many blocks. Add them all.
-                for (let i = 0; i < newBlocks.length; i++) {
-                    this.createBlock(newBlocks[i]);
-                }
-                break;
+        case 'create': {
+            const newBlocks = adapter(e);
+            // A create event can create many blocks. Add them all.
+            for (let i = 0; i < newBlocks.length; i++) {
+                this.createBlock(newBlocks[i]);
             }
-            case "change":
-                this.changeBlock({
-                    id: e.blockId,
-                    element: e.element,
-                    name: e.name,
-                    value: e.newValue,
-                });
-                break;
-            case "move":
-                this.moveBlock({
-                    id: e.blockId,
-                    oldParent: e.oldParentId,
-                    oldInput: e.oldInputName,
-                    newParent: e.newParentId,
-                    newInput: e.newInputName,
-                    newCoordinate: e.newCoordinate,
-                });
-                break;
-            case "dragOutside":
-                this.runtime.emitBlockDragUpdate(e.isOutside);
-                break;
-            case "endDrag":
-                this.runtime.emitBlockDragUpdate(false /* areBlocksOverGui */);
+            break;
+        }
+        case 'change':
+            this.changeBlock({
+                id: e.blockId,
+                element: e.element,
+                name: e.name,
+                value: e.newValue
+            });
+            break;
+        case 'move':
+            this.moveBlock({
+                id: e.blockId,
+                oldParent: e.oldParentId,
+                oldInput: e.oldInputName,
+                newParent: e.newParentId,
+                newInput: e.newInputName,
+                newCoordinate: e.newCoordinate
+            });
+            break;
+        case 'dragOutside':
+            this.runtime.emitBlockDragUpdate(e.isOutside);
+            break;
+        case 'endDrag':
+            this.runtime.emitBlockDragUpdate(false /* areBlocksOverGui */);
 
-                // Drag blocks onto another sprite
-                if (e.isOutside) {
-                    const newBlocks = adapter(e);
-                    this.runtime.emitBlockEndDrag(newBlocks, e.blockId);
-                }
-                break;
-            case "delete":
-                // Don't accept delete events for missing blocks,
-                // or shadow blocks being obscured.
-                if (
-                    !Object.prototype.hasOwnProperty.call(
-                        this._blocks,
-                        e.blockId
-                    ) ||
+            // Drag blocks onto another sprite
+            if (e.isOutside) {
+                const newBlocks = adapter(e);
+                this.runtime.emitBlockEndDrag(newBlocks, e.blockId);
+            }
+            break;
+        case 'delete':
+            // Don't accept delete events for missing blocks,
+            // or shadow blocks being obscured.
+            if (
+                !Object.prototype.hasOwnProperty.call(
+                    this._blocks,
+                    e.blockId
+                ) ||
                     this._blocks[e.blockId].shadow
-                ) {
-                    return;
-                }
-                // Inform any runtime to forget about glows on this script.
-                if (this._blocks[e.blockId].topLevel) {
-                    this.runtime.quietGlow(e.blockId);
-                }
-                this.deleteBlock(e.blockId);
-                break;
-            case "var_create":
-                // Check if the variable being created is global or local
-                // If local, create a local var on the current editing target, as long
-                // as there are no conflicts, and the current target is actually a sprite
-                // If global or if the editing target is not present or we somehow got
-                // into a state where a local var was requested for the stage,
-                // create a stage (global) var after checking for name conflicts
-                // on all the sprites.
-                if (
-                    e.isLocal &&
+            ) {
+                return;
+            }
+            // Inform any runtime to forget about glows on this script.
+            if (this._blocks[e.blockId].topLevel) {
+                this.runtime.quietGlow(e.blockId);
+            }
+            this.deleteBlock(e.blockId);
+            break;
+        case 'var_create':
+            // Check if the variable being created is global or local
+            // If local, create a local var on the current editing target, as long
+            // as there are no conflicts, and the current target is actually a sprite
+            // If global or if the editing target is not present or we somehow got
+            // into a state where a local var was requested for the stage,
+            // create a stage (global) var after checking for name conflicts
+            // on all the sprites.
+            if (
+                e.isLocal &&
                     editingTarget &&
                     !editingTarget.isStage &&
                     !e.isCloud
-                ) {
-                    if (!editingTarget.lookupVariableById(e.varId)) {
-                        editingTarget.createVariable(
-                            e.varId,
-                            e.varName,
-                            e.varType
-                        );
-                        this.emitProjectChanged();
-                    }
-                } else {
-                    if (stage.lookupVariableById(e.varId)) {
-                        // Do not re-create a variable if it already exists
-                        return;
-                    }
-                    // Check for name conflicts in all of the targets
-                    const allTargets = this.runtime.targets.filter(
-                        (t) => t.isOriginal
-                    );
-                    for (const target of allTargets) {
-                        if (
-                            target.lookupVariableByNameAndType(
-                                e.varName,
-                                e.varType,
-                                true
-                            )
-                        ) {
-                            return;
-                        }
-                    }
-                    stage.createVariable(
+            ) {
+                if (!editingTarget.lookupVariableById(e.varId)) {
+                    editingTarget.createVariable(
                         e.varId,
                         e.varName,
-                        e.varType,
-                        e.isCloud
+                        e.varType
                     );
                     this.emitProjectChanged();
                 }
-                break;
-            case "var_rename":
-                if (
-                    editingTarget &&
+            } else {
+                if (stage.lookupVariableById(e.varId)) {
+                    // Do not re-create a variable if it already exists
+                    return;
+                }
+                // Check for name conflicts in all of the targets
+                const allTargets = this.runtime.targets.filter(
+                    t => t.isOriginal
+                );
+                for (const target of allTargets) {
+                    if (
+                        target.lookupVariableByNameAndType(
+                            e.varName,
+                            e.varType,
+                            true
+                        )
+                    ) {
+                        return;
+                    }
+                }
+                stage.createVariable(
+                    e.varId,
+                    e.varName,
+                    e.varType,
+                    e.isCloud
+                );
+                this.emitProjectChanged();
+            }
+            break;
+        case 'var_rename':
+            if (
+                editingTarget &&
                     Object.prototype.hasOwnProperty.call(
                         editingTarget.variables,
                         e.varId
                     )
-                ) {
-                    // This is a local variable, rename on the current target
-                    editingTarget.renameVariable(e.varId, e.newName);
-                    // Update all the blocks on the current target that use
-                    // this variable
-                    editingTarget.blocks.updateBlocksAfterVarRename(
+            ) {
+                // This is a local variable, rename on the current target
+                editingTarget.renameVariable(e.varId, e.newName);
+                // Update all the blocks on the current target that use
+                // this variable
+                editingTarget.blocks.updateBlocksAfterVarRename(
+                    e.varId,
+                    e.newName
+                );
+            } else {
+                // This is a global variable
+                stage.renameVariable(e.varId, e.newName);
+                // Update all blocks on all targets that use the renamed variable
+                const targets = this.runtime.targets;
+                for (let i = 0; i < targets.length; i++) {
+                    const currTarget = targets[i];
+                    currTarget.blocks.updateBlocksAfterVarRename(
                         e.varId,
                         e.newName
                     );
-                } else {
-                    // This is a global variable
-                    stage.renameVariable(e.varId, e.newName);
-                    // Update all blocks on all targets that use the renamed variable
-                    const targets = this.runtime.targets;
-                    for (let i = 0; i < targets.length; i++) {
-                        const currTarget = targets[i];
-                        currTarget.blocks.updateBlocksAfterVarRename(
-                            e.varId,
-                            e.newName
-                        );
-                    }
                 }
-                this.emitProjectChanged();
-                break;
-            case "var_delete": {
-                const target =
+            }
+            this.emitProjectChanged();
+            break;
+        case 'var_delete': {
+            const target =
                     editingTarget &&
                     Object.prototype.hasOwnProperty.call(
                         editingTarget.variables,
                         e.varId
-                    )
-                        ? editingTarget
-                        : stage;
-                target.deleteVariable(e.varId);
-                this.emitProjectChanged();
-                break;
-            }
-            case "block_comment_create":
-            case "comment_create":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    currTarget.createComment(
-                        e.commentId,
-                        e.blockId,
-                        "",
-                        e.json.x,
-                        e.json.y,
-                        e.json.width,
-                        e.json.height,
-                        false
-                    );
+                    ) ?
+                        editingTarget :
+                        stage;
+            target.deleteVariable(e.varId);
+            this.emitProjectChanged();
+            break;
+        }
+        case 'block_comment_create':
+        case 'comment_create':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                currTarget.createComment(
+                    e.commentId,
+                    e.blockId,
+                    '',
+                    e.json.x,
+                    e.json.y,
+                    e.json.width,
+                    e.json.height,
+                    false
+                );
 
-                    if (
-                        currTarget.comments[e.commentId].x === null &&
+                if (
+                    currTarget.comments[e.commentId].x === null &&
                         currTarget.comments[e.commentId].y === null
-                    ) {
-                        // Block comments imported from 2.0 projects are imported with their
-                        // x and y coordinates set to null so that scratch-blocks can
-                        // auto-position them. If we are receiving a create event for these
-                        // comments, then the auto positioning should have taken place.
-                        // Update the x and y position of these comments to match the
-                        // one from the event.
-                        currTarget.comments[e.commentId].x = e.json.x;
-                        currTarget.comments[e.commentId].y = e.json.y;
-                    }
+                ) {
+                    // Block comments imported from 2.0 projects are imported with their
+                    // x and y coordinates set to null so that scratch-blocks can
+                    // auto-position them. If we are receiving a create event for these
+                    // comments, then the auto positioning should have taken place.
+                    // Update the x and y position of these comments to match the
+                    // one from the event.
+                    currTarget.comments[e.commentId].x = e.json.x;
+                    currTarget.comments[e.commentId].y = e.json.y;
                 }
-                this.emitProjectChanged();
-                break;
-            case "block_comment_change":
-            case "comment_change":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    if (
-                        !Object.prototype.hasOwnProperty.call(
-                            currTarget.comments,
-                            e.commentId
-                        )
-                    ) {
-                        log.warn(
-                            `Cannot change comment with id ${e.commentId} because it does not exist.`
-                        );
-                        return;
-                    }
-                    const comment = currTarget.comments[e.commentId];
-                    comment.text = e.newContents_;
-                    this.emitProjectChanged();
-                }
-                break;
-            case "block_comment_move":
-            case "comment_move":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    if (
-                        currTarget &&
-                        !Object.prototype.hasOwnProperty.call(
-                            currTarget.comments,
-                            e.commentId
-                        )
-                    ) {
-                        log.warn(
-                            `Cannot move comment with id ${e.commentId} because it does not exist.`
-                        );
-                        return;
-                    }
-                    const comment = currTarget.comments[e.commentId];
-                    const newCoord = e.newCoordinate_;
-                    comment.x = newCoord.x;
-                    comment.y = newCoord.y;
-
-                    this.emitProjectChanged();
-                }
-                break;
-            case "block_comment_collapse":
-            case "comment_collapse":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    if (
-                        currTarget &&
-                        !Object.prototype.hasOwnProperty.call(
-                            currTarget.comments,
-                            e.commentId
-                        )
-                    ) {
-                        log.warn(
-                            `Cannot collapse comment with id ${e.commentId} because it does not exist.`
-                        );
-                        return;
-                    }
-                    const comment = currTarget.comments[e.commentId];
-                    comment.minimized = e.newCollapsed;
-                    this.emitProjectChanged();
-                }
-                break;
-            case "block_comment_resize":
-            case "comment_resize":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    if (
-                        currTarget &&
-                        !Object.prototype.hasOwnProperty.call(
-                            currTarget.comments,
-                            e.commentId
-                        )
-                    ) {
-                        log.warn(
-                            `Cannot resize comment with id ${e.commentId} because it does not exist.`
-                        );
-                        return;
-                    }
-                    const comment = currTarget.comments[e.commentId];
-                    comment.width = e.newSize.width;
-                    comment.height = e.newSize.height;
-                    this.emitProjectChanged();
-                }
-                break;
-            case "block_comment_delete":
-            case "comment_delete":
-                if (this.runtime.getEditingTarget()) {
-                    const currTarget = this.runtime.getEditingTarget();
-                    if (
-                        !Object.prototype.hasOwnProperty.call(
-                            currTarget.comments,
-                            e.commentId
-                        )
-                    ) {
-                        // If we're in this state, we have probably received
-                        // a delete event from a workspace that we switched from
-                        // (e.g. a delete event for a comment on sprite a's workspace
-                        // when switching from sprite a to sprite b)
-                        return;
-                    }
-                    delete currTarget.comments[e.commentId];
-                    if (e.blockId) {
-                        const block = currTarget.blocks.getBlock(e.blockId);
-                        if (!block) {
-                            log.warn(
-                                `Could not find block referenced by comment with id: ${e.commentId}`
-                            );
-                            return;
-                        }
-                        delete block.comment;
-                    }
-
-                    this.emitProjectChanged();
-                }
-                break;
-            case "click":
-                // UI event: clicked scripts toggle in the runtime.
-                if (e.targetType === "block") {
-                    this.runtime.toggleScript(
-                        this.getTopLevelScript(e.blockId),
-                        { stackClick: true }
+            }
+            this.emitProjectChanged();
+            break;
+        case 'block_comment_change':
+        case 'comment_change':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (
+                    !Object.prototype.hasOwnProperty.call(
+                        currTarget.comments,
+                        e.commentId
+                    )
+                ) {
+                    log.warn(
+                        `Cannot change comment with id ${e.commentId} because it does not exist.`
                     );
+                    return;
                 }
-                break;
+                const comment = currTarget.comments[e.commentId];
+                comment.text = e.newContents_;
+                this.emitProjectChanged();
+            }
+            break;
+        case 'block_comment_move':
+        case 'comment_move':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (
+                    currTarget &&
+                        !Object.prototype.hasOwnProperty.call(
+                            currTarget.comments,
+                            e.commentId
+                        )
+                ) {
+                    log.warn(
+                        `Cannot move comment with id ${e.commentId} because it does not exist.`
+                    );
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                const newCoord = e.newCoordinate_;
+                comment.x = newCoord.x;
+                comment.y = newCoord.y;
+
+                this.emitProjectChanged();
+            }
+            break;
+        case 'block_comment_collapse':
+        case 'comment_collapse':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (
+                    currTarget &&
+                        !Object.prototype.hasOwnProperty.call(
+                            currTarget.comments,
+                            e.commentId
+                        )
+                ) {
+                    log.warn(
+                        `Cannot collapse comment with id ${e.commentId} because it does not exist.`
+                    );
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                comment.minimized = e.newCollapsed;
+                this.emitProjectChanged();
+            }
+            break;
+        case 'block_comment_resize':
+        case 'comment_resize':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (
+                    currTarget &&
+                        !Object.prototype.hasOwnProperty.call(
+                            currTarget.comments,
+                            e.commentId
+                        )
+                ) {
+                    log.warn(
+                        `Cannot resize comment with id ${e.commentId} because it does not exist.`
+                    );
+                    return;
+                }
+                const comment = currTarget.comments[e.commentId];
+                comment.width = e.newSize.width;
+                comment.height = e.newSize.height;
+                this.emitProjectChanged();
+            }
+            break;
+        case 'block_comment_delete':
+        case 'comment_delete':
+            if (this.runtime.getEditingTarget()) {
+                const currTarget = this.runtime.getEditingTarget();
+                if (
+                    !Object.prototype.hasOwnProperty.call(
+                        currTarget.comments,
+                        e.commentId
+                    )
+                ) {
+                    // If we're in this state, we have probably received
+                    // a delete event from a workspace that we switched from
+                    // (e.g. a delete event for a comment on sprite a's workspace
+                    // when switching from sprite a to sprite b)
+                    return;
+                }
+                delete currTarget.comments[e.commentId];
+                if (e.blockId) {
+                    const block = currTarget.blocks.getBlock(e.blockId);
+                    if (!block) {
+                        log.warn(
+                            `Could not find block referenced by comment with id: ${e.commentId}`
+                        );
+                        return;
+                    }
+                    delete block.comment;
+                }
+
+                this.emitProjectChanged();
+            }
+            break;
+        case 'click':
+            // UI event: clicked scripts toggle in the runtime.
+            if (e.targetType === 'block') {
+                this.runtime.toggleScript(
+                    this.getTopLevelScript(e.blockId),
+                    {stackClick: true}
+                );
+            }
+            break;
         }
     }
 
@@ -639,7 +641,7 @@ class Blocks {
     /**
      * Reset all runtime caches.
      */
-    resetCache() {
+    resetCache () {
         this._cache.inputs = {};
         this._cache.procedureParamNames = {};
         this._cache.procedureDefinitions = {};
@@ -652,7 +654,7 @@ class Blocks {
      * Emit a project changed event if this is a block container
      * that can affect the project state.
      */
-    emitProjectChanged() {
+    emitProjectChanged () {
         if (!this.forceNoGlow) {
             this.runtime.emitProjectChanged();
         }
@@ -662,7 +664,7 @@ class Blocks {
      * Block management: create blocks and scripts from a `create` event
      * @param {!object} block Blockly create event to be processed
      */
-    createBlock(block) {
+    createBlock (block) {
         // Does the block already exist?
         // Could happen, e.g., for an unobscured shadow.
         if (Object.prototype.hasOwnProperty.call(this._blocks, block.id)) {
@@ -688,121 +690,122 @@ class Blocks {
      * Block management: change block field values
      * @param {!object} args Blockly change event to be processed
      */
-    changeBlock(args) {
+    changeBlock (args) {
         // Validate
-        if (["field", "mutation", "checkbox"].indexOf(args.element) === -1)
+        if (['field', 'mutation', 'checkbox'].indexOf(args.element) === -1) {
             return;
+        }
         let block = this._blocks[args.id];
-        if (typeof block === "undefined") return;
+        if (typeof block === 'undefined') return;
         switch (args.element) {
-            case "field":
-                // TODO when the field of a monitored block changes,
-                // update the checkbox in the flyout based on whether
-                // a monitor for that current combination of selected parameters exists
-                // e.g.
-                // 1. check (current [v year])
-                // 2. switch dropdown in flyout block to (current [v minute])
-                // 3. the checkbox should become unchecked if we're not already
-                //    monitoring current minute
+        case 'field':
+            // TODO when the field of a monitored block changes,
+            // update the checkbox in the flyout based on whether
+            // a monitor for that current combination of selected parameters exists
+            // e.g.
+            // 1. check (current [v year])
+            // 2. switch dropdown in flyout block to (current [v minute])
+            // 3. the checkbox should become unchecked if we're not already
+            //    monitoring current minute
 
-                // Update block value
-                if (!block.fields[args.name]) return;
-                if (
-                    args.name === "VARIABLE" ||
-                    args.name === "LIST" ||
-                    args.name === "BROADCAST_OPTION"
-                ) {
-                    // Get variable name using the id in args.value.
-                    const variable = this.runtime
-                        .getEditingTarget()
-                        .lookupVariableById(args.value);
-                    if (variable) {
-                        block.fields[args.name].value = variable.name;
-                        block.fields[args.name].id = args.value;
-                    }
-                } else {
-                    // Changing the value in a dropdown
-                    block.fields[args.name].value = args.value;
-
-                    // The selected item in the sensing of block menu needs to change based on the
-                    // selected target.  Set it to the first item in the menu list.
-                    // TODO: (#1787)
-                    if (block.opcode === "sensing_of_object_menu") {
-                        if (block.fields.OBJECT.value === "_stage_") {
-                            this._blocks[block.parent].fields.PROPERTY.value =
-                                "backdrop #";
-                        } else {
-                            this._blocks[block.parent].fields.PROPERTY.value =
-                                "x position";
-                        }
-                        this.runtime.requestBlocksUpdate();
-                    }
-
-                    const flyoutBlock =
-                        block.shadow && block.parent
-                            ? this._blocks[block.parent]
-                            : block;
-                    if (flyoutBlock.isMonitored) {
-                        this.runtime.requestUpdateMonitor(
-                            Map({
-                                id: flyoutBlock.id,
-                                params: this._getBlockParams(flyoutBlock),
-                            })
-                        );
-                    }
+            // Update block value
+            if (!block.fields[args.name]) return;
+            if (
+                args.name === 'VARIABLE' ||
+                    args.name === 'LIST' ||
+                    args.name === 'BROADCAST_OPTION'
+            ) {
+                // Get variable name using the id in args.value.
+                const variable = this.runtime
+                    .getEditingTarget()
+                    .lookupVariableById(args.value);
+                if (variable) {
+                    block.fields[args.name].value = variable.name;
+                    block.fields[args.name].id = args.value;
                 }
-                break;
-            case "mutation":
-                block.mutation = mutationAdapter(args.value);
-                break;
-            case "checkbox": {
-                // A checkbox usually has a one to one correspondence with the monitor
-                // block but in the case of monitored reporters that have arguments,
-                // map the old id to a new id, creating a new monitor block if necessary
-                if (
-                    block.fields &&
-                    Object.keys(block.fields).length > 0 &&
-                    block.opcode !== "data_variable" &&
-                    block.opcode !== "data_listcontents"
-                ) {
-                    // This block has an argument which needs to get separated out into
-                    // multiple monitor blocks with ids based on the selected argument
-                    const newId = getMonitorIdForBlockWithArgs(
-                        block.id,
-                        block.fields
+            } else {
+                // Changing the value in a dropdown
+                block.fields[args.name].value = args.value;
+
+                // The selected item in the sensing of block menu needs to change based on the
+                // selected target.  Set it to the first item in the menu list.
+                // TODO: (#1787)
+                if (block.opcode === 'sensing_of_object_menu') {
+                    if (block.fields.OBJECT.value === '_stage_') {
+                        this._blocks[block.parent].fields.PROPERTY.value =
+                                'backdrop #';
+                    } else {
+                        this._blocks[block.parent].fields.PROPERTY.value =
+                                'x position';
+                    }
+                    this.runtime.requestBlocksUpdate();
+                }
+
+                const flyoutBlock =
+                        block.shadow && block.parent ?
+                            this._blocks[block.parent] :
+                            block;
+                if (flyoutBlock.isMonitored) {
+                    this.runtime.requestUpdateMonitor(
+                        Map({
+                            id: flyoutBlock.id,
+                            params: this._getBlockParams(flyoutBlock)
+                        })
                     );
+                }
+            }
+            break;
+        case 'mutation':
+            block.mutation = mutationAdapter(args.value);
+            break;
+        case 'checkbox': {
+            // A checkbox usually has a one to one correspondence with the monitor
+            // block but in the case of monitored reporters that have arguments,
+            // map the old id to a new id, creating a new monitor block if necessary
+            if (
+                block.fields &&
+                    Object.keys(block.fields).length > 0 &&
+                    block.opcode !== 'data_variable' &&
+                    block.opcode !== 'data_listcontents'
+            ) {
+                // This block has an argument which needs to get separated out into
+                // multiple monitor blocks with ids based on the selected argument
+                const newId = getMonitorIdForBlockWithArgs(
+                    block.id,
+                    block.fields
+                );
                     // Note: we're not just constantly creating a longer and longer id everytime we check
                     // the checkbox because we're using the id of the block in the flyout as the base
 
-                    // check if a block with the new id already exists, otherwise create
-                    let newBlock = this.runtime.monitorBlocks.getBlock(newId);
-                    if (!newBlock) {
-                        newBlock = JSON.parse(JSON.stringify(block));
-                        newBlock.id = newId;
-                        this.runtime.monitorBlocks.createBlock(newBlock);
-                    }
-
-                    block = newBlock; // Carry on through the rest of this code with newBlock
+                // check if a block with the new id already exists, otherwise create
+                let newBlock = this.runtime.monitorBlocks.getBlock(newId);
+                if (!newBlock) {
+                    newBlock = JSON.parse(JSON.stringify(block));
+                    newBlock.id = newId;
+                    this.runtime.monitorBlocks.createBlock(newBlock);
                 }
 
-                const wasMonitored = block.isMonitored;
-                block.isMonitored = args.value;
+                block = newBlock; // Carry on through the rest of this code with newBlock
+            }
 
-                // Variable blocks may be sprite specific depending on the owner of the variable
-                let isSpriteLocalVariable = false;
-                if (block.opcode === "data_variable") {
-                    isSpriteLocalVariable =
+            const wasMonitored = block.isMonitored;
+            block.isMonitored = args.value;
+
+            // Variable blocks may be sprite specific depending on the owner of the variable
+            let isSpriteLocalVariable = false;
+            if (block.opcode === 'data_variable') {
+                isSpriteLocalVariable =
                         !this.runtime.getTargetForStage().variables[
                             block.fields.VARIABLE.id
                         ];
-                } else if (block.opcode === "data_listcontents") {
-                    isSpriteLocalVariable =
+            } else if (block.opcode === 'data_listcontents') {
+                isSpriteLocalVariable =
                         !this.runtime.getTargetForStage().variables[
                             block.fields.LIST.id
                         ];
-                }
+            }
 
-                const isSpriteSpecific =
+            const isSpriteSpecific =
                     isSpriteLocalVariable ||
                     (Object.prototype.hasOwnProperty.call(
                         this.runtime.monitorBlockInfo,
@@ -810,44 +813,44 @@ class Blocks {
                     ) &&
                         this.runtime.monitorBlockInfo[block.opcode]
                             .isSpriteSpecific);
-                if (isSpriteSpecific) {
-                    // If creating a new sprite specific monitor, the only possible target is
-                    // the current editing one b/c you cannot dynamically create monitors.
-                    // Also, do not change the targetId if it has already been assigned
-                    block.targetId =
+            if (isSpriteSpecific) {
+                // If creating a new sprite specific monitor, the only possible target is
+                // the current editing one b/c you cannot dynamically create monitors.
+                // Also, do not change the targetId if it has already been assigned
+                block.targetId =
                         block.targetId || this.runtime.getEditingTarget().id;
-                } else {
-                    block.targetId = null;
-                }
-
-                if (wasMonitored && !block.isMonitored) {
-                    this.runtime.requestHideMonitor(block.id);
-                } else if (!wasMonitored && block.isMonitored) {
-                    // Tries to show the monitor for specified block. If it doesn't exist, add the monitor.
-                    if (!this.runtime.requestShowMonitor(block.id)) {
-                        this.runtime.requestAddMonitor(
-                            MonitorRecord({
-                                id: block.id,
-                                targetId: block.targetId,
-                                spriteName: block.targetId
-                                    ? this.runtime
-                                          .getTargetById(block.targetId)
-                                          .getName()
-                                    : null,
-                                opcode: block.opcode,
-                                params: this._getBlockParams(block),
-                                // @todo(vm#565) for numerical values with decimals, some countries use comma
-                                value: "",
-                                mode:
-                                    block.opcode === "data_listcontents"
-                                        ? "list"
-                                        : "default",
-                            })
-                        );
-                    }
-                }
-                break;
+            } else {
+                block.targetId = null;
             }
+
+            if (wasMonitored && !block.isMonitored) {
+                this.runtime.requestHideMonitor(block.id);
+            } else if (!wasMonitored && block.isMonitored) {
+                // Tries to show the monitor for specified block. If it doesn't exist, add the monitor.
+                if (!this.runtime.requestShowMonitor(block.id)) {
+                    this.runtime.requestAddMonitor(
+                        MonitorRecord({
+                            id: block.id,
+                            targetId: block.targetId,
+                            spriteName: block.targetId ?
+                                this.runtime
+                                    .getTargetById(block.targetId)
+                                    .getName() :
+                                null,
+                            opcode: block.opcode,
+                            params: this._getBlockParams(block),
+                            // @todo(vm#565) for numerical values with decimals, some countries use comma
+                            value: '',
+                            mode:
+                                    block.opcode === 'data_listcontents' ?
+                                        'list' :
+                                        'default'
+                        })
+                    );
+                }
+            }
+            break;
+        }
         }
 
         this.emitProjectChanged();
@@ -859,7 +862,7 @@ class Blocks {
      * Block management: move blocks from parent to parent
      * @param {!object} e Blockly move event to be processed
      */
-    moveBlock(e) {
+    moveBlock (e) {
         if (!Object.prototype.hasOwnProperty.call(this._blocks, e.id)) {
             return;
         }
@@ -880,10 +883,10 @@ class Blocks {
         }
 
         // Remove from any old parent.
-        if (typeof e.oldParent !== "undefined") {
+        if (typeof e.oldParent !== 'undefined') {
             const oldParent = this._blocks[e.oldParent];
             if (
-                typeof e.oldInput !== "undefined" &&
+                typeof e.oldInput !== 'undefined' &&
                 oldParent.inputs[e.oldInput].block === e.id
             ) {
                 // This block was connected to an input. We either want to
@@ -908,7 +911,7 @@ class Blocks {
         }
 
         // Is this block a top-level block?
-        if (typeof e.newParent === "undefined") {
+        if (typeof e.newParent === 'undefined') {
             if (!this._blocks[e.id].shadow) {
                 this._addScript(e.id);
             }
@@ -916,7 +919,7 @@ class Blocks {
             // Remove script, if one exists.
             this._deleteScript(e.id);
             // Otherwise, try to connect it in its new place.
-            if (typeof e.newInput === "undefined") {
+            if (typeof e.newInput === 'undefined') {
                 // Moved to the new parent's next connection.
                 this._blocks[e.newParent].next = e.id;
             } else {
@@ -941,7 +944,7 @@ class Blocks {
                 this._blocks[e.newParent].inputs[e.newInput] = {
                     name: e.newInput,
                     block: e.id,
-                    shadow: oldShadow,
+                    shadow: oldShadow
                 };
             }
             this._blocks[e.id].parent = e.newParent;
@@ -956,24 +959,24 @@ class Blocks {
      * Block management: run all blocks.
      * @param {!object} runtime Runtime to run all blocks in.
      */
-    runAllMonitored(runtime) {
+    runAllMonitored (runtime) {
         if (this._cache._monitored === null) {
             this._cache._monitored = Object.keys(this._blocks)
-                .filter((blockId) => this.getBlock(blockId).isMonitored)
-                .map((blockId) => {
+                .filter(blockId => this.getBlock(blockId).isMonitored)
+                .map(blockId => {
                     const targetId = this.getBlock(blockId).targetId;
                     return {
                         blockId,
-                        target: targetId
-                            ? runtime.getTargetById(targetId)
-                            : null,
+                        target: targetId ?
+                            runtime.getTargetById(targetId) :
+                            null
                     };
                 });
         }
 
         const monitored = this._cache._monitored;
         for (let i = 0; i < monitored.length; i++) {
-            const { blockId, target } = monitored[i];
+            const {blockId, target} = monitored[i];
             runtime.addMonitorScript(blockId, target);
         }
     }
@@ -983,7 +986,7 @@ class Blocks {
      * with the given ID does not exist.
      * @param {!string} blockId Id of block to delete
      */
-    deleteBlock(blockId) {
+    deleteBlock (blockId) {
         // @todo In runtime, stop threads running on this script.
 
         // Get block
@@ -1026,9 +1029,9 @@ class Blocks {
     /**
      * Delete all blocks and their associated scripts.
      */
-    deleteAllBlocks() {
+    deleteAllBlocks () {
         const blockIds = Object.keys(this._blocks);
-        blockIds.forEach((blockId) => this.deleteBlock(blockId));
+        blockIds.forEach(blockId => this.deleteBlock(blockId));
     }
 
     /**
@@ -1042,7 +1045,7 @@ class Blocks {
      * for that ID. A variable reference contains the field referencing that variable
      * and also the type of the variable being referenced.
      */
-    getAllVariableAndListReferences(optBlocks, optIncludeBroadcast) {
+    getAllVariableAndListReferences (optBlocks, optIncludeBroadcast) {
         const blocks = optBlocks ? optBlocks : this._blocks;
         const allReferences = Object.create(null);
         for (const blockId in blocks) {
@@ -1066,14 +1069,14 @@ class Blocks {
                 if (allReferences[currVarId]) {
                     allReferences[currVarId].push({
                         referencingField: varOrListField,
-                        type: varType,
+                        type: varType
                     });
                 } else {
                     allReferences[currVarId] = [
                         {
                             referencingField: varOrListField,
-                            type: varType,
-                        },
+                            type: varType
+                        }
                     ];
                 }
             }
@@ -1086,7 +1089,7 @@ class Blocks {
      * @param {string} varId The id of the variable that was renamed
      * @param {string} newName The new name of the variable that was renamed
      */
-    updateBlocksAfterVarRename(varId, newName) {
+    updateBlocksAfterVarRename (varId, newName) {
         const blocks = this._blocks;
         for (const blockId in blocks) {
             let varOrListField = null;
@@ -1108,19 +1111,19 @@ class Blocks {
      * Keep blocks up to date after they are shared between targets.
      * @param {boolean} isStage If the new target is a stage.
      */
-    updateTargetSpecificBlocks(isStage) {
+    updateTargetSpecificBlocks (isStage) {
         const blocks = this._blocks;
         for (const blockId in blocks) {
             if (
                 isStage &&
-                blocks[blockId].opcode === "event_whenthisspriteclicked"
+                blocks[blockId].opcode === 'event_whenthisspriteclicked'
             ) {
-                blocks[blockId].opcode = "event_whenstageclicked";
+                blocks[blockId].opcode = 'event_whenstageclicked';
             } else if (
                 !isStage &&
-                blocks[blockId].opcode === "event_whenstageclicked"
+                blocks[blockId].opcode === 'event_whenstageclicked'
             ) {
-                blocks[blockId].opcode = "event_whenthisspriteclicked";
+                blocks[blockId].opcode = 'event_whenthisspriteclicked';
             }
         }
     }
@@ -1135,15 +1138,15 @@ class Blocks {
      * that was renamed. This can be one of 'sprite','costume', 'sound', or
      * 'backdrop'.
      */
-    updateAssetName(oldName, newName, assetType) {
+    updateAssetName (oldName, newName, assetType) {
         let getAssetField;
-        if (assetType === "costume") {
+        if (assetType === 'costume') {
             getAssetField = this._getCostumeField.bind(this);
-        } else if (assetType === "sound") {
+        } else if (assetType === 'sound') {
             getAssetField = this._getSoundField.bind(this);
-        } else if (assetType === "backdrop") {
+        } else if (assetType === 'backdrop') {
             getAssetField = this._getBackdropField.bind(this);
-        } else if (assetType === "sprite") {
+        } else if (assetType === 'sprite') {
             getAssetField = this._getSpriteField.bind(this);
         } else {
             return;
@@ -1164,13 +1167,13 @@ class Blocks {
      * @param {string} targetName The name of the target the variable belongs to.
      * @return {boolean} Returns true if any of the blocks were updated.
      */
-    updateSensingOfReference(oldName, newName, targetName) {
+    updateSensingOfReference (oldName, newName, targetName) {
         const blocks = this._blocks;
         let blockUpdated = false;
         for (const blockId in blocks) {
             const block = blocks[blockId];
             if (
-                block.opcode === "sensing_of" &&
+                block.opcode === 'sensing_of' &&
                 block.fields.PROPERTY.value === oldName &&
                 // If block and shadow are different, it means a block is inserted to OBJECT, and should be ignored.
                 block.inputs.OBJECT.block === block.inputs.OBJECT.shadow
@@ -1193,11 +1196,11 @@ class Blocks {
      * Null if either a block with the given id doesn't exist or if a costume menu field
      * does not exist on the block with the given id.
      */
-    _getCostumeField(blockId) {
+    _getCostumeField (blockId) {
         const block = this.getBlock(blockId);
         if (
             block &&
-            Object.prototype.hasOwnProperty.call(block.fields, "COSTUME")
+            Object.prototype.hasOwnProperty.call(block.fields, 'COSTUME')
         ) {
             return block.fields.COSTUME;
         }
@@ -1211,11 +1214,11 @@ class Blocks {
      * Null, if either a block with the given id doesn't exist or if a sound menu field
      * does not exist on the block with the given id.
      */
-    _getSoundField(blockId) {
+    _getSoundField (blockId) {
         const block = this.getBlock(blockId);
         if (
             block &&
-            Object.prototype.hasOwnProperty.call(block.fields, "SOUND_MENU")
+            Object.prototype.hasOwnProperty.call(block.fields, 'SOUND_MENU')
         ) {
             return block.fields.SOUND_MENU;
         }
@@ -1229,11 +1232,11 @@ class Blocks {
      * Null, if either a block with the given id doesn't exist or if a backdrop menu field
      * does not exist on the block with the given id.
      */
-    _getBackdropField(blockId) {
+    _getBackdropField (blockId) {
         const block = this.getBlock(blockId);
         if (
             block &&
-            Object.prototype.hasOwnProperty.call(block.fields, "BACKDROP")
+            Object.prototype.hasOwnProperty.call(block.fields, 'BACKDROP')
         ) {
             return block.fields.BACKDROP;
         }
@@ -1247,19 +1250,19 @@ class Blocks {
      * Null, if either a block with the given id doesn't exist or if a sprite menu field
      * does not exist on the block with the given id.
      */
-    _getSpriteField(blockId) {
+    _getSpriteField (blockId) {
         const block = this.getBlock(blockId);
         if (!block) {
             return null;
         }
         const spriteMenuNames = [
-            "TOWARDS",
-            "TO",
-            "OBJECT",
-            "VIDEOONMENU2",
-            "DISTANCETOMENU",
-            "TOUCHINGOBJECTMENU",
-            "CLONE_OPTION",
+            'TOWARDS',
+            'TO',
+            'OBJECT',
+            'VIDEOONMENU2',
+            'DISTANCETOMENU',
+            'TOUCHINGOBJECTMENU',
+            'CLONE_OPTION'
         ];
         for (let i = 0; i < spriteMenuNames.length; i++) {
             const menuName = spriteMenuNames[i];
@@ -1278,9 +1281,9 @@ class Blocks {
      * @param {object<string, Comment>} comments Map of comments referenced by id
      * @return {string} String of XML representing this object's blocks.
      */
-    toXML(comments) {
+    toXML (comments) {
         return this._scripts
-            .map((script) => this.blockToXML(script, comments))
+            .map(script => this.blockToXML(script, comments))
             .join();
     }
 
@@ -1291,18 +1294,18 @@ class Blocks {
      * @param {object<string, Comment>} comments Map of comments referenced by id
      * @return {string} String of XML representing this block and any children.
      */
-    blockToXML(blockId, comments) {
+    blockToXML (blockId, comments) {
         const block = this._blocks[blockId];
         // block should exist, but currently some blocks' next property point
         // to a blockId for non-existent blocks. Until we track down that behavior,
         // this early exit allows the project to load.
         if (!block) return;
         // Encode properties of this block.
-        const tagName = block.shadow ? "shadow" : "block";
+        const tagName = block.shadow ? 'shadow' : 'block';
         let xmlString = `<${tagName}
                 id="${block.id}"
                 type="${block.opcode}"
-                ${block.topLevel ? `x="${block.x}" y="${block.y}"` : ""}
+                ${block.topLevel ? `x="${block.x}" y="${block.y}"` : ''}
             >`;
         const commentId = block.comment;
         if (commentId) {
@@ -1326,8 +1329,9 @@ class Blocks {
         }
         // Add any inputs on this block.
         for (const input in block.inputs) {
-            if (!Object.prototype.hasOwnProperty.call(block.inputs, input))
+            if (!Object.prototype.hasOwnProperty.call(block.inputs, input)) {
                 continue;
+            }
             const blockInput = block.inputs[input];
             // Only encode a value tag if the value input is occupied.
             if (blockInput.block || blockInput.shadow) {
@@ -1342,13 +1346,14 @@ class Blocks {
                     // Obscured shadow.
                     xmlString += this.blockToXML(blockInput.shadow, comments);
                 }
-                xmlString += "</value>";
+                xmlString += '</value>';
             }
         }
         // Add any fields on this block.
         for (const field in block.fields) {
-            if (!Object.prototype.hasOwnProperty.call(block.fields, field))
+            if (!Object.prototype.hasOwnProperty.call(block.fields, field)) {
                 continue;
+            }
             const blockField = block.fields[field];
             xmlString += `<field name="${blockField.name}"`;
             const fieldId = blockField.id;
@@ -1356,11 +1361,11 @@ class Blocks {
                 xmlString += ` id="${fieldId}"`;
             }
             const varType = blockField.variableType;
-            if (typeof varType === "string") {
+            if (typeof varType === 'string') {
                 xmlString += ` variabletype="${varType}"`;
             }
             let value = blockField.value;
-            if (typeof value === "string") {
+            if (typeof value === 'string') {
                 value = xmlEscape(blockField.value);
             }
             xmlString += `>${value}</field>`;
@@ -1381,23 +1386,23 @@ class Blocks {
      * @param {!object} mutation Object representing a mutation.
      * @return {string} XML string representing a mutation.
      */
-    mutationToXML(mutation) {
+    mutationToXML (mutation) {
         let mutationString = `<${mutation.tagName}`;
         for (const prop in mutation) {
-            if (prop === "children" || prop === "tagName") continue;
+            if (prop === 'children' || prop === 'tagName') continue;
             let mutationValue =
-                typeof mutation[prop] === "string"
-                    ? xmlEscape(mutation[prop])
-                    : mutation[prop];
+                typeof mutation[prop] === 'string' ?
+                    xmlEscape(mutation[prop]) :
+                    mutation[prop];
 
             // Handle dynamic extension blocks
-            if (prop === "blockInfo") {
+            if (prop === 'blockInfo') {
                 mutationValue = xmlEscape(JSON.stringify(mutation[prop]));
             }
 
             mutationString += ` ${prop}="${mutationValue}"`;
         }
-        mutationString += ">";
+        mutationString += '>';
         for (let i = 0; i < mutation.children.length; i++) {
             mutationString += this.mutationToXML(mutation.children[i]);
         }
@@ -1411,7 +1416,7 @@ class Blocks {
      * @param {!object} block Block to be paramified.
      * @return {!object} object of param key/values.
      */
-    _getBlockParams(block) {
+    _getBlockParams (block) {
         const params = {};
         for (const key in block.fields) {
             params[key] = block.fields[key].value;
@@ -1430,7 +1435,7 @@ class Blocks {
      * @param {!object} defineBlock Outer define block.
      * @return {!object} internal definition block which has the mutation.
      */
-    _getCustomBlockInternal(defineBlock) {
+    _getCustomBlockInternal (defineBlock) {
         if (defineBlock.inputs && defineBlock.inputs.custom_block) {
             return this._blocks[defineBlock.inputs.custom_block.block];
         }
@@ -1440,7 +1445,7 @@ class Blocks {
      * Helper to add a stack to `this._scripts`.
      * @param {?string} topBlockId ID of block that starts the script.
      */
-    _addScript(topBlockId) {
+    _addScript (topBlockId) {
         const i = this._scripts.indexOf(topBlockId);
         if (i > -1) return; // Already in scripts.
         this._scripts.push(topBlockId);
@@ -1452,7 +1457,7 @@ class Blocks {
      * Helper to remove a script from `this._scripts`.
      * @param {?string} topBlockId ID of block that starts the script.
      */
-    _deleteScript(topBlockId) {
+    _deleteScript (topBlockId) {
         const i = this._scripts.indexOf(topBlockId);
         if (i > -1) this._scripts.splice(i, 1);
         // Update `topLevel` property on the top block.
@@ -1471,20 +1476,20 @@ class Blocks {
  */
 BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
     let cached = blocks._cache._executeCached[blockId];
-    if (typeof cached !== "undefined") {
+    if (typeof cached !== 'undefined') {
         return cached;
     }
 
     const block = blocks.getBlock(blockId);
-    if (typeof block === "undefined") return null;
+    if (typeof block === 'undefined') return null;
 
-    if (typeof CacheType === "undefined") {
+    if (typeof CacheType === 'undefined') {
         cached = {
             id: blockId,
             opcode: blocks.getOpcode(block),
             fields: blocks.getFields(block),
             inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block),
+            mutation: blocks.getMutation(block)
         };
     } else {
         cached = new CacheType(blocks, {
@@ -1492,7 +1497,7 @@ BlocksExecuteCache.getCached = function (blocks, blockId, CacheType) {
             opcode: blocks.getOpcode(block),
             fields: blocks.getFields(block),
             inputs: blocks.getInputs(block),
-            mutation: blocks.getMutation(block),
+            mutation: blocks.getMutation(block)
         });
     }
 
