@@ -97,10 +97,7 @@ class Scratch3OperatorsBlocks {
     letterOf (args) {
         const index = Cast.toNumber(args.LETTER) - 1;
         const str = Cast.toString(args.STRING);
-        // Out of bounds?
-        if (index < 0 || index >= str.length) {
-            return '';
-        }
+        // `charAt` handles out of bounds by returning an empty string.
         return str.charAt(index);
     }
 
