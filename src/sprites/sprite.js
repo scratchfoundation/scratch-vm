@@ -1,10 +1,12 @@
 const RenderedTarget = require('./rendered-target');
 const Blocks = require('../engine/blocks');
+const Comment = require('../engine/comment');
 const {loadSoundFromAsset} = require('../import/load-sound');
 const {loadCostumeFromAsset} = require('../import/load-costume');
 const newBlockIds = require('../util/new-block-ids');
 const StringUtil = require('../util/string-util');
 const StageLayering = require('../engine/stage-layering');
+const log = require('../util/log');
 
 class Sprite {
     /**
@@ -54,6 +56,13 @@ class Sprite {
         if (this.runtime && this.runtime.audioEngine) {
             this.soundBank = this.runtime.audioEngine.createBank();
         }
+
+        /**
+         * Dictionary of comments for this target.
+         * Key is the comment id.
+         * @type {Object.<string, Comment>}
+         */
+        this.comments = {};
     }
 
     /**
@@ -140,9 +149,46 @@ class Sprite {
         const blocksContainer = this.blocks._blocks;
         const originalBlocks = Object.keys(blocksContainer).map(key => blocksContainer[key]);
         const copiedBlocks = JSON.parse(JSON.stringify(originalBlocks));
-        newBlockIds(copiedBlocks);
+        const oldToNew = newBlockIds(copiedBlocks);
         copiedBlocks.forEach(block => {
             newSprite.blocks.createBlock(block);
+        });
+
+        Object.keys(this.comments).forEach(commentId => {
+            const comment = this.comments[commentId];
+            const newComment = new Comment(
+                null, // generate new comment id
+                comment.text,
+                comment.x,
+                comment.y,
+                comment.width,
+                comment.height,
+                comment.minimized
+            );
+            // If the comment is attached to a block, it has a blockId property for the block it's attached to.
+            // Because we generate new block IDs for all the duplicated blocks, change all the comments' attached-block
+            // IDs from the old block IDs to the new ones.
+            if (comment.blockId) {
+                const newBlockId = oldToNew[comment.blockId];
+                if (newBlockId) {
+                    newComment.blockId = newBlockId;
+                    const newBlock = newSprite.blocks.getBlock(newBlockId);
+                    if (newBlock) {
+                        newBlock.comment = newComment.id;
+                    } else {
+                        log.warn(`Could not find block with id ${newBlockId} associated with comment ${newComment.id}`);
+                    }
+                } else {
+                    // Comments did not get deleted when the block got deleted
+                    // Such comments have blockId, but because the block is deleted
+                    // oldToNew mapping does not include that blockId
+                    // Handle it as workspace comment
+                    // TODO do not load such comments when deserializing
+                    log.warn(`Could not find block with id ${comment.blockId
+                    } associated with comment ${comment.id} in the block ID mapping`);
+                }
+            }
+            newSprite.comments[newComment.id] = newComment;
         });
 
 

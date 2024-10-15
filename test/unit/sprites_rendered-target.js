@@ -45,6 +45,21 @@ test('blocks get new id on duplicate', t => {
     });
 });
 
+test('comments are duplicated when duplicating target', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
+    rt.createComment('commentid', null, 'testcomment', 0, 0, 100, 100, false);
+    t.ok(s.comments.hasOwnProperty('commentid'));
+    return rt.duplicate().then(duplicate => {
+        // Not ok because comment id should be re-generated
+        t.notOk(duplicate.comments.hasOwnProperty('commentid'));
+        t.ok(Object.keys(duplicate.comments).length === 1);
+        t.end();
+    });
+});
+
+
 test('direction', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
