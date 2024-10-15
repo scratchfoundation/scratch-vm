@@ -1,20 +1,23 @@
 const test = require('tap').test;
 const Music = require('../../src/extensions/scratch3_music/index.js');
+const Blocks = require('../../src/engine/blocks');
+const BlockUtility = require('../../src/engine/block-utility');
+const Runtime = require('../../src/engine/runtime');
+const Target = require('../../src/engine/target');
+const Thread = require('../../src/engine/thread');
 
-const fakeRuntime = {
-    getTargetForStage: () => ({tempo: 60}),
-    on: () => {} // Stub out listener methods used in constructor.
-};
+const rt = new Runtime();
+const util = new BlockUtility();
+util.sequencer = rt.sequencer;
+util.runtime = rt;
+util.thread = new Thread(null);
+util.thread.pushStack();
 
-const blocks = new Music(fakeRuntime);
+const b = new Blocks(rt);
+const tgt = new Target(rt, b);
+tgt.isStage = true;
 
-const util = {
-    stackFrame: Object.create(null),
-    target: {
-        audioPlayer: null
-    },
-    yield: () => null
-};
+const blocks = new Music(rt);
 
 test('playDrum uses 1-indexing and wrap clamps', t => {
     // Stub playDrumNum
