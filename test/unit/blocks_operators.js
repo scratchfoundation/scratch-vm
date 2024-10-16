@@ -32,6 +32,12 @@ test('divide', t => {
     t.end();
 });
 
+test('exponent', t => {
+  t.strictEqual(blocks.exponent({NUM1: '2', NUM2: '3'}), 8);
+  t.strictEqual(blocks.exponent({NUM1: 'foo', NUM2: 'bar'}), 1);
+  t.end();
+});
+
 test('lt', t => {
     t.strictEqual(blocks.lt({OPERAND1: '1', OPERAND2: '2'}), true);
     t.strictEqual(blocks.lt({OPERAND1: '2', OPERAND2: '1'}), false);
