@@ -98,7 +98,7 @@
     "jsdoc": "3.6.11",
     "json": "^9.0.4",
     "pngjs": "3.4.0",
-    "scratch-blocks": "github:scratchfoundation/scratch-blocks#7ce9991b6f1b6a504847097ebd098f0ec1e50e52",
+    "scratch-blocks": "github:scratchfoundation/scratch-blocks#75e6e6c51290e1961e9bc49d8e57364c580a53b4",
     "scratch-l10n": "3.18.341",
     "scratch-render-fonts": "1.0.113",
     "scratch-semantic-release-config": "1.0.16",
