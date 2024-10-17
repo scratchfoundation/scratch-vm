@@ -147,7 +147,7 @@ class Scratch3Text2SpeechBlocks {
                 name: formatMessage({
                     id: 'text2speech.alto',
                     default: 'alto',
-                    description: 'Name for a voice with ambiguous gender.'
+                    description: 'Name for a voice of female gender. The voice's name is Salli.'
                 }),
                 gender: 'female',
                 playbackRate: 1
@@ -156,7 +156,7 @@ class Scratch3Text2SpeechBlocks {
                 name: formatMessage({
                     id: 'text2speech.tenor',
                     default: 'tenor',
-                    description: 'Name for a voice with ambiguous gender.'
+                    description: 'Name for a voice of male gender. The voice's name is Joey.'
                 }),
                 gender: 'male',
                 playbackRate: 1
@@ -165,20 +165,42 @@ class Scratch3Text2SpeechBlocks {
                 name: formatMessage({
                     id: 'text2speech.squeak',
                     default: 'squeak',
-                    description: 'Name for a funny voice with a high pitch.'
+                    description: 'Name for a funny female voice with a high pitch.'
                 }),
                 gender: 'female',
                 playbackRate: 1.19 // +3 semitones
             },
+
+            [SQUEAK-TENOR_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.squeaktenor',
+                    default: 'squeak_tenor',
+                    description: 'Name for a funny male voice with a high pitch.'
+                }),
+                gender: 'male',
+                playbackRate: 1.19 // +3 semitones
+            },
+            
             [GIANT_ID]: {
                 name: formatMessage({
                     id: 'text2speech.giant',
                     default: 'giant',
-                    description: 'Name for a funny voice with a low pitch.'
+                    description: 'Name for a funny male voice with a low pitch.'
                 }),
                 gender: 'male',
                 playbackRate: 0.84 // -3 semitones
             },
+            
+            [GIANT-ALTO_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.giantalto',
+                    default: 'giant_alto',
+                    description: 'Name for a funny female voice with a low pitch.'
+                }),
+                gender: 'female',
+                playbackrate: 0.84 // -3 semitones
+            },
+            
             [KITTEN_ID]: {
                 name: formatMessage({
                     id: 'text2speech.kitten',
@@ -187,7 +209,17 @@ class Scratch3Text2SpeechBlocks {
                 }),
                 gender: 'female',
                 playbackRate: 1.41 // +6 semitones
+            },
+            [CAT_ID]: {
+                name: formatMessage({
+                    id: 'text2speech.cat',
+                    default: 'cat',
+                    description: 'A adult cat.'
+                }),
+                gender: 'male',
+                playbackRate:1.35 // +6 semitones
             }
+            
         };
     }
 
