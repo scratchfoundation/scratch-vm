@@ -3,6 +3,28 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.8.33-beta.1](https://github.com/scratchfoundation/scratch-vm/compare/v4.8.32...v4.8.33-beta.1) (2024-10-18)
+
+
+### Bug Fixes
+
+* add the hat extension to extension hat blocks ([#5](https://github.com/scratchfoundation/scratch-vm/issues/5)) ([2baf2c9](https://github.com/scratchfoundation/scratch-vm/commit/2baf2c91b6b215163a07f686cf2c4ddbbcfbe978))
+* add the monitor block extension to extension monitor blocks ([#6](https://github.com/scratchfoundation/scratch-vm/issues/6)) ([4837dd8](https://github.com/scratchfoundation/scratch-vm/commit/4837dd8e8b19ca24b3aa014162b57fba34a74534))
+* **deps:** update dependency scratch-l10n to v3.18.339 ([51aa6bc](https://github.com/scratchfoundation/scratch-vm/commit/51aa6bc9b2e5b91a520a7a322f5667dc3ea526b4))
+* **deps:** update dependency scratch-l10n to v3.18.341 ([e801215](https://github.com/scratchfoundation/scratch-vm/commit/e80121577f845620912f6f2734797020ae6f3e51))
+* **deps:** update dependency scratch-render-fonts to v1.0.112 ([883ed15](https://github.com/scratchfoundation/scratch-vm/commit/883ed159b4c1f29eff0ed3ae7f15604ddd8ad7a7))
+* **deps:** update dependency scratch-render-fonts to v1.0.113 ([55e9355](https://github.com/scratchfoundation/scratch-vm/commit/55e9355504ea25c7cc38a839723bbc201e37d685))
+* **deps:** update dependency scratch-svg-renderer to v2.5.13 ([8b42e5e](https://github.com/scratchfoundation/scratch-vm/commit/8b42e5e4ae32840af82ed137edc66e4ff4d6bc2d))
+* **deps:** update dependency scratch-svg-renderer to v2.5.14 ([05b03bf](https://github.com/scratchfoundation/scratch-vm/commit/05b03bfa5ba0c08d1c6f2fa5f9b01069c2ba215d))
+* **deps:** update dependency scratch-svg-renderer to v2.5.15 ([a230323](https://github.com/scratchfoundation/scratch-vm/commit/a230323f1256fc3fa4741cd501de3c6abe84144a))
+* fix bug that could result in the VM's representation of shadow blocks getting into a bad state ([#9](https://github.com/scratchfoundation/scratch-vm/issues/9)) ([31189d6](https://github.com/scratchfoundation/scratch-vm/commit/31189d616b1fff1715ca65c851cbc7fa2d29a837))
+* handle modern workspace comment events ([#3](https://github.com/scratchfoundation/scratch-vm/issues/3)) ([88c097b](https://github.com/scratchfoundation/scratch-vm/commit/88c097b1f2b36c2cc244e977f8927c5d02783687))
+* handle new custom block comment events ([#4](https://github.com/scratchfoundation/scratch-vm/issues/4)) ([22fcd67](https://github.com/scratchfoundation/scratch-vm/commit/22fcd6753d5348ca3477c4a87c4dfcdbf5560fc1))
+* run stacks in response to click events ([#1](https://github.com/scratchfoundation/scratch-vm/issues/1)) ([12e2362](https://github.com/scratchfoundation/scratch-vm/commit/12e2362ac68a7165ecdef650080da83c6d9cd5c6))
+* update VM state when blocks are removed from an input previously occupied by a shadow block ([#8](https://github.com/scratchfoundation/scratch-vm/issues/8)) ([410826b](https://github.com/scratchfoundation/scratch-vm/commit/410826b9faa62ed70ff12430e42c8262c858de1f))
+* use scratch-blocks@^2.0.0-beta ([e92a2c6](https://github.com/scratchfoundation/scratch-vm/commit/e92a2c64d0a897ddf2df2a43707672a30e0e0978))
+* use toolboxitemid instead of id as the identifier attribute for extensions toolbox categories ([#2](https://github.com/scratchfoundation/scratch-vm/issues/2)) ([484d15b](https://github.com/scratchfoundation/scratch-vm/commit/484d15b1bedcfc0702ea1cba94251637c6defc0c))
+
 ## [4.8.32](https://github.com/scratchfoundation/scratch-vm/compare/v4.8.31...v4.8.32) (2024-10-11)
 
 
