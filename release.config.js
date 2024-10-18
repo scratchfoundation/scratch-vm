@@ -6,6 +6,14 @@ module.exports = {
             // default channel
         },
         {
+            name: 'alpha',
+            prerelease: true
+        },
+        {
+            name: 'beta',
+            prerelease: true
+        },
+        {
             name: 'hotfix/*',
             channel: 'hotfix'
         }
