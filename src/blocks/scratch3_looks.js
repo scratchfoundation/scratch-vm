@@ -418,9 +418,9 @@ class Scratch3LooksBlocks {
      * @param {!Target} stage Target to set backdrop to.
      * @param {Any} requestedBackdrop Backdrop requested, e.g., 0, 'name', etc.
      * @param {boolean=} optZeroIndex Set to zero-index the requestedBackdrop.
-     * @return {Array.<!Thread>} Any threads started by this switch.
+     * @param {boolean=} optSkipEvent Skips firing the backdrop changed event.
      */
-    _setBackdrop (stage, requestedBackdrop, optZeroIndex) {
+    _setBackdrop (stage, requestedBackdrop, optZeroIndex, optSkipEvent) {
         if (typeof requestedBackdrop === 'number') {
             // Numbers should be treated as backdrop indices, always
             stage.setCostume(optZeroIndex ? requestedBackdrop : requestedBackdrop - 1);
@@ -455,10 +455,12 @@ class Scratch3LooksBlocks {
             }
         }
 
-        const newName = stage.getCostumes()[stage.currentCostume].name;
-        return this.runtime.startHats('event_whenbackdropswitchesto', {
-            BACKDROP: newName
-        });
+        if (!optSkipEvent) {
+            const newName = stage.getCostumes()[stage.currentCostume].name;
+            this.runtime.startHats('event_whenbackdropswitchesto', {
+                BACKDROP: newName
+            });
+        }
     }
 
     switchCostume (args, util) {
@@ -476,41 +478,19 @@ class Scratch3LooksBlocks {
     }
 
     switchBackdropAndWait (args, util) {
-        // Have we run before, starting threads?
-        if (!util.stackFrame.startedThreads) {
-            // No - switch the backdrop.
-            util.stackFrame.startedThreads = (
-                this._setBackdrop(
-                    this.runtime.getTargetForStage(),
-                    args.BACKDROP
-                )
-            );
-            if (util.stackFrame.startedThreads.length === 0) {
-                // Nothing was started.
-                return;
-            }
-        }
-        // We've run before; check if the wait is still going on.
-        const instance = this;
-        // Scratch 2 considers threads to be waiting if they are still in
-        // runtime.threads. Threads that have run all their blocks, or are
-        // marked done but still in runtime.threads are still considered to
-        // be waiting.
-        const waiting = util.stackFrame.startedThreads
-            .some(thread => instance.runtime.threads.indexOf(thread) !== -1);
-        if (waiting) {
-            // If all threads are waiting for the next tick or later yield
-            // for a tick as well. Otherwise yield until the next loop of
-            // the threads.
-            if (
-                util.stackFrame.startedThreads
-                    .every(thread => instance.runtime.isWaitingThread(thread))
-            ) {
-                util.yieldTick();
-            } else {
-                util.yield();
-            }
-        }
+        const stage = this.runtime.getTargetForStage();
+
+        this._setBackdrop(
+            stage,
+            args.BACKDROP,
+            false,
+            true // Skip firing event so we can wait on it.
+        );
+
+        const newName = stage.getCostumes()[stage.currentCostume].name;
+        util.startHatsAndWait('event_whenbackdropswitchesto', {
+            BACKDROP: newName
+        });
     }
 
     nextBackdrop () {
