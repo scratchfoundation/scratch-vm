@@ -4,6 +4,8 @@ const maybeFormatMessage = require('../util/maybe-format-message');
 
 const BlockType = require('./block-type');
 
+let rejectUnofficialExtensions = true;
+
 // These extensions are currently built into the VM repository but should not be loaded at startup.
 // TODO: move these out into a separate repository?
 // TODO: change extension spec so that library info, including extension ID, can be collected through static methods
@@ -153,6 +155,10 @@ class ExtensionManager {
             const serviceName = this._registerInternalExtension(extensionInstance);
             this._loadedExtensions.set(extensionURL, serviceName);
             return Promise.resolve();
+        }
+        
+        if (rejectUnofficialExtensions) {
+            return Promise.reject(new Error('Unofficial extensions not supported here'));
         }
 
         return new Promise((resolve, reject) => {
