@@ -98,7 +98,7 @@
     "jsdoc": "3.6.11",
     "json": "^9.0.4",
     "pngjs": "3.4.0",
-    "scratch-blocks": "^2.0.0-beta",
+    "scratch-blocks": "2.0.0-spork.1",
     "scratch-l10n": "3.18.344",
     "scratch-render-fonts": "1.0.113",
     "scratch-semantic-release-config": "1.0.16",
