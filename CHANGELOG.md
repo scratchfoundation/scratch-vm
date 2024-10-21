@@ -3,6 +3,21 @@
 All notable changes to this project will be documented in this file. See
 [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [4.8.37-spork.1](https://github.com/scratchfoundation/scratch-vm/compare/v4.8.36...v4.8.37-spork.1) (2024-10-21)
+
+
+### Bug Fixes
+
+* add the hat extension to extension hat blocks ([#5](https://github.com/scratchfoundation/scratch-vm/issues/5)) ([2baf2c9](https://github.com/scratchfoundation/scratch-vm/commit/2baf2c91b6b215163a07f686cf2c4ddbbcfbe978))
+* add the monitor block extension to extension monitor blocks ([#6](https://github.com/scratchfoundation/scratch-vm/issues/6)) ([4837dd8](https://github.com/scratchfoundation/scratch-vm/commit/4837dd8e8b19ca24b3aa014162b57fba34a74534))
+* fix bug that could result in the VM's representation of shadow blocks getting into a bad state ([#9](https://github.com/scratchfoundation/scratch-vm/issues/9)) ([31189d6](https://github.com/scratchfoundation/scratch-vm/commit/31189d616b1fff1715ca65c851cbc7fa2d29a837))
+* handle modern workspace comment events ([#3](https://github.com/scratchfoundation/scratch-vm/issues/3)) ([88c097b](https://github.com/scratchfoundation/scratch-vm/commit/88c097b1f2b36c2cc244e977f8927c5d02783687))
+* handle new custom block comment events ([#4](https://github.com/scratchfoundation/scratch-vm/issues/4)) ([22fcd67](https://github.com/scratchfoundation/scratch-vm/commit/22fcd6753d5348ca3477c4a87c4dfcdbf5560fc1))
+* run stacks in response to click events ([#1](https://github.com/scratchfoundation/scratch-vm/issues/1)) ([12e2362](https://github.com/scratchfoundation/scratch-vm/commit/12e2362ac68a7165ecdef650080da83c6d9cd5c6))
+* update VM state when blocks are removed from an input previously occupied by a shadow block ([#8](https://github.com/scratchfoundation/scratch-vm/issues/8)) ([410826b](https://github.com/scratchfoundation/scratch-vm/commit/410826b9faa62ed70ff12430e42c8262c858de1f))
+* use scratch-blocks@^2.0.0-beta ([e92a2c6](https://github.com/scratchfoundation/scratch-vm/commit/e92a2c64d0a897ddf2df2a43707672a30e0e0978))
+* use toolboxitemid instead of id as the identifier attribute for extensions toolbox categories ([#2](https://github.com/scratchfoundation/scratch-vm/issues/2)) ([484d15b](https://github.com/scratchfoundation/scratch-vm/commit/484d15b1bedcfc0702ea1cba94251637c6defc0c))
+
 ## [4.8.36](https://github.com/scratchfoundation/scratch-vm/compare/v4.8.35...v4.8.36) (2024-10-19)
 
 
