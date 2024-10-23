@@ -69,7 +69,7 @@
     "scratch-parser": "^5.1.1",
     "scratch-render": "^1.0.232",
     "scratch-sb1-converter": "^1.0.0",
-    "scratch-storage": "^2.3.5",
+    "scratch-storage": "^3.0.0",
     "scratch-svg-renderer": "2.5.18",
     "scratch-translate-extension-languages": "^1.0.0",
     "text-encoding": "^0.7.0",
