@@ -45,6 +45,29 @@ test('blocks get new id on duplicate', t => {
     });
 });
 
+test('comments are duplicated when duplicating target', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const rt = new RenderedTarget(s, r);
+    rt.createComment('testCommentId', null, 'testcomment', 0, 0, 100, 100, false);
+    return rt.duplicate().then(duplicate => {
+        // ensure duplicated comment exists
+        t.equal(Object.keys(duplicate.comments).length, 1);
+
+        // ensure comment was duplicated correctly
+        const dupComment = duplicate.comments.testCommentId;
+        t.equal(dupComment.id, 'testCommentId');
+        t.equal(dupComment.text, 'testcomment');
+        t.equal(dupComment.x, 0);
+        t.equal(dupComment.y, 0);
+        t.equal(dupComment.width, 100);
+        t.equal(dupComment.height, 100);
+        t.equal(dupComment.minimized, false);
+
+        t.end();
+    });
+});
+
 test('direction', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
