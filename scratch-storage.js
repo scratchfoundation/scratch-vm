@@ -7,465 +7,37 @@
 		exports["ScratchStorage"] = factory();
 	else
 		root["ScratchStorage"] = factory();
-})(window, function() {
-return /******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// define __esModule on exports
-/******/ 	__webpack_require__.r = function(exports) {
-/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
-/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
-/******/ 		}
-/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
-/******/ 	};
-/******/
-/******/ 	// create a fake namespace object
-/******/ 	// mode & 1: value is a module id, require it
-/******/ 	// mode & 2: merge all properties of value into the ns
-/******/ 	// mode & 4: return value when already ns object
-/******/ 	// mode & 8|1: behave like require
-/******/ 	__webpack_require__.t = function(value, mode) {
-/******/ 		if(mode & 1) value = __webpack_require__(value);
-/******/ 		if(mode & 8) return value;
-/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
-/******/ 		var ns = Object.create(null);
-/******/ 		__webpack_require__.r(ns);
-/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
-/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
-/******/ 		return ns;
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
-/******/ })
-/************************************************************************/
-/******/ ({
+})(self, () => {
+return /******/ (() => { // webpackBootstrap
+/******/ 	var __webpack_modules__ = ({
 
-/***/ "./node_modules/@babel/runtime/helpers/arrayLikeToArray.js":
-/*!*****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayLikeToArray.js ***!
-  \*****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 9:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-function _arrayLikeToArray(r, a) {
-  (null == a || a > r.length) && (a = r.length);
-  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-  return n;
-}
-module.exports = _arrayLikeToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
+module.exports = __webpack_require__(14)("iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAAAAADmVT4XAAADZElEQVR42u3a70vbQBgH8O/7vOibvsmbFUEEWUGGUhQ25nDuhSKIUFDxlYi0SAd94atRmFiHCH2x4W8iiNtwowXRgd1QipJYY3N/1F4kTQ6XLKS9yyHcvWyO8MnT5y53Tw5EcIMESIAESIAESIAESIAEPFVAq/6l8G4oAQCp4aniwbUVJ6BVzafwqKXy1VZMgNb+CHzbyK4ZB+Bi0nnk0VyhsDiSoAmvvnMHmGUVAF6UG+0ffsxRhsRHky/AyCsAUpumX0wAAIs6T4CxDADDtcdZsal6gjmdH8AsAEC6+s8Fa48SFExeAKusAEju+V367AmUCi9ANQ0AU3pwcOw2cMEH0FwAAKz5X228pRLR5AI4TgIAtIDL24oLUE94AB6W7LsH/cONN14Ilh44AOqD9s2LQR1KHiB9zgGgOSGeuA3ocPrME1Q4ANaceyePAzrcjHmAZYs9IBeW4/fzHiAwTCwAgTle9ACZK44ALDT9e6x7gL4aT0BQCHb4AqgA5/1TTOMLoJ7vZSMM0H/GHnCeDnu+CrU8vGYPcN5FADBYD0vCaYPDy+i0p337GSMsS1Z4vA3t9QgAZTt0IuIxFRPSKicAQHlvhk3FXF5GhBByMa8qo/sBO6BarwuYbYrYnFKDYEvE7phKgcxvEQBqnvhgiQCUOgoAO4C3JOS3L/hv23UXxVldBECfcueAqpAa0WGy/QeULREAY6aTXRFDgBuA13+ElOncAERMAGaA9hBQD4gQQHsIRE1AZoD2xrgQS5nOZyHgFKmWDSIG4GRAVidiAE4GRB6AzAB2AKIPQFaA5myHA5AV4ESNugZhC7BLR50lIBPAebrzBGQCKAFQNSIMcDvRTQIwAHxNApM3RBygGK0uyhxwOwGsPAgEnPWj5ycRCNiJtBHlAChGKQVwANzPY+CXSMDNWISiLA9AfRA5IhJQ68UnoQAt+AtOPIBKhJosF8B6UM0yLkAxQk2WCyDX9SiUh1gkQAIkoCuAvjGuquMbuijAtwG7MPL8yBICOHSPk3W8Ne8KcEUdmBi6FADYos+QleIH0N/ogOxd7AD6uAS6WRU8WcBdlgZMG/EnYUlwEpLLoQ4PjzGbiA5UsRMRsbQ+5ziDJmYqJuR6NaMomdXuFuZyPSABEiABEiABEiABEiAc8Bd6VyvCEKGqcQAAAABJRU5ErkJggg==")
 
 /***/ }),
 
-/***/ "./node_modules/@babel/runtime/helpers/arrayWithHoles.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/arrayWithHoles.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 680:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-function _arrayWithHoles(r) {
-  if (Array.isArray(r)) return r;
-}
-module.exports = _arrayWithHoles, module.exports.__esModule = true, module.exports["default"] = module.exports;
+module.exports = __webpack_require__(14)("UklGRiYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQIAAAAAAA==")
 
 /***/ }),
 
-/***/ "./node_modules/@babel/runtime/helpers/assertThisInitialized.js":
-/*!**********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/assertThisInitialized.js ***!
-  \**********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 914:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-function _assertThisInitialized(e) {
-  if (void 0 === e) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  return e;
-}
-module.exports = _assertThisInitialized, module.exports.__esModule = true, module.exports["default"] = module.exports;
+module.exports = __webpack_require__(14)("PD94bWwgdmVyc2lvbj0iMS4wIj8+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8Zz4KICA8cmVjdCBmaWxsPSIjQ0NDIiBoZWlnaHQ9IjEyOCIgd2lkdGg9IjEyOCIvPgogIDx0ZXh0IGZpbGw9ImJsYWNrIiB5PSIxMDciIHg9IjM1LjUiIGZvbnQtc2l6ZT0iMTI4Ij4/PC90ZXh0PgogPC9nPgo8L3N2Zz4K")
 
 /***/ }),
 
-/***/ "./node_modules/@babel/runtime/helpers/classCallCheck.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/classCallCheck.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _classCallCheck(a, n) {
-  if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function");
-}
-module.exports = _classCallCheck, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/createClass.js":
-/*!************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/createClass.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var toPropertyKey = __webpack_require__(/*! ./toPropertyKey.js */ "./node_modules/@babel/runtime/helpers/toPropertyKey.js");
-function _defineProperties(e, r) {
-  for (var t = 0; t < r.length; t++) {
-    var o = r[t];
-    o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, toPropertyKey(o.key), o);
-  }
-}
-function _createClass(e, r, t) {
-  return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", {
-    writable: !1
-  }), e;
-}
-module.exports = _createClass, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/getPrototypeOf.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/getPrototypeOf.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _getPrototypeOf(t) {
-  return (module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function (t) {
-    return t.__proto__ || Object.getPrototypeOf(t);
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _getPrototypeOf(t);
-}
-module.exports = _getPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/inherits.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/inherits.js ***!
-  \*********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var setPrototypeOf = __webpack_require__(/*! ./setPrototypeOf.js */ "./node_modules/@babel/runtime/helpers/setPrototypeOf.js");
-function _inherits(t, e) {
-  if ("function" != typeof e && null !== e) throw new TypeError("Super expression must either be null or a function");
-  t.prototype = Object.create(e && e.prototype, {
-    constructor: {
-      value: t,
-      writable: !0,
-      configurable: !0
-    }
-  }), Object.defineProperty(t, "prototype", {
-    writable: !1
-  }), e && setPrototypeOf(t, e);
-}
-module.exports = _inherits, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js":
-/*!*********************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js ***!
-  \*********************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _iterableToArrayLimit(r, l) {
-  var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-  if (null != t) {
-    var e,
-      n,
-      i,
-      u,
-      a = [],
-      f = !0,
-      o = !1;
-    try {
-      if (i = (t = t.call(r)).next, 0 === l) {
-        if (Object(t) !== t) return;
-        f = !1;
-      } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0);
-    } catch (r) {
-      o = !0, n = r;
-    } finally {
-      try {
-        if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return;
-      } finally {
-        if (o) throw n;
-      }
-    }
-    return a;
-  }
-}
-module.exports = _iterableToArrayLimit, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/nonIterableRest.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/nonIterableRest.js ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-module.exports = _nonIterableRest, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/objectWithoutProperties.js":
-/*!************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/objectWithoutProperties.js ***!
-  \************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var objectWithoutPropertiesLoose = __webpack_require__(/*! ./objectWithoutPropertiesLoose.js */ "./node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js");
-function _objectWithoutProperties(e, t) {
-  if (null == e) return {};
-  var o,
-    r,
-    i = objectWithoutPropertiesLoose(e, t);
-  if (Object.getOwnPropertySymbols) {
-    var s = Object.getOwnPropertySymbols(e);
-    for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]);
-  }
-  return i;
-}
-module.exports = _objectWithoutProperties, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js":
-/*!*****************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/objectWithoutPropertiesLoose.js ***!
-  \*****************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _objectWithoutPropertiesLoose(r, e) {
-  if (null == r) return {};
-  var t = {};
-  for (var n in r) if ({}.hasOwnProperty.call(r, n)) {
-    if (e.includes(n)) continue;
-    t[n] = r[n];
-  }
-  return t;
-}
-module.exports = _objectWithoutPropertiesLoose, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js":
-/*!**************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js ***!
-  \**************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runtime/helpers/typeof.js")["default"];
-var assertThisInitialized = __webpack_require__(/*! ./assertThisInitialized.js */ "./node_modules/@babel/runtime/helpers/assertThisInitialized.js");
-function _possibleConstructorReturn(t, e) {
-  if (e && ("object" == _typeof(e) || "function" == typeof e)) return e;
-  if (void 0 !== e) throw new TypeError("Derived constructors may only return object or undefined");
-  return assertThisInitialized(t);
-}
-module.exports = _possibleConstructorReturn, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/readOnlyError.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/readOnlyError.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _readOnlyError(r) {
-  throw new TypeError('"' + r + '" is read-only');
-}
-module.exports = _readOnlyError, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/setPrototypeOf.js":
-/*!***************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/setPrototypeOf.js ***!
-  \***************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _setPrototypeOf(t, e) {
-  return (module.exports = _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function (t, e) {
-    return t.__proto__ = e, t;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _setPrototypeOf(t, e);
-}
-module.exports = _setPrototypeOf, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/slicedToArray.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/slicedToArray.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayWithHoles = __webpack_require__(/*! ./arrayWithHoles.js */ "./node_modules/@babel/runtime/helpers/arrayWithHoles.js");
-var iterableToArrayLimit = __webpack_require__(/*! ./iterableToArrayLimit.js */ "./node_modules/@babel/runtime/helpers/iterableToArrayLimit.js");
-var unsupportedIterableToArray = __webpack_require__(/*! ./unsupportedIterableToArray.js */ "./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js");
-var nonIterableRest = __webpack_require__(/*! ./nonIterableRest.js */ "./node_modules/@babel/runtime/helpers/nonIterableRest.js");
-function _slicedToArray(r, e) {
-  return arrayWithHoles(r) || iterableToArrayLimit(r, e) || unsupportedIterableToArray(r, e) || nonIterableRest();
-}
-module.exports = _slicedToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/toPrimitive.js":
-/*!************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPrimitive.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runtime/helpers/typeof.js")["default"];
-function toPrimitive(t, r) {
-  if ("object" != _typeof(t) || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r || "default");
-    if ("object" != _typeof(i)) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-module.exports = toPrimitive, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/toPropertyKey.js":
-/*!**************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/toPropertyKey.js ***!
-  \**************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(/*! ./typeof.js */ "./node_modules/@babel/runtime/helpers/typeof.js")["default"];
-var toPrimitive = __webpack_require__(/*! ./toPrimitive.js */ "./node_modules/@babel/runtime/helpers/toPrimitive.js");
-function toPropertyKey(t) {
-  var i = toPrimitive(t, "string");
-  return "symbol" == _typeof(i) ? i : i + "";
-}
-module.exports = toPropertyKey, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/typeof.js":
-/*!*******************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/typeof.js ***!
-  \*******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-function _typeof(o) {
-  "@babel/helpers - typeof";
-
-  return (module.exports = _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) {
-    return typeof o;
-  } : function (o) {
-    return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o;
-  }, module.exports.__esModule = true, module.exports["default"] = module.exports), _typeof(o);
-}
-module.exports = _typeof, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js":
-/*!***************************************************************************!*\
-  !*** ./node_modules/@babel/runtime/helpers/unsupportedIterableToArray.js ***!
-  \***************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var arrayLikeToArray = __webpack_require__(/*! ./arrayLikeToArray.js */ "./node_modules/@babel/runtime/helpers/arrayLikeToArray.js");
-function _unsupportedIterableToArray(r, a) {
-  if (r) {
-    if ("string" == typeof r) return arrayLikeToArray(r, a);
-    var t = {}.toString.call(r).slice(8, -1);
-    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? arrayLikeToArray(r, a) : void 0;
-  }
-}
-module.exports = _unsupportedIterableToArray, module.exports.__esModule = true, module.exports["default"] = module.exports;
-
-/***/ }),
-
-/***/ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js":
-/*!****************************************************************!*\
-  !*** ./node_modules/arraybuffer-loader/lib/to-array-buffer.js ***!
-  \****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 14:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(Buffer) {
+/* provided dependency */ var Buffer = __webpack_require__(287)["hp"];
+
 
 module.exports = function (base64Data) {
   var isBrowser = typeof window !== 'undefined' && typeof window.atob === 'function'
@@ -479,16 +51,130 @@ module.exports = function (base64Data) {
   return bytes.buffer
 }
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
 
 /***/ }),
 
-/***/ "./node_modules/base64-js/index.js":
-/*!*****************************************!*\
-  !*** ./node_modules/base64-js/index.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 953:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const crossFetch = __webpack_require__(945);
+
+/**
+ * Metadata header names
+ * @enum {string} The enum value is the name of the associated header.
+ * @readonly
+ */
+const RequestMetadata = {
+  /** The ID of the project associated with this request */
+  ProjectId: 'X-Project-ID',
+  /** The ID of the project run associated with this request */
+  RunId: 'X-Run-ID'
+};
+
+/**
+ * Metadata headers for requests
+ * @type {Headers}
+ */
+const metadata = new crossFetch.Headers();
+
+/**
+ * Check if there is any metadata to apply.
+ * @returns {boolean} true if `metadata` has contents, or false if it is empty.
+ */
+const hasMetadata = () => {
+  /* global self */
+  const searchParams = typeof self !== 'undefined' && self && self.location && self.location.search && self.location.search.split(/[?&]/) || [];
+  if (!searchParams.includes('scratchMetadata=1')) {
+    // for now, disable this feature unless scratchMetadata=1
+    // TODO: remove this check once we're sure the feature works correctly in production
+    return false;
+  }
+  for (const _ of metadata) {
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Non-destructively merge any metadata state (if any) with the provided options object (if any).
+ * If there is metadata state but no options object is provided, make a new object.
+ * If there is no metadata state, return the provided options parameter without modification.
+ * If there is metadata and an options object is provided, modify a copy and return it.
+ * Headers in the provided options object may override headers generated from metadata state.
+ * @param {RequestInit} [options] The initial request options. May be null or undefined.
+ * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
+ */
+const applyMetadata = options => {
+  if (hasMetadata()) {
+    const augmentedOptions = Object.assign({}, options);
+    augmentedOptions.headers = new crossFetch.Headers(metadata);
+    if (options && options.headers) {
+      // the Fetch spec says options.headers could be:
+      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
+      // turn it into a Headers object to be sure of how to interact with it
+      const overrideHeaders = options.headers instanceof crossFetch.Headers ? options.headers : new crossFetch.Headers(options.headers);
+      for (const [name, value] of overrideHeaders.entries()) {
+        augmentedOptions.headers.set(name, value);
+      }
+    }
+    return augmentedOptions;
+  }
+  return options;
+};
+
+/**
+ * Make a network request.
+ * This is a wrapper for the global fetch method, adding some Scratch-specific functionality.
+ * @param {RequestInfo|URL} resource The resource to fetch.
+ * @param {RequestInit} options Optional object containing custom settings for this request.
+ * @see {@link https://developer.mozilla.org/docs/Web/API/fetch} for more about the fetch API.
+ * @returns {Promise<Response>} A promise for the response to the request.
+ */
+const scratchFetch = (resource, options) => {
+  const augmentedOptions = applyMetadata(options);
+  return crossFetch.fetch(resource, augmentedOptions);
+};
+
+/**
+ * Set the value of a named request metadata item.
+ * Setting the value to `null` or `undefined` will NOT remove the item.
+ * Use `unsetMetadata` for that.
+ * @param {RequestMetadata} name The name of the metadata item to set.
+ * @param {any} value The value to set (will be converted to a string).
+ */
+const setMetadata = (name, value) => {
+  metadata.set(name, value);
+};
+
+/**
+ * Remove a named request metadata item.
+ * @param {RequestMetadata} name The name of the metadata item to remove.
+ */
+const unsetMetadata = name => {
+  metadata.delete(name);
+};
+
+/**
+ * Retrieve a named request metadata item.
+ * Only for use in tests. At the time of writing, used in scratch-vm tests.
+ * @param {RequestMetadata} name The name of the metadata item to retrieve.
+ * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
+ */
+const getMetadata = name => metadata.get(name);
+module.exports = {
+  Headers: crossFetch.Headers,
+  RequestMetadata,
+  applyMetadata,
+  scratchFetch,
+  setMetadata,
+  unsetMetadata,
+  getMetadata
+};
+
+/***/ }),
+
+/***/ 526:
+/***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
 
@@ -645,100 +331,96 @@ function fromByteArray (uint8) {
 
 /***/ }),
 
-/***/ "./node_modules/buffer/index.js":
-/*!**************************************!*\
-  !*** ./node_modules/buffer/index.js ***!
-  \**************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 287:
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {/*!
+var __webpack_unused_export__;
+/*!
  * The buffer module from node.js, for the browser.
  *
- * @author   Feross Aboukhadijeh <http://feross.org>
+ * @author   Feross Aboukhadijeh <https://feross.org>
  * @license  MIT
  */
 /* eslint-disable no-proto */
 
 
 
-var base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
-var ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
-var isArray = __webpack_require__(/*! isarray */ "./node_modules/buffer/node_modules/isarray/index.js")
+const base64 = __webpack_require__(526)
+const ieee754 = __webpack_require__(251)
+const customInspectSymbol =
+  (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
+    ? Symbol['for']('nodejs.util.inspect.custom') // eslint-disable-line dot-notation
+    : null
 
-exports.Buffer = Buffer
-exports.SlowBuffer = SlowBuffer
-exports.INSPECT_MAX_BYTES = 50
+exports.hp = Buffer
+__webpack_unused_export__ = SlowBuffer
+exports.IS = 50
+
+const K_MAX_LENGTH = 0x7fffffff
+__webpack_unused_export__ = K_MAX_LENGTH
 
 /**
  * If `Buffer.TYPED_ARRAY_SUPPORT`:
  *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (most compatible, even IE6)
+ *   === false   Print warning and recommend using `buffer` v4.x which has an Object
+ *               implementation (most compatible, even IE6)
  *
  * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
  * Opera 11.6+, iOS 4.2+.
  *
- * Due to various browser bugs, sometimes the Object implementation will be used even
- * when the browser supports typed arrays.
- *
- * Note:
- *
- *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
- *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
- *
- *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
- *
- *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
- *     incorrect length in some situations.
-
- * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
- * get the Object implementation, which is slower but behaves correctly.
+ * We report that the browser does not support typed arrays if the are not subclassable
+ * using __proto__. Firefox 4-29 lacks support for adding new properties to `Uint8Array`
+ * (See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438). IE 10 lacks support
+ * for __proto__ and has a buggy typed array implementation.
  */
-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
-  ? global.TYPED_ARRAY_SUPPORT
-  : typedArraySupport()
+Buffer.TYPED_ARRAY_SUPPORT = typedArraySupport()
 
-/*
- * Export kMaxLength after typed array support is determined.
- */
-exports.kMaxLength = kMaxLength()
+if (!Buffer.TYPED_ARRAY_SUPPORT && typeof console !== 'undefined' &&
+    typeof console.error === 'function') {
+  console.error(
+    'This browser lacks typed array (Uint8Array) support which is required by ' +
+    '`buffer` v5.x. Use `buffer` v4.x if you require old browser support.'
+  )
+}
 
 function typedArraySupport () {
+  // Can typed array instances can be augmented?
   try {
-    var arr = new Uint8Array(1)
-    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
-    return arr.foo() === 42 && // typed array instances can be augmented
-        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+    const arr = new Uint8Array(1)
+    const proto = { foo: function () { return 42 } }
+    Object.setPrototypeOf(proto, Uint8Array.prototype)
+    Object.setPrototypeOf(arr, proto)
+    return arr.foo() === 42
   } catch (e) {
     return false
   }
 }
 
-function kMaxLength () {
-  return Buffer.TYPED_ARRAY_SUPPORT
-    ? 0x7fffffff
-    : 0x3fffffff
-}
-
-function createBuffer (that, length) {
-  if (kMaxLength() < length) {
-    throw new RangeError('Invalid typed array length')
+Object.defineProperty(Buffer.prototype, 'parent', {
+  enumerable: true,
+  get: function () {
+    if (!Buffer.isBuffer(this)) return undefined
+    return this.buffer
   }
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(length)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    if (that === null) {
-      that = new Buffer(length)
-    }
-    that.length = length
-  }
+})
 
-  return that
+Object.defineProperty(Buffer.prototype, 'offset', {
+  enumerable: true,
+  get: function () {
+    if (!Buffer.isBuffer(this)) return undefined
+    return this.byteOffset
+  }
+})
+
+function createBuffer (length) {
+  if (length > K_MAX_LENGTH) {
+    throw new RangeError('The value "' + length + '" is invalid for option "size"')
+  }
+  // Return an augmented `Uint8Array` instance
+  const buf = new Uint8Array(length)
+  Object.setPrototypeOf(buf, Buffer.prototype)
+  return buf
 }
 
 /**
@@ -752,44 +434,70 @@ function createBuffer (that, length) {
  */
 
 function Buffer (arg, encodingOrOffset, length) {
-  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
-    return new Buffer(arg, encodingOrOffset, length)
-  }
-
   // Common case.
   if (typeof arg === 'number') {
     if (typeof encodingOrOffset === 'string') {
-      throw new Error(
-        'If encoding is specified then the first argument must be a string'
+      throw new TypeError(
+        'The "string" argument must be of type string. Received type number'
       )
     }
-    return allocUnsafe(this, arg)
+    return allocUnsafe(arg)
   }
-  return from(this, arg, encodingOrOffset, length)
+  return from(arg, encodingOrOffset, length)
 }
 
 Buffer.poolSize = 8192 // not used by this implementation
 
-// TODO: Legacy, not needed anymore. Remove in next major version.
-Buffer._augment = function (arr) {
-  arr.__proto__ = Buffer.prototype
-  return arr
-}
-
-function from (that, value, encodingOrOffset, length) {
-  if (typeof value === 'number') {
-    throw new TypeError('"value" argument must not be a number')
-  }
-
-  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
-    return fromArrayBuffer(that, value, encodingOrOffset, length)
-  }
-
+function from (value, encodingOrOffset, length) {
   if (typeof value === 'string') {
-    return fromString(that, value, encodingOrOffset)
+    return fromString(value, encodingOrOffset)
   }
 
-  return fromObject(that, value)
+  if (ArrayBuffer.isView(value)) {
+    return fromArrayView(value)
+  }
+
+  if (value == null) {
+    throw new TypeError(
+      'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
+      'or Array-like Object. Received type ' + (typeof value)
+    )
+  }
+
+  if (isInstance(value, ArrayBuffer) ||
+      (value && isInstance(value.buffer, ArrayBuffer))) {
+    return fromArrayBuffer(value, encodingOrOffset, length)
+  }
+
+  if (typeof SharedArrayBuffer !== 'undefined' &&
+      (isInstance(value, SharedArrayBuffer) ||
+      (value && isInstance(value.buffer, SharedArrayBuffer)))) {
+    return fromArrayBuffer(value, encodingOrOffset, length)
+  }
+
+  if (typeof value === 'number') {
+    throw new TypeError(
+      'The "value" argument must not be of type number. Received type number'
+    )
+  }
+
+  const valueOf = value.valueOf && value.valueOf()
+  if (valueOf != null && valueOf !== value) {
+    return Buffer.from(valueOf, encodingOrOffset, length)
+  }
+
+  const b = fromObject(value)
+  if (b) return b
+
+  if (typeof Symbol !== 'undefined' && Symbol.toPrimitive != null &&
+      typeof value[Symbol.toPrimitive] === 'function') {
+    return Buffer.from(value[Symbol.toPrimitive]('string'), encodingOrOffset, length)
+  }
+
+  throw new TypeError(
+    'The first argument must be one of type string, Buffer, ArrayBuffer, Array, ' +
+    'or Array-like Object. Received type ' + (typeof value)
+  )
 }
 
 /**
@@ -801,44 +509,36 @@ function from (that, value, encodingOrOffset, length) {
  * Buffer.from(arrayBuffer[, byteOffset[, length]])
  **/
 Buffer.from = function (value, encodingOrOffset, length) {
-  return from(null, value, encodingOrOffset, length)
+  return from(value, encodingOrOffset, length)
 }
 
-if (Buffer.TYPED_ARRAY_SUPPORT) {
-  Buffer.prototype.__proto__ = Uint8Array.prototype
-  Buffer.__proto__ = Uint8Array
-  if (typeof Symbol !== 'undefined' && Symbol.species &&
-      Buffer[Symbol.species] === Buffer) {
-    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-    Object.defineProperty(Buffer, Symbol.species, {
-      value: null,
-      configurable: true
-    })
-  }
-}
+// Note: Change prototype *after* Buffer.from is defined to workaround Chrome bug:
+// https://github.com/feross/buffer/pull/148
+Object.setPrototypeOf(Buffer.prototype, Uint8Array.prototype)
+Object.setPrototypeOf(Buffer, Uint8Array)
 
 function assertSize (size) {
   if (typeof size !== 'number') {
-    throw new TypeError('"size" argument must be a number')
+    throw new TypeError('"size" argument must be of type number')
   } else if (size < 0) {
-    throw new RangeError('"size" argument must not be negative')
+    throw new RangeError('The value "' + size + '" is invalid for option "size"')
   }
 }
 
-function alloc (that, size, fill, encoding) {
+function alloc (size, fill, encoding) {
   assertSize(size)
   if (size <= 0) {
-    return createBuffer(that, size)
+    return createBuffer(size)
   }
   if (fill !== undefined) {
     // Only pay attention to encoding if it's a string. This
     // prevents accidentally sending in a number that would
-    // be interpretted as a start offset.
+    // be interpreted as a start offset.
     return typeof encoding === 'string'
-      ? createBuffer(that, size).fill(fill, encoding)
-      : createBuffer(that, size).fill(fill)
+      ? createBuffer(size).fill(fill, encoding)
+      : createBuffer(size).fill(fill)
   }
-  return createBuffer(that, size)
+  return createBuffer(size)
 }
 
 /**
@@ -846,132 +546,123 @@ function alloc (that, size, fill, encoding) {
  * alloc(size[, fill[, encoding]])
  **/
 Buffer.alloc = function (size, fill, encoding) {
-  return alloc(null, size, fill, encoding)
+  return alloc(size, fill, encoding)
 }
 
-function allocUnsafe (that, size) {
+function allocUnsafe (size) {
   assertSize(size)
-  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < size; ++i) {
-      that[i] = 0
-    }
-  }
-  return that
+  return createBuffer(size < 0 ? 0 : checked(size) | 0)
 }
 
 /**
  * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
  * */
 Buffer.allocUnsafe = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 /**
  * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
  */
 Buffer.allocUnsafeSlow = function (size) {
-  return allocUnsafe(null, size)
+  return allocUnsafe(size)
 }
 
-function fromString (that, string, encoding) {
+function fromString (string, encoding) {
   if (typeof encoding !== 'string' || encoding === '') {
     encoding = 'utf8'
   }
 
   if (!Buffer.isEncoding(encoding)) {
-    throw new TypeError('"encoding" must be a valid string encoding')
+    throw new TypeError('Unknown encoding: ' + encoding)
   }
 
-  var length = byteLength(string, encoding) | 0
-  that = createBuffer(that, length)
+  const length = byteLength(string, encoding) | 0
+  let buf = createBuffer(length)
 
-  var actual = that.write(string, encoding)
+  const actual = buf.write(string, encoding)
 
   if (actual !== length) {
     // Writing a hex string, for example, that contains invalid characters will
     // cause everything after the first invalid character to be ignored. (e.g.
     // 'abxxcd' will be treated as 'ab')
-    that = that.slice(0, actual)
+    buf = buf.slice(0, actual)
   }
 
-  return that
+  return buf
 }
 
-function fromArrayLike (that, array) {
-  var length = array.length < 0 ? 0 : checked(array.length) | 0
-  that = createBuffer(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
+function fromArrayLike (array) {
+  const length = array.length < 0 ? 0 : checked(array.length) | 0
+  const buf = createBuffer(length)
+  for (let i = 0; i < length; i += 1) {
+    buf[i] = array[i] & 255
   }
-  return that
+  return buf
 }
 
-function fromArrayBuffer (that, array, byteOffset, length) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+function fromArrayView (arrayView) {
+  if (isInstance(arrayView, Uint8Array)) {
+    const copy = new Uint8Array(arrayView)
+    return fromArrayBuffer(copy.buffer, copy.byteOffset, copy.byteLength)
+  }
+  return fromArrayLike(arrayView)
+}
 
+function fromArrayBuffer (array, byteOffset, length) {
   if (byteOffset < 0 || array.byteLength < byteOffset) {
-    throw new RangeError('\'offset\' is out of bounds')
+    throw new RangeError('"offset" is outside of buffer bounds')
   }
 
   if (array.byteLength < byteOffset + (length || 0)) {
-    throw new RangeError('\'length\' is out of bounds')
+    throw new RangeError('"length" is outside of buffer bounds')
   }
 
+  let buf
   if (byteOffset === undefined && length === undefined) {
-    array = new Uint8Array(array)
+    buf = new Uint8Array(array)
   } else if (length === undefined) {
-    array = new Uint8Array(array, byteOffset)
+    buf = new Uint8Array(array, byteOffset)
   } else {
-    array = new Uint8Array(array, byteOffset, length)
+    buf = new Uint8Array(array, byteOffset, length)
   }
 
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = array
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that = fromArrayLike(that, array)
-  }
-  return that
+  // Return an augmented `Uint8Array` instance
+  Object.setPrototypeOf(buf, Buffer.prototype)
+
+  return buf
 }
 
-function fromObject (that, obj) {
+function fromObject (obj) {
   if (Buffer.isBuffer(obj)) {
-    var len = checked(obj.length) | 0
-    that = createBuffer(that, len)
+    const len = checked(obj.length) | 0
+    const buf = createBuffer(len)
 
-    if (that.length === 0) {
-      return that
+    if (buf.length === 0) {
+      return buf
     }
 
-    obj.copy(that, 0, 0, len)
-    return that
+    obj.copy(buf, 0, 0, len)
+    return buf
   }
 
-  if (obj) {
-    if ((typeof ArrayBuffer !== 'undefined' &&
-        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
-      if (typeof obj.length !== 'number' || isnan(obj.length)) {
-        return createBuffer(that, 0)
-      }
-      return fromArrayLike(that, obj)
+  if (obj.length !== undefined) {
+    if (typeof obj.length !== 'number' || numberIsNaN(obj.length)) {
+      return createBuffer(0)
     }
-
-    if (obj.type === 'Buffer' && isArray(obj.data)) {
-      return fromArrayLike(that, obj.data)
-    }
+    return fromArrayLike(obj)
   }
 
-  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+  if (obj.type === 'Buffer' && Array.isArray(obj.data)) {
+    return fromArrayLike(obj.data)
+  }
 }
 
 function checked (length) {
-  // Note: cannot use `length < kMaxLength()` here because that fails when
+  // Note: cannot use `length < K_MAX_LENGTH` here because that fails when
   // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength()) {
+  if (length >= K_MAX_LENGTH) {
     throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+                         'size: 0x' + K_MAX_LENGTH.toString(16) + ' bytes')
   }
   return length | 0
 }
@@ -984,20 +675,25 @@ function SlowBuffer (length) {
 }
 
 Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
+  return b != null && b._isBuffer === true &&
+    b !== Buffer.prototype // so Buffer.isBuffer(Buffer.prototype) will be false
 }
 
 Buffer.compare = function compare (a, b) {
+  if (isInstance(a, Uint8Array)) a = Buffer.from(a, a.offset, a.byteLength)
+  if (isInstance(b, Uint8Array)) b = Buffer.from(b, b.offset, b.byteLength)
   if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-    throw new TypeError('Arguments must be Buffers')
+    throw new TypeError(
+      'The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array'
+    )
   }
 
   if (a === b) return 0
 
-  var x = a.length
-  var y = b.length
+  let x = a.length
+  let y = b.length
 
-  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+  for (let i = 0, len = Math.min(x, y); i < len; ++i) {
     if (a[i] !== b[i]) {
       x = a[i]
       y = b[i]
@@ -1030,7 +726,7 @@ Buffer.isEncoding = function isEncoding (encoding) {
 }
 
 Buffer.concat = function concat (list, length) {
-  if (!isArray(list)) {
+  if (!Array.isArray(list)) {
     throw new TypeError('"list" argument must be an Array of Buffers')
   }
 
@@ -1038,7 +734,7 @@ Buffer.concat = function concat (list, length) {
     return Buffer.alloc(0)
   }
 
-  var i
+  let i
   if (length === undefined) {
     length = 0
     for (i = 0; i < list.length; ++i) {
@@ -1046,14 +742,26 @@ Buffer.concat = function concat (list, length) {
     }
   }
 
-  var buffer = Buffer.allocUnsafe(length)
-  var pos = 0
+  const buffer = Buffer.allocUnsafe(length)
+  let pos = 0
   for (i = 0; i < list.length; ++i) {
-    var buf = list[i]
-    if (!Buffer.isBuffer(buf)) {
+    let buf = list[i]
+    if (isInstance(buf, Uint8Array)) {
+      if (pos + buf.length > buffer.length) {
+        if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf)
+        buf.copy(buffer, pos)
+      } else {
+        Uint8Array.prototype.set.call(
+          buffer,
+          buf,
+          pos
+        )
+      }
+    } else if (!Buffer.isBuffer(buf)) {
       throw new TypeError('"list" argument must be an Array of Buffers')
+    } else {
+      buf.copy(buffer, pos)
     }
-    buf.copy(buffer, pos)
     pos += buf.length
   }
   return buffer
@@ -1063,19 +771,22 @@ function byteLength (string, encoding) {
   if (Buffer.isBuffer(string)) {
     return string.length
   }
-  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
-      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+  if (ArrayBuffer.isView(string) || isInstance(string, ArrayBuffer)) {
     return string.byteLength
   }
   if (typeof string !== 'string') {
-    string = '' + string
+    throw new TypeError(
+      'The "string" argument must be one of type string, Buffer, or ArrayBuffer. ' +
+      'Received type ' + typeof string
+    )
   }
 
-  var len = string.length
-  if (len === 0) return 0
+  const len = string.length
+  const mustMatch = (arguments.length > 2 && arguments[2] === true)
+  if (!mustMatch && len === 0) return 0
 
   // Use a for loop to avoid recursion
-  var loweredCase = false
+  let loweredCase = false
   for (;;) {
     switch (encoding) {
       case 'ascii':
@@ -1084,7 +795,6 @@ function byteLength (string, encoding) {
         return len
       case 'utf8':
       case 'utf-8':
-      case undefined:
         return utf8ToBytes(string).length
       case 'ucs2':
       case 'ucs-2':
@@ -1096,7 +806,9 @@ function byteLength (string, encoding) {
       case 'base64':
         return base64ToBytes(string).length
       default:
-        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        if (loweredCase) {
+          return mustMatch ? -1 : utf8ToBytes(string).length // assume utf8
+        }
         encoding = ('' + encoding).toLowerCase()
         loweredCase = true
     }
@@ -1105,7 +817,7 @@ function byteLength (string, encoding) {
 Buffer.byteLength = byteLength
 
 function slowToString (encoding, start, end) {
-  var loweredCase = false
+  let loweredCase = false
 
   // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
   // property of a typed array.
@@ -1131,7 +843,7 @@ function slowToString (encoding, start, end) {
     return ''
   }
 
-  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+  // Force coercion to uint32. This will also coerce falsey/NaN values to 0.
   end >>>= 0
   start >>>= 0
 
@@ -1174,33 +886,37 @@ function slowToString (encoding, start, end) {
   }
 }
 
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
+// This property is used by `Buffer.isBuffer` (and the `is-buffer` npm package)
+// to detect a Buffer instance. It's not possible to use `instanceof Buffer`
+// reliably in a browserify context because there could be multiple different
+// copies of the 'buffer' package in use. This method works even for Buffer
+// instances that were created from another copy of the `buffer` package.
+// See: https://github.com/feross/buffer/issues/154
 Buffer.prototype._isBuffer = true
 
 function swap (b, n, m) {
-  var i = b[n]
+  const i = b[n]
   b[n] = b[m]
   b[m] = i
 }
 
 Buffer.prototype.swap16 = function swap16 () {
-  var len = this.length
+  const len = this.length
   if (len % 2 !== 0) {
     throw new RangeError('Buffer size must be a multiple of 16-bits')
   }
-  for (var i = 0; i < len; i += 2) {
+  for (let i = 0; i < len; i += 2) {
     swap(this, i, i + 1)
   }
   return this
 }
 
 Buffer.prototype.swap32 = function swap32 () {
-  var len = this.length
+  const len = this.length
   if (len % 4 !== 0) {
     throw new RangeError('Buffer size must be a multiple of 32-bits')
   }
-  for (var i = 0; i < len; i += 4) {
+  for (let i = 0; i < len; i += 4) {
     swap(this, i, i + 3)
     swap(this, i + 1, i + 2)
   }
@@ -1208,11 +924,11 @@ Buffer.prototype.swap32 = function swap32 () {
 }
 
 Buffer.prototype.swap64 = function swap64 () {
-  var len = this.length
+  const len = this.length
   if (len % 8 !== 0) {
     throw new RangeError('Buffer size must be a multiple of 64-bits')
   }
-  for (var i = 0; i < len; i += 8) {
+  for (let i = 0; i < len; i += 8) {
     swap(this, i, i + 7)
     swap(this, i + 1, i + 6)
     swap(this, i + 2, i + 5)
@@ -1222,11 +938,13 @@ Buffer.prototype.swap64 = function swap64 () {
 }
 
 Buffer.prototype.toString = function toString () {
-  var length = this.length | 0
+  const length = this.length
   if (length === 0) return ''
   if (arguments.length === 0) return utf8Slice(this, 0, length)
   return slowToString.apply(this, arguments)
 }
+
+Buffer.prototype.toLocaleString = Buffer.prototype.toString
 
 Buffer.prototype.equals = function equals (b) {
   if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
@@ -1235,18 +953,25 @@ Buffer.prototype.equals = function equals (b) {
 }
 
 Buffer.prototype.inspect = function inspect () {
-  var str = ''
-  var max = exports.INSPECT_MAX_BYTES
-  if (this.length > 0) {
-    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
-    if (this.length > max) str += ' ... '
-  }
+  let str = ''
+  const max = exports.IS
+  str = this.toString('hex', 0, max).replace(/(.{2})/g, '$1 ').trim()
+  if (this.length > max) str += ' ... '
   return '<Buffer ' + str + '>'
+}
+if (customInspectSymbol) {
+  Buffer.prototype[customInspectSymbol] = Buffer.prototype.inspect
 }
 
 Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+  if (isInstance(target, Uint8Array)) {
+    target = Buffer.from(target, target.offset, target.byteLength)
+  }
   if (!Buffer.isBuffer(target)) {
-    throw new TypeError('Argument must be a Buffer')
+    throw new TypeError(
+      'The "target" argument must be one of type Buffer or Uint8Array. ' +
+      'Received type ' + (typeof target)
+    )
   }
 
   if (start === undefined) {
@@ -1283,14 +1008,14 @@ Buffer.prototype.compare = function compare (target, start, end, thisStart, this
 
   if (this === target) return 0
 
-  var x = thisEnd - thisStart
-  var y = end - start
-  var len = Math.min(x, y)
+  let x = thisEnd - thisStart
+  let y = end - start
+  const len = Math.min(x, y)
 
-  var thisCopy = this.slice(thisStart, thisEnd)
-  var targetCopy = target.slice(start, end)
+  const thisCopy = this.slice(thisStart, thisEnd)
+  const targetCopy = target.slice(start, end)
 
-  for (var i = 0; i < len; ++i) {
+  for (let i = 0; i < len; ++i) {
     if (thisCopy[i] !== targetCopy[i]) {
       x = thisCopy[i]
       y = targetCopy[i]
@@ -1325,8 +1050,8 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
   } else if (byteOffset < -0x80000000) {
     byteOffset = -0x80000000
   }
-  byteOffset = +byteOffset  // Coerce to Number.
-  if (isNaN(byteOffset)) {
+  byteOffset = +byteOffset // Coerce to Number.
+  if (numberIsNaN(byteOffset)) {
     // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
     byteOffset = dir ? 0 : (buffer.length - 1)
   }
@@ -1355,24 +1080,23 @@ function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
     return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
   } else if (typeof val === 'number') {
     val = val & 0xFF // Search for a byte value [0-255]
-    if (Buffer.TYPED_ARRAY_SUPPORT &&
-        typeof Uint8Array.prototype.indexOf === 'function') {
+    if (typeof Uint8Array.prototype.indexOf === 'function') {
       if (dir) {
         return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
       } else {
         return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
       }
     }
-    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
+    return arrayIndexOf(buffer, [val], byteOffset, encoding, dir)
   }
 
   throw new TypeError('val must be string, number or Buffer')
 }
 
 function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
-  var indexSize = 1
-  var arrLength = arr.length
-  var valLength = val.length
+  let indexSize = 1
+  let arrLength = arr.length
+  let valLength = val.length
 
   if (encoding !== undefined) {
     encoding = String(encoding).toLowerCase()
@@ -1396,9 +1120,9 @@ function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
     }
   }
 
-  var i
+  let i
   if (dir) {
-    var foundIndex = -1
+    let foundIndex = -1
     for (i = byteOffset; i < arrLength; i++) {
       if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
         if (foundIndex === -1) foundIndex = i
@@ -1411,8 +1135,8 @@ function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
   } else {
     if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
     for (i = byteOffset; i >= 0; i--) {
-      var found = true
-      for (var j = 0; j < valLength; j++) {
+      let found = true
+      for (let j = 0; j < valLength; j++) {
         if (read(arr, i + j) !== read(val, j)) {
           found = false
           break
@@ -1439,7 +1163,7 @@ Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) 
 
 function hexWrite (buf, string, offset, length) {
   offset = Number(offset) || 0
-  var remaining = buf.length - offset
+  const remaining = buf.length - offset
   if (!length) {
     length = remaining
   } else {
@@ -1449,16 +1173,15 @@ function hexWrite (buf, string, offset, length) {
     }
   }
 
-  // must be an even number of digits
-  var strLen = string.length
-  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
+  const strLen = string.length
 
   if (length > strLen / 2) {
     length = strLen / 2
   }
-  for (var i = 0; i < length; ++i) {
-    var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) return i
+  let i
+  for (i = 0; i < length; ++i) {
+    const parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (numberIsNaN(parsed)) return i
     buf[offset + i] = parsed
   }
   return i
@@ -1470,10 +1193,6 @@ function utf8Write (buf, string, offset, length) {
 
 function asciiWrite (buf, string, offset, length) {
   return blitBuffer(asciiToBytes(string), buf, offset, length)
-}
-
-function latin1Write (buf, string, offset, length) {
-  return asciiWrite(buf, string, offset, length)
 }
 
 function base64Write (buf, string, offset, length) {
@@ -1497,22 +1216,21 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
     offset = 0
   // Buffer#write(string, offset[, length][, encoding])
   } else if (isFinite(offset)) {
-    offset = offset | 0
+    offset = offset >>> 0
     if (isFinite(length)) {
-      length = length | 0
+      length = length >>> 0
       if (encoding === undefined) encoding = 'utf8'
     } else {
       encoding = length
       length = undefined
     }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
   } else {
     throw new Error(
       'Buffer.write(string, encoding, offset[, length]) is no longer supported'
     )
   }
 
-  var remaining = this.length - offset
+  const remaining = this.length - offset
   if (length === undefined || length > remaining) length = remaining
 
   if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
@@ -1521,7 +1239,7 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
 
   if (!encoding) encoding = 'utf8'
 
-  var loweredCase = false
+  let loweredCase = false
   for (;;) {
     switch (encoding) {
       case 'hex':
@@ -1532,11 +1250,9 @@ Buffer.prototype.write = function write (string, offset, length, encoding) {
         return utf8Write(this, string, offset, length)
 
       case 'ascii':
-        return asciiWrite(this, string, offset, length)
-
       case 'latin1':
       case 'binary':
-        return latin1Write(this, string, offset, length)
+        return asciiWrite(this, string, offset, length)
 
       case 'base64':
         // Warning: maxLength not taken into account in base64Write
@@ -1573,19 +1289,22 @@ function base64Slice (buf, start, end) {
 
 function utf8Slice (buf, start, end) {
   end = Math.min(buf.length, end)
-  var res = []
+  const res = []
 
-  var i = start
+  let i = start
   while (i < end) {
-    var firstByte = buf[i]
-    var codePoint = null
-    var bytesPerSequence = (firstByte > 0xEF) ? 4
-      : (firstByte > 0xDF) ? 3
-      : (firstByte > 0xBF) ? 2
-      : 1
+    const firstByte = buf[i]
+    let codePoint = null
+    let bytesPerSequence = (firstByte > 0xEF)
+      ? 4
+      : (firstByte > 0xDF)
+          ? 3
+          : (firstByte > 0xBF)
+              ? 2
+              : 1
 
     if (i + bytesPerSequence <= end) {
-      var secondByte, thirdByte, fourthByte, tempCodePoint
+      let secondByte, thirdByte, fourthByte, tempCodePoint
 
       switch (bytesPerSequence) {
         case 1:
@@ -1647,17 +1366,17 @@ function utf8Slice (buf, start, end) {
 // Based on http://stackoverflow.com/a/22747272/680742, the browser with
 // the lowest limit is Chrome, with 0x10000 args.
 // We go 1 magnitude less, for safety
-var MAX_ARGUMENTS_LENGTH = 0x1000
+const MAX_ARGUMENTS_LENGTH = 0x1000
 
 function decodeCodePointsArray (codePoints) {
-  var len = codePoints.length
+  const len = codePoints.length
   if (len <= MAX_ARGUMENTS_LENGTH) {
     return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
   }
 
   // Decode in chunks to avoid "call stack size exceeded".
-  var res = ''
-  var i = 0
+  let res = ''
+  let i = 0
   while (i < len) {
     res += String.fromCharCode.apply(
       String,
@@ -1668,49 +1387,50 @@ function decodeCodePointsArray (codePoints) {
 }
 
 function asciiSlice (buf, start, end) {
-  var ret = ''
+  let ret = ''
   end = Math.min(buf.length, end)
 
-  for (var i = start; i < end; ++i) {
+  for (let i = start; i < end; ++i) {
     ret += String.fromCharCode(buf[i] & 0x7F)
   }
   return ret
 }
 
 function latin1Slice (buf, start, end) {
-  var ret = ''
+  let ret = ''
   end = Math.min(buf.length, end)
 
-  for (var i = start; i < end; ++i) {
+  for (let i = start; i < end; ++i) {
     ret += String.fromCharCode(buf[i])
   }
   return ret
 }
 
 function hexSlice (buf, start, end) {
-  var len = buf.length
+  const len = buf.length
 
   if (!start || start < 0) start = 0
   if (!end || end < 0 || end > len) end = len
 
-  var out = ''
-  for (var i = start; i < end; ++i) {
-    out += toHex(buf[i])
+  let out = ''
+  for (let i = start; i < end; ++i) {
+    out += hexSliceLookupTable[buf[i]]
   }
   return out
 }
 
 function utf16leSlice (buf, start, end) {
-  var bytes = buf.slice(start, end)
-  var res = ''
-  for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  const bytes = buf.slice(start, end)
+  let res = ''
+  // If bytes.length is odd, the last 8 bits must be ignored (same as node.js)
+  for (let i = 0; i < bytes.length - 1; i += 2) {
+    res += String.fromCharCode(bytes[i] + (bytes[i + 1] * 256))
   }
   return res
 }
 
 Buffer.prototype.slice = function slice (start, end) {
-  var len = this.length
+  const len = this.length
   start = ~~start
   end = end === undefined ? len : ~~end
 
@@ -1730,17 +1450,9 @@ Buffer.prototype.slice = function slice (start, end) {
 
   if (end < start) end = start
 
-  var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = this.subarray(start, end)
-    newBuf.__proto__ = Buffer.prototype
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; ++i) {
-      newBuf[i] = this[i + start]
-    }
-  }
+  const newBuf = this.subarray(start, end)
+  // Return an augmented `Uint8Array` instance
+  Object.setPrototypeOf(newBuf, Buffer.prototype)
 
   return newBuf
 }
@@ -1753,14 +1465,15 @@ function checkOffset (offset, ext, length) {
   if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
 }
 
+Buffer.prototype.readUintLE =
 Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
-  var val = this[offset]
-  var mul = 1
-  var i = 0
+  let val = this[offset]
+  let mul = 1
+  let i = 0
   while (++i < byteLength && (mul *= 0x100)) {
     val += this[offset + i] * mul
   }
@@ -1768,15 +1481,16 @@ Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert)
   return val
 }
 
+Buffer.prototype.readUintBE =
 Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
     checkOffset(offset, byteLength, this.length)
   }
 
-  var val = this[offset + --byteLength]
-  var mul = 1
+  let val = this[offset + --byteLength]
+  let mul = 1
   while (byteLength > 0 && (mul *= 0x100)) {
     val += this[offset + --byteLength] * mul
   }
@@ -1784,22 +1498,30 @@ Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert)
   return val
 }
 
+Buffer.prototype.readUint8 =
 Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   return this[offset]
 }
 
+Buffer.prototype.readUint16LE =
 Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return this[offset] | (this[offset + 1] << 8)
 }
 
+Buffer.prototype.readUint16BE =
 Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
   return (this[offset] << 8) | this[offset + 1]
 }
 
+Buffer.prototype.readUint32LE =
 Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return ((this[offset]) |
@@ -1808,7 +1530,9 @@ Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
       (this[offset + 3] * 0x1000000)
 }
 
+Buffer.prototype.readUint32BE =
 Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] * 0x1000000) +
@@ -1817,14 +1541,58 @@ Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
     this[offset + 3])
 }
 
+Buffer.prototype.readBigUInt64LE = defineBigIntMethod(function readBigUInt64LE (offset) {
+  offset = offset >>> 0
+  validateNumber(offset, 'offset')
+  const first = this[offset]
+  const last = this[offset + 7]
+  if (first === undefined || last === undefined) {
+    boundsError(offset, this.length - 8)
+  }
+
+  const lo = first +
+    this[++offset] * 2 ** 8 +
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 24
+
+  const hi = this[++offset] +
+    this[++offset] * 2 ** 8 +
+    this[++offset] * 2 ** 16 +
+    last * 2 ** 24
+
+  return BigInt(lo) + (BigInt(hi) << BigInt(32))
+})
+
+Buffer.prototype.readBigUInt64BE = defineBigIntMethod(function readBigUInt64BE (offset) {
+  offset = offset >>> 0
+  validateNumber(offset, 'offset')
+  const first = this[offset]
+  const last = this[offset + 7]
+  if (first === undefined || last === undefined) {
+    boundsError(offset, this.length - 8)
+  }
+
+  const hi = first * 2 ** 24 +
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 8 +
+    this[++offset]
+
+  const lo = this[++offset] * 2 ** 24 +
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 8 +
+    last
+
+  return (BigInt(hi) << BigInt(32)) + BigInt(lo)
+})
+
 Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
-  var val = this[offset]
-  var mul = 1
-  var i = 0
+  let val = this[offset]
+  let mul = 1
+  let i = 0
   while (++i < byteLength && (mul *= 0x100)) {
     val += this[offset + i] * mul
   }
@@ -1836,13 +1604,13 @@ Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) checkOffset(offset, byteLength, this.length)
 
-  var i = byteLength
-  var mul = 1
-  var val = this[offset + --i]
+  let i = byteLength
+  let mul = 1
+  let val = this[offset + --i]
   while (i > 0 && (mul *= 0x100)) {
     val += this[offset + --i] * mul
   }
@@ -1854,24 +1622,28 @@ Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
 }
 
 Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 1, this.length)
   if (!(this[offset] & 0x80)) return (this[offset])
   return ((0xff - this[offset] + 1) * -1)
 }
 
 Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset] | (this[offset + 1] << 8)
+  const val = this[offset] | (this[offset + 1] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset + 1] | (this[offset] << 8)
+  const val = this[offset + 1] | (this[offset] << 8)
   return (val & 0x8000) ? val | 0xFFFF0000 : val
 }
 
 Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset]) |
@@ -1881,6 +1653,7 @@ Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
 }
 
 Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
 
   return (this[offset] << 24) |
@@ -1889,22 +1662,68 @@ Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
     (this[offset + 3])
 }
 
+Buffer.prototype.readBigInt64LE = defineBigIntMethod(function readBigInt64LE (offset) {
+  offset = offset >>> 0
+  validateNumber(offset, 'offset')
+  const first = this[offset]
+  const last = this[offset + 7]
+  if (first === undefined || last === undefined) {
+    boundsError(offset, this.length - 8)
+  }
+
+  const val = this[offset + 4] +
+    this[offset + 5] * 2 ** 8 +
+    this[offset + 6] * 2 ** 16 +
+    (last << 24) // Overflow
+
+  return (BigInt(val) << BigInt(32)) +
+    BigInt(first +
+    this[++offset] * 2 ** 8 +
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 24)
+})
+
+Buffer.prototype.readBigInt64BE = defineBigIntMethod(function readBigInt64BE (offset) {
+  offset = offset >>> 0
+  validateNumber(offset, 'offset')
+  const first = this[offset]
+  const last = this[offset + 7]
+  if (first === undefined || last === undefined) {
+    boundsError(offset, this.length - 8)
+  }
+
+  const val = (first << 24) + // Overflow
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 8 +
+    this[++offset]
+
+  return (BigInt(val) << BigInt(32)) +
+    BigInt(this[++offset] * 2 ** 24 +
+    this[++offset] * 2 ** 16 +
+    this[++offset] * 2 ** 8 +
+    last)
+})
+
 Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, true, 23, 4)
 }
 
 Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 4, this.length)
   return ieee754.read(this, offset, false, 23, 4)
 }
 
 Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, true, 52, 8)
 }
 
 Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  offset = offset >>> 0
   if (!noAssert) checkOffset(offset, 8, this.length)
   return ieee754.read(this, offset, false, 52, 8)
 }
@@ -1915,17 +1734,18 @@ function checkInt (buf, value, offset, ext, max, min) {
   if (offset + ext > buf.length) throw new RangeError('Index out of range')
 }
 
+Buffer.prototype.writeUintLE =
 Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
-    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    const maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
   }
 
-  var mul = 1
-  var i = 0
+  let mul = 1
+  let i = 0
   this[offset] = value & 0xFF
   while (++i < byteLength && (mul *= 0x100)) {
     this[offset + i] = (value / mul) & 0xFF
@@ -1934,17 +1754,18 @@ Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, 
   return offset + byteLength
 }
 
+Buffer.prototype.writeUintBE =
 Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
+  offset = offset >>> 0
+  byteLength = byteLength >>> 0
   if (!noAssert) {
-    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+    const maxBytes = Math.pow(2, 8 * byteLength) - 1
     checkInt(this, value, offset, byteLength, maxBytes, 0)
   }
 
-  var i = byteLength - 1
-  var mul = 1
+  let i = byteLength - 1
+  let mul = 1
   this[offset + i] = value & 0xFF
   while (--i >= 0 && (mul *= 0x100)) {
     this[offset + i] = (value / mul) & 0xFF
@@ -1953,98 +1774,123 @@ Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, 
   return offset + byteLength
 }
 
+Buffer.prototype.writeUint8 =
 Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   this[offset] = (value & 0xff)
   return offset + 1
 }
 
-function objectWriteUInt16 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
-    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
-      (littleEndian ? i : 1 - i) * 8
-  }
-}
-
+Buffer.prototype.writeUint16LE =
 Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
+Buffer.prototype.writeUint16BE =
 Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
 }
 
-function objectWriteUInt32 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffffffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
-    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
-  }
-}
-
+Buffer.prototype.writeUint32LE =
 Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset + 3] = (value >>> 24)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 1] = (value >>> 8)
-    this[offset] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset + 3] = (value >>> 24)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 1] = (value >>> 8)
+  this[offset] = (value & 0xff)
   return offset + 4
 }
 
+Buffer.prototype.writeUint32BE =
 Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
+
+function wrtBigUInt64LE (buf, value, offset, min, max) {
+  checkIntBI(value, min, max, buf, offset, 7)
+
+  let lo = Number(value & BigInt(0xffffffff))
+  buf[offset++] = lo
+  lo = lo >> 8
+  buf[offset++] = lo
+  lo = lo >> 8
+  buf[offset++] = lo
+  lo = lo >> 8
+  buf[offset++] = lo
+  let hi = Number(value >> BigInt(32) & BigInt(0xffffffff))
+  buf[offset++] = hi
+  hi = hi >> 8
+  buf[offset++] = hi
+  hi = hi >> 8
+  buf[offset++] = hi
+  hi = hi >> 8
+  buf[offset++] = hi
+  return offset
+}
+
+function wrtBigUInt64BE (buf, value, offset, min, max) {
+  checkIntBI(value, min, max, buf, offset, 7)
+
+  let lo = Number(value & BigInt(0xffffffff))
+  buf[offset + 7] = lo
+  lo = lo >> 8
+  buf[offset + 6] = lo
+  lo = lo >> 8
+  buf[offset + 5] = lo
+  lo = lo >> 8
+  buf[offset + 4] = lo
+  let hi = Number(value >> BigInt(32) & BigInt(0xffffffff))
+  buf[offset + 3] = hi
+  hi = hi >> 8
+  buf[offset + 2] = hi
+  hi = hi >> 8
+  buf[offset + 1] = hi
+  hi = hi >> 8
+  buf[offset] = hi
+  return offset + 8
+}
+
+Buffer.prototype.writeBigUInt64LE = defineBigIntMethod(function writeBigUInt64LE (value, offset = 0) {
+  return wrtBigUInt64LE(this, value, offset, BigInt(0), BigInt('0xffffffffffffffff'))
+})
+
+Buffer.prototype.writeBigUInt64BE = defineBigIntMethod(function writeBigUInt64BE (value, offset = 0) {
+  return wrtBigUInt64BE(this, value, offset, BigInt(0), BigInt('0xffffffffffffffff'))
+})
 
 Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    const limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
 
-  var i = 0
-  var mul = 1
-  var sub = 0
+  let i = 0
+  let mul = 1
+  let sub = 0
   this[offset] = value & 0xFF
   while (++i < byteLength && (mul *= 0x100)) {
     if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
@@ -2058,16 +1904,16 @@ Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, no
 
 Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
+    const limit = Math.pow(2, (8 * byteLength) - 1)
 
     checkInt(this, value, offset, byteLength, limit - 1, -limit)
   }
 
-  var i = byteLength - 1
-  var mul = 1
-  var sub = 0
+  let i = byteLength - 1
+  let mul = 1
+  let sub = 0
   this[offset + i] = value & 0xFF
   while (--i >= 0 && (mul *= 0x100)) {
     if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
@@ -2081,9 +1927,8 @@ Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, no
 
 Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
   if (value < 0) value = 0xff + value + 1
   this[offset] = (value & 0xff)
   return offset + 1
@@ -2091,60 +1936,52 @@ Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
 
 Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
   return offset + 2
 }
 
 Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
+  this[offset] = (value >>> 8)
+  this[offset + 1] = (value & 0xff)
   return offset + 2
 }
 
 Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
+  this[offset] = (value & 0xff)
+  this[offset + 1] = (value >>> 8)
+  this[offset + 2] = (value >>> 16)
+  this[offset + 3] = (value >>> 24)
   return offset + 4
 }
 
 Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
   value = +value
-  offset = offset | 0
+  offset = offset >>> 0
   if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
   if (value < 0) value = 0xffffffff + value + 1
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
+  this[offset] = (value >>> 24)
+  this[offset + 1] = (value >>> 16)
+  this[offset + 2] = (value >>> 8)
+  this[offset + 3] = (value & 0xff)
   return offset + 4
 }
+
+Buffer.prototype.writeBigInt64LE = defineBigIntMethod(function writeBigInt64LE (value, offset = 0) {
+  return wrtBigUInt64LE(this, value, offset, -BigInt('0x8000000000000000'), BigInt('0x7fffffffffffffff'))
+})
+
+Buffer.prototype.writeBigInt64BE = defineBigIntMethod(function writeBigInt64BE (value, offset = 0) {
+  return wrtBigUInt64BE(this, value, offset, -BigInt('0x8000000000000000'), BigInt('0x7fffffffffffffff'))
+})
 
 function checkIEEE754 (buf, value, offset, ext, max, min) {
   if (offset + ext > buf.length) throw new RangeError('Index out of range')
@@ -2152,6 +1989,8 @@ function checkIEEE754 (buf, value, offset, ext, max, min) {
 }
 
 function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
   }
@@ -2168,6 +2007,8 @@ Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) 
 }
 
 function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  value = +value
+  offset = offset >>> 0
   if (!noAssert) {
     checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
   }
@@ -2185,6 +2026,7 @@ Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert
 
 // copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
 Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!Buffer.isBuffer(target)) throw new TypeError('argument should be a Buffer')
   if (!start) start = 0
   if (!end && end !== 0) end = this.length
   if (targetStart >= target.length) targetStart = target.length
@@ -2199,7 +2041,7 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
   if (targetStart < 0) {
     throw new RangeError('targetStart out of bounds')
   }
-  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (start < 0 || start >= this.length) throw new RangeError('Index out of range')
   if (end < 0) throw new RangeError('sourceEnd out of bounds')
 
   // Are we oob?
@@ -2208,23 +2050,15 @@ Buffer.prototype.copy = function copy (target, targetStart, start, end) {
     end = target.length - targetStart + start
   }
 
-  var len = end - start
-  var i
+  const len = end - start
 
-  if (this === target && start < targetStart && targetStart < end) {
-    // descending copy from end
-    for (i = len - 1; i >= 0; --i) {
-      target[i + targetStart] = this[i + start]
-    }
-  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
-    // ascending copy from start
-    for (i = 0; i < len; ++i) {
-      target[i + targetStart] = this[i + start]
-    }
+  if (this === target && typeof Uint8Array.prototype.copyWithin === 'function') {
+    // Use built-in when available, missing from IE11
+    this.copyWithin(targetStart, start, end)
   } else {
     Uint8Array.prototype.set.call(
       target,
-      this.subarray(start, start + len),
+      this.subarray(start, end),
       targetStart
     )
   }
@@ -2247,20 +2081,24 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
       encoding = end
       end = this.length
     }
-    if (val.length === 1) {
-      var code = val.charCodeAt(0)
-      if (code < 256) {
-        val = code
-      }
-    }
     if (encoding !== undefined && typeof encoding !== 'string') {
       throw new TypeError('encoding must be a string')
     }
     if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
       throw new TypeError('Unknown encoding: ' + encoding)
     }
+    if (val.length === 1) {
+      const code = val.charCodeAt(0)
+      if ((encoding === 'utf8' && code < 128) ||
+          encoding === 'latin1') {
+        // Fast path: If `val` fits into a single byte, use that numeric value.
+        val = code
+      }
+    }
   } else if (typeof val === 'number') {
     val = val & 255
+  } else if (typeof val === 'boolean') {
+    val = Number(val)
   }
 
   // Invalid ranges are not set to a default, so can range check early.
@@ -2277,16 +2115,20 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
 
   if (!val) val = 0
 
-  var i
+  let i
   if (typeof val === 'number') {
     for (i = start; i < end; ++i) {
       this[i] = val
     }
   } else {
-    var bytes = Buffer.isBuffer(val)
+    const bytes = Buffer.isBuffer(val)
       ? val
-      : utf8ToBytes(new Buffer(val, encoding).toString())
-    var len = bytes.length
+      : Buffer.from(val, encoding)
+    const len = bytes.length
+    if (len === 0) {
+      throw new TypeError('The value "' + val +
+        '" is invalid for argument "value"')
+    }
     for (i = 0; i < end - start; ++i) {
       this[i + start] = bytes[i % len]
     }
@@ -2295,14 +2137,149 @@ Buffer.prototype.fill = function fill (val, start, end, encoding) {
   return this
 }
 
+// CUSTOM ERRORS
+// =============
+
+// Simplified versions from Node, changed for Buffer-only usage
+const errors = {}
+function E (sym, getMessage, Base) {
+  errors[sym] = class NodeError extends Base {
+    constructor () {
+      super()
+
+      Object.defineProperty(this, 'message', {
+        value: getMessage.apply(this, arguments),
+        writable: true,
+        configurable: true
+      })
+
+      // Add the error code to the name to include it in the stack trace.
+      this.name = `${this.name} [${sym}]`
+      // Access the stack to generate the error message including the error code
+      // from the name.
+      this.stack // eslint-disable-line no-unused-expressions
+      // Reset the name to the actual name.
+      delete this.name
+    }
+
+    get code () {
+      return sym
+    }
+
+    set code (value) {
+      Object.defineProperty(this, 'code', {
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true
+      })
+    }
+
+    toString () {
+      return `${this.name} [${sym}]: ${this.message}`
+    }
+  }
+}
+
+E('ERR_BUFFER_OUT_OF_BOUNDS',
+  function (name) {
+    if (name) {
+      return `${name} is outside of buffer bounds`
+    }
+
+    return 'Attempt to access memory outside buffer bounds'
+  }, RangeError)
+E('ERR_INVALID_ARG_TYPE',
+  function (name, actual) {
+    return `The "${name}" argument must be of type number. Received type ${typeof actual}`
+  }, TypeError)
+E('ERR_OUT_OF_RANGE',
+  function (str, range, input) {
+    let msg = `The value of "${str}" is out of range.`
+    let received = input
+    if (Number.isInteger(input) && Math.abs(input) > 2 ** 32) {
+      received = addNumericalSeparator(String(input))
+    } else if (typeof input === 'bigint') {
+      received = String(input)
+      if (input > BigInt(2) ** BigInt(32) || input < -(BigInt(2) ** BigInt(32))) {
+        received = addNumericalSeparator(received)
+      }
+      received += 'n'
+    }
+    msg += ` It must be ${range}. Received ${received}`
+    return msg
+  }, RangeError)
+
+function addNumericalSeparator (val) {
+  let res = ''
+  let i = val.length
+  const start = val[0] === '-' ? 1 : 0
+  for (; i >= start + 4; i -= 3) {
+    res = `_${val.slice(i - 3, i)}${res}`
+  }
+  return `${val.slice(0, i)}${res}`
+}
+
+// CHECK FUNCTIONS
+// ===============
+
+function checkBounds (buf, offset, byteLength) {
+  validateNumber(offset, 'offset')
+  if (buf[offset] === undefined || buf[offset + byteLength] === undefined) {
+    boundsError(offset, buf.length - (byteLength + 1))
+  }
+}
+
+function checkIntBI (value, min, max, buf, offset, byteLength) {
+  if (value > max || value < min) {
+    const n = typeof min === 'bigint' ? 'n' : ''
+    let range
+    if (byteLength > 3) {
+      if (min === 0 || min === BigInt(0)) {
+        range = `>= 0${n} and < 2${n} ** ${(byteLength + 1) * 8}${n}`
+      } else {
+        range = `>= -(2${n} ** ${(byteLength + 1) * 8 - 1}${n}) and < 2 ** ` +
+                `${(byteLength + 1) * 8 - 1}${n}`
+      }
+    } else {
+      range = `>= ${min}${n} and <= ${max}${n}`
+    }
+    throw new errors.ERR_OUT_OF_RANGE('value', range, value)
+  }
+  checkBounds(buf, offset, byteLength)
+}
+
+function validateNumber (value, name) {
+  if (typeof value !== 'number') {
+    throw new errors.ERR_INVALID_ARG_TYPE(name, 'number', value)
+  }
+}
+
+function boundsError (value, length, type) {
+  if (Math.floor(value) !== value) {
+    validateNumber(value, type)
+    throw new errors.ERR_OUT_OF_RANGE(type || 'offset', 'an integer', value)
+  }
+
+  if (length < 0) {
+    throw new errors.ERR_BUFFER_OUT_OF_BOUNDS()
+  }
+
+  throw new errors.ERR_OUT_OF_RANGE(type || 'offset',
+                                    `>= ${type ? 1 : 0} and <= ${length}`,
+                                    value)
+}
+
 // HELPER FUNCTIONS
 // ================
 
-var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+const INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g
 
 function base64clean (str) {
+  // Node takes equal signs as end of the Base64 encoding
+  str = str.split('=')[0]
   // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  str = str.trim().replace(INVALID_BASE64_RE, '')
   // Node converts strings with length < 2 to ''
   if (str.length < 2) return ''
   // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
@@ -2312,24 +2289,14 @@ function base64clean (str) {
   return str
 }
 
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
-}
-
-function toHex (n) {
-  if (n < 16) return '0' + n.toString(16)
-  return n.toString(16)
-}
-
 function utf8ToBytes (string, units) {
   units = units || Infinity
-  var codePoint
-  var length = string.length
-  var leadSurrogate = null
-  var bytes = []
+  let codePoint
+  const length = string.length
+  let leadSurrogate = null
+  const bytes = []
 
-  for (var i = 0; i < length; ++i) {
+  for (let i = 0; i < length; ++i) {
     codePoint = string.charCodeAt(i)
 
     // is surrogate component
@@ -2403,8 +2370,8 @@ function utf8ToBytes (string, units) {
 }
 
 function asciiToBytes (str) {
-  var byteArray = []
-  for (var i = 0; i < str.length; ++i) {
+  const byteArray = []
+  for (let i = 0; i < str.length; ++i) {
     // Node's code seems to be doing this and not & 0x7F..
     byteArray.push(str.charCodeAt(i) & 0xFF)
   }
@@ -2412,9 +2379,9 @@ function asciiToBytes (str) {
 }
 
 function utf16leToBytes (str, units) {
-  var c, hi, lo
-  var byteArray = []
-  for (var i = 0; i < str.length; ++i) {
+  let c, hi, lo
+  const byteArray = []
+  for (let i = 0; i < str.length; ++i) {
     if ((units -= 2) < 0) break
 
     c = str.charCodeAt(i)
@@ -2432,63 +2399,87 @@ function base64ToBytes (str) {
 }
 
 function blitBuffer (src, dst, offset, length) {
-  for (var i = 0; i < length; ++i) {
+  let i
+  for (i = 0; i < length; ++i) {
     if ((i + offset >= dst.length) || (i >= src.length)) break
     dst[i + offset] = src[i]
   }
   return i
 }
 
-function isnan (val) {
-  return val !== val // eslint-disable-line no-self-compare
+// ArrayBuffer or Uint8Array objects from other contexts (i.e. iframes) do not pass
+// the `instanceof` check but they should be treated as of that type.
+// See: https://github.com/feross/buffer/issues/166
+function isInstance (obj, type) {
+  return obj instanceof type ||
+    (obj != null && obj.constructor != null && obj.constructor.name != null &&
+      obj.constructor.name === type.name)
+}
+function numberIsNaN (obj) {
+  // For IE11 support
+  return obj !== obj // eslint-disable-line no-self-compare
 }
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+// Create lookup table for `toString('hex')`
+// See: https://github.com/feross/buffer/issues/219
+const hexSliceLookupTable = (function () {
+  const alphabet = '0123456789abcdef'
+  const table = new Array(256)
+  for (let i = 0; i < 16; ++i) {
+    const i16 = i * 16
+    for (let j = 0; j < 16; ++j) {
+      table[i16 + j] = alphabet[i] + alphabet[j]
+    }
+  }
+  return table
+})()
+
+// Return not function with Error if BigInt not supported
+function defineBigIntMethod (fn) {
+  return typeof BigInt === 'undefined' ? BufferBigIntNotDefined : fn
+}
+
+function BufferBigIntNotDefined () {
+  throw new Error('BigInt not supported')
+}
+
 
 /***/ }),
 
-/***/ "./node_modules/buffer/node_modules/isarray/index.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/buffer/node_modules/isarray/index.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 945:
+/***/ ((module, exports, __webpack_require__) => {
 
-var toString = {}.toString;
-
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-
-/***/ }),
-
-/***/ "./node_modules/cross-fetch/dist/browser-ponyfill.js":
-/*!***********************************************************!*\
-  !*** ./node_modules/cross-fetch/dist/browser-ponyfill.js ***!
-  \***********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-var global = typeof self !== 'undefined' ? self : this;
-var __self__ = (function () {
+// Save global object in a variable
+var __global__ =
+(typeof globalThis !== 'undefined' && globalThis) ||
+(typeof self !== 'undefined' && self) ||
+(typeof __webpack_require__.g !== 'undefined' && __webpack_require__.g);
+// Create an object that extends from __global__ without the fetch function
+var __globalThis__ = (function () {
 function F() {
 this.fetch = false;
-this.DOMException = global.DOMException
+this.DOMException = __global__.DOMException
 }
-F.prototype = global;
+F.prototype = __global__; // Needed for feature detection on whatwg-fetch's code
 return new F();
 })();
-(function(self) {
+// Wraps whatwg-fetch with a function scope to hijack the global object
+// "globalThis" that's going to be patched
+(function(globalThis) {
 
 var irrelevant = (function (exports) {
 
+  var global =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof self !== 'undefined' && self) ||
+    (typeof global !== 'undefined' && global);
+
   var support = {
-    searchParams: 'URLSearchParams' in self,
-    iterable: 'Symbol' in self && 'iterator' in Symbol,
+    searchParams: 'URLSearchParams' in global,
+    iterable: 'Symbol' in global && 'iterator' in Symbol,
     blob:
-      'FileReader' in self &&
-      'Blob' in self &&
+      'FileReader' in global &&
+      'Blob' in global &&
       (function() {
         try {
           new Blob();
@@ -2497,8 +2488,8 @@ var irrelevant = (function (exports) {
           return false
         }
       })(),
-    formData: 'FormData' in self,
-    arrayBuffer: 'ArrayBuffer' in self
+    formData: 'FormData' in global,
+    arrayBuffer: 'ArrayBuffer' in global
   };
 
   function isDataView(obj) {
@@ -2529,8 +2520,8 @@ var irrelevant = (function (exports) {
     if (typeof name !== 'string') {
       name = String(name);
     }
-    if (/[^a-z0-9\-#$%&'*+.^_`|~]/i.test(name)) {
-      throw new TypeError('Invalid character in header field name')
+    if (/[^a-z0-9\-#$%&'*+.^_`|~!]/i.test(name) || name === '') {
+      throw new TypeError('Invalid character in header field name: "' + name + '"')
     }
     return name.toLowerCase()
   }
@@ -2694,6 +2685,17 @@ var irrelevant = (function (exports) {
     this.bodyUsed = false;
 
     this._initBody = function(body) {
+      /*
+        fetch-mock wraps the Response object in an ES6 Proxy to
+        provide useful test harness features such as flush. However, on
+        ES5 browsers without fetch or Proxy support pollyfills must be used;
+        the proxy-pollyfill is unable to proxy an attribute unless it exists
+        on the object before the Proxy is created. This change ensures
+        Response.bodyUsed exists on the instance, while maintaining the
+        semantic of setting Request.bodyUsed in the constructor before
+        _initBody is called.
+      */
+      this.bodyUsed = this.bodyUsed;
       this._bodyInit = body;
       if (!body) {
         this._bodyText = '';
@@ -2746,7 +2748,20 @@ var irrelevant = (function (exports) {
 
       this.arrayBuffer = function() {
         if (this._bodyArrayBuffer) {
-          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)
+          var isConsumed = consumed(this);
+          if (isConsumed) {
+            return isConsumed
+          }
+          if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
+            return Promise.resolve(
+              this._bodyArrayBuffer.buffer.slice(
+                this._bodyArrayBuffer.byteOffset,
+                this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
+              )
+            )
+          } else {
+            return Promise.resolve(this._bodyArrayBuffer)
+          }
         } else {
           return this.blob().then(readBlobAsArrayBuffer)
         }
@@ -2792,6 +2807,10 @@ var irrelevant = (function (exports) {
   }
 
   function Request(input, options) {
+    if (!(this instanceof Request)) {
+      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+    }
+
     options = options || {};
     var body = options.body;
 
@@ -2828,6 +2847,21 @@ var irrelevant = (function (exports) {
       throw new TypeError('Body not allowed for GET or HEAD requests')
     }
     this._initBody(body);
+
+    if (this.method === 'GET' || this.method === 'HEAD') {
+      if (options.cache === 'no-store' || options.cache === 'no-cache') {
+        // Search for a '_' parameter in the query string
+        var reParamSearch = /([?&])_=[^&]*/;
+        if (reParamSearch.test(this.url)) {
+          // If it already exists then set the value with the current time
+          this.url = this.url.replace(reParamSearch, '$1_=' + new Date().getTime());
+        } else {
+          // Otherwise add a new '_' parameter to the end with the current time
+          var reQueryString = /\?/;
+          this.url += (reQueryString.test(this.url) ? '&' : '?') + '_=' + new Date().getTime();
+        }
+      }
+    }
   }
 
   Request.prototype.clone = function() {
@@ -2855,20 +2889,31 @@ var irrelevant = (function (exports) {
     // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
     // https://tools.ietf.org/html/rfc7230#section-3.2
     var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-    preProcessedHeaders.split(/\r?\n/).forEach(function(line) {
-      var parts = line.split(':');
-      var key = parts.shift().trim();
-      if (key) {
-        var value = parts.join(':').trim();
-        headers.append(key, value);
-      }
-    });
+    // Avoiding split via regex to work around a common IE11 bug with the core-js 3.6.0 regex polyfill
+    // https://github.com/github/fetch/issues/748
+    // https://github.com/zloirock/core-js/issues/751
+    preProcessedHeaders
+      .split('\r')
+      .map(function(header) {
+        return header.indexOf('\n') === 0 ? header.substr(1, header.length) : header
+      })
+      .forEach(function(line) {
+        var parts = line.split(':');
+        var key = parts.shift().trim();
+        if (key) {
+          var value = parts.join(':').trim();
+          headers.append(key, value);
+        }
+      });
     return headers
   }
 
   Body.call(Request.prototype);
 
   function Response(bodyInit, options) {
+    if (!(this instanceof Response)) {
+      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+    }
     if (!options) {
       options = {};
     }
@@ -2876,7 +2921,7 @@ var irrelevant = (function (exports) {
     this.type = 'default';
     this.status = options.status === undefined ? 200 : options.status;
     this.ok = this.status >= 200 && this.status < 300;
-    this.statusText = 'statusText' in options ? options.statusText : 'OK';
+    this.statusText = options.statusText === undefined ? '' : '' + options.statusText;
     this.headers = new Headers(options.headers);
     this.url = options.url || '';
     this._initBody(bodyInit);
@@ -2909,7 +2954,7 @@ var irrelevant = (function (exports) {
     return new Response(null, {status: status, headers: {location: url}})
   };
 
-  exports.DOMException = self.DOMException;
+  exports.DOMException = global.DOMException;
   try {
     new exports.DOMException();
   } catch (err) {
@@ -2945,22 +2990,38 @@ var irrelevant = (function (exports) {
         };
         options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
         var body = 'response' in xhr ? xhr.response : xhr.responseText;
-        resolve(new Response(body, options));
+        setTimeout(function() {
+          resolve(new Response(body, options));
+        }, 0);
       };
 
       xhr.onerror = function() {
-        reject(new TypeError('Network request failed'));
+        setTimeout(function() {
+          reject(new TypeError('Network request failed'));
+        }, 0);
       };
 
       xhr.ontimeout = function() {
-        reject(new TypeError('Network request failed'));
+        setTimeout(function() {
+          reject(new TypeError('Network request failed'));
+        }, 0);
       };
 
       xhr.onabort = function() {
-        reject(new exports.DOMException('Aborted', 'AbortError'));
+        setTimeout(function() {
+          reject(new exports.DOMException('Aborted', 'AbortError'));
+        }, 0);
       };
 
-      xhr.open(request.method, request.url, true);
+      function fixUrl(url) {
+        try {
+          return url === '' && global.location.href ? global.location.href : url
+        } catch (e) {
+          return url
+        }
+      }
+
+      xhr.open(request.method, fixUrl(request.url), true);
 
       if (request.credentials === 'include') {
         xhr.withCredentials = true;
@@ -2968,13 +3029,27 @@ var irrelevant = (function (exports) {
         xhr.withCredentials = false;
       }
 
-      if ('responseType' in xhr && support.blob) {
-        xhr.responseType = 'blob';
+      if ('responseType' in xhr) {
+        if (support.blob) {
+          xhr.responseType = 'blob';
+        } else if (
+          support.arrayBuffer &&
+          request.headers.get('Content-Type') &&
+          request.headers.get('Content-Type').indexOf('application/octet-stream') !== -1
+        ) {
+          xhr.responseType = 'arraybuffer';
+        }
       }
 
-      request.headers.forEach(function(value, name) {
-        xhr.setRequestHeader(name, value);
-      });
+      if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
+        Object.getOwnPropertyNames(init.headers).forEach(function(name) {
+          xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
+        });
+      } else {
+        request.headers.forEach(function(value, name) {
+          xhr.setRequestHeader(name, value);
+        });
+      }
 
       if (request.signal) {
         request.signal.addEventListener('abort', abortXhr);
@@ -2993,11 +3068,11 @@ var irrelevant = (function (exports) {
 
   fetch.polyfill = true;
 
-  if (!self.fetch) {
-    self.fetch = fetch;
-    self.Headers = Headers;
-    self.Request = Request;
-    self.Response = Response;
+  if (!global.fetch) {
+    global.fetch = fetch;
+    global.Headers = Headers;
+    global.Request = Request;
+    global.Response = Response;
   }
 
   exports.Headers = Headers;
@@ -3005,20 +3080,17 @@ var irrelevant = (function (exports) {
   exports.Response = Response;
   exports.fetch = fetch;
 
-  Object.defineProperty(exports, '__esModule', { value: true });
-
   return exports;
 
 })({});
-})(__self__);
-__self__.fetch.ponyfill = true;
-// Remove "polyfill" property added by whatwg-fetch
-delete __self__.fetch.polyfill;
-// Choose between native implementation (global) or custom implementation (__self__)
-// var ctx = global.fetch ? global : __self__;
-var ctx = __self__; // this line disable service worker support temporarily
+})(__globalThis__);
+// This is a ponyfill, so...
+__globalThis__.fetch.ponyfill = true;
+delete __globalThis__.fetch.polyfill;
+// Choose between native implementation (__global__) or custom implementation (__globalThis__)
+var ctx = __global__.fetch ? __global__ : __globalThis__;
 exports = ctx.fetch // To enable: import fetch from 'cross-fetch'
-exports.default = ctx.fetch // For TypeScript consumers without esModuleInterop.
+exports["default"] = ctx.fetch // For TypeScript consumers without esModuleInterop.
 exports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'
 exports.Headers = ctx.Headers
 exports.Request = ctx.Request
@@ -3028,31 +3100,22 @@ module.exports = exports
 
 /***/ }),
 
-/***/ "./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js":
-/*!**************************************************************************************!*\
-  !*** ./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js ***!
-  \**************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 767:
+/***/ (function(__unused_webpack_module, __unused_webpack_exports, __webpack_require__) {
 
 "use strict";
-/* WEBPACK VAR INJECTION */(function(global) {(function(r){function x(){}function y(){}var z=String.fromCharCode,v={}.toString,A=v.call(r.SharedArrayBuffer),B=v(),q=r.Uint8Array,t=q||Array,w=q?ArrayBuffer:t,C=w.isView||function(g){return g&&"length"in g},D=v.call(w.prototype);w=y.prototype;var E=r.TextEncoder,a=new (q?Uint16Array:t)(32);x.prototype.decode=function(g){if(!C(g)){var l=v.call(g);if(l!==D&&l!==A&&l!==B)throw TypeError("Failed to execute 'decode' on 'TextDecoder': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
+(function(r){function x(){}function y(){}var z=String.fromCharCode,v={}.toString,A=v.call(r.SharedArrayBuffer),B=v(),q=r.Uint8Array,t=q||Array,w=q?ArrayBuffer:t,C=w.isView||function(g){return g&&"length"in g},D=v.call(w.prototype);w=y.prototype;var E=r.TextEncoder,a=new (q?Uint16Array:t)(32);x.prototype.decode=function(g){if(!C(g)){var l=v.call(g);if(l!==D&&l!==A&&l!==B)throw TypeError("Failed to execute 'decode' on 'TextDecoder': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
 g=q?new t(g):g||[]}for(var f=l="",b=0,c=g.length|0,u=c-32|0,e,d,h=0,p=0,m,k=0,n=-1;b<c;){for(e=b<=u?32:c-b|0;k<e;b=b+1|0,k=k+1|0){d=g[b]&255;switch(d>>4){case 15:m=g[b=b+1|0]&255;if(2!==m>>6||247<d){b=b-1|0;break}h=(d&7)<<6|m&63;p=5;d=256;case 14:m=g[b=b+1|0]&255,h<<=6,h|=(d&15)<<6|m&63,p=2===m>>6?p+4|0:24,d=d+256&768;case 13:case 12:m=g[b=b+1|0]&255,h<<=6,h|=(d&31)<<6|m&63,p=p+7|0,b<c&&2===m>>6&&h>>p&&1114112>h?(d=h,h=h-65536|0,0<=h&&(n=(h>>10)+55296|0,d=(h&1023)+56320|0,31>k?(a[k]=n,k=k+1|0,n=-1):
 (m=n,n=d,d=m))):(d>>=8,b=b-d-1|0,d=65533),h=p=0,e=b<=u?32:c-b|0;default:a[k]=d;continue;case 11:case 10:case 9:case 8:}a[k]=65533}f+=z(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16],a[17],a[18],a[19],a[20],a[21],a[22],a[23],a[24],a[25],a[26],a[27],a[28],a[29],a[30],a[31]);32>k&&(f=f.slice(0,k-32|0));if(b<c){if(a[0]=n,k=~n>>>31,n=-1,f.length<l.length)continue}else-1!==n&&(f+=z(n));l+=f;f=""}return l};w.encode=function(g){g=void 0===g?"":""+g;var l=g.length|
 0,f=new t((l<<1)+8|0),b,c=0,u=!q;for(b=0;b<l;b=b+1|0,c=c+1|0){var e=g.charCodeAt(b)|0;if(127>=e)f[c]=e;else{if(2047>=e)f[c]=192|e>>6;else{a:{if(55296<=e)if(56319>=e){var d=g.charCodeAt(b=b+1|0)|0;if(56320<=d&&57343>=d){e=(e<<10)+d-56613888|0;if(65535<e){f[c]=240|e>>18;f[c=c+1|0]=128|e>>12&63;f[c=c+1|0]=128|e>>6&63;f[c=c+1|0]=128|e&63;continue}break a}e=65533}else 57343>=e&&(e=65533);!u&&b<<1<c&&b<<1<(c-7|0)&&(u=!0,d=new t(3*l),d.set(f),f=d)}f[c]=224|e>>12;f[c=c+1|0]=128|e>>6&63}f[c=c+1|0]=128|e&63}}return q?
-f.subarray(0,c):f.slice(0,c)};E||(r.TextDecoder=x,r.TextEncoder=y)})(""+void 0==typeof global?""+void 0==typeof self?this:self:global);//AnonyCo
+f.subarray(0,c):f.slice(0,c)};E||(r.TextDecoder=x,r.TextEncoder=y)})(""+void 0==typeof __webpack_require__.g?""+void 0==typeof self?this:self:__webpack_require__.g);//AnonyCo
 //# sourceMappingURL=https://cdn.jsdelivr.net/gh/AnonyCo/FastestSmallestTextEncoderDecoder/EncoderDecoderTogether.min.js.map
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
-/***/ "./node_modules/ieee754/index.js":
-/*!***************************************!*\
-  !*** ./node_modules/ieee754/index.js ***!
-  \***************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 251:
+/***/ ((__unused_webpack_module, exports) => {
 
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -3143,14 +3206,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
 /***/ }),
 
-/***/ "./node_modules/js-md5/src/md5.js":
-/*!****************************************!*\
-  !*** ./node_modules/js-md5/src/md5.js ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 386:
+/***/ ((module, exports, __webpack_require__) => {
 
-/* WEBPACK VAR INJECTION */(function(process, global) {var __WEBPACK_AMD_DEFINE_RESULT__;/**
+var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * [js-md5]{@link https://github.com/emn178/js-md5}
  *
  * @namespace md5
@@ -3171,12 +3230,12 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   var WEB_WORKER = !WINDOW && typeof self === 'object';
   var NODE_JS = !root.JS_MD5_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
   if (NODE_JS) {
-    root = global;
+    root = __webpack_require__.g;
   } else if (WEB_WORKER) {
     root = self;
   }
-  var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && typeof module === 'object' && module.exports;
-  var AMD =  true && __webpack_require__(/*! !webpack amd options */ "./node_modules/webpack/buildin/amd-options.js");
+  var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && "object" === 'object' && module.exports;
+  var AMD =  true && __webpack_require__.amdO;
   var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
   var HEX_CHARS = '0123456789abcdef'.split('');
   var EXTRA = [128, 32768, 8388608, -2147483648];
@@ -3830,21 +3889,16 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
       !(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
         return exports;
       }).call(exports, __webpack_require__, exports, module),
-				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     }
   }
 })();
 
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../process/browser.js */ "./node_modules/process/browser.js"), __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
-/***/ "./node_modules/microee/index.js":
-/*!***************************************!*\
-  !*** ./node_modules/microee/index.js ***!
-  \***************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 173:
+/***/ ((module) => {
 
 function M() { this._events = {}; }
 M.prototype = {
@@ -3900,15 +3954,11 @@ module.exports = M;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/common/filter.js":
-/*!***************************************************!*\
-  !*** ./node_modules/minilog/lib/common/filter.js ***!
-  \***************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 84:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // default filter
-var Transform = __webpack_require__(/*! ./transform.js */ "./node_modules/minilog/lib/common/transform.js");
+var Transform = __webpack_require__(408);
 
 var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
 
@@ -3967,15 +4017,11 @@ module.exports = Filter;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/common/minilog.js":
-/*!****************************************************!*\
-  !*** ./node_modules/minilog/lib/common/minilog.js ***!
-  \****************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 15:
+/***/ ((module, exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ./transform.js */ "./node_modules/minilog/lib/common/transform.js"),
-    Filter = __webpack_require__(/*! ./filter.js */ "./node_modules/minilog/lib/common/filter.js");
+var Transform = __webpack_require__(408),
+    Filter = __webpack_require__(84);
 
 var log = new Transform(),
     slice = Array.prototype.slice;
@@ -4023,14 +4069,10 @@ exports.enable = function() {
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/common/transform.js":
-/*!******************************************************!*\
-  !*** ./node_modules/minilog/lib/common/transform.js ***!
-  \******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 408:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var microee = __webpack_require__(/*! microee */ "./node_modules/microee/index.js");
+var microee = __webpack_require__(173);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -4106,14 +4148,10 @@ module.exports = Transform;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/array.js":
-/*!***********************************************!*\
-  !*** ./node_modules/minilog/lib/web/array.js ***!
-  \***********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 692:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+var Transform = __webpack_require__(408),
     cache = [ ];
 
 var logger = new Transform();
@@ -4131,14 +4169,10 @@ module.exports = logger;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/console.js":
-/*!*************************************************!*\
-  !*** ./node_modules/minilog/lib/web/console.js ***!
-  \*************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 260:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js");
+var Transform = __webpack_require__(408);
 
 var newlines = /\n+$/,
     logger = new Transform();
@@ -4166,23 +4200,19 @@ logger.write = function(name, level, args) {
 };
 
 logger.formatters = ['color', 'minilog'];
-logger.color = __webpack_require__(/*! ./formatters/color.js */ "./node_modules/minilog/lib/web/formatters/color.js");
-logger.minilog = __webpack_require__(/*! ./formatters/minilog.js */ "./node_modules/minilog/lib/web/formatters/minilog.js");
+logger.color = __webpack_require__(638);
+logger.minilog = __webpack_require__(658);
 
 module.exports = logger;
 
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/formatters/color.js":
-/*!**********************************************************!*\
-  !*** ./node_modules/minilog/lib/web/formatters/color.js ***!
-  \**********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 638:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
-    color = __webpack_require__(/*! ./util.js */ "./node_modules/minilog/lib/web/formatters/util.js");
+var Transform = __webpack_require__(408),
+    color = __webpack_require__(193);
 
 var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
@@ -4203,15 +4233,11 @@ module.exports = logger;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/formatters/minilog.js":
-/*!************************************************************!*\
-  !*** ./node_modules/minilog/lib/web/formatters/minilog.js ***!
-  \************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 658:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
-    color = __webpack_require__(/*! ./util.js */ "./node_modules/minilog/lib/web/formatters/util.js"),
+var Transform = __webpack_require__(408),
+    color = __webpack_require__(193),
     colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
     logger = new Transform();
 
@@ -4240,12 +4266,8 @@ module.exports = logger;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/formatters/util.js":
-/*!*********************************************************!*\
-  !*** ./node_modules/minilog/lib/web/formatters/util.js ***!
-  \*********************************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
+/***/ 193:
+/***/ ((module) => {
 
 var hex = {
   black: '#000',
@@ -4271,19 +4293,15 @@ module.exports = color;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/index.js":
-/*!***********************************************!*\
-  !*** ./node_modules/minilog/lib/web/index.js ***!
-  \***********************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 557:
+/***/ ((module, exports, __webpack_require__) => {
 
-var Minilog = __webpack_require__(/*! ../common/minilog.js */ "./node_modules/minilog/lib/common/minilog.js");
+var Minilog = __webpack_require__(15);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __webpack_require__(/*! ./console.js */ "./node_modules/minilog/lib/web/console.js");
+    console = __webpack_require__(260);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -4315,23 +4333,19 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __webpack_require__(/*! ./array.js */ "./node_modules/minilog/lib/web/array.js"),
+  array: __webpack_require__(692),
   browser: Minilog.defaultBackend,
-  localStorage: __webpack_require__(/*! ./localstorage.js */ "./node_modules/minilog/lib/web/localstorage.js"),
-  jQuery: __webpack_require__(/*! ./jquery_simple.js */ "./node_modules/minilog/lib/web/jquery_simple.js")
+  localStorage: __webpack_require__(113),
+  jQuery: __webpack_require__(740)
 };
 
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/jquery_simple.js":
-/*!*******************************************************!*\
-  !*** ./node_modules/minilog/lib/web/jquery_simple.js ***!
-  \*******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 740:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js");
+var Transform = __webpack_require__(408);
 
 var cid = new Date().valueOf().toString(36);
 
@@ -4409,14 +4423,10 @@ module.exports = AjaxLogger;
 
 /***/ }),
 
-/***/ "./node_modules/minilog/lib/web/localstorage.js":
-/*!******************************************************!*\
-  !*** ./node_modules/minilog/lib/web/localstorage.js ***!
-  \******************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ 113:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Transform = __webpack_require__(/*! ../common/transform.js */ "./node_modules/minilog/lib/common/transform.js"),
+var Transform = __webpack_require__(408),
     cache = false;
 
 var logger = new Transform();
@@ -4432,334 +4442,178 @@ logger.write = function(name, level, args) {
 
 module.exports = logger;
 
-/***/ }),
+/***/ })
 
-/***/ "./node_modules/process/browser.js":
-/*!*****************************************!*\
-  !*** ./node_modules/process/browser.js ***!
-  \*****************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-
-/***/ }),
-
-/***/ "./node_modules/webpack/buildin/amd-options.js":
-/*!****************************************!*\
-  !*** (webpack)/buildin/amd-options.js ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/* WEBPACK VAR INJECTION */(function(__webpack_amd_options__) {/* globals __webpack_amd_options__ */
-module.exports = __webpack_amd_options__;
-
-/* WEBPACK VAR INJECTION */}.call(this, {}))
-
-/***/ }),
-
-/***/ "./node_modules/webpack/buildin/global.js":
-/*!***********************************!*\
-  !*** (webpack)/buildin/global.js ***!
-  \***********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-var g;
-
-// This works in non-strict mode
-g = (function() {
-	return this;
-})();
-
-try {
-	// This works if eval is allowed (see CSP)
-	g = g || new Function("return this")();
-} catch (e) {
-	// This works if the window reference is available
-	if (typeof window === "object") g = window;
-}
-
-// g can still be undefined, but nothing to do about it...
-// We return undefined, instead of nothing here, so it's
-// easier to handle this case. if(!global) { ...}
-
-module.exports = g;
-
-
-/***/ }),
-
-/***/ "./node_modules/worker-loader/dist/cjs.js?{\"inline\":true,\"fallback\":true}!./src/FetchWorkerTool.worker.js":
-/*!****************************************************************************************************************!*\
-  !*** ./node_modules/worker-loader/dist/cjs.js?{"inline":true,"fallback":true}!./src/FetchWorkerTool.worker.js ***!
-  \****************************************************************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = function() {
-  return __webpack_require__(/*! !./node_modules/worker-loader/dist/workers/InlineWorker.js */ "./node_modules/worker-loader/dist/workers/InlineWorker.js")("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId]) {\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/ \t\t}\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\ti: moduleId,\n/******/ \t\t\tl: false,\n/******/ \t\t\texports: {}\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.l = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// define getter function for harmony exports\n/******/ \t__webpack_require__.d = function(exports, name, getter) {\n/******/ \t\tif(!__webpack_require__.o(exports, name)) {\n/******/ \t\t\tObject.defineProperty(exports, name, { enumerable: true, get: getter });\n/******/ \t\t}\n/******/ \t};\n/******/\n/******/ \t// define __esModule on exports\n/******/ \t__webpack_require__.r = function(exports) {\n/******/ \t\tif(typeof Symbol !== 'undefined' && Symbol.toStringTag) {\n/******/ \t\t\tObject.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });\n/******/ \t\t}\n/******/ \t\tObject.defineProperty(exports, '__esModule', { value: true });\n/******/ \t};\n/******/\n/******/ \t// create a fake namespace object\n/******/ \t// mode & 1: value is a module id, require it\n/******/ \t// mode & 2: merge all properties of value into the ns\n/******/ \t// mode & 4: return value when already ns object\n/******/ \t// mode & 8|1: behave like require\n/******/ \t__webpack_require__.t = function(value, mode) {\n/******/ \t\tif(mode & 1) value = __webpack_require__(value);\n/******/ \t\tif(mode & 8) return value;\n/******/ \t\tif((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;\n/******/ \t\tvar ns = Object.create(null);\n/******/ \t\t__webpack_require__.r(ns);\n/******/ \t\tObject.defineProperty(ns, 'default', { enumerable: true, value: value });\n/******/ \t\tif(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));\n/******/ \t\treturn ns;\n/******/ \t};\n/******/\n/******/ \t// getDefaultExport function for compatibility with non-harmony modules\n/******/ \t__webpack_require__.n = function(module) {\n/******/ \t\tvar getter = module && module.__esModule ?\n/******/ \t\t\tfunction getDefault() { return module['default']; } :\n/******/ \t\t\tfunction getModuleExports() { return module; };\n/******/ \t\t__webpack_require__.d(getter, 'a', getter);\n/******/ \t\treturn getter;\n/******/ \t};\n/******/\n/******/ \t// Object.prototype.hasOwnProperty.call\n/******/ \t__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(__webpack_require__.s = \"./node_modules/babel-loader/lib/index.js?!./src/FetchWorkerTool.worker.js\");\n/******/ })\n/************************************************************************/\n/******/ ({\n\n/***/ \"./node_modules/babel-loader/lib/index.js?!./src/FetchWorkerTool.worker.js\":\n/*!*******************************************************************************!*\\\n  !*** ./node_modules/babel-loader/lib??ref--4!./src/FetchWorkerTool.worker.js ***!\n  \\*******************************************************************************/\n/*! no static exports found */\n/***/ (function(module, exports, __webpack_require__) {\n\n/* eslint-env worker */\n\nvar crossFetch = __webpack_require__(/*! cross-fetch */ \"./node_modules/cross-fetch/dist/browser-ponyfill.js\").default;\nvar jobsActive = 0;\nvar complete = [];\nvar intervalId = null;\n\n/**\n * Register a step function.\n *\n * Step checks if there are completed jobs and if there are sends them to the\n * parent. Then it checks the jobs count. If there are no further jobs, clear\n * the step.\n */\nvar registerStep = function registerStep() {\n  intervalId = setInterval(function () {\n    if (complete.length) {\n      // Send our chunk of completed requests and instruct postMessage to\n      // transfer the buffers instead of copying them.\n      postMessage(complete.slice(),\n      // Instruct postMessage that these buffers in the sent message\n      // should use their Transferable trait. After the postMessage\n      // call the \"buffers\" will still be in complete if you looked,\n      // but they will all be length 0 as the data they reference has\n      // been sent to the window. This lets us send a lot of data\n      // without the normal postMessage behaviour of making a copy of\n      // all of the data for the window.\n      complete.map(function (response) {\n        return response.buffer;\n      }).filter(Boolean));\n      complete.length = 0;\n    }\n    if (jobsActive === 0) {\n      clearInterval(intervalId);\n      intervalId = null;\n    }\n  }, 1);\n};\n\n/**\n * Receive a job from the parent and fetch the requested data.\n * @param {object} options.job A job id, url, and options descriptor to perform.\n */\nvar onMessage = function onMessage(_ref) {\n  var job = _ref.data;\n  if (jobsActive === 0 && !intervalId) {\n    registerStep();\n  }\n  jobsActive++;\n  crossFetch(job.url, job.options).then(function (result) {\n    if (result.ok) return result.arrayBuffer();\n    if (result.status === 404) return null;\n    return Promise.reject(result.status);\n  }).then(function (buffer) {\n    return complete.push({\n      id: job.id,\n      buffer: buffer\n    });\n  }).catch(function (error) {\n    return complete.push({\n      id: job.id,\n      error: error && error.message || \"Failed request: \".concat(job.url)\n    });\n  }).then(function () {\n    return jobsActive--;\n  });\n};\n\n// crossFetch means \"fetch\" is now always supported\npostMessage({\n  support: {\n    fetch: true\n  }\n});\nself.addEventListener('message', onMessage);\n\n/***/ }),\n\n/***/ \"./node_modules/cross-fetch/dist/browser-ponyfill.js\":\n/*!***********************************************************!*\\\n  !*** ./node_modules/cross-fetch/dist/browser-ponyfill.js ***!\n  \\***********************************************************/\n/*! no static exports found */\n/***/ (function(module, exports) {\n\nvar global = typeof self !== 'undefined' ? self : this;\nvar __self__ = (function () {\nfunction F() {\nthis.fetch = false;\nthis.DOMException = global.DOMException\n}\nF.prototype = global;\nreturn new F();\n})();\n(function(self) {\n\nvar irrelevant = (function (exports) {\n\n  var support = {\n    searchParams: 'URLSearchParams' in self,\n    iterable: 'Symbol' in self && 'iterator' in Symbol,\n    blob:\n      'FileReader' in self &&\n      'Blob' in self &&\n      (function() {\n        try {\n          new Blob();\n          return true\n        } catch (e) {\n          return false\n        }\n      })(),\n    formData: 'FormData' in self,\n    arrayBuffer: 'ArrayBuffer' in self\n  };\n\n  function isDataView(obj) {\n    return obj && DataView.prototype.isPrototypeOf(obj)\n  }\n\n  if (support.arrayBuffer) {\n    var viewClasses = [\n      '[object Int8Array]',\n      '[object Uint8Array]',\n      '[object Uint8ClampedArray]',\n      '[object Int16Array]',\n      '[object Uint16Array]',\n      '[object Int32Array]',\n      '[object Uint32Array]',\n      '[object Float32Array]',\n      '[object Float64Array]'\n    ];\n\n    var isArrayBufferView =\n      ArrayBuffer.isView ||\n      function(obj) {\n        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1\n      };\n  }\n\n  function normalizeName(name) {\n    if (typeof name !== 'string') {\n      name = String(name);\n    }\n    if (/[^a-z0-9\\-#$%&'*+.^_`|~]/i.test(name)) {\n      throw new TypeError('Invalid character in header field name')\n    }\n    return name.toLowerCase()\n  }\n\n  function normalizeValue(value) {\n    if (typeof value !== 'string') {\n      value = String(value);\n    }\n    return value\n  }\n\n  // Build a destructive iterator for the value list\n  function iteratorFor(items) {\n    var iterator = {\n      next: function() {\n        var value = items.shift();\n        return {done: value === undefined, value: value}\n      }\n    };\n\n    if (support.iterable) {\n      iterator[Symbol.iterator] = function() {\n        return iterator\n      };\n    }\n\n    return iterator\n  }\n\n  function Headers(headers) {\n    this.map = {};\n\n    if (headers instanceof Headers) {\n      headers.forEach(function(value, name) {\n        this.append(name, value);\n      }, this);\n    } else if (Array.isArray(headers)) {\n      headers.forEach(function(header) {\n        this.append(header[0], header[1]);\n      }, this);\n    } else if (headers) {\n      Object.getOwnPropertyNames(headers).forEach(function(name) {\n        this.append(name, headers[name]);\n      }, this);\n    }\n  }\n\n  Headers.prototype.append = function(name, value) {\n    name = normalizeName(name);\n    value = normalizeValue(value);\n    var oldValue = this.map[name];\n    this.map[name] = oldValue ? oldValue + ', ' + value : value;\n  };\n\n  Headers.prototype['delete'] = function(name) {\n    delete this.map[normalizeName(name)];\n  };\n\n  Headers.prototype.get = function(name) {\n    name = normalizeName(name);\n    return this.has(name) ? this.map[name] : null\n  };\n\n  Headers.prototype.has = function(name) {\n    return this.map.hasOwnProperty(normalizeName(name))\n  };\n\n  Headers.prototype.set = function(name, value) {\n    this.map[normalizeName(name)] = normalizeValue(value);\n  };\n\n  Headers.prototype.forEach = function(callback, thisArg) {\n    for (var name in this.map) {\n      if (this.map.hasOwnProperty(name)) {\n        callback.call(thisArg, this.map[name], name, this);\n      }\n    }\n  };\n\n  Headers.prototype.keys = function() {\n    var items = [];\n    this.forEach(function(value, name) {\n      items.push(name);\n    });\n    return iteratorFor(items)\n  };\n\n  Headers.prototype.values = function() {\n    var items = [];\n    this.forEach(function(value) {\n      items.push(value);\n    });\n    return iteratorFor(items)\n  };\n\n  Headers.prototype.entries = function() {\n    var items = [];\n    this.forEach(function(value, name) {\n      items.push([name, value]);\n    });\n    return iteratorFor(items)\n  };\n\n  if (support.iterable) {\n    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;\n  }\n\n  function consumed(body) {\n    if (body.bodyUsed) {\n      return Promise.reject(new TypeError('Already read'))\n    }\n    body.bodyUsed = true;\n  }\n\n  function fileReaderReady(reader) {\n    return new Promise(function(resolve, reject) {\n      reader.onload = function() {\n        resolve(reader.result);\n      };\n      reader.onerror = function() {\n        reject(reader.error);\n      };\n    })\n  }\n\n  function readBlobAsArrayBuffer(blob) {\n    var reader = new FileReader();\n    var promise = fileReaderReady(reader);\n    reader.readAsArrayBuffer(blob);\n    return promise\n  }\n\n  function readBlobAsText(blob) {\n    var reader = new FileReader();\n    var promise = fileReaderReady(reader);\n    reader.readAsText(blob);\n    return promise\n  }\n\n  function readArrayBufferAsText(buf) {\n    var view = new Uint8Array(buf);\n    var chars = new Array(view.length);\n\n    for (var i = 0; i < view.length; i++) {\n      chars[i] = String.fromCharCode(view[i]);\n    }\n    return chars.join('')\n  }\n\n  function bufferClone(buf) {\n    if (buf.slice) {\n      return buf.slice(0)\n    } else {\n      var view = new Uint8Array(buf.byteLength);\n      view.set(new Uint8Array(buf));\n      return view.buffer\n    }\n  }\n\n  function Body() {\n    this.bodyUsed = false;\n\n    this._initBody = function(body) {\n      this._bodyInit = body;\n      if (!body) {\n        this._bodyText = '';\n      } else if (typeof body === 'string') {\n        this._bodyText = body;\n      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {\n        this._bodyBlob = body;\n      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {\n        this._bodyFormData = body;\n      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {\n        this._bodyText = body.toString();\n      } else if (support.arrayBuffer && support.blob && isDataView(body)) {\n        this._bodyArrayBuffer = bufferClone(body.buffer);\n        // IE 10-11 can't handle a DataView body.\n        this._bodyInit = new Blob([this._bodyArrayBuffer]);\n      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {\n        this._bodyArrayBuffer = bufferClone(body);\n      } else {\n        this._bodyText = body = Object.prototype.toString.call(body);\n      }\n\n      if (!this.headers.get('content-type')) {\n        if (typeof body === 'string') {\n          this.headers.set('content-type', 'text/plain;charset=UTF-8');\n        } else if (this._bodyBlob && this._bodyBlob.type) {\n          this.headers.set('content-type', this._bodyBlob.type);\n        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {\n          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');\n        }\n      }\n    };\n\n    if (support.blob) {\n      this.blob = function() {\n        var rejected = consumed(this);\n        if (rejected) {\n          return rejected\n        }\n\n        if (this._bodyBlob) {\n          return Promise.resolve(this._bodyBlob)\n        } else if (this._bodyArrayBuffer) {\n          return Promise.resolve(new Blob([this._bodyArrayBuffer]))\n        } else if (this._bodyFormData) {\n          throw new Error('could not read FormData body as blob')\n        } else {\n          return Promise.resolve(new Blob([this._bodyText]))\n        }\n      };\n\n      this.arrayBuffer = function() {\n        if (this._bodyArrayBuffer) {\n          return consumed(this) || Promise.resolve(this._bodyArrayBuffer)\n        } else {\n          return this.blob().then(readBlobAsArrayBuffer)\n        }\n      };\n    }\n\n    this.text = function() {\n      var rejected = consumed(this);\n      if (rejected) {\n        return rejected\n      }\n\n      if (this._bodyBlob) {\n        return readBlobAsText(this._bodyBlob)\n      } else if (this._bodyArrayBuffer) {\n        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))\n      } else if (this._bodyFormData) {\n        throw new Error('could not read FormData body as text')\n      } else {\n        return Promise.resolve(this._bodyText)\n      }\n    };\n\n    if (support.formData) {\n      this.formData = function() {\n        return this.text().then(decode)\n      };\n    }\n\n    this.json = function() {\n      return this.text().then(JSON.parse)\n    };\n\n    return this\n  }\n\n  // HTTP methods whose capitalization should be normalized\n  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];\n\n  function normalizeMethod(method) {\n    var upcased = method.toUpperCase();\n    return methods.indexOf(upcased) > -1 ? upcased : method\n  }\n\n  function Request(input, options) {\n    options = options || {};\n    var body = options.body;\n\n    if (input instanceof Request) {\n      if (input.bodyUsed) {\n        throw new TypeError('Already read')\n      }\n      this.url = input.url;\n      this.credentials = input.credentials;\n      if (!options.headers) {\n        this.headers = new Headers(input.headers);\n      }\n      this.method = input.method;\n      this.mode = input.mode;\n      this.signal = input.signal;\n      if (!body && input._bodyInit != null) {\n        body = input._bodyInit;\n        input.bodyUsed = true;\n      }\n    } else {\n      this.url = String(input);\n    }\n\n    this.credentials = options.credentials || this.credentials || 'same-origin';\n    if (options.headers || !this.headers) {\n      this.headers = new Headers(options.headers);\n    }\n    this.method = normalizeMethod(options.method || this.method || 'GET');\n    this.mode = options.mode || this.mode || null;\n    this.signal = options.signal || this.signal;\n    this.referrer = null;\n\n    if ((this.method === 'GET' || this.method === 'HEAD') && body) {\n      throw new TypeError('Body not allowed for GET or HEAD requests')\n    }\n    this._initBody(body);\n  }\n\n  Request.prototype.clone = function() {\n    return new Request(this, {body: this._bodyInit})\n  };\n\n  function decode(body) {\n    var form = new FormData();\n    body\n      .trim()\n      .split('&')\n      .forEach(function(bytes) {\n        if (bytes) {\n          var split = bytes.split('=');\n          var name = split.shift().replace(/\\+/g, ' ');\n          var value = split.join('=').replace(/\\+/g, ' ');\n          form.append(decodeURIComponent(name), decodeURIComponent(value));\n        }\n      });\n    return form\n  }\n\n  function parseHeaders(rawHeaders) {\n    var headers = new Headers();\n    // Replace instances of \\r\\n and \\n followed by at least one space or horizontal tab with a space\n    // https://tools.ietf.org/html/rfc7230#section-3.2\n    var preProcessedHeaders = rawHeaders.replace(/\\r?\\n[\\t ]+/g, ' ');\n    preProcessedHeaders.split(/\\r?\\n/).forEach(function(line) {\n      var parts = line.split(':');\n      var key = parts.shift().trim();\n      if (key) {\n        var value = parts.join(':').trim();\n        headers.append(key, value);\n      }\n    });\n    return headers\n  }\n\n  Body.call(Request.prototype);\n\n  function Response(bodyInit, options) {\n    if (!options) {\n      options = {};\n    }\n\n    this.type = 'default';\n    this.status = options.status === undefined ? 200 : options.status;\n    this.ok = this.status >= 200 && this.status < 300;\n    this.statusText = 'statusText' in options ? options.statusText : 'OK';\n    this.headers = new Headers(options.headers);\n    this.url = options.url || '';\n    this._initBody(bodyInit);\n  }\n\n  Body.call(Response.prototype);\n\n  Response.prototype.clone = function() {\n    return new Response(this._bodyInit, {\n      status: this.status,\n      statusText: this.statusText,\n      headers: new Headers(this.headers),\n      url: this.url\n    })\n  };\n\n  Response.error = function() {\n    var response = new Response(null, {status: 0, statusText: ''});\n    response.type = 'error';\n    return response\n  };\n\n  var redirectStatuses = [301, 302, 303, 307, 308];\n\n  Response.redirect = function(url, status) {\n    if (redirectStatuses.indexOf(status) === -1) {\n      throw new RangeError('Invalid status code')\n    }\n\n    return new Response(null, {status: status, headers: {location: url}})\n  };\n\n  exports.DOMException = self.DOMException;\n  try {\n    new exports.DOMException();\n  } catch (err) {\n    exports.DOMException = function(message, name) {\n      this.message = message;\n      this.name = name;\n      var error = Error(message);\n      this.stack = error.stack;\n    };\n    exports.DOMException.prototype = Object.create(Error.prototype);\n    exports.DOMException.prototype.constructor = exports.DOMException;\n  }\n\n  function fetch(input, init) {\n    return new Promise(function(resolve, reject) {\n      var request = new Request(input, init);\n\n      if (request.signal && request.signal.aborted) {\n        return reject(new exports.DOMException('Aborted', 'AbortError'))\n      }\n\n      var xhr = new XMLHttpRequest();\n\n      function abortXhr() {\n        xhr.abort();\n      }\n\n      xhr.onload = function() {\n        var options = {\n          status: xhr.status,\n          statusText: xhr.statusText,\n          headers: parseHeaders(xhr.getAllResponseHeaders() || '')\n        };\n        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');\n        var body = 'response' in xhr ? xhr.response : xhr.responseText;\n        resolve(new Response(body, options));\n      };\n\n      xhr.onerror = function() {\n        reject(new TypeError('Network request failed'));\n      };\n\n      xhr.ontimeout = function() {\n        reject(new TypeError('Network request failed'));\n      };\n\n      xhr.onabort = function() {\n        reject(new exports.DOMException('Aborted', 'AbortError'));\n      };\n\n      xhr.open(request.method, request.url, true);\n\n      if (request.credentials === 'include') {\n        xhr.withCredentials = true;\n      } else if (request.credentials === 'omit') {\n        xhr.withCredentials = false;\n      }\n\n      if ('responseType' in xhr && support.blob) {\n        xhr.responseType = 'blob';\n      }\n\n      request.headers.forEach(function(value, name) {\n        xhr.setRequestHeader(name, value);\n      });\n\n      if (request.signal) {\n        request.signal.addEventListener('abort', abortXhr);\n\n        xhr.onreadystatechange = function() {\n          // DONE (success or failure)\n          if (xhr.readyState === 4) {\n            request.signal.removeEventListener('abort', abortXhr);\n          }\n        };\n      }\n\n      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);\n    })\n  }\n\n  fetch.polyfill = true;\n\n  if (!self.fetch) {\n    self.fetch = fetch;\n    self.Headers = Headers;\n    self.Request = Request;\n    self.Response = Response;\n  }\n\n  exports.Headers = Headers;\n  exports.Request = Request;\n  exports.Response = Response;\n  exports.fetch = fetch;\n\n  Object.defineProperty(exports, '__esModule', { value: true });\n\n  return exports;\n\n})({});\n})(__self__);\n__self__.fetch.ponyfill = true;\n// Remove \"polyfill\" property added by whatwg-fetch\ndelete __self__.fetch.polyfill;\n// Choose between native implementation (global) or custom implementation (__self__)\n// var ctx = global.fetch ? global : __self__;\nvar ctx = __self__; // this line disable service worker support temporarily\nexports = ctx.fetch // To enable: import fetch from 'cross-fetch'\nexports.default = ctx.fetch // For TypeScript consumers without esModuleInterop.\nexports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'\nexports.Headers = ctx.Headers\nexports.Request = ctx.Request\nexports.Response = ctx.Response\nmodule.exports = exports\n\n\n/***/ })\n\n/******/ });\n//# sourceMappingURL=f6240eab828e6d415177.worker.js.map", __webpack_require__.p + "f6240eab828e6d415177.worker.js");
-};
-
-/***/ }),
-
-/***/ "./node_modules/worker-loader/dist/workers/InlineWorker.js":
-/*!*****************************************************************!*\
-  !*** ./node_modules/worker-loader/dist/workers/InlineWorker.js ***!
-  \*****************************************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = __webpack_modules__;
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/amd options */
+/******/ 	(() => {
+/******/ 		__webpack_require__.amdO = {};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/compat get default export */
+/******/ 	(() => {
+/******/ 		// getDefaultExport function for compatibility with non-harmony modules
+/******/ 		__webpack_require__.n = (module) => {
+/******/ 			var getter = module && module.__esModule ?
+/******/ 				() => (module['default']) :
+/******/ 				() => (module);
+/******/ 			__webpack_require__.d(getter, { a: getter });
+/******/ 			return getter;
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/get javascript chunk filename */
+/******/ 	(() => {
+/******/ 		// This function allow to reference async chunks
+/******/ 		__webpack_require__.u = (chunkId) => {
+/******/ 			// return url for filenames based on template
+/******/ 			return "chunks/" + "fetch-worker" + "." + "cd3a909d7b876aabf94a" + ".js";
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/global */
+/******/ 	(() => {
+/******/ 		__webpack_require__.g = (function() {
+/******/ 			if (typeof globalThis === 'object') return globalThis;
+/******/ 			try {
+/******/ 				return this || new Function('return this')();
+/******/ 			} catch (e) {
+/******/ 				if (typeof window === 'object') return window;
+/******/ 			}
+/******/ 		})();
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/publicPath */
+/******/ 	(() => {
+/******/ 		__webpack_require__.p = "/";
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/jsonp chunk loading */
+/******/ 	(() => {
+/******/ 		__webpack_require__.b = document.baseURI || self.location.href;
+/******/ 		
+/******/ 		// object to store loaded and loading chunks
+/******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 		// [resolve, reject, Promise] = chunk loading, 0 = chunk loaded
+/******/ 		var installedChunks = {
+/******/ 			139: 0
+/******/ 		};
+/******/ 		
+/******/ 		// no chunk on demand loading
+/******/ 		
+/******/ 		// no prefetching
+/******/ 		
+/******/ 		// no preloaded
+/******/ 		
+/******/ 		// no HMR
+/******/ 		
+/******/ 		// no HMR manifest
+/******/ 		
+/******/ 		// no on chunks loaded
+/******/ 		
+/******/ 		// no jsonp function
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+var __webpack_exports__ = {};
+// This entry needs to be wrapped in an IIFE because it needs to be in strict mode.
+(() => {
 "use strict";
+// ESM COMPAT FLAG
+__webpack_require__.r(__webpack_exports__);
 
+// EXPORTS
+__webpack_require__.d(__webpack_exports__, {
+  Asset: () => (/* reexport */ Asset),
+  AssetType: () => (/* reexport */ AssetType),
+  DataFormat: () => (/* reexport */ DataFormat),
+  Helper: () => (/* reexport */ Helper),
+  ScratchStorage: () => (/* reexport */ ScratchStorage)
+});
 
-// http://stackoverflow.com/questions/10343913/how-to-create-a-web-worker-from-a-string
+// EXTERNAL MODULE: ./node_modules/minilog/lib/web/index.js
+var web = __webpack_require__(557);
+var web_default = /*#__PURE__*/__webpack_require__.n(web);
+;// ./src/log.ts
 
-var URL = window.URL || window.webkitURL;
-
-module.exports = function (content, url) {
-  try {
-    try {
-      var blob;
-
-      try {
-        // BlobBuilder = Deprecated, but widely implemented
-        var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
-
-        blob = new BlobBuilder();
-
-        blob.append(content);
-
-        blob = blob.getBlob();
-      } catch (e) {
-        // The proposed API
-        blob = new Blob([content]);
-      }
-
-      return new Worker(URL.createObjectURL(blob));
-    } catch (e) {
-      return new Worker('data:application/javascript,' + encodeURIComponent(content));
-    }
-  } catch (e) {
-    if (!url) {
-      throw Error('Inline worker is not supported');
-    }
-
-    return new Worker(url);
-  }
-};
-
-/***/ }),
-
-/***/ "./src/Asset.js":
-/*!**********************!*\
-  !*** ./src/Asset.js ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
+web_default().enable();
+/* harmony default export */ const log = (web_default()('storage'));
+// EXTERNAL MODULE: ./node_modules/js-md5/src/md5.js
+var md5 = __webpack_require__(386);
+var md5_default = /*#__PURE__*/__webpack_require__.n(md5);
+;// ./src/memoizedToString.ts
 // Use JS implemented TextDecoder and TextEncoder if it is not provided by the
 // browser.
-var _TextDecoder;
-var _TextEncoder;
+let _TextDecoder;
+let _TextEncoder;
 if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
   // Wait to require the text encoding polyfill until we know it's needed.
   // eslint-disable-next-line global-require
-  var encoding = __webpack_require__(/*! fastestsmallesttextencoderdecoder */ "./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js");
+  const encoding = __webpack_require__(767);
   _TextDecoder = encoding.TextDecoder;
   _TextEncoder = encoding.TextEncoder;
 } else {
   _TextDecoder = TextDecoder;
   _TextEncoder = TextEncoder;
 }
-var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
-var memoizedToString = function () {
+const memoizedToString = function () {
   /**
    * The maximum length of a chunk before encoding it into base64.
    *
@@ -4768,20 +4622,19 @@ var memoizedToString = function () {
    * 32768 so it is close to a size an memory allocator would prefer.
    * @const {number}
    */
-  var BTOA_CHUNK_MAX_LENGTH = 32766;
-
+  const BTOA_CHUNK_MAX_LENGTH = 32766;
   /**
    * An array cache of bytes to characters.
    * @const {?Array.<string>}
    */
-  var fromCharCode = null;
-  var strings = {};
-  return function (assetId, data) {
+  let fromCharCode = null;
+  const strings = {};
+  return (assetId, data) => {
     if (!Object.prototype.hasOwnProperty.call(strings, assetId)) {
       if (typeof btoa === 'undefined') {
         // Use a library that does not need btoa to run.
         /* eslint-disable-next-line global-require */
-        var base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
+        const base64js = __webpack_require__(526);
         strings[assetId] = base64js.fromByteArray(data);
       } else {
         // Native btoa is faster than javascript translation. Use js to
@@ -4789,19 +4642,21 @@ var memoizedToString = function () {
         if (fromCharCode === null) {
           // Cache the first 256 characters for input byte values.
           fromCharCode = new Array(256);
-          for (var i = 0; i < 256; i++) {
+          for (let i = 0; i < 256; i++) {
             fromCharCode[i] = String.fromCharCode(i);
           }
         }
-        var length = data.length;
-        var s = '';
+        const {
+          length
+        } = data;
+        let s = '';
         // Iterate over chunks of the binary data.
-        for (var _i = 0, e = 0; _i < length; _i = e) {
+        for (let i = 0, e = 0; i < length; i = e) {
           // Create small chunks to cause more small allocations and
           // less large allocations.
           e = Math.min(e + BTOA_CHUNK_MAX_LENGTH, length);
-          var s_ = '';
-          for (var j = _i; j < e; j += 1) {
+          let s_ = '';
+          for (let j = i; j < e; j += 1) {
             s_ += fromCharCode[data[j]];
           }
           // Encode the latest chunk so the we create one big output
@@ -4815,9 +4670,14 @@ var memoizedToString = function () {
     return strings[assetId];
   };
 }();
-var Asset = /*#__PURE__*/function () {
-  "use strict";
 
+;// ./src/Asset.ts
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+class Asset {
   /**
    * Construct an Asset.
    * @param {AssetType} assetType - The type of this asset (sound, image, etc.)
@@ -4826,84 +4686,80 @@ var Asset = /*#__PURE__*/function () {
    * @param {Buffer} [data] - The in-memory data for this asset; optional.
    * @param {bool} [generateId] - Whether to create id from an md5 hash of data
    */
-  function Asset(assetType, assetId, dataFormat, data, generateId) {
-    _classCallCheck(this, Asset);
+  constructor(assetType, assetId, dataFormat, data, generateId) {
+    _defineProperty(this, "assetType", void 0);
+    _defineProperty(this, "assetId", void 0);
+    _defineProperty(this, "data", void 0);
+    _defineProperty(this, "dataFormat", void 0);
+    _defineProperty(this, "dependencies", void 0);
+    _defineProperty(this, "clean", void 0);
     /** @type {AssetType} */
     this.assetType = assetType;
-
     /** @type {string} */
     this.assetId = assetId;
     this.setData(data, dataFormat || assetType.runtimeFormat, generateId);
-
     /** @type {Asset[]} */
     this.dependencies = [];
   }
-  return _createClass(Asset, [{
-    key: "setData",
-    value: function setData(data, dataFormat, generateId) {
-      if (data && !dataFormat) {
-        throw new Error('Data provided without specifying its format');
-      }
-
-      /** @type {DataFormat} */
-      this.dataFormat = dataFormat;
-
-      /** @type {Buffer} */
-      this.data = data;
-      if (generateId) this.assetId = md5(data);
-
-      // Mark as clean only if set is being called without generateId
-      // If a new id is being generated, mark this asset as not clean
-      this.clean = !generateId;
+  setData(data, dataFormat, generateId) {
+    if (data && !dataFormat) {
+      throw new Error('Data provided without specifying its format');
     }
-
-    /**
-     * @returns {string} - This asset's data, decoded as text.
-     */
-  }, {
-    key: "decodeText",
-    value: function decodeText() {
-      var decoder = new _TextDecoder();
-      return decoder.decode(this.data);
-    }
-
-    /**
-     * Same as `setData` but encodes text first.
-     * @param {string} data - the text data to encode and store.
-     * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
-     * @param {bool} generateId - after setting data, set the id to an md5 of the data?
-     */
-  }, {
-    key: "encodeTextData",
-    value: function encodeTextData(data, dataFormat, generateId) {
-      var encoder = new _TextEncoder();
-      this.setData(encoder.encode(data), dataFormat, generateId);
-    }
-
-    /**
-     * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
-     * @returns {string} - A data URI representing the asset's data.
-     */
-  }, {
-    key: "encodeDataURI",
-    value: function encodeDataURI(contentType) {
-      contentType = contentType || this.assetType.contentType;
-      return "data:".concat(contentType, ";base64,").concat(memoizedToString(this.assetId, this.data));
-    }
-  }]);
-}();
-module.exports = Asset;
-
-/***/ }),
-
-/***/ "./src/AssetType.js":
-/*!**************************!*\
-  !*** ./src/AssetType.js ***!
-  \**************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
+    /** @type {DataFormat} */
+    this.dataFormat = dataFormat;
+    /** @type {Buffer} */
+    this.data = data;
+    if (generateId) this.assetId = md5_default()(data);
+    // Mark as clean only if set is being called without generateId
+    // If a new id is being generated, mark this asset as not clean
+    this.clean = !generateId;
+  }
+  /**
+   * @returns {string} - This asset's data, decoded as text.
+   */
+  decodeText() {
+    const decoder = new _TextDecoder();
+    // The data may be string, but it seems like this function is only called if the data is a byte array?
+    // This was the behavior of the code when we added TS
+    return decoder.decode(this.data);
+  }
+  /**
+   * Same as `setData` but encodes text first.
+   * @param {string} data - the text data to encode and store.
+   * @param {DataFormat} dataFormat - the format of the data (DataFormat.SVG for example).
+   * @param {bool} generateId - after setting data, set the id to an md5 of the data?
+   */
+  encodeTextData(data, dataFormat, generateId) {
+    const encoder = new _TextEncoder();
+    this.setData(encoder.encode(data), dataFormat, generateId);
+  }
+  /**
+   * @param {string} [contentType] - Optionally override the content type to be included in the data URI.
+   * @returns {string} - A data URI representing the asset's data.
+   */
+  encodeDataURI(contentType) {
+    contentType = contentType || this.assetType.contentType;
+    // The data may be string, but it seems like this function is only called if the data is a byte array?
+    // This was the behavior of the code when we added TS
+    return "data:".concat(contentType, ";base64,").concat(memoizedToString(this.assetId, this.data));
+  }
+}
+;// ./src/DataFormat.ts
+/**
+ * Enumeration of the supported data formats.
+ * @enum {string}
+ */
+const DataFormat = {
+  JPG: 'jpg',
+  JSON: 'json',
+  MP3: 'mp3',
+  PNG: 'png',
+  SB2: 'sb2',
+  SB3: 'sb3',
+  SVG: 'svg',
+  WAV: 'wav'
+};
+;// ./src/AssetType.ts
 
 /**
  * Enumeration of the supported asset types.
@@ -4915,7 +4771,7 @@ var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
  *     example, a project stored in SB2 format on disk will be returned as JSON when loaded into memory.
  * @property {boolean} immutable - Indicates if the asset id is determined by the asset content.
  */
-var AssetType = {
+const AssetType = {
   ImageBitmap: {
     contentType: 'image/png',
     name: 'ImageBitmap',
@@ -4947,349 +4803,203 @@ var AssetType = {
     immutable: true
   }
 };
-module.exports = AssetType;
-
-/***/ }),
-
-/***/ "./src/BuiltinHelper.js":
-/*!******************************!*\
-  !*** ./src/BuiltinHelper.js ***!
-  \******************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/* WEBPACK VAR INJECTION */(function(Buffer) {var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var _possibleConstructorReturn = __webpack_require__(/*! @babel/runtime/helpers/possibleConstructorReturn */ "./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js");
-var _getPrototypeOf = __webpack_require__(/*! @babel/runtime/helpers/getPrototypeOf */ "./node_modules/@babel/runtime/helpers/getPrototypeOf.js");
-var _inherits = __webpack_require__(/*! @babel/runtime/helpers/inherits */ "./node_modules/@babel/runtime/helpers/inherits.js");
-function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
-function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
-var md5 = __webpack_require__(/*! js-md5 */ "./node_modules/js-md5/src/md5.js");
-var log = __webpack_require__(/*! ./log */ "./src/log.js");
-var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
-var AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
-var DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
-var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
-
+;// ./src/Helper.ts
+function Helper_defineProperty(e, r, t) { return (r = Helper_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function Helper_toPropertyKey(t) { var i = Helper_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function Helper_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
- * @typedef {object} BuiltinAssetRecord
- * @property {AssetType} type - The type of the asset.
- * @property {DataFormat} format - The format of the asset's data.
- * @property {?string} id - The asset's unique ID.
- * @property {Buffer} data - The asset's data.
+ * Base class for asset load/save helpers.
+ * @abstract
  */
+class Helper {
+  constructor(parent) {
+    Helper_defineProperty(this, "parent", void 0);
+    this.parent = parent;
+  }
+  /**
+   * Fetch an asset but don't process dependencies.
+   * @param {AssetType} assetType - The type of asset to fetch.
+   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+   * @return {Promise.<Asset>} A promise for the contents of the asset.
+   */
+  load(assetType, assetId, dataFormat) {
+    return Promise.reject(new Error("No asset of type ".concat(assetType, " for ID ").concat(assetId, " with format ").concat(dataFormat)));
+  }
+}
+// EXTERNAL MODULE: ./src/builtins/defaultBitmap.png?arrayBuffer
+var defaultBitmaparrayBuffer = __webpack_require__(9);
+var defaultBitmaparrayBuffer_default = /*#__PURE__*/__webpack_require__.n(defaultBitmaparrayBuffer);
+// EXTERNAL MODULE: ./src/builtins/defaultSound.wav?arrayBuffer
+var defaultSoundarrayBuffer = __webpack_require__(680);
+var defaultSoundarrayBuffer_default = /*#__PURE__*/__webpack_require__.n(defaultSoundarrayBuffer);
+// EXTERNAL MODULE: ./src/builtins/defaultVector.svg?arrayBuffer
+var defaultVectorarrayBuffer = __webpack_require__(914);
+var defaultVectorarrayBuffer_default = /*#__PURE__*/__webpack_require__.n(defaultVectorarrayBuffer);
+// EXTERNAL MODULE: ./node_modules/buffer/index.js
+var buffer = __webpack_require__(287);
+;// ./src/BuiltinHelper.ts
+function BuiltinHelper_defineProperty(e, r, t) { return (r = BuiltinHelper_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function BuiltinHelper_toPropertyKey(t) { var i = BuiltinHelper_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function BuiltinHelper_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+
+
+
+
+
+
+
+
 
 /**
  * @type {BuiltinAssetRecord[]}
  */
-var DefaultAssets = [{
+const DefaultAssets = [{
   type: AssetType.ImageBitmap,
   format: DataFormat.PNG,
   id: null,
-  data: Buffer.from(__webpack_require__(/*! ./builtins/defaultBitmap.png */ "./src/builtins/defaultBitmap.png") // eslint-disable-line global-require
-  )
+  data: buffer/* Buffer */.hp.from((defaultBitmaparrayBuffer_default()))
 }, {
   type: AssetType.Sound,
   format: DataFormat.WAV,
   id: null,
-  data: Buffer.from(__webpack_require__(/*! ./builtins/defaultSound.wav */ "./src/builtins/defaultSound.wav") // eslint-disable-line global-require
-  )
+  data: buffer/* Buffer */.hp.from((defaultSoundarrayBuffer_default()))
 }, {
   type: AssetType.ImageVector,
   format: DataFormat.SVG,
   id: null,
-  data: Buffer.from(__webpack_require__(/*! ./builtins/defaultVector.svg */ "./src/builtins/defaultVector.svg") // eslint-disable-line global-require
-  )
+  data: buffer/* Buffer */.hp.from((defaultVectorarrayBuffer_default()))
 }];
-
 /**
  * @type {BuiltinAssetRecord[]}
  */
-var BuiltinAssets = DefaultAssets.concat([]);
-var BuiltinHelper = /*#__PURE__*/function (_Helper) {
-  "use strict";
-
-  function BuiltinHelper(parent) {
-    var _this;
-    _classCallCheck(this, BuiltinHelper);
-    _this = _callSuper(this, BuiltinHelper, [parent]);
-
+const BuiltinAssets = DefaultAssets.concat([]);
+class BuiltinHelper extends Helper {
+  constructor(parent) {
+    super(parent);
     /**
      * In-memory storage for all built-in assets.
      * @type {Object.<AssetType, AssetIdMap>} Maps asset type to a map of asset ID to actual assets.
      * @typedef {Object.<string, BuiltinAssetRecord>} AssetIdMap - Maps asset ID to asset.
      */
-    _this.assets = {};
-    BuiltinAssets.forEach(function (assetRecord) {
-      assetRecord.id = _this._store(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
+    BuiltinHelper_defineProperty(this, "assets", void 0);
+    this.assets = {};
+    BuiltinAssets.forEach(assetRecord => {
+      assetRecord.id = this._store(assetRecord.type, assetRecord.format, assetRecord.data, assetRecord.id);
     });
-    return _this;
   }
-
   /**
    * Call `setDefaultAssetId` on the parent `ScratchStorage` instance to register all built-in default assets.
    */
-  _inherits(BuiltinHelper, _Helper);
-  return _createClass(BuiltinHelper, [{
-    key: "registerDefaultAssets",
-    value: function registerDefaultAssets() {
-      var numAssets = DefaultAssets.length;
-      for (var assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
-        var assetRecord = DefaultAssets[assetIndex];
-        this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
-      }
+  registerDefaultAssets() {
+    const numAssets = DefaultAssets.length;
+    for (let assetIndex = 0; assetIndex < numAssets; ++assetIndex) {
+      const assetRecord = DefaultAssets[assetIndex];
+      this.parent.setDefaultAssetId(assetRecord.type, assetRecord.id);
     }
-
-    /**
-     * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
-     * @param {string} assetId - The id for the asset to fetch.
-     * @returns {?Asset} The asset for assetId, if it exists.
-     */
-  }, {
-    key: "get",
-    value: function get(assetId) {
-      var asset = null;
-      if (Object.prototype.hasOwnProperty.call(this.assets, assetId)) {
-        /** @type{BuiltinAssetRecord} */
-        var assetRecord = this.assets[assetId];
-        asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
-      }
-      return asset;
-    }
-
-    /**
-     * Alias for store (old name of store)
-     * @deprecated Use BuiltinHelper.store
-     * @param {AssetType} assetType - The type of the asset to cache.
-     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {string} id - The id for the cached asset.
-     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-     */
-  }, {
-    key: "cache",
-    value: function cache(assetType, dataFormat, data, id) {
-      log.warn('Deprecation: BuiltinHelper.cache has been replaced with BuiltinHelper.store.');
-      return this.store(assetType, dataFormat, data, id);
-    }
-
-    /**
-     * Deprecated external API for _store
-     * @deprecated Not for external use. Create assets and keep track of them outside of the storage instance.
-     * @param {AssetType} assetType - The type of the asset to cache.
-     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {(string|number)} id - The id for the cached asset.
-     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-     */
-  }, {
-    key: "store",
-    value: function store(assetType, dataFormat, data, id) {
-      log.warn('Deprecation: use Storage.createAsset. BuiltinHelper is for internal use only.');
-      return this._store(assetType, dataFormat, data, id);
-    }
-
-    /**
-     * Cache an asset for future lookups by ID.
-     * @param {AssetType} assetType - The type of the asset to cache.
-     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {(string|number)} id - The id for the cached asset.
-     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-     */
-  }, {
-    key: "_store",
-    value: function _store(assetType, dataFormat, data, id) {
-      if (!dataFormat) throw new Error('Data cached without specifying its format');
-      if (id !== '' && id !== null && typeof id !== 'undefined') {
-        if (Object.prototype.hasOwnProperty.call(this.assets, id) && assetType.immutable) return id;
-      } else if (assetType.immutable) {
-        id = md5(data);
-      } else {
-        throw new Error('Tried to cache data without an id');
-      }
-      this.assets[id] = {
-        type: assetType,
-        format: dataFormat,
-        id: id,
-        data: data
-      };
-      return id;
-    }
-
-    /**
-     * Fetch an asset but don't process dependencies.
-     * @param {AssetType} assetType - The type of asset to fetch.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @return {?Promise.<Asset>} A promise for the contents of the asset.
-     */
-  }, {
-    key: "load",
-    value: function load(assetType, assetId) {
-      if (!this.get(assetId)) {
-        // Return null immediately so Storage can quickly move to trying the
-        // next helper.
-        return null;
-      }
-      return Promise.resolve(this.get(assetId));
-    }
-  }]);
-}(Helper);
-module.exports = BuiltinHelper;
-/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/buffer/index.js */ "./node_modules/buffer/index.js").Buffer))
-
-/***/ }),
-
-/***/ "./src/DataFormat.js":
-/*!***************************!*\
-  !*** ./src/DataFormat.js ***!
-  \***************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/**
- * Enumeration of the supported data formats.
- * @enum {string}
- */
-var DataFormat = {
-  JPG: 'jpg',
-  JSON: 'json',
-  MP3: 'mp3',
-  PNG: 'png',
-  SB2: 'sb2',
-  SB3: 'sb3',
-  SVG: 'svg',
-  WAV: 'wav'
-};
-module.exports = DataFormat;
-
-/***/ }),
-
-/***/ "./src/FetchTool.js":
-/*!**************************!*\
-  !*** ./src/FetchTool.js ***!
-  \**************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _objectWithoutProperties = __webpack_require__(/*! @babel/runtime/helpers/objectWithoutProperties */ "./node_modules/@babel/runtime/helpers/objectWithoutProperties.js");
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var _excluded = ["url"],
-  _excluded2 = ["url", "withCredentials"];
-var _require = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js"),
-  scratchFetch = _require.scratchFetch;
-
-/**
- * @typedef {Request & {withCredentials: boolean}} ScratchSendRequest
- */
-
-/**
- * Get and send assets with the fetch standard web api.
- */
-var FetchTool = /*#__PURE__*/function () {
-  "use strict";
-
-  function FetchTool() {
-    _classCallCheck(this, FetchTool);
   }
-  return _createClass(FetchTool, [{
-    key: "isGetSupported",
-    get:
-    /**
-     * Is get supported?
-     * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
-     * @returns {boolean} Is get supported?
-     */
-    function get() {
-      return true;
+  /**
+   * Synchronously fetch a cached asset for a given asset id. Returns null if not found.
+   * @param {string} assetId - The id for the asset to fetch.
+   * @returns {?Asset} The asset for assetId, if it exists.
+   */
+  get(assetId) {
+    let asset = null;
+    if (Object.prototype.hasOwnProperty.call(this.assets, assetId)) {
+      /** @type{BuiltinAssetRecord} */
+      const assetRecord = this.assets[assetId];
+      asset = new Asset(assetRecord.type, assetRecord.id, assetRecord.format, assetRecord.data);
     }
-
-    /**
-     * Request data from a server with fetch.
-     * @param {Request} reqConfig - Request configuration for data to get.
-     * @returns {Promise.<Uint8Array?>} Resolve to Buffer of data from server.
-     */
-  }, {
-    key: "get",
-    value: function get(_ref) {
-      var url = _ref.url,
-        options = _objectWithoutProperties(_ref, _excluded);
-      return scratchFetch(url, Object.assign({
-        method: 'GET'
-      }, options)).then(function (result) {
-        if (result.ok) return result.arrayBuffer().then(function (b) {
-          return new Uint8Array(b);
-        });
-        if (result.status === 404) return null;
-        return Promise.reject(result.status); // TODO: we should throw a proper error
-      });
+    return asset;
+  }
+  /**
+   * Alias for store (old name of store)
+   * @deprecated Use BuiltinHelper.store
+   * @param {AssetType} assetType - The type of the asset to cache.
+   * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {string} id - The id for the cached asset.
+   * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+   */
+  cache(assetType, dataFormat, data, id) {
+    log.warn('Deprecation: BuiltinHelper.cache has been replaced with BuiltinHelper.store.');
+    return this.store(assetType, dataFormat, data, id);
+  }
+  /**
+   * Deprecated external API for _store
+   * @deprecated Not for external use. Create assets and keep track of them outside of the storage instance.
+   * @param {AssetType} assetType - The type of the asset to cache.
+   * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {(string|number)} id - The id for the cached asset.
+   * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+   */
+  store(assetType, dataFormat, data, id) {
+    log.warn('Deprecation: use Storage.createAsset. BuiltinHelper is for internal use only.');
+    return this._store(assetType, dataFormat, data, id);
+  }
+  /**
+   * Cache an asset for future lookups by ID.
+   * @param {AssetType} assetType - The type of the asset to cache.
+   * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {(string|number)} id - The id for the cached asset.
+   * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+   */
+  _store(assetType, dataFormat, data, id) {
+    let assetId = id;
+    if (!dataFormat) throw new Error('Data cached without specifying its format');
+    if (assetId !== '' && assetId !== null && typeof assetId !== 'undefined') {
+      if (Object.prototype.hasOwnProperty.call(this.assets, assetId) && assetType.immutable) return assetId;
+    } else if (assetType.immutable) {
+      assetId = md5_default()(data);
+    } else {
+      throw new Error('Tried to cache data without an id');
     }
-
-    /**
-     * Is sending supported?
-     * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
-     * @returns {boolean} Is sending supported?
-     */
-  }, {
-    key: "isSendSupported",
-    get: function get() {
-      return true;
+    this.assets[assetId] = {
+      type: assetType,
+      format: dataFormat,
+      id: assetId,
+      data: data
+    };
+    return assetId;
+  }
+  /**
+   * Fetch an asset but don't process dependencies.
+   * @param {AssetType} assetType - The type of asset to fetch.
+   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @return {?Promise.<Asset>} A promise for the contents of the asset.
+   */
+  load(assetType, assetId) {
+    if (!this.get(assetId)) {
+      // Return null immediately so Storage can quickly move to trying the
+      // next helper.
+      return null;
     }
-
-    /**
-     * Send data to a server with fetch.
-     * @param {ScratchSendRequest} reqConfig - Request configuration for data to send.
-     * @returns {Promise.<string>} Server returned metadata.
-     */
-  }, {
-    key: "send",
-    value: function send(_ref2) {
-      var url = _ref2.url,
-        _ref2$withCredentials = _ref2.withCredentials,
-        withCredentials = _ref2$withCredentials === void 0 ? false : _ref2$withCredentials,
-        options = _objectWithoutProperties(_ref2, _excluded2);
-      return scratchFetch(url, Object.assign({
-        credentials: withCredentials ? 'include' : 'omit'
-      }, options)).then(function (response) {
-        if (response.ok) return response.text();
-        return Promise.reject(response.status);
-      });
-    }
-  }]);
-}();
-module.exports = FetchTool;
-
-/***/ }),
-
-/***/ "./src/FetchWorkerTool.js":
-/*!********************************!*\
-  !*** ./src/FetchWorkerTool.js ***!
-  \********************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _objectWithoutProperties = __webpack_require__(/*! @babel/runtime/helpers/objectWithoutProperties */ "./node_modules/@babel/runtime/helpers/objectWithoutProperties.js");
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var _excluded = ["url"];
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-var _require = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js"),
-  Headers = _require.Headers,
-  applyMetadata = _require.applyMetadata;
+    return Promise.resolve(this.get(assetId));
+  }
+}
+// EXTERNAL MODULE: ./src/scratchFetch.js
+var scratchFetch = __webpack_require__(953);
+var scratchFetch_default = /*#__PURE__*/__webpack_require__.n(scratchFetch);
+;// ./src/FetchWorkerTool.ts
+const _excluded = ["url"];
+function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var s = Object.getOwnPropertySymbols(e); for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (e.includes(n)) continue; t[n] = r[n]; } return t; }
+function FetchWorkerTool_defineProperty(e, r, t) { return (r = FetchWorkerTool_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function FetchWorkerTool_toPropertyKey(t) { var i = FetchWorkerTool_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function FetchWorkerTool_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * Get and send assets with a worker that uses fetch.
  */
-var PrivateFetchWorkerTool = /*#__PURE__*/function () {
-  "use strict";
-
-  function PrivateFetchWorkerTool() {
-    var _this = this;
-    _classCallCheck(this, PrivateFetchWorkerTool);
+class PrivateFetchWorkerTool {
+  constructor() {
+    FetchWorkerTool_defineProperty(this, "_workerSupport", void 0);
+    FetchWorkerTool_defineProperty(this, "_supportError", void 0);
+    FetchWorkerTool_defineProperty(this, "worker", void 0);
+    FetchWorkerTool_defineProperty(this, "jobs", void 0);
     /**
      * What does the worker support of the APIs we need?
      * @type {{fetch:boolean}}
@@ -5297,19 +5007,16 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
     this._workerSupport = {
       fetch: typeof fetch !== 'undefined'
     };
-
     /**
      * A possible error occurred standing up the worker.
      * @type {Error?}
      */
     this._supportError = null;
-
     /**
      * The worker that runs fetch and returns data for us.
      * @type {Worker?}
      */
     this.worker = null;
-
     /**
      * A map of ids to fetch job objects.
      * @type {object}
@@ -5317,33 +5024,29 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
     this.jobs = {};
     try {
       if (this.isGetSupported) {
-        // eslint-disable-next-line global-require
-        var FetchWorker = __webpack_require__(/*! worker-loader?{"inline":true,"fallback":true}!./FetchWorkerTool.worker */ "./node_modules/worker-loader/dist/cjs.js?{\"inline\":true,\"fallback\":true}!./src/FetchWorkerTool.worker.js");
-        var worker = new FetchWorker();
-        worker.addEventListener('message', function (_ref) {
-          var data = _ref.data;
+        // Yes, this is a browser API and we've specified `browser: false` in the eslint env,
+        // but `isGetSupported` checks for the presence of Worker and uses it only if present.
+        // Also see https://webpack.js.org/guides/web-workers/
+        // eslint-disable-next-line no-undef
+        const worker = new Worker(/* webpackChunkName: "fetch-worker" */new URL(/* worker import */ __webpack_require__.p + __webpack_require__.u(836), __webpack_require__.b));
+        worker.addEventListener('message', _ref => {
+          let {
+            data
+          } = _ref;
           if (data.support) {
-            _this._workerSupport = data.support;
+            this._workerSupport = data.support;
             return;
           }
-          var _iterator = _createForOfIteratorHelper(data),
-            _step;
-          try {
-            for (_iterator.s(); !(_step = _iterator.n()).done;) {
-              var message = _step.value;
-              if (_this.jobs[message.id]) {
-                if (message.error) {
-                  _this.jobs[message.id].reject(message.error);
-                } else {
-                  _this.jobs[message.id].resolve(message.buffer);
-                }
-                delete _this.jobs[message.id];
+          for (const message of data) {
+            const job = this.jobs[message.id];
+            if (job) {
+              if (message.error) {
+                job.reject(message.error);
+              } else {
+                job.resolve(message.buffer);
               }
+              delete this.jobs[message.id];
             }
-          } catch (err) {
-            _iterator.e(err);
-          } finally {
-            _iterator.f();
           }
         });
         this.worker = worker;
@@ -5352,7 +5055,6 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
       this._supportError = error;
     }
   }
-
   /**
    * Is get supported?
    *
@@ -5361,96 +5063,83 @@ var PrivateFetchWorkerTool = /*#__PURE__*/function () {
    * guess that it does if the window does until the worker can inform us.
    * @returns {boolean} Is get supported?
    */
-  return _createClass(PrivateFetchWorkerTool, [{
-    key: "isGetSupported",
-    get: function get() {
-      return typeof Worker !== 'undefined' && this._workerSupport.fetch && !this._supportError;
+  get isGetSupported() {
+    return typeof Worker !== 'undefined' && this._workerSupport.fetch && !this._supportError;
+  }
+  /**
+   * Request data from a server with a worker using fetch.
+   * @param {{url:string}} reqConfig - Request configuration for data to get.
+   * @param {{method:string}} options - Additional options to configure fetch.
+   * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
+   */
+  get(_ref2) {
+    let {
+        url
+      } = _ref2,
+      options = _objectWithoutProperties(_ref2, _excluded);
+    const worker = this.worker;
+    if (!worker) {
+      return Promise.reject(new Error('The worker could not be initialized'));
     }
-
-    /**
-     * Request data from a server with a worker using fetch.
-     * @param {{url:string}} reqConfig - Request configuration for data to get.
-     * @param {{method:string}} options - Additional options to configure fetch.
-     * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
-     */
-  }, {
-    key: "get",
-    value: function get(_ref2) {
-      var _this2 = this;
-      var url = _ref2.url,
-        options = _objectWithoutProperties(_ref2, _excluded);
-      return new Promise(function (resolve, reject) {
-        // TODO: Use a Scratch standard ID generator ...
-        var id = Math.random().toString(16).substring(2);
-        var augmentedOptions = applyMetadata(Object.assign({
-          method: 'GET'
-        }, options));
-        // the Fetch spec says options.headers could be:
-        // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
-        // structured clone (postMessage) doesn't support Headers objects
-        // so turn it into an array of two-item arrays to make it to the worker intact
-        if (augmentedOptions && augmentedOptions.headers instanceof Headers) {
-          augmentedOptions.headers = Array.from(augmentedOptions.headers.entries());
-        }
-        _this2.worker.postMessage({
-          id: id,
-          url: url,
-          options: augmentedOptions
-        });
-        _this2.jobs[id] = {
-          id: id,
-          resolve: resolve,
-          reject: reject
-        };
-      })
-      /* eslint no-confusing-arrow: ["error", {"allowParens": true}] */.then(function (body) {
-        return body ? new Uint8Array(body) : null;
-      });
-    }
-
-    /**
-     * Is sending supported? always false for FetchWorkerTool.
-     * @returns {boolean} Is sending supported?
-     */
-  }, {
-    key: "isSendSupported",
-    get: function get() {
-      return false;
-    }
-
-    /**
-     * Send data to a server.
-     * @throws {Error} A not implemented error.
-     */
-  }, {
-    key: "send",
-    value: function send() {
-      throw new Error('Not implemented.');
-    }
-
-    /**
-     * Return a static PrivateFetchWorkerTool instance on demand.
-     * @returns {PrivateFetchWorkerTool} A static PrivateFetchWorkerTool
-     *   instance
-     */
-  }], [{
-    key: "instance",
-    get: function get() {
-      if (!this._instance) {
-        this._instance = new PrivateFetchWorkerTool();
+    return new Promise((resolve, reject) => {
+      // TODO: Use a Scratch standard ID generator ...
+      const id = Math.random().toString(16).substring(2);
+      const augmentedOptions = (0,scratchFetch.applyMetadata)(Object.assign({
+        method: 'GET'
+      }, options));
+      // the Fetch spec says options.headers could be:
+      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
+      // structured clone (postMessage) doesn't support Headers objects
+      // so turn it into an array of two-item arrays to make it to the worker intact
+      if (augmentedOptions && augmentedOptions.headers instanceof scratchFetch.Headers) {
+        augmentedOptions.headers = Array.from(augmentedOptions.headers.entries());
       }
-      return this._instance;
+      worker.postMessage({
+        id,
+        url,
+        options: augmentedOptions
+      });
+      this.jobs[id] = {
+        id,
+        resolve,
+        reject
+      };
+    })
+    /* eslint no-confusing-arrow: ["error", {"allowParens": true}] */.then(body => body ? new Uint8Array(body) : null);
+  }
+  /**
+   * Is sending supported? always false for FetchWorkerTool.
+   * @returns {boolean} Is sending supported?
+   */
+  get isSendSupported() {
+    return false;
+  }
+  /**
+   * Send data to a server.
+   * @throws {Error} A not implemented error.
+   */
+  send() {
+    throw new Error('Not implemented.');
+  }
+  /**
+   * Return a static PrivateFetchWorkerTool instance on demand.
+   * @returns {PrivateFetchWorkerTool} A static PrivateFetchWorkerTool
+   *   instance
+   */
+  static get instance() {
+    if (!this._instance) {
+      this._instance = new PrivateFetchWorkerTool();
     }
-  }]);
-}();
+    return this._instance;
+  }
+}
 /**
  * Get and send assets with a worker that uses fetch.
  */
-var PublicFetchWorkerTool = /*#__PURE__*/function () {
-  "use strict";
-
-  function PublicFetchWorkerTool() {
-    _classCallCheck(this, PublicFetchWorkerTool);
+FetchWorkerTool_defineProperty(PrivateFetchWorkerTool, "_instance", void 0);
+class PublicFetchWorkerTool {
+  constructor() {
+    FetchWorkerTool_defineProperty(this, "inner", void 0);
     /**
      * Shared instance of an internal worker. PublicFetchWorkerTool proxies
      * it.
@@ -5458,211 +5147,185 @@ var PublicFetchWorkerTool = /*#__PURE__*/function () {
      */
     this.inner = PrivateFetchWorkerTool.instance;
   }
-
   /**
    * Is get supported?
    * @returns {boolean} Is get supported?
    */
-  return _createClass(PublicFetchWorkerTool, [{
-    key: "isGetSupported",
-    get: function get() {
-      return this.inner.isGetSupported;
-    }
-
-    /**
-     * Request data from a server with a worker that uses fetch.
-     * @param {{url:string}} reqConfig - Request configuration for data to get.
-     * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
-     */
-  }, {
-    key: "get",
-    value: function get(reqConfig) {
-      return this.inner.get(reqConfig);
-    }
-
-    /**
-     * Is sending supported?
-     * @returns {boolean} Is sending supported?
-     */
-  }, {
-    key: "isSendSupported",
-    get: function get() {
-      return false;
-    }
-
-    /**
-     * Send data to a server with a worker that uses fetch.
-     * @throws {Error} A not implemented error.
-     */
-  }, {
-    key: "send",
-    value: function send() {
-      throw new Error('Not implemented.');
-    }
-  }]);
-}();
-module.exports = PublicFetchWorkerTool;
-
-/***/ }),
-
-/***/ "./src/Helper.js":
-/*!***********************!*\
-  !*** ./src/Helper.js ***!
-  \***********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-/**
- * Base class for asset load/save helpers.
- * @abstract
- */
-var Helper = /*#__PURE__*/function () {
-  "use strict";
-
-  function Helper(parent) {
-    _classCallCheck(this, Helper);
-    this.parent = parent;
+  get isGetSupported() {
+    return this.inner.isGetSupported;
   }
-
   /**
-   * Fetch an asset but don't process dependencies.
-   * @param {AssetType} assetType - The type of asset to fetch.
-   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-   * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-   * @return {Promise.<Asset>} A promise for the contents of the asset.
+   * Request data from a server with a worker that uses fetch.
+   * @param {{url:string}} reqConfig - Request configuration for data to get.
+   * @returns {Promise.<Buffer|Uint8Array|null>} Resolve to Buffer of data from server.
    */
-  return _createClass(Helper, [{
-    key: "load",
-    value: function load(assetType, assetId, dataFormat) {
-      return Promise.reject(new Error("No asset of type ".concat(assetType, " for ID ").concat(assetId, " with format ").concat(dataFormat)));
-    }
-  }]);
-}();
-module.exports = Helper;
-
-/***/ }),
-
-/***/ "./src/ProxyTool.js":
-/*!**************************!*\
-  !*** ./src/ProxyTool.js ***!
-  \**************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var FetchWorkerTool = __webpack_require__(/*! ./FetchWorkerTool */ "./src/FetchWorkerTool.js");
-var FetchTool = __webpack_require__(/*! ./FetchTool */ "./src/FetchTool.js");
+  get(reqConfig) {
+    return this.inner.get(reqConfig);
+  }
+  /**
+   * Is sending supported?
+   * @returns {boolean} Is sending supported?
+   */
+  get isSendSupported() {
+    return false;
+  }
+  /**
+   * Send data to a server with a worker that uses fetch.
+   * @throws {Error} A not implemented error.
+   */
+  send() {
+    throw new Error('Not implemented.');
+  }
+}
+;// ./src/FetchTool.ts
+const FetchTool_excluded = ["url"],
+  _excluded2 = ["url", "withCredentials"];
+function FetchTool_objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = FetchTool_objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var s = Object.getOwnPropertySymbols(e); for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function FetchTool_objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (e.includes(n)) continue; t[n] = r[n]; } return t; }
 
 /**
- * @typedef {object} Request
- * @property {string} url
- * @property {*} body
- * @property {string} method
- * @property {boolean} withCredentials
+ * @typedef {Request & {withCredentials: boolean}} ScratchSendRequest
  */
+/**
+ * Get and send assets with the fetch standard web api.
+ */
+class FetchTool {
+  /**
+   * Is get supported?
+   * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
+   * @returns {boolean} Is get supported?
+   */
+  get isGetSupported() {
+    return true;
+  }
+  /**
+   * Request data from a server with fetch.
+   * @param {Request} reqConfig - Request configuration for data to get.
+   * @returns {Promise.<Uint8Array?>} Resolve to Buffer of data from server.
+   */
+  get(_ref) {
+    let {
+        url
+      } = _ref,
+      options = FetchTool_objectWithoutProperties(_ref, FetchTool_excluded);
+    return (0,scratchFetch.scratchFetch)(url, Object.assign({
+      method: 'GET'
+    }, options)).then(result => {
+      if (result.ok) return result.arrayBuffer().then(b => new Uint8Array(b));
+      if (result.status === 404) return null;
+      return Promise.reject(result.status); // TODO: we should throw a proper error
+    });
+  }
+  /**
+   * Is sending supported?
+   * Always true for `FetchTool` because `scratchFetch` ponyfills `fetch` if necessary.
+   * @returns {boolean} Is sending supported?
+   */
+  get isSendSupported() {
+    return true;
+  }
+  /**
+   * Send data to a server with fetch.
+   * @param {ScratchSendRequest} reqConfig - Request configuration for data to send.
+   * @returns {Promise.<string>} Server returned metadata.
+   */
+  send(_ref2) {
+    let {
+        url,
+        withCredentials = false
+      } = _ref2,
+      options = FetchTool_objectWithoutProperties(_ref2, _excluded2);
+    return (0,scratchFetch.scratchFetch)(url, Object.assign({
+      credentials: withCredentials ? 'include' : 'omit'
+    }, options)).then(response => {
+      if (response.ok) return response.text();
+      return Promise.reject(response.status);
+    });
+  }
+}
+;// ./src/ProxyTool.ts
+function ProxyTool_defineProperty(e, r, t) { return (r = ProxyTool_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function ProxyTool_toPropertyKey(t) { var i = ProxyTool_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function ProxyTool_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
 
 /**
  * Get and send assets with other tools in sequence.
  */
-var ProxyTool = /*#__PURE__*/function () {
-  "use strict";
-
-  function ProxyTool() {
-    var filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ProxyTool.TOOL_FILTER.ALL;
-    _classCallCheck(this, ProxyTool);
-    var tools;
+class ProxyTool {
+  constructor() {
+    let filter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ProxyTool.TOOL_FILTER.ALL;
+    ProxyTool_defineProperty(this, "tools", void 0);
+    let tools;
     if (filter === ProxyTool.TOOL_FILTER.READY) {
       tools = [new FetchTool()];
     } else {
-      tools = [new FetchWorkerTool(), new FetchTool()];
+      tools = [new PublicFetchWorkerTool(), new FetchTool()];
     }
-
     /**
      * Sequence of tools to proxy.
      * @type {Array.<Tool>}
      */
     this.tools = tools;
   }
-
   /**
    * Is get supported? false if all proxied tool return false.
    * @returns {boolean} Is get supported?
    */
-  return _createClass(ProxyTool, [{
-    key: "isGetSupported",
-    get: function get() {
-      return this.tools.some(function (tool) {
-        return tool.isGetSupported;
-      });
-    }
-
-    /**
-     * Request data from with one of the proxied tools.
-     * @param {Request} reqConfig - Request configuration for data to get.
-     * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
-     */
-  }, {
-    key: "get",
-    value: function get(reqConfig) {
-      var _this = this;
-      var toolIndex = 0;
-      var _nextTool = function nextTool(err) {
-        var tool = _this.tools[toolIndex++];
-        if (!tool) {
-          throw err;
-        }
-        if (!tool.isGetSupported) {
-          return _nextTool(err);
-        }
-        return tool.get(reqConfig).catch(_nextTool);
-      };
-      return _nextTool();
-    }
-
-    /**
-     * Is sending supported? false if all proxied tool return false.
-     * @returns {boolean} Is sending supported?
-     */
-  }, {
-    key: "isSendSupported",
-    get: function get() {
-      return this.tools.some(function (tool) {
-        return tool.isSendSupported;
-      });
-    }
-
-    /**
-     * Send data to a server with one of the proxied tools.
-     * @param {Request} reqConfig - Request configuration for data to send.
-     * @returns {Promise.<Buffer|string|object>} Server returned metadata.
-     */
-  }, {
-    key: "send",
-    value: function send(reqConfig) {
-      var _this2 = this;
-      var toolIndex = 0;
-      var _nextTool2 = function nextTool(err) {
-        var tool = _this2.tools[toolIndex++];
-        if (!tool) {
-          throw err;
-        }
-        if (!tool.isSendSupported) {
-          return _nextTool2(err);
-        }
-        return tool.send(reqConfig).catch(_nextTool2);
-      };
-      return _nextTool2();
-    }
-  }]);
-}();
+  get isGetSupported() {
+    return this.tools.some(tool => tool.isGetSupported);
+  }
+  /**
+   * Request data from with one of the proxied tools.
+   * @param {Request} reqConfig - Request configuration for data to get.
+   * @returns {Promise.<Buffer>} Resolve to Buffer of data from server.
+   */
+  get(reqConfig) {
+    let toolIndex = 0;
+    const nextTool = err => {
+      const tool = this.tools[toolIndex++];
+      if (!tool) {
+        throw err;
+      }
+      if (!tool.isGetSupported) {
+        return nextTool(err);
+      }
+      return tool.get(reqConfig).catch(nextTool);
+    };
+    return nextTool();
+  }
+  /**
+   * Is sending supported? false if all proxied tool return false.
+   * @returns {boolean} Is sending supported?
+   */
+  get isSendSupported() {
+    return this.tools.some(tool => tool.isSendSupported);
+  }
+  /**
+   * Send data to a server with one of the proxied tools.
+   * @param {Request} reqConfig - Request configuration for data to send.
+   * @returns {Promise.<Buffer|string|object>} Server returned metadata.
+   */
+  send(reqConfig) {
+    let toolIndex = 0;
+    const nextTool = err => {
+      const tool = this.tools[toolIndex++];
+      if (!tool) {
+        throw err;
+      }
+      if (!tool.isSendSupported) {
+        return nextTool(err);
+      }
+      return tool.send(reqConfig).catch(nextTool);
+    };
+    return nextTool();
+  }
+}
 /**
  * Constant values that filter the set of tools in a ProxyTool instance.
  * @enum {string}
  */
-ProxyTool.TOOL_FILTER = {
+ProxyTool_defineProperty(ProxyTool, "TOOL_FILTER", {
   /**
    * Use all tools.
    */
@@ -5671,319 +5334,16 @@ ProxyTool.TOOL_FILTER = {
    * Use tools that are ready right now.
    */
   READY: 'ready'
-};
-module.exports = ProxyTool;
+});
+;// ./src/WebHelper.ts
+function WebHelper_defineProperty(e, r, t) { return (r = WebHelper_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function WebHelper_toPropertyKey(t) { var i = WebHelper_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function WebHelper_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
-/***/ }),
 
-/***/ "./src/ScratchStorage.js":
-/*!*******************************!*\
-  !*** ./src/ScratchStorage.js ***!
-  \*******************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
 
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var log = __webpack_require__(/*! ./log */ "./src/log.js");
-var BuiltinHelper = __webpack_require__(/*! ./BuiltinHelper */ "./src/BuiltinHelper.js");
-var WebHelper = __webpack_require__(/*! ./WebHelper */ "./src/WebHelper.js");
-var _Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
-var _AssetType = __webpack_require__(/*! ./AssetType */ "./src/AssetType.js");
-var _DataFormat = __webpack_require__(/*! ./DataFormat */ "./src/DataFormat.js");
-var _scratchFetch = __webpack_require__(/*! ./scratchFetch */ "./src/scratchFetch.js");
-var ScratchStorage = /*#__PURE__*/function () {
-  "use strict";
 
-  function ScratchStorage() {
-    _classCallCheck(this, ScratchStorage);
-    this.defaultAssetId = {};
-    this.builtinHelper = new BuiltinHelper(this);
-    this.webHelper = new WebHelper(this);
-    this.builtinHelper.registerDefaultAssets(this);
-    this._helpers = [{
-      helper: this.builtinHelper,
-      priority: 100
-    }, {
-      helper: this.webHelper,
-      priority: -100
-    }];
-  }
-
-  /**
-   * @return {Asset} - the `Asset` class constructor.
-   * @constructor
-   */
-  return _createClass(ScratchStorage, [{
-    key: "Asset",
-    get: function get() {
-      return _Asset;
-    }
-
-    /**
-     * @return {AssetType} - the list of supported asset types.
-     * @constructor
-     */
-  }, {
-    key: "AssetType",
-    get: function get() {
-      return _AssetType;
-    }
-
-    /**
-     * @return {DataFormat} - the list of supported data formats.
-     * @constructor
-     */
-  }, {
-    key: "DataFormat",
-    get: function get() {
-      return _DataFormat;
-    }
-
-    /**
-     * Access the `scratchFetch` module within this library.
-     * @return {module} the scratchFetch module, with properties for `scratchFetch`, `setMetadata`, etc.
-     */
-  }, {
-    key: "scratchFetch",
-    get: function get() {
-      return _scratchFetch;
-    }
-
-    /**
-     * @deprecated Please use the `Asset` member of a storage instance instead.
-     * @return {Asset} - the `Asset` class constructor.
-     * @constructor
-     */
-  }, {
-    key: "addHelper",
-    value:
-    /**
-     * Add a storage helper to this manager. Helpers with a higher priority number will be checked first when loading
-     * or storing assets. For comparison, the helper for built-in assets has `priority=100` and the default web helper
-     * has `priority=-100`. The relative order of helpers with equal priorities is undefined.
-     * @param {Helper} helper - the helper to be added.
-     * @param {number} [priority] - the priority for this new helper (default: 0).
-     */
-    function addHelper(helper) {
-      var priority = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
-      this._helpers.push({
-        helper: helper,
-        priority: priority
-      });
-      this._helpers.sort(function (a, b) {
-        return b.priority - a.priority;
-      });
-    }
-
-    /**
-     * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
-     * @param {string} assetId - The id of the asset to fetch.
-     * @returns {?Asset} The asset, if it exists.
-     */
-  }, {
-    key: "get",
-    value: function get(assetId) {
-      return this.builtinHelper.get(assetId);
-    }
-
-    /**
-     * Deprecated API for caching built-in assets. Use createAsset.
-     * @param {AssetType} assetType - The type of the asset to cache.
-     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {string} id - The id for the cached asset.
-     * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
-     */
-  }, {
-    key: "cache",
-    value: function cache(assetType, dataFormat, data, id) {
-      log.warn('Deprecation: Storage.cache is deprecated. Use Storage.createAsset, and store assets externally.');
-      return this.builtinHelper._store(assetType, dataFormat, data, id);
-    }
-
-    /**
-     * Construct an Asset, and optionally generate an md5 hash of its data to create an id
-     * @param {AssetType} assetType - The type of the asset to cache.
-     * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {string} [id] - The id for the cached asset.
-     * @param {bool} [generateId] - flag to set id to an md5 hash of data if `id` isn't supplied
-     * @returns {Asset} generated Asset with `id` attribute set if not supplied
-     */
-  }, {
-    key: "createAsset",
-    value: function createAsset(assetType, dataFormat, data, id, generateId) {
-      if (!dataFormat) throw new Error('Tried to create asset without a dataFormat');
-      return new _Asset(assetType, id, dataFormat, data, generateId);
-    }
-
-    /**
-     * Register a web-based source for assets. Sources will be checked in order of registration.
-     * @param {Array.<AssetType>} types - The types of asset provided by this source.
-     * @param {UrlFunction} getFunction - A function which computes a GET URL from an Asset.
-     * @param {UrlFunction} createFunction - A function which computes a POST URL for asset data.
-     * @param {UrlFunction} updateFunction - A function which computes a PUT URL for asset data.
-     */
-  }, {
-    key: "addWebStore",
-    value: function addWebStore(types, getFunction, createFunction, updateFunction) {
-      this.webHelper.addStore(types, getFunction, createFunction, updateFunction);
-    }
-
-    /**
-     * Register a web-based source for assets. Sources will be checked in order of registration.
-     * @deprecated Please use addWebStore
-     * @param {Array.<AssetType>} types - The types of asset provided by this source.
-     * @param {UrlFunction} urlFunction - A function which computes a GET URL from an Asset.
-     */
-  }, {
-    key: "addWebSource",
-    value: function addWebSource(types, urlFunction) {
-      log.warn('Deprecation: Storage.addWebSource has been replaced by addWebStore.');
-      this.addWebStore(types, urlFunction);
-    }
-
-    /**
-     * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-     * @param {AssetType} type - Get the default ID for assets of this type.
-     * @return {?string} The ID of the default asset of the given type, if any.
-     */
-  }, {
-    key: "getDefaultAssetId",
-    value: function getDefaultAssetId(type) {
-      if (Object.prototype.hasOwnProperty.call(this.defaultAssetId, type.name)) {
-        return this.defaultAssetId[type.name];
-      }
-    }
-
-    /**
-     * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
-     * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
-     * one built into this module.
-     * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
-     * @param {AssetType} type - The type of asset for which the default will be set.
-     * @param {string} id - The default ID to use for this type of asset.
-     */
-  }, {
-    key: "setDefaultAssetId",
-    value: function setDefaultAssetId(type, id) {
-      this.defaultAssetId[type.name] = id;
-    }
-
-    /**
-     * Fetch an asset by type & ID.
-     * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
-     * @return {Promise.<Asset>} A promise for the requested Asset.
-     *   If the promise is resolved with non-null, the value is the requested asset.
-     *   If the promise is resolved with null, the desired asset could not be found with the current asset sources.
-     *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
-     *   error here, but (for example) HTTP 403 does.
-     */
-  }, {
-    key: "load",
-    value: function load(assetType, assetId, dataFormat) {
-      /** @type {Helper[]} */
-      var helpers = this._helpers.map(function (x) {
-        return x.helper;
-      });
-      var errors = [];
-      dataFormat = dataFormat || assetType.runtimeFormat;
-      var helperIndex = 0;
-      var helper;
-      var _tryNextHelper = function tryNextHelper(err) {
-        if (err) {
-          // Track the error, but continue looking
-          errors.push(err);
-        }
-        helper = helpers[helperIndex++];
-        if (helper) {
-          var loading = helper.load(assetType, assetId, dataFormat);
-          if (loading === null) {
-            return _tryNextHelper();
-          }
-          // Note that other attempts may have logged errors; if this succeeds they will be suppressed.
-          return loading
-          // TODO: maybe some types of error should prevent trying the next helper?
-          .catch(_tryNextHelper);
-        } else if (errors.length > 0) {
-          // We looked through all the helpers and couldn't find the asset, AND
-          // at least one thing went wrong while we were looking.
-          return Promise.reject(errors);
-        }
-
-        // Nothing went wrong but we couldn't find the asset.
-        return Promise.resolve(null);
-      };
-      return _tryNextHelper();
-    }
-
-    /**
-     * Store an asset by type & ID.
-     * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
-     * @param {?DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
-     * @param {Buffer} data - Data to store for the asset
-     * @param {?string} [assetId] - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @return {Promise.<object>} A promise for asset metadata
-     */
-  }, {
-    key: "store",
-    value: function store(assetType, dataFormat, data, assetId) {
-      var _this = this;
-      dataFormat = dataFormat || assetType.runtimeFormat;
-      return new Promise(function (resolve, reject) {
-        return _this.webHelper.store(assetType, dataFormat, data, assetId).then(function (body) {
-          _this.builtinHelper._store(assetType, dataFormat, data, body.id);
-          return resolve(body);
-        }).catch(function (error) {
-          return reject(error);
-        });
-      });
-    }
-  }], [{
-    key: "Asset",
-    get: function get() {
-      return _Asset;
-    }
-
-    /**
-     * @deprecated Please use the `AssetType` member of a storage instance instead.
-     * @return {AssetType} - the list of supported asset types.
-     * @constructor
-     */
-  }, {
-    key: "AssetType",
-    get: function get() {
-      return _AssetType;
-    }
-  }]);
-}();
-module.exports = ScratchStorage;
-
-/***/ }),
-
-/***/ "./src/WebHelper.js":
-/*!**************************!*\
-  !*** ./src/WebHelper.js ***!
-  \**************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _readOnlyError = __webpack_require__(/*! @babel/runtime/helpers/readOnlyError */ "./node_modules/@babel/runtime/helpers/readOnlyError.js");
-var _classCallCheck = __webpack_require__(/*! @babel/runtime/helpers/classCallCheck */ "./node_modules/@babel/runtime/helpers/classCallCheck.js");
-var _createClass = __webpack_require__(/*! @babel/runtime/helpers/createClass */ "./node_modules/@babel/runtime/helpers/createClass.js");
-var _possibleConstructorReturn = __webpack_require__(/*! @babel/runtime/helpers/possibleConstructorReturn */ "./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js");
-var _getPrototypeOf = __webpack_require__(/*! @babel/runtime/helpers/getPrototypeOf */ "./node_modules/@babel/runtime/helpers/getPrototypeOf.js");
-var _inherits = __webpack_require__(/*! @babel/runtime/helpers/inherits */ "./node_modules/@babel/runtime/helpers/inherits.js");
-function _callSuper(t, o, e) { return o = _getPrototypeOf(o), _possibleConstructorReturn(t, _isNativeReflectConstruct() ? Reflect.construct(o, e || [], _getPrototypeOf(t).constructor) : o.apply(t, e)); }
-function _isNativeReflectConstruct() { try { var t = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); } catch (t) {} return (_isNativeReflectConstruct = function _isNativeReflectConstruct() { return !!t; })(); }
-var log = __webpack_require__(/*! ./log */ "./src/log.js");
-var Asset = __webpack_require__(/*! ./Asset */ "./src/Asset.js");
-var Helper = __webpack_require__(/*! ./Helper */ "./src/Helper.js");
-var ProxyTool = __webpack_require__(/*! ./ProxyTool */ "./src/ProxyTool.js");
-var ensureRequestConfig = function ensureRequestConfig(reqConfig) {
+const ensureRequestConfig = reqConfig => {
   if (typeof reqConfig === 'string') {
     return {
       url: reqConfig
@@ -5991,21 +5351,9 @@ var ensureRequestConfig = function ensureRequestConfig(reqConfig) {
   }
   return reqConfig;
 };
-
-/**
- * @typedef {function} UrlFunction - A function which computes a URL from asset information.
- * @param {Asset} - The asset for which the URL should be computed.
- * @returns {(string|object)} - A string representing the URL for the asset request OR an object with configuration for
- *                              the underlying fetch call (necessary for configuring e.g. authentication)
- */
-var WebHelper = /*#__PURE__*/function (_Helper) {
-  "use strict";
-
-  function WebHelper(parent) {
-    var _this;
-    _classCallCheck(this, WebHelper);
-    _this = _callSuper(this, WebHelper, [parent]);
-
+class WebHelper extends Helper {
+  constructor(parent) {
+    super(parent);
     /**
      * @type {Array.<StoreRecord>}
      * @typedef {object} StoreRecord
@@ -6014,386 +5362,383 @@ var WebHelper = /*#__PURE__*/function (_Helper) {
      * @property {UrlFunction} createFunction - A function which computes a URL from an Asset.
      * @property {UrlFunction} updateFunction - A function which computes a URL from an Asset.
      */
-    _this.stores = [];
-
+    WebHelper_defineProperty(this, "stores", void 0);
+    WebHelper_defineProperty(this, "assetTool", void 0);
+    WebHelper_defineProperty(this, "projectTool", void 0);
+    this.stores = [];
     /**
      * Set of tools to best load many assets in parallel. If one tool
      * cannot be used, it will use the next.
      * @type {ProxyTool}
      */
-    _this.assetTool = new ProxyTool();
-
+    this.assetTool = new ProxyTool();
     /**
      * Set of tools to best load project data in parallel with assets. This
      * tool set prefers tools that are immediately ready. Some tools have
      * to initialize before they can load files.
      * @type {ProxyTool}
      */
-    _this.projectTool = new ProxyTool(ProxyTool.TOOL_FILTER.READY);
-    return _this;
+    this.projectTool = new ProxyTool(ProxyTool.TOOL_FILTER.READY);
   }
-
   /**
    * Register a web-based source for assets. Sources will be checked in order of registration.
    * @deprecated Please use addStore
    * @param {Array.<AssetType>} types - The types of asset provided by this source.
    * @param {UrlFunction} urlFunction - A function which computes a URL from an Asset.
    */
-  _inherits(WebHelper, _Helper);
-  return _createClass(WebHelper, [{
-    key: "addSource",
-    value: function addSource(types, urlFunction) {
-      log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
-      this.addStore(types, urlFunction);
-    }
-
-    /**
-     * Register a web-based store for assets. Sources will be checked in order of registration.
-     * @param {Array.<AssetType>} types - The types of asset provided by this store.
-     * @param {UrlFunction} getFunction - A function which computes a GET URL for an Asset
-     * @param {UrlFunction} createFunction - A function which computes a POST URL for an Asset
-     * @param {UrlFunction} updateFunction - A function which computes a PUT URL for an Asset
-     */
-  }, {
-    key: "addStore",
-    value: function addStore(types, getFunction, createFunction, updateFunction) {
-      this.stores.push({
-        types: types.map(function (assetType) {
-          return assetType.name;
-        }),
-        get: getFunction,
-        create: createFunction,
-        update: updateFunction
-      });
-    }
-
-    /**
-     * Fetch an asset but don't process dependencies.
-     * @param {AssetType} assetType - The type of asset to fetch.
-     * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
-     * @return {Promise.<Asset>} A promise for the contents of the asset.
-     */
-  }, {
-    key: "load",
-    value: function load(assetType, assetId, dataFormat) {
-      /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
-      var errors = [];
-      var stores = this.stores.slice().filter(function (store) {
-        return store.types.indexOf(assetType.name) >= 0;
-      });
-
-      // New empty asset but it doesn't have data yet
-      var asset = new Asset(assetType, assetId, dataFormat);
-      var tool = this.assetTool;
-      if (assetType.name === 'Project') {
-        tool = this.projectTool;
-      }
-      var storeIndex = 0;
-      var _tryNextSource = function tryNextSource(err) {
-        if (err) {
-          errors.push(err);
-        }
-        var store = stores[storeIndex++];
-
-        /** @type {UrlFunction} */
-        var reqConfigFunction = store && store.get;
-        if (reqConfigFunction) {
-          var reqConfig = ensureRequestConfig(reqConfigFunction(asset));
-          if (reqConfig === false) {
-            return _tryNextSource();
-          }
-          return tool.get(reqConfig).then(function (body) {
-            if (body) {
-              asset.setData(body, dataFormat);
-              return asset;
-            }
-            return _tryNextSource();
-          }).catch(_tryNextSource);
-        } else if (errors.length > 0) {
-          return Promise.reject(errors);
-        }
-
-        // no stores matching asset
-        return Promise.resolve(null);
-      };
-      return _tryNextSource();
-    }
-
-    /**
-     * Create or update an asset with provided data. The create function is called if no asset id is provided
-     * @param {AssetType} assetType - The type of asset to create or update.
-     * @param {?DataFormat} dataFormat - DataFormat of the data for the stored asset.
-     * @param {Buffer} data - The data for the cached asset.
-     * @param {?string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
-     * @return {Promise.<object>} A promise for the response from the create or update request
-     */
-  }, {
-    key: "store",
-    value: function store(assetType, dataFormat, data, assetId) {
-      var asset = new Asset(assetType, assetId, dataFormat);
-      // If we have an asset id, we should update, otherwise create to get an id
-      var create = assetId === '' || assetId === null || typeof assetId === 'undefined';
-
-      // Use the first store with the appropriate asset type and url function
-      var store = this.stores.filter(function (s) {
-        return (
-          // Only use stores for the incoming asset type
-          s.types.indexOf(assetType.name) !== -1 && (
-          // Only use stores that have a create function if this is a create request
-          // or an update function if this is an update request
-          create && s.create || s.update)
-        );
-      })[0];
-      var method = create ? 'post' : 'put';
-      if (!store) return Promise.reject(new Error('No appropriate stores'));
-      var tool = this.assetTool;
-      if (assetType.name === 'Project') {
-        tool = this.projectTool;
-      }
-      var reqConfig = ensureRequestConfig(create ? store.create(asset) : store.update(asset));
-      var reqBodyConfig = Object.assign({
-        body: data,
-        method: method
-      }, reqConfig);
-      return tool.send(reqBodyConfig).then(function (body) {
-        // xhr makes it difficult to both send FormData and
-        // automatically parse a JSON response. So try to parse
-        // everything as JSON.
-        if (typeof body === 'string') {
-          try {
-            body = JSON.parse(body);
-          } catch (parseError) {
-            // If it's not parseable, then we can't add the id even
-            // if we want to, so stop here
-            return body;
-          }
-        }
-        return Object.assign({
-          id: body['content-name'] || assetId
-        }, body);
-      });
-    }
-  }]);
-}(Helper);
-module.exports = WebHelper;
-
-/***/ }),
-
-/***/ "./src/builtins/defaultBitmap.png":
-/*!****************************************!*\
-  !*** ./src/builtins/defaultBitmap.png ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAAAAADmVT4XAAADZElEQVR42u3a70vbQBgH8O/7vOibvsmbFUEEWUGGUhQ25nDuhSKIUFDxlYi0SAd94atRmFiHCH2x4W8iiNtwowXRgd1QipJYY3N/1F4kTQ6XLKS9yyHcvWyO8MnT5y53Tw5EcIMESIAESIAESIAESIAEPFVAq/6l8G4oAQCp4aniwbUVJ6BVzafwqKXy1VZMgNb+CHzbyK4ZB+Bi0nnk0VyhsDiSoAmvvnMHmGUVAF6UG+0ffsxRhsRHky/AyCsAUpumX0wAAIs6T4CxDADDtcdZsal6gjmdH8AsAEC6+s8Fa48SFExeAKusAEju+V367AmUCi9ANQ0AU3pwcOw2cMEH0FwAAKz5X228pRLR5AI4TgIAtIDL24oLUE94AB6W7LsH/cONN14Ilh44AOqD9s2LQR1KHiB9zgGgOSGeuA3ocPrME1Q4ANaceyePAzrcjHmAZYs9IBeW4/fzHiAwTCwAgTle9ACZK44ALDT9e6x7gL4aT0BQCHb4AqgA5/1TTOMLoJ7vZSMM0H/GHnCeDnu+CrU8vGYPcN5FADBYD0vCaYPDy+i0p337GSMsS1Z4vA3t9QgAZTt0IuIxFRPSKicAQHlvhk3FXF5GhBByMa8qo/sBO6BarwuYbYrYnFKDYEvE7phKgcxvEQBqnvhgiQCUOgoAO4C3JOS3L/hv23UXxVldBECfcueAqpAa0WGy/QeULREAY6aTXRFDgBuA13+ElOncAERMAGaA9hBQD4gQQHsIRE1AZoD2xrgQS5nOZyHgFKmWDSIG4GRAVidiAE4GRB6AzAB2AKIPQFaA5myHA5AV4ESNugZhC7BLR50lIBPAebrzBGQCKAFQNSIMcDvRTQIwAHxNApM3RBygGK0uyhxwOwGsPAgEnPWj5ycRCNiJtBHlAChGKQVwANzPY+CXSMDNWISiLA9AfRA5IhJQ68UnoQAt+AtOPIBKhJosF8B6UM0yLkAxQk2WCyDX9SiUh1gkQAIkoCuAvjGuquMbuijAtwG7MPL8yBICOHSPk3W8Ne8KcEUdmBi6FADYos+QleIH0N/ogOxd7AD6uAS6WRU8WcBdlgZMG/EnYUlwEpLLoQ4PjzGbiA5UsRMRsbQ+5ziDJmYqJuR6NaMomdXuFuZyPSABEiABEiABEiABEiAc8Bd6VyvCEKGqcQAAAABJRU5ErkJggg==")
-
-/***/ }),
-
-/***/ "./src/builtins/defaultSound.wav":
-/*!***************************************!*\
-  !*** ./src/builtins/defaultSound.wav ***!
-  \***************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("UklGRiYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQIAAAAAAA==")
-
-/***/ }),
-
-/***/ "./src/builtins/defaultVector.svg":
-/*!****************************************!*\
-  !*** ./src/builtins/defaultVector.svg ***!
-  \****************************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(/*! ../../node_modules/arraybuffer-loader/lib/to-array-buffer.js */ "./node_modules/arraybuffer-loader/lib/to-array-buffer.js")("PD94bWwgdmVyc2lvbj0iMS4wIj8+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8Zz4KICA8cmVjdCBmaWxsPSIjQ0NDIiBoZWlnaHQ9IjEyOCIgd2lkdGg9IjEyOCIvPgogIDx0ZXh0IGZpbGw9ImJsYWNrIiB5PSIxMDciIHg9IjM1LjUiIGZvbnQtc2l6ZT0iMTI4Ij4/PC90ZXh0PgogPC9nPgo8L3N2Zz4K")
-
-/***/ }),
-
-/***/ "./src/index.js":
-/*!**********************!*\
-  !*** ./src/index.js ***!
-  \**********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var ScratchStorage = __webpack_require__(/*! ./ScratchStorage */ "./src/ScratchStorage.js");
-
-/**
- * Export for use with NPM & Node.js.
- * @type {ScratchStorage}
- */
-module.exports = ScratchStorage;
-
-/***/ }),
-
-/***/ "./src/log.js":
-/*!********************!*\
-  !*** ./src/log.js ***!
-  \********************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
-minilog.enable();
-module.exports = minilog('storage');
-
-/***/ }),
-
-/***/ "./src/scratchFetch.js":
-/*!*****************************!*\
-  !*** ./src/scratchFetch.js ***!
-  \*****************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _slicedToArray = __webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ "./node_modules/@babel/runtime/helpers/slicedToArray.js");
-function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t.return || t.return(); } finally { if (u) throw o; } } }; }
-function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
-function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
-var crossFetch = __webpack_require__(/*! cross-fetch */ "./node_modules/cross-fetch/dist/browser-ponyfill.js");
-
-/**
- * Metadata header names
- * @enum {string} The enum value is the name of the associated header.
- * @readonly
- */
-var RequestMetadata = {
-  /** The ID of the project associated with this request */
-  ProjectId: 'X-Project-ID',
-  /** The ID of the project run associated with this request */
-  RunId: 'X-Run-ID'
-};
-
-/**
- * Metadata headers for requests
- * @type {Headers}
- */
-var metadata = new crossFetch.Headers();
-
-/**
- * Check if there is any metadata to apply.
- * @returns {boolean} true if `metadata` has contents, or false if it is empty.
- */
-var hasMetadata = function hasMetadata() {
-  /* global self */
-  var searchParams = typeof self !== 'undefined' && self && self.location && self.location.search && self.location.search.split(/[?&]/) || [];
-  if (!searchParams.includes('scratchMetadata=1')) {
-    // for now, disable this feature unless scratchMetadata=1
-    // TODO: remove this check once we're sure the feature works correctly in production
-    return false;
+  addSource(types, urlFunction) {
+    log.warn('Deprecation: WebHelper.addSource has been replaced with WebHelper.addStore.');
+    this.addStore(types, urlFunction);
   }
-  var _iterator = _createForOfIteratorHelper(metadata),
-    _step;
-  try {
-    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-      var _ = _step.value;
-      return true;
-    }
-  } catch (err) {
-    _iterator.e(err);
-  } finally {
-    _iterator.f();
-  }
-  return false;
-};
-
-/**
- * Non-destructively merge any metadata state (if any) with the provided options object (if any).
- * If there is metadata state but no options object is provided, make a new object.
- * If there is no metadata state, return the provided options parameter without modification.
- * If there is metadata and an options object is provided, modify a copy and return it.
- * Headers in the provided options object may override headers generated from metadata state.
- * @param {RequestInit} [options] The initial request options. May be null or undefined.
- * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
- */
-var applyMetadata = function applyMetadata(options) {
-  if (hasMetadata()) {
-    var augmentedOptions = Object.assign({}, options);
-    augmentedOptions.headers = new crossFetch.Headers(metadata);
-    if (options && options.headers) {
-      // the Fetch spec says options.headers could be:
-      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
-      // turn it into a Headers object to be sure of how to interact with it
-      var overrideHeaders = options.headers instanceof crossFetch.Headers ? options.headers : new crossFetch.Headers(options.headers);
-      var _iterator2 = _createForOfIteratorHelper(overrideHeaders.entries()),
-        _step2;
-      try {
-        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var _step2$value = _slicedToArray(_step2.value, 2),
-            name = _step2$value[0],
-            value = _step2$value[1];
-          augmentedOptions.headers.set(name, value);
-        }
-      } catch (err) {
-        _iterator2.e(err);
-      } finally {
-        _iterator2.f();
-      }
-    }
-    return augmentedOptions;
-  }
-  return options;
-};
-
-/**
- * Make a network request.
- * This is a wrapper for the global fetch method, adding some Scratch-specific functionality.
- * @param {RequestInfo|URL} resource The resource to fetch.
- * @param {RequestInit} options Optional object containing custom settings for this request.
- * @see {@link https://developer.mozilla.org/docs/Web/API/fetch} for more about the fetch API.
- * @returns {Promise<Response>} A promise for the response to the request.
- */
-var scratchFetch = function scratchFetch(resource, options) {
-  var augmentedOptions = applyMetadata(options);
-  return crossFetch.fetch(resource, augmentedOptions);
-};
-
-/**
- * Set the value of a named request metadata item.
- * Setting the value to `null` or `undefined` will NOT remove the item.
- * Use `unsetMetadata` for that.
- * @param {RequestMetadata} name The name of the metadata item to set.
- * @param {any} value The value to set (will be converted to a string).
- */
-var setMetadata = function setMetadata(name, value) {
-  metadata.set(name, value);
-};
-
-/**
- * Remove a named request metadata item.
- * @param {RequestMetadata} name The name of the metadata item to remove.
- */
-var unsetMetadata = function unsetMetadata(name) {
-  metadata.delete(name);
-};
-module.exports = {
-  default: scratchFetch,
-  Headers: crossFetch.Headers,
-  RequestMetadata: RequestMetadata,
-  applyMetadata: applyMetadata,
-  scratchFetch: scratchFetch,
-  setMetadata: setMetadata,
-  unsetMetadata: unsetMetadata
-};
-if (true) {
   /**
-   * Retrieve a named request metadata item.
-   * Only for use in tests.
-   * @param {RequestMetadata} name The name of the metadata item to retrieve.
-   * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
+   * Register a web-based store for assets. Sources will be checked in order of registration.
+   * @param {Array.<AssetType>} types - The types of asset provided by this store.
+   * @param {UrlFunction} getFunction - A function which computes a GET URL for an Asset
+   * @param {UrlFunction} createFunction - A function which computes a POST URL for an Asset
+   * @param {UrlFunction} updateFunction - A function which computes a PUT URL for an Asset
    */
-  var getMetadata = function getMetadata(name) {
-    return metadata.get(name);
-  };
-  module.exports.getMetadata = getMetadata;
+  addStore(types, getFunction, createFunction, updateFunction) {
+    this.stores.push({
+      types: types.map(assetType => assetType.name),
+      get: getFunction,
+      create: createFunction,
+      update: updateFunction
+    });
+  }
+  /**
+   * Fetch an asset but don't process dependencies.
+   * @param {AssetType} assetType - The type of asset to fetch.
+   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @param {DataFormat} dataFormat - The file format / file extension of the asset to fetch: PNG, JPG, etc.
+   * @return {Promise.<Asset>} A promise for the contents of the asset.
+   */
+  load(assetType, assetId, dataFormat) {
+    /** @type {Array.<{url:string, result:*}>} List of URLs attempted & errors encountered. */
+    const errors = [];
+    const stores = this.stores.slice().filter(store => store.types.indexOf(assetType.name) >= 0);
+    // New empty asset but it doesn't have data yet
+    const asset = new Asset(assetType, assetId, dataFormat);
+    let tool = this.assetTool;
+    if (assetType.name === 'Project') {
+      tool = this.projectTool;
+    }
+    let storeIndex = 0;
+    const tryNextSource = err => {
+      if (err) {
+        errors.push(err);
+      }
+      const store = stores[storeIndex++];
+      /** @type {UrlFunction} */
+      const reqConfigFunction = store && store.get;
+      if (reqConfigFunction) {
+        const reqConfig = ensureRequestConfig(reqConfigFunction(asset));
+        if (reqConfig === false) {
+          return tryNextSource();
+        }
+        return tool.get(reqConfig).then(body => {
+          if (body) {
+            asset.setData(body, dataFormat);
+            return asset;
+          }
+          return tryNextSource();
+        }).catch(tryNextSource);
+      } else if (errors.length > 0) {
+        return Promise.reject(errors);
+      }
+      // no stores matching asset
+      return Promise.resolve(null);
+    };
+    return tryNextSource();
+  }
+  /**
+   * Create or update an asset with provided data. The create function is called if no asset id is provided
+   * @param {AssetType} assetType - The type of asset to create or update.
+   * @param {?DataFormat} dataFormat - DataFormat of the data for the stored asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {?string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @return {Promise.<object>} A promise for the response from the create or update request
+   */
+  store(assetType, dataFormat, data, assetId) {
+    const asset = new Asset(assetType, assetId, dataFormat);
+    // If we have an asset id, we should update, otherwise create to get an id
+    const create = assetId === '' || assetId === null || typeof assetId === 'undefined';
+    // Use the first store with the appropriate asset type and url function
+    const store = this.stores.filter(s =>
+    // Only use stores for the incoming asset type
+    s.types.indexOf(assetType.name) !== -1 && (
+    // Only use stores that have a create function if this is a create request
+    // or an update function if this is an update request
+    create && s.create || s.update))[0];
+    const method = create ? 'post' : 'put';
+    if (!store) return Promise.reject(new Error('No appropriate stores'));
+    let tool = this.assetTool;
+    if (assetType.name === 'Project') {
+      tool = this.projectTool;
+    }
+    const reqConfig = ensureRequestConfig(
+    // The non-nullability of this gets checked above while looking up the store.
+    // Making TS understand that is going to require code refactoring which we currently don't
+    // feel safe to do.
+    create ? store.create(asset) : store.update(asset));
+    const reqBodyConfig = Object.assign({
+      body: data,
+      method
+    }, reqConfig);
+    return tool.send(reqBodyConfig).then(body => {
+      // xhr makes it difficult to both send FormData and
+      // automatically parse a JSON response. So try to parse
+      // everything as JSON.
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (parseError) {
+          // If it's not parseable, then we can't add the id even
+          // if we want to, so stop here
+          return body;
+        }
+      }
+      return Object.assign({
+        id: body['content-name'] || assetId
+      }, body);
+    });
+  }
 }
+;// ./src/ScratchStorage.ts
+function ScratchStorage_defineProperty(e, r, t) { return (r = ScratchStorage_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function ScratchStorage_toPropertyKey(t) { var i = ScratchStorage_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function ScratchStorage_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
-/***/ })
 
-/******/ });
+
+
+
+
+
+class ScratchStorage {
+  constructor() {
+    ScratchStorage_defineProperty(this, "defaultAssetId", void 0);
+    ScratchStorage_defineProperty(this, "builtinHelper", void 0);
+    ScratchStorage_defineProperty(this, "webHelper", void 0);
+    ScratchStorage_defineProperty(this, "_helpers", void 0);
+    this.defaultAssetId = {};
+    this.builtinHelper = new BuiltinHelper(this);
+    this.webHelper = new WebHelper(this);
+    this.builtinHelper.registerDefaultAssets();
+    this._helpers = [{
+      helper: this.builtinHelper,
+      priority: 100
+    }, {
+      helper: this.webHelper,
+      priority: -100
+    }];
+  }
+  /**
+   * @return {Asset} - the `Asset` class constructor.
+   * @constructor
+   */
+  get Asset() {
+    return Asset;
+  }
+  /**
+   * @return {AssetType} - the list of supported asset types.
+   * @constructor
+   */
+  get AssetType() {
+    return AssetType;
+  }
+  /**
+   * @return {DataFormat} - the list of supported data formats.
+   * @constructor
+   */
+  get DataFormat() {
+    return DataFormat;
+  }
+  /**
+   * Access the `scratchFetch` module within this library.
+   * @return {module} the scratchFetch module, with properties for `scratchFetch`, `setMetadata`, etc.
+   */
+  get scratchFetch() {
+    return (scratchFetch_default());
+  }
+  /**
+   * @deprecated Please use the `Asset` member of a storage instance instead.
+   * @return {Asset} - the `Asset` class constructor.
+   * @constructor
+   */
+  static get Asset() {
+    return Asset;
+  }
+  /**
+   * @deprecated Please use the `AssetType` member of a storage instance instead.
+   * @return {AssetType} - the list of supported asset types.
+   * @constructor
+   */
+  static get AssetType() {
+    return AssetType;
+  }
+  /**
+   * Add a storage helper to this manager. Helpers with a higher priority number will be checked first when loading
+   * or storing assets. For comparison, the helper for built-in assets has `priority=100` and the default web helper
+   * has `priority=-100`. The relative order of helpers with equal priorities is undefined.
+   * @param {Helper} helper - the helper to be added.
+   * @param {number} [priority] - the priority for this new helper (default: 0).
+   */
+  addHelper(helper) {
+    let priority = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    this._helpers.push({
+      helper,
+      priority
+    });
+    this._helpers.sort((a, b) => b.priority - a.priority);
+  }
+  /**
+   * Synchronously fetch a cached asset from built-in storage. Assets are cached when they are loaded.
+   * @param {string} assetId - The id of the asset to fetch.
+   * @returns {?Asset} The asset, if it exists.
+   */
+  get(assetId) {
+    return this.builtinHelper.get(assetId);
+  }
+  /**
+   * Deprecated API for caching built-in assets. Use createAsset.
+   * @param {AssetType} assetType - The type of the asset to cache.
+   * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {string} id - The id for the cached asset.
+   * @returns {string} The calculated id of the cached asset, or the supplied id if the asset is mutable.
+   */
+  cache(assetType, dataFormat, data, id) {
+    log.warn('Deprecation: Storage.cache is deprecated. Use Storage.createAsset, and store assets externally.');
+    return this.builtinHelper._store(assetType, dataFormat, data, id);
+  }
+  /**
+   * Construct an Asset, and optionally generate an md5 hash of its data to create an id
+   * @param {AssetType} assetType - The type of the asset to cache.
+   * @param {DataFormat} dataFormat - The dataFormat of the data for the cached asset.
+   * @param {Buffer} data - The data for the cached asset.
+   * @param {string} [id] - The id for the cached asset.
+   * @param {bool} [generateId] - flag to set id to an md5 hash of data if `id` isn't supplied
+   * @returns {Asset} generated Asset with `id` attribute set if not supplied
+   */
+  createAsset(assetType, dataFormat, data, id, generateId) {
+    if (!dataFormat) throw new Error('Tried to create asset without a dataFormat');
+    return new Asset(assetType, id, dataFormat, data, generateId);
+  }
+  /**
+   * Register a web-based source for assets. Sources will be checked in order of registration.
+   * @param {Array.<AssetType>} types - The types of asset provided by this source.
+   * @param {UrlFunction} getFunction - A function which computes a GET URL from an Asset.
+   * @param {UrlFunction} createFunction - A function which computes a POST URL for asset data.
+   * @param {UrlFunction} updateFunction - A function which computes a PUT URL for asset data.
+   */
+  addWebStore(types, getFunction, createFunction, updateFunction) {
+    this.webHelper.addStore(types, getFunction, createFunction, updateFunction);
+  }
+  /**
+   * Register a web-based source for assets. Sources will be checked in order of registration.
+   * @deprecated Please use addWebStore
+   * @param {Array.<AssetType>} types - The types of asset provided by this source.
+   * @param {UrlFunction} urlFunction - A function which computes a GET URL from an Asset.
+   */
+  addWebSource(types, urlFunction) {
+    log.warn('Deprecation: Storage.addWebSource has been replaced by addWebStore.');
+    this.addWebStore(types, urlFunction);
+  }
+  /**
+   * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+   * @param {AssetType} type - Get the default ID for assets of this type.
+   * @return {?string} The ID of the default asset of the given type, if any.
+   */
+  getDefaultAssetId(type) {
+    if (Object.prototype.hasOwnProperty.call(this.defaultAssetId, type.name)) {
+      return this.defaultAssetId[type.name];
+    }
+  }
+  /**
+   * Set the default ID for a particular type of asset. This default asset will be used if a requested asset cannot
+   * be found and automatic fallback is enabled. Ideally this should be an asset that is available locally or even
+   * one built into this module.
+   * TODO: Should this be removed in favor of requesting an asset with `null` as the ID?
+   * @param {AssetType} type - The type of asset for which the default will be set.
+   * @param {string} id - The default ID to use for this type of asset.
+   */
+  setDefaultAssetId(type, id) {
+    this.defaultAssetId[type.name] = id;
+  }
+  /**
+   * Fetch an asset by type & ID.
+   * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+   * @param {string} assetId - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @param {DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+   * @return {Promise.<Asset>} A promise for the requested Asset.
+   *   If the promise is resolved with non-null, the value is the requested asset.
+   *   If the promise is resolved with null, the desired asset could not be found with the current asset sources.
+   *   If the promise is rejected, there was an error on at least one asset source. HTTP 404 does not count as an
+   *   error here, but (for example) HTTP 403 does.
+   */
+  load(assetType, assetId, dataFormat) {
+    const helpers = this._helpers.map(x => x.helper);
+    const errors = [];
+    dataFormat = dataFormat || assetType.runtimeFormat;
+    let helperIndex = 0;
+    let helper;
+    const tryNextHelper = err => {
+      if (err) {
+        // Track the error, but continue looking
+        errors.push(err);
+      }
+      helper = helpers[helperIndex++];
+      if (helper) {
+        const loading = helper.load(assetType, assetId, dataFormat);
+        if (loading === null) {
+          return tryNextHelper();
+        }
+        // Note that other attempts may have logged errors; if this succeeds they will be suppressed.
+        return loading
+        // TODO: maybe some types of error should prevent trying the next helper?
+        .catch(tryNextHelper);
+      } else if (errors.length > 0) {
+        // We looked through all the helpers and couldn't find the asset, AND
+        // at least one thing went wrong while we were looking.
+        return Promise.reject(errors);
+      }
+      // Nothing went wrong but we couldn't find the asset.
+      return Promise.resolve(null);
+    };
+    return tryNextHelper();
+  }
+  /**
+   * Store an asset by type & ID.
+   * @param {AssetType} assetType - The type of asset to fetch. This also determines which asset store to use.
+   * @param {?DataFormat} [dataFormat] - Optional: load this format instead of the AssetType's default.
+   * @param {Buffer} data - Data to store for the asset
+   * @param {?string} [assetId] - The ID of the asset to fetch: a project ID, MD5, etc.
+   * @return {Promise.<object>} A promise for asset metadata
+   */
+  store(assetType, dataFormat, data, assetId) {
+    dataFormat = dataFormat || assetType.runtimeFormat;
+    return this.webHelper.store(assetType, dataFormat, data, assetId).then(body => {
+      // The previous logic here ignored that the body can be a string (if it's not a JSON),
+      // so just ignore that case.
+      // Also, having undefined was the previous behavior
+      // eslint-disable-next-line no-undefined
+      const id = typeof body === 'string' ? undefined : body.id;
+      this.builtinHelper._store(assetType, dataFormat, data, id);
+      return body;
+    });
+  }
+}
+;// ./src/index.ts
+
+
+
+
+
+
+})();
+
+/******/ 	return __webpack_exports__;
+/******/ })()
+;
 });
 //# sourceMappingURL=scratch-storage.js.map
