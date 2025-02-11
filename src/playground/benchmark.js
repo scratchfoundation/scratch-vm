@@ -43,7 +43,7 @@ const importLoadSound = require('../import/load-sound');
 const soundMiddleware = new LoadingMiddleware();
 importLoadSound.loadSound = soundMiddleware.install(importLoadSound, importLoadSound.loadSound);
 
-const ScratchStorage = require('scratch-storage');
+const {ScratchStorage} = require('scratch-storage');
 const VirtualMachine = require('..');
 const Runtime = require('../engine/runtime');
 

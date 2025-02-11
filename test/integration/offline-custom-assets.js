@@ -8,7 +8,7 @@ const path = require('path');
 const fs = require('fs');
 const test = require('tap').test;
 const AdmZip = require('adm-zip');
-const ScratchStorage = require('scratch-storage');
+const {ScratchStorage} = require('scratch-storage');
 const VirtualMachine = require('../../src/index');
 
 const projectUri = path.resolve(__dirname, '../fixtures/offline-custom-assets.sb2');
