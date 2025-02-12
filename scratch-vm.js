@@ -6157,6 +6157,14 @@ class Blocks {
     const stage = this.runtime.getTargetForStage();
     const editingTarget = this.runtime.getEditingTarget();
 
+    // UI event: clicked scripts toggle in the runtime.
+    if (e.element === 'stackclick') {
+      this.runtime.toggleScript(e.blockId, {
+        stackClick: true
+      });
+      return;
+    }
+
     // Block create/update/destroy
     switch (e.type) {
       case 'create':
@@ -6265,11 +6273,10 @@ class Blocks {
           this.emitProjectChanged();
           break;
         }
-      case 'block_comment_create':
       case 'comment_create':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
-          currTarget.createComment(e.commentId, e.blockId, '', e.json.x, e.json.y, e.json.width, e.json.height, false);
+          currTarget.createComment(e.commentId, e.blockId, e.text, e.xy.x, e.xy.y, e.width, e.height, e.minimized);
           if (currTarget.comments[e.commentId].x === null && currTarget.comments[e.commentId].y === null) {
             // Block comments imported from 2.0 projects are imported with their
             // x and y coordinates set to null so that scratch-blocks can
@@ -6277,13 +6284,12 @@ class Blocks {
             // comments, then the auto positioning should have taken place.
             // Update the x and y position of these comments to match the
             // one from the event.
-            currTarget.comments[e.commentId].x = e.json.x;
-            currTarget.comments[e.commentId].y = e.json.y;
+            currTarget.comments[e.commentId].x = e.xy.x;
+            currTarget.comments[e.commentId].y = e.xy.y;
           }
         }
         this.emitProjectChanged();
         break;
-      case 'block_comment_change':
       case 'comment_change':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -6292,11 +6298,20 @@ class Blocks {
             return;
           }
           const comment = currTarget.comments[e.commentId];
-          comment.text = e.newContents_;
+          const change = e.newContents_;
+          if (Object.prototype.hasOwnProperty.call(change, 'minimized')) {
+            comment.minimized = change.minimized;
+          }
+          if (Object.prototype.hasOwnProperty.call(change, 'width') && Object.prototype.hasOwnProperty.call(change, 'height')) {
+            comment.width = change.width;
+            comment.height = change.height;
+          }
+          if (Object.prototype.hasOwnProperty.call(change, 'text')) {
+            comment.text = change.text;
+          }
           this.emitProjectChanged();
         }
         break;
-      case 'block_comment_move':
       case 'comment_move':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -6311,34 +6326,6 @@ class Blocks {
           this.emitProjectChanged();
         }
         break;
-      case 'block_comment_collapse':
-      case 'comment_collapse':
-        if (this.runtime.getEditingTarget()) {
-          const currTarget = this.runtime.getEditingTarget();
-          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
-            log.warn("Cannot collapse comment with id ".concat(e.commentId, " because it does not exist."));
-            return;
-          }
-          const comment = currTarget.comments[e.commentId];
-          comment.minimized = e.newCollapsed;
-          this.emitProjectChanged();
-        }
-        break;
-      case 'block_comment_resize':
-      case 'comment_resize':
-        if (this.runtime.getEditingTarget()) {
-          const currTarget = this.runtime.getEditingTarget();
-          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
-            log.warn("Cannot resize comment with id ".concat(e.commentId, " because it does not exist."));
-            return;
-          }
-          const comment = currTarget.comments[e.commentId];
-          comment.width = e.newSize.width;
-          comment.height = e.newSize.height;
-          this.emitProjectChanged();
-        }
-        break;
-      case 'block_comment_delete':
       case 'comment_delete':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -6359,14 +6346,6 @@ class Blocks {
             delete block.comment;
           }
           this.emitProjectChanged();
-        }
-        break;
-      case 'click':
-        // UI event: clicked scripts toggle in the runtime.
-        if (e.targetType === 'block') {
-          this.runtime.toggleScript(this.getTopLevelScript(e.blockId), {
-            stackClick: true
-          });
         }
         break;
     }
@@ -6568,32 +6547,19 @@ class Blocks {
     if (typeof e.oldParent !== 'undefined') {
       const oldParent = this._blocks[e.oldParent];
       if (typeof e.oldInput !== 'undefined' && oldParent.inputs[e.oldInput].block === e.id) {
-        // This block was connected to an input. We either want to
-        // restore the shadow block that previously occupied
-        // this input, or null out the input's block.
-        const shadow = oldParent.inputs[e.oldInput].shadow;
-        if (shadow && e.id !== shadow) {
-          oldParent.inputs[e.oldInput].block = shadow;
-          this._blocks[shadow].parent = oldParent.id;
-        } else {
-          oldParent.inputs[e.oldInput].block = null;
-          if (e.id !== shadow) {
-            this._blocks[e.id].parent = null;
-          }
-        }
+        // This block was connected to the old parent's input.
+        oldParent.inputs[e.oldInput].block = null;
       } else if (oldParent.next === e.id) {
         // This block was connected to the old parent's next connection.
         oldParent.next = null;
-        this._blocks[e.id].parent = null;
       }
+      this._blocks[e.id].parent = null;
       didChange = true;
     }
 
     // Is this block a top-level block?
     if (typeof e.newParent === 'undefined') {
-      if (!this._blocks[e.id].shadow) {
-        this._addScript(e.id);
-      }
+      this._addScript(e.id);
     } else {
       // Remove script, if one exists.
       this._deleteScript(e.id);
@@ -7184,7 +7150,7 @@ class Comment {
     this.blockId = null;
   }
   toXML() {
-    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(!this.minimized, "\" collapsed=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
+    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(this.blockId !== null, "\" minimized=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
   }
 
   // TODO choose min and defaults for width and height
@@ -9201,7 +9167,9 @@ class Runtime extends EventEmitter {
         type: menuId,
         inputsInline: true,
         output: 'String',
-        style: categoryInfo.id,
+        colour: categoryInfo.color1,
+        colourSecondary: categoryInfo.color2,
+        colourTertiary: categoryInfo.color3,
         outputShape: menuInfo.acceptReporters ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
         args0: [{
           type: 'field_dropdown',
@@ -9243,7 +9211,9 @@ class Runtime extends EventEmitter {
         message0: '%1',
         inputsInline: true,
         output: output,
-        style: categoryInfo.id,
+        colour: categoryInfo.color1,
+        colourSecondary: categoryInfo.color2,
+        colourTertiary: categoryInfo.color3,
         outputShape: outputShape,
         args0: [{
           name: "field_".concat(fieldName),
@@ -9283,8 +9253,9 @@ class Runtime extends EventEmitter {
       type: extendedOpcode,
       inputsInline: true,
       category: categoryInfo.name,
-      style: categoryInfo.id,
-      extensions: []
+      colour: categoryInfo.color1,
+      colourSecondary: categoryInfo.color2,
+      colourTertiary: categoryInfo.color3
     };
     const context = {
       // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -9303,7 +9274,7 @@ class Runtime extends EventEmitter {
     // the category block icon.
     const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
     if (iconURI) {
-      blockJSON.extensions.push('scratch_extension');
+      blockJSON.extensions = ['scratch_extension'];
       blockJSON.message0 = '%1 %2';
       const iconJSON = {
         type: 'field_image',
@@ -9340,7 +9311,6 @@ class Runtime extends EventEmitter {
         }
         blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
         blockJSON.nextStatement = null; // null = available connection; undefined = terminal
-        blockJSON.extensions.push('shape_hat');
         break;
       case BlockType.CONDITIONAL:
       case BlockType.LOOP:
@@ -9385,7 +9355,7 @@ class Runtime extends EventEmitter {
     }
     if (blockInfo.blockType === BlockType.REPORTER) {
       if (!blockInfo.disableMonitor && context.inputList.length === 0) {
-        blockJSON.extensions.push('monitor_block');
+        blockJSON.checkboxInFlyout = true;
       }
     } else if (blockInfo.blockType === BlockType.LOOP) {
       // Add icon to the bottom right of a loop block
@@ -9612,7 +9582,7 @@ class Runtime extends EventEmitter {
       }
       return {
         id: categoryInfo.id,
-        xml: "<category name=\"".concat(name, "\" toolboxitemid=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
+        xml: "<category name=\"".concat(name, "\" id=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
       };
     });
   }
@@ -80681,7 +80651,7 @@ module.exports = /*#__PURE__*/JSON.parse('{"menuMap":{"cs":[{"code":"am","name":
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.40-spork.1","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git","sha":"0ed962df655549448753dec55cff5cb9678274d8"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.60","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.26.8","@babel/eslint-parser":"7.26.8","@babel/preset-env":"7.26.8","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"2.0.0-spork.4","scratch-l10n":"5.0.121","scratch-render-fonts":"1.0.161","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.97.1","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.164","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git","sha":"4380bea7d5408f9a520c62ff3e9df50b6bbb9ee0"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.60","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.26.8","@babel/eslint-parser":"7.26.8","@babel/preset-env":"7.26.8","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"1.1.206","scratch-l10n":"5.0.122","scratch-render-fonts":"1.0.161","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.97.1","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
 
 /***/ })
 
