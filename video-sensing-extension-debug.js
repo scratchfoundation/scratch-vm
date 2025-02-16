@@ -11,49 +11,6 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js":
-/*!******************************************************************!*\
-  !*** ./node_modules/expose-loader/dist/runtime/getGlobalThis.js ***!
-  \******************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-"use strict";
-
-
-// eslint-disable-next-line func-names
-module.exports = function () {
-  if (typeof globalThis === "object") {
-    return globalThis;
-  }
-
-  var g;
-
-  try {
-    // This works if eval is allowed (see CSP)
-    // eslint-disable-next-line no-new-func
-    g = this || new Function("return this")();
-  } catch (e) {
-    // This works if the window reference is available
-    if (typeof window === "object") {
-      return window;
-    } // This works if the self reference is available
-
-
-    if (typeof self === "object") {
-      return self;
-    } // This works if the global reference is available
-
-
-    if (typeof __webpack_require__.g !== "undefined") {
-      return __webpack_require__.g;
-    }
-  }
-
-  return g;
-}();
-
-/***/ }),
-
 /***/ "./src/extensions/scratch3_video_sensing/debug-exposed.js":
 /*!****************************************************************!*\
   !*** ./src/extensions/scratch3_video_sensing/debug-exposed.js ***!
@@ -65,29 +22,6 @@ var ___EXPOSE_LOADER_GET_GLOBAL_THIS___ = __webpack_require__(/*! ../../../node_
 var ___EXPOSE_LOADER_GLOBAL_THIS___ = ___EXPOSE_LOADER_GET_GLOBAL_THIS___;
 if (typeof ___EXPOSE_LOADER_GLOBAL_THIS___["Scratch3VideoSensingDebug"] === 'undefined') ___EXPOSE_LOADER_GLOBAL_THIS___["Scratch3VideoSensingDebug"] = ___EXPOSE_LOADER_IMPORT___;else throw new Error('[exposes-loader] The "Scratch3VideoSensingDebug" value exists in the global scope, it may not be safe to overwrite it, use the "override" option');
 module.exports = ___EXPOSE_LOADER_IMPORT___;
-
-/***/ }),
-
-/***/ "./src/extensions/scratch3_video_sensing/debug.js":
-/*!********************************************************!*\
-  !*** ./src/extensions/scratch3_video_sensing/debug.js ***!
-  \********************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/**
- * A debug "index" module exporting VideoMotion and VideoMotionView to debug
- * VideoMotion directly.
- * @file debug.js
- */
-
-const VideoMotion = __webpack_require__(/*! ./library */ "./src/extensions/scratch3_video_sensing/library.js");
-const VideoMotionView = __webpack_require__(/*! ./view */ "./src/extensions/scratch3_video_sensing/view.js");
-
-module.exports = {
-    VideoMotion,
-    VideoMotionView
-};
-
 
 /***/ }),
 
@@ -1074,6 +1008,72 @@ class VideoMotionView {
   }
 }
 module.exports = VideoMotionView;
+
+/***/ }),
+
+/***/ "./node_modules/expose-loader/dist/runtime/getGlobalThis.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/expose-loader/dist/runtime/getGlobalThis.js ***!
+  \******************************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+// eslint-disable-next-line func-names
+module.exports = function () {
+  if (typeof globalThis === "object") {
+    return globalThis;
+  }
+
+  var g;
+
+  try {
+    // This works if eval is allowed (see CSP)
+    // eslint-disable-next-line no-new-func
+    g = this || new Function("return this")();
+  } catch (e) {
+    // This works if the window reference is available
+    if (typeof window === "object") {
+      return window;
+    } // This works if the self reference is available
+
+
+    if (typeof self === "object") {
+      return self;
+    } // This works if the global reference is available
+
+
+    if (typeof __webpack_require__.g !== "undefined") {
+      return __webpack_require__.g;
+    }
+  }
+
+  return g;
+}();
+
+/***/ }),
+
+/***/ "./src/extensions/scratch3_video_sensing/debug.js":
+/*!********************************************************!*\
+  !*** ./src/extensions/scratch3_video_sensing/debug.js ***!
+  \********************************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/**
+ * A debug "index" module exporting VideoMotion and VideoMotionView to debug
+ * VideoMotion directly.
+ * @file debug.js
+ */
+
+const VideoMotion = __webpack_require__(/*! ./library */ "./src/extensions/scratch3_video_sensing/library.js");
+const VideoMotionView = __webpack_require__(/*! ./view */ "./src/extensions/scratch3_video_sensing/view.js");
+
+module.exports = {
+    VideoMotion,
+    VideoMotionView
+};
+
 
 /***/ })
 
