@@ -11,1756 +11,6 @@
 return /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./src/bitmap-adapter.js":
-/*!*******************************!*\
-  !*** ./src/bitmap-adapter.js ***!
-  \*******************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
-
-/**
- * Adapts Scratch 2.0 bitmaps for use in scratch 3.0
- */
-class BitmapAdapter {
-  /**
-   * @param {?function} makeImage HTML image constructor. Tests can provide this.
-   * @param {?function} makeCanvas HTML canvas constructor. Tests can provide this.
-   */
-  constructor(makeImage, makeCanvas) {
-    this._makeImage = makeImage ? makeImage : () => new Image();
-    this._makeCanvas = makeCanvas ? makeCanvas : () => document.createElement('canvas');
-  }
-
-  /**
-   * Return a canvas with the resized version of the given image, done using nearest-neighbor interpolation
-   * @param {CanvasImageSource} image The image to resize
-   * @param {int} newWidth The desired post-resize width of the image
-   * @param {int} newHeight The desired post-resize height of the image
-   * @returns {HTMLCanvasElement} A canvas with the resized image drawn on it.
-   */
-  resize(image, newWidth, newHeight) {
-    // We want to always resize using nearest-neighbor interpolation. However, canvas implementations are free to
-    // use linear interpolation (or other "smooth" interpolation methods) when downscaling:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1360415
-    // It seems we can get around this by resizing in two steps: first width, then height. This will always result
-    // in nearest-neighbor interpolation, even when downscaling.
-    const stretchWidthCanvas = this._makeCanvas();
-    stretchWidthCanvas.width = newWidth;
-    stretchWidthCanvas.height = image.height;
-    let context = stretchWidthCanvas.getContext('2d');
-    context.imageSmoothingEnabled = false;
-    context.drawImage(image, 0, 0, stretchWidthCanvas.width, stretchWidthCanvas.height);
-    const stretchHeightCanvas = this._makeCanvas();
-    stretchHeightCanvas.width = newWidth;
-    stretchHeightCanvas.height = newHeight;
-    context = stretchHeightCanvas.getContext('2d');
-    context.imageSmoothingEnabled = false;
-    context.drawImage(stretchWidthCanvas, 0, 0, stretchHeightCanvas.width, stretchHeightCanvas.height);
-    return stretchHeightCanvas;
-  }
-
-  /**
-   * Scratch 2.0 had resolution 1 and 2 bitmaps. All bitmaps in Scratch 3.0 are equivalent
-   * to resolution 2 bitmaps. Therefore, converting a resolution 1 bitmap means doubling
-   * it in width and height.
-   * @param {!string} dataURI Base 64 encoded image data of the bitmap
-   * @param {!function} callback Node-style callback that returns updated dataURI if conversion succeeded
-   */
-  convertResolution1Bitmap(dataURI, callback) {
-    const image = this._makeImage();
-    image.src = dataURI;
-    image.onload = () => {
-      callback(null, this.resize(image, image.width * 2, image.height * 2).toDataURL());
-    };
-    image.onerror = () => {
-      callback('Image load failed');
-    };
-  }
-
-  /**
-   * Given width/height of an uploaded item, return width/height the image will be resized
-   * to in Scratch 3.0
-   * @param {!number} oldWidth original width
-   * @param {!number} oldHeight original height
-   * @return {object} Array of new width, new height
-   */
-  getResizedWidthHeight(oldWidth, oldHeight) {
-    const STAGE_WIDTH = 480;
-    const STAGE_HEIGHT = 360;
-    const STAGE_RATIO = STAGE_WIDTH / STAGE_HEIGHT;
-
-    // If both dimensions are smaller than or equal to corresponding stage dimension,
-    // double both dimensions
-    if (oldWidth <= STAGE_WIDTH && oldHeight <= STAGE_HEIGHT) {
-      return {
-        width: oldWidth * 2,
-        height: oldHeight * 2
-      };
-    }
-
-    // If neither dimension is larger than 2x corresponding stage dimension,
-    // this is an in-between image, return it as is
-    if (oldWidth <= STAGE_WIDTH * 2 && oldHeight <= STAGE_HEIGHT * 2) {
-      return {
-        width: oldWidth,
-        height: oldHeight
-      };
-    }
-    const imageRatio = oldWidth / oldHeight;
-    // Otherwise, figure out how to resize
-    if (imageRatio >= STAGE_RATIO) {
-      // Wide Image
-      return {
-        width: STAGE_WIDTH * 2,
-        height: STAGE_WIDTH * 2 / imageRatio
-      };
-    }
-    // In this case we have either:
-    // - A wide image, but not with as big a ratio between width and height,
-    // making it so that fitting the width to double stage size would leave
-    // the height too big to fit in double the stage height
-    // - A square image that's still larger than the double at least
-    // one of the stage dimensions, so pick the smaller of the two dimensions (to fit)
-    // - A tall image
-    // In any of these cases, resize the image to fit the height to double the stage height
-    return {
-      width: STAGE_HEIGHT * 2 * imageRatio,
-      height: STAGE_HEIGHT * 2
-    };
-  }
-
-  /**
-   * Given bitmap data, resize as necessary.
-   * @param {ArrayBuffer | string} fileData Base 64 encoded image data of the bitmap
-   * @param {string} fileType The MIME type of this file
-   * @returns {Promise} Resolves to resized image data Uint8Array
-   */
-  importBitmap(fileData, fileType) {
-    let dataURI = fileData;
-    if (fileData instanceof ArrayBuffer) {
-      dataURI = this.convertBinaryToDataURI(fileData, fileType);
-    }
-    return new Promise((resolve, reject) => {
-      const image = this._makeImage();
-      image.src = dataURI;
-      image.onload = () => {
-        const newSize = this.getResizedWidthHeight(image.width, image.height);
-        if (newSize.width === image.width && newSize.height === image.height) {
-          // No change
-          resolve(this.convertDataURIToBinary(dataURI));
-        } else {
-          const resizedDataURI = this.resize(image, newSize.width, newSize.height).toDataURL();
-          resolve(this.convertDataURIToBinary(resizedDataURI));
-        }
-      };
-      image.onerror = () => {
-        // TODO: reject with an Error (breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
-        reject('Image load failed');
-      };
-    });
-  }
-
-  // TODO consolidate with scratch-vm/src/util/base64-util.js
-  // From https://gist.github.com/borismus/1032746
-  convertDataURIToBinary(dataURI) {
-    const BASE64_MARKER = ';base64,';
-    const base64Index = dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
-    const base64 = dataURI.substring(base64Index);
-    const raw = window.atob(base64);
-    const rawLength = raw.length;
-    const array = new Uint8Array(new ArrayBuffer(rawLength));
-    for (let i = 0; i < rawLength; i++) {
-      array[i] = raw.charCodeAt(i);
-    }
-    return array;
-  }
-  convertBinaryToDataURI(arrayBuffer, contentType) {
-    return "data:".concat(contentType, ";base64,").concat(base64js.fromByteArray(new Uint8Array(arrayBuffer)));
-  }
-}
-module.exports = BitmapAdapter;
-
-/***/ }),
-
-/***/ "./src/fixup-svg-string.js":
-/*!*********************************!*\
-  !*** ./src/fixup-svg-string.js ***!
-  \*********************************/
-/***/ ((module) => {
-
-/**
- * Fixup svg string prior to parsing.
- * @param {!string} svgString String of the svg to fix.
- * @returns {!string} fixed svg that should be parseable.
- */
-module.exports = function (svgString) {
-  // Add root svg namespace if it does not exist.
-  const svgAttrs = svgString.match(/<svg [^>]*>/);
-  if (svgAttrs && svgAttrs[0].indexOf('xmlns=') === -1) {
-    svgString = svgString.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
-  }
-
-  // There are some SVGs from Illustrator that use undeclared entities.
-  // Just replace those entities with fake namespace references to prevent
-  // DOMParser from crashing
-  if (svgAttrs && svgAttrs[0].indexOf('&ns_') !== -1 && svgString.indexOf('<!DOCTYPE') === -1) {
-    svgString = svgString.replace(svgAttrs[0], svgAttrs[0].replace(/&ns_[^;]+;/g, 'http://ns.adobe.com/Extensibility/1.0/'));
-  }
-
-  // Some SVGs exported from Photoshop have been found to have an invalid mime type
-  // Chrome and Safari won't render these SVGs, so we correct it here
-  if (svgString.includes('data:img/png')) {
-    svgString = svgString.replace(
-    // capture entire image tag with xlink:href=and the quote - dont capture data: bit
-    /(<image[^>]+?xlink:href=["'])data:img\/png/g,
-    // use the captured <image ..... xlink:href=" then append the right data uri mime type
-    ($0, $1) => "".concat($1, "data:image/png"));
-  }
-
-  // Some SVGs from Inkscape attempt to bind a prefix to a reserved namespace name.
-  // This will cause SVG parsing to fail, so replace these with a dummy namespace name.
-  // This namespace name is only valid for "xml", and if we bind "xmlns:xml" to the dummy namespace,
-  // parsing will fail yet again, so exclude "xmlns:xml" declarations.
-  const xmlnsRegex = /(<[^>]+?xmlns:(?!xml=)[^ ]+=)"http:\/\/www.w3.org\/XML\/1998\/namespace"/g;
-  if (svgString.match(xmlnsRegex) !== null) {
-    svgString = svgString.replace(
-    // capture the entire attribute
-    xmlnsRegex,
-    // use the captured attribute name; replace only the URL
-    ($0, $1) => "".concat($1, "\"http://dummy.namespace\""));
-  }
-
-  // Strip `svg:` prefix (sometimes added by Inkscape) from all tags. They interfere with DOMPurify (prefixed tag
-  // names are not recognized) and the paint editor.
-  // This matches opening and closing tags--the capture group captures the slash if it exists, and it is reinserted
-  // in the replacement text.
-  svgString = svgString.replace(/<(\/?)\s*svg:/g, '<$1');
-
-  // The <metadata> element is not needed for rendering and sometimes contains
-  // unparseable garbage from Illustrator :( Empty out the contents.
-  // Note: [\s\S] matches everything including newlines, which .* does not
-  svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '<metadata></metadata>');
-
-  // Empty script tags and javascript executing
-  svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '<script></script>');
-  return svgString;
-};
-
-/***/ }),
-
-/***/ "./src/font-converter.js":
-/*!*******************************!*\
-  !*** ./src/font-converter.js ***!
-  \*******************************/
-/***/ ((module) => {
-
-/**
- * @fileOverview Convert 2.0 fonts to 3.0 fonts.
- */
-
-/**
- * Given an SVG, replace Scratch 2.0 fonts with new 3.0 fonts. Add defaults where there are none.
- * @param {SVGElement} svgTag The SVG dom object
- * @return {void}
- */
-const convertFonts = function convertFonts(svgTag) {
-  // Collect all text elements into a list.
-  const textElements = [];
-  const collectText = domElement => {
-    if (domElement.localName === 'text') {
-      textElements.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectText(domElement.childNodes[i]);
-    }
-  };
-  collectText(svgTag);
-  // If there's an old font-family, switch to the new one.
-  for (const textElement of textElements) {
-    // If there's no font-family provided, provide one.
-    if (!textElement.getAttribute('font-family') || textElement.getAttribute('font-family') === 'Helvetica') {
-      textElement.setAttribute('font-family', 'Sans Serif');
-    } else if (textElement.getAttribute('font-family') === 'Mystery') {
-      textElement.setAttribute('font-family', 'Curly');
-    } else if (textElement.getAttribute('font-family') === 'Gloria') {
-      textElement.setAttribute('font-family', 'Handwriting');
-    } else if (textElement.getAttribute('font-family') === 'Donegal') {
-      textElement.setAttribute('font-family', 'Serif');
-    }
-  }
-};
-module.exports = convertFonts;
-
-/***/ }),
-
-/***/ "./src/font-inliner.js":
-/*!*****************************!*\
-  !*** ./src/font-inliner.js ***!
-  \*****************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/**
- * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
- */
-const getFonts = __webpack_require__(/*! scratch-render-fonts */ "./node_modules/scratch-render-fonts/src/index.js");
-
-/**
- * Given SVG data, inline the fonts. This allows them to be rendered correctly when set
- * as the source of an HTMLImageElement. Here is a note from tmickel:
- *   // Inject fonts that are needed.
- *   // It would be nice if there were another way to get the SVG-in-canvas
- *   // to render the correct font family, but I couldn't find any other way.
- *   // Other things I tried:
- *   // Just injecting the font-family into the document: no effect.
- *   // External stylesheet linked to by SVG: no effect.
- *   // Using a <link> or <style>@import</style> to link to font-family
- *   // injected into the document: no effect.
- * @param {string} svgString The string representation of the svg to modify
- * @return {string} The svg with any needed fonts inlined
- */
-const inlineSvgFonts = function inlineSvgFonts(svgString) {
-  const FONTS = getFonts();
-  // Make it clear that this function only operates on strings.
-  // If we don't explicitly throw this here, the function silently fails.
-  if (typeof svgString !== 'string') {
-    throw new Error('SVG to be inlined is not a string');
-  }
-
-  // Collect fonts that need injection.
-  const fontsNeeded = new Set();
-  const fontRegex = /font-family="([^"]*)"/g;
-  let matches = fontRegex.exec(svgString);
-  while (matches) {
-    fontsNeeded.add(matches[1]);
-    matches = fontRegex.exec(svgString);
-  }
-  if (fontsNeeded.size > 0) {
-    let str = '<defs><style>';
-    for (const font of fontsNeeded) {
-      if (Object.prototype.hasOwnProperty.call(FONTS, font)) {
-        str += "".concat(FONTS[font]);
-      }
-    }
-    str += '</style></defs>';
-    svgString = svgString.replace(/<svg[^>]*>/, "$&".concat(str));
-    return svgString;
-  }
-  return svgString;
-};
-module.exports = inlineSvgFonts;
-
-/***/ }),
-
-/***/ "./src/index.js":
-/*!**********************!*\
-  !*** ./src/index.js ***!
-  \**********************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const SVGRenderer = __webpack_require__(/*! ./svg-renderer */ "./src/svg-renderer.js");
-const BitmapAdapter = __webpack_require__(/*! ./bitmap-adapter */ "./src/bitmap-adapter.js");
-const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./src/font-inliner.js");
-const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./src/load-svg-string.js");
-const sanitizeSvg = __webpack_require__(/*! ./sanitize-svg */ "./src/sanitize-svg.js");
-const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./src/serialize-svg-to-string.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
-const convertFonts = __webpack_require__(/*! ./font-converter */ "./src/font-converter.js");
-// /**
-//  * Export for NPM & Node.js
-//  * @type {RenderWebGL}
-//  */
-module.exports = {
-  BitmapAdapter: BitmapAdapter,
-  convertFonts: convertFonts,
-  inlineSvgFonts: inlineSvgFonts,
-  loadSvgString: loadSvgString,
-  sanitizeSvg: sanitizeSvg,
-  serializeSvgToString: serializeSvgToString,
-  SvgElement: SvgElement,
-  SVGRenderer: SVGRenderer
-};
-
-/***/ }),
-
-/***/ "./src/load-svg-string.js":
-/*!********************************!*\
-  !*** ./src/load-svg-string.js ***!
-  \********************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
-const convertFonts = __webpack_require__(/*! ./font-converter */ "./src/font-converter.js");
-const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./src/fixup-svg-string.js");
-const transformStrokeWidths = __webpack_require__(/*! ./transform-applier */ "./src/transform-applier.js");
-
-/**
- * @param {SVGElement} svgTag the tag to search within
- * @param {string} [tagName] svg tag to search for (or collect all elements if not given)
- * @return {Array} a list of elements with the given tagname
- */
-const collectElements = (svgTag, tagName) => {
-  const elts = [];
-  const collectElementsInner = domElement => {
-    if ((domElement.localName === tagName || typeof tagName === 'undefined') && domElement.getAttribute) {
-      elts.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectElementsInner(domElement.childNodes[i]);
-    }
-  };
-  collectElementsInner(svgTag);
-  return elts;
-};
-
-/**
- * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
- * SVG defaults to x2 = 1 when missing.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformGradients = svgTag => {
-  const linearGradientElements = collectElements(svgTag, 'linearGradient');
-
-  // For each gradient element, supply x2 if necessary.
-  for (const gradientElement of linearGradientElements) {
-    if (!gradientElement.getAttribute('x2')) {
-      gradientElement.setAttribute('x2', '0');
-    }
-  }
-};
-
-/**
- * Fix SVGs to match appearance in Scratch 2, which used nearest neighbor scaling for bitmaps
- * within SVGs.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformImages = svgTag => {
-  const imageElements = collectElements(svgTag, 'image');
-
-  // For each image element, set image rendering to pixelated
-  const pixelatedImages = 'image-rendering: optimizespeed; image-rendering: pixelated;';
-  for (const elt of imageElements) {
-    if (elt.getAttribute('style')) {
-      elt.setAttribute('style', "".concat(pixelatedImages, " ").concat(elt.getAttribute('style')));
-    } else {
-      elt.setAttribute('style', pixelatedImages);
-    }
-  }
-};
-
-/**
- * Transforms an SVG's text elements for Scratch 2.0 quirks.
- * These quirks include:
- * 1. `x` and `y` properties are removed/ignored.
- * 2. Alignment is set to `text-before-edge`.
- * 3. Line-breaks are converted to explicit <tspan> elements.
- * 4. Any required fonts are injected.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformText = svgTag => {
-  // Collect all text elements into a list.
-  const textElements = [];
-  const collectText = domElement => {
-    if (domElement.localName === 'text') {
-      textElements.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectText(domElement.childNodes[i]);
-    }
-  };
-  collectText(svgTag);
-  convertFonts(svgTag);
-  // For each text element, apply quirks.
-  for (const textElement of textElements) {
-    // Remove x and y attributes - they are not used in Scratch.
-    textElement.removeAttribute('x');
-    textElement.removeAttribute('y');
-    // Set text-before-edge alignment:
-    // Scratch renders all text like this.
-    textElement.setAttribute('alignment-baseline', 'text-before-edge');
-    textElement.setAttribute('xml:space', 'preserve');
-    // If there's no font size provided, provide one.
-    if (!textElement.getAttribute('font-size')) {
-      textElement.setAttribute('font-size', '18');
-    }
-    let text = textElement.textContent;
-
-    // Fix line breaks in text, which are not natively supported by SVG.
-    // Only fix if text does not have child tspans.
-    // @todo this will not work for font sizes with units such as em, percent
-    // However, text made in scratch 2 should only ever export size 22 font.
-    const fontSize = parseFloat(textElement.getAttribute('font-size'));
-    const tx = 2;
-    let ty = 0;
-    let spacing = 1.2;
-    // Try to match the position and spacing of Scratch 2.0's fonts.
-    // Different fonts seem to use different line spacing.
-    // Scratch 2 always uses alignment-baseline=text-before-edge
-    // However, most SVG readers don't support this attribute
-    // or don't support it alongside use of tspan, so the translations
-    // here are to make up for that.
-    if (textElement.getAttribute('font-family') === 'Handwriting') {
-      spacing = 2;
-      ty = -11 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Scratch') {
-      spacing = 0.89;
-      ty = -3 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Curly') {
-      spacing = 1.38;
-      ty = -6 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Marker') {
-      spacing = 1.45;
-      ty = -6 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Sans Serif') {
-      spacing = 1.13;
-      ty = -3 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Serif') {
-      spacing = 1.25;
-      ty = -4 * fontSize / 22;
-    }
-    if (textElement.transform.baseVal.numberOfItems === 0) {
-      const transform = svgTag.createSVGTransform();
-      textElement.transform.baseVal.appendItem(transform);
-    }
-
-    // Right multiply matrix by a translation of (tx, ty)
-    const mtx = textElement.transform.baseVal.getItem(0).matrix;
-    mtx.e += mtx.a * tx + mtx.c * ty;
-    mtx.f += mtx.b * tx + mtx.d * ty;
-    if (text && textElement.childElementCount === 0) {
-      textElement.textContent = '';
-      const lines = text.split('\n');
-      text = '';
-      for (const line of lines) {
-        const tspanNode = SvgElement.create('tspan');
-        tspanNode.setAttribute('x', '0');
-        tspanNode.setAttribute('style', 'white-space: pre');
-        tspanNode.setAttribute('dy', "".concat(spacing, "em"));
-        tspanNode.textContent = line ? line : ' ';
-        textElement.appendChild(tspanNode);
-      }
-    }
-  }
-};
-
-/**
- * Find the largest stroke width in the svg. If a shape has no
- * `stroke` property, it has a stroke-width of 0. If it has a `stroke`,
- * it is by default a stroke-width of 1.
- * This is used to enlarge the computed bounding box, which doesn't take
- * stroke width into account.
- * @param {SVGSVGElement} rootNode The root SVG node to traverse.
- * @return {number} The largest stroke width in the SVG.
- */
-const findLargestStrokeWidth = rootNode => {
-  let largestStrokeWidth = 0;
-  const collectStrokeWidths = domElement => {
-    if (domElement.getAttribute) {
-      if (domElement.getAttribute('stroke')) {
-        largestStrokeWidth = Math.max(largestStrokeWidth, 1);
-      }
-      if (domElement.getAttribute('stroke-width')) {
-        largestStrokeWidth = Math.max(largestStrokeWidth, Number(domElement.getAttribute('stroke-width')) || 0);
-      }
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectStrokeWidths(domElement.childNodes[i]);
-    }
-  };
-  collectStrokeWidths(rootNode);
-  return largestStrokeWidth;
-};
-
-/**
- * Transform the measurements of the SVG.
- * In Scratch 2.0, SVGs are drawn without respect to the width,
- * height, and viewBox attribute on the tag. The exporter
- * does output these properties - but they appear to be incorrect often.
- * To address the incorrect measurements, we append the DOM to the
- * document, and then use SVG's native `getBBox` to find the real
- * drawn dimensions. This ensures things drawn in negative dimensions,
- * outside the given viewBox, etc., are all eventually drawn to the canvas.
- * I tried to do this several other ways: stripping the width/height/viewBox
- * attributes and then drawing (Firefox won't draw anything),
- * or inflating them and then measuring a canvas. But this seems to be
- * a natural and performant way.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformMeasurements = svgTag => {
-  // Append the SVG dom to the document.
-  // This allows us to use `getBBox` on the page,
-  // which returns the full bounding-box of all drawn SVG
-  // elements, similar to how Scratch 2.0 did measurement.
-  const svgSpot = document.createElement('span');
-  // Since we're adding user-provided SVG to document.body,
-  // sanitizing is required. This should not affect bounding box calculation.
-  // outerHTML is attribute of Element (and not HTMLElement), so use it instead of
-  // calling serializer or toString()
-  // NOTE: svgTag remains untouched!
-  const rawValue = svgTag.outerHTML;
-  const sanitizedValue = DOMPurify.sanitize(rawValue, {
-    // Use SVG profile (no HTML elements)
-    USE_PROFILES: {
-      svg: true
-    },
-    // Remove some tags that Scratch does not use.
-    FORBID_TAGS: ['a', 'audio', 'canvas', 'video'],
-    // Allow data URI in image tags (e.g. SVGs converted from bitmap)
-    ADD_DATA_URI_TAGS: ['image']
-  });
-  let bbox;
-  try {
-    // Insert sanitized value.
-    svgSpot.innerHTML = sanitizedValue;
-    document.body.appendChild(svgSpot);
-    // Take the bounding box. We have to get elements via svgSpot
-    // because we added it via innerHTML.
-    bbox = svgSpot.children[0].getBBox();
-  } finally {
-    // Always destroy the element, even if, for example, getBBox throws.
-    document.body.removeChild(svgSpot);
-  }
-
-  // Enlarge the bbox from the largest found stroke width
-  // This may have false-positives, but at least the bbox will always
-  // contain the full graphic including strokes.
-  // If the width or height is zero however, don't enlarge since
-  // they won't have a stroke width that needs to be enlarged.
-  let halfStrokeWidth;
-  if (bbox.width === 0 || bbox.height === 0) {
-    halfStrokeWidth = 0;
-  } else {
-    halfStrokeWidth = findLargestStrokeWidth(svgTag) / 2;
-  }
-  const width = bbox.width + halfStrokeWidth * 2;
-  const height = bbox.height + halfStrokeWidth * 2;
-  const x = bbox.x - halfStrokeWidth;
-  const y = bbox.y - halfStrokeWidth;
-
-  // Set the correct measurements on the SVG tag
-  svgTag.setAttribute('width', width);
-  svgTag.setAttribute('height', height);
-  svgTag.setAttribute('viewBox', "".concat(x, " ").concat(y, " ").concat(width, " ").concat(height));
-};
-
-/**
- * Find all instances of a URL-referenced `stroke` in the svg. In 2.0, all gradient strokes
- * have a round `stroke-linejoin` and `stroke-linecap`... for some reason.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const setGradientStrokeRoundedness = svgTag => {
-  const elements = collectElements(svgTag);
-  for (const elt of elements) {
-    if (!elt.style) continue;
-    const stroke = elt.style.stroke || elt.getAttribute('stroke');
-    if (stroke && stroke.match(/^url\(#.*\)$/)) {
-      elt.style['stroke-linejoin'] = 'round';
-      elt.style['stroke-linecap'] = 'round';
-    }
-  }
-};
-
-/**
- * In-place, convert passed SVG to something consistent that will be rendered the way we want them to be.
- * @param {SVGSvgElement} svgTag root SVG node to operate upon
- * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
- */
-const normalizeSvg = (svgTag, fromVersion2) => {
-  if (fromVersion2) {
-    // Fix gradients. Scratch 2 exports no x2 when x2 = 0, but
-    // SVG default is that x2 is 1. This must be done before
-    // transformStrokeWidths since transformStrokeWidths affects
-    // gradients.
-    transformGradients(svgTag);
-  }
-  transformStrokeWidths(svgTag, window);
-  transformImages(svgTag);
-  if (fromVersion2) {
-    // Transform all text elements.
-    transformText(svgTag);
-    // Transform measurements.
-    transformMeasurements(svgTag);
-    // Fix stroke roundedness.
-    setGradientStrokeRoundedness(svgTag);
-  } else if (!svgTag.getAttribute('viewBox')) {
-    // Renderer expects a view box.
-    transformMeasurements(svgTag);
-  } else if (!svgTag.getAttribute('width') || !svgTag.getAttribute('height')) {
-    svgTag.setAttribute('width', svgTag.viewBox.baseVal.width);
-    svgTag.setAttribute('height', svgTag.viewBox.baseVal.height);
-  }
-};
-
-/**
- * Load an SVG string and normalize it. All the steps before drawing/measuring.
- * Currently, this will normalize stroke widths (see transform-applier.js) and render all embedded images pixelated.
- * The returned SVG will be guaranteed to always have a `width`, `height` and `viewBox`.
- * In addition, if the `fromVersion2` parameter is `true`, several "quirks-mode" transformations will be applied which
- * mimic Scratch 2.0's SVG rendering.
- * @param {!string} svgString String of SVG data to draw in quirks-mode.
- * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
- * @return {SVGSVGElement} The normalized SVG element.
- */
-const loadSvgString = (svgString, fromVersion2) => {
-  // Parse string into SVG XML.
-  const parser = new DOMParser();
-  svgString = fixupSvgString(svgString);
-  const svgDom = parser.parseFromString(svgString, 'text/xml');
-  if (svgDom.childNodes.length < 1 || svgDom.documentElement.localName !== 'svg') {
-    throw new Error('Document does not appear to be SVG.');
-  }
-  const svgTag = svgDom.documentElement;
-  normalizeSvg(svgTag, fromVersion2);
-  return svgTag;
-};
-module.exports = loadSvgString;
-
-/***/ }),
-
-/***/ "./src/sanitize-svg.js":
-/*!*****************************!*\
-  !*** ./src/sanitize-svg.js ***!
-  \*****************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/**
- * @fileOverview Sanitize the content of an SVG aggressively, to make it as safe
- * as possible
- */
-const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./src/fixup-svg-string.js");
-const {
-  generate,
-  parse,
-  walk
-} = __webpack_require__(/*! css-tree */ "./node_modules/css-tree/lib/index.js");
-const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
-const sanitizeSvg = {};
-DOMPurify.addHook('beforeSanitizeAttributes', currentNode => {
-  if (currentNode && currentNode.href && currentNode.href.baseVal) {
-    const href = currentNode.href.baseVal.replace(/\s/g, '');
-    // "data:" and "#" are valid hrefs
-    if (href.slice(0, 5) !== 'data:' && href.slice(0, 1) !== '#') {
-      if (currentNode.attributes.getNamedItem('xlink:href')) {
-        currentNode.attributes.removeNamedItem('xlink:href');
-        delete currentNode['xlink:href'];
-      }
-      if (currentNode.attributes.getNamedItem('href')) {
-        currentNode.attributes.removeNamedItem('href');
-        delete currentNode.href;
-      }
-    }
-  }
-  return currentNode;
-});
-DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-  if (data.tagName === 'style') {
-    const ast = parse(node.textContent);
-    let isModified = false;
-    // Remove any @import rules as it could leak HTTP requests
-    walk(ast, (astNode, item, list) => {
-      if (astNode.type === 'Atrule' && astNode.name === 'import') {
-        list.remove(item);
-        isModified = true;
-      }
-    });
-    if (isModified) {
-      node.textContent = generate(ast);
-    }
-  }
-});
-
-// Use JS implemented TextDecoder and TextEncoder if it is not provided by the
-// browser.
-let _TextDecoder;
-let _TextEncoder;
-if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
-  // Wait to require the text encoding polyfill until we know it's needed.
-  // eslint-disable-next-line global-require
-  const encoding = __webpack_require__(/*! fastestsmallesttextencoderdecoder */ "./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js");
-  _TextDecoder = encoding.TextDecoder;
-  _TextEncoder = encoding.TextEncoder;
-} else {
-  _TextDecoder = TextDecoder;
-  _TextEncoder = TextEncoder;
-}
-
-/**
- * Load an SVG Uint8Array of bytes and "sanitize" it
- * @param {!Uint8Array} rawData unsanitized SVG daata
- * @return {Uint8Array} sanitized SVG data
- */
-sanitizeSvg.sanitizeByteStream = function (rawData) {
-  const decoder = new _TextDecoder();
-  const encoder = new _TextEncoder();
-  const sanitizedText = sanitizeSvg.sanitizeSvgText(decoder.decode(rawData));
-  return encoder.encode(sanitizedText);
-};
-
-/**
- * Load an SVG string and "sanitize" it. This is more aggressive than the handling in
- * fixup-svg-string.js, and thus more risky; there are known examples of SVGs that
- * it will clobber. We use DOMPurify's svg profile, which restricts many types of tag.
- * @param {!string} rawSvgText unsanitized SVG string
- * @return {string} sanitized SVG text
- */
-sanitizeSvg.sanitizeSvgText = function (rawSvgText) {
-  let sanitizedText = DOMPurify.sanitize(rawSvgText, {
-    USE_PROFILES: {
-      svg: true
-    }
-  });
-
-  // Remove partial XML comment that is sometimes left in the HTML
-  const badTag = sanitizedText.indexOf(']&gt;');
-  if (badTag >= 0) {
-    sanitizedText = sanitizedText.substring(5, sanitizedText.length);
-  }
-
-  // also use our custom fixup rules
-  sanitizedText = fixupSvgString(sanitizedText);
-  return sanitizedText;
-};
-module.exports = sanitizeSvg;
-
-/***/ }),
-
-/***/ "./src/serialize-svg-to-string.js":
-/*!****************************************!*\
-  !*** ./src/serialize-svg-to-string.js ***!
-  \****************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./src/font-inliner.js");
-
-/**
- * Serialize a given SVG DOM to a string.
- * @param {SVGSVGElement} svgTag The SVG element to serialize.
- * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
- *     base64 data.
- * @returns {string} String representing current SVG data.
- */
-const serializeSvgToString = (svgTag, shouldInjectFonts) => {
-  const serializer = new XMLSerializer();
-  let string = serializer.serializeToString(svgTag);
-  if (shouldInjectFonts) {
-    string = inlineSvgFonts(string);
-  }
-  return string;
-};
-module.exports = serializeSvgToString;
-
-/***/ }),
-
-/***/ "./src/svg-element.js":
-/*!****************************!*\
-  !*** ./src/svg-element.js ***!
-  \****************************/
-/***/ ((module) => {
-
-/* Adapted from
- * Paper.js - The Swiss Army Knife of Vector Graphics Scripting.
- * http://paperjs.org/
- *
- * Copyright (c) 2011 - 2016, Juerg Lehni & Jonathan Puckey
- * http://scratchdisk.com/ & http://jonathanpuckey.com/
- *
- * Distributed under the MIT license. See LICENSE file for details.
- *
- * All rights reserved.
- */
-
-/**
- * @name SvgElement
- * @namespace
- * @private
- */
-class SvgElement {
-  // SVG related namespaces
-  static get svg() {
-    return 'http://www.w3.org/2000/svg';
-  }
-  static get xmlns() {
-    return 'http://www.w3.org/2000/xmlns';
-  }
-  static get xlink() {
-    return 'http://www.w3.org/1999/xlink';
-  }
-
-  // Mapping of attribute names to required namespaces:
-  static attributeNamespace() {
-    return {
-      'href': SvgElement.xlink,
-      'xlink': SvgElement.xmlns,
-      // Only the xmlns attribute needs the trailing slash. See #984
-      'xmlns': "".concat(SvgElement.xmlns, "/"),
-      // IE needs the xmlns namespace when setting 'xmlns:xlink'. See #984
-      'xmlns:xlink': "".concat(SvgElement.xmlns, "/")
-    };
-  }
-  static create(tag, attributes, formatter) {
-    return SvgElement.set(document.createElementNS(SvgElement.svg, tag), attributes, formatter);
-  }
-  static get(node, name) {
-    const namespace = SvgElement.attributeNamespace[name];
-    const value = namespace ? node.getAttributeNS(namespace, name) : node.getAttribute(name);
-    return value === 'null' ? null : value;
-  }
-  static set(node, attributes, formatter) {
-    for (const name in attributes) {
-      let value = attributes[name];
-      const namespace = SvgElement.attributeNamespace[name];
-      if (typeof value === 'number' && formatter) {
-        value = formatter.number(value);
-      }
-      if (namespace) {
-        node.setAttributeNS(namespace, name, value);
-      } else {
-        node.setAttribute(name, value);
-      }
-    }
-    return node;
-  }
-}
-module.exports = SvgElement;
-
-/***/ }),
-
-/***/ "./src/svg-renderer.js":
-/*!*****************************!*\
-  !*** ./src/svg-renderer.js ***!
-  \*****************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./src/load-svg-string.js");
-const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./src/serialize-svg-to-string.js");
-
-/**
- * Main quirks-mode SVG rendering code.
- * @deprecated Call into individual methods exported from this library instead.
- */
-class SvgRenderer {
-  /**
-   * Create a quirks-mode SVG renderer for a particular canvas.
-   * @param {HTMLCanvasElement} [canvas] An optional canvas element to draw to. If this is not provided, the renderer
-   * will create a new canvas.
-   * @constructor
-   */
-  constructor(canvas) {
-    /**
-     * The canvas that this SVG renderer will render to.
-     * @type {HTMLCanvasElement}
-     * @private
-     */
-    this._canvas = canvas || document.createElement('canvas');
-    this._context = this._canvas.getContext('2d');
-
-    /**
-     * A measured SVG "viewbox"
-     * @typedef {object} SvgRenderer#SvgMeasurements
-     * @property {number} x - The left edge of the SVG viewbox.
-     * @property {number} y - The top edge of the SVG viewbox.
-     * @property {number} width - The width of the SVG viewbox.
-     * @property {number} height - The height of the SVG viewbox.
-     */
-
-    /**
-     * The measurement box of the currently loaded SVG.
-     * @type {SvgRenderer#SvgMeasurements}
-     * @private
-     */
-    this._measurements = {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    };
-
-    /**
-     * The `<img>` element with the contents of the currently loaded SVG.
-     * @type {?HTMLImageElement}
-     * @private
-     */
-    this._cachedImage = null;
-
-    /**
-     * True if this renderer's current SVG is loaded and can be rendered to the canvas.
-     * @type {boolean}
-     */
-    this.loaded = false;
-  }
-
-  /**
-   * @returns {!HTMLCanvasElement} this renderer's target canvas.
-   */
-  get canvas() {
-    return this._canvas;
-  }
-
-  /**
-   * @return {Array<number>} the natural size, in Scratch units, of this SVG.
-   */
-  get size() {
-    return [this._measurements.width, this._measurements.height];
-  }
-
-  /**
-   * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
-   */
-  get viewOffset() {
-    return [this._measurements.x, this._measurements.y];
-  }
-
-  /**
-   * Load an SVG string and normalize it. All the steps before drawing/measuring.
-   * @param {!string} svgString String of SVG data to draw in quirks-mode.
-   * @param {?boolean} fromVersion2 True if we should perform conversion from
-   *     version 2 to version 3 svg.
-   */
-  loadString(svgString, fromVersion2) {
-    // New svg string invalidates the cached image
-    this._cachedImage = null;
-    const svgTag = loadSvgString(svgString, fromVersion2);
-    this._svgTag = svgTag;
-    this._measurements = {
-      width: svgTag.viewBox.baseVal.width,
-      height: svgTag.viewBox.baseVal.height,
-      x: svgTag.viewBox.baseVal.x,
-      y: svgTag.viewBox.baseVal.y
-    };
-  }
-
-  /**
-   * Load an SVG string, normalize it, and prepare it for (synchronous) rendering.
-   * @param {!string} svgString String of SVG data to draw in quirks-mode.
-   * @param {?boolean} fromVersion2 True if we should perform conversion from version 2 to version 3 svg.
-   * @param {Function} [onFinish] - An optional callback to call when the SVG is loaded and can be rendered.
-   */
-  loadSVG(svgString, fromVersion2, onFinish) {
-    this.loadString(svgString, fromVersion2);
-    this._createSVGImage(onFinish);
-  }
-
-  /**
-   * Creates an <img> element for the currently loaded SVG string, then calls the callback once it's loaded.
-   * @param {Function} [onFinish] - An optional callback to call when the <img> has loaded.
-   */
-  _createSVGImage(onFinish) {
-    if (this._cachedImage === null) this._cachedImage = new Image();
-    const img = this._cachedImage;
-    img.onload = () => {
-      this.loaded = true;
-      if (onFinish) onFinish();
-    };
-    const svgText = this.toString(true /* shouldInjectFonts */);
-    img.src = "data:image/svg+xml;utf8,".concat(encodeURIComponent(svgText));
-    this.loaded = false;
-  }
-
-  /**
-   * Serialize the active SVG DOM to a string.
-   * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
-   *     base64 data.
-   * @returns {string} String representing current SVG data.
-   * @deprecated Use the standalone `serializeSvgToString` export instead.
-   */
-  toString(shouldInjectFonts) {
-    return serializeSvgToString(this._svgTag, shouldInjectFonts);
-  }
-
-  /**
-   * Synchronously draw the loaded SVG to this renderer's `canvas`.
-   * @param {number} [scale] - Optionally, also scale the image by this factor.
-   */
-  draw(scale) {
-    if (!this.loaded) throw new Error('SVG image has not finished loading');
-    this._drawFromImage(scale);
-  }
-
-  /**
-   * Draw to the canvas from a loaded image element.
-   * @param {number} [scale] - Optionally, also scale the image by this factor.
-   **/
-  _drawFromImage(scale) {
-    if (this._cachedImage === null) return;
-    const ratio = Number.isFinite(scale) ? scale : 1;
-    const bbox = this._measurements;
-    this._canvas.width = bbox.width * ratio;
-    this._canvas.height = bbox.height * ratio;
-    // Even if the canvas at the current scale has a nonzero size, the image's dimensions are floored pre-scaling.
-    // e.g. if an image has a width of 0.4 and is being rendered at 3x scale, the canvas will have a width of 1, but
-    // the image's width will be rounded down to 0 on some browsers (Firefox) prior to being drawn at that scale.
-    if (this._canvas.width <= 0 || this._canvas.height <= 0 || this._cachedImage.naturalWidth <= 0 || this._cachedImage.naturalHeight <= 0) return;
-    this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-    this._context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    this._context.drawImage(this._cachedImage, 0, 0);
-  }
-}
-module.exports = SvgRenderer;
-
-/***/ }),
-
-/***/ "./src/transform-applier.js":
-/*!**********************************!*\
-  !*** ./src/transform-applier.js ***!
-  \**********************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const Matrix = __webpack_require__(/*! transformation-matrix */ "./node_modules/transformation-matrix/build-es/index.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
-const log = __webpack_require__(/*! ./util/log */ "./src/util/log.js");
-
-/**
- * @fileOverview Apply transforms to match stroke width appearance in 2.0 and 3.0
- */
-
-// Adapted from paper.js's Path.applyTransform
-const _parseTransform = function _parseTransform(domElement) {
-  let matrix = Matrix.identity();
-  const string = domElement.attributes && domElement.attributes.transform && domElement.attributes.transform.value;
-  if (!string) return matrix;
-  // https://www.w3.org/TR/SVG/types.html#DataTypeTransformList
-  // Parse SVG transform string. First we split at /)\s*/, to separate
-  // commands
-  const transforms = string.split(/\)\s*/g);
-  for (const transform of transforms) {
-    if (!transform) break;
-    // Command come before the '(', values after
-    const parts = transform.split(/\(\s*/);
-    const command = parts[0].trim();
-    const v = parts[1].split(/[\s,]+/g);
-    // Convert values to floats
-    for (let j = 0; j < v.length; j++) {
-      v[j] = parseFloat(v[j]);
-    }
-    switch (command) {
-      case 'matrix':
-        matrix = Matrix.compose(matrix, {
-          a: v[0],
-          b: v[1],
-          c: v[2],
-          d: v[3],
-          e: v[4],
-          f: v[5]
-        });
-        break;
-      case 'rotate':
-        matrix = Matrix.compose(matrix, Matrix.rotateDEG(v[0], v[1] || 0, v[2] || 0));
-        break;
-      case 'translate':
-        matrix = Matrix.compose(matrix, Matrix.translate(v[0], v[1] || 0));
-        break;
-      case 'scale':
-        matrix = Matrix.compose(matrix, Matrix.scale(v[0], v[1] || v[0]));
-        break;
-      case 'skewX':
-        matrix = Matrix.compose(matrix, Matrix.skewDEG(v[0], 0));
-        break;
-      case 'skewY':
-        matrix = Matrix.compose(matrix, Matrix.skewDEG(0, v[0]));
-        break;
-      default:
-        log.error("Couldn't parse: ".concat(command));
-    }
-  }
-  return matrix;
-};
-
-// Adapted from paper.js's Matrix.decompose
-// Given a matrix, return the x and y scale factors of the matrix
-const _getScaleFactor = function _getScaleFactor(matrix) {
-  const a = matrix.a;
-  const b = matrix.b;
-  const c = matrix.c;
-  const d = matrix.d;
-  const det = a * d - b * c;
-  if (a !== 0 || b !== 0) {
-    const r = Math.sqrt(a * a + b * b);
-    return {
-      x: r,
-      y: det / r
-    };
-  }
-  if (c !== 0 || d !== 0) {
-    const s = Math.sqrt(c * c + d * d);
-    return {
-      x: det / s,
-      y: s
-    };
-  }
-  // a = b = c = d = 0
-  return {
-    x: 0,
-    y: 0
-  };
-};
-
-// Returns null if matrix is not invertible. Otherwise returns given ellipse
-// transformed by transform, an object {radiusX, radiusY, rotation}.
-const _calculateTransformedEllipse = function _calculateTransformedEllipse(radiusX, radiusY, theta, transform) {
-  theta = -theta * Math.PI / 180;
-  const a = transform.a;
-  const b = -transform.c;
-  const c = -transform.b;
-  const d = transform.d;
-  // Since other parameters determine the translation of the ellipse in SVG, we do not need to worry
-  // about what e and f are.
-  const det = a * d - b * c;
-  // Non-invertible matrix
-  if (det === 0) return null;
-
-  // rotA, rotB, and rotC represent Ax^2 + Bxy + Cy^2 = 1 coefficients for a rotated ellipse formula
-  const sinT = Math.sin(theta);
-  const cosT = Math.cos(theta);
-  const sin2T = Math.sin(2 * theta);
-  const rotA = cosT * cosT / radiusX / radiusX + sinT * sinT / radiusY / radiusY;
-  const rotB = sin2T / radiusX / radiusX - sin2T / radiusY / radiusY;
-  const rotC = sinT * sinT / radiusX / radiusX + cosT * cosT / radiusY / radiusY;
-
-  // Calculate the ellipse formula of the transformed ellipse
-  // A, B, and C represent Ax^2 + Bxy + Cy^2 = 1 / det / det coefficients in a transformed ellipse formula
-  // scaled by inverse det squared (to preserve accuracy)
-  const A = rotA * d * d - rotB * d * c + rotC * c * c;
-  const B = -2 * rotA * b * d + rotB * a * d + rotB * b * c - 2 * rotC * a * c;
-  const C = rotA * b * b - rotB * a * b + rotC * a * a;
-
-  // Derive new radii and theta from the transformed ellipse formula
-  const newRadiusXOverDet = Math.sqrt(2) * Math.sqrt((A + C - Math.sqrt(A * A + B * B - 2 * A * C + C * C)) / (-B * B + 4 * A * C));
-  const newRadiusYOverDet = 1 / Math.sqrt(A + C - 1 / newRadiusXOverDet / newRadiusXOverDet);
-  let temp = (A - 1 / newRadiusXOverDet / newRadiusXOverDet) / (1 / newRadiusYOverDet / newRadiusYOverDet - 1 / newRadiusXOverDet / newRadiusXOverDet);
-  if (temp < 0 && Math.abs(temp) < 1e-8) temp = 0; // Fix floating point issue
-  temp = Math.sqrt(temp);
-  if (Math.abs(1 - temp) < 1e-8) temp = 1; // Fix floating point issue
-  // Solve for which of the two possible thetas is correct
-  let newTheta = Math.asin(temp);
-  temp = B / (1 / newRadiusXOverDet / newRadiusXOverDet - 1 / newRadiusYOverDet / newRadiusYOverDet);
-  const newTheta2 = -newTheta;
-  if (Math.abs(Math.sin(2 * newTheta2) - temp) < Math.abs(Math.sin(2 * newTheta) - temp)) {
-    newTheta = newTheta2;
-  }
-  return {
-    radiusX: newRadiusXOverDet * det,
-    radiusY: newRadiusYOverDet * det,
-    rotation: -newTheta * 180 / Math.PI
-  };
-};
-
-// Adapted from paper.js's PathItem.setPathData
-const _transformPath = function _transformPath(pathString, transform) {
-  if (!transform || Matrix.toString(transform) === Matrix.toString(Matrix.identity())) return pathString;
-  // First split the path data into parts of command-coordinates pairs
-  // Commands are any of these characters: mzlhvcsqta
-  const parts = pathString && pathString.match(/[mlhvcsqtaz][^mlhvcsqtaz]*/ig);
-  let coords;
-  let relative = false;
-  let previous;
-  let control;
-  let current = {
-    x: 0,
-    y: 0
-  };
-  let start = {
-    x: 0,
-    y: 0
-  };
-  let result = '';
-  const getCoord = function getCoord(index, coord) {
-    let val = +coords[index];
-    if (relative) {
-      val += current[coord];
-    }
-    return val;
-  };
-  const getPoint = function getPoint(index) {
-    return {
-      x: getCoord(index, 'x'),
-      y: getCoord(index + 1, 'y')
-    };
-  };
-  const roundTo4Places = function roundTo4Places(num) {
-    return Number(num.toFixed(4));
-  };
-
-  // Returns the transformed point as a string
-  const getString = function getString(point) {
-    const transformed = Matrix.applyToPoint(transform, point);
-    return "".concat(roundTo4Places(transformed.x), " ").concat(roundTo4Places(transformed.y), " ");
-  };
-  for (let i = 0, l = parts && parts.length; i < l; i++) {
-    const part = parts[i];
-    const command = part[0];
-    const lower = command.toLowerCase();
-    // Match all coordinate values
-    coords = part.match(/[+-]?(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?/g);
-    const length = coords && coords.length;
-    relative = command === lower;
-    // Fix issues with z in the middle of SVG path data, not followed by
-    // a m command, see paper.js#413:
-    if (previous === 'z' && !/[mz]/.test(lower)) {
-      result += "M ".concat(current.x, " ").concat(current.y, " ");
-    }
-    switch (lower) {
-      case 'm': // Move to
-      case 'l':
-        // Line to
-        {
-          let move = lower === 'm';
-          for (let j = 0; j < length; j += 2) {
-            result += move ? 'M ' : 'L ';
-            current = getPoint(j);
-            result += getString(current);
-            if (move) {
-              start = current;
-              move = false;
-            }
-          }
-          control = current;
-          break;
-        }
-      case 'h': // Horizontal line
-      case 'v':
-        // Vertical line
-        {
-          const coord = lower === 'h' ? 'x' : 'y';
-          current = {
-            x: current.x,
-            y: current.y
-          }; // Clone as we're going to modify it.
-          for (let j = 0; j < length; j++) {
-            current[coord] = getCoord(j, coord);
-            result += "L ".concat(getString(current));
-          }
-          control = current;
-          break;
-        }
-      case 'c':
-        // Cubic Bezier curve
-        for (let j = 0; j < length; j += 6) {
-          const handle1 = getPoint(j);
-          control = getPoint(j + 2);
-          current = getPoint(j + 4);
-          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
-        }
-        break;
-      case 's':
-        // Smooth cubic Bezier curve
-        for (let j = 0; j < length; j += 4) {
-          const handle1 = /[cs]/.test(previous) ? {
-            x: current.x * 2 - control.x,
-            y: current.y * 2 - control.y
-          } : current;
-          control = getPoint(j);
-          current = getPoint(j + 2);
-          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
-          previous = lower;
-        }
-        break;
-      case 'q':
-        // Quadratic Bezier curve
-        for (let j = 0; j < length; j += 4) {
-          control = getPoint(j);
-          current = getPoint(j + 2);
-          result += "Q ".concat(getString(control)).concat(getString(current));
-        }
-        break;
-      case 't':
-        // Smooth quadratic Bezier curve
-        for (let j = 0; j < length; j += 2) {
-          control = /[qt]/.test(previous) ? {
-            x: current.x * 2 - control.x,
-            y: current.y * 2 - control.y
-          } : current;
-          current = getPoint(j);
-          result += "Q ".concat(getString(control)).concat(getString(current));
-          previous = lower;
-        }
-        break;
-      case 'a':
-        // Elliptical arc curve
-        for (let j = 0; j < length; j += 7) {
-          current = getPoint(j + 5);
-          const rx = +coords[j];
-          const ry = +coords[j + 1];
-          const rotation = +coords[j + 2];
-          const largeArcFlag = +coords[j + 3];
-          let clockwiseFlag = +coords[j + 4];
-          const newEllipse = _calculateTransformedEllipse(rx, ry, rotation, transform);
-          const matrixScale = _getScaleFactor(transform);
-          if (newEllipse) {
-            if (matrixScale.x > 0 && matrixScale.y < 0 || matrixScale.x < 0 && matrixScale.y > 0) {
-              clockwiseFlag = clockwiseFlag ^ 1;
-            }
-            result += "A ".concat(roundTo4Places(Math.abs(newEllipse.radiusX)), " ") + "".concat(roundTo4Places(Math.abs(newEllipse.radiusY)), " ") + "".concat(roundTo4Places(newEllipse.rotation), " ").concat(largeArcFlag, " ") + "".concat(clockwiseFlag, " ").concat(getString(current));
-          } else {
-            result += "L ".concat(getString(current));
-          }
-        }
-        break;
-      case 'z':
-        // Close path
-        result += "Z ";
-        // Correctly handle relative m commands, see paper.js#1101:
-        current = start;
-        break;
-    }
-    previous = lower;
-  }
-  return result;
-};
-const GRAPHICS_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'use'];
-const CONTAINER_ELEMENTS = ['a', 'defs', 'g', 'marker', 'glyph', 'missing-glyph', 'pattern', 'svg', 'switch', 'symbol'];
-const _isContainerElement = function _isContainerElement(element) {
-  return element.tagName && CONTAINER_ELEMENTS.includes(element.tagName.toLowerCase());
-};
-const _isGraphicsElement = function _isGraphicsElement(element) {
-  return element.tagName && GRAPHICS_ELEMENTS.includes(element.tagName.toLowerCase());
-};
-const _isPathWithTransformAndStroke = function _isPathWithTransformAndStroke(element, strokeWidth) {
-  if (!element.attributes) return false;
-  strokeWidth = element.attributes['stroke-width'] ? Number(element.attributes['stroke-width'].value) : Number(strokeWidth);
-  return strokeWidth && element.tagName && element.tagName.toLowerCase() === 'path' && element.attributes.d && element.attributes.d.value;
-};
-const _quadraticMean = function _quadraticMean(a, b) {
-  return Math.sqrt((a * a + b * b) / 2);
-};
-const _createGradient = function _createGradient(gradientId, svgTag, bbox, matrix) {
-  // Adapted from Paper.js's SvgImport.getValue
-  const getValue = function getValue(node, name, isString, allowNull, allowPercent, defaultValue) {
-    // Interpret value as number. Never return NaN, but 0 instead.
-    // If the value is a sequence of numbers, parseFloat will
-    // return the first occurring number, which is enough for now.
-    let value = SvgElement.get(node, name);
-    let res;
-    if (value === null) {
-      if (defaultValue) {
-        res = defaultValue;
-        if (/%\s*$/.test(res)) {
-          value = defaultValue;
-          res = parseFloat(value);
-        }
-      } else if (allowNull) {
-        res = null;
-      } else if (isString) {
-        res = '';
-      } else {
-        res = 0;
-      }
-    } else if (isString) {
-      res = value;
-    } else {
-      res = parseFloat(value);
-    }
-    // Support for dimensions in percentage of the root size. If root-size
-    // is not set (e.g. during <defs>), just scale the percentage value to
-    // 0..1, as required by gradients with gradientUnits="objectBoundingBox"
-    if (/%\s*$/.test(value)) {
-      const size = allowPercent ? 1 : bbox[/x|^width/.test(name) ? 'width' : 'height'];
-      return res / 100 * size;
-    }
-    return res;
-  };
-  const getPoint = function getPoint(node, x, y, allowNull, allowPercent, defaultX, defaultY) {
-    x = getValue(node, x || 'x', false, allowNull, allowPercent, defaultX);
-    y = getValue(node, y || 'y', false, allowNull, allowPercent, defaultY);
-    return allowNull && (x === null || y === null) ? null : {
-      x,
-      y
-    };
-  };
-  let defs = svgTag.getElementsByTagName('defs');
-  if (defs.length === 0) {
-    defs = SvgElement.create('defs');
-    svgTag.appendChild(defs);
-  } else {
-    defs = defs[0];
-  }
-
-  // Clone the old gradient. We'll make a new one, since the gradient might be reused elsewhere
-  // with different transform matrix
-  const oldGradient = svgTag.getElementById(gradientId);
-  if (!oldGradient) return;
-  const radial = oldGradient.tagName.toLowerCase() === 'radialgradient';
-  const newGradient = svgTag.getElementById(gradientId).cloneNode(true /* deep */);
-
-  // Give the new gradient a new ID
-  let matrixString = Matrix.toString(matrix);
-  matrixString = matrixString.substring(8, matrixString.length - 1);
-  const newGradientId = "".concat(gradientId, "-").concat(matrixString);
-  newGradient.setAttribute('id', newGradientId);
-
-  // This gradient already exists and was transformed before. Just reuse the already-transformed one.
-  if (svgTag.getElementById(newGradientId)) {
-    // This is the same code as in the end of the function, but I don't feel like wrapping the next 80 lines
-    // in an `if (!svgTag.getElementById(newGradientId))` block
-    return "url(#".concat(newGradientId, ")");
-  }
-  const scaleToBounds = getValue(newGradient, 'gradientUnits', true) !== 'userSpaceOnUse';
-  let origin;
-  let destination;
-  let radius;
-  let focal;
-  if (radial) {
-    origin = getPoint(newGradient, 'cx', 'cy', false, scaleToBounds, '50%', '50%');
-    radius = getValue(newGradient, 'r', false, false, scaleToBounds, '50%');
-    focal = getPoint(newGradient, 'fx', 'fy', true, scaleToBounds);
-  } else {
-    origin = getPoint(newGradient, 'x1', 'y1', false, scaleToBounds);
-    destination = getPoint(newGradient, 'x2', 'y2', false, scaleToBounds, '1');
-    if (origin.x === destination.x && origin.y === destination.y) {
-      // If it's degenerate, use the color of the last stop, as described by
-      // https://www.w3.org/TR/SVG/pservers.html#LinearGradientNotes
-      const stops = newGradient.getElementsByTagName('stop');
-      if (!stops.length || !stops[stops.length - 1].attributes || !stops[stops.length - 1].attributes['stop-color']) {
-        return null;
-      }
-      return stops[stops.length - 1].attributes['stop-color'].value;
-    }
-  }
-
-  // Transform points
-  // Emulate SVG's gradientUnits="objectBoundingBox"
-  if (scaleToBounds) {
-    const boundsMatrix = Matrix.compose(Matrix.translate(bbox.x, bbox.y), Matrix.scale(bbox.width, bbox.height));
-    origin = Matrix.applyToPoint(boundsMatrix, origin);
-    if (destination) destination = Matrix.applyToPoint(boundsMatrix, destination);
-    if (radius) {
-      radius = _quadraticMean(bbox.width, bbox.height) * radius;
-    }
-    if (focal) focal = Matrix.applyToPoint(boundsMatrix, focal);
-  }
-  if (radial) {
-    origin = Matrix.applyToPoint(matrix, origin);
-    const matrixScale = _getScaleFactor(matrix);
-    radius = _quadraticMean(matrixScale.x, matrixScale.y) * radius;
-    if (focal) focal = Matrix.applyToPoint(matrix, focal);
-  } else {
-    const dot = (a, b) => a.x * b.x + a.y * b.y;
-    const multiply = (coefficient, v) => ({
-      x: coefficient * v.x,
-      y: coefficient * v.y
-    });
-    const add = (a, b) => ({
-      x: a.x + b.x,
-      y: a.y + b.y
-    });
-    const subtract = (a, b) => ({
-      x: a.x - b.x,
-      y: a.y - b.y
-    });
-
-    // The line through origin and gradientPerpendicular is the line at which the gradient starts
-    let gradientPerpendicular = Math.abs(origin.x - destination.x) < 1e-8 ? add(origin, {
-      x: 1,
-      y: (origin.x - destination.x) / (destination.y - origin.y)
-    }) : add(origin, {
-      x: (destination.y - origin.y) / (origin.x - destination.x),
-      y: 1
-    });
-
-    // Transform points
-    gradientPerpendicular = Matrix.applyToPoint(matrix, gradientPerpendicular);
-    origin = Matrix.applyToPoint(matrix, origin);
-    destination = Matrix.applyToPoint(matrix, destination);
-
-    // Calculate the direction that the gradient has changed to
-    const originToPerpendicular = subtract(gradientPerpendicular, origin);
-    const originToDestination = subtract(destination, origin);
-    const gradientDirection = Math.abs(originToPerpendicular.x) < 1e-8 ? {
-      x: 1,
-      y: -originToPerpendicular.x / originToPerpendicular.y
-    } : {
-      x: -originToPerpendicular.y / originToPerpendicular.x,
-      y: 1
-    };
-
-    // Set the destination so that the gradient moves in the correct direction, by projecting the destination vector
-    // onto the gradient direction vector
-    const projectionCoeff = dot(originToDestination, gradientDirection) / dot(gradientDirection, gradientDirection);
-    const projection = multiply(projectionCoeff, gradientDirection);
-    destination = {
-      x: origin.x + projection.x,
-      y: origin.y + projection.y
-    };
-  }
-
-  // Put values back into svg
-  if (radial) {
-    newGradient.setAttribute('cx', Number(origin.x.toFixed(4)));
-    newGradient.setAttribute('cy', Number(origin.y.toFixed(4)));
-    newGradient.setAttribute('r', Number(radius.toFixed(4)));
-    if (focal) {
-      newGradient.setAttribute('fx', Number(focal.x.toFixed(4)));
-      newGradient.setAttribute('fy', Number(focal.y.toFixed(4)));
-    }
-  } else {
-    newGradient.setAttribute('x1', Number(origin.x.toFixed(4)));
-    newGradient.setAttribute('y1', Number(origin.y.toFixed(4)));
-    newGradient.setAttribute('x2', Number(destination.x.toFixed(4)));
-    newGradient.setAttribute('y2', Number(destination.y.toFixed(4)));
-  }
-  newGradient.setAttribute('gradientUnits', 'userSpaceOnUse');
-  defs.appendChild(newGradient);
-  return "url(#".concat(newGradientId, ")");
-};
-
-// Adapted from paper.js's SvgImport.getDefinition
-const _parseUrl = (value, windowRef) => {
-  // When url() comes from a style property, '#'' seems to be missing on
-  // WebKit. We also get variations of quotes or no quotes, single or
-  // double, so handle it all with one regular expression:
-  const match = value && value.match(/\((?:["'#]*)([^"')]+)/);
-  const name = match && match[1];
-  const res = name && windowRef ?
-  // This is required by Firefox, which can produce absolute
-  // urls for local gradients, see paperjs#1001:
-  name.replace("".concat(windowRef.location.href.split('#')[0], "#"), '') : name;
-  return res;
-};
-
-/**
- * Scratch 2.0 displays stroke widths in a "normalized" way, that is,
- * if a shape with a stroke width has a transform applied, it will be
- * rendered with a stroke that is the same width all the way around,
- * instead of stretched looking.
- *
- * The vector paint editor also prefers to normalize the stroke width,
- * rather than keep track of transforms at the group level, as this
- * simplifies editing (e.g. stroke width 3 always means the same thickness)
- *
- * This function performs that normalization process, pushing transforms
- * on groups down to the leaf level and averaging out the stroke width
- * around the shapes. Note that this doens't just change stroke widths, it
- * changes path data and attributes throughout the SVG.
- *
- * @param {SVGElement} svgTag The SVG dom object
- * @param {Window} windowRef The window to use. Need to pass in for
- *     tests to work, as they get angry at even the mention of window.
- * @param {object} bboxForTesting The bounds to use. Need to pass in for
- *     tests only, because getBBox doesn't work in Node. This should
- *     be the bounds of the svgTag without including stroke width or transforms.
- * @return {void}
- */
-const transformStrokeWidths = function transformStrokeWidths(svgTag, windowRef, bboxForTesting) {
-  const inherited = Matrix.identity();
-  const applyTransforms = (element, matrix, strokeWidth, fill, stroke) => {
-    if (_isContainerElement(element)) {
-      // Push fills and stroke width down to leaves
-      if (element.attributes['stroke-width']) {
-        strokeWidth = element.attributes['stroke-width'].value;
-      }
-      if (element.attributes) {
-        if (element.attributes.fill) fill = element.attributes.fill.value;
-        if (element.attributes.stroke) stroke = element.attributes.stroke.value;
-      }
-
-      // If any child nodes don't take attributes, leave the attributes
-      // at the parent level.
-      for (let i = 0; i < element.childNodes.length; i++) {
-        applyTransforms(element.childNodes[i], Matrix.compose(matrix, _parseTransform(element)), strokeWidth, fill, stroke);
-      }
-      element.removeAttribute('transform');
-      element.removeAttribute('stroke-width');
-      element.removeAttribute('fill');
-      element.removeAttribute('stroke');
-    } else if (_isPathWithTransformAndStroke(element, strokeWidth)) {
-      if (element.attributes['stroke-width']) {
-        strokeWidth = element.attributes['stroke-width'].value;
-      }
-      if (element.attributes.fill) fill = element.attributes.fill.value;
-      if (element.attributes.stroke) stroke = element.attributes.stroke.value;
-      matrix = Matrix.compose(matrix, _parseTransform(element));
-      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
-        element.removeAttribute('transform');
-        element.setAttribute('stroke-width', strokeWidth);
-        if (fill) element.setAttribute('fill', fill);
-        if (stroke) element.setAttribute('stroke', stroke);
-        return;
-      }
-
-      // Transform gradient
-      const fillGradientId = _parseUrl(fill, windowRef);
-      const strokeGradientId = _parseUrl(stroke, windowRef);
-      if (fillGradientId || strokeGradientId) {
-        const doc = windowRef.document;
-        // Need path bounds to transform gradient
-        const svgSpot = doc.createElement('span');
-        let bbox;
-        if (bboxForTesting) {
-          bbox = bboxForTesting;
-        } else {
-          try {
-            doc.body.appendChild(svgSpot);
-            const svg = SvgElement.set(doc.createElementNS(SvgElement.svg, 'svg'));
-            const path = SvgElement.set(doc.createElementNS(SvgElement.svg, 'path'));
-            path.setAttribute('d', element.attributes.d.value);
-            svg.appendChild(path);
-            svgSpot.appendChild(svg);
-            // Take the bounding box.
-            bbox = svg.getBBox();
-          } finally {
-            // Always destroy the element, even if, for example, getBBox throws.
-            doc.body.removeChild(svgSpot);
-          }
-        }
-        if (fillGradientId) {
-          const newFillRef = _createGradient(fillGradientId, svgTag, bbox, matrix);
-          if (newFillRef) fill = newFillRef;
-        }
-        if (strokeGradientId) {
-          const newStrokeRef = _createGradient(strokeGradientId, svgTag, bbox, matrix);
-          if (newStrokeRef) stroke = newStrokeRef;
-        }
-      }
-
-      // Transform path data
-      element.setAttribute('d', _transformPath(element.attributes.d.value, matrix));
-      element.removeAttribute('transform');
-
-      // Transform stroke width
-      const matrixScale = _getScaleFactor(matrix);
-      element.setAttribute('stroke-width', _quadraticMean(matrixScale.x, matrixScale.y) * strokeWidth);
-      if (fill) element.setAttribute('fill', fill);
-      if (stroke) element.setAttribute('stroke', stroke);
-    } else if (_isGraphicsElement(element)) {
-      // Push stroke width, fill, and stroke down to leaves
-      if (strokeWidth && !element.attributes['stroke-width']) {
-        element.setAttribute('stroke-width', strokeWidth);
-      }
-      if (fill && !element.attributes.fill) {
-        element.setAttribute('fill', fill);
-      }
-      if (stroke && !element.attributes.stroke) {
-        element.setAttribute('stroke', stroke);
-      }
-
-      // Push transform down to leaves
-      matrix = Matrix.compose(matrix, _parseTransform(element));
-      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
-        element.removeAttribute('transform');
-      } else {
-        element.setAttribute('transform', Matrix.toString(matrix));
-      }
-    }
-  };
-  applyTransforms(svgTag, inherited, 1 /* default SVG stroke width */);
-};
-module.exports = transformStrokeWidths;
-
-/***/ }),
-
-/***/ "./src/util/log.js":
-/*!*************************!*\
-  !*** ./src/util/log.js ***!
-  \*************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
-minilog.enable();
-module.exports = minilog('scratch-svg-render');
-
-/***/ }),
-
 /***/ "./node_modules/base64-js/index.js":
 /*!*****************************************!*\
   !*** ./node_modules/base64-js/index.js ***!
@@ -2102,6 +352,17 @@ module.exports = {
     properties: patchDictionary(mdnProperties, patch.properties)
 };
 
+
+/***/ }),
+
+/***/ "./node_modules/css-tree/data/patch.json":
+/*!***********************************************!*\
+  !*** ./node_modules/css-tree/data/patch.json ***!
+  \***********************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"atrules":{"charset":{"prelude":"<string>"},"font-face":{"descriptors":{"unicode-range":{"comment":"replaces <unicode-range>, an old production name","syntax":"<urange>#"}}}},"properties":{"-moz-background-clip":{"comment":"deprecated syntax in old Firefox, https://developer.mozilla.org/en/docs/Web/CSS/background-clip","syntax":"padding | border"},"-moz-border-radius-bottomleft":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-left-radius","syntax":"<\'border-bottom-left-radius\'>"},"-moz-border-radius-bottomright":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius","syntax":"<\'border-bottom-right-radius\'>"},"-moz-border-radius-topleft":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-left-radius","syntax":"<\'border-top-left-radius\'>"},"-moz-border-radius-topright":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius","syntax":"<\'border-bottom-right-radius\'>"},"-moz-control-character-visibility":{"comment":"firefox specific keywords, https://bugzilla.mozilla.org/show_bug.cgi?id=947588","syntax":"visible | hidden"},"-moz-osx-font-smoothing":{"comment":"misssed old syntax https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth","syntax":"auto | grayscale"},"-moz-user-select":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/user-select","syntax":"none | text | all | -moz-none"},"-ms-flex-align":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-align","syntax":"start | end | center | baseline | stretch"},"-ms-flex-item-align":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-align","syntax":"auto | start | end | center | baseline | stretch"},"-ms-flex-line-pack":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-line-pack","syntax":"start | end | center | justify | distribute | stretch"},"-ms-flex-negative":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-shrink\'>"},"-ms-flex-pack":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-pack","syntax":"start | end | center | justify | distribute"},"-ms-flex-order":{"comment":"misssed old syntax implemented in IE; https://msdn.microsoft.com/en-us/library/jj127303(v=vs.85).aspx","syntax":"<integer>"},"-ms-flex-positive":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-grow\'>"},"-ms-flex-preferred-size":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-basis\'>"},"-ms-interpolation-mode":{"comment":"https://msdn.microsoft.com/en-us/library/ff521095(v=vs.85).aspx","syntax":"nearest-neighbor | bicubic"},"-ms-grid-column-align":{"comment":"add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466338.aspx","syntax":"start | end | center | stretch"},"-ms-grid-row-align":{"comment":"add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466348.aspx","syntax":"start | end | center | stretch"},"-ms-hyphenate-limit-last":{"comment":"misssed old syntax implemented in IE; https://www.w3.org/TR/css-text-4/#hyphenate-line-limits","syntax":"none | always | column | page | spread"},"-webkit-appearance":{"comment":"webkit specific keywords","references":["http://css-infos.net/property/-webkit-appearance"],"syntax":"none | button | button-bevel | caps-lock-indicator | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbargripper-horizontal | scrollbargripper-vertical | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield | -apple-pay-button"},"-webkit-background-clip":{"comment":"https://developer.mozilla.org/en/docs/Web/CSS/background-clip","syntax":"[ <box> | border | padding | content | text ]#"},"-webkit-column-break-after":{"comment":"added, http://help.dottoro.com/lcrthhhv.php","syntax":"always | auto | avoid"},"-webkit-column-break-before":{"comment":"added, http://help.dottoro.com/lcxquvkf.php","syntax":"always | auto | avoid"},"-webkit-column-break-inside":{"comment":"added, http://help.dottoro.com/lclhnthl.php","syntax":"always | auto | avoid"},"-webkit-font-smoothing":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth","syntax":"auto | none | antialiased | subpixel-antialiased"},"-webkit-mask-box-image":{"comment":"missed; https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-mask-box-image","syntax":"[ <url> | <gradient> | none ] [ <length-percentage>{4} <-webkit-mask-box-repeat>{2} ]?"},"-webkit-print-color-adjust":{"comment":"missed","references":["https://developer.mozilla.org/en/docs/Web/CSS/-webkit-print-color-adjust"],"syntax":"economy | exact"},"-webkit-text-security":{"comment":"missed; http://help.dottoro.com/lcbkewgt.php","syntax":"none | circle | disc | square"},"-webkit-user-drag":{"comment":"missed; http://help.dottoro.com/lcbixvwm.php","syntax":"none | element | auto"},"-webkit-user-select":{"comment":"auto is supported by old webkit, https://developer.mozilla.org/en-US/docs/Web/CSS/user-select","syntax":"auto | none | text | all"},"alignment-baseline":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#AlignmentBaselineProperty"],"syntax":"auto | baseline | before-edge | text-before-edge | middle | central | after-edge | text-after-edge | ideographic | alphabetic | hanging | mathematical"},"baseline-shift":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#BaselineShiftProperty"],"syntax":"baseline | sub | super | <svg-length>"},"behavior":{"comment":"added old IE property https://msdn.microsoft.com/en-us/library/ms530723(v=vs.85).aspx","syntax":"<url>+"},"clip-rule":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/masking.html#ClipRuleProperty"],"syntax":"nonzero | evenodd"},"cue":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'cue-before\'> <\'cue-after\'>?"},"cue-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<url> <decibel>? | none"},"cue-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<url> <decibel>? | none"},"cursor":{"comment":"added legacy keywords: hand, -webkit-grab. -webkit-grabbing, -webkit-zoom-in, -webkit-zoom-out, -moz-grab, -moz-grabbing, -moz-zoom-in, -moz-zoom-out","references":["https://www.sitepoint.com/css3-cursor-styles/"],"syntax":"[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing | hand | -webkit-grab | -webkit-grabbing | -webkit-zoom-in | -webkit-zoom-out | -moz-grab | -moz-grabbing | -moz-zoom-in | -moz-zoom-out ] ]"},"display":{"comment":"extended with -ms-flexbox","syntax":"| <-non-standard-display>"},"position":{"comment":"extended with -webkit-sticky","syntax":"| -webkit-sticky"},"dominant-baseline":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty"],"syntax":"auto | use-script | no-change | reset-size | ideographic | alphabetic | hanging | mathematical | central | middle | text-after-edge | text-before-edge"},"image-rendering":{"comment":"extended with <-non-standard-image-rendering>, added SVG keywords optimizeSpeed and optimizeQuality","references":["https://developer.mozilla.org/en/docs/Web/CSS/image-rendering","https://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty"],"syntax":"| optimizeSpeed | optimizeQuality | <-non-standard-image-rendering>"},"fill":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"<paint>"},"fill-opacity":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"<number-zero-one>"},"fill-rule":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"nonzero | evenodd"},"filter":{"comment":"extend with IE legacy syntaxes","syntax":"| <-ms-filter-function-list>"},"glyph-orientation-horizontal":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#GlyphOrientationHorizontalProperty"],"syntax":"<angle>"},"glyph-orientation-vertical":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#GlyphOrientationVerticalProperty"],"syntax":"<angle>"},"kerning":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#KerningProperty"],"syntax":"auto | <svg-length>"},"letter-spacing":{"comment":"fix syntax <length> -> <length-percentage>","references":["https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/letter-spacing"],"syntax":"normal | <length-percentage>"},"marker":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-end":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-mid":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-start":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"max-width":{"comment":"fix auto -> none (https://github.com/mdn/data/pull/431); extend by non-standard width keywords https://developer.mozilla.org/en-US/docs/Web/CSS/max-width","syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>) | <-non-standard-width>"},"width":{"comment":"per spec fit-content should be a function, however browsers are supporting it as a keyword (https://github.com/csstree/stylelint-validator/issues/29)","syntax":"| fit-content | -moz-fit-content | -webkit-fit-content"},"min-width":{"comment":"extend by non-standard width keywords https://developer.mozilla.org/en-US/docs/Web/CSS/width","syntax":"auto | <length-percentage> | min-content | max-content | fit-content(<length-percentage>) | <-non-standard-width>"},"overflow":{"comment":"extend by vendor keywords https://developer.mozilla.org/en-US/docs/Web/CSS/overflow","syntax":"| <-non-standard-overflow>"},"pause":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'pause-before\'> <\'pause-after\'>?"},"pause-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"pause-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"rest":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'rest-before\'> <\'rest-after\'>?"},"rest-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"rest-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"shape-rendering":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#ShapeRenderingPropert"],"syntax":"auto | optimizeSpeed | crispEdges | geometricPrecision"},"src":{"comment":"added @font-face\'s src property https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/src","syntax":"[ <url> [ format( <string># ) ]? | local( <family-name> ) ]#"},"speak":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"auto | none | normal"},"speak-as":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"normal | spell-out || digits || [ literal-punctuation | no-punctuation ]"},"stroke":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<paint>"},"stroke-dasharray":{"comment":"added SVG property; a list of comma and/or white space separated <length>s and <percentage>s","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"none | [ <svg-length>+ ]#"},"stroke-dashoffset":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<svg-length>"},"stroke-linecap":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"butt | round | square"},"stroke-linejoin":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"miter | round | bevel"},"stroke-miterlimit":{"comment":"added SVG property (<miterlimit> = <number-one-or-greater>) ","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<number-one-or-greater>"},"stroke-opacity":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<number-zero-one>"},"stroke-width":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<svg-length>"},"text-anchor":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#TextAlignmentProperties"],"syntax":"start | middle | end"},"unicode-bidi":{"comment":"added prefixed keywords https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-bidi","syntax":"| -moz-isolate | -moz-isolate-override | -moz-plaintext | -webkit-isolate | -webkit-isolate-override | -webkit-plaintext"},"unicode-range":{"comment":"added missed property https://developer.mozilla.org/en-US/docs/Web/CSS/%40font-face/unicode-range","syntax":"<urange>#"},"voice-balance":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<number> | left | center | right | leftwards | rightwards"},"voice-duration":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"auto | <time>"},"voice-family":{"comment":"<name> -> <family-name>, https://www.w3.org/TR/css3-speech/#property-index","syntax":"[ [ <family-name> | <generic-voice> ] , ]* [ <family-name> | <generic-voice> ] | preserve"},"voice-pitch":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<frequency> && absolute | [ [ x-low | low | medium | high | x-high ] || [ <frequency> | <semitones> | <percentage> ] ]"},"voice-range":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<frequency> && absolute | [ [ x-low | low | medium | high | x-high ] || [ <frequency> | <semitones> | <percentage> ] ]"},"voice-rate":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"[ normal | x-slow | slow | medium | fast | x-fast ] || <percentage>"},"voice-stress":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"normal | strong | moderate | none | reduced"},"voice-volume":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"silent | [ [ x-soft | soft | medium | loud | x-loud ] || <decibel> ]"},"writing-mode":{"comment":"extend with SVG keywords","syntax":"| <svg-writing-mode>"}},"syntaxes":{"-legacy-gradient":{"comment":"added collection of legacy gradient syntaxes","syntax":"<-webkit-gradient()> | <-legacy-linear-gradient> | <-legacy-repeating-linear-gradient> | <-legacy-radial-gradient> | <-legacy-repeating-radial-gradient>"},"-legacy-linear-gradient":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"-moz-linear-gradient( <-legacy-linear-gradient-arguments> ) | -webkit-linear-gradient( <-legacy-linear-gradient-arguments> ) | -o-linear-gradient( <-legacy-linear-gradient-arguments> )"},"-legacy-repeating-linear-gradient":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"-moz-repeating-linear-gradient( <-legacy-linear-gradient-arguments> ) | -webkit-repeating-linear-gradient( <-legacy-linear-gradient-arguments> ) | -o-repeating-linear-gradient( <-legacy-linear-gradient-arguments> )"},"-legacy-linear-gradient-arguments":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"[ <angle> | <side-or-corner> ]? , <color-stop-list>"},"-legacy-radial-gradient":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"-moz-radial-gradient( <-legacy-radial-gradient-arguments> ) | -webkit-radial-gradient( <-legacy-radial-gradient-arguments> ) | -o-radial-gradient( <-legacy-radial-gradient-arguments> )"},"-legacy-repeating-radial-gradient":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"-moz-repeating-radial-gradient( <-legacy-radial-gradient-arguments> ) | -webkit-repeating-radial-gradient( <-legacy-radial-gradient-arguments> ) | -o-repeating-radial-gradient( <-legacy-radial-gradient-arguments> )"},"-legacy-radial-gradient-arguments":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"[ <position> , ]? [ [ [ <-legacy-radial-gradient-shape> || <-legacy-radial-gradient-size> ] | [ <length> | <percentage> ]{2} ] , ]? <color-stop-list>"},"-legacy-radial-gradient-size":{"comment":"before a standard it contains 2 extra keywords (`contain` and `cover`) https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltsize","syntax":"closest-side | closest-corner | farthest-side | farthest-corner | contain | cover"},"-legacy-radial-gradient-shape":{"comment":"define to double sure it doesn\'t extends in future https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltshape","syntax":"circle | ellipse"},"-non-standard-font":{"comment":"non standard fonts","references":["https://webkit.org/blog/3709/using-the-system-font-in-web-content/"],"syntax":"-apple-system-body | -apple-system-headline | -apple-system-subheadline | -apple-system-caption1 | -apple-system-caption2 | -apple-system-footnote | -apple-system-short-body | -apple-system-short-headline | -apple-system-short-subheadline | -apple-system-short-caption1 | -apple-system-short-footnote | -apple-system-tall-body"},"-non-standard-color":{"comment":"non standard colors","references":["http://cssdot.ru/%D0%A1%D0%BF%D1%80%D0%B0%D0%B2%D0%BE%D1%87%D0%BD%D0%B8%D0%BA_CSS/color-i305.html","https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#Mozilla_Color_Preference_Extensions"],"syntax":"-moz-ButtonDefault | -moz-ButtonHoverFace | -moz-ButtonHoverText | -moz-CellHighlight | -moz-CellHighlightText | -moz-Combobox | -moz-ComboboxText | -moz-Dialog | -moz-DialogText | -moz-dragtargetzone | -moz-EvenTreeRow | -moz-Field | -moz-FieldText | -moz-html-CellHighlight | -moz-html-CellHighlightText | -moz-mac-accentdarkestshadow | -moz-mac-accentdarkshadow | -moz-mac-accentface | -moz-mac-accentlightesthighlight | -moz-mac-accentlightshadow | -moz-mac-accentregularhighlight | -moz-mac-accentregularshadow | -moz-mac-chrome-active | -moz-mac-chrome-inactive | -moz-mac-focusring | -moz-mac-menuselect | -moz-mac-menushadow | -moz-mac-menutextselect | -moz-MenuHover | -moz-MenuHoverText | -moz-MenuBarText | -moz-MenuBarHoverText | -moz-nativehyperlinktext | -moz-OddTreeRow | -moz-win-communicationstext | -moz-win-mediatext | -moz-activehyperlinktext | -moz-default-background-color | -moz-default-color | -moz-hyperlinktext | -moz-visitedhyperlinktext | -webkit-activelink | -webkit-focus-ring-color | -webkit-link | -webkit-text"},"-non-standard-image-rendering":{"comment":"non-standard keywords http://phrogz.net/tmp/canvas_image_zoom.html","syntax":"optimize-contrast | -moz-crisp-edges | -o-crisp-edges | -webkit-optimize-contrast"},"-non-standard-overflow":{"comment":"non-standard keywords https://developer.mozilla.org/en-US/docs/Web/CSS/overflow","syntax":"-moz-scrollbars-none | -moz-scrollbars-horizontal | -moz-scrollbars-vertical | -moz-hidden-unscrollable"},"-non-standard-width":{"comment":"non-standard keywords https://developer.mozilla.org/en-US/docs/Web/CSS/width","syntax":"fill-available | min-intrinsic | intrinsic | -moz-available | -moz-fit-content | -moz-min-content | -moz-max-content | -webkit-min-content | -webkit-max-content"},"-webkit-gradient()":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/ - TODO: simplify when after match algorithm improvement ( [, point, radius | , point] -> [, radius]? , point )","syntax":"-webkit-gradient( <-webkit-gradient-type>, <-webkit-gradient-point> [, <-webkit-gradient-point> | , <-webkit-gradient-radius>, <-webkit-gradient-point> ] [, <-webkit-gradient-radius>]? [, <-webkit-gradient-color-stop>]* )"},"-webkit-gradient-color-stop":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"from( <color> ) | color-stop( [ <number-zero-one> | <percentage> ] , <color> ) | to( <color> )"},"-webkit-gradient-point":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"[ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]"},"-webkit-gradient-radius":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"<length> | <percentage>"},"-webkit-gradient-type":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"linear | radial"},"-webkit-mask-box-repeat":{"comment":"missed; https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-mask-box-image","syntax":"repeat | stretch | round"},"-webkit-mask-clip-style":{"comment":"missed; there is no enough information about `-webkit-mask-clip` property, but looks like all those keywords are working","syntax":"border | border-box | padding | padding-box | content | content-box | text"},"-ms-filter-function-list":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<-ms-filter-function>+"},"-ms-filter-function":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<-ms-filter-function-progid> | <-ms-filter-function-legacy>"},"-ms-filter-function-progid":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"\'progid:\' [ <ident-token> \'.\' ]* [ <ident-token> | <function-token> <any-value>? ) ]"},"-ms-filter-function-legacy":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<ident-token> | <function-token> <any-value>? )"},"-ms-filter":{"syntax":"<string>"},"age":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"child | young | old"},"attr-name":{"syntax":"<wq-name>"},"attr-fallback":{"syntax":"<any-value>"},"border-radius":{"comment":"missed, https://drafts.csswg.org/css-backgrounds-3/#the-border-radius","syntax":"<length-percentage>{1,2}"},"bottom":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"content-list":{"comment":"missed -> https://drafts.csswg.org/css-content/#typedef-content-list (document-url, <target> and leader() is omitted util stabilization)","syntax":"[ <string> | contents | <image> | <quote> | <target> | <leader()> | <attr()> | counter( <ident>, <\'list-style-type\'>? ) ]+"},"element()":{"comment":"https://drafts.csswg.org/css-gcpm/#element-syntax & https://drafts.csswg.org/css-images-4/#element-notation","syntax":"element( <custom-ident> , [ first | start | last | first-except ]? ) | element( <id-selector> )"},"generic-voice":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"[ <age>? <gender> <integer>? ]"},"gender":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"male | female | neutral"},"generic-family":{"comment":"added -apple-system","references":["https://webkit.org/blog/3709/using-the-system-font-in-web-content/"],"syntax":"| -apple-system"},"gradient":{"comment":"added legacy syntaxes support","syntax":"| <-legacy-gradient>"},"left":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"mask-image":{"comment":"missed; https://drafts.fxtf.org/css-masking-1/#the-mask-image","syntax":"<mask-reference>#"},"name-repeat":{"comment":"missed, and looks like obsolete, keep it as is since other property syntaxes should be changed too; https://www.w3.org/TR/2015/WD-css-grid-1-20150917/#typedef-name-repeat","syntax":"repeat( [ <positive-integer> | auto-fill ], <line-names>+)"},"named-color":{"comment":"added non standard color names","syntax":"| <-non-standard-color>"},"paint":{"comment":"used by SVG https://www.w3.org/TR/SVG/painting.html#SpecifyingPaint","syntax":"none | <color> | <url> [ none | <color> ]? | context-fill | context-stroke"},"page-size":{"comment":"https://www.w3.org/TR/css-page-3/#typedef-page-size-page-size","syntax":"A5 | A4 | A3 | B5 | B4 | JIS-B5 | JIS-B4 | letter | legal | ledger"},"ratio":{"comment":"missed, https://drafts.csswg.org/mediaqueries-4/#typedef-ratio","syntax":"<integer> / <integer>"},"right":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"shape":{"comment":"missed spaces in function body and add backwards compatible syntax","syntax":"rect( <top>, <right>, <bottom>, <left> ) | rect( <top> <right> <bottom> <left> )"},"svg-length":{"comment":"All coordinates and lengths in SVG can be specified with or without a unit identifier","references":["https://www.w3.org/TR/SVG11/coords.html#Units"],"syntax":"<percentage> | <length> | <number>"},"svg-writing-mode":{"comment":"SVG specific keywords (deprecated for CSS)","references":["https://developer.mozilla.org/en/docs/Web/CSS/writing-mode","https://www.w3.org/TR/SVG/text.html#WritingModeProperty"],"syntax":"lr-tb | rl-tb | tb-rl | lr | rl | tb"},"top":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"track-group":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"\'(\' [ <string>* <track-minmax> <string>* ]+ \')\' [ \'[\' <positive-integer> \']\' ]? | <track-minmax>"},"track-list-v0":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"[ <string>* <track-group> <string>* ]+ | none"},"track-minmax":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"minmax( <track-breadth> , <track-breadth> ) | auto | <track-breadth> | fit-content"},"x":{"comment":"missed; not sure we should add it, but no others except `cursor` is using it so it\'s ok for now; https://drafts.csswg.org/css-ui-3/#cursor","syntax":"<number>"},"y":{"comment":"missed; not sure we should add it, but no others except `cursor` is using so it\'s ok for now; https://drafts.csswg.org/css-ui-3/#cursor","syntax":"<number>"},"declaration":{"comment":"missed, restored by https://drafts.csswg.org/css-syntax","syntax":"<ident-token> : <declaration-value>? [ \'!\' important ]?"},"declaration-list":{"comment":"missed, restored by https://drafts.csswg.org/css-syntax","syntax":"[ <declaration>? \';\' ]* <declaration>?"},"url":{"comment":"https://drafts.csswg.org/css-values-4/#urls","syntax":"url( <string> <url-modifier>* ) | <url-token>"},"url-modifier":{"comment":"https://drafts.csswg.org/css-values-4/#typedef-url-modifier","syntax":"<ident> | <function-token> <any-value> )"},"number-zero-one":{"syntax":"<number [0,1]>"},"number-one-or-greater":{"syntax":"<number [1,∞]>"},"positive-integer":{"syntax":"<integer [0,∞]>"},"-non-standard-display":{"syntax":"-ms-inline-flexbox | -ms-grid | -ms-inline-grid | -webkit-flex | -webkit-inline-flex | -webkit-box | -webkit-inline-box | -moz-inline-stack | -moz-box | -moz-inline-box"}}}');
 
 /***/ }),
 
@@ -13371,6 +11632,17 @@ module.exports = function createWalker(config) {
 
 /***/ }),
 
+/***/ "./node_modules/css-tree/package.json":
+/*!********************************************!*\
+  !*** ./node_modules/css-tree/package.json ***!
+  \********************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"name":"css-tree","version":"1.1.3","description":"A tool set for CSS: fast detailed parser (CSS → AST), walker (AST traversal), generator (AST → CSS) and lexer (validation and matching) based on specs and browser implementations","author":"Roman Dvornov <rdvornov@gmail.com> (https://github.com/lahmatiy)","license":"MIT","repository":"csstree/csstree","keywords":["css","ast","tokenizer","parser","walker","lexer","generator","utils","syntax","validation"],"main":"lib/index.js","unpkg":"dist/csstree.min.js","jsdelivr":"dist/csstree.min.js","scripts":{"build":"rollup --config","lint":"eslint data lib scripts test && node scripts/review-syntax-patch --lint && node scripts/update-docs --lint","lint-and-test":"npm run lint && npm test","update:docs":"node scripts/update-docs","review:syntax-patch":"node scripts/review-syntax-patch","test":"mocha --reporter progress","coverage":"nyc npm test","travis":"nyc npm run lint-and-test && npm run coveralls","coveralls":"nyc report --reporter=text-lcov | coveralls","prepublishOnly":"npm run build","hydrogen":"node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --trace_hydrogen_file=code.cfg --print-opt-code bin/parse --stat -o /dev/null"},"dependencies":{"mdn-data":"2.0.14","source-map":"^0.6.1"},"devDependencies":{"@rollup/plugin-commonjs":"^11.0.2","@rollup/plugin-json":"^4.0.2","@rollup/plugin-node-resolve":"^7.1.1","coveralls":"^3.0.9","eslint":"^6.8.0","json-to-ast":"^2.1.0","mocha":"^6.2.3","nyc":"^14.1.1","rollup":"^1.32.1","rollup-plugin-terser":"^5.3.0"},"engines":{"node":">=8.0.0"},"files":["data","dist","lib"]}');
+
+/***/ }),
+
 /***/ "./node_modules/dompurify/dist/purify.cjs.js":
 /*!***************************************************!*\
   !*** ./node_modules/dompurify/dist/purify.cjs.js ***!
@@ -14747,6 +13019,39 @@ f.subarray(0,c):f.slice(0,c)};E||(r.TextDecoder=x,r.TextEncoder=y)})(""+void 0==
 
 module.exports = window.DOMPurify || (window.DOMPurify = (__webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js")["default"]) || __webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js"));
 
+
+/***/ }),
+
+/***/ "./node_modules/mdn-data/css/at-rules.json":
+/*!*************************************************!*\
+  !*** ./node_modules/mdn-data/css/at-rules.json ***!
+  \*************************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"@charset":{"syntax":"@charset \\"<charset>\\";","groups":["CSS Charsets"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@charset"},"@counter-style":{"syntax":"@counter-style <counter-style-name> {\\n  [ system: <counter-system>; ] ||\\n  [ symbols: <counter-symbols>; ] ||\\n  [ additive-symbols: <additive-symbols>; ] ||\\n  [ negative: <negative-symbol>; ] ||\\n  [ prefix: <prefix>; ] ||\\n  [ suffix: <suffix>; ] ||\\n  [ range: <range>; ] ||\\n  [ pad: <padding>; ] ||\\n  [ speak-as: <speak-as>; ] ||\\n  [ fallback: <counter-style-name>; ]\\n}","interfaces":["CSSCounterStyleRule"],"groups":["CSS Counter Styles"],"descriptors":{"additive-symbols":{"syntax":"[ <integer> && <symbol> ]#","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"fallback":{"syntax":"<counter-style-name>","media":"all","initial":"decimal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"negative":{"syntax":"<symbol> <symbol>?","media":"all","initial":"\\"-\\" hyphen-minus","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"pad":{"syntax":"<integer> && <symbol>","media":"all","initial":"0 \\"\\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"prefix":{"syntax":"<symbol>","media":"all","initial":"\\"\\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"range":{"syntax":"[ [ <integer> | infinite ]{2} ]# | auto","media":"all","initial":"auto","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"speak-as":{"syntax":"auto | bullets | numbers | words | spell-out | <counter-style-name>","media":"all","initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"suffix":{"syntax":"<symbol>","media":"all","initial":"\\". \\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"symbols":{"syntax":"<symbol>+","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"system":{"syntax":"cyclic | numeric | alphabetic | symbolic | additive | [ fixed <integer>? ] | [ extends <counter-style-name> ]","media":"all","initial":"symbolic","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@counter-style"},"@document":{"syntax":"@document [ <url> | url-prefix(<string>) | domain(<string>) | media-document(<string>) | regexp(<string>) ]# {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule"],"groups":["CSS Conditional Rules"],"status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@document"},"@font-face":{"syntax":"@font-face {\\n  [ font-family: <family-name>; ] ||\\n  [ src: <src>; ] ||\\n  [ unicode-range: <unicode-range>; ] ||\\n  [ font-variant: <font-variant>; ] ||\\n  [ font-feature-settings: <font-feature-settings>; ] ||\\n  [ font-variation-settings: <font-variation-settings>; ] ||\\n  [ font-stretch: <font-stretch>; ] ||\\n  [ font-weight: <font-weight>; ] ||\\n  [ font-style: <font-style>; ]\\n}","interfaces":["CSSFontFaceRule"],"groups":["CSS Fonts"],"descriptors":{"font-display":{"syntax":"[ auto | block | swap | fallback | optional ]","media":"visual","percentages":"no","initial":"auto","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"font-family":{"syntax":"<family-name>","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-feature-settings":{"syntax":"normal | <feature-tag-value>#","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"font-variation-settings":{"syntax":"normal | [ <string> <number> ]#","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"font-stretch":{"syntax":"<font-stretch-absolute>{1,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-style":{"syntax":"normal | italic | oblique <angle>{0,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-weight":{"syntax":"<font-weight-absolute>{1,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-variant":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"src":{"syntax":"[ <url> [ format( <string># ) ]? | local( <family-name> ) ]#","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"unicode-range":{"syntax":"<unicode-range>#","media":"all","initial":"U+0-10FFFF","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@font-face"},"@font-feature-values":{"syntax":"@font-feature-values <family-name># {\\n  <feature-value-block-list>\\n}","interfaces":["CSSFontFeatureValuesRule"],"groups":["CSS Fonts"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@font-feature-values"},"@import":{"syntax":"@import [ <string> | <url> ] [ <media-query-list> ]?;","groups":["Media Queries"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@import"},"@keyframes":{"syntax":"@keyframes <keyframes-name> {\\n  <keyframe-block-list>\\n}","interfaces":["CSSKeyframeRule","CSSKeyframesRule"],"groups":["CSS Animations"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@keyframes"},"@media":{"syntax":"@media <media-query-list> {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule","CSSMediaRule","CSSCustomMediaRule"],"groups":["CSS Conditional Rules","Media Queries"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@media"},"@namespace":{"syntax":"@namespace <namespace-prefix>? [ <string> | <url> ];","groups":["CSS Namespaces"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@namespace"},"@page":{"syntax":"@page <page-selector-list> {\\n  <page-body>\\n}","interfaces":["CSSPageRule"],"groups":["CSS Pages"],"descriptors":{"bleed":{"syntax":"auto | <length>","media":["visual","paged"],"initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"marks":{"syntax":"none | [ crop || cross ]","media":["visual","paged"],"initial":"none","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"size":{"syntax":"<length>{1,2} | auto | [ <page-size> || [ portrait | landscape ] ]","media":["visual","paged"],"initial":"auto","percentages":"no","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"orderOfAppearance","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@page"},"@property":{"syntax":"@property <custom-property-name> {\\n  <declaration-list>\\n}","interfaces":["CSS","CSSPropertyRule"],"groups":["CSS Houdini"],"descriptors":{"syntax":{"syntax":"<string>","media":"all","percentages":"no","initial":"n/a (required)","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"inherits":{"syntax":"true | false","media":"all","percentages":"no","initial":"auto","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"initial-value":{"syntax":"<string>","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"experimental"}},"status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@property"},"@supports":{"syntax":"@supports <supports-condition> {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule","CSSSupportsRule"],"groups":["CSS Conditional Rules"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@supports"},"@viewport":{"syntax":"@viewport {\\n  <group-rule-body>\\n}","interfaces":["CSSViewportRule"],"groups":["CSS Device Adaptation"],"descriptors":{"height":{"syntax":"<viewport-length>{1,2}","media":["visual","continuous"],"initial":["min-height","max-height"],"percentages":["min-height","max-height"],"computed":["min-height","max-height"],"order":"orderOfAppearance","status":"standard"},"max-height":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToHeightOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"max-width":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToWidthOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"max-zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"},"min-height":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToHeightOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"min-width":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToWidthOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"min-zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"},"orientation":{"syntax":"auto | portrait | landscape","media":["visual","continuous"],"initial":"auto","percentages":"referToSizeOfBoundingBox","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"user-zoom":{"syntax":"zoom | fixed","media":["visual","continuous"],"initial":"zoom","percentages":"referToSizeOfBoundingBox","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"viewport-fit":{"syntax":"auto | contain | cover","media":["visual","continuous"],"initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"width":{"syntax":"<viewport-length>{1,2}","media":["visual","continuous"],"initial":["min-width","max-width"],"percentages":["min-width","max-width"],"computed":["min-width","max-width"],"order":"orderOfAppearance","status":"standard"},"zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@viewport"}}');
+
+/***/ }),
+
+/***/ "./node_modules/mdn-data/css/properties.json":
+/*!***************************************************!*\
+  !*** ./node_modules/mdn-data/css/properties.json ***!
+  \***************************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"--*":{"syntax":"<declaration-value>","media":"all","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Variables"],"initial":"seeProse","appliesto":"allElements","computed":"asSpecifiedWithVarsSubstituted","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/--*"},"-ms-accelerator":{"syntax":"false | true","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"false","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-accelerator"},"-ms-block-progression":{"syntax":"tb | rl | bt | lr","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"tb","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-block-progression"},"-ms-content-zoom-chaining":{"syntax":"none | chained","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-chaining"},"-ms-content-zooming":{"syntax":"none | zoom","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"zoomForTheTopLevelNoneForTheRest","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zooming"},"-ms-content-zoom-limit":{"syntax":"<\'-ms-content-zoom-limit-min\'> <\'-ms-content-zoom-limit-max\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"groups":["Microsoft Extensions"],"initial":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit"},"-ms-content-zoom-limit-max":{"syntax":"<percentage>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"maxZoomFactor","groups":["Microsoft Extensions"],"initial":"400%","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-max"},"-ms-content-zoom-limit-min":{"syntax":"<percentage>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"minZoomFactor","groups":["Microsoft Extensions"],"initial":"100%","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-min"},"-ms-content-zoom-snap":{"syntax":"<\'-ms-content-zoom-snap-type\'> || <\'-ms-content-zoom-snap-points\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-content-zoom-snap-type","-ms-content-zoom-snap-points"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-content-zoom-snap-type","-ms-content-zoom-snap-points"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap"},"-ms-content-zoom-snap-points":{"syntax":"snapInterval( <percentage>, <percentage> ) | snapList( <percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0%, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-points"},"-ms-content-zoom-snap-type":{"syntax":"none | proximity | mandatory","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-type"},"-ms-filter":{"syntax":"<string>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"\\"\\"","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-filter"},"-ms-flow-from":{"syntax":"[ none | <custom-ident> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-flow-from"},"-ms-flow-into":{"syntax":"[ none | <custom-ident> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"iframeElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-flow-into"},"-ms-grid-columns":{"syntax":"none | <track-list> | <auto-track-list>","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-grid-columns"},"-ms-grid-rows":{"syntax":"none | <track-list> | <auto-track-list>","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-grid-rows"},"-ms-high-contrast-adjust":{"syntax":"auto | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-high-contrast-adjust"},"-ms-hyphenate-limit-chars":{"syntax":"auto | <integer>{1,3}","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-chars"},"-ms-hyphenate-limit-lines":{"syntax":"no-limit | <integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"no-limit","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-lines"},"-ms-hyphenate-limit-zone":{"syntax":"<percentage> | <length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"referToLineBoxWidth","groups":["Microsoft Extensions"],"initial":"0","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-zone"},"-ms-ime-align":{"syntax":"auto | after","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-ime-align"},"-ms-overflow-style":{"syntax":"auto | none | scrollbar | -ms-autohiding-scrollbar","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-overflow-style"},"-ms-scrollbar-3dlight-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-3dlight-color"},"-ms-scrollbar-arrow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ButtonText","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-arrow-color"},"-ms-scrollbar-base-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-base-color"},"-ms-scrollbar-darkshadow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDDarkShadow","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-darkshadow-color"},"-ms-scrollbar-face-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDFace","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-face-color"},"-ms-scrollbar-highlight-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDHighlight","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-highlight-color"},"-ms-scrollbar-shadow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDDarkShadow","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-shadow-color"},"-ms-scrollbar-track-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"Scrollbar","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-track-color"},"-ms-scroll-chaining":{"syntax":"chained | none","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"chained","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-chaining"},"-ms-scroll-limit":{"syntax":"<\'-ms-scroll-limit-x-min\'> <\'-ms-scroll-limit-y-min\'> <\'-ms-scroll-limit-x-max\'> <\'-ms-scroll-limit-y-max\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-limit-x-min","-ms-scroll-limit-y-min","-ms-scroll-limit-x-max","-ms-scroll-limit-y-max"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-limit-x-min","-ms-scroll-limit-y-min","-ms-scroll-limit-x-max","-ms-scroll-limit-y-max"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit"},"-ms-scroll-limit-x-max":{"syntax":"auto | <length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-max"},"-ms-scroll-limit-x-min":{"syntax":"<length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-min"},"-ms-scroll-limit-y-max":{"syntax":"auto | <length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-max"},"-ms-scroll-limit-y-min":{"syntax":"<length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-min"},"-ms-scroll-rails":{"syntax":"none | railed","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"railed","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-rails"},"-ms-scroll-snap-points-x":{"syntax":"snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0px, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-x"},"-ms-scroll-snap-points-y":{"syntax":"snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0px, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-y"},"-ms-scroll-snap-type":{"syntax":"none | proximity | mandatory","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-type"},"-ms-scroll-snap-x":{"syntax":"<\'-ms-scroll-snap-type\'> <\'-ms-scroll-snap-points-x\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-snap-type","-ms-scroll-snap-points-x"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-snap-type","-ms-scroll-snap-points-x"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-x"},"-ms-scroll-snap-y":{"syntax":"<\'-ms-scroll-snap-type\'> <\'-ms-scroll-snap-points-y\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-snap-type","-ms-scroll-snap-points-y"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-snap-type","-ms-scroll-snap-points-y"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-y"},"-ms-scroll-translation":{"syntax":"none | vertical-to-horizontal","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-translation"},"-ms-text-autospace":{"syntax":"none | ideograph-alpha | ideograph-numeric | ideograph-parenthesis | ideograph-space","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-text-autospace"},"-ms-touch-select":{"syntax":"grippers | none","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"grippers","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-touch-select"},"-ms-user-select":{"syntax":"none | element | text","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"text","appliesto":"nonReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-user-select"},"-ms-wrap-flow":{"syntax":"auto | both | start | end | maximum | clear","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-flow"},"-ms-wrap-margin":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"exclusionElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-margin"},"-ms-wrap-through":{"syntax":"wrap | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"wrap","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-through"},"-moz-appearance":{"syntax":"none | button | button-arrow-down | button-arrow-next | button-arrow-previous | button-arrow-up | button-bevel | button-focus | caret | checkbox | checkbox-container | checkbox-label | checkmenuitem | dualbutton | groupbox | listbox | listitem | menuarrow | menubar | menucheckbox | menuimage | menuitem | menuitemtext | menulist | menulist-button | menulist-text | menulist-textfield | menupopup | menuradio | menuseparator | meterbar | meterchunk | progressbar | progressbar-vertical | progresschunk | progresschunk-vertical | radio | radio-container | radio-label | radiomenuitem | range | range-thumb | resizer | resizerpanel | scale-horizontal | scalethumbend | scalethumb-horizontal | scalethumbstart | scalethumbtick | scalethumb-vertical | scale-vertical | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | separator | sheet | spinner | spinner-downbutton | spinner-textfield | spinner-upbutton | splitter | statusbar | statusbarpanel | tab | tabpanel | tabpanels | tab-scroll-arrow-back | tab-scroll-arrow-forward | textfield | textfield-multiline | toolbar | toolbarbutton | toolbarbutton-dropdown | toolbargripper | toolbox | tooltip | treeheader | treeheadercell | treeheadersortarrow | treeitem | treeline | treetwisty | treetwistyopen | treeview | -moz-mac-unified-toolbar | -moz-win-borderless-glass | -moz-win-browsertabbar-toolbox | -moz-win-communicationstext | -moz-win-communications-toolbox | -moz-win-exclude-glass | -moz-win-glass | -moz-win-mediatext | -moz-win-media-toolbox | -moz-window-button-box | -moz-window-button-box-maximized | -moz-window-button-close | -moz-window-button-maximize | -moz-window-button-minimize | -moz-window-button-restore | -moz-window-frame-bottom | -moz-window-frame-left | -moz-window-frame-right | -moz-window-titlebar | -moz-window-titlebar-maximized","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"noneButOverriddenInUserAgentCSS","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"-moz-binding":{"syntax":"<url> | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElementsExceptGeneratedContentOrPseudoElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-binding"},"-moz-border-bottom-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-bottom-colors"},"-moz-border-left-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-left-colors"},"-moz-border-right-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-right-colors"},"-moz-border-top-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-top-colors"},"-moz-context-properties":{"syntax":"none | [ fill | fill-opacity | stroke | stroke-opacity ]#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElementsThatCanReferenceImages","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-context-properties"},"-moz-float-edge":{"syntax":"border-box | content-box | margin-box | padding-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"content-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-float-edge"},"-moz-force-broken-image-icon":{"syntax":"<integer [0,1]>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"0","appliesto":"images","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-force-broken-image-icon"},"-moz-image-region":{"syntax":"<shape> | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"auto","appliesto":"xulImageElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-image-region"},"-moz-orient":{"syntax":"inline | block | horizontal | vertical","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"inline","appliesto":"anyElementEffectOnProgressAndMeter","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-orient"},"-moz-outline-radius":{"syntax":"<outline-radius>{1,4} [ / <outline-radius>{1,4} ]?","media":"visual","inherited":false,"animationType":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"percentages":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"groups":["Mozilla Extensions"],"initial":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"appliesto":"allElements","computed":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius"},"-moz-outline-radius-bottomleft":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomleft"},"-moz-outline-radius-bottomright":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomright"},"-moz-outline-radius-topleft":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topleft"},"-moz-outline-radius-topright":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topright"},"-moz-stack-sizing":{"syntax":"ignore | stretch-to-fit","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"stretch-to-fit","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-stack-sizing"},"-moz-text-blink":{"syntax":"none | blink","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-text-blink"},"-moz-user-focus":{"syntax":"ignore | normal | select-after | select-before | select-menu | select-same | select-all | none","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-focus"},"-moz-user-input":{"syntax":"auto | none | enabled | disabled","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-input"},"-moz-user-modify":{"syntax":"read-only | read-write | write-only","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"read-only","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-modify"},"-moz-window-dragging":{"syntax":"drag | no-drag","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"drag","appliesto":"allElementsCreatingNativeWindows","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-window-dragging"},"-moz-window-shadow":{"syntax":"default | menu | tooltip | sheet | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"default","appliesto":"allElementsCreatingNativeWindows","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-window-shadow"},"-webkit-appearance":{"syntax":"none | button | button-bevel | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield | -apple-pay-button","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"noneButOverriddenInUserAgentCSS","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"-webkit-border-before":{"syntax":"<\'border-width\'> || <\'border-style\'> || <\'color\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":["-webkit-border-before-width"],"groups":["WebKit Extensions"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","color"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-border-before"},"-webkit-border-before-color":{"syntax":"<\'color\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard"},"-webkit-border-before-style":{"syntax":"<\'border-style\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard"},"-webkit-border-before-width":{"syntax":"<\'border-width\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["WebKit Extensions"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"nonstandard"},"-webkit-box-reflect":{"syntax":"[ above | below | right | left ]? <length>? <image>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-box-reflect"},"-webkit-line-clamp":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["WebKit Extensions","CSS Overflow"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-line-clamp"},"-webkit-mask":{"syntax":"[ <mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || [ <box> | border | padding | content | text ] || [ <box> | border | padding | content ] ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":["-webkit-mask-image","-webkit-mask-repeat","-webkit-mask-attachment","-webkit-mask-position","-webkit-mask-origin","-webkit-mask-clip"],"appliesto":"allElements","computed":["-webkit-mask-image","-webkit-mask-repeat","-webkit-mask-attachment","-webkit-mask-position","-webkit-mask-origin","-webkit-mask-clip"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask"},"-webkit-mask-attachment":{"syntax":"<attachment>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"scroll","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-attachment"},"-webkit-mask-clip":{"syntax":"[ <box> | border | padding | content | text ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"border","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-clip"},"-webkit-mask-composite":{"syntax":"<composite-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"source-over","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-composite"},"-webkit-mask-image":{"syntax":"<mask-reference>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"absoluteURIOrNone","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-image"},"-webkit-mask-origin":{"syntax":"[ <box> | border | padding | content ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"padding","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-origin"},"-webkit-mask-position":{"syntax":"<position>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0% 0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-position"},"-webkit-mask-position-x":{"syntax":"[ <length-percentage> | left | center | right ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-x"},"-webkit-mask-position-y":{"syntax":"[ <length-percentage> | top | center | bottom ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-y"},"-webkit-mask-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-repeat"},"-webkit-mask-repeat-x":{"syntax":"repeat | no-repeat | space | round","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-x"},"-webkit-mask-repeat-y":{"syntax":"repeat | no-repeat | space | round","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-y"},"-webkit-mask-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"relativeToBackgroundPositioningArea","groups":["WebKit Extensions"],"initial":"auto auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-size"},"-webkit-overflow-scrolling":{"syntax":"auto | touch","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-overflow-scrolling"},"-webkit-tap-highlight-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"black","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-tap-highlight-color"},"-webkit-text-fill-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-fill-color"},"-webkit-text-stroke":{"syntax":"<length> || <color>","media":"visual","inherited":true,"animationType":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"percentages":"no","groups":["WebKit Extensions"],"initial":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"appliesto":"allElements","computed":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"order":"canonicalOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke"},"-webkit-text-stroke-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-color"},"-webkit-text-stroke-width":{"syntax":"<length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"0","appliesto":"allElements","computed":"absoluteLength","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-width"},"-webkit-touch-callout":{"syntax":"default | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"default","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-touch-callout"},"-webkit-user-modify":{"syntax":"read-only | read-write | read-write-plaintext-only","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"read-only","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard"},"align-content":{"syntax":"normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multilineFlexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-content"},"align-items":{"syntax":"normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-items"},"align-self":{"syntax":"auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"auto","appliesto":"flexItemsGridItemsAndAbsolutelyPositionedBoxes","computed":"autoOnAbsolutelyPositionedElementsValueOfAlignItemsOnParent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-self"},"align-tracks":{"syntax":"[ normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"normal","appliesto":"gridContainersWithMasonryLayoutInTheirBlockAxis","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-tracks"},"all":{"syntax":"initial | inherit | unset | revert","media":"noPracticalMedia","inherited":false,"animationType":"eachOfShorthandPropertiesExceptUnicodeBiDiAndDirection","percentages":"no","groups":["CSS Miscellaneous"],"initial":"noPracticalInitialValue","appliesto":"allElements","computed":"asSpecifiedAppliesToEachProperty","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/all"},"animation":{"syntax":"<single-animation>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":["animation-name","animation-duration","animation-timing-function","animation-delay","animation-iteration-count","animation-direction","animation-fill-mode","animation-play-state"],"appliesto":"allElementsAndPseudos","computed":["animation-name","animation-duration","animation-timing-function","animation-delay","animation-direction","animation-iteration-count","animation-fill-mode","animation-play-state"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation"},"animation-delay":{"syntax":"<time>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-delay"},"animation-direction":{"syntax":"<single-animation-direction>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"normal","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-direction"},"animation-duration":{"syntax":"<time>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-duration"},"animation-fill-mode":{"syntax":"<single-animation-fill-mode>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"none","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-fill-mode"},"animation-iteration-count":{"syntax":"<single-animation-iteration-count>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"1","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-iteration-count"},"animation-name":{"syntax":"[ none | <keyframes-name> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"none","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-name"},"animation-play-state":{"syntax":"<single-animation-play-state>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"running","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-play-state"},"animation-timing-function":{"syntax":"<timing-function>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"ease","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-timing-function"},"appearance":{"syntax":"none | auto | textfield | menulist-button | <compat-auto>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"aspect-ratio":{"syntax":"auto | <ratio>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes","computed":"asSpecified","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/aspect-ratio"},"azimuth":{"syntax":"<angle> | [ [ left-side | far-left | left | center-left | center | center-right | right | far-right | right-side ] || behind ] | leftwards | rightwards","media":"aural","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Speech"],"initial":"center","appliesto":"allElements","computed":"normalizedAngle","order":"orderOfAppearance","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/azimuth"},"backdrop-filter":{"syntax":"none | <filter-function-list>","media":"visual","inherited":false,"animationType":"filterList","percentages":"no","groups":["Filter Effects"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/backdrop-filter"},"backface-visibility":{"syntax":"visible | hidden","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"visible","appliesto":"transformableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/backface-visibility"},"background":{"syntax":"[ <bg-layer> , ]* <final-bg-layer>","media":"visual","inherited":false,"animationType":["background-color","background-image","background-clip","background-position","background-size","background-repeat","background-attachment"],"percentages":["background-position","background-size"],"groups":["CSS Backgrounds and Borders"],"initial":["background-image","background-position","background-size","background-repeat","background-origin","background-clip","background-attachment","background-color"],"appliesto":"allElements","computed":["background-image","background-position","background-size","background-repeat","background-origin","background-clip","background-attachment","background-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background"},"background-attachment":{"syntax":"<attachment>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"scroll","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-attachment"},"background-blend-mode":{"syntax":"<blend-mode>#","media":"none","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"normal","appliesto":"allElementsSVGContainerGraphicsAndGraphicsReferencingElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-blend-mode"},"background-clip":{"syntax":"<box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"border-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-clip"},"background-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"transparent","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-color"},"background-image":{"syntax":"<bg-image>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-image"},"background-origin":{"syntax":"<box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"padding-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-origin"},"background-position":{"syntax":"<bg-position>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToSizeOfBackgroundPositioningAreaMinusBackgroundImageSize","groups":["CSS Backgrounds and Borders"],"initial":"0% 0%","appliesto":"allElements","computed":"listEachItemTwoKeywordsOriginOffsets","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position"},"background-position-x":{"syntax":"[ center | [ [ left | right | x-start | x-end ]? <length-percentage>? ]! ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToWidthOfBackgroundPositioningAreaMinusBackgroundImageHeight","groups":["CSS Backgrounds and Borders"],"initial":"left","appliesto":"allElements","computed":"listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position-x"},"background-position-y":{"syntax":"[ center | [ [ top | bottom | y-start | y-end ]? <length-percentage>? ]! ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToHeightOfBackgroundPositioningAreaMinusBackgroundImageHeight","groups":["CSS Backgrounds and Borders"],"initial":"top","appliesto":"allElements","computed":"listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position-y"},"background-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"repeat","appliesto":"allElements","computed":"listEachItemHasTwoKeywordsOnePerDimension","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-repeat"},"background-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"relativeToBackgroundPositioningArea","groups":["CSS Backgrounds and Borders"],"initial":"auto auto","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-size"},"block-overflow":{"syntax":"clip | ellipsis | <string>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"clip","appliesto":"blockContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"block-size":{"syntax":"<\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"sameAsWidthAndHeight","computed":"sameAsWidthAndHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/block-size"},"border":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-color","border-style","border-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-width","border-style","border-color"],"appliesto":"allElements","computed":["border-width","border-style","border-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border"},"border-block":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block"},"border-block-color":{"syntax":"<\'border-top-color\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-color"},"border-block-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-style"},"border-block-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-width"},"border-block-end":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-block-end-color","border-block-end-style","border-block-end-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end"},"border-block-end-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-color"},"border-block-end-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-style"},"border-block-end-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-width"},"border-block-start":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-block-start-color","border-block-start-style","border-block-start-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-block-start-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start"},"border-block-start-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-color"},"border-block-start-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-style"},"border-block-start-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-width"},"border-bottom":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-bottom-color","border-bottom-style","border-bottom-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-bottom-width","border-bottom-style","border-bottom-color"],"appliesto":"allElements","computed":["border-bottom-width","border-bottom-style","border-bottom-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom"},"border-bottom-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-color"},"border-bottom-left-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-left-radius"},"border-bottom-right-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-right-radius"},"border-bottom-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-style"},"border-bottom-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderBottomStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-width"},"border-collapse":{"syntax":"collapse | separate","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"separate","appliesto":"tableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-collapse"},"border-color":{"syntax":"<color>{1,4}","media":"visual","inherited":false,"animationType":["border-bottom-color","border-left-color","border-right-color","border-top-color"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-color","border-right-color","border-bottom-color","border-left-color"],"appliesto":"allElements","computed":["border-bottom-color","border-left-color","border-right-color","border-top-color"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-color"},"border-end-end-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-end-end-radius"},"border-end-start-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-end-start-radius"},"border-image":{"syntax":"<\'border-image-source\'> || <\'border-image-slice\'> [ / <\'border-image-width\'> | / <\'border-image-width\'>? / <\'border-image-outset\'> ]? || <\'border-image-repeat\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":["border-image-slice","border-image-width"],"groups":["CSS Backgrounds and Borders"],"initial":["border-image-source","border-image-slice","border-image-width","border-image-outset","border-image-repeat"],"appliesto":"allElementsExceptTableElementsWhenCollapse","computed":["border-image-outset","border-image-repeat","border-image-slice","border-image-source","border-image-width"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image"},"border-image-outset":{"syntax":"[ <length> | <number> ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-outset"},"border-image-repeat":{"syntax":"[ stretch | repeat | round | space ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"stretch","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-repeat"},"border-image-slice":{"syntax":"<number-percentage>{1,4} && fill?","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToSizeOfBorderImage","groups":["CSS Backgrounds and Borders"],"initial":"100%","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"oneToFourPercentagesOrAbsoluteLengthsPlusFill","order":"percentagesOrLengthsFollowedByFill","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-slice"},"border-image-source":{"syntax":"none | <image>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"noneOrImageWithAbsoluteURI","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-source"},"border-image-width":{"syntax":"[ <length-percentage> | <number> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToWidthOrHeightOfBorderImageArea","groups":["CSS Backgrounds and Borders"],"initial":"1","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-width"},"border-inline":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline"},"border-inline-end":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-inline-end-color","border-inline-end-style","border-inline-end-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-inline-end-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end"},"border-inline-color":{"syntax":"<\'border-top-color\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-color"},"border-inline-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-style"},"border-inline-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-width"},"border-inline-end-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-color"},"border-inline-end-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-style"},"border-inline-end-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-width"},"border-inline-start":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-inline-start-color","border-inline-start-style","border-inline-start-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-inline-start-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start"},"border-inline-start-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-color"},"border-inline-start-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-style"},"border-inline-start-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-width"},"border-left":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-left-color","border-left-style","border-left-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-left-width","border-left-style","border-left-color"],"appliesto":"allElements","computed":["border-left-width","border-left-style","border-left-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left"},"border-left-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-color"},"border-left-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-style"},"border-left-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderLeftStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-width"},"border-radius":{"syntax":"<length-percentage>{1,4} [ / <length-percentage>{1,4} ]?","media":"visual","inherited":false,"animationType":["border-top-left-radius","border-top-right-radius","border-bottom-right-radius","border-bottom-left-radius"],"percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":["border-top-left-radius","border-top-right-radius","border-bottom-right-radius","border-bottom-left-radius"],"appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":["border-bottom-left-radius","border-bottom-right-radius","border-top-left-radius","border-top-right-radius"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-radius"},"border-right":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-right-color","border-right-style","border-right-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-right-width","border-right-style","border-right-color"],"appliesto":"allElements","computed":["border-right-width","border-right-style","border-right-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right"},"border-right-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-color"},"border-right-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-style"},"border-right-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderRightStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-width"},"border-spacing":{"syntax":"<length> <length>?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"0","appliesto":"tableElements","computed":"twoAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-spacing"},"border-start-end-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-start-end-radius"},"border-start-start-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-start-start-radius"},"border-style":{"syntax":"<line-style>{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-style","border-right-style","border-bottom-style","border-left-style"],"appliesto":"allElements","computed":["border-bottom-style","border-left-style","border-right-style","border-top-style"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-style"},"border-top":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-top-color","border-top-style","border-top-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top"},"border-top-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-color"},"border-top-left-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-left-radius"},"border-top-right-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-right-radius"},"border-top-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-style"},"border-top-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderTopStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-width"},"border-width":{"syntax":"<line-width>{1,4}","media":"visual","inherited":false,"animationType":["border-bottom-width","border-left-width","border-right-width","border-top-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-width","border-right-width","border-bottom-width","border-left-width"],"appliesto":"allElements","computed":["border-bottom-width","border-left-width","border-right-width","border-top-width"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-width"},"bottom":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToContainingBlockHeight","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/bottom"},"box-align":{"syntax":"start | center | end | baseline | stretch","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"stretch","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-align"},"box-decoration-break":{"syntax":"slice | clone","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"slice","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-decoration-break"},"box-direction":{"syntax":"normal | reverse | inherit","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"normal","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-direction"},"box-flex":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"0","appliesto":"directChildrenOfElementsWithDisplayMozBoxMozInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-flex"},"box-flex-group":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"1","appliesto":"inFlowChildrenOfBoxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-flex-group"},"box-lines":{"syntax":"single | multiple","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"single","appliesto":"boxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-lines"},"box-ordinal-group":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"1","appliesto":"childrenOfBoxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-ordinal-group"},"box-orient":{"syntax":"horizontal | vertical | inline-axis | block-axis | inherit","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"inlineAxisHorizontalInXUL","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-orient"},"box-pack":{"syntax":"start | center | end | justify","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"start","appliesto":"elementsWithDisplayMozBoxMozInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-pack"},"box-shadow":{"syntax":"none | <shadow>#","media":"visual","inherited":false,"animationType":"shadowList","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"absoluteLengthsSpecifiedColorAsSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-shadow"},"box-sizing":{"syntax":"content-box | border-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"content-box","appliesto":"allElementsAcceptingWidthOrHeight","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-sizing"},"break-after":{"syntax":"auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-after"},"break-before":{"syntax":"auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-before"},"break-inside":{"syntax":"auto | avoid | avoid-page | avoid-column | avoid-region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-inside"},"caption-side":{"syntax":"top | bottom | block-start | block-end | inline-start | inline-end","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"top","appliesto":"tableCaptionElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/caption-side"},"caret-color":{"syntax":"auto | <color>","media":"interactive","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asAutoOrColor","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/caret-color"},"clear":{"syntax":"none | left | right | both | inline-start | inline-end","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"none","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clear"},"clip":{"syntax":"<shape> | auto","media":"visual","inherited":false,"animationType":"rectangle","percentages":"no","groups":["CSS Masking"],"initial":"auto","appliesto":"absolutelyPositionedElements","computed":"autoOrRectangle","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clip"},"clip-path":{"syntax":"<clip-source> | [ <basic-shape> || <geometry-box> ] | none","media":"visual","inherited":false,"animationType":"basicShapeOtherwiseNo","percentages":"referToReferenceBoxWhenSpecifiedOtherwiseBorderBox","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clip-path"},"color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Color"],"initial":"variesFromBrowserToBrowser","appliesto":"allElements","computed":"translucentValuesRGBAOtherwiseRGB","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/color"},"color-adjust":{"syntax":"economy | exact","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Color"],"initial":"economy","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/color-adjust"},"column-count":{"syntax":"<integer> | auto","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Columns"],"initial":"auto","appliesto":"blockContainersExceptTableWrappers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-count"},"column-fill":{"syntax":"auto | balance | balance-all","media":"visualInContinuousMediaNoEffectInOverflowColumns","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"balance","appliesto":"multicolElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-fill"},"column-gap":{"syntax":"normal | <length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfContentArea","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multiColumnElementsFlexContainersGridContainers","computed":"asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-gap"},"column-rule":{"syntax":"<\'column-rule-width\'> || <\'column-rule-style\'> || <\'column-rule-color\'>","media":"visual","inherited":false,"animationType":["column-rule-color","column-rule-style","column-rule-width"],"percentages":"no","groups":["CSS Columns"],"initial":["column-rule-width","column-rule-style","column-rule-color"],"appliesto":"multicolElements","computed":["column-rule-color","column-rule-style","column-rule-width"],"order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule"},"column-rule-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Columns"],"initial":"currentcolor","appliesto":"multicolElements","computed":"computedColor","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-color"},"column-rule-style":{"syntax":"<\'border-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"none","appliesto":"multicolElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-style"},"column-rule-width":{"syntax":"<\'border-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Columns"],"initial":"medium","appliesto":"multicolElements","computed":"absoluteLength0IfColumnRuleStyleNoneOrHidden","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-width"},"column-span":{"syntax":"none | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"none","appliesto":"inFlowBlockLevelElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-span"},"column-width":{"syntax":"<length> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Columns"],"initial":"auto","appliesto":"blockContainersExceptTableWrappers","computed":"absoluteLengthZeroOrLarger","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-width"},"columns":{"syntax":"<\'column-width\'> || <\'column-count\'>","media":"visual","inherited":false,"animationType":["column-width","column-count"],"percentages":"no","groups":["CSS Columns"],"initial":["column-width","column-count"],"appliesto":"blockContainersExceptTableWrappers","computed":["column-width","column-count"],"order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/columns"},"contain":{"syntax":"none | strict | content | [ size || layout || style || paint ]","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Containment"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/contain"},"content":{"syntax":"normal | none | [ <content-replacement> | <content-list> ] [/ <string> ]?","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Generated Content"],"initial":"normal","appliesto":"beforeAndAfterPseudos","computed":"normalOnElementsForPseudosNoneAbsoluteURIStringOrAsSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/content"},"counter-increment":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-increment"},"counter-reset":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-reset"},"counter-set":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-set"},"cursor":{"syntax":"[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing ] ]","media":["visual","interactive"],"inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/cursor"},"direction":{"syntax":"ltr | rtl","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"ltr","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/direction"},"display":{"syntax":"[ <display-outside> || <display-inside> ] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Display"],"initial":"inline","appliesto":"allElements","computed":"asSpecifiedExceptPositionedFloatingAndRootElementsKeywordMaybeDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/display"},"empty-cells":{"syntax":"show | hide","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"show","appliesto":"tableCellElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/empty-cells"},"filter":{"syntax":"none | <filter-function-list>","media":"visual","inherited":false,"animationType":"filterList","percentages":"no","groups":["Filter Effects"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/filter"},"flex":{"syntax":"none | [ <\'flex-grow\'> <\'flex-shrink\'>? || <\'flex-basis\'> ]","media":"visual","inherited":false,"animationType":["flex-grow","flex-shrink","flex-basis"],"percentages":"no","groups":["CSS Flexible Box Layout"],"initial":["flex-grow","flex-shrink","flex-basis"],"appliesto":"flexItemsAndInFlowPseudos","computed":["flex-grow","flex-shrink","flex-basis"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex"},"flex-basis":{"syntax":"content | <\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToFlexContainersInnerMainSize","groups":["CSS Flexible Box Layout"],"initial":"auto","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"lengthOrPercentageBeforeKeywordIfBothPresent","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-basis"},"flex-direction":{"syntax":"row | row-reverse | column | column-reverse","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"row","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-direction"},"flex-flow":{"syntax":"<\'flex-direction\'> || <\'flex-wrap\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":["flex-direction","flex-wrap"],"appliesto":"flexContainers","computed":["flex-direction","flex-wrap"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-flow"},"flex-grow":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"0","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-grow"},"flex-shrink":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"1","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-shrink"},"flex-wrap":{"syntax":"nowrap | wrap | wrap-reverse","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"nowrap","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-wrap"},"float":{"syntax":"left | right | none | inline-start | inline-end","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"none","appliesto":"allElementsNoEffectIfDisplayNone","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/float"},"font":{"syntax":"[ [ <\'font-style\'> || <font-variant-css21> || <\'font-weight\'> || <\'font-stretch\'> ]? <\'font-size\'> [ / <\'line-height\'> ]? <\'font-family\'> ] | caption | icon | menu | message-box | small-caption | status-bar","media":"visual","inherited":true,"animationType":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"percentages":["font-size","line-height"],"groups":["CSS Fonts"],"initial":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"appliesto":"allElements","computed":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font"},"font-family":{"syntax":"[ <family-name> | <generic-family> ]#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-family"},"font-feature-settings":{"syntax":"normal | <feature-tag-value>#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-feature-settings"},"font-kerning":{"syntax":"auto | normal | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-kerning"},"font-language-override":{"syntax":"normal | <string>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-language-override"},"font-optical-sizing":{"syntax":"auto | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-optical-sizing"},"font-variation-settings":{"syntax":"normal | [ <string> <number> ]#","media":"visual","inherited":true,"animationType":"transform","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variation-settings"},"font-size":{"syntax":"<absolute-size> | <relative-size> | <length-percentage>","media":"visual","inherited":true,"animationType":"length","percentages":"referToParentElementsFontSize","groups":["CSS Fonts"],"initial":"medium","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-size"},"font-size-adjust":{"syntax":"none | <number>","media":"visual","inherited":true,"animationType":"number","percentages":"no","groups":["CSS Fonts"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-size-adjust"},"font-smooth":{"syntax":"auto | never | always | <absolute-size> | <length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-smooth"},"font-stretch":{"syntax":"<font-stretch-absolute>","media":"visual","inherited":true,"animationType":"fontStretch","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-stretch"},"font-style":{"syntax":"normal | italic | oblique <angle>?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-style"},"font-synthesis":{"syntax":"none | [ weight || style ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"weight style","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-synthesis"},"font-variant":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant"},"font-variant-alternates":{"syntax":"normal | [ stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-alternates"},"font-variant-caps":{"syntax":"normal | small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-caps"},"font-variant-east-asian":{"syntax":"normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-east-asian"},"font-variant-ligatures":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-ligatures"},"font-variant-numeric":{"syntax":"normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-numeric"},"font-variant-position":{"syntax":"normal | sub | super","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-position"},"font-weight":{"syntax":"<font-weight-absolute> | bolder | lighter","media":"visual","inherited":true,"animationType":"fontWeight","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"keywordOrNumericalValueBolderLighterTransformedToRealValue","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-weight"},"gap":{"syntax":"<\'row-gap\'> <\'column-gap\'>?","media":"visual","inherited":false,"animationType":["row-gap","column-gap"],"percentages":"no","groups":["CSS Box Alignment"],"initial":["row-gap","column-gap"],"appliesto":"multiColumnElementsFlexContainersGridContainers","computed":["row-gap","column-gap"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/gap"},"grid":{"syntax":"<\'grid-template\'> | <\'grid-template-rows\'> / [ auto-flow && dense? ] <\'grid-auto-columns\'>? | [ auto-flow && dense? ] <\'grid-auto-rows\'>? / <\'grid-template-columns\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":["grid-template-rows","grid-template-columns","grid-auto-rows","grid-auto-columns"],"groups":["CSS Grid Layout"],"initial":["grid-template-rows","grid-template-columns","grid-template-areas","grid-auto-rows","grid-auto-columns","grid-auto-flow","grid-column-gap","grid-row-gap","column-gap","row-gap"],"appliesto":"gridContainers","computed":["grid-template-rows","grid-template-columns","grid-template-areas","grid-auto-rows","grid-auto-columns","grid-auto-flow","grid-column-gap","grid-row-gap","column-gap","row-gap"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid"},"grid-area":{"syntax":"<grid-line> [ / <grid-line> ]{0,3}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-start","grid-column-start","grid-row-end","grid-column-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-row-start","grid-column-start","grid-row-end","grid-column-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-area"},"grid-auto-columns":{"syntax":"<track-size>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-columns"},"grid-auto-flow":{"syntax":"[ row | column ] || dense","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"row","appliesto":"gridContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-flow"},"grid-auto-rows":{"syntax":"<track-size>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-rows"},"grid-column":{"syntax":"<grid-line> [ / <grid-line> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-column-start","grid-column-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-column-start","grid-column-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column"},"grid-column-end":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column-end"},"grid-column-gap":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"0","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-gap"},"grid-column-start":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column-start"},"grid-gap":{"syntax":"<\'grid-row-gap\'> <\'grid-column-gap\'>?","media":"visual","inherited":false,"animationType":["grid-row-gap","grid-column-gap"],"percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-gap","grid-column-gap"],"appliesto":"gridContainers","computed":["grid-row-gap","grid-column-gap"],"order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/gap"},"grid-row":{"syntax":"<grid-line> [ / <grid-line> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-start","grid-row-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-row-start","grid-row-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row"},"grid-row-end":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row-end"},"grid-row-gap":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"0","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/row-gap"},"grid-row-start":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row-start"},"grid-template":{"syntax":"none | [ <\'grid-template-rows\'> / <\'grid-template-columns\'> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":["grid-template-columns","grid-template-rows"],"groups":["CSS Grid Layout"],"initial":["grid-template-columns","grid-template-rows","grid-template-areas"],"appliesto":"gridContainers","computed":["grid-template-columns","grid-template-rows","grid-template-areas"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template"},"grid-template-areas":{"syntax":"none | <string>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-areas"},"grid-template-columns":{"syntax":"none | <track-list> | <auto-track-list> | subgrid <line-name-list>?","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-columns"},"grid-template-rows":{"syntax":"none | <track-list> | <auto-track-list> | subgrid <line-name-list>?","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-rows"},"hanging-punctuation":{"syntax":"none | [ first || [ force-end | allow-end ] || last ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/hanging-punctuation"},"height":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentagesRelativeToContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAutoOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/height"},"hyphens":{"syntax":"none | manual | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"manual","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/hyphens"},"image-orientation":{"syntax":"from-image | <angle> | [ <angle>? flip ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"from-image","appliesto":"allElements","computed":"angleRoundedToNextQuarter","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/image-orientation"},"image-rendering":{"syntax":"auto | crisp-edges | pixelated","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/image-rendering"},"image-resolution":{"syntax":"[ from-image || <resolution> ] && snap?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"1dppx","appliesto":"allElements","computed":"asSpecifiedWithExceptionOfResolution","order":"uniqueOrder","status":"experimental"},"ime-mode":{"syntax":"auto | normal | active | inactive | disabled","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"textFields","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ime-mode"},"initial-letter":{"syntax":"normal | [ <number> <integer>? ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Inline"],"initial":"normal","appliesto":"firstLetterPseudoElementsAndInlineLevelFirstChildren","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/initial-letter"},"initial-letter-align":{"syntax":"[ auto | alphabetic | hanging | ideographic ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Inline"],"initial":"auto","appliesto":"firstLetterPseudoElementsAndInlineLevelFirstChildren","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/initial-letter-align"},"inline-size":{"syntax":"<\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"sameAsWidthAndHeight","computed":"sameAsWidthAndHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inline-size"},"inset":{"syntax":"<\'top\'>{1,4}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset"},"inset-block":{"syntax":"<\'top\'>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block"},"inset-block-end":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block-end"},"inset-block-start":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block-start"},"inset-inline":{"syntax":"<\'top\'>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline"},"inset-inline-end":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline-end"},"inset-inline-start":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline-start"},"isolation":{"syntax":"auto | isolate","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"auto","appliesto":"allElementsSVGContainerGraphicsAndGraphicsReferencingElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/isolation"},"justify-content":{"syntax":"normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-content"},"justify-items":{"syntax":"normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"legacy","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-items"},"justify-self":{"syntax":"auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"auto","appliesto":"blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-self"},"justify-tracks":{"syntax":"[ normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ] ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"normal","appliesto":"gridContainersWithMasonryLayoutInTheirInlineAxis","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-tracks"},"left":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/left"},"letter-spacing":{"syntax":"normal | <length>","media":"visual","inherited":true,"animationType":"length","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"optimumValueOfAbsoluteLengthOrNormal","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/letter-spacing"},"line-break":{"syntax":"auto | loose | normal | strict | anywhere","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-break"},"line-clamp":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Overflow"],"initial":"none","appliesto":"blockContainersExceptMultiColumnContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"line-height":{"syntax":"normal | <number> | <length> | <percentage>","media":"visual","inherited":true,"animationType":"numberOrLength","percentages":"referToElementFontSize","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"absoluteLengthOrAsSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-height"},"line-height-step":{"syntax":"<length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"0","appliesto":"blockContainers","computed":"absoluteLength","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-height-step"},"list-style":{"syntax":"<\'list-style-type\'> || <\'list-style-position\'> || <\'list-style-image\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":["list-style-type","list-style-position","list-style-image"],"appliesto":"listItems","computed":["list-style-image","list-style-position","list-style-type"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style"},"list-style-image":{"syntax":"<url> | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"none","appliesto":"listItems","computed":"noneOrImageWithAbsoluteURI","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-image"},"list-style-position":{"syntax":"inside | outside","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"outside","appliesto":"listItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-position"},"list-style-type":{"syntax":"<counter-style> | <string> | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"disc","appliesto":"listItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-type"},"margin":{"syntax":"[ <length> | <percentage> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":["margin-bottom","margin-left","margin-right","margin-top"],"appliesto":"allElementsExceptTableDisplayTypes","computed":["margin-bottom","margin-left","margin-right","margin-top"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin"},"margin-block":{"syntax":"<\'margin-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block"},"margin-block-end":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block-end"},"margin-block-start":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block-start"},"margin-bottom":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-bottom"},"margin-inline":{"syntax":"<\'margin-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline"},"margin-inline-end":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline-end"},"margin-inline-start":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline-start"},"margin-left":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-left"},"margin-right":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-right"},"margin-top":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-top"},"margin-trim":{"syntax":"none | in-flow | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"none","appliesto":"blockContainersAndMultiColumnContainers","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line"],"status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-trim"},"mask":{"syntax":"<mask-layer>#","media":"visual","inherited":false,"animationType":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"percentages":["mask-position"],"groups":["CSS Masking"],"initial":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"appliesto":"allElementsSVGContainerElements","computed":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask"},"mask-border":{"syntax":"<\'mask-border-source\'> || <\'mask-border-slice\'> [ / <\'mask-border-width\'>? [ / <\'mask-border-outset\'> ]? ]? || <\'mask-border-repeat\'> || <\'mask-border-mode\'>","media":"visual","inherited":false,"animationType":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"percentages":["mask-border-slice","mask-border-width"],"groups":["CSS Masking"],"initial":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"appliesto":"allElementsSVGContainerElements","computed":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border"},"mask-border-mode":{"syntax":"luminance | alpha","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"alpha","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-mode"},"mask-border-outset":{"syntax":"[ <length> | <number> ]{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"0","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-outset"},"mask-border-repeat":{"syntax":"[ stretch | repeat | round | space ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"stretch","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-repeat"},"mask-border-slice":{"syntax":"<number-percentage>{1,4} fill?","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfMaskBorderImage","groups":["CSS Masking"],"initial":"0","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-slice"},"mask-border-source":{"syntax":"none | <image>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-source"},"mask-border-width":{"syntax":"[ <length-percentage> | <number> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"relativeToMaskBorderImageArea","groups":["CSS Masking"],"initial":"auto","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-width"},"mask-clip":{"syntax":"[ <geometry-box> | no-clip ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"border-box","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-clip"},"mask-composite":{"syntax":"<compositing-operator>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"add","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-composite"},"mask-image":{"syntax":"<mask-reference>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-image"},"mask-mode":{"syntax":"<masking-mode>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"match-source","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-mode"},"mask-origin":{"syntax":"<geometry-box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"border-box","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-origin"},"mask-position":{"syntax":"<position>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToSizeOfMaskPaintingArea","groups":["CSS Masking"],"initial":"center","appliesto":"allElementsSVGContainerElements","computed":"consistsOfTwoKeywordsForOriginAndOffsets","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-position"},"mask-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"no-repeat","appliesto":"allElementsSVGContainerElements","computed":"consistsOfTwoDimensionKeywords","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-repeat"},"mask-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"no","groups":["CSS Masking"],"initial":"auto","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-size"},"mask-type":{"syntax":"luminance | alpha","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"luminance","appliesto":"maskElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-type"},"masonry-auto-flow":{"syntax":"[ pack | next ] || [ definite-first | ordered ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"pack","appliesto":"gridContainersWithMasonryLayout","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/masonry-auto-flow"},"math-style":{"syntax":"normal | compact","media":"visual","inherited":true,"animationType":"notAnimatable","percentages":"no","groups":["MathML"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/math-style"},"max-block-size":{"syntax":"<\'max-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMaxWidthAndMaxHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-block-size"},"max-height":{"syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentagesNone","groups":["CSS Box Model"],"initial":"none","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAsSpecifiedAbsoluteLengthOrNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-height"},"max-inline-size":{"syntax":"<\'max-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMaxWidthAndMaxHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-inline-size"},"max-lines":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Overflow"],"initial":"none","appliesto":"blockContainersExceptMultiColumnContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"max-width":{"syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"none","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAsSpecifiedAbsoluteLengthOrNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-width"},"min-block-size":{"syntax":"<\'min-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMinWidthAndMinHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-block-size"},"min-height":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentages0","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-height"},"min-inline-size":{"syntax":"<\'min-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMinWidthAndMinHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-inline-size"},"min-width":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-width"},"mix-blend-mode":{"syntax":"<blend-mode>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mix-blend-mode"},"object-fit":{"syntax":"fill | contain | cover | none | scale-down","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"fill","appliesto":"replacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/object-fit"},"object-position":{"syntax":"<position>","media":"visual","inherited":true,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToWidthAndHeightOfElement","groups":["CSS Images"],"initial":"50% 50%","appliesto":"replacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/object-position"},"offset":{"syntax":"[ <\'offset-position\'>? [ <\'offset-path\'> [ <\'offset-distance\'> || <\'offset-rotate\'> ]? ]? ]! [ / <\'offset-anchor\'> ]?","media":"visual","inherited":false,"animationType":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"percentages":["offset-position","offset-distance","offset-anchor"],"groups":["CSS Motion Path"],"initial":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"appliesto":"transformableElements","computed":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset"},"offset-anchor":{"syntax":"auto | <position>","media":"visual","inherited":false,"animationType":"position","percentages":"relativeToWidthAndHeight","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"standard"},"offset-distance":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToTotalPathLength","groups":["CSS Motion Path"],"initial":"0","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-distance"},"offset-path":{"syntax":"none | ray( [ <angle> && <size> && contain? ] ) | <path()> | <url> | [ <basic-shape> || <geometry-box> ]","media":"visual","inherited":false,"animationType":"angleOrBasicShapeOrPath","percentages":"no","groups":["CSS Motion Path"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-path"},"offset-position":{"syntax":"auto | <position>","media":"visual","inherited":false,"animationType":"position","percentages":"referToSizeOfContainingBlock","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"experimental"},"offset-rotate":{"syntax":"[ auto | reverse ] || <angle>","media":"visual","inherited":false,"animationType":"angleOrBasicShapeOrPath","percentages":"no","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-rotate"},"opacity":{"syntax":"<alpha-value>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Color"],"initial":"1.0","appliesto":"allElements","computed":"specifiedValueClipped0To1","order":"uniqueOrder","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/opacity"},"order":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"0","appliesto":"flexItemsGridItemsAbsolutelyPositionedContainerChildren","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/order"},"orphans":{"syntax":"<integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"2","appliesto":"blockContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/orphans"},"outline":{"syntax":"[ <\'outline-color\'> || <\'outline-style\'> || <\'outline-width\'> ]","media":["visual","interactive"],"inherited":false,"animationType":["outline-color","outline-width","outline-style"],"percentages":"no","groups":["CSS Basic User Interface"],"initial":["outline-color","outline-style","outline-width"],"appliesto":"allElements","computed":["outline-color","outline-width","outline-style"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline"},"outline-color":{"syntax":"<color> | invert","media":["visual","interactive"],"inherited":false,"animationType":"color","percentages":"no","groups":["CSS Basic User Interface"],"initial":"invertOrCurrentColor","appliesto":"allElements","computed":"invertForTranslucentColorRGBAOtherwiseRGB","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-color"},"outline-offset":{"syntax":"<length>","media":["visual","interactive"],"inherited":false,"animationType":"length","percentages":"no","groups":["CSS Basic User Interface"],"initial":"0","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-offset"},"outline-style":{"syntax":"auto | <\'border-style\'>","media":["visual","interactive"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-style"},"outline-width":{"syntax":"<line-width>","media":["visual","interactive"],"inherited":false,"animationType":"length","percentages":"no","groups":["CSS Basic User Interface"],"initial":"medium","appliesto":"allElements","computed":"absoluteLength0ForNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-width"},"overflow":{"syntax":"[ visible | hidden | clip | scroll | auto ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":["overflow-x","overflow-y"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow"},"overflow-anchor":{"syntax":"auto | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Anchoring"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard"},"overflow-block":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"perGrammar","status":"standard"},"overflow-clip-box":{"syntax":"padding-box | content-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"padding-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Mozilla/CSS/overflow-clip-box"},"overflow-inline":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"perGrammar","status":"standard"},"overflow-wrap":{"syntax":"normal | break-word | anywhere","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"nonReplacedInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"},"overflow-x":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-x"},"overflow-y":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-y"},"overscroll-behavior":{"syntax":"[ contain | none | auto ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior"},"overscroll-behavior-block":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-block"},"overscroll-behavior-inline":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-inline"},"overscroll-behavior-x":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-x"},"overscroll-behavior-y":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-y"},"padding":{"syntax":"[ <length> | <percentage> ]{1,4}","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":["padding-bottom","padding-left","padding-right","padding-top"],"appliesto":"allElementsExceptInternalTableDisplayTypes","computed":["padding-bottom","padding-left","padding-right","padding-top"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding"},"padding-block":{"syntax":"<\'padding-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block"},"padding-block-end":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block-end"},"padding-block-start":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block-start"},"padding-bottom":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-bottom"},"padding-inline":{"syntax":"<\'padding-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline"},"padding-inline-end":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline-end"},"padding-inline-start":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline-start"},"padding-left":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-left"},"padding-right":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-right"},"padding-top":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-top"},"page-break-after":{"syntax":"auto | always | avoid | left | right | recto | verso","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-after"},"page-break-before":{"syntax":"auto | always | avoid | left | right | recto | verso","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-before"},"page-break-inside":{"syntax":"auto | avoid","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-inside"},"paint-order":{"syntax":"normal | [ fill || stroke || markers ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"textElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/paint-order"},"perspective":{"syntax":"none | <length>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"absoluteLengthOrNone","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/perspective"},"perspective-origin":{"syntax":"<position>","media":"visual","inherited":false,"animationType":"simpleListOfLpc","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"50% 50%","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"oneOrTwoValuesLengthAbsoluteKeywordsPercentages","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/perspective-origin"},"place-content":{"syntax":"<\'align-content\'> <\'justify-content\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multilineFlexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-content"},"place-items":{"syntax":"<\'align-items\'> <\'justify-items\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":["align-items","justify-items"],"appliesto":"allElements","computed":["align-items","justify-items"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-items"},"place-self":{"syntax":"<\'align-self\'> <\'justify-self\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":["align-self","justify-self"],"appliesto":"blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems","computed":["align-self","justify-self"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-self"},"pointer-events":{"syntax":"auto | none | visiblePainted | visibleFill | visibleStroke | visible | painted | fill | stroke | all | inherit","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Pointer Events"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/pointer-events"},"position":{"syntax":"static | relative | absolute | sticky | fixed","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"static","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/position"},"quotes":{"syntax":"none | auto | [ <string> <string> ]+","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Generated Content"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/quotes"},"resize":{"syntax":"none | both | horizontal | vertical | block | inline","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"none","appliesto":"elementsWithOverflowNotVisibleAndReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/resize"},"right":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/right"},"rotate":{"syntax":"none | <angle> | [ x | y | z | <number>{3} ] && <angle>","media":"visual","inherited":false,"animationType":"transform","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/rotate"},"row-gap":{"syntax":"normal | <length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfContentArea","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multiColumnElementsFlexContainersGridContainers","computed":"asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/row-gap"},"ruby-align":{"syntax":"start | center | space-between | space-around","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"space-around","appliesto":"rubyBasesAnnotationsBaseAnnotationContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ruby-align"},"ruby-merge":{"syntax":"separate | collapse | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"separate","appliesto":"rubyAnnotationsContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"ruby-position":{"syntax":"over | under | inter-character","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"over","appliesto":"rubyAnnotationsContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ruby-position"},"scale":{"syntax":"none | <number>{1,3}","media":"visual","inherited":false,"animationType":"transform","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scale"},"scrollbar-color":{"syntax":"auto | dark | light | <color>{2}","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Scrollbars"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-color"},"scrollbar-gutter":{"syntax":"auto | [ stable | always ] && both? && force?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-gutter"},"scrollbar-width":{"syntax":"auto | thin | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scrollbars"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-width"},"scroll-behavior":{"syntax":"auto | smooth","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSSOM View"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-behavior"},"scroll-margin":{"syntax":"<length>{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin"},"scroll-margin-block":{"syntax":"<length>{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block"},"scroll-margin-block-start":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-start"},"scroll-margin-block-end":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-end"},"scroll-margin-bottom":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-bottom"},"scroll-margin-inline":{"syntax":"<length>{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline"},"scroll-margin-inline-start":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-start"},"scroll-margin-inline-end":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-end"},"scroll-margin-left":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-left"},"scroll-margin-right":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-right"},"scroll-margin-top":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-top"},"scroll-padding":{"syntax":"[ auto | <length-percentage> ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding"},"scroll-padding-block":{"syntax":"[ auto | <length-percentage> ]{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block"},"scroll-padding-block-start":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-start"},"scroll-padding-block-end":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-end"},"scroll-padding-bottom":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-bottom"},"scroll-padding-inline":{"syntax":"[ auto | <length-percentage> ]{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline"},"scroll-padding-inline-start":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-start"},"scroll-padding-inline-end":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-end"},"scroll-padding-left":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-left"},"scroll-padding-right":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-right"},"scroll-padding-top":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-top"},"scroll-snap-align":{"syntax":"[ none | start | end | center ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-align"},"scroll-snap-coordinate":{"syntax":"none | <position>#","media":"interactive","inherited":false,"animationType":"position","percentages":"referToBorderBox","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-coordinate"},"scroll-snap-destination":{"syntax":"<position>","media":"interactive","inherited":false,"animationType":"position","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"0px 0px","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-destination"},"scroll-snap-points-x":{"syntax":"none | repeat( <length-percentage> )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-x"},"scroll-snap-points-y":{"syntax":"none | repeat( <length-percentage> )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-y"},"scroll-snap-stop":{"syntax":"normal | always","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-stop"},"scroll-snap-type":{"syntax":"none | [ x | y | block | inline | both ] [ mandatory | proximity ]?","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type"},"scroll-snap-type-x":{"syntax":"none | mandatory | proximity","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-x"},"scroll-snap-type-y":{"syntax":"none | mandatory | proximity","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-y"},"shape-image-threshold":{"syntax":"<alpha-value>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Shapes"],"initial":"0.0","appliesto":"floats","computed":"specifiedValueNumberClipped0To1","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-image-threshold"},"shape-margin":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Shapes"],"initial":"0","appliesto":"floats","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-margin"},"shape-outside":{"syntax":"none | <shape-box> || <basic-shape> | <image>","media":"visual","inherited":false,"animationType":"basicShapeOtherwiseNo","percentages":"no","groups":["CSS Shapes"],"initial":"none","appliesto":"floats","computed":"asDefinedForBasicShapeWithAbsoluteURIOtherwiseAsSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-outside"},"tab-size":{"syntax":"<integer> | <length>","media":"visual","inherited":true,"animationType":"length","percentages":"no","groups":["CSS Text"],"initial":"8","appliesto":"blockContainers","computed":"specifiedIntegerOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/tab-size"},"table-layout":{"syntax":"auto | fixed","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"auto","appliesto":"tableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/table-layout"},"text-align":{"syntax":"start | end | left | right | center | justify | match-parent","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"startOrNamelessValueIfLTRRightIfRTL","appliesto":"blockContainers","computed":"asSpecifiedExceptMatchParent","order":"orderOfAppearance","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-align"},"text-align-last":{"syntax":"auto | start | end | left | right | center | justify","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"blockContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-align-last"},"text-combine-upright":{"syntax":"none | all | [ digits <integer>? ]","media":"visual","inherited":true,"animationType":"notAnimatable","percentages":"no","groups":["CSS Writing Modes"],"initial":"none","appliesto":"nonReplacedInlineElements","computed":"keywordPlusIntegerIfDigits","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-combine-upright"},"text-decoration":{"syntax":"<\'text-decoration-line\'> || <\'text-decoration-style\'> || <\'text-decoration-color\'> || <\'text-decoration-thickness\'>","media":"visual","inherited":false,"animationType":["text-decoration-color","text-decoration-style","text-decoration-line","text-decoration-thickness"],"percentages":"no","groups":["CSS Text Decoration"],"initial":["text-decoration-color","text-decoration-style","text-decoration-line"],"appliesto":"allElements","computed":["text-decoration-line","text-decoration-style","text-decoration-color","text-decoration-thickness"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration"},"text-decoration-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Text Decoration"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-color"},"text-decoration-line":{"syntax":"none | [ underline || overline || line-through || blink ] | spelling-error | grammar-error","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-line"},"text-decoration-skip":{"syntax":"none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges || box-decoration ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"objects","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip"},"text-decoration-skip-ink":{"syntax":"auto | all | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip-ink"},"text-decoration-style":{"syntax":"solid | double | dotted | dashed | wavy","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"solid","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-style"},"text-decoration-thickness":{"syntax":"auto | from-font | <length> | <percentage> ","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToElementFontSize","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-thickness"},"text-emphasis":{"syntax":"<\'text-emphasis-style\'> || <\'text-emphasis-color\'>","media":"visual","inherited":false,"animationType":["text-emphasis-color","text-emphasis-style"],"percentages":"no","groups":["CSS Text Decoration"],"initial":["text-emphasis-style","text-emphasis-color"],"appliesto":"allElements","computed":["text-emphasis-style","text-emphasis-color"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis"},"text-emphasis-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Text Decoration"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-color"},"text-emphasis-position":{"syntax":"[ over | under ] && [ right | left ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"over right","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-position"},"text-emphasis-style":{"syntax":"none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-style"},"text-indent":{"syntax":"<length-percentage> && hanging? && each-line?","media":"visual","inherited":true,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Text"],"initial":"0","appliesto":"blockContainers","computed":"percentageOrAbsoluteLengthPlusKeywords","order":"lengthOrPercentageBeforeKeywords","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-indent"},"text-justify":{"syntax":"auto | inter-character | inter-word | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"inlineLevelAndTableCellElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-justify"},"text-orientation":{"syntax":"mixed | upright | sideways","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"mixed","appliesto":"allElementsExceptTableRowGroupsRowsColumnGroupsAndColumns","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-orientation"},"text-overflow":{"syntax":"[ clip | ellipsis | <string> ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"clip","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-overflow"},"text-rendering":{"syntax":"auto | optimizeSpeed | optimizeLegibility | geometricPrecision","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Miscellaneous"],"initial":"auto","appliesto":"textElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-rendering"},"text-shadow":{"syntax":"none | <shadow-t>#","media":"visual","inherited":true,"animationType":"shadowList","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"colorPlusThreeAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-shadow"},"text-size-adjust":{"syntax":"none | auto | <percentage>","media":"visual","inherited":true,"animationType":"discrete","percentages":"referToSizeOfFont","groups":["CSS Text"],"initial":"autoForSmartphoneBrowsersSupportingInflation","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-size-adjust"},"text-transform":{"syntax":"none | capitalize | uppercase | lowercase | full-width | full-size-kana","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-transform"},"text-underline-offset":{"syntax":"auto | <length> | <percentage> ","media":"visual","inherited":true,"animationType":"byComputedValueType","percentages":"referToElementFontSize","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-underline-offset"},"text-underline-position":{"syntax":"auto | from-font | [ under || [ left | right ] ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-underline-position"},"top":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToContainingBlockHeight","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/top"},"touch-action":{"syntax":"auto | none | [ [ pan-x | pan-left | pan-right ] || [ pan-y | pan-up | pan-down ] || pinch-zoom ] | manipulation","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Pointer Events"],"initial":"auto","appliesto":"allElementsExceptNonReplacedInlineElementsTableRowsColumnsRowColumnGroups","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/touch-action"},"transform":{"syntax":"none | <transform-list>","media":"visual","inherited":false,"animationType":"transform","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform"},"transform-box":{"syntax":"content-box | border-box | fill-box | stroke-box | view-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"view-box","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-box"},"transform-origin":{"syntax":"[ <length-percentage> | left | center | right | top | bottom ] | [ [ <length-percentage> | left | center | right ] && [ <length-percentage> | top | center | bottom ] ] <length>?","media":"visual","inherited":false,"animationType":"simpleListOfLpc","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"50% 50% 0","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"oneOrTwoValuesLengthAbsoluteKeywordsPercentages","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-origin"},"transform-style":{"syntax":"flat | preserve-3d","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"flat","appliesto":"transformableElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-style"},"transition":{"syntax":"<single-transition>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":["transition-delay","transition-duration","transition-property","transition-timing-function"],"appliesto":"allElementsAndPseudos","computed":["transition-delay","transition-duration","transition-property","transition-timing-function"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition"},"transition-delay":{"syntax":"<time>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-delay"},"transition-duration":{"syntax":"<time>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-duration"},"transition-property":{"syntax":"none | <single-transition-property>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"all","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-property"},"transition-timing-function":{"syntax":"<timing-function>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"ease","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-timing-function"},"translate":{"syntax":"none | <length-percentage> [ <length-percentage> <length>? ]?","media":"visual","inherited":false,"animationType":"transform","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/translate"},"unicode-bidi":{"syntax":"normal | embed | isolate | bidi-override | isolate-override | plaintext","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"normal","appliesto":"allElementsSomeValuesNoEffectOnNonInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/unicode-bidi"},"user-select":{"syntax":"auto | text | none | contain | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/user-select"},"vertical-align":{"syntax":"baseline | sub | super | text-top | text-bottom | middle | top | bottom | <percentage> | <length>","media":"visual","inherited":false,"animationType":"length","percentages":"referToLineHeight","groups":["CSS Table"],"initial":"baseline","appliesto":"inlineLevelAndTableCellElements","computed":"absoluteLengthOrKeyword","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/vertical-align"},"visibility":{"syntax":"visible | hidden | collapse","media":"visual","inherited":true,"animationType":"visibility","percentages":"no","groups":["CSS Box Model"],"initial":"visible","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/visibility"},"white-space":{"syntax":"normal | pre | nowrap | pre-wrap | pre-line | break-spaces","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/white-space"},"widows":{"syntax":"<integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"2","appliesto":"blockContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/widows"},"width":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAutoOrAbsoluteLength","order":"lengthOrPercentageBeforeKeywordIfBothPresent","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/width"},"will-change":{"syntax":"auto | <animateable-feature>#","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Will Change"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/will-change"},"word-break":{"syntax":"normal | break-all | keep-all | break-word","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/word-break"},"word-spacing":{"syntax":"normal | <length-percentage>","media":"visual","inherited":true,"animationType":"length","percentages":"referToWidthOfAffectedGlyph","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"optimumMinAndMaxValueOfAbsoluteLengthPercentageOrNormal","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/word-spacing"},"word-wrap":{"syntax":"normal | break-word","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"nonReplacedInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"},"writing-mode":{"syntax":"horizontal-tb | vertical-rl | vertical-lr | sideways-rl | sideways-lr","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"horizontal-tb","appliesto":"allElementsExceptTableRowColumnGroupsTableRowsColumns","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/writing-mode"},"z-index":{"syntax":"auto | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/z-index"},"zoom":{"syntax":"normal | reset | <number> | <percentage>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["Microsoft Extensions"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/zoom"}}');
+
+/***/ }),
+
+/***/ "./node_modules/mdn-data/css/syntaxes.json":
+/*!*************************************************!*\
+  !*** ./node_modules/mdn-data/css/syntaxes.json ***!
+  \*************************************************/
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"absolute-size":{"syntax":"xx-small | x-small | small | medium | large | x-large | xx-large | xxx-large"},"alpha-value":{"syntax":"<number> | <percentage>"},"angle-percentage":{"syntax":"<angle> | <percentage>"},"angular-color-hint":{"syntax":"<angle-percentage>"},"angular-color-stop":{"syntax":"<color> && <color-stop-angle>?"},"angular-color-stop-list":{"syntax":"[ <angular-color-stop> [, <angular-color-hint>]? ]# , <angular-color-stop>"},"animateable-feature":{"syntax":"scroll-position | contents | <custom-ident>"},"attachment":{"syntax":"scroll | fixed | local"},"attr()":{"syntax":"attr( <attr-name> <type-or-unit>? [, <attr-fallback> ]? )"},"attr-matcher":{"syntax":"[ \'~\' | \'|\' | \'^\' | \'$\' | \'*\' ]? \'=\'"},"attr-modifier":{"syntax":"i | s"},"attribute-selector":{"syntax":"\'[\' <wq-name> \']\' | \'[\' <wq-name> <attr-matcher> [ <string-token> | <ident-token> ] <attr-modifier>? \']\'"},"auto-repeat":{"syntax":"repeat( [ auto-fill | auto-fit ] , [ <line-names>? <fixed-size> ]+ <line-names>? )"},"auto-track-list":{"syntax":"[ <line-names>? [ <fixed-size> | <fixed-repeat> ] ]* <line-names>? <auto-repeat>\\n[ <line-names>? [ <fixed-size> | <fixed-repeat> ] ]* <line-names>?"},"baseline-position":{"syntax":"[ first | last ]? baseline"},"basic-shape":{"syntax":"<inset()> | <circle()> | <ellipse()> | <polygon()> | <path()>"},"bg-image":{"syntax":"none | <image>"},"bg-layer":{"syntax":"<bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>"},"bg-position":{"syntax":"[ [ left | center | right | top | bottom | <length-percentage> ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ] | [ center | [ left | right ] <length-percentage>? ] && [ center | [ top | bottom ] <length-percentage>? ] ]"},"bg-size":{"syntax":"[ <length-percentage> | auto ]{1,2} | cover | contain"},"blur()":{"syntax":"blur( <length> )"},"blend-mode":{"syntax":"normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn | hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity"},"box":{"syntax":"border-box | padding-box | content-box"},"brightness()":{"syntax":"brightness( <number-percentage> )"},"calc()":{"syntax":"calc( <calc-sum> )"},"calc-sum":{"syntax":"<calc-product> [ [ \'+\' | \'-\' ] <calc-product> ]*"},"calc-product":{"syntax":"<calc-value> [ \'*\' <calc-value> | \'/\' <number> ]*"},"calc-value":{"syntax":"<number> | <dimension> | <percentage> | ( <calc-sum> )"},"cf-final-image":{"syntax":"<image> | <color>"},"cf-mixing-image":{"syntax":"<percentage>? && <image>"},"circle()":{"syntax":"circle( [ <shape-radius> ]? [ at <position> ]? )"},"clamp()":{"syntax":"clamp( <calc-sum>#{3} )"},"class-selector":{"syntax":"\'.\' <ident-token>"},"clip-source":{"syntax":"<url>"},"color":{"syntax":"<rgb()> | <rgba()> | <hsl()> | <hsla()> | <hex-color> | <named-color> | currentcolor | <deprecated-system-color>"},"color-stop":{"syntax":"<color-stop-length> | <color-stop-angle>"},"color-stop-angle":{"syntax":"<angle-percentage>{1,2}"},"color-stop-length":{"syntax":"<length-percentage>{1,2}"},"color-stop-list":{"syntax":"[ <linear-color-stop> [, <linear-color-hint>]? ]# , <linear-color-stop>"},"combinator":{"syntax":"\'>\' | \'+\' | \'~\' | [ \'||\' ]"},"common-lig-values":{"syntax":"[ common-ligatures | no-common-ligatures ]"},"compat-auto":{"syntax":"searchfield | textarea | push-button | slider-horizontal | checkbox | radio | square-button | menulist | listbox | meter | progress-bar | button"},"composite-style":{"syntax":"clear | copy | source-over | source-in | source-out | source-atop | destination-over | destination-in | destination-out | destination-atop | xor"},"compositing-operator":{"syntax":"add | subtract | intersect | exclude"},"compound-selector":{"syntax":"[ <type-selector>? <subclass-selector>* [ <pseudo-element-selector> <pseudo-class-selector>* ]* ]!"},"compound-selector-list":{"syntax":"<compound-selector>#"},"complex-selector":{"syntax":"<compound-selector> [ <combinator>? <compound-selector> ]*"},"complex-selector-list":{"syntax":"<complex-selector>#"},"conic-gradient()":{"syntax":"conic-gradient( [ from <angle> ]? [ at <position> ]?, <angular-color-stop-list> )"},"contextual-alt-values":{"syntax":"[ contextual | no-contextual ]"},"content-distribution":{"syntax":"space-between | space-around | space-evenly | stretch"},"content-list":{"syntax":"[ <string> | contents | <image> | <quote> | <target> | <leader()> ]+"},"content-position":{"syntax":"center | start | end | flex-start | flex-end"},"content-replacement":{"syntax":"<image>"},"contrast()":{"syntax":"contrast( [ <number-percentage> ] )"},"counter()":{"syntax":"counter( <custom-ident>, <counter-style>? )"},"counter-style":{"syntax":"<counter-style-name> | symbols()"},"counter-style-name":{"syntax":"<custom-ident>"},"counters()":{"syntax":"counters( <custom-ident>, <string>, <counter-style>? )"},"cross-fade()":{"syntax":"cross-fade( <cf-mixing-image> , <cf-final-image>? )"},"cubic-bezier-timing-function":{"syntax":"ease | ease-in | ease-out | ease-in-out | cubic-bezier(<number [0,1]>, <number>, <number [0,1]>, <number>)"},"deprecated-system-color":{"syntax":"ActiveBorder | ActiveCaption | AppWorkspace | Background | ButtonFace | ButtonHighlight | ButtonShadow | ButtonText | CaptionText | GrayText | Highlight | HighlightText | InactiveBorder | InactiveCaption | InactiveCaptionText | InfoBackground | InfoText | Menu | MenuText | Scrollbar | ThreeDDarkShadow | ThreeDFace | ThreeDHighlight | ThreeDLightShadow | ThreeDShadow | Window | WindowFrame | WindowText"},"discretionary-lig-values":{"syntax":"[ discretionary-ligatures | no-discretionary-ligatures ]"},"display-box":{"syntax":"contents | none"},"display-inside":{"syntax":"flow | flow-root | table | flex | grid | ruby"},"display-internal":{"syntax":"table-row-group | table-header-group | table-footer-group | table-row | table-cell | table-column-group | table-column | table-caption | ruby-base | ruby-text | ruby-base-container | ruby-text-container"},"display-legacy":{"syntax":"inline-block | inline-list-item | inline-table | inline-flex | inline-grid"},"display-listitem":{"syntax":"<display-outside>? && [ flow | flow-root ]? && list-item"},"display-outside":{"syntax":"block | inline | run-in"},"drop-shadow()":{"syntax":"drop-shadow( <length>{2,3} <color>? )"},"east-asian-variant-values":{"syntax":"[ jis78 | jis83 | jis90 | jis04 | simplified | traditional ]"},"east-asian-width-values":{"syntax":"[ full-width | proportional-width ]"},"element()":{"syntax":"element( <id-selector> )"},"ellipse()":{"syntax":"ellipse( [ <shape-radius>{2} ]? [ at <position> ]? )"},"ending-shape":{"syntax":"circle | ellipse"},"env()":{"syntax":"env( <custom-ident> , <declaration-value>? )"},"explicit-track-list":{"syntax":"[ <line-names>? <track-size> ]+ <line-names>?"},"family-name":{"syntax":"<string> | <custom-ident>+"},"feature-tag-value":{"syntax":"<string> [ <integer> | on | off ]?"},"feature-type":{"syntax":"@stylistic | @historical-forms | @styleset | @character-variant | @swash | @ornaments | @annotation"},"feature-value-block":{"syntax":"<feature-type> \'{\' <feature-value-declaration-list> \'}\'"},"feature-value-block-list":{"syntax":"<feature-value-block>+"},"feature-value-declaration":{"syntax":"<custom-ident>: <integer>+;"},"feature-value-declaration-list":{"syntax":"<feature-value-declaration>"},"feature-value-name":{"syntax":"<custom-ident>"},"fill-rule":{"syntax":"nonzero | evenodd"},"filter-function":{"syntax":"<blur()> | <brightness()> | <contrast()> | <drop-shadow()> | <grayscale()> | <hue-rotate()> | <invert()> | <opacity()> | <saturate()> | <sepia()>"},"filter-function-list":{"syntax":"[ <filter-function> | <url> ]+"},"final-bg-layer":{"syntax":"<\'background-color\'> || <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>"},"fit-content()":{"syntax":"fit-content( [ <length> | <percentage> ] )"},"fixed-breadth":{"syntax":"<length-percentage>"},"fixed-repeat":{"syntax":"repeat( [ <positive-integer> ] , [ <line-names>? <fixed-size> ]+ <line-names>? )"},"fixed-size":{"syntax":"<fixed-breadth> | minmax( <fixed-breadth> , <track-breadth> ) | minmax( <inflexible-breadth> , <fixed-breadth> )"},"font-stretch-absolute":{"syntax":"normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded | <percentage>"},"font-variant-css21":{"syntax":"[ normal | small-caps ]"},"font-weight-absolute":{"syntax":"normal | bold | <number [1,1000]>"},"frequency-percentage":{"syntax":"<frequency> | <percentage>"},"general-enclosed":{"syntax":"[ <function-token> <any-value> ) ] | ( <ident> <any-value> )"},"generic-family":{"syntax":"serif | sans-serif | cursive | fantasy | monospace"},"generic-name":{"syntax":"serif | sans-serif | cursive | fantasy | monospace"},"geometry-box":{"syntax":"<shape-box> | fill-box | stroke-box | view-box"},"gradient":{"syntax":"<linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()> | <conic-gradient()>"},"grayscale()":{"syntax":"grayscale( <number-percentage> )"},"grid-line":{"syntax":"auto | <custom-ident> | [ <integer> && <custom-ident>? ] | [ span && [ <integer> || <custom-ident> ] ]"},"historical-lig-values":{"syntax":"[ historical-ligatures | no-historical-ligatures ]"},"hsl()":{"syntax":"hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? ) | hsl( <hue>, <percentage>, <percentage>, <alpha-value>? )"},"hsla()":{"syntax":"hsla( <hue> <percentage> <percentage> [ / <alpha-value> ]? ) | hsla( <hue>, <percentage>, <percentage>, <alpha-value>? )"},"hue":{"syntax":"<number> | <angle>"},"hue-rotate()":{"syntax":"hue-rotate( <angle> )"},"id-selector":{"syntax":"<hash-token>"},"image":{"syntax":"<url> | <image()> | <image-set()> | <element()> | <paint()> | <cross-fade()> | <gradient>"},"image()":{"syntax":"image( <image-tags>? [ <image-src>? , <color>? ]! )"},"image-set()":{"syntax":"image-set( <image-set-option># )"},"image-set-option":{"syntax":"[ <image> | <string> ] <resolution>"},"image-src":{"syntax":"<url> | <string>"},"image-tags":{"syntax":"ltr | rtl"},"inflexible-breadth":{"syntax":"<length> | <percentage> | min-content | max-content | auto"},"inset()":{"syntax":"inset( <length-percentage>{1,4} [ round <\'border-radius\'> ]? )"},"invert()":{"syntax":"invert( <number-percentage> )"},"keyframes-name":{"syntax":"<custom-ident> | <string>"},"keyframe-block":{"syntax":"<keyframe-selector># {\\n  <declaration-list>\\n}"},"keyframe-block-list":{"syntax":"<keyframe-block>+"},"keyframe-selector":{"syntax":"from | to | <percentage>"},"leader()":{"syntax":"leader( <leader-type> )"},"leader-type":{"syntax":"dotted | solid | space | <string>"},"length-percentage":{"syntax":"<length> | <percentage>"},"line-names":{"syntax":"\'[\' <custom-ident>* \']\'"},"line-name-list":{"syntax":"[ <line-names> | <name-repeat> ]+"},"line-style":{"syntax":"none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset"},"line-width":{"syntax":"<length> | thin | medium | thick"},"linear-color-hint":{"syntax":"<length-percentage>"},"linear-color-stop":{"syntax":"<color> <color-stop-length>?"},"linear-gradient()":{"syntax":"linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )"},"mask-layer":{"syntax":"<mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || <geometry-box> || [ <geometry-box> | no-clip ] || <compositing-operator> || <masking-mode>"},"mask-position":{"syntax":"[ <length-percentage> | left | center | right ] [ <length-percentage> | top | center | bottom ]?"},"mask-reference":{"syntax":"none | <image> | <mask-source>"},"mask-source":{"syntax":"<url>"},"masking-mode":{"syntax":"alpha | luminance | match-source"},"matrix()":{"syntax":"matrix( <number>#{6} )"},"matrix3d()":{"syntax":"matrix3d( <number>#{16} )"},"max()":{"syntax":"max( <calc-sum># )"},"media-and":{"syntax":"<media-in-parens> [ and <media-in-parens> ]+"},"media-condition":{"syntax":"<media-not> | <media-and> | <media-or> | <media-in-parens>"},"media-condition-without-or":{"syntax":"<media-not> | <media-and> | <media-in-parens>"},"media-feature":{"syntax":"( [ <mf-plain> | <mf-boolean> | <mf-range> ] )"},"media-in-parens":{"syntax":"( <media-condition> ) | <media-feature> | <general-enclosed>"},"media-not":{"syntax":"not <media-in-parens>"},"media-or":{"syntax":"<media-in-parens> [ or <media-in-parens> ]+"},"media-query":{"syntax":"<media-condition> | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?"},"media-query-list":{"syntax":"<media-query>#"},"media-type":{"syntax":"<ident>"},"mf-boolean":{"syntax":"<mf-name>"},"mf-name":{"syntax":"<ident>"},"mf-plain":{"syntax":"<mf-name> : <mf-value>"},"mf-range":{"syntax":"<mf-name> [ \'<\' | \'>\' ]? \'=\'? <mf-value>\\n| <mf-value> [ \'<\' | \'>\' ]? \'=\'? <mf-name>\\n| <mf-value> \'<\' \'=\'? <mf-name> \'<\' \'=\'? <mf-value>\\n| <mf-value> \'>\' \'=\'? <mf-name> \'>\' \'=\'? <mf-value>"},"mf-value":{"syntax":"<number> | <dimension> | <ident> | <ratio>"},"min()":{"syntax":"min( <calc-sum># )"},"minmax()":{"syntax":"minmax( [ <length> | <percentage> | min-content | max-content | auto ] , [ <length> | <percentage> | <flex> | min-content | max-content | auto ] )"},"named-color":{"syntax":"transparent | aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen"},"namespace-prefix":{"syntax":"<ident>"},"ns-prefix":{"syntax":"[ <ident-token> | \'*\' ]? \'|\'"},"number-percentage":{"syntax":"<number> | <percentage>"},"numeric-figure-values":{"syntax":"[ lining-nums | oldstyle-nums ]"},"numeric-fraction-values":{"syntax":"[ diagonal-fractions | stacked-fractions ]"},"numeric-spacing-values":{"syntax":"[ proportional-nums | tabular-nums ]"},"nth":{"syntax":"<an-plus-b> | even | odd"},"opacity()":{"syntax":"opacity( [ <number-percentage> ] )"},"overflow-position":{"syntax":"unsafe | safe"},"outline-radius":{"syntax":"<length> | <percentage>"},"page-body":{"syntax":"<declaration>? [ ; <page-body> ]? | <page-margin-box> <page-body>"},"page-margin-box":{"syntax":"<page-margin-box-type> \'{\' <declaration-list> \'}\'"},"page-margin-box-type":{"syntax":"@top-left-corner | @top-left | @top-center | @top-right | @top-right-corner | @bottom-left-corner | @bottom-left | @bottom-center | @bottom-right | @bottom-right-corner | @left-top | @left-middle | @left-bottom | @right-top | @right-middle | @right-bottom"},"page-selector-list":{"syntax":"[ <page-selector># ]?"},"page-selector":{"syntax":"<pseudo-page>+ | <ident> <pseudo-page>*"},"path()":{"syntax":"path( [ <fill-rule>, ]? <string> )"},"paint()":{"syntax":"paint( <ident>, <declaration-value>? )"},"perspective()":{"syntax":"perspective( <length> )"},"polygon()":{"syntax":"polygon( <fill-rule>? , [ <length-percentage> <length-percentage> ]# )"},"position":{"syntax":"[ [ left | center | right ] || [ top | center | bottom ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]? | [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ] ]"},"pseudo-class-selector":{"syntax":"\':\' <ident-token> | \':\' <function-token> <any-value> \')\'"},"pseudo-element-selector":{"syntax":"\':\' <pseudo-class-selector>"},"pseudo-page":{"syntax":": [ left | right | first | blank ]"},"quote":{"syntax":"open-quote | close-quote | no-open-quote | no-close-quote"},"radial-gradient()":{"syntax":"radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )"},"relative-selector":{"syntax":"<combinator>? <complex-selector>"},"relative-selector-list":{"syntax":"<relative-selector>#"},"relative-size":{"syntax":"larger | smaller"},"repeat-style":{"syntax":"repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}"},"repeating-linear-gradient()":{"syntax":"repeating-linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )"},"repeating-radial-gradient()":{"syntax":"repeating-radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )"},"rgb()":{"syntax":"rgb( <percentage>{3} [ / <alpha-value> ]? ) | rgb( <number>{3} [ / <alpha-value> ]? ) | rgb( <percentage>#{3} , <alpha-value>? ) | rgb( <number>#{3} , <alpha-value>? )"},"rgba()":{"syntax":"rgba( <percentage>{3} [ / <alpha-value> ]? ) | rgba( <number>{3} [ / <alpha-value> ]? ) | rgba( <percentage>#{3} , <alpha-value>? ) | rgba( <number>#{3} , <alpha-value>? )"},"rotate()":{"syntax":"rotate( [ <angle> | <zero> ] )"},"rotate3d()":{"syntax":"rotate3d( <number> , <number> , <number> , [ <angle> | <zero> ] )"},"rotateX()":{"syntax":"rotateX( [ <angle> | <zero> ] )"},"rotateY()":{"syntax":"rotateY( [ <angle> | <zero> ] )"},"rotateZ()":{"syntax":"rotateZ( [ <angle> | <zero> ] )"},"saturate()":{"syntax":"saturate( <number-percentage> )"},"scale()":{"syntax":"scale( <number> , <number>? )"},"scale3d()":{"syntax":"scale3d( <number> , <number> , <number> )"},"scaleX()":{"syntax":"scaleX( <number> )"},"scaleY()":{"syntax":"scaleY( <number> )"},"scaleZ()":{"syntax":"scaleZ( <number> )"},"self-position":{"syntax":"center | start | end | self-start | self-end | flex-start | flex-end"},"shape-radius":{"syntax":"<length-percentage> | closest-side | farthest-side"},"skew()":{"syntax":"skew( [ <angle> | <zero> ] , [ <angle> | <zero> ]? )"},"skewX()":{"syntax":"skewX( [ <angle> | <zero> ] )"},"skewY()":{"syntax":"skewY( [ <angle> | <zero> ] )"},"sepia()":{"syntax":"sepia( <number-percentage> )"},"shadow":{"syntax":"inset? && <length>{2,4} && <color>?"},"shadow-t":{"syntax":"[ <length>{2,3} && <color>? ]"},"shape":{"syntax":"rect(<top>, <right>, <bottom>, <left>)"},"shape-box":{"syntax":"<box> | margin-box"},"side-or-corner":{"syntax":"[ left | right ] || [ top | bottom ]"},"single-animation":{"syntax":"<time> || <timing-function> || <time> || <single-animation-iteration-count> || <single-animation-direction> || <single-animation-fill-mode> || <single-animation-play-state> || [ none | <keyframes-name> ]"},"single-animation-direction":{"syntax":"normal | reverse | alternate | alternate-reverse"},"single-animation-fill-mode":{"syntax":"none | forwards | backwards | both"},"single-animation-iteration-count":{"syntax":"infinite | <number>"},"single-animation-play-state":{"syntax":"running | paused"},"single-transition":{"syntax":"[ none | <single-transition-property> ] || <time> || <timing-function> || <time>"},"single-transition-property":{"syntax":"all | <custom-ident>"},"size":{"syntax":"closest-side | farthest-side | closest-corner | farthest-corner | <length> | <length-percentage>{2}"},"step-position":{"syntax":"jump-start | jump-end | jump-none | jump-both | start | end"},"step-timing-function":{"syntax":"step-start | step-end | steps(<integer>[, <step-position>]?)"},"subclass-selector":{"syntax":"<id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector>"},"supports-condition":{"syntax":"not <supports-in-parens> | <supports-in-parens> [ and <supports-in-parens> ]* | <supports-in-parens> [ or <supports-in-parens> ]*"},"supports-in-parens":{"syntax":"( <supports-condition> ) | <supports-feature> | <general-enclosed>"},"supports-feature":{"syntax":"<supports-decl> | <supports-selector-fn>"},"supports-decl":{"syntax":"( <declaration> )"},"supports-selector-fn":{"syntax":"selector( <complex-selector> )"},"symbol":{"syntax":"<string> | <image> | <custom-ident>"},"target":{"syntax":"<target-counter()> | <target-counters()> | <target-text()>"},"target-counter()":{"syntax":"target-counter( [ <string> | <url> ] , <custom-ident> , <counter-style>? )"},"target-counters()":{"syntax":"target-counters( [ <string> | <url> ] , <custom-ident> , <string> , <counter-style>? )"},"target-text()":{"syntax":"target-text( [ <string> | <url> ] , [ content | before | after | first-letter ]? )"},"time-percentage":{"syntax":"<time> | <percentage>"},"timing-function":{"syntax":"linear | <cubic-bezier-timing-function> | <step-timing-function>"},"track-breadth":{"syntax":"<length-percentage> | <flex> | min-content | max-content | auto"},"track-list":{"syntax":"[ <line-names>? [ <track-size> | <track-repeat> ] ]+ <line-names>?"},"track-repeat":{"syntax":"repeat( [ <positive-integer> ] , [ <line-names>? <track-size> ]+ <line-names>? )"},"track-size":{"syntax":"<track-breadth> | minmax( <inflexible-breadth> , <track-breadth> ) | fit-content( [ <length> | <percentage> ] )"},"transform-function":{"syntax":"<matrix()> | <translate()> | <translateX()> | <translateY()> | <scale()> | <scaleX()> | <scaleY()> | <rotate()> | <skew()> | <skewX()> | <skewY()> | <matrix3d()> | <translate3d()> | <translateZ()> | <scale3d()> | <scaleZ()> | <rotate3d()> | <rotateX()> | <rotateY()> | <rotateZ()> | <perspective()>"},"transform-list":{"syntax":"<transform-function>+"},"translate()":{"syntax":"translate( <length-percentage> , <length-percentage>? )"},"translate3d()":{"syntax":"translate3d( <length-percentage> , <length-percentage> , <length> )"},"translateX()":{"syntax":"translateX( <length-percentage> )"},"translateY()":{"syntax":"translateY( <length-percentage> )"},"translateZ()":{"syntax":"translateZ( <length> )"},"type-or-unit":{"syntax":"string | color | url | integer | number | length | angle | time | frequency | cap | ch | em | ex | ic | lh | rlh | rem | vb | vi | vw | vh | vmin | vmax | mm | Q | cm | in | pt | pc | px | deg | grad | rad | turn | ms | s | Hz | kHz | %"},"type-selector":{"syntax":"<wq-name> | <ns-prefix>? \'*\'"},"var()":{"syntax":"var( <custom-property-name> , <declaration-value>? )"},"viewport-length":{"syntax":"auto | <length-percentage>"},"wq-name":{"syntax":"<ns-prefix>? <ident-token>"}}');
 
 /***/ }),
 
@@ -17474,58 +15779,1753 @@ function isUndefined(val) {
 
 /***/ }),
 
-/***/ "./node_modules/css-tree/data/patch.json":
-/*!***********************************************!*\
-  !*** ./node_modules/css-tree/data/patch.json ***!
-  \***********************************************/
-/***/ ((module) => {
+/***/ "./src/bitmap-adapter.js":
+/*!*******************************!*\
+  !*** ./src/bitmap-adapter.js ***!
+  \*******************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"atrules":{"charset":{"prelude":"<string>"},"font-face":{"descriptors":{"unicode-range":{"comment":"replaces <unicode-range>, an old production name","syntax":"<urange>#"}}}},"properties":{"-moz-background-clip":{"comment":"deprecated syntax in old Firefox, https://developer.mozilla.org/en/docs/Web/CSS/background-clip","syntax":"padding | border"},"-moz-border-radius-bottomleft":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-left-radius","syntax":"<\'border-bottom-left-radius\'>"},"-moz-border-radius-bottomright":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius","syntax":"<\'border-bottom-right-radius\'>"},"-moz-border-radius-topleft":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-top-left-radius","syntax":"<\'border-top-left-radius\'>"},"-moz-border-radius-topright":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/border-bottom-right-radius","syntax":"<\'border-bottom-right-radius\'>"},"-moz-control-character-visibility":{"comment":"firefox specific keywords, https://bugzilla.mozilla.org/show_bug.cgi?id=947588","syntax":"visible | hidden"},"-moz-osx-font-smoothing":{"comment":"misssed old syntax https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth","syntax":"auto | grayscale"},"-moz-user-select":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/user-select","syntax":"none | text | all | -moz-none"},"-ms-flex-align":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-align","syntax":"start | end | center | baseline | stretch"},"-ms-flex-item-align":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-align","syntax":"auto | start | end | center | baseline | stretch"},"-ms-flex-line-pack":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-line-pack","syntax":"start | end | center | justify | distribute | stretch"},"-ms-flex-negative":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-shrink\'>"},"-ms-flex-pack":{"comment":"misssed old syntax implemented in IE, https://www.w3.org/TR/2012/WD-css3-flexbox-20120322/#flex-pack","syntax":"start | end | center | justify | distribute"},"-ms-flex-order":{"comment":"misssed old syntax implemented in IE; https://msdn.microsoft.com/en-us/library/jj127303(v=vs.85).aspx","syntax":"<integer>"},"-ms-flex-positive":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-grow\'>"},"-ms-flex-preferred-size":{"comment":"misssed old syntax implemented in IE; TODO: find references for comfirmation","syntax":"<\'flex-basis\'>"},"-ms-interpolation-mode":{"comment":"https://msdn.microsoft.com/en-us/library/ff521095(v=vs.85).aspx","syntax":"nearest-neighbor | bicubic"},"-ms-grid-column-align":{"comment":"add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466338.aspx","syntax":"start | end | center | stretch"},"-ms-grid-row-align":{"comment":"add this property first since it uses as fallback for flexbox, https://msdn.microsoft.com/en-us/library/windows/apps/hh466348.aspx","syntax":"start | end | center | stretch"},"-ms-hyphenate-limit-last":{"comment":"misssed old syntax implemented in IE; https://www.w3.org/TR/css-text-4/#hyphenate-line-limits","syntax":"none | always | column | page | spread"},"-webkit-appearance":{"comment":"webkit specific keywords","references":["http://css-infos.net/property/-webkit-appearance"],"syntax":"none | button | button-bevel | caps-lock-indicator | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbargripper-horizontal | scrollbargripper-vertical | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield | -apple-pay-button"},"-webkit-background-clip":{"comment":"https://developer.mozilla.org/en/docs/Web/CSS/background-clip","syntax":"[ <box> | border | padding | content | text ]#"},"-webkit-column-break-after":{"comment":"added, http://help.dottoro.com/lcrthhhv.php","syntax":"always | auto | avoid"},"-webkit-column-break-before":{"comment":"added, http://help.dottoro.com/lcxquvkf.php","syntax":"always | auto | avoid"},"-webkit-column-break-inside":{"comment":"added, http://help.dottoro.com/lclhnthl.php","syntax":"always | auto | avoid"},"-webkit-font-smoothing":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/font-smooth","syntax":"auto | none | antialiased | subpixel-antialiased"},"-webkit-mask-box-image":{"comment":"missed; https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-mask-box-image","syntax":"[ <url> | <gradient> | none ] [ <length-percentage>{4} <-webkit-mask-box-repeat>{2} ]?"},"-webkit-print-color-adjust":{"comment":"missed","references":["https://developer.mozilla.org/en/docs/Web/CSS/-webkit-print-color-adjust"],"syntax":"economy | exact"},"-webkit-text-security":{"comment":"missed; http://help.dottoro.com/lcbkewgt.php","syntax":"none | circle | disc | square"},"-webkit-user-drag":{"comment":"missed; http://help.dottoro.com/lcbixvwm.php","syntax":"none | element | auto"},"-webkit-user-select":{"comment":"auto is supported by old webkit, https://developer.mozilla.org/en-US/docs/Web/CSS/user-select","syntax":"auto | none | text | all"},"alignment-baseline":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#AlignmentBaselineProperty"],"syntax":"auto | baseline | before-edge | text-before-edge | middle | central | after-edge | text-after-edge | ideographic | alphabetic | hanging | mathematical"},"baseline-shift":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#BaselineShiftProperty"],"syntax":"baseline | sub | super | <svg-length>"},"behavior":{"comment":"added old IE property https://msdn.microsoft.com/en-us/library/ms530723(v=vs.85).aspx","syntax":"<url>+"},"clip-rule":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/masking.html#ClipRuleProperty"],"syntax":"nonzero | evenodd"},"cue":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'cue-before\'> <\'cue-after\'>?"},"cue-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<url> <decibel>? | none"},"cue-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<url> <decibel>? | none"},"cursor":{"comment":"added legacy keywords: hand, -webkit-grab. -webkit-grabbing, -webkit-zoom-in, -webkit-zoom-out, -moz-grab, -moz-grabbing, -moz-zoom-in, -moz-zoom-out","references":["https://www.sitepoint.com/css3-cursor-styles/"],"syntax":"[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing | hand | -webkit-grab | -webkit-grabbing | -webkit-zoom-in | -webkit-zoom-out | -moz-grab | -moz-grabbing | -moz-zoom-in | -moz-zoom-out ] ]"},"display":{"comment":"extended with -ms-flexbox","syntax":"| <-non-standard-display>"},"position":{"comment":"extended with -webkit-sticky","syntax":"| -webkit-sticky"},"dominant-baseline":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#DominantBaselineProperty"],"syntax":"auto | use-script | no-change | reset-size | ideographic | alphabetic | hanging | mathematical | central | middle | text-after-edge | text-before-edge"},"image-rendering":{"comment":"extended with <-non-standard-image-rendering>, added SVG keywords optimizeSpeed and optimizeQuality","references":["https://developer.mozilla.org/en/docs/Web/CSS/image-rendering","https://www.w3.org/TR/SVG/painting.html#ImageRenderingProperty"],"syntax":"| optimizeSpeed | optimizeQuality | <-non-standard-image-rendering>"},"fill":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"<paint>"},"fill-opacity":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"<number-zero-one>"},"fill-rule":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#FillProperty"],"syntax":"nonzero | evenodd"},"filter":{"comment":"extend with IE legacy syntaxes","syntax":"| <-ms-filter-function-list>"},"glyph-orientation-horizontal":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#GlyphOrientationHorizontalProperty"],"syntax":"<angle>"},"glyph-orientation-vertical":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#GlyphOrientationVerticalProperty"],"syntax":"<angle>"},"kerning":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#KerningProperty"],"syntax":"auto | <svg-length>"},"letter-spacing":{"comment":"fix syntax <length> -> <length-percentage>","references":["https://developer.mozilla.org/en-US/docs/Web/SVG/Attribute/letter-spacing"],"syntax":"normal | <length-percentage>"},"marker":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-end":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-mid":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"marker-start":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#MarkerProperties"],"syntax":"none | <url>"},"max-width":{"comment":"fix auto -> none (https://github.com/mdn/data/pull/431); extend by non-standard width keywords https://developer.mozilla.org/en-US/docs/Web/CSS/max-width","syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>) | <-non-standard-width>"},"width":{"comment":"per spec fit-content should be a function, however browsers are supporting it as a keyword (https://github.com/csstree/stylelint-validator/issues/29)","syntax":"| fit-content | -moz-fit-content | -webkit-fit-content"},"min-width":{"comment":"extend by non-standard width keywords https://developer.mozilla.org/en-US/docs/Web/CSS/width","syntax":"auto | <length-percentage> | min-content | max-content | fit-content(<length-percentage>) | <-non-standard-width>"},"overflow":{"comment":"extend by vendor keywords https://developer.mozilla.org/en-US/docs/Web/CSS/overflow","syntax":"| <-non-standard-overflow>"},"pause":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'pause-before\'> <\'pause-after\'>?"},"pause-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"pause-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"rest":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<\'rest-before\'> <\'rest-after\'>?"},"rest-after":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"rest-before":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<time> | none | x-weak | weak | medium | strong | x-strong"},"shape-rendering":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#ShapeRenderingPropert"],"syntax":"auto | optimizeSpeed | crispEdges | geometricPrecision"},"src":{"comment":"added @font-face\'s src property https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/src","syntax":"[ <url> [ format( <string># ) ]? | local( <family-name> ) ]#"},"speak":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"auto | none | normal"},"speak-as":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"normal | spell-out || digits || [ literal-punctuation | no-punctuation ]"},"stroke":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<paint>"},"stroke-dasharray":{"comment":"added SVG property; a list of comma and/or white space separated <length>s and <percentage>s","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"none | [ <svg-length>+ ]#"},"stroke-dashoffset":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<svg-length>"},"stroke-linecap":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"butt | round | square"},"stroke-linejoin":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"miter | round | bevel"},"stroke-miterlimit":{"comment":"added SVG property (<miterlimit> = <number-one-or-greater>) ","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<number-one-or-greater>"},"stroke-opacity":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<number-zero-one>"},"stroke-width":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/painting.html#StrokeProperties"],"syntax":"<svg-length>"},"text-anchor":{"comment":"added SVG property","references":["https://www.w3.org/TR/SVG/text.html#TextAlignmentProperties"],"syntax":"start | middle | end"},"unicode-bidi":{"comment":"added prefixed keywords https://developer.mozilla.org/en-US/docs/Web/CSS/unicode-bidi","syntax":"| -moz-isolate | -moz-isolate-override | -moz-plaintext | -webkit-isolate | -webkit-isolate-override | -webkit-plaintext"},"unicode-range":{"comment":"added missed property https://developer.mozilla.org/en-US/docs/Web/CSS/%40font-face/unicode-range","syntax":"<urange>#"},"voice-balance":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<number> | left | center | right | leftwards | rightwards"},"voice-duration":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"auto | <time>"},"voice-family":{"comment":"<name> -> <family-name>, https://www.w3.org/TR/css3-speech/#property-index","syntax":"[ [ <family-name> | <generic-voice> ] , ]* [ <family-name> | <generic-voice> ] | preserve"},"voice-pitch":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<frequency> && absolute | [ [ x-low | low | medium | high | x-high ] || [ <frequency> | <semitones> | <percentage> ] ]"},"voice-range":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"<frequency> && absolute | [ [ x-low | low | medium | high | x-high ] || [ <frequency> | <semitones> | <percentage> ] ]"},"voice-rate":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"[ normal | x-slow | slow | medium | fast | x-fast ] || <percentage>"},"voice-stress":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"normal | strong | moderate | none | reduced"},"voice-volume":{"comment":"https://www.w3.org/TR/css3-speech/#property-index","syntax":"silent | [ [ x-soft | soft | medium | loud | x-loud ] || <decibel> ]"},"writing-mode":{"comment":"extend with SVG keywords","syntax":"| <svg-writing-mode>"}},"syntaxes":{"-legacy-gradient":{"comment":"added collection of legacy gradient syntaxes","syntax":"<-webkit-gradient()> | <-legacy-linear-gradient> | <-legacy-repeating-linear-gradient> | <-legacy-radial-gradient> | <-legacy-repeating-radial-gradient>"},"-legacy-linear-gradient":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"-moz-linear-gradient( <-legacy-linear-gradient-arguments> ) | -webkit-linear-gradient( <-legacy-linear-gradient-arguments> ) | -o-linear-gradient( <-legacy-linear-gradient-arguments> )"},"-legacy-repeating-linear-gradient":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"-moz-repeating-linear-gradient( <-legacy-linear-gradient-arguments> ) | -webkit-repeating-linear-gradient( <-legacy-linear-gradient-arguments> ) | -o-repeating-linear-gradient( <-legacy-linear-gradient-arguments> )"},"-legacy-linear-gradient-arguments":{"comment":"like standard syntax but w/o `to` keyword https://developer.mozilla.org/en-US/docs/Web/CSS/linear-gradient","syntax":"[ <angle> | <side-or-corner> ]? , <color-stop-list>"},"-legacy-radial-gradient":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"-moz-radial-gradient( <-legacy-radial-gradient-arguments> ) | -webkit-radial-gradient( <-legacy-radial-gradient-arguments> ) | -o-radial-gradient( <-legacy-radial-gradient-arguments> )"},"-legacy-repeating-radial-gradient":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"-moz-repeating-radial-gradient( <-legacy-radial-gradient-arguments> ) | -webkit-repeating-radial-gradient( <-legacy-radial-gradient-arguments> ) | -o-repeating-radial-gradient( <-legacy-radial-gradient-arguments> )"},"-legacy-radial-gradient-arguments":{"comment":"deprecated syntax that implemented by some browsers https://www.w3.org/TR/2011/WD-css3-images-20110908/#radial-gradients","syntax":"[ <position> , ]? [ [ [ <-legacy-radial-gradient-shape> || <-legacy-radial-gradient-size> ] | [ <length> | <percentage> ]{2} ] , ]? <color-stop-list>"},"-legacy-radial-gradient-size":{"comment":"before a standard it contains 2 extra keywords (`contain` and `cover`) https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltsize","syntax":"closest-side | closest-corner | farthest-side | farthest-corner | contain | cover"},"-legacy-radial-gradient-shape":{"comment":"define to double sure it doesn\'t extends in future https://www.w3.org/TR/2011/WD-css3-images-20110908/#ltshape","syntax":"circle | ellipse"},"-non-standard-font":{"comment":"non standard fonts","references":["https://webkit.org/blog/3709/using-the-system-font-in-web-content/"],"syntax":"-apple-system-body | -apple-system-headline | -apple-system-subheadline | -apple-system-caption1 | -apple-system-caption2 | -apple-system-footnote | -apple-system-short-body | -apple-system-short-headline | -apple-system-short-subheadline | -apple-system-short-caption1 | -apple-system-short-footnote | -apple-system-tall-body"},"-non-standard-color":{"comment":"non standard colors","references":["http://cssdot.ru/%D0%A1%D0%BF%D1%80%D0%B0%D0%B2%D0%BE%D1%87%D0%BD%D0%B8%D0%BA_CSS/color-i305.html","https://developer.mozilla.org/en-US/docs/Web/CSS/color_value#Mozilla_Color_Preference_Extensions"],"syntax":"-moz-ButtonDefault | -moz-ButtonHoverFace | -moz-ButtonHoverText | -moz-CellHighlight | -moz-CellHighlightText | -moz-Combobox | -moz-ComboboxText | -moz-Dialog | -moz-DialogText | -moz-dragtargetzone | -moz-EvenTreeRow | -moz-Field | -moz-FieldText | -moz-html-CellHighlight | -moz-html-CellHighlightText | -moz-mac-accentdarkestshadow | -moz-mac-accentdarkshadow | -moz-mac-accentface | -moz-mac-accentlightesthighlight | -moz-mac-accentlightshadow | -moz-mac-accentregularhighlight | -moz-mac-accentregularshadow | -moz-mac-chrome-active | -moz-mac-chrome-inactive | -moz-mac-focusring | -moz-mac-menuselect | -moz-mac-menushadow | -moz-mac-menutextselect | -moz-MenuHover | -moz-MenuHoverText | -moz-MenuBarText | -moz-MenuBarHoverText | -moz-nativehyperlinktext | -moz-OddTreeRow | -moz-win-communicationstext | -moz-win-mediatext | -moz-activehyperlinktext | -moz-default-background-color | -moz-default-color | -moz-hyperlinktext | -moz-visitedhyperlinktext | -webkit-activelink | -webkit-focus-ring-color | -webkit-link | -webkit-text"},"-non-standard-image-rendering":{"comment":"non-standard keywords http://phrogz.net/tmp/canvas_image_zoom.html","syntax":"optimize-contrast | -moz-crisp-edges | -o-crisp-edges | -webkit-optimize-contrast"},"-non-standard-overflow":{"comment":"non-standard keywords https://developer.mozilla.org/en-US/docs/Web/CSS/overflow","syntax":"-moz-scrollbars-none | -moz-scrollbars-horizontal | -moz-scrollbars-vertical | -moz-hidden-unscrollable"},"-non-standard-width":{"comment":"non-standard keywords https://developer.mozilla.org/en-US/docs/Web/CSS/width","syntax":"fill-available | min-intrinsic | intrinsic | -moz-available | -moz-fit-content | -moz-min-content | -moz-max-content | -webkit-min-content | -webkit-max-content"},"-webkit-gradient()":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/ - TODO: simplify when after match algorithm improvement ( [, point, radius | , point] -> [, radius]? , point )","syntax":"-webkit-gradient( <-webkit-gradient-type>, <-webkit-gradient-point> [, <-webkit-gradient-point> | , <-webkit-gradient-radius>, <-webkit-gradient-point> ] [, <-webkit-gradient-radius>]? [, <-webkit-gradient-color-stop>]* )"},"-webkit-gradient-color-stop":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"from( <color> ) | color-stop( [ <number-zero-one> | <percentage> ] , <color> ) | to( <color> )"},"-webkit-gradient-point":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"[ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]"},"-webkit-gradient-radius":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"<length> | <percentage>"},"-webkit-gradient-type":{"comment":"first Apple proposal gradient syntax https://webkit.org/blog/175/introducing-css-gradients/","syntax":"linear | radial"},"-webkit-mask-box-repeat":{"comment":"missed; https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-mask-box-image","syntax":"repeat | stretch | round"},"-webkit-mask-clip-style":{"comment":"missed; there is no enough information about `-webkit-mask-clip` property, but looks like all those keywords are working","syntax":"border | border-box | padding | padding-box | content | content-box | text"},"-ms-filter-function-list":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<-ms-filter-function>+"},"-ms-filter-function":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<-ms-filter-function-progid> | <-ms-filter-function-legacy>"},"-ms-filter-function-progid":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"\'progid:\' [ <ident-token> \'.\' ]* [ <ident-token> | <function-token> <any-value>? ) ]"},"-ms-filter-function-legacy":{"comment":"https://developer.mozilla.org/en-US/docs/Web/CSS/-ms-filter","syntax":"<ident-token> | <function-token> <any-value>? )"},"-ms-filter":{"syntax":"<string>"},"age":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"child | young | old"},"attr-name":{"syntax":"<wq-name>"},"attr-fallback":{"syntax":"<any-value>"},"border-radius":{"comment":"missed, https://drafts.csswg.org/css-backgrounds-3/#the-border-radius","syntax":"<length-percentage>{1,2}"},"bottom":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"content-list":{"comment":"missed -> https://drafts.csswg.org/css-content/#typedef-content-list (document-url, <target> and leader() is omitted util stabilization)","syntax":"[ <string> | contents | <image> | <quote> | <target> | <leader()> | <attr()> | counter( <ident>, <\'list-style-type\'>? ) ]+"},"element()":{"comment":"https://drafts.csswg.org/css-gcpm/#element-syntax & https://drafts.csswg.org/css-images-4/#element-notation","syntax":"element( <custom-ident> , [ first | start | last | first-except ]? ) | element( <id-selector> )"},"generic-voice":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"[ <age>? <gender> <integer>? ]"},"gender":{"comment":"https://www.w3.org/TR/css3-speech/#voice-family","syntax":"male | female | neutral"},"generic-family":{"comment":"added -apple-system","references":["https://webkit.org/blog/3709/using-the-system-font-in-web-content/"],"syntax":"| -apple-system"},"gradient":{"comment":"added legacy syntaxes support","syntax":"| <-legacy-gradient>"},"left":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"mask-image":{"comment":"missed; https://drafts.fxtf.org/css-masking-1/#the-mask-image","syntax":"<mask-reference>#"},"name-repeat":{"comment":"missed, and looks like obsolete, keep it as is since other property syntaxes should be changed too; https://www.w3.org/TR/2015/WD-css-grid-1-20150917/#typedef-name-repeat","syntax":"repeat( [ <positive-integer> | auto-fill ], <line-names>+)"},"named-color":{"comment":"added non standard color names","syntax":"| <-non-standard-color>"},"paint":{"comment":"used by SVG https://www.w3.org/TR/SVG/painting.html#SpecifyingPaint","syntax":"none | <color> | <url> [ none | <color> ]? | context-fill | context-stroke"},"page-size":{"comment":"https://www.w3.org/TR/css-page-3/#typedef-page-size-page-size","syntax":"A5 | A4 | A3 | B5 | B4 | JIS-B5 | JIS-B4 | letter | legal | ledger"},"ratio":{"comment":"missed, https://drafts.csswg.org/mediaqueries-4/#typedef-ratio","syntax":"<integer> / <integer>"},"right":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"shape":{"comment":"missed spaces in function body and add backwards compatible syntax","syntax":"rect( <top>, <right>, <bottom>, <left> ) | rect( <top> <right> <bottom> <left> )"},"svg-length":{"comment":"All coordinates and lengths in SVG can be specified with or without a unit identifier","references":["https://www.w3.org/TR/SVG11/coords.html#Units"],"syntax":"<percentage> | <length> | <number>"},"svg-writing-mode":{"comment":"SVG specific keywords (deprecated for CSS)","references":["https://developer.mozilla.org/en/docs/Web/CSS/writing-mode","https://www.w3.org/TR/SVG/text.html#WritingModeProperty"],"syntax":"lr-tb | rl-tb | tb-rl | lr | rl | tb"},"top":{"comment":"missed; not sure we should add it, but no others except `shape` is using it so it\'s ok for now; https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect","syntax":"<length> | auto"},"track-group":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"\'(\' [ <string>* <track-minmax> <string>* ]+ \')\' [ \'[\' <positive-integer> \']\' ]? | <track-minmax>"},"track-list-v0":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"[ <string>* <track-group> <string>* ]+ | none"},"track-minmax":{"comment":"used by old grid-columns and grid-rows syntax v0","syntax":"minmax( <track-breadth> , <track-breadth> ) | auto | <track-breadth> | fit-content"},"x":{"comment":"missed; not sure we should add it, but no others except `cursor` is using it so it\'s ok for now; https://drafts.csswg.org/css-ui-3/#cursor","syntax":"<number>"},"y":{"comment":"missed; not sure we should add it, but no others except `cursor` is using so it\'s ok for now; https://drafts.csswg.org/css-ui-3/#cursor","syntax":"<number>"},"declaration":{"comment":"missed, restored by https://drafts.csswg.org/css-syntax","syntax":"<ident-token> : <declaration-value>? [ \'!\' important ]?"},"declaration-list":{"comment":"missed, restored by https://drafts.csswg.org/css-syntax","syntax":"[ <declaration>? \';\' ]* <declaration>?"},"url":{"comment":"https://drafts.csswg.org/css-values-4/#urls","syntax":"url( <string> <url-modifier>* ) | <url-token>"},"url-modifier":{"comment":"https://drafts.csswg.org/css-values-4/#typedef-url-modifier","syntax":"<ident> | <function-token> <any-value> )"},"number-zero-one":{"syntax":"<number [0,1]>"},"number-one-or-greater":{"syntax":"<number [1,∞]>"},"positive-integer":{"syntax":"<integer [0,∞]>"},"-non-standard-display":{"syntax":"-ms-inline-flexbox | -ms-grid | -ms-inline-grid | -webkit-flex | -webkit-inline-flex | -webkit-box | -webkit-inline-box | -moz-inline-stack | -moz-box | -moz-inline-box"}}}');
+const base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
+
+/**
+ * Adapts Scratch 2.0 bitmaps for use in scratch 3.0
+ */
+class BitmapAdapter {
+  /**
+   * @param {?function} makeImage HTML image constructor. Tests can provide this.
+   * @param {?function} makeCanvas HTML canvas constructor. Tests can provide this.
+   */
+  constructor(makeImage, makeCanvas) {
+    this._makeImage = makeImage ? makeImage : () => new Image();
+    this._makeCanvas = makeCanvas ? makeCanvas : () => document.createElement('canvas');
+  }
+
+  /**
+   * Return a canvas with the resized version of the given image, done using nearest-neighbor interpolation
+   * @param {CanvasImageSource} image The image to resize
+   * @param {int} newWidth The desired post-resize width of the image
+   * @param {int} newHeight The desired post-resize height of the image
+   * @returns {HTMLCanvasElement} A canvas with the resized image drawn on it.
+   */
+  resize(image, newWidth, newHeight) {
+    // We want to always resize using nearest-neighbor interpolation. However, canvas implementations are free to
+    // use linear interpolation (or other "smooth" interpolation methods) when downscaling:
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1360415
+    // It seems we can get around this by resizing in two steps: first width, then height. This will always result
+    // in nearest-neighbor interpolation, even when downscaling.
+    const stretchWidthCanvas = this._makeCanvas();
+    stretchWidthCanvas.width = newWidth;
+    stretchWidthCanvas.height = image.height;
+    let context = stretchWidthCanvas.getContext('2d');
+    context.imageSmoothingEnabled = false;
+    context.drawImage(image, 0, 0, stretchWidthCanvas.width, stretchWidthCanvas.height);
+    const stretchHeightCanvas = this._makeCanvas();
+    stretchHeightCanvas.width = newWidth;
+    stretchHeightCanvas.height = newHeight;
+    context = stretchHeightCanvas.getContext('2d');
+    context.imageSmoothingEnabled = false;
+    context.drawImage(stretchWidthCanvas, 0, 0, stretchHeightCanvas.width, stretchHeightCanvas.height);
+    return stretchHeightCanvas;
+  }
+
+  /**
+   * Scratch 2.0 had resolution 1 and 2 bitmaps. All bitmaps in Scratch 3.0 are equivalent
+   * to resolution 2 bitmaps. Therefore, converting a resolution 1 bitmap means doubling
+   * it in width and height.
+   * @param {!string} dataURI Base 64 encoded image data of the bitmap
+   * @param {!function} callback Node-style callback that returns updated dataURI if conversion succeeded
+   */
+  convertResolution1Bitmap(dataURI, callback) {
+    const image = this._makeImage();
+    image.src = dataURI;
+    image.onload = () => {
+      callback(null, this.resize(image, image.width * 2, image.height * 2).toDataURL());
+    };
+    image.onerror = () => {
+      callback('Image load failed');
+    };
+  }
+
+  /**
+   * Given width/height of an uploaded item, return width/height the image will be resized
+   * to in Scratch 3.0
+   * @param {!number} oldWidth original width
+   * @param {!number} oldHeight original height
+   * @return {object} Array of new width, new height
+   */
+  getResizedWidthHeight(oldWidth, oldHeight) {
+    const STAGE_WIDTH = 480;
+    const STAGE_HEIGHT = 360;
+    const STAGE_RATIO = STAGE_WIDTH / STAGE_HEIGHT;
+
+    // If both dimensions are smaller than or equal to corresponding stage dimension,
+    // double both dimensions
+    if (oldWidth <= STAGE_WIDTH && oldHeight <= STAGE_HEIGHT) {
+      return {
+        width: oldWidth * 2,
+        height: oldHeight * 2
+      };
+    }
+
+    // If neither dimension is larger than 2x corresponding stage dimension,
+    // this is an in-between image, return it as is
+    if (oldWidth <= STAGE_WIDTH * 2 && oldHeight <= STAGE_HEIGHT * 2) {
+      return {
+        width: oldWidth,
+        height: oldHeight
+      };
+    }
+    const imageRatio = oldWidth / oldHeight;
+    // Otherwise, figure out how to resize
+    if (imageRatio >= STAGE_RATIO) {
+      // Wide Image
+      return {
+        width: STAGE_WIDTH * 2,
+        height: STAGE_WIDTH * 2 / imageRatio
+      };
+    }
+    // In this case we have either:
+    // - A wide image, but not with as big a ratio between width and height,
+    // making it so that fitting the width to double stage size would leave
+    // the height too big to fit in double the stage height
+    // - A square image that's still larger than the double at least
+    // one of the stage dimensions, so pick the smaller of the two dimensions (to fit)
+    // - A tall image
+    // In any of these cases, resize the image to fit the height to double the stage height
+    return {
+      width: STAGE_HEIGHT * 2 * imageRatio,
+      height: STAGE_HEIGHT * 2
+    };
+  }
+
+  /**
+   * Given bitmap data, resize as necessary.
+   * @param {ArrayBuffer | string} fileData Base 64 encoded image data of the bitmap
+   * @param {string} fileType The MIME type of this file
+   * @returns {Promise} Resolves to resized image data Uint8Array
+   */
+  importBitmap(fileData, fileType) {
+    let dataURI = fileData;
+    if (fileData instanceof ArrayBuffer) {
+      dataURI = this.convertBinaryToDataURI(fileData, fileType);
+    }
+    return new Promise((resolve, reject) => {
+      const image = this._makeImage();
+      image.src = dataURI;
+      image.onload = () => {
+        const newSize = this.getResizedWidthHeight(image.width, image.height);
+        if (newSize.width === image.width && newSize.height === image.height) {
+          // No change
+          resolve(this.convertDataURIToBinary(dataURI));
+        } else {
+          const resizedDataURI = this.resize(image, newSize.width, newSize.height).toDataURL();
+          resolve(this.convertDataURIToBinary(resizedDataURI));
+        }
+      };
+      image.onerror = () => {
+        // TODO: reject with an Error (breaking API change!)
+        // eslint-disable-next-line prefer-promise-reject-errors
+        reject('Image load failed');
+      };
+    });
+  }
+
+  // TODO consolidate with scratch-vm/src/util/base64-util.js
+  // From https://gist.github.com/borismus/1032746
+  convertDataURIToBinary(dataURI) {
+    const BASE64_MARKER = ';base64,';
+    const base64Index = dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
+    const base64 = dataURI.substring(base64Index);
+    const raw = window.atob(base64);
+    const rawLength = raw.length;
+    const array = new Uint8Array(new ArrayBuffer(rawLength));
+    for (let i = 0; i < rawLength; i++) {
+      array[i] = raw.charCodeAt(i);
+    }
+    return array;
+  }
+  convertBinaryToDataURI(arrayBuffer, contentType) {
+    return "data:".concat(contentType, ";base64,").concat(base64js.fromByteArray(new Uint8Array(arrayBuffer)));
+  }
+}
+module.exports = BitmapAdapter;
 
 /***/ }),
 
-/***/ "./node_modules/css-tree/package.json":
-/*!********************************************!*\
-  !*** ./node_modules/css-tree/package.json ***!
-  \********************************************/
+/***/ "./src/fixup-svg-string.js":
+/*!*********************************!*\
+  !*** ./src/fixup-svg-string.js ***!
+  \*********************************/
 /***/ ((module) => {
 
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"css-tree","version":"1.1.3","description":"A tool set for CSS: fast detailed parser (CSS → AST), walker (AST traversal), generator (AST → CSS) and lexer (validation and matching) based on specs and browser implementations","author":"Roman Dvornov <rdvornov@gmail.com> (https://github.com/lahmatiy)","license":"MIT","repository":"csstree/csstree","keywords":["css","ast","tokenizer","parser","walker","lexer","generator","utils","syntax","validation"],"main":"lib/index.js","unpkg":"dist/csstree.min.js","jsdelivr":"dist/csstree.min.js","scripts":{"build":"rollup --config","lint":"eslint data lib scripts test && node scripts/review-syntax-patch --lint && node scripts/update-docs --lint","lint-and-test":"npm run lint && npm test","update:docs":"node scripts/update-docs","review:syntax-patch":"node scripts/review-syntax-patch","test":"mocha --reporter progress","coverage":"nyc npm test","travis":"nyc npm run lint-and-test && npm run coveralls","coveralls":"nyc report --reporter=text-lcov | coveralls","prepublishOnly":"npm run build","hydrogen":"node --trace-hydrogen --trace-phase=Z --trace-deopt --code-comments --hydrogen-track-positions --redirect-code-traces --redirect-code-traces-to=code.asm --trace_hydrogen_file=code.cfg --print-opt-code bin/parse --stat -o /dev/null"},"dependencies":{"mdn-data":"2.0.14","source-map":"^0.6.1"},"devDependencies":{"@rollup/plugin-commonjs":"^11.0.2","@rollup/plugin-json":"^4.0.2","@rollup/plugin-node-resolve":"^7.1.1","coveralls":"^3.0.9","eslint":"^6.8.0","json-to-ast":"^2.1.0","mocha":"^6.2.3","nyc":"^14.1.1","rollup":"^1.32.1","rollup-plugin-terser":"^5.3.0"},"engines":{"node":">=8.0.0"},"files":["data","dist","lib"]}');
+/**
+ * Fixup svg string prior to parsing.
+ * @param {!string} svgString String of the svg to fix.
+ * @returns {!string} fixed svg that should be parseable.
+ */
+module.exports = function (svgString) {
+  // Add root svg namespace if it does not exist.
+  const svgAttrs = svgString.match(/<svg [^>]*>/);
+  if (svgAttrs && svgAttrs[0].indexOf('xmlns=') === -1) {
+    svgString = svgString.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+  }
+
+  // There are some SVGs from Illustrator that use undeclared entities.
+  // Just replace those entities with fake namespace references to prevent
+  // DOMParser from crashing
+  if (svgAttrs && svgAttrs[0].indexOf('&ns_') !== -1 && svgString.indexOf('<!DOCTYPE') === -1) {
+    svgString = svgString.replace(svgAttrs[0], svgAttrs[0].replace(/&ns_[^;]+;/g, 'http://ns.adobe.com/Extensibility/1.0/'));
+  }
+
+  // Some SVGs exported from Photoshop have been found to have an invalid mime type
+  // Chrome and Safari won't render these SVGs, so we correct it here
+  if (svgString.includes('data:img/png')) {
+    svgString = svgString.replace(
+    // capture entire image tag with xlink:href=and the quote - dont capture data: bit
+    /(<image[^>]+?xlink:href=["'])data:img\/png/g,
+    // use the captured <image ..... xlink:href=" then append the right data uri mime type
+    ($0, $1) => "".concat($1, "data:image/png"));
+  }
+
+  // Some SVGs from Inkscape attempt to bind a prefix to a reserved namespace name.
+  // This will cause SVG parsing to fail, so replace these with a dummy namespace name.
+  // This namespace name is only valid for "xml", and if we bind "xmlns:xml" to the dummy namespace,
+  // parsing will fail yet again, so exclude "xmlns:xml" declarations.
+  const xmlnsRegex = /(<[^>]+?xmlns:(?!xml=)[^ ]+=)"http:\/\/www.w3.org\/XML\/1998\/namespace"/g;
+  if (svgString.match(xmlnsRegex) !== null) {
+    svgString = svgString.replace(
+    // capture the entire attribute
+    xmlnsRegex,
+    // use the captured attribute name; replace only the URL
+    ($0, $1) => "".concat($1, "\"http://dummy.namespace\""));
+  }
+
+  // Strip `svg:` prefix (sometimes added by Inkscape) from all tags. They interfere with DOMPurify (prefixed tag
+  // names are not recognized) and the paint editor.
+  // This matches opening and closing tags--the capture group captures the slash if it exists, and it is reinserted
+  // in the replacement text.
+  svgString = svgString.replace(/<(\/?)\s*svg:/g, '<$1');
+
+  // The <metadata> element is not needed for rendering and sometimes contains
+  // unparseable garbage from Illustrator :( Empty out the contents.
+  // Note: [\s\S] matches everything including newlines, which .* does not
+  svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '<metadata></metadata>');
+
+  // Empty script tags and javascript executing
+  svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '<script></script>');
+  return svgString;
+};
 
 /***/ }),
 
-/***/ "./node_modules/mdn-data/css/at-rules.json":
-/*!*************************************************!*\
-  !*** ./node_modules/mdn-data/css/at-rules.json ***!
-  \*************************************************/
+/***/ "./src/font-converter.js":
+/*!*******************************!*\
+  !*** ./src/font-converter.js ***!
+  \*******************************/
 /***/ ((module) => {
 
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"@charset":{"syntax":"@charset \\"<charset>\\";","groups":["CSS Charsets"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@charset"},"@counter-style":{"syntax":"@counter-style <counter-style-name> {\\n  [ system: <counter-system>; ] ||\\n  [ symbols: <counter-symbols>; ] ||\\n  [ additive-symbols: <additive-symbols>; ] ||\\n  [ negative: <negative-symbol>; ] ||\\n  [ prefix: <prefix>; ] ||\\n  [ suffix: <suffix>; ] ||\\n  [ range: <range>; ] ||\\n  [ pad: <padding>; ] ||\\n  [ speak-as: <speak-as>; ] ||\\n  [ fallback: <counter-style-name>; ]\\n}","interfaces":["CSSCounterStyleRule"],"groups":["CSS Counter Styles"],"descriptors":{"additive-symbols":{"syntax":"[ <integer> && <symbol> ]#","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"fallback":{"syntax":"<counter-style-name>","media":"all","initial":"decimal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"negative":{"syntax":"<symbol> <symbol>?","media":"all","initial":"\\"-\\" hyphen-minus","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"pad":{"syntax":"<integer> && <symbol>","media":"all","initial":"0 \\"\\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"prefix":{"syntax":"<symbol>","media":"all","initial":"\\"\\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"range":{"syntax":"[ [ <integer> | infinite ]{2} ]# | auto","media":"all","initial":"auto","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"speak-as":{"syntax":"auto | bullets | numbers | words | spell-out | <counter-style-name>","media":"all","initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"suffix":{"syntax":"<symbol>","media":"all","initial":"\\". \\"","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"symbols":{"syntax":"<symbol>+","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"system":{"syntax":"cyclic | numeric | alphabetic | symbolic | additive | [ fixed <integer>? ] | [ extends <counter-style-name> ]","media":"all","initial":"symbolic","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@counter-style"},"@document":{"syntax":"@document [ <url> | url-prefix(<string>) | domain(<string>) | media-document(<string>) | regexp(<string>) ]# {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule"],"groups":["CSS Conditional Rules"],"status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@document"},"@font-face":{"syntax":"@font-face {\\n  [ font-family: <family-name>; ] ||\\n  [ src: <src>; ] ||\\n  [ unicode-range: <unicode-range>; ] ||\\n  [ font-variant: <font-variant>; ] ||\\n  [ font-feature-settings: <font-feature-settings>; ] ||\\n  [ font-variation-settings: <font-variation-settings>; ] ||\\n  [ font-stretch: <font-stretch>; ] ||\\n  [ font-weight: <font-weight>; ] ||\\n  [ font-style: <font-style>; ]\\n}","interfaces":["CSSFontFaceRule"],"groups":["CSS Fonts"],"descriptors":{"font-display":{"syntax":"[ auto | block | swap | fallback | optional ]","media":"visual","percentages":"no","initial":"auto","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"font-family":{"syntax":"<family-name>","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-feature-settings":{"syntax":"normal | <feature-tag-value>#","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"font-variation-settings":{"syntax":"normal | [ <string> <number> ]#","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"font-stretch":{"syntax":"<font-stretch-absolute>{1,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-style":{"syntax":"normal | italic | oblique <angle>{0,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-weight":{"syntax":"<font-weight-absolute>{1,2}","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"font-variant":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"all","initial":"normal","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"src":{"syntax":"[ <url> [ format( <string># ) ]? | local( <family-name> ) ]#","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"unicode-range":{"syntax":"<unicode-range>#","media":"all","initial":"U+0-10FFFF","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@font-face"},"@font-feature-values":{"syntax":"@font-feature-values <family-name># {\\n  <feature-value-block-list>\\n}","interfaces":["CSSFontFeatureValuesRule"],"groups":["CSS Fonts"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@font-feature-values"},"@import":{"syntax":"@import [ <string> | <url> ] [ <media-query-list> ]?;","groups":["Media Queries"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@import"},"@keyframes":{"syntax":"@keyframes <keyframes-name> {\\n  <keyframe-block-list>\\n}","interfaces":["CSSKeyframeRule","CSSKeyframesRule"],"groups":["CSS Animations"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@keyframes"},"@media":{"syntax":"@media <media-query-list> {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule","CSSMediaRule","CSSCustomMediaRule"],"groups":["CSS Conditional Rules","Media Queries"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@media"},"@namespace":{"syntax":"@namespace <namespace-prefix>? [ <string> | <url> ];","groups":["CSS Namespaces"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@namespace"},"@page":{"syntax":"@page <page-selector-list> {\\n  <page-body>\\n}","interfaces":["CSSPageRule"],"groups":["CSS Pages"],"descriptors":{"bleed":{"syntax":"auto | <length>","media":["visual","paged"],"initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"marks":{"syntax":"none | [ crop || cross ]","media":["visual","paged"],"initial":"none","percentages":"no","computed":"asSpecified","order":"orderOfAppearance","status":"standard"},"size":{"syntax":"<length>{1,2} | auto | [ <page-size> || [ portrait | landscape ] ]","media":["visual","paged"],"initial":"auto","percentages":"no","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"orderOfAppearance","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@page"},"@property":{"syntax":"@property <custom-property-name> {\\n  <declaration-list>\\n}","interfaces":["CSS","CSSPropertyRule"],"groups":["CSS Houdini"],"descriptors":{"syntax":{"syntax":"<string>","media":"all","percentages":"no","initial":"n/a (required)","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"inherits":{"syntax":"true | false","media":"all","percentages":"no","initial":"auto","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"initial-value":{"syntax":"<string>","media":"all","initial":"n/a (required)","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"experimental"}},"status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@property"},"@supports":{"syntax":"@supports <supports-condition> {\\n  <group-rule-body>\\n}","interfaces":["CSSGroupingRule","CSSConditionRule","CSSSupportsRule"],"groups":["CSS Conditional Rules"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@supports"},"@viewport":{"syntax":"@viewport {\\n  <group-rule-body>\\n}","interfaces":["CSSViewportRule"],"groups":["CSS Device Adaptation"],"descriptors":{"height":{"syntax":"<viewport-length>{1,2}","media":["visual","continuous"],"initial":["min-height","max-height"],"percentages":["min-height","max-height"],"computed":["min-height","max-height"],"order":"orderOfAppearance","status":"standard"},"max-height":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToHeightOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"max-width":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToWidthOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"max-zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"},"min-height":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToHeightOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"min-width":{"syntax":"<viewport-length>","media":["visual","continuous"],"initial":"auto","percentages":"referToWidthOfInitialViewport","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard"},"min-zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"},"orientation":{"syntax":"auto | portrait | landscape","media":["visual","continuous"],"initial":"auto","percentages":"referToSizeOfBoundingBox","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"user-zoom":{"syntax":"zoom | fixed","media":["visual","continuous"],"initial":"zoom","percentages":"referToSizeOfBoundingBox","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"viewport-fit":{"syntax":"auto | contain | cover","media":["visual","continuous"],"initial":"auto","percentages":"no","computed":"asSpecified","order":"uniqueOrder","status":"standard"},"width":{"syntax":"<viewport-length>{1,2}","media":["visual","continuous"],"initial":["min-width","max-width"],"percentages":["min-width","max-width"],"computed":["min-width","max-width"],"order":"orderOfAppearance","status":"standard"},"zoom":{"syntax":"auto | <number> | <percentage>","media":["visual","continuous"],"initial":"auto","percentages":"the zoom factor itself","computed":"autoNonNegativeOrPercentage","order":"uniqueOrder","status":"standard"}},"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/@viewport"}}');
+/**
+ * @fileOverview Convert 2.0 fonts to 3.0 fonts.
+ */
+
+/**
+ * Given an SVG, replace Scratch 2.0 fonts with new 3.0 fonts. Add defaults where there are none.
+ * @param {SVGElement} svgTag The SVG dom object
+ * @return {void}
+ */
+const convertFonts = function convertFonts(svgTag) {
+  // Collect all text elements into a list.
+  const textElements = [];
+  const collectText = domElement => {
+    if (domElement.localName === 'text') {
+      textElements.push(domElement);
+    }
+    for (let i = 0; i < domElement.childNodes.length; i++) {
+      collectText(domElement.childNodes[i]);
+    }
+  };
+  collectText(svgTag);
+  // If there's an old font-family, switch to the new one.
+  for (const textElement of textElements) {
+    // If there's no font-family provided, provide one.
+    if (!textElement.getAttribute('font-family') || textElement.getAttribute('font-family') === 'Helvetica') {
+      textElement.setAttribute('font-family', 'Sans Serif');
+    } else if (textElement.getAttribute('font-family') === 'Mystery') {
+      textElement.setAttribute('font-family', 'Curly');
+    } else if (textElement.getAttribute('font-family') === 'Gloria') {
+      textElement.setAttribute('font-family', 'Handwriting');
+    } else if (textElement.getAttribute('font-family') === 'Donegal') {
+      textElement.setAttribute('font-family', 'Serif');
+    }
+  }
+};
+module.exports = convertFonts;
 
 /***/ }),
 
-/***/ "./node_modules/mdn-data/css/properties.json":
-/*!***************************************************!*\
-  !*** ./node_modules/mdn-data/css/properties.json ***!
-  \***************************************************/
-/***/ ((module) => {
+/***/ "./src/font-inliner.js":
+/*!*****************************!*\
+  !*** ./src/font-inliner.js ***!
+  \*****************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"--*":{"syntax":"<declaration-value>","media":"all","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Variables"],"initial":"seeProse","appliesto":"allElements","computed":"asSpecifiedWithVarsSubstituted","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/--*"},"-ms-accelerator":{"syntax":"false | true","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"false","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-accelerator"},"-ms-block-progression":{"syntax":"tb | rl | bt | lr","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"tb","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-block-progression"},"-ms-content-zoom-chaining":{"syntax":"none | chained","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-chaining"},"-ms-content-zooming":{"syntax":"none | zoom","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"zoomForTheTopLevelNoneForTheRest","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zooming"},"-ms-content-zoom-limit":{"syntax":"<\'-ms-content-zoom-limit-min\'> <\'-ms-content-zoom-limit-max\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"groups":["Microsoft Extensions"],"initial":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-content-zoom-limit-max","-ms-content-zoom-limit-min"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit"},"-ms-content-zoom-limit-max":{"syntax":"<percentage>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"maxZoomFactor","groups":["Microsoft Extensions"],"initial":"400%","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-max"},"-ms-content-zoom-limit-min":{"syntax":"<percentage>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"minZoomFactor","groups":["Microsoft Extensions"],"initial":"100%","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-limit-min"},"-ms-content-zoom-snap":{"syntax":"<\'-ms-content-zoom-snap-type\'> || <\'-ms-content-zoom-snap-points\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-content-zoom-snap-type","-ms-content-zoom-snap-points"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-content-zoom-snap-type","-ms-content-zoom-snap-points"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap"},"-ms-content-zoom-snap-points":{"syntax":"snapInterval( <percentage>, <percentage> ) | snapList( <percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0%, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-points"},"-ms-content-zoom-snap-type":{"syntax":"none | proximity | mandatory","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-content-zoom-snap-type"},"-ms-filter":{"syntax":"<string>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"\\"\\"","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-filter"},"-ms-flow-from":{"syntax":"[ none | <custom-ident> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-flow-from"},"-ms-flow-into":{"syntax":"[ none | <custom-ident> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"iframeElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-flow-into"},"-ms-grid-columns":{"syntax":"none | <track-list> | <auto-track-list>","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-grid-columns"},"-ms-grid-rows":{"syntax":"none | <track-list> | <auto-track-list>","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-grid-rows"},"-ms-high-contrast-adjust":{"syntax":"auto | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-high-contrast-adjust"},"-ms-hyphenate-limit-chars":{"syntax":"auto | <integer>{1,3}","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-chars"},"-ms-hyphenate-limit-lines":{"syntax":"no-limit | <integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"no-limit","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-lines"},"-ms-hyphenate-limit-zone":{"syntax":"<percentage> | <length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"referToLineBoxWidth","groups":["Microsoft Extensions"],"initial":"0","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-hyphenate-limit-zone"},"-ms-ime-align":{"syntax":"auto | after","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-ime-align"},"-ms-overflow-style":{"syntax":"auto | none | scrollbar | -ms-autohiding-scrollbar","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-overflow-style"},"-ms-scrollbar-3dlight-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-3dlight-color"},"-ms-scrollbar-arrow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ButtonText","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-arrow-color"},"-ms-scrollbar-base-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-base-color"},"-ms-scrollbar-darkshadow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDDarkShadow","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-darkshadow-color"},"-ms-scrollbar-face-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDFace","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-face-color"},"-ms-scrollbar-highlight-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDHighlight","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-highlight-color"},"-ms-scrollbar-shadow-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"ThreeDDarkShadow","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-shadow-color"},"-ms-scrollbar-track-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"Scrollbar","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scrollbar-track-color"},"-ms-scroll-chaining":{"syntax":"chained | none","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"chained","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-chaining"},"-ms-scroll-limit":{"syntax":"<\'-ms-scroll-limit-x-min\'> <\'-ms-scroll-limit-y-min\'> <\'-ms-scroll-limit-x-max\'> <\'-ms-scroll-limit-y-max\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-limit-x-min","-ms-scroll-limit-y-min","-ms-scroll-limit-x-max","-ms-scroll-limit-y-max"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-limit-x-min","-ms-scroll-limit-y-min","-ms-scroll-limit-x-max","-ms-scroll-limit-y-max"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit"},"-ms-scroll-limit-x-max":{"syntax":"auto | <length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-max"},"-ms-scroll-limit-x-min":{"syntax":"<length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-x-min"},"-ms-scroll-limit-y-max":{"syntax":"auto | <length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-max"},"-ms-scroll-limit-y-min":{"syntax":"<length>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-limit-y-min"},"-ms-scroll-rails":{"syntax":"none | railed","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"railed","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-rails"},"-ms-scroll-snap-points-x":{"syntax":"snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0px, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-x"},"-ms-scroll-snap-points-y":{"syntax":"snapInterval( <length-percentage>, <length-percentage> ) | snapList( <length-percentage># )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"snapInterval(0px, 100%)","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-points-y"},"-ms-scroll-snap-type":{"syntax":"none | proximity | mandatory","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-type"},"-ms-scroll-snap-x":{"syntax":"<\'-ms-scroll-snap-type\'> <\'-ms-scroll-snap-points-x\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-snap-type","-ms-scroll-snap-points-x"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-snap-type","-ms-scroll-snap-points-x"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-x"},"-ms-scroll-snap-y":{"syntax":"<\'-ms-scroll-snap-type\'> <\'-ms-scroll-snap-points-y\'>","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":["-ms-scroll-snap-type","-ms-scroll-snap-points-y"],"appliesto":"nonReplacedBlockAndInlineBlockElements","computed":["-ms-scroll-snap-type","-ms-scroll-snap-points-y"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-snap-y"},"-ms-scroll-translation":{"syntax":"none | vertical-to-horizontal","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-scroll-translation"},"-ms-text-autospace":{"syntax":"none | ideograph-alpha | ideograph-numeric | ideograph-parenthesis | ideograph-space","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-text-autospace"},"-ms-touch-select":{"syntax":"grippers | none","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"grippers","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-touch-select"},"-ms-user-select":{"syntax":"none | element | text","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"text","appliesto":"nonReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-user-select"},"-ms-wrap-flow":{"syntax":"auto | both | start | end | maximum | clear","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-flow"},"-ms-wrap-margin":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"0","appliesto":"exclusionElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-margin"},"-ms-wrap-through":{"syntax":"wrap | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Microsoft Extensions"],"initial":"wrap","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-ms-wrap-through"},"-moz-appearance":{"syntax":"none | button | button-arrow-down | button-arrow-next | button-arrow-previous | button-arrow-up | button-bevel | button-focus | caret | checkbox | checkbox-container | checkbox-label | checkmenuitem | dualbutton | groupbox | listbox | listitem | menuarrow | menubar | menucheckbox | menuimage | menuitem | menuitemtext | menulist | menulist-button | menulist-text | menulist-textfield | menupopup | menuradio | menuseparator | meterbar | meterchunk | progressbar | progressbar-vertical | progresschunk | progresschunk-vertical | radio | radio-container | radio-label | radiomenuitem | range | range-thumb | resizer | resizerpanel | scale-horizontal | scalethumbend | scalethumb-horizontal | scalethumbstart | scalethumbtick | scalethumb-vertical | scale-vertical | scrollbarbutton-down | scrollbarbutton-left | scrollbarbutton-right | scrollbarbutton-up | scrollbarthumb-horizontal | scrollbarthumb-vertical | scrollbartrack-horizontal | scrollbartrack-vertical | searchfield | separator | sheet | spinner | spinner-downbutton | spinner-textfield | spinner-upbutton | splitter | statusbar | statusbarpanel | tab | tabpanel | tabpanels | tab-scroll-arrow-back | tab-scroll-arrow-forward | textfield | textfield-multiline | toolbar | toolbarbutton | toolbarbutton-dropdown | toolbargripper | toolbox | tooltip | treeheader | treeheadercell | treeheadersortarrow | treeitem | treeline | treetwisty | treetwistyopen | treeview | -moz-mac-unified-toolbar | -moz-win-borderless-glass | -moz-win-browsertabbar-toolbox | -moz-win-communicationstext | -moz-win-communications-toolbox | -moz-win-exclude-glass | -moz-win-glass | -moz-win-mediatext | -moz-win-media-toolbox | -moz-window-button-box | -moz-window-button-box-maximized | -moz-window-button-close | -moz-window-button-maximize | -moz-window-button-minimize | -moz-window-button-restore | -moz-window-frame-bottom | -moz-window-frame-left | -moz-window-frame-right | -moz-window-titlebar | -moz-window-titlebar-maximized","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"noneButOverriddenInUserAgentCSS","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"-moz-binding":{"syntax":"<url> | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElementsExceptGeneratedContentOrPseudoElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-binding"},"-moz-border-bottom-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-bottom-colors"},"-moz-border-left-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-left-colors"},"-moz-border-right-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-right-colors"},"-moz-border-top-colors":{"syntax":"<color>+ | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-border-top-colors"},"-moz-context-properties":{"syntax":"none | [ fill | fill-opacity | stroke | stroke-opacity ]#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElementsThatCanReferenceImages","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-context-properties"},"-moz-float-edge":{"syntax":"border-box | content-box | margin-box | padding-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"content-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-float-edge"},"-moz-force-broken-image-icon":{"syntax":"<integer [0,1]>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"0","appliesto":"images","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-force-broken-image-icon"},"-moz-image-region":{"syntax":"<shape> | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"auto","appliesto":"xulImageElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-image-region"},"-moz-orient":{"syntax":"inline | block | horizontal | vertical","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"inline","appliesto":"anyElementEffectOnProgressAndMeter","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-orient"},"-moz-outline-radius":{"syntax":"<outline-radius>{1,4} [ / <outline-radius>{1,4} ]?","media":"visual","inherited":false,"animationType":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"percentages":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"groups":["Mozilla Extensions"],"initial":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"appliesto":"allElements","computed":["-moz-outline-radius-topleft","-moz-outline-radius-topright","-moz-outline-radius-bottomright","-moz-outline-radius-bottomleft"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius"},"-moz-outline-radius-bottomleft":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomleft"},"-moz-outline-radius-bottomright":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-bottomright"},"-moz-outline-radius-topleft":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topleft"},"-moz-outline-radius-topright":{"syntax":"<outline-radius>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["Mozilla Extensions"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-outline-radius-topright"},"-moz-stack-sizing":{"syntax":"ignore | stretch-to-fit","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"stretch-to-fit","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-stack-sizing"},"-moz-text-blink":{"syntax":"none | blink","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-text-blink"},"-moz-user-focus":{"syntax":"ignore | normal | select-after | select-before | select-menu | select-same | select-all | none","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-focus"},"-moz-user-input":{"syntax":"auto | none | enabled | disabled","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-input"},"-moz-user-modify":{"syntax":"read-only | read-write | write-only","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"read-only","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-user-modify"},"-moz-window-dragging":{"syntax":"drag | no-drag","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"drag","appliesto":"allElementsCreatingNativeWindows","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-window-dragging"},"-moz-window-shadow":{"syntax":"default | menu | tooltip | sheet | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"default","appliesto":"allElementsCreatingNativeWindows","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-moz-window-shadow"},"-webkit-appearance":{"syntax":"none | button | button-bevel | caret | checkbox | default-button | inner-spin-button | listbox | listitem | media-controls-background | media-controls-fullscreen-background | media-current-time-display | media-enter-fullscreen-button | media-exit-fullscreen-button | media-fullscreen-button | media-mute-button | media-overlay-play-button | media-play-button | media-seek-back-button | media-seek-forward-button | media-slider | media-sliderthumb | media-time-remaining-display | media-toggle-closed-captions-button | media-volume-slider | media-volume-slider-container | media-volume-sliderthumb | menulist | menulist-button | menulist-text | menulist-textfield | meter | progress-bar | progress-bar-value | push-button | radio | searchfield | searchfield-cancel-button | searchfield-decoration | searchfield-results-button | searchfield-results-decoration | slider-horizontal | slider-vertical | sliderthumb-horizontal | sliderthumb-vertical | square-button | textarea | textfield | -apple-pay-button","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"noneButOverriddenInUserAgentCSS","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"-webkit-border-before":{"syntax":"<\'border-width\'> || <\'border-style\'> || <\'color\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":["-webkit-border-before-width"],"groups":["WebKit Extensions"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","color"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-border-before"},"-webkit-border-before-color":{"syntax":"<\'color\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard"},"-webkit-border-before-style":{"syntax":"<\'border-style\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard"},"-webkit-border-before-width":{"syntax":"<\'border-width\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["WebKit Extensions"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"nonstandard"},"-webkit-box-reflect":{"syntax":"[ above | below | right | left ]? <length>? <image>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-box-reflect"},"-webkit-line-clamp":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["WebKit Extensions","CSS Overflow"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-line-clamp"},"-webkit-mask":{"syntax":"[ <mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || [ <box> | border | padding | content | text ] || [ <box> | border | padding | content ] ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":["-webkit-mask-image","-webkit-mask-repeat","-webkit-mask-attachment","-webkit-mask-position","-webkit-mask-origin","-webkit-mask-clip"],"appliesto":"allElements","computed":["-webkit-mask-image","-webkit-mask-repeat","-webkit-mask-attachment","-webkit-mask-position","-webkit-mask-origin","-webkit-mask-clip"],"order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask"},"-webkit-mask-attachment":{"syntax":"<attachment>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"scroll","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-attachment"},"-webkit-mask-clip":{"syntax":"[ <box> | border | padding | content | text ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"border","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-clip"},"-webkit-mask-composite":{"syntax":"<composite-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"source-over","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-composite"},"-webkit-mask-image":{"syntax":"<mask-reference>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"none","appliesto":"allElements","computed":"absoluteURIOrNone","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-image"},"-webkit-mask-origin":{"syntax":"[ <box> | border | padding | content ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"padding","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-origin"},"-webkit-mask-position":{"syntax":"<position>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0% 0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-position"},"-webkit-mask-position-x":{"syntax":"[ <length-percentage> | left | center | right ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-x"},"-webkit-mask-position-y":{"syntax":"[ <length-percentage> | top | center | bottom ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfElement","groups":["WebKit Extensions"],"initial":"0%","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-position-y"},"-webkit-mask-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-repeat"},"-webkit-mask-repeat-x":{"syntax":"repeat | no-repeat | space | round","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-x"},"-webkit-mask-repeat-y":{"syntax":"repeat | no-repeat | space | round","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"repeat","appliesto":"allElements","computed":"absoluteLengthOrPercentage","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-mask-repeat-y"},"-webkit-mask-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"relativeToBackgroundPositioningArea","groups":["WebKit Extensions"],"initial":"auto auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-size"},"-webkit-overflow-scrolling":{"syntax":"auto | touch","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"orderOfAppearance","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-overflow-scrolling"},"-webkit-tap-highlight-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"black","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-tap-highlight-color"},"-webkit-text-fill-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-fill-color"},"-webkit-text-stroke":{"syntax":"<length> || <color>","media":"visual","inherited":true,"animationType":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"percentages":"no","groups":["WebKit Extensions"],"initial":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"appliesto":"allElements","computed":["-webkit-text-stroke-width","-webkit-text-stroke-color"],"order":"canonicalOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke"},"-webkit-text-stroke-color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["WebKit Extensions"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-color"},"-webkit-text-stroke-width":{"syntax":"<length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"0","appliesto":"allElements","computed":"absoluteLength","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-text-stroke-width"},"-webkit-touch-callout":{"syntax":"default | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"default","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/-webkit-touch-callout"},"-webkit-user-modify":{"syntax":"read-only | read-write | read-write-plaintext-only","media":"interactive","inherited":true,"animationType":"discrete","percentages":"no","groups":["WebKit Extensions"],"initial":"read-only","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard"},"align-content":{"syntax":"normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multilineFlexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-content"},"align-items":{"syntax":"normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-items"},"align-self":{"syntax":"auto | normal | stretch | <baseline-position> | <overflow-position>? <self-position>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"auto","appliesto":"flexItemsGridItemsAndAbsolutelyPositionedBoxes","computed":"autoOnAbsolutelyPositionedElementsValueOfAlignItemsOnParent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-self"},"align-tracks":{"syntax":"[ normal | <baseline-position> | <content-distribution> | <overflow-position>? <content-position> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"normal","appliesto":"gridContainersWithMasonryLayoutInTheirBlockAxis","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/align-tracks"},"all":{"syntax":"initial | inherit | unset | revert","media":"noPracticalMedia","inherited":false,"animationType":"eachOfShorthandPropertiesExceptUnicodeBiDiAndDirection","percentages":"no","groups":["CSS Miscellaneous"],"initial":"noPracticalInitialValue","appliesto":"allElements","computed":"asSpecifiedAppliesToEachProperty","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/all"},"animation":{"syntax":"<single-animation>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":["animation-name","animation-duration","animation-timing-function","animation-delay","animation-iteration-count","animation-direction","animation-fill-mode","animation-play-state"],"appliesto":"allElementsAndPseudos","computed":["animation-name","animation-duration","animation-timing-function","animation-delay","animation-direction","animation-iteration-count","animation-fill-mode","animation-play-state"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation"},"animation-delay":{"syntax":"<time>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-delay"},"animation-direction":{"syntax":"<single-animation-direction>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"normal","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-direction"},"animation-duration":{"syntax":"<time>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-duration"},"animation-fill-mode":{"syntax":"<single-animation-fill-mode>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"none","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-fill-mode"},"animation-iteration-count":{"syntax":"<single-animation-iteration-count>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"1","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-iteration-count"},"animation-name":{"syntax":"[ none | <keyframes-name> ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"none","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-name"},"animation-play-state":{"syntax":"<single-animation-play-state>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"running","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-play-state"},"animation-timing-function":{"syntax":"<timing-function>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Animations"],"initial":"ease","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/animation-timing-function"},"appearance":{"syntax":"none | auto | textfield | menulist-button | <compat-auto>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/appearance"},"aspect-ratio":{"syntax":"auto | <ratio>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElementsExceptInlineBoxesAndInternalRubyOrTableBoxes","computed":"asSpecified","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/aspect-ratio"},"azimuth":{"syntax":"<angle> | [ [ left-side | far-left | left | center-left | center | center-right | right | far-right | right-side ] || behind ] | leftwards | rightwards","media":"aural","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Speech"],"initial":"center","appliesto":"allElements","computed":"normalizedAngle","order":"orderOfAppearance","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/azimuth"},"backdrop-filter":{"syntax":"none | <filter-function-list>","media":"visual","inherited":false,"animationType":"filterList","percentages":"no","groups":["Filter Effects"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/backdrop-filter"},"backface-visibility":{"syntax":"visible | hidden","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"visible","appliesto":"transformableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/backface-visibility"},"background":{"syntax":"[ <bg-layer> , ]* <final-bg-layer>","media":"visual","inherited":false,"animationType":["background-color","background-image","background-clip","background-position","background-size","background-repeat","background-attachment"],"percentages":["background-position","background-size"],"groups":["CSS Backgrounds and Borders"],"initial":["background-image","background-position","background-size","background-repeat","background-origin","background-clip","background-attachment","background-color"],"appliesto":"allElements","computed":["background-image","background-position","background-size","background-repeat","background-origin","background-clip","background-attachment","background-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background"},"background-attachment":{"syntax":"<attachment>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"scroll","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-attachment"},"background-blend-mode":{"syntax":"<blend-mode>#","media":"none","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"normal","appliesto":"allElementsSVGContainerGraphicsAndGraphicsReferencingElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-blend-mode"},"background-clip":{"syntax":"<box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"border-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-clip"},"background-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"transparent","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-color"},"background-image":{"syntax":"<bg-image>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-image"},"background-origin":{"syntax":"<box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"padding-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-origin"},"background-position":{"syntax":"<bg-position>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToSizeOfBackgroundPositioningAreaMinusBackgroundImageSize","groups":["CSS Backgrounds and Borders"],"initial":"0% 0%","appliesto":"allElements","computed":"listEachItemTwoKeywordsOriginOffsets","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position"},"background-position-x":{"syntax":"[ center | [ [ left | right | x-start | x-end ]? <length-percentage>? ]! ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToWidthOfBackgroundPositioningAreaMinusBackgroundImageHeight","groups":["CSS Backgrounds and Borders"],"initial":"left","appliesto":"allElements","computed":"listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position-x"},"background-position-y":{"syntax":"[ center | [ [ top | bottom | y-start | y-end ]? <length-percentage>? ]! ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToHeightOfBackgroundPositioningAreaMinusBackgroundImageHeight","groups":["CSS Backgrounds and Borders"],"initial":"top","appliesto":"allElements","computed":"listEachItemConsistingOfAbsoluteLengthPercentageAndOrigin","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-position-y"},"background-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"repeat","appliesto":"allElements","computed":"listEachItemHasTwoKeywordsOnePerDimension","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-repeat"},"background-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"relativeToBackgroundPositioningArea","groups":["CSS Backgrounds and Borders"],"initial":"auto auto","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/background-size"},"block-overflow":{"syntax":"clip | ellipsis | <string>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"clip","appliesto":"blockContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"block-size":{"syntax":"<\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"sameAsWidthAndHeight","computed":"sameAsWidthAndHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/block-size"},"border":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-color","border-style","border-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-width","border-style","border-color"],"appliesto":"allElements","computed":["border-width","border-style","border-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border"},"border-block":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block"},"border-block-color":{"syntax":"<\'border-top-color\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-color"},"border-block-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-style"},"border-block-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-width"},"border-block-end":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-block-end-color","border-block-end-style","border-block-end-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end"},"border-block-end-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-color"},"border-block-end-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-style"},"border-block-end-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-end-width"},"border-block-start":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-block-start-color","border-block-start-style","border-block-start-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-block-start-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start"},"border-block-start-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-color"},"border-block-start-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-style"},"border-block-start-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-block-start-width"},"border-bottom":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-bottom-color","border-bottom-style","border-bottom-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-bottom-width","border-bottom-style","border-bottom-color"],"appliesto":"allElements","computed":["border-bottom-width","border-bottom-style","border-bottom-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom"},"border-bottom-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-color"},"border-bottom-left-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-left-radius"},"border-bottom-right-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-right-radius"},"border-bottom-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-style"},"border-bottom-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderBottomStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-bottom-width"},"border-collapse":{"syntax":"collapse | separate","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"separate","appliesto":"tableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-collapse"},"border-color":{"syntax":"<color>{1,4}","media":"visual","inherited":false,"animationType":["border-bottom-color","border-left-color","border-right-color","border-top-color"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-color","border-right-color","border-bottom-color","border-left-color"],"appliesto":"allElements","computed":["border-bottom-color","border-left-color","border-right-color","border-top-color"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-color"},"border-end-end-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-end-end-radius"},"border-end-start-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-end-start-radius"},"border-image":{"syntax":"<\'border-image-source\'> || <\'border-image-slice\'> [ / <\'border-image-width\'> | / <\'border-image-width\'>? / <\'border-image-outset\'> ]? || <\'border-image-repeat\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":["border-image-slice","border-image-width"],"groups":["CSS Backgrounds and Borders"],"initial":["border-image-source","border-image-slice","border-image-width","border-image-outset","border-image-repeat"],"appliesto":"allElementsExceptTableElementsWhenCollapse","computed":["border-image-outset","border-image-repeat","border-image-slice","border-image-source","border-image-width"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image"},"border-image-outset":{"syntax":"[ <length> | <number> ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-outset"},"border-image-repeat":{"syntax":"[ stretch | repeat | round | space ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"stretch","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-repeat"},"border-image-slice":{"syntax":"<number-percentage>{1,4} && fill?","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToSizeOfBorderImage","groups":["CSS Backgrounds and Borders"],"initial":"100%","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"oneToFourPercentagesOrAbsoluteLengthsPlusFill","order":"percentagesOrLengthsFollowedByFill","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-slice"},"border-image-source":{"syntax":"none | <image>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"noneOrImageWithAbsoluteURI","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-source"},"border-image-width":{"syntax":"[ <length-percentage> | <number> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToWidthOrHeightOfBorderImageArea","groups":["CSS Backgrounds and Borders"],"initial":"1","appliesto":"allElementsExceptTableElementsWhenCollapse","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-image-width"},"border-inline":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline"},"border-inline-end":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-inline-end-color","border-inline-end-style","border-inline-end-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-inline-end-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end"},"border-inline-color":{"syntax":"<\'border-top-color\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-color"},"border-inline-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-style"},"border-inline-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-width"},"border-inline-end-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-color"},"border-inline-end-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-style"},"border-inline-end-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-end-width"},"border-inline-start":{"syntax":"<\'border-top-width\'> || <\'border-top-style\'> || <\'color\'>","media":"visual","inherited":false,"animationType":["border-inline-start-color","border-inline-start-style","border-inline-start-width"],"percentages":"no","groups":["CSS Logical Properties"],"initial":["border-width","border-style","color"],"appliesto":"allElements","computed":["border-width","border-style","border-inline-start-color"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start"},"border-inline-start-color":{"syntax":"<\'border-top-color\'>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Logical Properties"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-color"},"border-inline-start-style":{"syntax":"<\'border-top-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Logical Properties"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-style"},"border-inline-start-width":{"syntax":"<\'border-top-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthZeroIfBorderStyleNoneOrHidden","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-inline-start-width"},"border-left":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-left-color","border-left-style","border-left-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-left-width","border-left-style","border-left-color"],"appliesto":"allElements","computed":["border-left-width","border-left-style","border-left-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left"},"border-left-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-color"},"border-left-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-style"},"border-left-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderLeftStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-left-width"},"border-radius":{"syntax":"<length-percentage>{1,4} [ / <length-percentage>{1,4} ]?","media":"visual","inherited":false,"animationType":["border-top-left-radius","border-top-right-radius","border-bottom-right-radius","border-bottom-left-radius"],"percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":["border-top-left-radius","border-top-right-radius","border-bottom-right-radius","border-bottom-left-radius"],"appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":["border-bottom-left-radius","border-bottom-right-radius","border-top-left-radius","border-top-right-radius"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-radius"},"border-right":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-right-color","border-right-style","border-right-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-right-width","border-right-style","border-right-color"],"appliesto":"allElements","computed":["border-right-width","border-right-style","border-right-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right"},"border-right-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-color"},"border-right-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-style"},"border-right-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderRightStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-right-width"},"border-spacing":{"syntax":"<length> <length>?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"0","appliesto":"tableElements","computed":"twoAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-spacing"},"border-start-end-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-start-end-radius"},"border-start-start-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-start-start-radius"},"border-style":{"syntax":"<line-style>{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-style","border-right-style","border-bottom-style","border-left-style"],"appliesto":"allElements","computed":["border-bottom-style","border-left-style","border-right-style","border-top-style"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-style"},"border-top":{"syntax":"<line-width> || <line-style> || <color>","media":"visual","inherited":false,"animationType":["border-top-color","border-top-style","border-top-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-width","border-top-style","border-top-color"],"appliesto":"allElements","computed":["border-top-width","border-top-style","border-top-color"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top"},"border-top-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-color"},"border-top-left-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-left-radius"},"border-top-right-radius":{"syntax":"<length-percentage>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfBorderBox","groups":["CSS Backgrounds and Borders"],"initial":"0","appliesto":"allElementsUAsNotRequiredWhenCollapse","computed":"twoAbsoluteLengthOrPercentages","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-right-radius"},"border-top-style":{"syntax":"<line-style>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-style"},"border-top-width":{"syntax":"<line-width>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"medium","appliesto":"allElements","computed":"absoluteLengthOr0IfBorderTopStyleNoneOrHidden","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-top-width"},"border-width":{"syntax":"<line-width>{1,4}","media":"visual","inherited":false,"animationType":["border-bottom-width","border-left-width","border-right-width","border-top-width"],"percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":["border-top-width","border-right-width","border-bottom-width","border-left-width"],"appliesto":"allElements","computed":["border-bottom-width","border-left-width","border-right-width","border-top-width"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/border-width"},"bottom":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToContainingBlockHeight","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/bottom"},"box-align":{"syntax":"start | center | end | baseline | stretch","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"stretch","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-align"},"box-decoration-break":{"syntax":"slice | clone","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"slice","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-decoration-break"},"box-direction":{"syntax":"normal | reverse | inherit","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"normal","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-direction"},"box-flex":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"0","appliesto":"directChildrenOfElementsWithDisplayMozBoxMozInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-flex"},"box-flex-group":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"1","appliesto":"inFlowChildrenOfBoxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-flex-group"},"box-lines":{"syntax":"single | multiple","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"single","appliesto":"boxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-lines"},"box-ordinal-group":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"1","appliesto":"childrenOfBoxElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-ordinal-group"},"box-orient":{"syntax":"horizontal | vertical | inline-axis | block-axis | inherit","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"inlineAxisHorizontalInXUL","appliesto":"elementsWithDisplayBoxOrInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-orient"},"box-pack":{"syntax":"start | center | end | justify","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions","WebKit Extensions"],"initial":"start","appliesto":"elementsWithDisplayMozBoxMozInlineBox","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-pack"},"box-shadow":{"syntax":"none | <shadow>#","media":"visual","inherited":false,"animationType":"shadowList","percentages":"no","groups":["CSS Backgrounds and Borders"],"initial":"none","appliesto":"allElements","computed":"absoluteLengthsSpecifiedColorAsSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-shadow"},"box-sizing":{"syntax":"content-box | border-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"content-box","appliesto":"allElementsAcceptingWidthOrHeight","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/box-sizing"},"break-after":{"syntax":"auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-after"},"break-before":{"syntax":"auto | avoid | always | all | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-before"},"break-inside":{"syntax":"auto | avoid | avoid-page | avoid-column | avoid-region","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"auto","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/break-inside"},"caption-side":{"syntax":"top | bottom | block-start | block-end | inline-start | inline-end","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"top","appliesto":"tableCaptionElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/caption-side"},"caret-color":{"syntax":"auto | <color>","media":"interactive","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asAutoOrColor","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/caret-color"},"clear":{"syntax":"none | left | right | both | inline-start | inline-end","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"none","appliesto":"blockLevelElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clear"},"clip":{"syntax":"<shape> | auto","media":"visual","inherited":false,"animationType":"rectangle","percentages":"no","groups":["CSS Masking"],"initial":"auto","appliesto":"absolutelyPositionedElements","computed":"autoOrRectangle","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clip"},"clip-path":{"syntax":"<clip-source> | [ <basic-shape> || <geometry-box> ] | none","media":"visual","inherited":false,"animationType":"basicShapeOtherwiseNo","percentages":"referToReferenceBoxWhenSpecifiedOtherwiseBorderBox","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/clip-path"},"color":{"syntax":"<color>","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Color"],"initial":"variesFromBrowserToBrowser","appliesto":"allElements","computed":"translucentValuesRGBAOtherwiseRGB","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/color"},"color-adjust":{"syntax":"economy | exact","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Color"],"initial":"economy","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/color-adjust"},"column-count":{"syntax":"<integer> | auto","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Columns"],"initial":"auto","appliesto":"blockContainersExceptTableWrappers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-count"},"column-fill":{"syntax":"auto | balance | balance-all","media":"visualInContinuousMediaNoEffectInOverflowColumns","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"balance","appliesto":"multicolElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-fill"},"column-gap":{"syntax":"normal | <length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfContentArea","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multiColumnElementsFlexContainersGridContainers","computed":"asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-gap"},"column-rule":{"syntax":"<\'column-rule-width\'> || <\'column-rule-style\'> || <\'column-rule-color\'>","media":"visual","inherited":false,"animationType":["column-rule-color","column-rule-style","column-rule-width"],"percentages":"no","groups":["CSS Columns"],"initial":["column-rule-width","column-rule-style","column-rule-color"],"appliesto":"multicolElements","computed":["column-rule-color","column-rule-style","column-rule-width"],"order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule"},"column-rule-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Columns"],"initial":"currentcolor","appliesto":"multicolElements","computed":"computedColor","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-color"},"column-rule-style":{"syntax":"<\'border-style\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"none","appliesto":"multicolElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-style"},"column-rule-width":{"syntax":"<\'border-width\'>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Columns"],"initial":"medium","appliesto":"multicolElements","computed":"absoluteLength0IfColumnRuleStyleNoneOrHidden","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-rule-width"},"column-span":{"syntax":"none | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Columns"],"initial":"none","appliesto":"inFlowBlockLevelElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-span"},"column-width":{"syntax":"<length> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Columns"],"initial":"auto","appliesto":"blockContainersExceptTableWrappers","computed":"absoluteLengthZeroOrLarger","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-width"},"columns":{"syntax":"<\'column-width\'> || <\'column-count\'>","media":"visual","inherited":false,"animationType":["column-width","column-count"],"percentages":"no","groups":["CSS Columns"],"initial":["column-width","column-count"],"appliesto":"blockContainersExceptTableWrappers","computed":["column-width","column-count"],"order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/columns"},"contain":{"syntax":"none | strict | content | [ size || layout || style || paint ]","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Containment"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/contain"},"content":{"syntax":"normal | none | [ <content-replacement> | <content-list> ] [/ <string> ]?","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Generated Content"],"initial":"normal","appliesto":"beforeAndAfterPseudos","computed":"normalOnElementsForPseudosNoneAbsoluteURIStringOrAsSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/content"},"counter-increment":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-increment"},"counter-reset":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-reset"},"counter-set":{"syntax":"[ <custom-ident> <integer>? ]+ | none","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Counter Styles"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/counter-set"},"cursor":{"syntax":"[ [ <url> [ <x> <y> ]? , ]* [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing ] ]","media":["visual","interactive"],"inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecifiedURLsAbsolute","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/cursor"},"direction":{"syntax":"ltr | rtl","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"ltr","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/direction"},"display":{"syntax":"[ <display-outside> || <display-inside> ] | <display-listitem> | <display-internal> | <display-box> | <display-legacy>","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Display"],"initial":"inline","appliesto":"allElements","computed":"asSpecifiedExceptPositionedFloatingAndRootElementsKeywordMaybeDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/display"},"empty-cells":{"syntax":"show | hide","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"show","appliesto":"tableCellElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/empty-cells"},"filter":{"syntax":"none | <filter-function-list>","media":"visual","inherited":false,"animationType":"filterList","percentages":"no","groups":["Filter Effects"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/filter"},"flex":{"syntax":"none | [ <\'flex-grow\'> <\'flex-shrink\'>? || <\'flex-basis\'> ]","media":"visual","inherited":false,"animationType":["flex-grow","flex-shrink","flex-basis"],"percentages":"no","groups":["CSS Flexible Box Layout"],"initial":["flex-grow","flex-shrink","flex-basis"],"appliesto":"flexItemsAndInFlowPseudos","computed":["flex-grow","flex-shrink","flex-basis"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex"},"flex-basis":{"syntax":"content | <\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToFlexContainersInnerMainSize","groups":["CSS Flexible Box Layout"],"initial":"auto","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"lengthOrPercentageBeforeKeywordIfBothPresent","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-basis"},"flex-direction":{"syntax":"row | row-reverse | column | column-reverse","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"row","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-direction"},"flex-flow":{"syntax":"<\'flex-direction\'> || <\'flex-wrap\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":["flex-direction","flex-wrap"],"appliesto":"flexContainers","computed":["flex-direction","flex-wrap"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-flow"},"flex-grow":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"0","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-grow"},"flex-shrink":{"syntax":"<number>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"1","appliesto":"flexItemsAndInFlowPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-shrink"},"flex-wrap":{"syntax":"nowrap | wrap | wrap-reverse","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"nowrap","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/flex-wrap"},"float":{"syntax":"left | right | none | inline-start | inline-end","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"none","appliesto":"allElementsNoEffectIfDisplayNone","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/float"},"font":{"syntax":"[ [ <\'font-style\'> || <font-variant-css21> || <\'font-weight\'> || <\'font-stretch\'> ]? <\'font-size\'> [ / <\'line-height\'> ]? <\'font-family\'> ] | caption | icon | menu | message-box | small-caption | status-bar","media":"visual","inherited":true,"animationType":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"percentages":["font-size","line-height"],"groups":["CSS Fonts"],"initial":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"appliesto":"allElements","computed":["font-style","font-variant","font-weight","font-stretch","font-size","line-height","font-family"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font"},"font-family":{"syntax":"[ <family-name> | <generic-family> ]#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-family"},"font-feature-settings":{"syntax":"normal | <feature-tag-value>#","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-feature-settings"},"font-kerning":{"syntax":"auto | normal | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-kerning"},"font-language-override":{"syntax":"normal | <string>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-language-override"},"font-optical-sizing":{"syntax":"auto | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-optical-sizing"},"font-variation-settings":{"syntax":"normal | [ <string> <number> ]#","media":"visual","inherited":true,"animationType":"transform","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variation-settings"},"font-size":{"syntax":"<absolute-size> | <relative-size> | <length-percentage>","media":"visual","inherited":true,"animationType":"length","percentages":"referToParentElementsFontSize","groups":["CSS Fonts"],"initial":"medium","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-size"},"font-size-adjust":{"syntax":"none | <number>","media":"visual","inherited":true,"animationType":"number","percentages":"no","groups":["CSS Fonts"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-size-adjust"},"font-smooth":{"syntax":"auto | never | always | <absolute-size> | <length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-smooth"},"font-stretch":{"syntax":"<font-stretch-absolute>","media":"visual","inherited":true,"animationType":"fontStretch","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-stretch"},"font-style":{"syntax":"normal | italic | oblique <angle>?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-style"},"font-synthesis":{"syntax":"none | [ weight || style ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"weight style","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-synthesis"},"font-variant":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> || stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) || [ small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps ] || <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero || <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant"},"font-variant-alternates":{"syntax":"normal | [ stylistic( <feature-value-name> ) || historical-forms || styleset( <feature-value-name># ) || character-variant( <feature-value-name># ) || swash( <feature-value-name> ) || ornaments( <feature-value-name> ) || annotation( <feature-value-name> ) ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-alternates"},"font-variant-caps":{"syntax":"normal | small-caps | all-small-caps | petite-caps | all-petite-caps | unicase | titling-caps","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-caps"},"font-variant-east-asian":{"syntax":"normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-east-asian"},"font-variant-ligatures":{"syntax":"normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-ligatures"},"font-variant-numeric":{"syntax":"normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-numeric"},"font-variant-position":{"syntax":"normal | sub | super","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-variant-position"},"font-weight":{"syntax":"<font-weight-absolute> | bolder | lighter","media":"visual","inherited":true,"animationType":"fontWeight","percentages":"no","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"keywordOrNumericalValueBolderLighterTransformedToRealValue","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/font-weight"},"gap":{"syntax":"<\'row-gap\'> <\'column-gap\'>?","media":"visual","inherited":false,"animationType":["row-gap","column-gap"],"percentages":"no","groups":["CSS Box Alignment"],"initial":["row-gap","column-gap"],"appliesto":"multiColumnElementsFlexContainersGridContainers","computed":["row-gap","column-gap"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/gap"},"grid":{"syntax":"<\'grid-template\'> | <\'grid-template-rows\'> / [ auto-flow && dense? ] <\'grid-auto-columns\'>? | [ auto-flow && dense? ] <\'grid-auto-rows\'>? / <\'grid-template-columns\'>","media":"visual","inherited":false,"animationType":"discrete","percentages":["grid-template-rows","grid-template-columns","grid-auto-rows","grid-auto-columns"],"groups":["CSS Grid Layout"],"initial":["grid-template-rows","grid-template-columns","grid-template-areas","grid-auto-rows","grid-auto-columns","grid-auto-flow","grid-column-gap","grid-row-gap","column-gap","row-gap"],"appliesto":"gridContainers","computed":["grid-template-rows","grid-template-columns","grid-template-areas","grid-auto-rows","grid-auto-columns","grid-auto-flow","grid-column-gap","grid-row-gap","column-gap","row-gap"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid"},"grid-area":{"syntax":"<grid-line> [ / <grid-line> ]{0,3}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-start","grid-column-start","grid-row-end","grid-column-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-row-start","grid-column-start","grid-row-end","grid-column-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-area"},"grid-auto-columns":{"syntax":"<track-size>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-columns"},"grid-auto-flow":{"syntax":"[ row | column ] || dense","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"row","appliesto":"gridContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-flow"},"grid-auto-rows":{"syntax":"<track-size>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-auto-rows"},"grid-column":{"syntax":"<grid-line> [ / <grid-line> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-column-start","grid-column-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-column-start","grid-column-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column"},"grid-column-end":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column-end"},"grid-column-gap":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"0","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/column-gap"},"grid-column-start":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-column-start"},"grid-gap":{"syntax":"<\'grid-row-gap\'> <\'grid-column-gap\'>?","media":"visual","inherited":false,"animationType":["grid-row-gap","grid-column-gap"],"percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-gap","grid-column-gap"],"appliesto":"gridContainers","computed":["grid-row-gap","grid-column-gap"],"order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/gap"},"grid-row":{"syntax":"<grid-line> [ / <grid-line> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":["grid-row-start","grid-row-end"],"appliesto":"gridItemsAndBoxesWithinGridContainer","computed":["grid-row-start","grid-row-end"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row"},"grid-row-end":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row-end"},"grid-row-gap":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"0","appliesto":"gridContainers","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/row-gap"},"grid-row-start":{"syntax":"<grid-line>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"auto","appliesto":"gridItemsAndBoxesWithinGridContainer","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-row-start"},"grid-template":{"syntax":"none | [ <\'grid-template-rows\'> / <\'grid-template-columns\'> ] | [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?","media":"visual","inherited":false,"animationType":"discrete","percentages":["grid-template-columns","grid-template-rows"],"groups":["CSS Grid Layout"],"initial":["grid-template-columns","grid-template-rows","grid-template-areas"],"appliesto":"gridContainers","computed":["grid-template-columns","grid-template-rows","grid-template-areas"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template"},"grid-template-areas":{"syntax":"none | <string>+","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-areas"},"grid-template-columns":{"syntax":"none | <track-list> | <auto-track-list> | subgrid <line-name-list>?","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-columns"},"grid-template-rows":{"syntax":"none | <track-list> | <auto-track-list> | subgrid <line-name-list>?","media":"visual","inherited":false,"animationType":"simpleListOfLpcDifferenceLpc","percentages":"referToDimensionOfContentArea","groups":["CSS Grid Layout"],"initial":"none","appliesto":"gridContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/grid-template-rows"},"hanging-punctuation":{"syntax":"none | [ first || [ force-end | allow-end ] || last ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/hanging-punctuation"},"height":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentagesRelativeToContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAutoOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/height"},"hyphens":{"syntax":"none | manual | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"manual","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/hyphens"},"image-orientation":{"syntax":"from-image | <angle> | [ <angle>? flip ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"from-image","appliesto":"allElements","computed":"angleRoundedToNextQuarter","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/image-orientation"},"image-rendering":{"syntax":"auto | crisp-edges | pixelated","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/image-rendering"},"image-resolution":{"syntax":"[ from-image || <resolution> ] && snap?","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"1dppx","appliesto":"allElements","computed":"asSpecifiedWithExceptionOfResolution","order":"uniqueOrder","status":"experimental"},"ime-mode":{"syntax":"auto | normal | active | inactive | disabled","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"textFields","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ime-mode"},"initial-letter":{"syntax":"normal | [ <number> <integer>? ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Inline"],"initial":"normal","appliesto":"firstLetterPseudoElementsAndInlineLevelFirstChildren","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/initial-letter"},"initial-letter-align":{"syntax":"[ auto | alphabetic | hanging | ideographic ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Inline"],"initial":"auto","appliesto":"firstLetterPseudoElementsAndInlineLevelFirstChildren","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/initial-letter-align"},"inline-size":{"syntax":"<\'width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"sameAsWidthAndHeight","computed":"sameAsWidthAndHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inline-size"},"inset":{"syntax":"<\'top\'>{1,4}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset"},"inset-block":{"syntax":"<\'top\'>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block"},"inset-block-end":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block-end"},"inset-block-start":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalHeightOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-block-start"},"inset-inline":{"syntax":"<\'top\'>{1,2}","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline"},"inset-inline-end":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline-end"},"inset-inline-start":{"syntax":"<\'top\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"auto","appliesto":"positionedElements","computed":"sameAsBoxOffsets","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/inset-inline-start"},"isolation":{"syntax":"auto | isolate","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"auto","appliesto":"allElementsSVGContainerGraphicsAndGraphicsReferencingElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/isolation"},"justify-content":{"syntax":"normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"flexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-content"},"justify-items":{"syntax":"normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ] | legacy | legacy && [ left | right | center ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"legacy","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-items"},"justify-self":{"syntax":"auto | normal | stretch | <baseline-position> | <overflow-position>? [ <self-position> | left | right ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"auto","appliesto":"blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-self"},"justify-tracks":{"syntax":"[ normal | <content-distribution> | <overflow-position>? [ <content-position> | left | right ] ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"normal","appliesto":"gridContainersWithMasonryLayoutInTheirInlineAxis","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/justify-tracks"},"left":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/left"},"letter-spacing":{"syntax":"normal | <length>","media":"visual","inherited":true,"animationType":"length","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"optimumValueOfAbsoluteLengthOrNormal","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/letter-spacing"},"line-break":{"syntax":"auto | loose | normal | strict | anywhere","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-break"},"line-clamp":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Overflow"],"initial":"none","appliesto":"blockContainersExceptMultiColumnContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"line-height":{"syntax":"normal | <number> | <length> | <percentage>","media":"visual","inherited":true,"animationType":"numberOrLength","percentages":"referToElementFontSize","groups":["CSS Fonts"],"initial":"normal","appliesto":"allElements","computed":"absoluteLengthOrAsSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-height"},"line-height-step":{"syntax":"<length>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fonts"],"initial":"0","appliesto":"blockContainers","computed":"absoluteLength","order":"perGrammar","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/line-height-step"},"list-style":{"syntax":"<\'list-style-type\'> || <\'list-style-position\'> || <\'list-style-image\'>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":["list-style-type","list-style-position","list-style-image"],"appliesto":"listItems","computed":["list-style-image","list-style-position","list-style-type"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style"},"list-style-image":{"syntax":"<url> | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"none","appliesto":"listItems","computed":"noneOrImageWithAbsoluteURI","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-image"},"list-style-position":{"syntax":"inside | outside","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"outside","appliesto":"listItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-position"},"list-style-type":{"syntax":"<counter-style> | <string> | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Lists and Counters"],"initial":"disc","appliesto":"listItems","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/list-style-type"},"margin":{"syntax":"[ <length> | <percentage> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":["margin-bottom","margin-left","margin-right","margin-top"],"appliesto":"allElementsExceptTableDisplayTypes","computed":["margin-bottom","margin-left","margin-right","margin-top"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin"},"margin-block":{"syntax":"<\'margin-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block"},"margin-block-end":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block-end"},"margin-block-start":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-block-start"},"margin-bottom":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-bottom"},"margin-inline":{"syntax":"<\'margin-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline"},"margin-inline-end":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline-end"},"margin-inline-start":{"syntax":"<\'margin-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"dependsOnLayoutModel","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsMargin","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-inline-start"},"margin-left":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-left"},"margin-right":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-right"},"margin-top":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-top"},"margin-trim":{"syntax":"none | in-flow | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"none","appliesto":"blockContainersAndMultiColumnContainers","computed":"asSpecified","order":"perGrammar","alsoAppliesTo":["::first-letter","::first-line"],"status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/margin-trim"},"mask":{"syntax":"<mask-layer>#","media":"visual","inherited":false,"animationType":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"percentages":["mask-position"],"groups":["CSS Masking"],"initial":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"appliesto":"allElementsSVGContainerElements","computed":["mask-image","mask-mode","mask-repeat","mask-position","mask-clip","mask-origin","mask-size","mask-composite"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask"},"mask-border":{"syntax":"<\'mask-border-source\'> || <\'mask-border-slice\'> [ / <\'mask-border-width\'>? [ / <\'mask-border-outset\'> ]? ]? || <\'mask-border-repeat\'> || <\'mask-border-mode\'>","media":"visual","inherited":false,"animationType":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"percentages":["mask-border-slice","mask-border-width"],"groups":["CSS Masking"],"initial":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"appliesto":"allElementsSVGContainerElements","computed":["mask-border-mode","mask-border-outset","mask-border-repeat","mask-border-slice","mask-border-source","mask-border-width"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border"},"mask-border-mode":{"syntax":"luminance | alpha","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"alpha","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-mode"},"mask-border-outset":{"syntax":"[ <length> | <number> ]{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"0","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-outset"},"mask-border-repeat":{"syntax":"[ stretch | repeat | round | space ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"stretch","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-repeat"},"mask-border-slice":{"syntax":"<number-percentage>{1,4} fill?","media":"visual","inherited":false,"animationType":"discrete","percentages":"referToSizeOfMaskBorderImage","groups":["CSS Masking"],"initial":"0","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-slice"},"mask-border-source":{"syntax":"none | <image>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-source"},"mask-border-width":{"syntax":"[ <length-percentage> | <number> | auto ]{1,4}","media":"visual","inherited":false,"animationType":"discrete","percentages":"relativeToMaskBorderImageArea","groups":["CSS Masking"],"initial":"auto","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-border-width"},"mask-clip":{"syntax":"[ <geometry-box> | no-clip ]#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"border-box","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-clip"},"mask-composite":{"syntax":"<compositing-operator>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"add","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-composite"},"mask-image":{"syntax":"<mask-reference>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"none","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedURLsAbsolute","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-image"},"mask-mode":{"syntax":"<masking-mode>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"match-source","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-mode"},"mask-origin":{"syntax":"<geometry-box>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"border-box","appliesto":"allElementsSVGContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-origin"},"mask-position":{"syntax":"<position>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToSizeOfMaskPaintingArea","groups":["CSS Masking"],"initial":"center","appliesto":"allElementsSVGContainerElements","computed":"consistsOfTwoKeywordsForOriginAndOffsets","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-position"},"mask-repeat":{"syntax":"<repeat-style>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"no-repeat","appliesto":"allElementsSVGContainerElements","computed":"consistsOfTwoDimensionKeywords","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-repeat"},"mask-size":{"syntax":"<bg-size>#","media":"visual","inherited":false,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"no","groups":["CSS Masking"],"initial":"auto","appliesto":"allElementsSVGContainerElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-size"},"mask-type":{"syntax":"luminance | alpha","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Masking"],"initial":"luminance","appliesto":"maskElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mask-type"},"masonry-auto-flow":{"syntax":"[ pack | next ] || [ definite-first | ordered ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Grid Layout"],"initial":"pack","appliesto":"gridContainersWithMasonryLayout","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/masonry-auto-flow"},"math-style":{"syntax":"normal | compact","media":"visual","inherited":true,"animationType":"notAnimatable","percentages":"no","groups":["MathML"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/math-style"},"max-block-size":{"syntax":"<\'max-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMaxWidthAndMaxHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-block-size"},"max-height":{"syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentagesNone","groups":["CSS Box Model"],"initial":"none","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAsSpecifiedAbsoluteLengthOrNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-height"},"max-inline-size":{"syntax":"<\'max-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMaxWidthAndMaxHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-inline-size"},"max-lines":{"syntax":"none | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Overflow"],"initial":"none","appliesto":"blockContainersExceptMultiColumnContainers","computed":"asSpecified","order":"perGrammar","status":"experimental"},"max-width":{"syntax":"none | <length-percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"none","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAsSpecifiedAbsoluteLengthOrNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/max-width"},"min-block-size":{"syntax":"<\'min-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"blockSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMinWidthAndMinHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-block-size"},"min-height":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"regardingHeightOfGeneratedBoxContainingBlockPercentages0","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableColumns","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-height"},"min-inline-size":{"syntax":"<\'min-width\'>","media":"visual","inherited":false,"animationType":"lpc","percentages":"inlineSizeOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"sameAsWidthAndHeight","computed":"sameAsMinWidthAndMinHeight","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-inline-size"},"min-width":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/min-width"},"mix-blend-mode":{"syntax":"<blend-mode>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Compositing and Blending"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/mix-blend-mode"},"object-fit":{"syntax":"fill | contain | cover | none | scale-down","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Images"],"initial":"fill","appliesto":"replacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/object-fit"},"object-position":{"syntax":"<position>","media":"visual","inherited":true,"animationType":"repeatableListOfSimpleListOfLpc","percentages":"referToWidthAndHeightOfElement","groups":["CSS Images"],"initial":"50% 50%","appliesto":"replacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/object-position"},"offset":{"syntax":"[ <\'offset-position\'>? [ <\'offset-path\'> [ <\'offset-distance\'> || <\'offset-rotate\'> ]? ]? ]! [ / <\'offset-anchor\'> ]?","media":"visual","inherited":false,"animationType":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"percentages":["offset-position","offset-distance","offset-anchor"],"groups":["CSS Motion Path"],"initial":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"appliesto":"transformableElements","computed":["offset-position","offset-path","offset-distance","offset-anchor","offset-rotate"],"order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset"},"offset-anchor":{"syntax":"auto | <position>","media":"visual","inherited":false,"animationType":"position","percentages":"relativeToWidthAndHeight","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"standard"},"offset-distance":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToTotalPathLength","groups":["CSS Motion Path"],"initial":"0","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-distance"},"offset-path":{"syntax":"none | ray( [ <angle> && <size> && contain? ] ) | <path()> | <url> | [ <basic-shape> || <geometry-box> ]","media":"visual","inherited":false,"animationType":"angleOrBasicShapeOrPath","percentages":"no","groups":["CSS Motion Path"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-path"},"offset-position":{"syntax":"auto | <position>","media":"visual","inherited":false,"animationType":"position","percentages":"referToSizeOfContainingBlock","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"perGrammar","status":"experimental"},"offset-rotate":{"syntax":"[ auto | reverse ] || <angle>","media":"visual","inherited":false,"animationType":"angleOrBasicShapeOrPath","percentages":"no","groups":["CSS Motion Path"],"initial":"auto","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/offset-rotate"},"opacity":{"syntax":"<alpha-value>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Color"],"initial":"1.0","appliesto":"allElements","computed":"specifiedValueClipped0To1","order":"uniqueOrder","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/opacity"},"order":{"syntax":"<integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Flexible Box Layout"],"initial":"0","appliesto":"flexItemsGridItemsAbsolutelyPositionedContainerChildren","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/order"},"orphans":{"syntax":"<integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"2","appliesto":"blockContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/orphans"},"outline":{"syntax":"[ <\'outline-color\'> || <\'outline-style\'> || <\'outline-width\'> ]","media":["visual","interactive"],"inherited":false,"animationType":["outline-color","outline-width","outline-style"],"percentages":"no","groups":["CSS Basic User Interface"],"initial":["outline-color","outline-style","outline-width"],"appliesto":"allElements","computed":["outline-color","outline-width","outline-style"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline"},"outline-color":{"syntax":"<color> | invert","media":["visual","interactive"],"inherited":false,"animationType":"color","percentages":"no","groups":["CSS Basic User Interface"],"initial":"invertOrCurrentColor","appliesto":"allElements","computed":"invertForTranslucentColorRGBAOtherwiseRGB","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-color"},"outline-offset":{"syntax":"<length>","media":["visual","interactive"],"inherited":false,"animationType":"length","percentages":"no","groups":["CSS Basic User Interface"],"initial":"0","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-offset"},"outline-style":{"syntax":"auto | <\'border-style\'>","media":["visual","interactive"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-style"},"outline-width":{"syntax":"<line-width>","media":["visual","interactive"],"inherited":false,"animationType":"length","percentages":"no","groups":["CSS Basic User Interface"],"initial":"medium","appliesto":"allElements","computed":"absoluteLength0ForNone","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/outline-width"},"overflow":{"syntax":"[ visible | hidden | clip | scroll | auto ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":["overflow-x","overflow-y"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow"},"overflow-anchor":{"syntax":"auto | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Anchoring"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard"},"overflow-block":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"perGrammar","status":"standard"},"overflow-clip-box":{"syntax":"padding-box | content-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Mozilla Extensions"],"initial":"padding-box","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Mozilla/CSS/overflow-clip-box"},"overflow-inline":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"perGrammar","status":"standard"},"overflow-wrap":{"syntax":"normal | break-word | anywhere","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"nonReplacedInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"},"overflow-x":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-x"},"overflow-y":{"syntax":"visible | hidden | clip | scroll | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"visible","appliesto":"blockContainersFlexContainersGridContainers","computed":"asSpecifiedButVisibleOrClipReplacedToAutoOrHiddenIfOtherValueDifferent","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-y"},"overscroll-behavior":{"syntax":"[ contain | none | auto ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior"},"overscroll-behavior-block":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-block"},"overscroll-behavior-inline":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-inline"},"overscroll-behavior-x":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-x"},"overscroll-behavior-y":{"syntax":"contain | none | auto","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Model"],"initial":"auto","appliesto":"nonReplacedBlockAndInlineBlockElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overscroll-behavior-y"},"padding":{"syntax":"[ <length> | <percentage> ]{1,4}","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":["padding-bottom","padding-left","padding-right","padding-top"],"appliesto":"allElementsExceptInternalTableDisplayTypes","computed":["padding-bottom","padding-left","padding-right","padding-top"],"order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding"},"padding-block":{"syntax":"<\'padding-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block"},"padding-block-end":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block-end"},"padding-block-start":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-block-start"},"padding-bottom":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-bottom"},"padding-inline":{"syntax":"<\'padding-left\'>{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline"},"padding-inline-end":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline-end"},"padding-inline-start":{"syntax":"<\'padding-left\'>","media":"visual","inherited":false,"animationType":"length","percentages":"logicalWidthOfContainingBlock","groups":["CSS Logical Properties"],"initial":"0","appliesto":"allElements","computed":"asLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-inline-start"},"padding-left":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-left"},"padding-right":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-right"},"padding-top":{"syntax":"<length> | <percentage>","media":"visual","inherited":false,"animationType":"length","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"0","appliesto":"allElementsExceptInternalTableDisplayTypes","computed":"percentageAsSpecifiedOrAbsoluteLength","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/padding-top"},"page-break-after":{"syntax":"auto | always | avoid | left | right | recto | verso","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-after"},"page-break-before":{"syntax":"auto | always | avoid | left | right | recto | verso","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-before"},"page-break-inside":{"syntax":"auto | avoid","media":["visual","paged"],"inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Pages"],"initial":"auto","appliesto":"blockElementsInNormalFlow","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/page-break-inside"},"paint-order":{"syntax":"normal | [ fill || stroke || markers ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"textElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/paint-order"},"perspective":{"syntax":"none | <length>","media":"visual","inherited":false,"animationType":"length","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"absoluteLengthOrNone","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/perspective"},"perspective-origin":{"syntax":"<position>","media":"visual","inherited":false,"animationType":"simpleListOfLpc","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"50% 50%","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"oneOrTwoValuesLengthAbsoluteKeywordsPercentages","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/perspective-origin"},"place-content":{"syntax":"<\'align-content\'> <\'justify-content\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multilineFlexContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-content"},"place-items":{"syntax":"<\'align-items\'> <\'justify-items\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":["align-items","justify-items"],"appliesto":"allElements","computed":["align-items","justify-items"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-items"},"place-self":{"syntax":"<\'align-self\'> <\'justify-self\'>?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Box Alignment"],"initial":["align-self","justify-self"],"appliesto":"blockLevelBoxesAndAbsolutelyPositionedBoxesAndGridItems","computed":["align-self","justify-self"],"order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/place-self"},"pointer-events":{"syntax":"auto | none | visiblePainted | visibleFill | visibleStroke | visible | painted | fill | stroke | all | inherit","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["Pointer Events"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/pointer-events"},"position":{"syntax":"static | relative | absolute | sticky | fixed","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Positioning"],"initial":"static","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/position"},"quotes":{"syntax":"none | auto | [ <string> <string> ]+","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Generated Content"],"initial":"dependsOnUserAgent","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/quotes"},"resize":{"syntax":"none | both | horizontal | vertical | block | inline","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"none","appliesto":"elementsWithOverflowNotVisibleAndReplacedElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/resize"},"right":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/right"},"rotate":{"syntax":"none | <angle> | [ x | y | z | <number>{3} ] && <angle>","media":"visual","inherited":false,"animationType":"transform","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/rotate"},"row-gap":{"syntax":"normal | <length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToDimensionOfContentArea","groups":["CSS Box Alignment"],"initial":"normal","appliesto":"multiColumnElementsFlexContainersGridContainers","computed":"asSpecifiedWithLengthsAbsoluteAndNormalComputingToZeroExceptMultiColumn","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/row-gap"},"ruby-align":{"syntax":"start | center | space-between | space-around","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"space-around","appliesto":"rubyBasesAnnotationsBaseAnnotationContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ruby-align"},"ruby-merge":{"syntax":"separate | collapse | auto","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"separate","appliesto":"rubyAnnotationsContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental"},"ruby-position":{"syntax":"over | under | inter-character","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Ruby"],"initial":"over","appliesto":"rubyAnnotationsContainers","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/ruby-position"},"scale":{"syntax":"none | <number>{1,3}","media":"visual","inherited":false,"animationType":"transform","percentages":"no","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scale"},"scrollbar-color":{"syntax":"auto | dark | light | <color>{2}","media":"visual","inherited":true,"animationType":"color","percentages":"no","groups":["CSS Scrollbars"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-color"},"scrollbar-gutter":{"syntax":"auto | [ stable | always ] && both? && force?","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Overflow"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-gutter"},"scrollbar-width":{"syntax":"auto | thin | none","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scrollbars"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scrollbar-width"},"scroll-behavior":{"syntax":"auto | smooth","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSSOM View"],"initial":"auto","appliesto":"scrollingBoxes","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-behavior"},"scroll-margin":{"syntax":"<length>{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin"},"scroll-margin-block":{"syntax":"<length>{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block"},"scroll-margin-block-start":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-start"},"scroll-margin-block-end":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-block-end"},"scroll-margin-bottom":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-bottom"},"scroll-margin-inline":{"syntax":"<length>{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline"},"scroll-margin-inline-start":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-start"},"scroll-margin-inline-end":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-inline-end"},"scroll-margin-left":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-left"},"scroll-margin-right":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-right"},"scroll-margin-top":{"syntax":"<length>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"no","groups":["CSS Scroll Snap"],"initial":"0","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-margin-top"},"scroll-padding":{"syntax":"[ auto | <length-percentage> ]{1,4}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding"},"scroll-padding-block":{"syntax":"[ auto | <length-percentage> ]{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block"},"scroll-padding-block-start":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-start"},"scroll-padding-block-end":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-block-end"},"scroll-padding-bottom":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-bottom"},"scroll-padding-inline":{"syntax":"[ auto | <length-percentage> ]{1,2}","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline"},"scroll-padding-inline-start":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-start"},"scroll-padding-inline-end":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-inline-end"},"scroll-padding-left":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-left"},"scroll-padding-right":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-right"},"scroll-padding-top":{"syntax":"auto | <length-percentage>","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"relativeToTheScrollContainersScrollport","groups":["CSS Scroll Snap"],"initial":"auto","appliesto":"scrollContainers","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-padding-top"},"scroll-snap-align":{"syntax":"[ none | start | end | center ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-align"},"scroll-snap-coordinate":{"syntax":"none | <position>#","media":"interactive","inherited":false,"animationType":"position","percentages":"referToBorderBox","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-coordinate"},"scroll-snap-destination":{"syntax":"<position>","media":"interactive","inherited":false,"animationType":"position","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"0px 0px","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-destination"},"scroll-snap-points-x":{"syntax":"none | repeat( <length-percentage> )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-x"},"scroll-snap-points-y":{"syntax":"none | repeat( <length-percentage> )","media":"interactive","inherited":false,"animationType":"discrete","percentages":"relativeToScrollContainerPaddingBoxAxis","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-points-y"},"scroll-snap-stop":{"syntax":"normal | always","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-stop"},"scroll-snap-type":{"syntax":"none | [ x | y | block | inline | both ] [ mandatory | proximity ]?","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type"},"scroll-snap-type-x":{"syntax":"none | mandatory | proximity","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-x"},"scroll-snap-type-y":{"syntax":"none | mandatory | proximity","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Scroll Snap"],"initial":"none","appliesto":"scrollContainers","computed":"asSpecified","order":"uniqueOrder","status":"obsolete","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/scroll-snap-type-y"},"shape-image-threshold":{"syntax":"<alpha-value>","media":"visual","inherited":false,"animationType":"number","percentages":"no","groups":["CSS Shapes"],"initial":"0.0","appliesto":"floats","computed":"specifiedValueNumberClipped0To1","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-image-threshold"},"shape-margin":{"syntax":"<length-percentage>","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Shapes"],"initial":"0","appliesto":"floats","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-margin"},"shape-outside":{"syntax":"none | <shape-box> || <basic-shape> | <image>","media":"visual","inherited":false,"animationType":"basicShapeOtherwiseNo","percentages":"no","groups":["CSS Shapes"],"initial":"none","appliesto":"floats","computed":"asDefinedForBasicShapeWithAbsoluteURIOtherwiseAsSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/shape-outside"},"tab-size":{"syntax":"<integer> | <length>","media":"visual","inherited":true,"animationType":"length","percentages":"no","groups":["CSS Text"],"initial":"8","appliesto":"blockContainers","computed":"specifiedIntegerOrAbsoluteLength","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/tab-size"},"table-layout":{"syntax":"auto | fixed","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Table"],"initial":"auto","appliesto":"tableElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/table-layout"},"text-align":{"syntax":"start | end | left | right | center | justify | match-parent","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"startOrNamelessValueIfLTRRightIfRTL","appliesto":"blockContainers","computed":"asSpecifiedExceptMatchParent","order":"orderOfAppearance","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-align"},"text-align-last":{"syntax":"auto | start | end | left | right | center | justify","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"blockContainers","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-align-last"},"text-combine-upright":{"syntax":"none | all | [ digits <integer>? ]","media":"visual","inherited":true,"animationType":"notAnimatable","percentages":"no","groups":["CSS Writing Modes"],"initial":"none","appliesto":"nonReplacedInlineElements","computed":"keywordPlusIntegerIfDigits","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-combine-upright"},"text-decoration":{"syntax":"<\'text-decoration-line\'> || <\'text-decoration-style\'> || <\'text-decoration-color\'> || <\'text-decoration-thickness\'>","media":"visual","inherited":false,"animationType":["text-decoration-color","text-decoration-style","text-decoration-line","text-decoration-thickness"],"percentages":"no","groups":["CSS Text Decoration"],"initial":["text-decoration-color","text-decoration-style","text-decoration-line"],"appliesto":"allElements","computed":["text-decoration-line","text-decoration-style","text-decoration-color","text-decoration-thickness"],"order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration"},"text-decoration-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Text Decoration"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-color"},"text-decoration-line":{"syntax":"none | [ underline || overline || line-through || blink ] | spelling-error | grammar-error","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-line"},"text-decoration-skip":{"syntax":"none | [ objects || [ spaces | [ leading-spaces || trailing-spaces ] ] || edges || box-decoration ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"objects","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip"},"text-decoration-skip-ink":{"syntax":"auto | all | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-skip-ink"},"text-decoration-style":{"syntax":"solid | double | dotted | dashed | wavy","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"solid","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-style"},"text-decoration-thickness":{"syntax":"auto | from-font | <length> | <percentage> ","media":"visual","inherited":false,"animationType":"byComputedValueType","percentages":"referToElementFontSize","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-decoration-thickness"},"text-emphasis":{"syntax":"<\'text-emphasis-style\'> || <\'text-emphasis-color\'>","media":"visual","inherited":false,"animationType":["text-emphasis-color","text-emphasis-style"],"percentages":"no","groups":["CSS Text Decoration"],"initial":["text-emphasis-style","text-emphasis-color"],"appliesto":"allElements","computed":["text-emphasis-style","text-emphasis-color"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis"},"text-emphasis-color":{"syntax":"<color>","media":"visual","inherited":false,"animationType":"color","percentages":"no","groups":["CSS Text Decoration"],"initial":"currentcolor","appliesto":"allElements","computed":"computedColor","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-color"},"text-emphasis-position":{"syntax":"[ over | under ] && [ right | left ]","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"over right","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-position"},"text-emphasis-style":{"syntax":"none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-emphasis-style"},"text-indent":{"syntax":"<length-percentage> && hanging? && each-line?","media":"visual","inherited":true,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Text"],"initial":"0","appliesto":"blockContainers","computed":"percentageOrAbsoluteLengthPlusKeywords","order":"lengthOrPercentageBeforeKeywords","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-indent"},"text-justify":{"syntax":"auto | inter-character | inter-word | none","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"auto","appliesto":"inlineLevelAndTableCellElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-justify"},"text-orientation":{"syntax":"mixed | upright | sideways","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"mixed","appliesto":"allElementsExceptTableRowGroupsRowsColumnGroupsAndColumns","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-orientation"},"text-overflow":{"syntax":"[ clip | ellipsis | <string> ]{1,2}","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"clip","appliesto":"blockContainerElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-overflow"},"text-rendering":{"syntax":"auto | optimizeSpeed | optimizeLegibility | geometricPrecision","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Miscellaneous"],"initial":"auto","appliesto":"textElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-rendering"},"text-shadow":{"syntax":"none | <shadow-t>#","media":"visual","inherited":true,"animationType":"shadowList","percentages":"no","groups":["CSS Text Decoration"],"initial":"none","appliesto":"allElements","computed":"colorPlusThreeAbsoluteLengths","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-shadow"},"text-size-adjust":{"syntax":"none | auto | <percentage>","media":"visual","inherited":true,"animationType":"discrete","percentages":"referToSizeOfFont","groups":["CSS Text"],"initial":"autoForSmartphoneBrowsersSupportingInflation","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"experimental","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-size-adjust"},"text-transform":{"syntax":"none | capitalize | uppercase | lowercase | full-width | full-size-kana","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"none","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-transform"},"text-underline-offset":{"syntax":"auto | <length> | <percentage> ","media":"visual","inherited":true,"animationType":"byComputedValueType","percentages":"referToElementFontSize","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-underline-offset"},"text-underline-position":{"syntax":"auto | from-font | [ under || [ left | right ] ]","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text Decoration"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/text-underline-position"},"top":{"syntax":"<length> | <percentage> | auto","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToContainingBlockHeight","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"lengthAbsolutePercentageAsSpecifiedOtherwiseAuto","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/top"},"touch-action":{"syntax":"auto | none | [ [ pan-x | pan-left | pan-right ] || [ pan-y | pan-up | pan-down ] || pinch-zoom ] | manipulation","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["Pointer Events"],"initial":"auto","appliesto":"allElementsExceptNonReplacedInlineElementsTableRowsColumnsRowColumnGroups","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/touch-action"},"transform":{"syntax":"none | <transform-list>","media":"visual","inherited":false,"animationType":"transform","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform"},"transform-box":{"syntax":"content-box | border-box | fill-box | stroke-box | view-box","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"view-box","appliesto":"transformableElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-box"},"transform-origin":{"syntax":"[ <length-percentage> | left | center | right | top | bottom ] | [ [ <length-percentage> | left | center | right ] && [ <length-percentage> | top | center | bottom ] ] <length>?","media":"visual","inherited":false,"animationType":"simpleListOfLpc","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"50% 50% 0","appliesto":"transformableElements","computed":"forLengthAbsoluteValueOtherwisePercentage","order":"oneOrTwoValuesLengthAbsoluteKeywordsPercentages","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-origin"},"transform-style":{"syntax":"flat | preserve-3d","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transforms"],"initial":"flat","appliesto":"transformableElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transform-style"},"transition":{"syntax":"<single-transition>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":["transition-delay","transition-duration","transition-property","transition-timing-function"],"appliesto":"allElementsAndPseudos","computed":["transition-delay","transition-duration","transition-property","transition-timing-function"],"order":"orderOfAppearance","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition"},"transition-delay":{"syntax":"<time>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-delay"},"transition-duration":{"syntax":"<time>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"0s","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-duration"},"transition-property":{"syntax":"none | <single-transition-property>#","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"all","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-property"},"transition-timing-function":{"syntax":"<timing-function>#","media":"interactive","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Transitions"],"initial":"ease","appliesto":"allElementsAndPseudos","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/transition-timing-function"},"translate":{"syntax":"none | <length-percentage> [ <length-percentage> <length>? ]?","media":"visual","inherited":false,"animationType":"transform","percentages":"referToSizeOfBoundingBox","groups":["CSS Transforms"],"initial":"none","appliesto":"transformableElements","computed":"asSpecifiedRelativeToAbsoluteLengths","order":"perGrammar","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/translate"},"unicode-bidi":{"syntax":"normal | embed | isolate | bidi-override | isolate-override | plaintext","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"normal","appliesto":"allElementsSomeValuesNoEffectOnNonInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/unicode-bidi"},"user-select":{"syntax":"auto | text | none | contain | all","media":"visual","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Basic User Interface"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/user-select"},"vertical-align":{"syntax":"baseline | sub | super | text-top | text-bottom | middle | top | bottom | <percentage> | <length>","media":"visual","inherited":false,"animationType":"length","percentages":"referToLineHeight","groups":["CSS Table"],"initial":"baseline","appliesto":"inlineLevelAndTableCellElements","computed":"absoluteLengthOrKeyword","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/vertical-align"},"visibility":{"syntax":"visible | hidden | collapse","media":"visual","inherited":true,"animationType":"visibility","percentages":"no","groups":["CSS Box Model"],"initial":"visible","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/visibility"},"white-space":{"syntax":"normal | pre | nowrap | pre-wrap | pre-line | break-spaces","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/white-space"},"widows":{"syntax":"<integer>","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Fragmentation"],"initial":"2","appliesto":"blockContainerElements","computed":"asSpecified","order":"perGrammar","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/widows"},"width":{"syntax":"auto | <length> | <percentage> | min-content | max-content | fit-content(<length-percentage>)","media":"visual","inherited":false,"animationType":"lpc","percentages":"referToWidthOfContainingBlock","groups":["CSS Box Model"],"initial":"auto","appliesto":"allElementsButNonReplacedAndTableRows","computed":"percentageAutoOrAbsoluteLength","order":"lengthOrPercentageBeforeKeywordIfBothPresent","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/width"},"will-change":{"syntax":"auto | <animateable-feature>#","media":"all","inherited":false,"animationType":"discrete","percentages":"no","groups":["CSS Will Change"],"initial":"auto","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/will-change"},"word-break":{"syntax":"normal | break-all | keep-all | break-word","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/word-break"},"word-spacing":{"syntax":"normal | <length-percentage>","media":"visual","inherited":true,"animationType":"length","percentages":"referToWidthOfAffectedGlyph","groups":["CSS Text"],"initial":"normal","appliesto":"allElements","computed":"optimumMinAndMaxValueOfAbsoluteLengthPercentageOrNormal","order":"uniqueOrder","alsoAppliesTo":["::first-letter","::first-line","::placeholder"],"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/word-spacing"},"word-wrap":{"syntax":"normal | break-word","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Text"],"initial":"normal","appliesto":"nonReplacedInlineElements","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/overflow-wrap"},"writing-mode":{"syntax":"horizontal-tb | vertical-rl | vertical-lr | sideways-rl | sideways-lr","media":"visual","inherited":true,"animationType":"discrete","percentages":"no","groups":["CSS Writing Modes"],"initial":"horizontal-tb","appliesto":"allElementsExceptTableRowColumnGroupsTableRowsColumns","computed":"asSpecified","order":"uniqueOrder","status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/writing-mode"},"z-index":{"syntax":"auto | <integer>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["CSS Positioning"],"initial":"auto","appliesto":"positionedElements","computed":"asSpecified","order":"uniqueOrder","stacking":true,"status":"standard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/z-index"},"zoom":{"syntax":"normal | reset | <number> | <percentage>","media":"visual","inherited":false,"animationType":"integer","percentages":"no","groups":["Microsoft Extensions"],"initial":"normal","appliesto":"allElements","computed":"asSpecified","order":"uniqueOrder","status":"nonstandard","mdn_url":"https://developer.mozilla.org/docs/Web/CSS/zoom"}}');
+/**
+ * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
+ */
+const getFonts = __webpack_require__(/*! scratch-render-fonts */ "./node_modules/scratch-render-fonts/src/index.js");
+
+/**
+ * Given SVG data, inline the fonts. This allows them to be rendered correctly when set
+ * as the source of an HTMLImageElement. Here is a note from tmickel:
+ *   // Inject fonts that are needed.
+ *   // It would be nice if there were another way to get the SVG-in-canvas
+ *   // to render the correct font family, but I couldn't find any other way.
+ *   // Other things I tried:
+ *   // Just injecting the font-family into the document: no effect.
+ *   // External stylesheet linked to by SVG: no effect.
+ *   // Using a <link> or <style>@import</style> to link to font-family
+ *   // injected into the document: no effect.
+ * @param {string} svgString The string representation of the svg to modify
+ * @return {string} The svg with any needed fonts inlined
+ */
+const inlineSvgFonts = function inlineSvgFonts(svgString) {
+  const FONTS = getFonts();
+  // Make it clear that this function only operates on strings.
+  // If we don't explicitly throw this here, the function silently fails.
+  if (typeof svgString !== 'string') {
+    throw new Error('SVG to be inlined is not a string');
+  }
+
+  // Collect fonts that need injection.
+  const fontsNeeded = new Set();
+  const fontRegex = /font-family="([^"]*)"/g;
+  let matches = fontRegex.exec(svgString);
+  while (matches) {
+    fontsNeeded.add(matches[1]);
+    matches = fontRegex.exec(svgString);
+  }
+  if (fontsNeeded.size > 0) {
+    let str = '<defs><style>';
+    for (const font of fontsNeeded) {
+      if (Object.prototype.hasOwnProperty.call(FONTS, font)) {
+        str += "".concat(FONTS[font]);
+      }
+    }
+    str += '</style></defs>';
+    svgString = svgString.replace(/<svg[^>]*>/, "$&".concat(str));
+    return svgString;
+  }
+  return svgString;
+};
+module.exports = inlineSvgFonts;
 
 /***/ }),
 
-/***/ "./node_modules/mdn-data/css/syntaxes.json":
-/*!*************************************************!*\
-  !*** ./node_modules/mdn-data/css/syntaxes.json ***!
-  \*************************************************/
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const SVGRenderer = __webpack_require__(/*! ./svg-renderer */ "./src/svg-renderer.js");
+const BitmapAdapter = __webpack_require__(/*! ./bitmap-adapter */ "./src/bitmap-adapter.js");
+const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./src/font-inliner.js");
+const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./src/load-svg-string.js");
+const sanitizeSvg = __webpack_require__(/*! ./sanitize-svg */ "./src/sanitize-svg.js");
+const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./src/serialize-svg-to-string.js");
+const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
+const convertFonts = __webpack_require__(/*! ./font-converter */ "./src/font-converter.js");
+// /**
+//  * Export for NPM & Node.js
+//  * @type {RenderWebGL}
+//  */
+module.exports = {
+  BitmapAdapter: BitmapAdapter,
+  convertFonts: convertFonts,
+  inlineSvgFonts: inlineSvgFonts,
+  loadSvgString: loadSvgString,
+  sanitizeSvg: sanitizeSvg,
+  serializeSvgToString: serializeSvgToString,
+  SvgElement: SvgElement,
+  SVGRenderer: SVGRenderer
+};
+
+/***/ }),
+
+/***/ "./src/load-svg-string.js":
+/*!********************************!*\
+  !*** ./src/load-svg-string.js ***!
+  \********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
+const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
+const convertFonts = __webpack_require__(/*! ./font-converter */ "./src/font-converter.js");
+const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./src/fixup-svg-string.js");
+const transformStrokeWidths = __webpack_require__(/*! ./transform-applier */ "./src/transform-applier.js");
+
+/**
+ * @param {SVGElement} svgTag the tag to search within
+ * @param {string} [tagName] svg tag to search for (or collect all elements if not given)
+ * @return {Array} a list of elements with the given tagname
+ */
+const collectElements = (svgTag, tagName) => {
+  const elts = [];
+  const collectElementsInner = domElement => {
+    if ((domElement.localName === tagName || typeof tagName === 'undefined') && domElement.getAttribute) {
+      elts.push(domElement);
+    }
+    for (let i = 0; i < domElement.childNodes.length; i++) {
+      collectElementsInner(domElement.childNodes[i]);
+    }
+  };
+  collectElementsInner(svgTag);
+  return elts;
+};
+
+/**
+ * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
+ * SVG defaults to x2 = 1 when missing.
+ * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
+ */
+const transformGradients = svgTag => {
+  const linearGradientElements = collectElements(svgTag, 'linearGradient');
+
+  // For each gradient element, supply x2 if necessary.
+  for (const gradientElement of linearGradientElements) {
+    if (!gradientElement.getAttribute('x2')) {
+      gradientElement.setAttribute('x2', '0');
+    }
+  }
+};
+
+/**
+ * Fix SVGs to match appearance in Scratch 2, which used nearest neighbor scaling for bitmaps
+ * within SVGs.
+ * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
+ */
+const transformImages = svgTag => {
+  const imageElements = collectElements(svgTag, 'image');
+
+  // For each image element, set image rendering to pixelated
+  const pixelatedImages = 'image-rendering: optimizespeed; image-rendering: pixelated;';
+  for (const elt of imageElements) {
+    if (elt.getAttribute('style')) {
+      elt.setAttribute('style', "".concat(pixelatedImages, " ").concat(elt.getAttribute('style')));
+    } else {
+      elt.setAttribute('style', pixelatedImages);
+    }
+  }
+};
+
+/**
+ * Transforms an SVG's text elements for Scratch 2.0 quirks.
+ * These quirks include:
+ * 1. `x` and `y` properties are removed/ignored.
+ * 2. Alignment is set to `text-before-edge`.
+ * 3. Line-breaks are converted to explicit <tspan> elements.
+ * 4. Any required fonts are injected.
+ * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
+ */
+const transformText = svgTag => {
+  // Collect all text elements into a list.
+  const textElements = [];
+  const collectText = domElement => {
+    if (domElement.localName === 'text') {
+      textElements.push(domElement);
+    }
+    for (let i = 0; i < domElement.childNodes.length; i++) {
+      collectText(domElement.childNodes[i]);
+    }
+  };
+  collectText(svgTag);
+  convertFonts(svgTag);
+  // For each text element, apply quirks.
+  for (const textElement of textElements) {
+    // Remove x and y attributes - they are not used in Scratch.
+    textElement.removeAttribute('x');
+    textElement.removeAttribute('y');
+    // Set text-before-edge alignment:
+    // Scratch renders all text like this.
+    textElement.setAttribute('alignment-baseline', 'text-before-edge');
+    textElement.setAttribute('xml:space', 'preserve');
+    // If there's no font size provided, provide one.
+    if (!textElement.getAttribute('font-size')) {
+      textElement.setAttribute('font-size', '18');
+    }
+    let text = textElement.textContent;
+
+    // Fix line breaks in text, which are not natively supported by SVG.
+    // Only fix if text does not have child tspans.
+    // @todo this will not work for font sizes with units such as em, percent
+    // However, text made in scratch 2 should only ever export size 22 font.
+    const fontSize = parseFloat(textElement.getAttribute('font-size'));
+    const tx = 2;
+    let ty = 0;
+    let spacing = 1.2;
+    // Try to match the position and spacing of Scratch 2.0's fonts.
+    // Different fonts seem to use different line spacing.
+    // Scratch 2 always uses alignment-baseline=text-before-edge
+    // However, most SVG readers don't support this attribute
+    // or don't support it alongside use of tspan, so the translations
+    // here are to make up for that.
+    if (textElement.getAttribute('font-family') === 'Handwriting') {
+      spacing = 2;
+      ty = -11 * fontSize / 22;
+    } else if (textElement.getAttribute('font-family') === 'Scratch') {
+      spacing = 0.89;
+      ty = -3 * fontSize / 22;
+    } else if (textElement.getAttribute('font-family') === 'Curly') {
+      spacing = 1.38;
+      ty = -6 * fontSize / 22;
+    } else if (textElement.getAttribute('font-family') === 'Marker') {
+      spacing = 1.45;
+      ty = -6 * fontSize / 22;
+    } else if (textElement.getAttribute('font-family') === 'Sans Serif') {
+      spacing = 1.13;
+      ty = -3 * fontSize / 22;
+    } else if (textElement.getAttribute('font-family') === 'Serif') {
+      spacing = 1.25;
+      ty = -4 * fontSize / 22;
+    }
+    if (textElement.transform.baseVal.numberOfItems === 0) {
+      const transform = svgTag.createSVGTransform();
+      textElement.transform.baseVal.appendItem(transform);
+    }
+
+    // Right multiply matrix by a translation of (tx, ty)
+    const mtx = textElement.transform.baseVal.getItem(0).matrix;
+    mtx.e += mtx.a * tx + mtx.c * ty;
+    mtx.f += mtx.b * tx + mtx.d * ty;
+    if (text && textElement.childElementCount === 0) {
+      textElement.textContent = '';
+      const lines = text.split('\n');
+      text = '';
+      for (const line of lines) {
+        const tspanNode = SvgElement.create('tspan');
+        tspanNode.setAttribute('x', '0');
+        tspanNode.setAttribute('style', 'white-space: pre');
+        tspanNode.setAttribute('dy', "".concat(spacing, "em"));
+        tspanNode.textContent = line ? line : ' ';
+        textElement.appendChild(tspanNode);
+      }
+    }
+  }
+};
+
+/**
+ * Find the largest stroke width in the svg. If a shape has no
+ * `stroke` property, it has a stroke-width of 0. If it has a `stroke`,
+ * it is by default a stroke-width of 1.
+ * This is used to enlarge the computed bounding box, which doesn't take
+ * stroke width into account.
+ * @param {SVGSVGElement} rootNode The root SVG node to traverse.
+ * @return {number} The largest stroke width in the SVG.
+ */
+const findLargestStrokeWidth = rootNode => {
+  let largestStrokeWidth = 0;
+  const collectStrokeWidths = domElement => {
+    if (domElement.getAttribute) {
+      if (domElement.getAttribute('stroke')) {
+        largestStrokeWidth = Math.max(largestStrokeWidth, 1);
+      }
+      if (domElement.getAttribute('stroke-width')) {
+        largestStrokeWidth = Math.max(largestStrokeWidth, Number(domElement.getAttribute('stroke-width')) || 0);
+      }
+    }
+    for (let i = 0; i < domElement.childNodes.length; i++) {
+      collectStrokeWidths(domElement.childNodes[i]);
+    }
+  };
+  collectStrokeWidths(rootNode);
+  return largestStrokeWidth;
+};
+
+/**
+ * Transform the measurements of the SVG.
+ * In Scratch 2.0, SVGs are drawn without respect to the width,
+ * height, and viewBox attribute on the tag. The exporter
+ * does output these properties - but they appear to be incorrect often.
+ * To address the incorrect measurements, we append the DOM to the
+ * document, and then use SVG's native `getBBox` to find the real
+ * drawn dimensions. This ensures things drawn in negative dimensions,
+ * outside the given viewBox, etc., are all eventually drawn to the canvas.
+ * I tried to do this several other ways: stripping the width/height/viewBox
+ * attributes and then drawing (Firefox won't draw anything),
+ * or inflating them and then measuring a canvas. But this seems to be
+ * a natural and performant way.
+ * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
+ */
+const transformMeasurements = svgTag => {
+  // Append the SVG dom to the document.
+  // This allows us to use `getBBox` on the page,
+  // which returns the full bounding-box of all drawn SVG
+  // elements, similar to how Scratch 2.0 did measurement.
+  const svgSpot = document.createElement('span');
+  // Since we're adding user-provided SVG to document.body,
+  // sanitizing is required. This should not affect bounding box calculation.
+  // outerHTML is attribute of Element (and not HTMLElement), so use it instead of
+  // calling serializer or toString()
+  // NOTE: svgTag remains untouched!
+  const rawValue = svgTag.outerHTML;
+  const sanitizedValue = DOMPurify.sanitize(rawValue, {
+    // Use SVG profile (no HTML elements)
+    USE_PROFILES: {
+      svg: true
+    },
+    // Remove some tags that Scratch does not use.
+    FORBID_TAGS: ['a', 'audio', 'canvas', 'video'],
+    // Allow data URI in image tags (e.g. SVGs converted from bitmap)
+    ADD_DATA_URI_TAGS: ['image']
+  });
+  let bbox;
+  try {
+    // Insert sanitized value.
+    svgSpot.innerHTML = sanitizedValue;
+    document.body.appendChild(svgSpot);
+    // Take the bounding box. We have to get elements via svgSpot
+    // because we added it via innerHTML.
+    bbox = svgSpot.children[0].getBBox();
+  } finally {
+    // Always destroy the element, even if, for example, getBBox throws.
+    document.body.removeChild(svgSpot);
+  }
+
+  // Enlarge the bbox from the largest found stroke width
+  // This may have false-positives, but at least the bbox will always
+  // contain the full graphic including strokes.
+  // If the width or height is zero however, don't enlarge since
+  // they won't have a stroke width that needs to be enlarged.
+  let halfStrokeWidth;
+  if (bbox.width === 0 || bbox.height === 0) {
+    halfStrokeWidth = 0;
+  } else {
+    halfStrokeWidth = findLargestStrokeWidth(svgTag) / 2;
+  }
+  const width = bbox.width + halfStrokeWidth * 2;
+  const height = bbox.height + halfStrokeWidth * 2;
+  const x = bbox.x - halfStrokeWidth;
+  const y = bbox.y - halfStrokeWidth;
+
+  // Set the correct measurements on the SVG tag
+  svgTag.setAttribute('width', width);
+  svgTag.setAttribute('height', height);
+  svgTag.setAttribute('viewBox', "".concat(x, " ").concat(y, " ").concat(width, " ").concat(height));
+};
+
+/**
+ * Find all instances of a URL-referenced `stroke` in the svg. In 2.0, all gradient strokes
+ * have a round `stroke-linejoin` and `stroke-linecap`... for some reason.
+ * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
+ */
+const setGradientStrokeRoundedness = svgTag => {
+  const elements = collectElements(svgTag);
+  for (const elt of elements) {
+    if (!elt.style) continue;
+    const stroke = elt.style.stroke || elt.getAttribute('stroke');
+    if (stroke && stroke.match(/^url\(#.*\)$/)) {
+      elt.style['stroke-linejoin'] = 'round';
+      elt.style['stroke-linecap'] = 'round';
+    }
+  }
+};
+
+/**
+ * In-place, convert passed SVG to something consistent that will be rendered the way we want them to be.
+ * @param {SVGSvgElement} svgTag root SVG node to operate upon
+ * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
+ */
+const normalizeSvg = (svgTag, fromVersion2) => {
+  if (fromVersion2) {
+    // Fix gradients. Scratch 2 exports no x2 when x2 = 0, but
+    // SVG default is that x2 is 1. This must be done before
+    // transformStrokeWidths since transformStrokeWidths affects
+    // gradients.
+    transformGradients(svgTag);
+  }
+  transformStrokeWidths(svgTag, window);
+  transformImages(svgTag);
+  if (fromVersion2) {
+    // Transform all text elements.
+    transformText(svgTag);
+    // Transform measurements.
+    transformMeasurements(svgTag);
+    // Fix stroke roundedness.
+    setGradientStrokeRoundedness(svgTag);
+  } else if (!svgTag.getAttribute('viewBox')) {
+    // Renderer expects a view box.
+    transformMeasurements(svgTag);
+  } else if (!svgTag.getAttribute('width') || !svgTag.getAttribute('height')) {
+    svgTag.setAttribute('width', svgTag.viewBox.baseVal.width);
+    svgTag.setAttribute('height', svgTag.viewBox.baseVal.height);
+  }
+};
+
+/**
+ * Load an SVG string and normalize it. All the steps before drawing/measuring.
+ * Currently, this will normalize stroke widths (see transform-applier.js) and render all embedded images pixelated.
+ * The returned SVG will be guaranteed to always have a `width`, `height` and `viewBox`.
+ * In addition, if the `fromVersion2` parameter is `true`, several "quirks-mode" transformations will be applied which
+ * mimic Scratch 2.0's SVG rendering.
+ * @param {!string} svgString String of SVG data to draw in quirks-mode.
+ * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
+ * @return {SVGSVGElement} The normalized SVG element.
+ */
+const loadSvgString = (svgString, fromVersion2) => {
+  // Parse string into SVG XML.
+  const parser = new DOMParser();
+  svgString = fixupSvgString(svgString);
+  const svgDom = parser.parseFromString(svgString, 'text/xml');
+  if (svgDom.childNodes.length < 1 || svgDom.documentElement.localName !== 'svg') {
+    throw new Error('Document does not appear to be SVG.');
+  }
+  const svgTag = svgDom.documentElement;
+  normalizeSvg(svgTag, fromVersion2);
+  return svgTag;
+};
+module.exports = loadSvgString;
+
+/***/ }),
+
+/***/ "./src/sanitize-svg.js":
+/*!*****************************!*\
+  !*** ./src/sanitize-svg.js ***!
+  \*****************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+/**
+ * @fileOverview Sanitize the content of an SVG aggressively, to make it as safe
+ * as possible
+ */
+const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./src/fixup-svg-string.js");
+const {
+  generate,
+  parse,
+  walk
+} = __webpack_require__(/*! css-tree */ "./node_modules/css-tree/lib/index.js");
+const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
+const sanitizeSvg = {};
+DOMPurify.addHook('beforeSanitizeAttributes', currentNode => {
+  if (currentNode && currentNode.href && currentNode.href.baseVal) {
+    const href = currentNode.href.baseVal.replace(/\s/g, '');
+    // "data:" and "#" are valid hrefs
+    if (href.slice(0, 5) !== 'data:' && href.slice(0, 1) !== '#') {
+      if (currentNode.attributes.getNamedItem('xlink:href')) {
+        currentNode.attributes.removeNamedItem('xlink:href');
+        delete currentNode['xlink:href'];
+      }
+      if (currentNode.attributes.getNamedItem('href')) {
+        currentNode.attributes.removeNamedItem('href');
+        delete currentNode.href;
+      }
+    }
+  }
+  return currentNode;
+});
+DOMPurify.addHook('uponSanitizeElement', (node, data) => {
+  if (data.tagName === 'style') {
+    const ast = parse(node.textContent);
+    let isModified = false;
+    // Remove any @import rules as it could leak HTTP requests
+    walk(ast, (astNode, item, list) => {
+      if (astNode.type === 'Atrule' && astNode.name === 'import') {
+        list.remove(item);
+        isModified = true;
+      }
+    });
+    if (isModified) {
+      node.textContent = generate(ast);
+    }
+  }
+});
+
+// Use JS implemented TextDecoder and TextEncoder if it is not provided by the
+// browser.
+let _TextDecoder;
+let _TextEncoder;
+if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
+  // Wait to require the text encoding polyfill until we know it's needed.
+  // eslint-disable-next-line global-require
+  const encoding = __webpack_require__(/*! fastestsmallesttextencoderdecoder */ "./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js");
+  _TextDecoder = encoding.TextDecoder;
+  _TextEncoder = encoding.TextEncoder;
+} else {
+  _TextDecoder = TextDecoder;
+  _TextEncoder = TextEncoder;
+}
+
+/**
+ * Load an SVG Uint8Array of bytes and "sanitize" it
+ * @param {!Uint8Array} rawData unsanitized SVG daata
+ * @return {Uint8Array} sanitized SVG data
+ */
+sanitizeSvg.sanitizeByteStream = function (rawData) {
+  const decoder = new _TextDecoder();
+  const encoder = new _TextEncoder();
+  const sanitizedText = sanitizeSvg.sanitizeSvgText(decoder.decode(rawData));
+  return encoder.encode(sanitizedText);
+};
+
+/**
+ * Load an SVG string and "sanitize" it. This is more aggressive than the handling in
+ * fixup-svg-string.js, and thus more risky; there are known examples of SVGs that
+ * it will clobber. We use DOMPurify's svg profile, which restricts many types of tag.
+ * @param {!string} rawSvgText unsanitized SVG string
+ * @return {string} sanitized SVG text
+ */
+sanitizeSvg.sanitizeSvgText = function (rawSvgText) {
+  let sanitizedText = DOMPurify.sanitize(rawSvgText, {
+    USE_PROFILES: {
+      svg: true
+    }
+  });
+
+  // Remove partial XML comment that is sometimes left in the HTML
+  const badTag = sanitizedText.indexOf(']&gt;');
+  if (badTag >= 0) {
+    sanitizedText = sanitizedText.substring(5, sanitizedText.length);
+  }
+
+  // also use our custom fixup rules
+  sanitizedText = fixupSvgString(sanitizedText);
+  return sanitizedText;
+};
+module.exports = sanitizeSvg;
+
+/***/ }),
+
+/***/ "./src/serialize-svg-to-string.js":
+/*!****************************************!*\
+  !*** ./src/serialize-svg-to-string.js ***!
+  \****************************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./src/font-inliner.js");
+
+/**
+ * Serialize a given SVG DOM to a string.
+ * @param {SVGSVGElement} svgTag The SVG element to serialize.
+ * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
+ *     base64 data.
+ * @returns {string} String representing current SVG data.
+ */
+const serializeSvgToString = (svgTag, shouldInjectFonts) => {
+  const serializer = new XMLSerializer();
+  let string = serializer.serializeToString(svgTag);
+  if (shouldInjectFonts) {
+    string = inlineSvgFonts(string);
+  }
+  return string;
+};
+module.exports = serializeSvgToString;
+
+/***/ }),
+
+/***/ "./src/svg-element.js":
+/*!****************************!*\
+  !*** ./src/svg-element.js ***!
+  \****************************/
 /***/ ((module) => {
 
-"use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"absolute-size":{"syntax":"xx-small | x-small | small | medium | large | x-large | xx-large | xxx-large"},"alpha-value":{"syntax":"<number> | <percentage>"},"angle-percentage":{"syntax":"<angle> | <percentage>"},"angular-color-hint":{"syntax":"<angle-percentage>"},"angular-color-stop":{"syntax":"<color> && <color-stop-angle>?"},"angular-color-stop-list":{"syntax":"[ <angular-color-stop> [, <angular-color-hint>]? ]# , <angular-color-stop>"},"animateable-feature":{"syntax":"scroll-position | contents | <custom-ident>"},"attachment":{"syntax":"scroll | fixed | local"},"attr()":{"syntax":"attr( <attr-name> <type-or-unit>? [, <attr-fallback> ]? )"},"attr-matcher":{"syntax":"[ \'~\' | \'|\' | \'^\' | \'$\' | \'*\' ]? \'=\'"},"attr-modifier":{"syntax":"i | s"},"attribute-selector":{"syntax":"\'[\' <wq-name> \']\' | \'[\' <wq-name> <attr-matcher> [ <string-token> | <ident-token> ] <attr-modifier>? \']\'"},"auto-repeat":{"syntax":"repeat( [ auto-fill | auto-fit ] , [ <line-names>? <fixed-size> ]+ <line-names>? )"},"auto-track-list":{"syntax":"[ <line-names>? [ <fixed-size> | <fixed-repeat> ] ]* <line-names>? <auto-repeat>\\n[ <line-names>? [ <fixed-size> | <fixed-repeat> ] ]* <line-names>?"},"baseline-position":{"syntax":"[ first | last ]? baseline"},"basic-shape":{"syntax":"<inset()> | <circle()> | <ellipse()> | <polygon()> | <path()>"},"bg-image":{"syntax":"none | <image>"},"bg-layer":{"syntax":"<bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>"},"bg-position":{"syntax":"[ [ left | center | right | top | bottom | <length-percentage> ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ] | [ center | [ left | right ] <length-percentage>? ] && [ center | [ top | bottom ] <length-percentage>? ] ]"},"bg-size":{"syntax":"[ <length-percentage> | auto ]{1,2} | cover | contain"},"blur()":{"syntax":"blur( <length> )"},"blend-mode":{"syntax":"normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn | hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity"},"box":{"syntax":"border-box | padding-box | content-box"},"brightness()":{"syntax":"brightness( <number-percentage> )"},"calc()":{"syntax":"calc( <calc-sum> )"},"calc-sum":{"syntax":"<calc-product> [ [ \'+\' | \'-\' ] <calc-product> ]*"},"calc-product":{"syntax":"<calc-value> [ \'*\' <calc-value> | \'/\' <number> ]*"},"calc-value":{"syntax":"<number> | <dimension> | <percentage> | ( <calc-sum> )"},"cf-final-image":{"syntax":"<image> | <color>"},"cf-mixing-image":{"syntax":"<percentage>? && <image>"},"circle()":{"syntax":"circle( [ <shape-radius> ]? [ at <position> ]? )"},"clamp()":{"syntax":"clamp( <calc-sum>#{3} )"},"class-selector":{"syntax":"\'.\' <ident-token>"},"clip-source":{"syntax":"<url>"},"color":{"syntax":"<rgb()> | <rgba()> | <hsl()> | <hsla()> | <hex-color> | <named-color> | currentcolor | <deprecated-system-color>"},"color-stop":{"syntax":"<color-stop-length> | <color-stop-angle>"},"color-stop-angle":{"syntax":"<angle-percentage>{1,2}"},"color-stop-length":{"syntax":"<length-percentage>{1,2}"},"color-stop-list":{"syntax":"[ <linear-color-stop> [, <linear-color-hint>]? ]# , <linear-color-stop>"},"combinator":{"syntax":"\'>\' | \'+\' | \'~\' | [ \'||\' ]"},"common-lig-values":{"syntax":"[ common-ligatures | no-common-ligatures ]"},"compat-auto":{"syntax":"searchfield | textarea | push-button | slider-horizontal | checkbox | radio | square-button | menulist | listbox | meter | progress-bar | button"},"composite-style":{"syntax":"clear | copy | source-over | source-in | source-out | source-atop | destination-over | destination-in | destination-out | destination-atop | xor"},"compositing-operator":{"syntax":"add | subtract | intersect | exclude"},"compound-selector":{"syntax":"[ <type-selector>? <subclass-selector>* [ <pseudo-element-selector> <pseudo-class-selector>* ]* ]!"},"compound-selector-list":{"syntax":"<compound-selector>#"},"complex-selector":{"syntax":"<compound-selector> [ <combinator>? <compound-selector> ]*"},"complex-selector-list":{"syntax":"<complex-selector>#"},"conic-gradient()":{"syntax":"conic-gradient( [ from <angle> ]? [ at <position> ]?, <angular-color-stop-list> )"},"contextual-alt-values":{"syntax":"[ contextual | no-contextual ]"},"content-distribution":{"syntax":"space-between | space-around | space-evenly | stretch"},"content-list":{"syntax":"[ <string> | contents | <image> | <quote> | <target> | <leader()> ]+"},"content-position":{"syntax":"center | start | end | flex-start | flex-end"},"content-replacement":{"syntax":"<image>"},"contrast()":{"syntax":"contrast( [ <number-percentage> ] )"},"counter()":{"syntax":"counter( <custom-ident>, <counter-style>? )"},"counter-style":{"syntax":"<counter-style-name> | symbols()"},"counter-style-name":{"syntax":"<custom-ident>"},"counters()":{"syntax":"counters( <custom-ident>, <string>, <counter-style>? )"},"cross-fade()":{"syntax":"cross-fade( <cf-mixing-image> , <cf-final-image>? )"},"cubic-bezier-timing-function":{"syntax":"ease | ease-in | ease-out | ease-in-out | cubic-bezier(<number [0,1]>, <number>, <number [0,1]>, <number>)"},"deprecated-system-color":{"syntax":"ActiveBorder | ActiveCaption | AppWorkspace | Background | ButtonFace | ButtonHighlight | ButtonShadow | ButtonText | CaptionText | GrayText | Highlight | HighlightText | InactiveBorder | InactiveCaption | InactiveCaptionText | InfoBackground | InfoText | Menu | MenuText | Scrollbar | ThreeDDarkShadow | ThreeDFace | ThreeDHighlight | ThreeDLightShadow | ThreeDShadow | Window | WindowFrame | WindowText"},"discretionary-lig-values":{"syntax":"[ discretionary-ligatures | no-discretionary-ligatures ]"},"display-box":{"syntax":"contents | none"},"display-inside":{"syntax":"flow | flow-root | table | flex | grid | ruby"},"display-internal":{"syntax":"table-row-group | table-header-group | table-footer-group | table-row | table-cell | table-column-group | table-column | table-caption | ruby-base | ruby-text | ruby-base-container | ruby-text-container"},"display-legacy":{"syntax":"inline-block | inline-list-item | inline-table | inline-flex | inline-grid"},"display-listitem":{"syntax":"<display-outside>? && [ flow | flow-root ]? && list-item"},"display-outside":{"syntax":"block | inline | run-in"},"drop-shadow()":{"syntax":"drop-shadow( <length>{2,3} <color>? )"},"east-asian-variant-values":{"syntax":"[ jis78 | jis83 | jis90 | jis04 | simplified | traditional ]"},"east-asian-width-values":{"syntax":"[ full-width | proportional-width ]"},"element()":{"syntax":"element( <id-selector> )"},"ellipse()":{"syntax":"ellipse( [ <shape-radius>{2} ]? [ at <position> ]? )"},"ending-shape":{"syntax":"circle | ellipse"},"env()":{"syntax":"env( <custom-ident> , <declaration-value>? )"},"explicit-track-list":{"syntax":"[ <line-names>? <track-size> ]+ <line-names>?"},"family-name":{"syntax":"<string> | <custom-ident>+"},"feature-tag-value":{"syntax":"<string> [ <integer> | on | off ]?"},"feature-type":{"syntax":"@stylistic | @historical-forms | @styleset | @character-variant | @swash | @ornaments | @annotation"},"feature-value-block":{"syntax":"<feature-type> \'{\' <feature-value-declaration-list> \'}\'"},"feature-value-block-list":{"syntax":"<feature-value-block>+"},"feature-value-declaration":{"syntax":"<custom-ident>: <integer>+;"},"feature-value-declaration-list":{"syntax":"<feature-value-declaration>"},"feature-value-name":{"syntax":"<custom-ident>"},"fill-rule":{"syntax":"nonzero | evenodd"},"filter-function":{"syntax":"<blur()> | <brightness()> | <contrast()> | <drop-shadow()> | <grayscale()> | <hue-rotate()> | <invert()> | <opacity()> | <saturate()> | <sepia()>"},"filter-function-list":{"syntax":"[ <filter-function> | <url> ]+"},"final-bg-layer":{"syntax":"<\'background-color\'> || <bg-image> || <bg-position> [ / <bg-size> ]? || <repeat-style> || <attachment> || <box> || <box>"},"fit-content()":{"syntax":"fit-content( [ <length> | <percentage> ] )"},"fixed-breadth":{"syntax":"<length-percentage>"},"fixed-repeat":{"syntax":"repeat( [ <positive-integer> ] , [ <line-names>? <fixed-size> ]+ <line-names>? )"},"fixed-size":{"syntax":"<fixed-breadth> | minmax( <fixed-breadth> , <track-breadth> ) | minmax( <inflexible-breadth> , <fixed-breadth> )"},"font-stretch-absolute":{"syntax":"normal | ultra-condensed | extra-condensed | condensed | semi-condensed | semi-expanded | expanded | extra-expanded | ultra-expanded | <percentage>"},"font-variant-css21":{"syntax":"[ normal | small-caps ]"},"font-weight-absolute":{"syntax":"normal | bold | <number [1,1000]>"},"frequency-percentage":{"syntax":"<frequency> | <percentage>"},"general-enclosed":{"syntax":"[ <function-token> <any-value> ) ] | ( <ident> <any-value> )"},"generic-family":{"syntax":"serif | sans-serif | cursive | fantasy | monospace"},"generic-name":{"syntax":"serif | sans-serif | cursive | fantasy | monospace"},"geometry-box":{"syntax":"<shape-box> | fill-box | stroke-box | view-box"},"gradient":{"syntax":"<linear-gradient()> | <repeating-linear-gradient()> | <radial-gradient()> | <repeating-radial-gradient()> | <conic-gradient()>"},"grayscale()":{"syntax":"grayscale( <number-percentage> )"},"grid-line":{"syntax":"auto | <custom-ident> | [ <integer> && <custom-ident>? ] | [ span && [ <integer> || <custom-ident> ] ]"},"historical-lig-values":{"syntax":"[ historical-ligatures | no-historical-ligatures ]"},"hsl()":{"syntax":"hsl( <hue> <percentage> <percentage> [ / <alpha-value> ]? ) | hsl( <hue>, <percentage>, <percentage>, <alpha-value>? )"},"hsla()":{"syntax":"hsla( <hue> <percentage> <percentage> [ / <alpha-value> ]? ) | hsla( <hue>, <percentage>, <percentage>, <alpha-value>? )"},"hue":{"syntax":"<number> | <angle>"},"hue-rotate()":{"syntax":"hue-rotate( <angle> )"},"id-selector":{"syntax":"<hash-token>"},"image":{"syntax":"<url> | <image()> | <image-set()> | <element()> | <paint()> | <cross-fade()> | <gradient>"},"image()":{"syntax":"image( <image-tags>? [ <image-src>? , <color>? ]! )"},"image-set()":{"syntax":"image-set( <image-set-option># )"},"image-set-option":{"syntax":"[ <image> | <string> ] <resolution>"},"image-src":{"syntax":"<url> | <string>"},"image-tags":{"syntax":"ltr | rtl"},"inflexible-breadth":{"syntax":"<length> | <percentage> | min-content | max-content | auto"},"inset()":{"syntax":"inset( <length-percentage>{1,4} [ round <\'border-radius\'> ]? )"},"invert()":{"syntax":"invert( <number-percentage> )"},"keyframes-name":{"syntax":"<custom-ident> | <string>"},"keyframe-block":{"syntax":"<keyframe-selector># {\\n  <declaration-list>\\n}"},"keyframe-block-list":{"syntax":"<keyframe-block>+"},"keyframe-selector":{"syntax":"from | to | <percentage>"},"leader()":{"syntax":"leader( <leader-type> )"},"leader-type":{"syntax":"dotted | solid | space | <string>"},"length-percentage":{"syntax":"<length> | <percentage>"},"line-names":{"syntax":"\'[\' <custom-ident>* \']\'"},"line-name-list":{"syntax":"[ <line-names> | <name-repeat> ]+"},"line-style":{"syntax":"none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset"},"line-width":{"syntax":"<length> | thin | medium | thick"},"linear-color-hint":{"syntax":"<length-percentage>"},"linear-color-stop":{"syntax":"<color> <color-stop-length>?"},"linear-gradient()":{"syntax":"linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )"},"mask-layer":{"syntax":"<mask-reference> || <position> [ / <bg-size> ]? || <repeat-style> || <geometry-box> || [ <geometry-box> | no-clip ] || <compositing-operator> || <masking-mode>"},"mask-position":{"syntax":"[ <length-percentage> | left | center | right ] [ <length-percentage> | top | center | bottom ]?"},"mask-reference":{"syntax":"none | <image> | <mask-source>"},"mask-source":{"syntax":"<url>"},"masking-mode":{"syntax":"alpha | luminance | match-source"},"matrix()":{"syntax":"matrix( <number>#{6} )"},"matrix3d()":{"syntax":"matrix3d( <number>#{16} )"},"max()":{"syntax":"max( <calc-sum># )"},"media-and":{"syntax":"<media-in-parens> [ and <media-in-parens> ]+"},"media-condition":{"syntax":"<media-not> | <media-and> | <media-or> | <media-in-parens>"},"media-condition-without-or":{"syntax":"<media-not> | <media-and> | <media-in-parens>"},"media-feature":{"syntax":"( [ <mf-plain> | <mf-boolean> | <mf-range> ] )"},"media-in-parens":{"syntax":"( <media-condition> ) | <media-feature> | <general-enclosed>"},"media-not":{"syntax":"not <media-in-parens>"},"media-or":{"syntax":"<media-in-parens> [ or <media-in-parens> ]+"},"media-query":{"syntax":"<media-condition> | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?"},"media-query-list":{"syntax":"<media-query>#"},"media-type":{"syntax":"<ident>"},"mf-boolean":{"syntax":"<mf-name>"},"mf-name":{"syntax":"<ident>"},"mf-plain":{"syntax":"<mf-name> : <mf-value>"},"mf-range":{"syntax":"<mf-name> [ \'<\' | \'>\' ]? \'=\'? <mf-value>\\n| <mf-value> [ \'<\' | \'>\' ]? \'=\'? <mf-name>\\n| <mf-value> \'<\' \'=\'? <mf-name> \'<\' \'=\'? <mf-value>\\n| <mf-value> \'>\' \'=\'? <mf-name> \'>\' \'=\'? <mf-value>"},"mf-value":{"syntax":"<number> | <dimension> | <ident> | <ratio>"},"min()":{"syntax":"min( <calc-sum># )"},"minmax()":{"syntax":"minmax( [ <length> | <percentage> | min-content | max-content | auto ] , [ <length> | <percentage> | <flex> | min-content | max-content | auto ] )"},"named-color":{"syntax":"transparent | aliceblue | antiquewhite | aqua | aquamarine | azure | beige | bisque | black | blanchedalmond | blue | blueviolet | brown | burlywood | cadetblue | chartreuse | chocolate | coral | cornflowerblue | cornsilk | crimson | cyan | darkblue | darkcyan | darkgoldenrod | darkgray | darkgreen | darkgrey | darkkhaki | darkmagenta | darkolivegreen | darkorange | darkorchid | darkred | darksalmon | darkseagreen | darkslateblue | darkslategray | darkslategrey | darkturquoise | darkviolet | deeppink | deepskyblue | dimgray | dimgrey | dodgerblue | firebrick | floralwhite | forestgreen | fuchsia | gainsboro | ghostwhite | gold | goldenrod | gray | green | greenyellow | grey | honeydew | hotpink | indianred | indigo | ivory | khaki | lavender | lavenderblush | lawngreen | lemonchiffon | lightblue | lightcoral | lightcyan | lightgoldenrodyellow | lightgray | lightgreen | lightgrey | lightpink | lightsalmon | lightseagreen | lightskyblue | lightslategray | lightslategrey | lightsteelblue | lightyellow | lime | limegreen | linen | magenta | maroon | mediumaquamarine | mediumblue | mediumorchid | mediumpurple | mediumseagreen | mediumslateblue | mediumspringgreen | mediumturquoise | mediumvioletred | midnightblue | mintcream | mistyrose | moccasin | navajowhite | navy | oldlace | olive | olivedrab | orange | orangered | orchid | palegoldenrod | palegreen | paleturquoise | palevioletred | papayawhip | peachpuff | peru | pink | plum | powderblue | purple | rebeccapurple | red | rosybrown | royalblue | saddlebrown | salmon | sandybrown | seagreen | seashell | sienna | silver | skyblue | slateblue | slategray | slategrey | snow | springgreen | steelblue | tan | teal | thistle | tomato | turquoise | violet | wheat | white | whitesmoke | yellow | yellowgreen"},"namespace-prefix":{"syntax":"<ident>"},"ns-prefix":{"syntax":"[ <ident-token> | \'*\' ]? \'|\'"},"number-percentage":{"syntax":"<number> | <percentage>"},"numeric-figure-values":{"syntax":"[ lining-nums | oldstyle-nums ]"},"numeric-fraction-values":{"syntax":"[ diagonal-fractions | stacked-fractions ]"},"numeric-spacing-values":{"syntax":"[ proportional-nums | tabular-nums ]"},"nth":{"syntax":"<an-plus-b> | even | odd"},"opacity()":{"syntax":"opacity( [ <number-percentage> ] )"},"overflow-position":{"syntax":"unsafe | safe"},"outline-radius":{"syntax":"<length> | <percentage>"},"page-body":{"syntax":"<declaration>? [ ; <page-body> ]? | <page-margin-box> <page-body>"},"page-margin-box":{"syntax":"<page-margin-box-type> \'{\' <declaration-list> \'}\'"},"page-margin-box-type":{"syntax":"@top-left-corner | @top-left | @top-center | @top-right | @top-right-corner | @bottom-left-corner | @bottom-left | @bottom-center | @bottom-right | @bottom-right-corner | @left-top | @left-middle | @left-bottom | @right-top | @right-middle | @right-bottom"},"page-selector-list":{"syntax":"[ <page-selector># ]?"},"page-selector":{"syntax":"<pseudo-page>+ | <ident> <pseudo-page>*"},"path()":{"syntax":"path( [ <fill-rule>, ]? <string> )"},"paint()":{"syntax":"paint( <ident>, <declaration-value>? )"},"perspective()":{"syntax":"perspective( <length> )"},"polygon()":{"syntax":"polygon( <fill-rule>? , [ <length-percentage> <length-percentage> ]# )"},"position":{"syntax":"[ [ left | center | right ] || [ top | center | bottom ] | [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]? | [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ] ]"},"pseudo-class-selector":{"syntax":"\':\' <ident-token> | \':\' <function-token> <any-value> \')\'"},"pseudo-element-selector":{"syntax":"\':\' <pseudo-class-selector>"},"pseudo-page":{"syntax":": [ left | right | first | blank ]"},"quote":{"syntax":"open-quote | close-quote | no-open-quote | no-close-quote"},"radial-gradient()":{"syntax":"radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )"},"relative-selector":{"syntax":"<combinator>? <complex-selector>"},"relative-selector-list":{"syntax":"<relative-selector>#"},"relative-size":{"syntax":"larger | smaller"},"repeat-style":{"syntax":"repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}"},"repeating-linear-gradient()":{"syntax":"repeating-linear-gradient( [ <angle> | to <side-or-corner> ]? , <color-stop-list> )"},"repeating-radial-gradient()":{"syntax":"repeating-radial-gradient( [ <ending-shape> || <size> ]? [ at <position> ]? , <color-stop-list> )"},"rgb()":{"syntax":"rgb( <percentage>{3} [ / <alpha-value> ]? ) | rgb( <number>{3} [ / <alpha-value> ]? ) | rgb( <percentage>#{3} , <alpha-value>? ) | rgb( <number>#{3} , <alpha-value>? )"},"rgba()":{"syntax":"rgba( <percentage>{3} [ / <alpha-value> ]? ) | rgba( <number>{3} [ / <alpha-value> ]? ) | rgba( <percentage>#{3} , <alpha-value>? ) | rgba( <number>#{3} , <alpha-value>? )"},"rotate()":{"syntax":"rotate( [ <angle> | <zero> ] )"},"rotate3d()":{"syntax":"rotate3d( <number> , <number> , <number> , [ <angle> | <zero> ] )"},"rotateX()":{"syntax":"rotateX( [ <angle> | <zero> ] )"},"rotateY()":{"syntax":"rotateY( [ <angle> | <zero> ] )"},"rotateZ()":{"syntax":"rotateZ( [ <angle> | <zero> ] )"},"saturate()":{"syntax":"saturate( <number-percentage> )"},"scale()":{"syntax":"scale( <number> , <number>? )"},"scale3d()":{"syntax":"scale3d( <number> , <number> , <number> )"},"scaleX()":{"syntax":"scaleX( <number> )"},"scaleY()":{"syntax":"scaleY( <number> )"},"scaleZ()":{"syntax":"scaleZ( <number> )"},"self-position":{"syntax":"center | start | end | self-start | self-end | flex-start | flex-end"},"shape-radius":{"syntax":"<length-percentage> | closest-side | farthest-side"},"skew()":{"syntax":"skew( [ <angle> | <zero> ] , [ <angle> | <zero> ]? )"},"skewX()":{"syntax":"skewX( [ <angle> | <zero> ] )"},"skewY()":{"syntax":"skewY( [ <angle> | <zero> ] )"},"sepia()":{"syntax":"sepia( <number-percentage> )"},"shadow":{"syntax":"inset? && <length>{2,4} && <color>?"},"shadow-t":{"syntax":"[ <length>{2,3} && <color>? ]"},"shape":{"syntax":"rect(<top>, <right>, <bottom>, <left>)"},"shape-box":{"syntax":"<box> | margin-box"},"side-or-corner":{"syntax":"[ left | right ] || [ top | bottom ]"},"single-animation":{"syntax":"<time> || <timing-function> || <time> || <single-animation-iteration-count> || <single-animation-direction> || <single-animation-fill-mode> || <single-animation-play-state> || [ none | <keyframes-name> ]"},"single-animation-direction":{"syntax":"normal | reverse | alternate | alternate-reverse"},"single-animation-fill-mode":{"syntax":"none | forwards | backwards | both"},"single-animation-iteration-count":{"syntax":"infinite | <number>"},"single-animation-play-state":{"syntax":"running | paused"},"single-transition":{"syntax":"[ none | <single-transition-property> ] || <time> || <timing-function> || <time>"},"single-transition-property":{"syntax":"all | <custom-ident>"},"size":{"syntax":"closest-side | farthest-side | closest-corner | farthest-corner | <length> | <length-percentage>{2}"},"step-position":{"syntax":"jump-start | jump-end | jump-none | jump-both | start | end"},"step-timing-function":{"syntax":"step-start | step-end | steps(<integer>[, <step-position>]?)"},"subclass-selector":{"syntax":"<id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector>"},"supports-condition":{"syntax":"not <supports-in-parens> | <supports-in-parens> [ and <supports-in-parens> ]* | <supports-in-parens> [ or <supports-in-parens> ]*"},"supports-in-parens":{"syntax":"( <supports-condition> ) | <supports-feature> | <general-enclosed>"},"supports-feature":{"syntax":"<supports-decl> | <supports-selector-fn>"},"supports-decl":{"syntax":"( <declaration> )"},"supports-selector-fn":{"syntax":"selector( <complex-selector> )"},"symbol":{"syntax":"<string> | <image> | <custom-ident>"},"target":{"syntax":"<target-counter()> | <target-counters()> | <target-text()>"},"target-counter()":{"syntax":"target-counter( [ <string> | <url> ] , <custom-ident> , <counter-style>? )"},"target-counters()":{"syntax":"target-counters( [ <string> | <url> ] , <custom-ident> , <string> , <counter-style>? )"},"target-text()":{"syntax":"target-text( [ <string> | <url> ] , [ content | before | after | first-letter ]? )"},"time-percentage":{"syntax":"<time> | <percentage>"},"timing-function":{"syntax":"linear | <cubic-bezier-timing-function> | <step-timing-function>"},"track-breadth":{"syntax":"<length-percentage> | <flex> | min-content | max-content | auto"},"track-list":{"syntax":"[ <line-names>? [ <track-size> | <track-repeat> ] ]+ <line-names>?"},"track-repeat":{"syntax":"repeat( [ <positive-integer> ] , [ <line-names>? <track-size> ]+ <line-names>? )"},"track-size":{"syntax":"<track-breadth> | minmax( <inflexible-breadth> , <track-breadth> ) | fit-content( [ <length> | <percentage> ] )"},"transform-function":{"syntax":"<matrix()> | <translate()> | <translateX()> | <translateY()> | <scale()> | <scaleX()> | <scaleY()> | <rotate()> | <skew()> | <skewX()> | <skewY()> | <matrix3d()> | <translate3d()> | <translateZ()> | <scale3d()> | <scaleZ()> | <rotate3d()> | <rotateX()> | <rotateY()> | <rotateZ()> | <perspective()>"},"transform-list":{"syntax":"<transform-function>+"},"translate()":{"syntax":"translate( <length-percentage> , <length-percentage>? )"},"translate3d()":{"syntax":"translate3d( <length-percentage> , <length-percentage> , <length> )"},"translateX()":{"syntax":"translateX( <length-percentage> )"},"translateY()":{"syntax":"translateY( <length-percentage> )"},"translateZ()":{"syntax":"translateZ( <length> )"},"type-or-unit":{"syntax":"string | color | url | integer | number | length | angle | time | frequency | cap | ch | em | ex | ic | lh | rlh | rem | vb | vi | vw | vh | vmin | vmax | mm | Q | cm | in | pt | pc | px | deg | grad | rad | turn | ms | s | Hz | kHz | %"},"type-selector":{"syntax":"<wq-name> | <ns-prefix>? \'*\'"},"var()":{"syntax":"var( <custom-property-name> , <declaration-value>? )"},"viewport-length":{"syntax":"auto | <length-percentage>"},"wq-name":{"syntax":"<ns-prefix>? <ident-token>"}}');
+/* Adapted from
+ * Paper.js - The Swiss Army Knife of Vector Graphics Scripting.
+ * http://paperjs.org/
+ *
+ * Copyright (c) 2011 - 2016, Juerg Lehni & Jonathan Puckey
+ * http://scratchdisk.com/ & http://jonathanpuckey.com/
+ *
+ * Distributed under the MIT license. See LICENSE file for details.
+ *
+ * All rights reserved.
+ */
+
+/**
+ * @name SvgElement
+ * @namespace
+ * @private
+ */
+class SvgElement {
+  // SVG related namespaces
+  static get svg() {
+    return 'http://www.w3.org/2000/svg';
+  }
+  static get xmlns() {
+    return 'http://www.w3.org/2000/xmlns';
+  }
+  static get xlink() {
+    return 'http://www.w3.org/1999/xlink';
+  }
+
+  // Mapping of attribute names to required namespaces:
+  static attributeNamespace() {
+    return {
+      'href': SvgElement.xlink,
+      'xlink': SvgElement.xmlns,
+      // Only the xmlns attribute needs the trailing slash. See #984
+      'xmlns': "".concat(SvgElement.xmlns, "/"),
+      // IE needs the xmlns namespace when setting 'xmlns:xlink'. See #984
+      'xmlns:xlink': "".concat(SvgElement.xmlns, "/")
+    };
+  }
+  static create(tag, attributes, formatter) {
+    return SvgElement.set(document.createElementNS(SvgElement.svg, tag), attributes, formatter);
+  }
+  static get(node, name) {
+    const namespace = SvgElement.attributeNamespace[name];
+    const value = namespace ? node.getAttributeNS(namespace, name) : node.getAttribute(name);
+    return value === 'null' ? null : value;
+  }
+  static set(node, attributes, formatter) {
+    for (const name in attributes) {
+      let value = attributes[name];
+      const namespace = SvgElement.attributeNamespace[name];
+      if (typeof value === 'number' && formatter) {
+        value = formatter.number(value);
+      }
+      if (namespace) {
+        node.setAttributeNS(namespace, name, value);
+      } else {
+        node.setAttribute(name, value);
+      }
+    }
+    return node;
+  }
+}
+module.exports = SvgElement;
+
+/***/ }),
+
+/***/ "./src/svg-renderer.js":
+/*!*****************************!*\
+  !*** ./src/svg-renderer.js ***!
+  \*****************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./src/load-svg-string.js");
+const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./src/serialize-svg-to-string.js");
+
+/**
+ * Main quirks-mode SVG rendering code.
+ * @deprecated Call into individual methods exported from this library instead.
+ */
+class SvgRenderer {
+  /**
+   * Create a quirks-mode SVG renderer for a particular canvas.
+   * @param {HTMLCanvasElement} [canvas] An optional canvas element to draw to. If this is not provided, the renderer
+   * will create a new canvas.
+   * @constructor
+   */
+  constructor(canvas) {
+    /**
+     * The canvas that this SVG renderer will render to.
+     * @type {HTMLCanvasElement}
+     * @private
+     */
+    this._canvas = canvas || document.createElement('canvas');
+    this._context = this._canvas.getContext('2d');
+
+    /**
+     * A measured SVG "viewbox"
+     * @typedef {object} SvgRenderer#SvgMeasurements
+     * @property {number} x - The left edge of the SVG viewbox.
+     * @property {number} y - The top edge of the SVG viewbox.
+     * @property {number} width - The width of the SVG viewbox.
+     * @property {number} height - The height of the SVG viewbox.
+     */
+
+    /**
+     * The measurement box of the currently loaded SVG.
+     * @type {SvgRenderer#SvgMeasurements}
+     * @private
+     */
+    this._measurements = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0
+    };
+
+    /**
+     * The `<img>` element with the contents of the currently loaded SVG.
+     * @type {?HTMLImageElement}
+     * @private
+     */
+    this._cachedImage = null;
+
+    /**
+     * True if this renderer's current SVG is loaded and can be rendered to the canvas.
+     * @type {boolean}
+     */
+    this.loaded = false;
+  }
+
+  /**
+   * @returns {!HTMLCanvasElement} this renderer's target canvas.
+   */
+  get canvas() {
+    return this._canvas;
+  }
+
+  /**
+   * @return {Array<number>} the natural size, in Scratch units, of this SVG.
+   */
+  get size() {
+    return [this._measurements.width, this._measurements.height];
+  }
+
+  /**
+   * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
+   */
+  get viewOffset() {
+    return [this._measurements.x, this._measurements.y];
+  }
+
+  /**
+   * Load an SVG string and normalize it. All the steps before drawing/measuring.
+   * @param {!string} svgString String of SVG data to draw in quirks-mode.
+   * @param {?boolean} fromVersion2 True if we should perform conversion from
+   *     version 2 to version 3 svg.
+   */
+  loadString(svgString, fromVersion2) {
+    // New svg string invalidates the cached image
+    this._cachedImage = null;
+    const svgTag = loadSvgString(svgString, fromVersion2);
+    this._svgTag = svgTag;
+    this._measurements = {
+      width: svgTag.viewBox.baseVal.width,
+      height: svgTag.viewBox.baseVal.height,
+      x: svgTag.viewBox.baseVal.x,
+      y: svgTag.viewBox.baseVal.y
+    };
+  }
+
+  /**
+   * Load an SVG string, normalize it, and prepare it for (synchronous) rendering.
+   * @param {!string} svgString String of SVG data to draw in quirks-mode.
+   * @param {?boolean} fromVersion2 True if we should perform conversion from version 2 to version 3 svg.
+   * @param {Function} [onFinish] - An optional callback to call when the SVG is loaded and can be rendered.
+   */
+  loadSVG(svgString, fromVersion2, onFinish) {
+    this.loadString(svgString, fromVersion2);
+    this._createSVGImage(onFinish);
+  }
+
+  /**
+   * Creates an <img> element for the currently loaded SVG string, then calls the callback once it's loaded.
+   * @param {Function} [onFinish] - An optional callback to call when the <img> has loaded.
+   */
+  _createSVGImage(onFinish) {
+    if (this._cachedImage === null) this._cachedImage = new Image();
+    const img = this._cachedImage;
+    img.onload = () => {
+      this.loaded = true;
+      if (onFinish) onFinish();
+    };
+    const svgText = this.toString(true /* shouldInjectFonts */);
+    img.src = "data:image/svg+xml;utf8,".concat(encodeURIComponent(svgText));
+    this.loaded = false;
+  }
+
+  /**
+   * Serialize the active SVG DOM to a string.
+   * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
+   *     base64 data.
+   * @returns {string} String representing current SVG data.
+   * @deprecated Use the standalone `serializeSvgToString` export instead.
+   */
+  toString(shouldInjectFonts) {
+    return serializeSvgToString(this._svgTag, shouldInjectFonts);
+  }
+
+  /**
+   * Synchronously draw the loaded SVG to this renderer's `canvas`.
+   * @param {number} [scale] - Optionally, also scale the image by this factor.
+   */
+  draw(scale) {
+    if (!this.loaded) throw new Error('SVG image has not finished loading');
+    this._drawFromImage(scale);
+  }
+
+  /**
+   * Draw to the canvas from a loaded image element.
+   * @param {number} [scale] - Optionally, also scale the image by this factor.
+   **/
+  _drawFromImage(scale) {
+    if (this._cachedImage === null) return;
+    const ratio = Number.isFinite(scale) ? scale : 1;
+    const bbox = this._measurements;
+    this._canvas.width = bbox.width * ratio;
+    this._canvas.height = bbox.height * ratio;
+    // Even if the canvas at the current scale has a nonzero size, the image's dimensions are floored pre-scaling.
+    // e.g. if an image has a width of 0.4 and is being rendered at 3x scale, the canvas will have a width of 1, but
+    // the image's width will be rounded down to 0 on some browsers (Firefox) prior to being drawn at that scale.
+    if (this._canvas.width <= 0 || this._canvas.height <= 0 || this._cachedImage.naturalWidth <= 0 || this._cachedImage.naturalHeight <= 0) return;
+    this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    this._context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    this._context.drawImage(this._cachedImage, 0, 0);
+  }
+}
+module.exports = SvgRenderer;
+
+/***/ }),
+
+/***/ "./src/transform-applier.js":
+/*!**********************************!*\
+  !*** ./src/transform-applier.js ***!
+  \**********************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const Matrix = __webpack_require__(/*! transformation-matrix */ "./node_modules/transformation-matrix/build-es/index.js");
+const SvgElement = __webpack_require__(/*! ./svg-element */ "./src/svg-element.js");
+const log = __webpack_require__(/*! ./util/log */ "./src/util/log.js");
+
+/**
+ * @fileOverview Apply transforms to match stroke width appearance in 2.0 and 3.0
+ */
+
+// Adapted from paper.js's Path.applyTransform
+const _parseTransform = function _parseTransform(domElement) {
+  let matrix = Matrix.identity();
+  const string = domElement.attributes && domElement.attributes.transform && domElement.attributes.transform.value;
+  if (!string) return matrix;
+  // https://www.w3.org/TR/SVG/types.html#DataTypeTransformList
+  // Parse SVG transform string. First we split at /)\s*/, to separate
+  // commands
+  const transforms = string.split(/\)\s*/g);
+  for (const transform of transforms) {
+    if (!transform) break;
+    // Command come before the '(', values after
+    const parts = transform.split(/\(\s*/);
+    const command = parts[0].trim();
+    const v = parts[1].split(/[\s,]+/g);
+    // Convert values to floats
+    for (let j = 0; j < v.length; j++) {
+      v[j] = parseFloat(v[j]);
+    }
+    switch (command) {
+      case 'matrix':
+        matrix = Matrix.compose(matrix, {
+          a: v[0],
+          b: v[1],
+          c: v[2],
+          d: v[3],
+          e: v[4],
+          f: v[5]
+        });
+        break;
+      case 'rotate':
+        matrix = Matrix.compose(matrix, Matrix.rotateDEG(v[0], v[1] || 0, v[2] || 0));
+        break;
+      case 'translate':
+        matrix = Matrix.compose(matrix, Matrix.translate(v[0], v[1] || 0));
+        break;
+      case 'scale':
+        matrix = Matrix.compose(matrix, Matrix.scale(v[0], v[1] || v[0]));
+        break;
+      case 'skewX':
+        matrix = Matrix.compose(matrix, Matrix.skewDEG(v[0], 0));
+        break;
+      case 'skewY':
+        matrix = Matrix.compose(matrix, Matrix.skewDEG(0, v[0]));
+        break;
+      default:
+        log.error("Couldn't parse: ".concat(command));
+    }
+  }
+  return matrix;
+};
+
+// Adapted from paper.js's Matrix.decompose
+// Given a matrix, return the x and y scale factors of the matrix
+const _getScaleFactor = function _getScaleFactor(matrix) {
+  const a = matrix.a;
+  const b = matrix.b;
+  const c = matrix.c;
+  const d = matrix.d;
+  const det = a * d - b * c;
+  if (a !== 0 || b !== 0) {
+    const r = Math.sqrt(a * a + b * b);
+    return {
+      x: r,
+      y: det / r
+    };
+  }
+  if (c !== 0 || d !== 0) {
+    const s = Math.sqrt(c * c + d * d);
+    return {
+      x: det / s,
+      y: s
+    };
+  }
+  // a = b = c = d = 0
+  return {
+    x: 0,
+    y: 0
+  };
+};
+
+// Returns null if matrix is not invertible. Otherwise returns given ellipse
+// transformed by transform, an object {radiusX, radiusY, rotation}.
+const _calculateTransformedEllipse = function _calculateTransformedEllipse(radiusX, radiusY, theta, transform) {
+  theta = -theta * Math.PI / 180;
+  const a = transform.a;
+  const b = -transform.c;
+  const c = -transform.b;
+  const d = transform.d;
+  // Since other parameters determine the translation of the ellipse in SVG, we do not need to worry
+  // about what e and f are.
+  const det = a * d - b * c;
+  // Non-invertible matrix
+  if (det === 0) return null;
+
+  // rotA, rotB, and rotC represent Ax^2 + Bxy + Cy^2 = 1 coefficients for a rotated ellipse formula
+  const sinT = Math.sin(theta);
+  const cosT = Math.cos(theta);
+  const sin2T = Math.sin(2 * theta);
+  const rotA = cosT * cosT / radiusX / radiusX + sinT * sinT / radiusY / radiusY;
+  const rotB = sin2T / radiusX / radiusX - sin2T / radiusY / radiusY;
+  const rotC = sinT * sinT / radiusX / radiusX + cosT * cosT / radiusY / radiusY;
+
+  // Calculate the ellipse formula of the transformed ellipse
+  // A, B, and C represent Ax^2 + Bxy + Cy^2 = 1 / det / det coefficients in a transformed ellipse formula
+  // scaled by inverse det squared (to preserve accuracy)
+  const A = rotA * d * d - rotB * d * c + rotC * c * c;
+  const B = -2 * rotA * b * d + rotB * a * d + rotB * b * c - 2 * rotC * a * c;
+  const C = rotA * b * b - rotB * a * b + rotC * a * a;
+
+  // Derive new radii and theta from the transformed ellipse formula
+  const newRadiusXOverDet = Math.sqrt(2) * Math.sqrt((A + C - Math.sqrt(A * A + B * B - 2 * A * C + C * C)) / (-B * B + 4 * A * C));
+  const newRadiusYOverDet = 1 / Math.sqrt(A + C - 1 / newRadiusXOverDet / newRadiusXOverDet);
+  let temp = (A - 1 / newRadiusXOverDet / newRadiusXOverDet) / (1 / newRadiusYOverDet / newRadiusYOverDet - 1 / newRadiusXOverDet / newRadiusXOverDet);
+  if (temp < 0 && Math.abs(temp) < 1e-8) temp = 0; // Fix floating point issue
+  temp = Math.sqrt(temp);
+  if (Math.abs(1 - temp) < 1e-8) temp = 1; // Fix floating point issue
+  // Solve for which of the two possible thetas is correct
+  let newTheta = Math.asin(temp);
+  temp = B / (1 / newRadiusXOverDet / newRadiusXOverDet - 1 / newRadiusYOverDet / newRadiusYOverDet);
+  const newTheta2 = -newTheta;
+  if (Math.abs(Math.sin(2 * newTheta2) - temp) < Math.abs(Math.sin(2 * newTheta) - temp)) {
+    newTheta = newTheta2;
+  }
+  return {
+    radiusX: newRadiusXOverDet * det,
+    radiusY: newRadiusYOverDet * det,
+    rotation: -newTheta * 180 / Math.PI
+  };
+};
+
+// Adapted from paper.js's PathItem.setPathData
+const _transformPath = function _transformPath(pathString, transform) {
+  if (!transform || Matrix.toString(transform) === Matrix.toString(Matrix.identity())) return pathString;
+  // First split the path data into parts of command-coordinates pairs
+  // Commands are any of these characters: mzlhvcsqta
+  const parts = pathString && pathString.match(/[mlhvcsqtaz][^mlhvcsqtaz]*/ig);
+  let coords;
+  let relative = false;
+  let previous;
+  let control;
+  let current = {
+    x: 0,
+    y: 0
+  };
+  let start = {
+    x: 0,
+    y: 0
+  };
+  let result = '';
+  const getCoord = function getCoord(index, coord) {
+    let val = +coords[index];
+    if (relative) {
+      val += current[coord];
+    }
+    return val;
+  };
+  const getPoint = function getPoint(index) {
+    return {
+      x: getCoord(index, 'x'),
+      y: getCoord(index + 1, 'y')
+    };
+  };
+  const roundTo4Places = function roundTo4Places(num) {
+    return Number(num.toFixed(4));
+  };
+
+  // Returns the transformed point as a string
+  const getString = function getString(point) {
+    const transformed = Matrix.applyToPoint(transform, point);
+    return "".concat(roundTo4Places(transformed.x), " ").concat(roundTo4Places(transformed.y), " ");
+  };
+  for (let i = 0, l = parts && parts.length; i < l; i++) {
+    const part = parts[i];
+    const command = part[0];
+    const lower = command.toLowerCase();
+    // Match all coordinate values
+    coords = part.match(/[+-]?(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?/g);
+    const length = coords && coords.length;
+    relative = command === lower;
+    // Fix issues with z in the middle of SVG path data, not followed by
+    // a m command, see paper.js#413:
+    if (previous === 'z' && !/[mz]/.test(lower)) {
+      result += "M ".concat(current.x, " ").concat(current.y, " ");
+    }
+    switch (lower) {
+      case 'm': // Move to
+      case 'l':
+        // Line to
+        {
+          let move = lower === 'm';
+          for (let j = 0; j < length; j += 2) {
+            result += move ? 'M ' : 'L ';
+            current = getPoint(j);
+            result += getString(current);
+            if (move) {
+              start = current;
+              move = false;
+            }
+          }
+          control = current;
+          break;
+        }
+      case 'h': // Horizontal line
+      case 'v':
+        // Vertical line
+        {
+          const coord = lower === 'h' ? 'x' : 'y';
+          current = {
+            x: current.x,
+            y: current.y
+          }; // Clone as we're going to modify it.
+          for (let j = 0; j < length; j++) {
+            current[coord] = getCoord(j, coord);
+            result += "L ".concat(getString(current));
+          }
+          control = current;
+          break;
+        }
+      case 'c':
+        // Cubic Bezier curve
+        for (let j = 0; j < length; j += 6) {
+          const handle1 = getPoint(j);
+          control = getPoint(j + 2);
+          current = getPoint(j + 4);
+          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
+        }
+        break;
+      case 's':
+        // Smooth cubic Bezier curve
+        for (let j = 0; j < length; j += 4) {
+          const handle1 = /[cs]/.test(previous) ? {
+            x: current.x * 2 - control.x,
+            y: current.y * 2 - control.y
+          } : current;
+          control = getPoint(j);
+          current = getPoint(j + 2);
+          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
+          previous = lower;
+        }
+        break;
+      case 'q':
+        // Quadratic Bezier curve
+        for (let j = 0; j < length; j += 4) {
+          control = getPoint(j);
+          current = getPoint(j + 2);
+          result += "Q ".concat(getString(control)).concat(getString(current));
+        }
+        break;
+      case 't':
+        // Smooth quadratic Bezier curve
+        for (let j = 0; j < length; j += 2) {
+          control = /[qt]/.test(previous) ? {
+            x: current.x * 2 - control.x,
+            y: current.y * 2 - control.y
+          } : current;
+          current = getPoint(j);
+          result += "Q ".concat(getString(control)).concat(getString(current));
+          previous = lower;
+        }
+        break;
+      case 'a':
+        // Elliptical arc curve
+        for (let j = 0; j < length; j += 7) {
+          current = getPoint(j + 5);
+          const rx = +coords[j];
+          const ry = +coords[j + 1];
+          const rotation = +coords[j + 2];
+          const largeArcFlag = +coords[j + 3];
+          let clockwiseFlag = +coords[j + 4];
+          const newEllipse = _calculateTransformedEllipse(rx, ry, rotation, transform);
+          const matrixScale = _getScaleFactor(transform);
+          if (newEllipse) {
+            if (matrixScale.x > 0 && matrixScale.y < 0 || matrixScale.x < 0 && matrixScale.y > 0) {
+              clockwiseFlag = clockwiseFlag ^ 1;
+            }
+            result += "A ".concat(roundTo4Places(Math.abs(newEllipse.radiusX)), " ") + "".concat(roundTo4Places(Math.abs(newEllipse.radiusY)), " ") + "".concat(roundTo4Places(newEllipse.rotation), " ").concat(largeArcFlag, " ") + "".concat(clockwiseFlag, " ").concat(getString(current));
+          } else {
+            result += "L ".concat(getString(current));
+          }
+        }
+        break;
+      case 'z':
+        // Close path
+        result += "Z ";
+        // Correctly handle relative m commands, see paper.js#1101:
+        current = start;
+        break;
+    }
+    previous = lower;
+  }
+  return result;
+};
+const GRAPHICS_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'use'];
+const CONTAINER_ELEMENTS = ['a', 'defs', 'g', 'marker', 'glyph', 'missing-glyph', 'pattern', 'svg', 'switch', 'symbol'];
+const _isContainerElement = function _isContainerElement(element) {
+  return element.tagName && CONTAINER_ELEMENTS.includes(element.tagName.toLowerCase());
+};
+const _isGraphicsElement = function _isGraphicsElement(element) {
+  return element.tagName && GRAPHICS_ELEMENTS.includes(element.tagName.toLowerCase());
+};
+const _isPathWithTransformAndStroke = function _isPathWithTransformAndStroke(element, strokeWidth) {
+  if (!element.attributes) return false;
+  strokeWidth = element.attributes['stroke-width'] ? Number(element.attributes['stroke-width'].value) : Number(strokeWidth);
+  return strokeWidth && element.tagName && element.tagName.toLowerCase() === 'path' && element.attributes.d && element.attributes.d.value;
+};
+const _quadraticMean = function _quadraticMean(a, b) {
+  return Math.sqrt((a * a + b * b) / 2);
+};
+const _createGradient = function _createGradient(gradientId, svgTag, bbox, matrix) {
+  // Adapted from Paper.js's SvgImport.getValue
+  const getValue = function getValue(node, name, isString, allowNull, allowPercent, defaultValue) {
+    // Interpret value as number. Never return NaN, but 0 instead.
+    // If the value is a sequence of numbers, parseFloat will
+    // return the first occurring number, which is enough for now.
+    let value = SvgElement.get(node, name);
+    let res;
+    if (value === null) {
+      if (defaultValue) {
+        res = defaultValue;
+        if (/%\s*$/.test(res)) {
+          value = defaultValue;
+          res = parseFloat(value);
+        }
+      } else if (allowNull) {
+        res = null;
+      } else if (isString) {
+        res = '';
+      } else {
+        res = 0;
+      }
+    } else if (isString) {
+      res = value;
+    } else {
+      res = parseFloat(value);
+    }
+    // Support for dimensions in percentage of the root size. If root-size
+    // is not set (e.g. during <defs>), just scale the percentage value to
+    // 0..1, as required by gradients with gradientUnits="objectBoundingBox"
+    if (/%\s*$/.test(value)) {
+      const size = allowPercent ? 1 : bbox[/x|^width/.test(name) ? 'width' : 'height'];
+      return res / 100 * size;
+    }
+    return res;
+  };
+  const getPoint = function getPoint(node, x, y, allowNull, allowPercent, defaultX, defaultY) {
+    x = getValue(node, x || 'x', false, allowNull, allowPercent, defaultX);
+    y = getValue(node, y || 'y', false, allowNull, allowPercent, defaultY);
+    return allowNull && (x === null || y === null) ? null : {
+      x,
+      y
+    };
+  };
+  let defs = svgTag.getElementsByTagName('defs');
+  if (defs.length === 0) {
+    defs = SvgElement.create('defs');
+    svgTag.appendChild(defs);
+  } else {
+    defs = defs[0];
+  }
+
+  // Clone the old gradient. We'll make a new one, since the gradient might be reused elsewhere
+  // with different transform matrix
+  const oldGradient = svgTag.getElementById(gradientId);
+  if (!oldGradient) return;
+  const radial = oldGradient.tagName.toLowerCase() === 'radialgradient';
+  const newGradient = svgTag.getElementById(gradientId).cloneNode(true /* deep */);
+
+  // Give the new gradient a new ID
+  let matrixString = Matrix.toString(matrix);
+  matrixString = matrixString.substring(8, matrixString.length - 1);
+  const newGradientId = "".concat(gradientId, "-").concat(matrixString);
+  newGradient.setAttribute('id', newGradientId);
+
+  // This gradient already exists and was transformed before. Just reuse the already-transformed one.
+  if (svgTag.getElementById(newGradientId)) {
+    // This is the same code as in the end of the function, but I don't feel like wrapping the next 80 lines
+    // in an `if (!svgTag.getElementById(newGradientId))` block
+    return "url(#".concat(newGradientId, ")");
+  }
+  const scaleToBounds = getValue(newGradient, 'gradientUnits', true) !== 'userSpaceOnUse';
+  let origin;
+  let destination;
+  let radius;
+  let focal;
+  if (radial) {
+    origin = getPoint(newGradient, 'cx', 'cy', false, scaleToBounds, '50%', '50%');
+    radius = getValue(newGradient, 'r', false, false, scaleToBounds, '50%');
+    focal = getPoint(newGradient, 'fx', 'fy', true, scaleToBounds);
+  } else {
+    origin = getPoint(newGradient, 'x1', 'y1', false, scaleToBounds);
+    destination = getPoint(newGradient, 'x2', 'y2', false, scaleToBounds, '1');
+    if (origin.x === destination.x && origin.y === destination.y) {
+      // If it's degenerate, use the color of the last stop, as described by
+      // https://www.w3.org/TR/SVG/pservers.html#LinearGradientNotes
+      const stops = newGradient.getElementsByTagName('stop');
+      if (!stops.length || !stops[stops.length - 1].attributes || !stops[stops.length - 1].attributes['stop-color']) {
+        return null;
+      }
+      return stops[stops.length - 1].attributes['stop-color'].value;
+    }
+  }
+
+  // Transform points
+  // Emulate SVG's gradientUnits="objectBoundingBox"
+  if (scaleToBounds) {
+    const boundsMatrix = Matrix.compose(Matrix.translate(bbox.x, bbox.y), Matrix.scale(bbox.width, bbox.height));
+    origin = Matrix.applyToPoint(boundsMatrix, origin);
+    if (destination) destination = Matrix.applyToPoint(boundsMatrix, destination);
+    if (radius) {
+      radius = _quadraticMean(bbox.width, bbox.height) * radius;
+    }
+    if (focal) focal = Matrix.applyToPoint(boundsMatrix, focal);
+  }
+  if (radial) {
+    origin = Matrix.applyToPoint(matrix, origin);
+    const matrixScale = _getScaleFactor(matrix);
+    radius = _quadraticMean(matrixScale.x, matrixScale.y) * radius;
+    if (focal) focal = Matrix.applyToPoint(matrix, focal);
+  } else {
+    const dot = (a, b) => a.x * b.x + a.y * b.y;
+    const multiply = (coefficient, v) => ({
+      x: coefficient * v.x,
+      y: coefficient * v.y
+    });
+    const add = (a, b) => ({
+      x: a.x + b.x,
+      y: a.y + b.y
+    });
+    const subtract = (a, b) => ({
+      x: a.x - b.x,
+      y: a.y - b.y
+    });
+
+    // The line through origin and gradientPerpendicular is the line at which the gradient starts
+    let gradientPerpendicular = Math.abs(origin.x - destination.x) < 1e-8 ? add(origin, {
+      x: 1,
+      y: (origin.x - destination.x) / (destination.y - origin.y)
+    }) : add(origin, {
+      x: (destination.y - origin.y) / (origin.x - destination.x),
+      y: 1
+    });
+
+    // Transform points
+    gradientPerpendicular = Matrix.applyToPoint(matrix, gradientPerpendicular);
+    origin = Matrix.applyToPoint(matrix, origin);
+    destination = Matrix.applyToPoint(matrix, destination);
+
+    // Calculate the direction that the gradient has changed to
+    const originToPerpendicular = subtract(gradientPerpendicular, origin);
+    const originToDestination = subtract(destination, origin);
+    const gradientDirection = Math.abs(originToPerpendicular.x) < 1e-8 ? {
+      x: 1,
+      y: -originToPerpendicular.x / originToPerpendicular.y
+    } : {
+      x: -originToPerpendicular.y / originToPerpendicular.x,
+      y: 1
+    };
+
+    // Set the destination so that the gradient moves in the correct direction, by projecting the destination vector
+    // onto the gradient direction vector
+    const projectionCoeff = dot(originToDestination, gradientDirection) / dot(gradientDirection, gradientDirection);
+    const projection = multiply(projectionCoeff, gradientDirection);
+    destination = {
+      x: origin.x + projection.x,
+      y: origin.y + projection.y
+    };
+  }
+
+  // Put values back into svg
+  if (radial) {
+    newGradient.setAttribute('cx', Number(origin.x.toFixed(4)));
+    newGradient.setAttribute('cy', Number(origin.y.toFixed(4)));
+    newGradient.setAttribute('r', Number(radius.toFixed(4)));
+    if (focal) {
+      newGradient.setAttribute('fx', Number(focal.x.toFixed(4)));
+      newGradient.setAttribute('fy', Number(focal.y.toFixed(4)));
+    }
+  } else {
+    newGradient.setAttribute('x1', Number(origin.x.toFixed(4)));
+    newGradient.setAttribute('y1', Number(origin.y.toFixed(4)));
+    newGradient.setAttribute('x2', Number(destination.x.toFixed(4)));
+    newGradient.setAttribute('y2', Number(destination.y.toFixed(4)));
+  }
+  newGradient.setAttribute('gradientUnits', 'userSpaceOnUse');
+  defs.appendChild(newGradient);
+  return "url(#".concat(newGradientId, ")");
+};
+
+// Adapted from paper.js's SvgImport.getDefinition
+const _parseUrl = (value, windowRef) => {
+  // When url() comes from a style property, '#'' seems to be missing on
+  // WebKit. We also get variations of quotes or no quotes, single or
+  // double, so handle it all with one regular expression:
+  const match = value && value.match(/\((?:["'#]*)([^"')]+)/);
+  const name = match && match[1];
+  const res = name && windowRef ?
+  // This is required by Firefox, which can produce absolute
+  // urls for local gradients, see paperjs#1001:
+  name.replace("".concat(windowRef.location.href.split('#')[0], "#"), '') : name;
+  return res;
+};
+
+/**
+ * Scratch 2.0 displays stroke widths in a "normalized" way, that is,
+ * if a shape with a stroke width has a transform applied, it will be
+ * rendered with a stroke that is the same width all the way around,
+ * instead of stretched looking.
+ *
+ * The vector paint editor also prefers to normalize the stroke width,
+ * rather than keep track of transforms at the group level, as this
+ * simplifies editing (e.g. stroke width 3 always means the same thickness)
+ *
+ * This function performs that normalization process, pushing transforms
+ * on groups down to the leaf level and averaging out the stroke width
+ * around the shapes. Note that this doens't just change stroke widths, it
+ * changes path data and attributes throughout the SVG.
+ *
+ * @param {SVGElement} svgTag The SVG dom object
+ * @param {Window} windowRef The window to use. Need to pass in for
+ *     tests to work, as they get angry at even the mention of window.
+ * @param {object} bboxForTesting The bounds to use. Need to pass in for
+ *     tests only, because getBBox doesn't work in Node. This should
+ *     be the bounds of the svgTag without including stroke width or transforms.
+ * @return {void}
+ */
+const transformStrokeWidths = function transformStrokeWidths(svgTag, windowRef, bboxForTesting) {
+  const inherited = Matrix.identity();
+  const applyTransforms = (element, matrix, strokeWidth, fill, stroke) => {
+    if (_isContainerElement(element)) {
+      // Push fills and stroke width down to leaves
+      if (element.attributes['stroke-width']) {
+        strokeWidth = element.attributes['stroke-width'].value;
+      }
+      if (element.attributes) {
+        if (element.attributes.fill) fill = element.attributes.fill.value;
+        if (element.attributes.stroke) stroke = element.attributes.stroke.value;
+      }
+
+      // If any child nodes don't take attributes, leave the attributes
+      // at the parent level.
+      for (let i = 0; i < element.childNodes.length; i++) {
+        applyTransforms(element.childNodes[i], Matrix.compose(matrix, _parseTransform(element)), strokeWidth, fill, stroke);
+      }
+      element.removeAttribute('transform');
+      element.removeAttribute('stroke-width');
+      element.removeAttribute('fill');
+      element.removeAttribute('stroke');
+    } else if (_isPathWithTransformAndStroke(element, strokeWidth)) {
+      if (element.attributes['stroke-width']) {
+        strokeWidth = element.attributes['stroke-width'].value;
+      }
+      if (element.attributes.fill) fill = element.attributes.fill.value;
+      if (element.attributes.stroke) stroke = element.attributes.stroke.value;
+      matrix = Matrix.compose(matrix, _parseTransform(element));
+      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
+        element.removeAttribute('transform');
+        element.setAttribute('stroke-width', strokeWidth);
+        if (fill) element.setAttribute('fill', fill);
+        if (stroke) element.setAttribute('stroke', stroke);
+        return;
+      }
+
+      // Transform gradient
+      const fillGradientId = _parseUrl(fill, windowRef);
+      const strokeGradientId = _parseUrl(stroke, windowRef);
+      if (fillGradientId || strokeGradientId) {
+        const doc = windowRef.document;
+        // Need path bounds to transform gradient
+        const svgSpot = doc.createElement('span');
+        let bbox;
+        if (bboxForTesting) {
+          bbox = bboxForTesting;
+        } else {
+          try {
+            doc.body.appendChild(svgSpot);
+            const svg = SvgElement.set(doc.createElementNS(SvgElement.svg, 'svg'));
+            const path = SvgElement.set(doc.createElementNS(SvgElement.svg, 'path'));
+            path.setAttribute('d', element.attributes.d.value);
+            svg.appendChild(path);
+            svgSpot.appendChild(svg);
+            // Take the bounding box.
+            bbox = svg.getBBox();
+          } finally {
+            // Always destroy the element, even if, for example, getBBox throws.
+            doc.body.removeChild(svgSpot);
+          }
+        }
+        if (fillGradientId) {
+          const newFillRef = _createGradient(fillGradientId, svgTag, bbox, matrix);
+          if (newFillRef) fill = newFillRef;
+        }
+        if (strokeGradientId) {
+          const newStrokeRef = _createGradient(strokeGradientId, svgTag, bbox, matrix);
+          if (newStrokeRef) stroke = newStrokeRef;
+        }
+      }
+
+      // Transform path data
+      element.setAttribute('d', _transformPath(element.attributes.d.value, matrix));
+      element.removeAttribute('transform');
+
+      // Transform stroke width
+      const matrixScale = _getScaleFactor(matrix);
+      element.setAttribute('stroke-width', _quadraticMean(matrixScale.x, matrixScale.y) * strokeWidth);
+      if (fill) element.setAttribute('fill', fill);
+      if (stroke) element.setAttribute('stroke', stroke);
+    } else if (_isGraphicsElement(element)) {
+      // Push stroke width, fill, and stroke down to leaves
+      if (strokeWidth && !element.attributes['stroke-width']) {
+        element.setAttribute('stroke-width', strokeWidth);
+      }
+      if (fill && !element.attributes.fill) {
+        element.setAttribute('fill', fill);
+      }
+      if (stroke && !element.attributes.stroke) {
+        element.setAttribute('stroke', stroke);
+      }
+
+      // Push transform down to leaves
+      matrix = Matrix.compose(matrix, _parseTransform(element));
+      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
+        element.removeAttribute('transform');
+      } else {
+        element.setAttribute('transform', Matrix.toString(matrix));
+      }
+    }
+  };
+  applyTransforms(svgTag, inherited, 1 /* default SVG stroke width */);
+};
+module.exports = transformStrokeWidths;
+
+/***/ }),
+
+/***/ "./src/util/log.js":
+/*!*************************!*\
+  !*** ./src/util/log.js ***!
+  \*************************/
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+const minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
+minilog.enable();
+module.exports = minilog('scratch-svg-render');
 
 /***/ })
 
