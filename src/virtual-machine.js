@@ -1,3 +1,6 @@
+require('core-js');
+require('regenerator-runtime/runtime');
+
 let _TextEncoder;
 if (typeof TextEncoder === 'undefined') {
     _TextEncoder = require('text-encoding').TextEncoder;
