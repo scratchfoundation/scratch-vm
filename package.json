@@ -105,7 +105,7 @@
     "scratch-semantic-release-config": "3.0.0",
     "scratch-webpack-configuration": "3.0.0",
     "script-loader": "0.7.2",
-    "semantic-release": "19.0.5",
+    "semantic-release": "24.2.3",
     "stats.js": "0.17.0",
     "tap": "16.3.10",
     "webpack": "5.98.0",
