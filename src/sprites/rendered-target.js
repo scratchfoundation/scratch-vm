@@ -743,8 +743,24 @@ class RenderedTarget extends Target {
     isTouchingObject (requestedObject) {
         if (requestedObject === '_mouse_') {
             if (!this.runtime.ioDevices.mouse) return false;
-            const mouseX = this.runtime.ioDevices.mouse.getClientX();
-            const mouseY = this.runtime.ioDevices.mouse.getClientY();
+            let mouseRealX = this.runtime.ioDevices.mouse.getClientX();
+            let mouseRealY = this.runtime.ioDevices.mouse.getClientY();
+            let mouseX;
+            let mouseY
+            if(Math.abs(mouseRealX) > 240){
+                if(mouseRealX > 0){
+                    mouseX = -240;
+                }else{
+                    mouseX = 240;
+                }
+            }
+            if(Math.abs(mouseRealY) > 180){
+                if(mouseRealY > 0){
+                    mouseY = -180;
+                }else{
+                    mouseY = 180;
+                }
+            }
             return this.isTouchingPoint(mouseX, mouseY);
         } else if (requestedObject === '_edge_') {
             return this.isTouchingEdge();
