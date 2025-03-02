@@ -84,7 +84,7 @@
     "@commitlint/cli": "17.8.1",
     "@commitlint/config-conventional": "17.8.1",
     "adm-zip": "0.4.11",
-    "babel-loader": "9.2.1",
+    "babel-loader": "10.0.0",
     "callsite": "1.0.0",
     "copy-webpack-plugin": "4.6.0",
     "docdash": "1.2.0",
