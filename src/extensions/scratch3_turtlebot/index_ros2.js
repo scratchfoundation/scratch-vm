@@ -3,9 +3,9 @@ const BlockType     = require('../../extension-support/block-type');
 const Cast          = require('../../util/cast');
 const languageNames = require('scratch-translate-extension-languages');
 const formatMessage = require('format-message');
-const ROSLIB        = require('roslib');
+const ROSLIB        = require('rclnodejs'); // ROS2用に変更
 
-const Clone          = require('../../util/clone');//追加
+const Clone          = require('../../util/clone');
 const Color          = require('../../util/color');
 const MathUtil       = require('../../util/math-util');
 const RenderedTarget = require('../../sprites/rendered-target');
@@ -15,23 +15,23 @@ const WEBVideoViewer = require('./web_video_viewer');
 
 const iconURI = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAFWUlEQVRIS61We0xTZxQ/X+9te/sQKkhrQB7bTDSK1lDEEN9OZRkxMjDMiCEqAo2CcVuyuSXqNo2vGLYZ4vSPLcYlJkMckyIP/4D4DxEpD6XoDEGNmOiq0Fqgt697v+V8pQwdCsk8yU1u7ved8zuP3znnEniLDAwMaM6fOTPH5XZbRv1+cygYXOj3+2N4jhNVgnBfp9P16LXa22aL5X5BQYHrTabIZAeUUnLk0KE0R2/vpkGXK+eZ0znf4/EoA4EAcBxHZFkGQgiNioqCWbGxT41xcfUJ8fE1O4qKbqSnp3tft/kfEJvNpm2qqyts7+qyPn32zDw6OgpKpRJUKhUoFIpxfUopIGgwGARBECA2JubJvLlzqz/MyqosLS3tnwj0CkhVVZW+6tKlg7cdjhKX221AZQQgRAGUypNmA8+CoSD4/X4Q1GpISUy0Wffu/Xrbtm29EYVxELvdrjxy+PDhbofjc1EUNVqtlt1Bj6cSQgimjwFhdAvmzastKy3dn19Y+BB1x0E+KysrqmtsPOXyeGJm6HTMropFMWnZXsFFRzBt6A4CUVmGdIvl7NFjx740m82jzELFiROLLtfU/Hq/ry8di4mGZxoMoNfrpxWNghDwer0w6HKztGIdY2NjX65dtWr32fPnqwmllMvNydnX1d1dgaGq1GoWgclkAl6pBGTSVIJOofdOpxO8Ph9Lj8fjgcyMjMsFhYXl5Ifjx1Oampt/a+/sXIFRyJSCWqUCk9EICp5nylMKppRSePH8OYx6vcBxPIyMDMOchISX61av3kL2l5Wtab15s+HBo0dCVFQ0SLLEQIxGI3DTBGGRTABBqodCIZBCIXlLXt73pHzPnjJbff2PgVCIU2N6xiL5vyAY/fDwsJy1fn0DKd616+fGpqYSwnEKjuPeKYhXFGnm0gw7Kdi69VJrW9unkiS9cxDR56NpixffISVFRecarl8vJoSMgwhYE5MJFBw3rcKzXqIUnmPhRRGQ0ijjkZRbrfvqGhsr/GM1wQLyPA+zTSZG5+lSWA6F4G+nE0S/fxwEa7Jh3boGUma1rrlltzc8ePxYwE5Howik1+nYA8ict3AYfcYHm9EzMsJuRtglS5Kcl5t7JNwnLS0Xb9ntK6OjkcIySxECRWYSvr8+wyJnYyOBEQYdwlTxvBI8I8OQFOkT7Pgtubn72traKpRqNViWLGF6CIZ5RkVZktjgi0wxjAyZqFSpwnfYFAwD4Pfee/dg4MkTWLlixeWC7dvLI7Nr4e/V1b/81de37OOsLEhdsABEb3j3+AMBNmLSMjLCxrCPBAEe9vfD7c5O1rgIgN8FrZYZ//PaNYiJjnZv3LBh90+VlVdemcI1Ntsp0eeLydu8GeJmxYFP9ELA54fEpCRYu3EjUKCsZjq9Hu46HHCjuZktLBTcJThSauvrYXBoCJZnZp49fvLkV6mpqSPjIC0tLXzF6dPftrW3fzHTYBA2Z2eDVhAggCOc0nDOx4qMb6zgY5uS5zh2dr25GXru3gWL2VxbbLXuL3x9n+Clq1evzrh44cLBjo6O4qTZCYb3PkqDgbggBEGC918IkOLSgMiHB2YEhC1kQqCjuxt6HA74ICWlrrSk5JvtO3f2REg56Y6vrakpvHOnp9THSUtcVGQpN4AGNBIPFK0i2wAgGB6CbEXLkjSQnJx8JSc7u3LH23b8xHY4cOCAxWHv3jTqcn/iHByaPzTykg8S+V+GUQparZaajManMdHRjUnJyX98d/Tojfj4+Kn/ViYCtba2aqqrqxOHh92Lgv7Q0mAgEB8IBDScQhFUaTQvBLXaMUOn61q2fHl/fn7+0Jt69h+a0LqPu9pEAgAAAABJRU5ErkJggg==';
 
-
 class Turtlebot {
 
-    constructor(){
-        this.ros_ = new ROSLIB.Ros({url:'ws://192.168.11.11:9090'});
-        this.ros_.on('connection', function() { console.log('Connected to rosbridge server.');});
-        this.ros_.on('error', function(error) { console.log('Error connecting to rosbridge server: ', error);});
-        this.ros_.on('close', function() {      console.log('Connection of rosbridge was closed.');});
+      constructor(){
+        rclnodejs.init();
+        this.node = new rclnodejs.Node('scratch_ros2_node');
 
-        //Publisher and Subscliber
-        this.publisher_  = new ROSLIB.Topic({ ros:this.ros_, name:'/scratch_ros', messageType:'std_msgs/String'});
-        this.subscliber_ = new ROSLIB.Topic({ ros:this.ros_, name:'/ros_scratch', messageType:'std_msgs/String'});
-        this.subscliber_.subscribe(message => { this.analysisRosMessage(message);});
+        this.publisher_ = this.node.createPublisher('std_msgs/msg/String', '/scratch_ros');
+        this.subscriber_ = this.node.createSubscription(
+            'std_msgs/msg/String',
+            '/ros_scratch',
+            message => { this.analysisRosMessage(message); }
+        );
 
-        //define of variable
-        this.ipAddress        = null;
-        this.isRobotMoving    = false;
+        rclnodejs.spin(this.node);
+
+        this.ipAddress = null;
+        this.isRobotMoving = false;
         this.isButton0Push    = false;
         this.isButton1Push    = false;
         this.isButton2Push    = false;
@@ -68,14 +68,14 @@ class Turtlebot {
         console.log('Turtlebot setRosIp : ' + ipAddress);
     }
 
-    closeRosIp(ipAddress){
-        this.ros_.close();
-        console.log('Turtlebot closetRosIp : ' + ipAddress);
+    closeRosIp(){
+        rclnodejs.shutdown();
+        console.log('ROS2ノードをシャットダウンしました。');
     }
 
     analysisRosMessage(message){
-        console.log('Received message on ' + this.subscliber_.name + ': ' + message.data);
-        var receivedData = message.data;
+        const receivedData = message.data;
+        console.log('ROS2からメッセージ受信:', receivedData);
 
         if (this.isDataContainKeyword(receivedData,'arrival')){ this.isRobotMoving = false; }
         else if(this.isDataContainKeyword(receivedData,'front_bumper:true')){   this.isfrontBumperHit  = true;  }
@@ -140,7 +140,7 @@ class Turtlebot {
     }
 
     publishScratchRos(message){
-        const rosMsg = new ROSLIB.Message({ data : message});
+        const rosMsg = { data: message };
         this.publisher_.publish(rosMsg);
     }
 
@@ -149,51 +149,65 @@ class Turtlebot {
 
 class Scratch3TurtleBotBlocks {
 
-    constructor (runtime) {
+    constructor(runtime) {
         this.runtime_ = runtime;
-        //this.runtime_.on('PROJECT_STOP_ALL', this.stopProgram.bind(this));
         this.turtlebot_ = new Turtlebot();
-        this.viewer_ = new WEBVideoViewer();
     }
 
-    static get STATE_KEY () { return 'scratch.turtlebot'; }
+    stopProgram(){ this.turtlebot_.publishScratchRos("motion_stop:True"); }
 
-    stopProgram (){ this.turtlebot_.publishScratchRos("motion_stop:True"); }
+    setRosDomain(domainId) {
+      process.env.ROS_DOMAIN_ID = String(domainId);
+      if (rclnodejs.isInitialized()) {
+          rclnodejs.shutdown();
+      }
+      rclnodejs.init();
+      this.node = new rclnodejs.Node('scratch_ros2_node_' + domainId);
+  
+      this.publisher_ = this.node.createPublisher('std_msgs/msg/String', '/scratch_ros');
+      this.subscriber_ = this.node.createSubscription(
+          'std_msgs/msg/String',
+          '/ros_scratch',
+          message => { this.analysisRosMessage(message); }
+      );
+  
+      rclnodejs.spin(this.node);
+      this.domainId = domainId;
+      console.log('ROS2ノードがROS_DOMAIN_ID:', domainId, 'で初期化されました。');
+  }
 
-    setROSIP (args) {
-      if(String(args.TURTLEBOT_NAME) == "TurtleBot"){       this.turtlebot_.setRosIp('127.0.0.1');  }
-      if(String(args.TURTLEBOT_NAME) == "TurtleBot_1"){       this.turtlebot_.setRosIp('192.168.1.10');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_2"){  this.turtlebot_.setRosIp('192.168.1.20');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_3"){  this.turtlebot_.setRosIp('192.168.1.30');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_4"){  this.turtlebot_.setRosIp('192.168.1.40');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_5"){  this.turtlebot_.setRosIp('192.168.1.50');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_6"){  this.turtlebot_.setRosIp('192.168.1.60');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_7"){  this.turtlebot_.setRosIp('192.168.1.70');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_8"){  this.turtlebot_.setRosIp('192.168.1.80');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_9"){  this.turtlebot_.setRosIp('192.168.1.90');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_10"){ this.turtlebot_.setRosIp('192.168.1.100'); }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_11"){ this.turtlebot_.setRosIp('192.168.1.110'); }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_test"){ this.turtlebot_.setRosIp('192.168.1.5'); }
+    setROSIP(args) {
+        let domainMap = {
+            "TurtleBot": 0,
+            "TurtleBot_1": 1,
+            "TurtleBot_2": 2,
+            "TurtleBot_3": 3,
+            "TurtleBot_4": 4,
+            "TurtleBot_5": 5,
+            "TurtleBot_6": 6,
+            "TurtleBot_7": 7,
+            "TurtleBot_8": 8,
+            "TurtleBot_9": 9,
+            "TurtleBot_10": 10,
+            "TurtleBot_11": 11,
+            "TurtleBot_test": 100
+        };
+        let domainId = domainMap[args.TURTLEBOT_NAME] || 0;
+        this.turtlebot_.setRosDomain(domainId);
     }
-
-    closeROSIP(args){
-      if(String(args.TURTLEBOT_NAME) == "TurtleBot"){     this.turtlebot_.closeRosIp('127.0.0.1');}
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_1"){  this.turtlebot_.closeRosIp('192.168.1.10');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_2"){  this.turtlebot_.closeRosIp('192.168.1.20');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_3"){  this.turtlebot_.closeRosIp('192.168.1.30');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_4"){  this.turtlebot_.closeRosIp('192.168.1.40');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_5"){  this.turtlebot_.closeRosIp('192.168.1.50');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_6"){  this.turtlebot_.closeRosIp('192.168.1.60');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_7"){  this.turtlebot_.closeRosIp('192.168.1.70');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_8"){  this.turtlebot_.closeRosIp('192.168.1.80');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_9"){  this.turtlebot_.closeRosIp('192.168.1.90');  }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_10"){ this.turtlebot_.closeRosIp('192.168.1.100'); }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_11"){ this.turtlebot_.closeRosIp('192.168.1.110'); }
-      else if(String(args.TURTLEBOT_NAME) == "TurtleBot_test"){ this.turtlebot_.closeRosIp('192.168.1.5'); }
+    closeROSIP(args) {
+        this.turtlebot_.closeRosDomain();
     }
-
-    stopMotion (args) {
-      this.turtlebot_.publishScratchRos("motion_stop:True");
+    closeRosDomain() {
+        if (rclnodejs.isInitialized()) {
+            rclnodejs.shutdown();
+            console.log('ROS2ノードがシャットダウンされました。(Domain ID:', this.domainId, ')');
+        } else {
+            console.log('ROS2ノードは既にシャットダウンされています。');
+        }
+    }
+    stopMotion() {
+        this.turtlebot_.publishScratchRos("motion_stop:True");
     }
 
     pushBumper (args) {
@@ -376,10 +390,7 @@ class Scratch3TurtleBotBlocks {
     getInfo () {
         return {
             id: 'turtlebot',
-            name: formatMessage({
-                id: 'turtlebot.categoryName',
-                default: 'TurtleBot'
-            }),
+            name: formatMessage({id: 'turtlebot.categoryName', default: 'TurtleBot'}),
             showStatusButton: true,
             menuIconURI: iconURI,
             blockIconURI: iconURI,
