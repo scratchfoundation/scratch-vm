@@ -183,7 +183,7 @@ class Scratch3MotionBlocks {
         }
     }
 
-    ifOnEdgeBounce (args, util) {
+    ifOnEdgeBounce(args, util) {
         const bounds = util.target.getBounds();
         if (!bounds) {
             return;
@@ -219,20 +219,15 @@ class Scratch3MotionBlocks {
         if (minDist > 0) {
             return; // Not touching any edge.
         }
-        // Point away from the nearest edge.
-        const radians = MathUtil.degToRad(90 - util.target.direction);
-        let dx = Math.cos(radians);
-        let dy = -Math.sin(radians);
-        if (nearestEdge === 'left') {
-            dx = Math.max(0.2, Math.abs(dx));
-        } else if (nearestEdge === 'top') {
-            dy = Math.max(0.2, Math.abs(dy));
-        } else if (nearestEdge === 'right') {
-            dx = 0 - Math.max(0.2, Math.abs(dx));
-        } else if (nearestEdge === 'bottom') {
-            dy = 0 - Math.max(0.2, Math.abs(dy));
+        // Point away from the nearest edge using geometric reflection.
+        let oldDir = util.target.direction;
+        let newDirection;
+        if (nearestEdge === 'left' || nearestEdge === 'right') {
+            newDirection = (180 - oldDir) % 360;
+        } else {
+            newDirection = (-oldDir + 180) % 360;
         }
-        const newDirection = MathUtil.radToDeg(Math.atan2(dy, dx)) + 90;
+        if (newDirection < 0) newDirection += 360;
         util.target.setDirection(newDirection);
         // Keep within the stage.
         const fencedPosition = util.target.keepInFence(util.target.x, util.target.y);
