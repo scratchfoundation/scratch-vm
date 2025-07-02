@@ -54,6 +54,12 @@ class Sprite {
         if (this.runtime && this.runtime.audioEngine) {
             this.soundBank = this.runtime.audioEngine.createBank();
         }
+        /**
+         * Dictionary of comments for this target.
+         * Key is the comment id.
+         * @type {Object.<string.*>}
+         */
+        this.comments = {};
     }
 
     /**
@@ -145,7 +151,12 @@ class Sprite {
             newSprite.blocks.createBlock(block);
         });
 
-
+        // Logic to handle new sprite retaining the comments from the current sprite
+        Object.keys(this.comments).forEach(commentId => {
+            const newComment = this.comments[commentId];
+            newSprite.comments[newComment.id] = newComment;
+        });
+         
         const allNames = this.runtime.targets.map(t => t.sprite.name);
         newSprite.name = StringUtil.unusedName(this.name, allNames);
 
