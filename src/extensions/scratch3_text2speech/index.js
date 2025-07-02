@@ -523,7 +523,7 @@ class Scratch3Text2SpeechBlocks {
         // Support language names dropped onto the menu via reporter block
         // such as a variable containing a language name (in any language),
         // or the translate extension's language reporter.
-        const localeForDroppedName = languageNames.nameMap[locale.toLowerCase()];
+        const localeForDroppedName = languageNames.nameMap[locale.toString().toLowerCase()];
         if (localeForDroppedName && this.isSupportedLanguage(localeForDroppedName)) {
             stage.textToSpeechLanguage =
                 this._getExtensionLocaleForSupportedLocale(localeForDroppedName);
