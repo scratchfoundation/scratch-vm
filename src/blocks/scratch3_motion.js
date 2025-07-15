@@ -1,6 +1,5 @@
 const Cast = require('../util/cast');
 const MathUtil = require('../util/math-util');
-const Timer = require('../util/timer');
 
 class Scratch3MotionBlocks {
     constructor (runtime) {
@@ -142,36 +141,33 @@ class Scratch3MotionBlocks {
     }
 
     glide (args, util) {
-        if (util.stackFrame.timer) {
-            const timeElapsed = util.stackFrame.timer.timeElapsed();
-            if (timeElapsed < util.stackFrame.duration * 1000) {
-                // In progress: move to intermediate position.
-                const frac = timeElapsed / (util.stackFrame.duration * 1000);
-                const dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
-                const dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
-                util.target.setXY(
-                    util.stackFrame.startX + dx,
-                    util.stackFrame.startY + dy
-                );
-                util.yield();
-            } else {
-                // Finished: move to final position.
-                util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
-            }
-        } else {
+        if (util.stackTimerNeedsInit()) {
             // First time: save data for future use.
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.stackFrame.duration = Cast.toNumber(args.SECS);
+            const duration = Cast.toNumber(args.SECS) * 1000;
+            util.startStackTimer(duration);
             util.stackFrame.startX = util.target.x;
             util.stackFrame.startY = util.target.y;
             util.stackFrame.endX = Cast.toNumber(args.X);
             util.stackFrame.endY = Cast.toNumber(args.Y);
-            if (util.stackFrame.duration <= 0) {
+            if (duration <= 0) {
                 // Duration too short to glide.
                 util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
                 return;
             }
+            util.yield();
+        } else if (util.stackTimerFinished()) {
+            // Finished: move to final position.
+            util.target.setXY(util.stackFrame.endX, util.stackFrame.endY);
+        } else {
+            // In progress: move to intermediate position.
+            const timeElapsed = util.stackFrame.timer.timeElapsed();
+            const frac = timeElapsed / util.stackFrame.duration;
+            const dx = frac * (util.stackFrame.endX - util.stackFrame.startX);
+            const dy = frac * (util.stackFrame.endY - util.stackFrame.startY);
+            util.target.setXY(
+                util.stackFrame.startX + dx,
+                util.stackFrame.startY + dy
+            );
             util.yield();
         }
     }

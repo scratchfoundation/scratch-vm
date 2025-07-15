@@ -4,7 +4,6 @@ const Clone = require('../../util/clone');
 const Cast = require('../../util/cast');
 const formatMessage = require('format-message');
 const MathUtil = require('../../util/math-util');
-const Timer = require('../../util/timer');
 
 /**
  * The instrument and drum sounds, loaded as static assets.
@@ -961,7 +960,7 @@ class Scratch3MusicBlocks {
      * @param {object} util - utility object provided by the runtime.
      */
     _playDrumForBeats (drumNum, beats, util) {
-        if (this._stackTimerNeedsInit(util)) {
+        if (util.stackTimerNeedsInit()) {
             drumNum = Cast.toNumber(drumNum);
             drumNum = Math.round(drumNum);
             drumNum -= 1; // drums are one-indexed
@@ -969,9 +968,10 @@ class Scratch3MusicBlocks {
             beats = Cast.toNumber(beats);
             beats = this._clampBeats(beats);
             this._playDrumNum(util, drumNum);
-            this._startStackTimer(util, this._beatsToSec(beats));
-        } else {
-            this._checkStackTimer(util);
+            util.startStackTimer(this._beatsToMSec(beats));
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
         }
     }
 
@@ -1025,12 +1025,13 @@ class Scratch3MusicBlocks {
      * @property {number} BEATS - the duration in beats of the rest.
      */
     restForBeats (args, util) {
-        if (this._stackTimerNeedsInit(util)) {
+        if (util.stackTimerNeedsInit()) {
             let beats = Cast.toNumber(args.BEATS);
             beats = this._clampBeats(beats);
-            this._startStackTimer(util, this._beatsToSec(beats));
-        } else {
-            this._checkStackTimer(util);
+            util.startStackTimer(this._beatsToMSec(beats));
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
         }
     }
 
@@ -1043,7 +1044,7 @@ class Scratch3MusicBlocks {
      * @property {number} BEATS - the duration in beats of the note.
      */
     playNoteForBeats (args, util) {
-        if (this._stackTimerNeedsInit(util)) {
+        if (util.stackTimerNeedsInit()) {
             let note = Cast.toNumber(args.NOTE);
             note = MathUtil.clamp(note,
                 Scratch3MusicBlocks.MIDI_NOTE_RANGE.min, Scratch3MusicBlocks.MIDI_NOTE_RANGE.max);
@@ -1053,13 +1054,14 @@ class Scratch3MusicBlocks {
             // but "play note for 0 beats" is silent.
             if (beats === 0) return;
 
-            const durationSec = this._beatsToSec(beats);
+            const durationMSec = this._beatsToMSec(beats);
 
-            this._playNote(util, note, durationSec);
+            this._playNote(util, note, durationMSec * 0.001);
 
-            this._startStackTimer(util, durationSec);
-        } else {
-            this._checkStackTimer(util);
+            util.startStackTimer(durationMSec);
+            util.yield();
+        } else if (!util.stackTimerFinished()) {
+            util.yield();
         }
     }
 
@@ -1199,48 +1201,13 @@ class Scratch3MusicBlocks {
     }
 
     /**
-     * Convert a number of beats to a number of seconds, using the current tempo.
+     * Convert a number of beats to a number of milliseconds, using the current tempo.
      * @param  {number} beats - number of beats to convert to secs.
-     * @return {number} seconds - number of seconds `beats` will last.
+     * @return {number} number of milliseconds `beats` will last.
      * @private
      */
-    _beatsToSec (beats) {
-        return (60 / this.getTempo()) * beats;
-    }
-
-    /**
-     * Check if the stack timer needs initialization.
-     * @param {object} util - utility object provided by the runtime.
-     * @return {boolean} - true if the stack timer needs to be initialized.
-     * @private
-     */
-    _stackTimerNeedsInit (util) {
-        return !util.stackFrame.timer;
-    }
-
-    /**
-     * Start the stack timer and the yield the thread if necessary.
-     * @param {object} util - utility object provided by the runtime.
-     * @param {number} duration - a duration in seconds to set the timer for.
-     * @private
-     */
-    _startStackTimer (util, duration) {
-        util.stackFrame.timer = new Timer();
-        util.stackFrame.timer.start();
-        util.stackFrame.duration = duration;
-        util.yield();
-    }
-
-    /**
-     * Check the stack timer, and if its time is not up yet, yield the thread.
-     * @param {object} util - utility object provided by the runtime.
-     * @private
-     */
-    _checkStackTimer (util) {
-        const timeElapsed = util.stackFrame.timer.timeElapsed();
-        if (timeElapsed < util.stackFrame.duration * 1000) {
-            util.yield();
-        }
+    _beatsToMSec (beats) {
+        return (60 / this.getTempo()) * beats * 1000;
     }
 
     /**
