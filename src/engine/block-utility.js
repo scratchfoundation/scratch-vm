@@ -220,6 +220,80 @@ class BlockUtility {
     }
 
     /**
+     * Start all relevant hats, and wait for their completion in warp mode.
+     * @param {!string} requestedHat Opcode of hats to start.
+     * @param {object=} optMatchFields Optionally, fields to match on the hat.
+     * @param {Target=} optTarget Optionally, a target to restrict to.
+     */
+    startHatsAndWait (requestedHat, optMatchFields, optTarget) {
+        // Have we run before, starting threads?
+        if (!this.stackFrame.startedThreads) {
+            // No - start threads.
+            this.stackFrame.startedThreads = this.startHats(
+                requestedHat, optMatchFields, optTarget
+            );
+            if (this.stackFrame.startedThreads.length === 0) {
+                // Nothing was started.
+                return;
+            }
+        }
+
+        // We've run before; check if the wait is still going on.
+        // Scratch 2 considers threads to be waiting if they are still in
+        // runtime.threads. Threads that have run all their blocks, or are
+        // marked done but still in runtime.threads are still considered to
+        // be waiting.
+        if (
+            this.stackFrame.startedThreads
+                .every(thread => this.runtime.threads.indexOf(thread) === -1)
+        ) {
+            return;
+        }
+
+        if (this.thread.peekStackFrame().warpMode) {
+            const threads = this.stackFrame.startedThreads;
+
+            // Make threads inherit warpMode and warpTimer if they haven't already.
+            for (let i = 0; i < threads.length; i++) {
+                if (!threads[i].warpTimer) {
+                    threads[i].peekStackFrame().warpMode = true;
+                    threads[i].warpTimer = this.thread.warpTimer;
+                }
+            }
+
+            // Workaround for cyclic dependency chain introduced by importing Sequencer
+            const warpTime = this.sequencer.constructor.WARP_TIME;
+            // Don't step the threads once the timer is up.
+            if (this.thread.warpTimer.timeElapsed() <= warpTime) {
+                // Step threads one by one in warp mode. They will execute until completion, or until
+                // the inherited warpTimer is up.
+                for (let i = 0; i < threads.length; i++) {
+                    this.sequencer.stepThread(threads[i]);
+                }
+
+                // End the call when all threads are completed.
+                if (threads.every(thread => thread.status === Thread.STATUS_DONE)) {
+                    return;
+                }
+            }
+
+            // If we still need to execute the threads, and the warp timer is up, yield.
+        }
+
+        // If all threads are waiting for the next tick or later yield
+        // for a tick as well. Otherwise yield until the next loop of
+        // the threads.
+        if (
+            this.stackFrame.startedThreads
+                .every(thread => this.runtime.isWaitingThread(thread))
+        ) {
+            this.yieldTick();
+        } else {
+            this.yield();
+        }
+    }
+
+    /**
      * Query a named IO device.
      * @param {string} device The name of like the device, like keyboard.
      * @param {string} func The name of the device's function to query.
