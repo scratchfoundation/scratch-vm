@@ -76,13 +76,13 @@ test('run tasks', async t => {
     });
 });
 
-test('cancel', async t => {
+test('cancel with doOrReject', async t => {
     const bukkit = makeTestQueue();
 
     const taskResults = [];
     const goodCancelMessage = 'Task was canceled correctly';
     const afterCancelMessage = 'Task was run correctly';
-    const cancelTaskPromise = bukkit.do(
+    const cancelTaskPromise = bukkit.doOrReject(
         () => {
             taskResults.push('nope');
         }, 999);
@@ -94,7 +94,7 @@ test('cancel', async t => {
             taskResults.push(goodCancelMessage);
         }
     );
-    const keepTaskPromise = bukkit.do(
+    const keepTaskPromise = bukkit.doOrReject(
         () => {
             taskResults.push(afterCancelMessage);
             testCompare(t, bukkit._timer.timeElapsed(), '<', 10, 'Canceled task must not delay other tasks');
@@ -118,6 +118,39 @@ test('cancel', async t => {
     });
 });
 
+test('cancel with do (no reject)', async t => {
+    const bukkit = makeTestQueue();
+
+    const taskResults = [];
+    const afterCancelMessage = 'Task was run correctly';
+    const cancelTaskPromise = bukkit.do(
+        () => {
+            taskResults.push('nope');
+        }, 999);
+    const keepTaskPromise = bukkit.do(
+        () => {
+            taskResults.push(afterCancelMessage);
+            testCompare(t, bukkit._timer.timeElapsed(), '<', 10, 'Canceled task must not delay other tasks');
+        }, 5);
+
+    // give the bucket a chance to make a mistake
+    await bukkit._timer.advanceMockTimeAsync(1);
+
+    t.equal(bukkit.length, 2);
+    const taskWasCanceled = bukkit.cancel(cancelTaskPromise);
+    t.ok(taskWasCanceled);
+    t.equal(bukkit.length, 1);
+
+    while (bukkit.length > 0) {
+        await bukkit._timer.advanceMockTimeAsync(1);
+    }
+
+    return keepTaskPromise.then(() => {
+        t.deepEqual(taskResults, [afterCancelMessage]);
+        t.end();
+    });
+});
+
 test('cancelAll', async t => {
     const bukkit = makeTestQueue();
 
@@ -126,7 +159,7 @@ test('cancelAll', async t => {
     const goodCancelMessage2 = 'Task2 was canceled correctly';
 
     const promises = [
-        bukkit.do(() => taskResults.push('nope'), 999).then(
+        bukkit.doOrReject(() => taskResults.push('nope'), 999).then(
             () => {
                 t.fail('Task1 should have been canceled');
             },
@@ -134,7 +167,7 @@ test('cancelAll', async t => {
                 taskResults.push(goodCancelMessage1);
             }
         ),
-        bukkit.do(() => taskResults.push('nah'), 999).then(
+        bukkit.doOrReject(() => taskResults.push('nah'), 999).then(
             () => {
                 t.fail('Task2 should have been canceled');
             },
