@@ -45,12 +45,6 @@ class _StackFrame {
         this.reported = null;
 
         /**
-         * Name of waiting reporter.
-         * @type {string}
-         */
-        this.waitingReporter = null;
-
-        /**
          * Procedure parameters.
          * @type {Object}
          */
@@ -74,7 +68,6 @@ class _StackFrame {
         this.warpMode = false;
         this.justReported = null;
         this.reported = null;
-        this.waitingReporter = null;
         this.params = null;
         this.executionContext = null;
 
