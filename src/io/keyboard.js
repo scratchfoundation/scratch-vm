@@ -10,8 +10,20 @@ const KEY_NAME = {
     UP: 'up arrow',
     RIGHT: 'right arrow',
     DOWN: 'down arrow',
-    ENTER: 'enter'
+    ENTER: 'enter',
+    BACKSPACE: 'backspace',
+    SHIFT: 'shift'
 };
+
+/**
+ * Names which don't count for the key "any" pressed? block. Items match the
+ * values for KEY_NAME listed above. If a key isn't mentioned here, then it
+ * does count for "any", provided Scratch detects that key at all.
+ * @type {Array<string>}
+ */
+const KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED = [
+    'shift'
+];
 
 /**
  * An array of the names of scratch keys.
@@ -58,6 +70,8 @@ class Keyboard {
         case 'Down':
         case 'ArrowDown': return KEY_NAME.DOWN;
         case 'Enter': return KEY_NAME.ENTER;
+        case 'Backspace': return KEY_NAME.BACKSPACE;
+        case 'Shift': return KEY_NAME.SHIFT;
         }
         // Ignore modifier keys
         if (keyString.length > 1) {
@@ -115,10 +129,19 @@ class Keyboard {
     postData (data) {
         if (!data.key) return;
         const scratchKey = this._keyStringToScratchKey(data.key);
+
         if (scratchKey === '') return;
         const index = this._keysPressed.indexOf(scratchKey);
+
         if (data.isDown) {
+            // Emit a generic event indicating which key was pressed.
             this.runtime.emit('KEY_PRESSED', scratchKey);
+
+            // Emit a specific event indicating that some key valid for "any" was pressed.
+            if (!KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED.includes(scratchKey)) {
+                this.runtime.emit('KEY_ANY_PRESSED');
+            }
+
             // If not already present, add to the list.
             if (index < 0) {
                 this._keysPressed.push(scratchKey);
@@ -136,7 +159,8 @@ class Keyboard {
      */
     getKeyIsDown (keyArg) {
         if (keyArg === 'any') {
-            return this._keysPressed.length > 0;
+            return this._keysPressed.some(key =>
+                !KEY_NAMES_EXCLUDED_FOR_KEY_ANY_PRESSED.includes(key));
         }
         const scratchKey = this._keyArgToScratchKey(keyArg);
         return this._keysPressed.indexOf(scratchKey) > -1;
