@@ -87,7 +87,7 @@
     "babel-loader": "9.2.1",
     "callsite": "1.0.0",
     "copy-webpack-plugin": "4.6.0",
-    "docdash": "1.2.0",
+    "docdash": "2.0.2",
     "eslint": "8.57.1",
     "eslint-config-scratch": "9.0.9",
     "expose-loader": "1.0.3",
