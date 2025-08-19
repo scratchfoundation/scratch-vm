@@ -836,6 +836,7 @@ class Runtime extends EventEmitter {
      * Create a context ("args") object for use with `formatMessage` on messages which might be target-specific.
      * @param {Target} [target] - the target to use as context. If a target is not provided, default to the current
      * editing target or the stage.
+     * @returns {object} - the context object.
      */
     makeMessageContextForTarget (target) {
         const context = {};
@@ -845,6 +846,7 @@ class Runtime extends EventEmitter {
                 TargetType.STAGE :
                 TargetType.SPRITE;
         }
+        return context;
     }
 
     /**
