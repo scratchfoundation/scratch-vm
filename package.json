@@ -90,7 +90,7 @@
     "docdash": "1.2.0",
     "eslint": "8.57.1",
     "eslint-config-scratch": "9.0.9",
-    "expose-loader": "1.0.3",
+    "expose-loader": "5.0.1",
     "file-loader": "6.2.0",
     "format-message-cli": "6.2.4",
     "husky": "8.0.3",
