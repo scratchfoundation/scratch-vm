@@ -505,18 +505,28 @@ class RenderedTarget extends Target {
             return null;
         }
 
-        const deletedCostume = this.sprite.deleteCostumeAt(index);
+        const deletedCostume = this.sprite.deleteCostumeAt(index, true); // Update current costume
 
-        if (index === this.currentCostume && index === originalCostumeCount - 1) {
+        this.runtime.requestTargetsUpdate(this);
+        return deletedCostume;
+    }
+
+    /**
+     * Shift current costume index if needed and re-render this target.
+     * This needs to be called on all clones to prevent desync crash. (#2661)
+     * @param {number} index Index of deleted costume
+     * @param {boolean} isLastCostume Whether the deleted costume was the last costume or not
+     */
+    shiftCurrentCostume (index, isLastCostume) {
+        if (index === this.currentCostume && isLastCostume) {
             this.setCostume(index - 1);
         } else if (index < this.currentCostume) {
             this.setCostume(this.currentCostume - 1);
         } else {
+            // Index is still the same; however, the costume itself may have changed.
+            // This causes the renderer to re-render.
             this.setCostume(this.currentCostume);
         }
-
-        this.runtime.requestTargetsUpdate(this);
-        return deletedCostume;
     }
 
     /**
@@ -630,14 +640,15 @@ class RenderedTarget extends Target {
 
         if (newIndex === costumeIndex) return false;
 
-        const currentCostume = this.getCurrentCostume();
+        this.sprite.saveCurrentCostumeName();
         const costume = this.sprite.costumes[costumeIndex];
 
         // Use the sprite method for deleting costumes because setCostume is handled manually
         this.sprite.deleteCostumeAt(costumeIndex);
 
         this.addCostume(costume, newIndex);
-        this.currentCostume = this.getCostumeIndexByName(currentCostume.name);
+        // This sets currentCostume
+        this.sprite.restoreCurrentCostume();
         return true;
     }
 

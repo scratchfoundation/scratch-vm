@@ -119,6 +119,7 @@ test('deleteCostume', t => {
     const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
     a.renderer = renderer;
+    s.clones = [a];
 
     // x* Costume 1        * Costume 2
     //    Costume 2   =>     Costume 3
@@ -208,6 +209,70 @@ test('deleteCostume', t => {
     t.equals(a.sprite.costumes[2].id, 3);
     t.equals(a.sprite.costumes[3].id, 4);
     t.equals(a.currentCostume, 1);
+    t.end();
+});
+
+test('deleteCostume shifts current costume (1/2)', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    s.costumes = [o1, o2, o3];
+    const renderer = new FakeRenderer();
+
+    const c1 = new RenderedTarget(s, r);
+    c1.renderer = renderer;
+    c1.currentCostume = 0;
+
+    const c2 = new RenderedTarget(s, r);
+    c2.renderer = renderer;
+    c2.currentCostume = 1;
+
+    const c3 = new RenderedTarget(s, r);
+    c3.renderer = renderer;
+    c3.currentCostume = 2;
+
+    s.clones = [c1, c2, c3];
+
+    c1.deleteCostume(0);
+    t.equals(c1.currentCostume, 0);
+    t.equals(c2.currentCostume, 0);
+    t.equals(c3.currentCostume, 1);
+
+    t.end();
+});
+
+test('deleteCostume shifts current costume (2/2)', t => {
+    const o1 = {id: 1};
+    const o2 = {id: 2};
+    const o3 = {id: 3};
+
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    s.costumes = [o1, o2, o3];
+    const renderer = new FakeRenderer();
+
+    const c1 = new RenderedTarget(s, r);
+    c1.renderer = renderer;
+    c1.currentCostume = 0;
+
+    const c2 = new RenderedTarget(s, r);
+    c2.renderer = renderer;
+    c2.currentCostume = 1;
+
+    const c3 = new RenderedTarget(s, r);
+    c3.renderer = renderer;
+    c3.currentCostume = 2;
+
+    s.clones = [c1, c2, c3];
+
+    c1.deleteCostume(2);
+    t.equals(c1.currentCostume, 0);
+    t.equals(c2.currentCostume, 1);
+    t.equals(c3.currentCostume, 1);
+
     t.end();
 });
 
@@ -474,12 +539,16 @@ test('#reorderCostume', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
     s.costumes = [o1, o2, o3, o4, o5];
-    const a = new RenderedTarget(s, r);
     const renderer = new FakeRenderer();
+    const a = new RenderedTarget(s, r);
     a.renderer = renderer;
+    const b = new RenderedTarget(s, r);
+    b.renderer = renderer;
+    s.clones = [a, b];
 
     const resetCostumes = () => {
         a.setCostume(0);
+        b.setCostume(0);
         s.costumes = [o1, o2, o3, o4, o5];
     };
     const costumeIds = () => a.sprite.costumes.map(c => c.id);
@@ -487,6 +556,7 @@ test('#reorderCostume', t => {
     resetCostumes();
     t.deepEquals(costumeIds(), [0, 1, 2, 3, 4]);
     t.equals(a.currentCostume, 0);
+    t.equals(b.currentCostume, 0);
 
     // Returns false if the costumes are the same and no change occurred
     t.equal(a.reorderCostume(3, 3), false);
@@ -495,15 +565,19 @@ test('#reorderCostume', t => {
 
     // Make sure reordering up and down works and current costume follows
     resetCostumes();
+    b.setCostume(4);
     t.equal(a.reorderCostume(0, 3), true);
     t.deepEquals(costumeIds(), [1, 2, 3, 0, 4]);
     t.equals(a.currentCostume, 3); // Index of id=0
+    t.equals(b.currentCostume, 4); // Index of id=4
 
     resetCostumes();
     a.setCostume(1);
+    b.setCostume(3);
     t.equal(a.reorderCostume(3, 1), true);
     t.deepEquals(costumeIds(), [0, 3, 1, 2, 4]);
     t.equals(a.currentCostume, 2); // Index of id=1
+    t.equals(b.currentCostume, 1); // Index of id=3
 
     // Out of bounds indices get clamped
     resetCostumes();
