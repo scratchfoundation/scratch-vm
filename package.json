@@ -93,7 +93,7 @@
     "expose-loader": "1.0.3",
     "file-loader": "6.2.0",
     "format-message-cli": "6.2.4",
-    "husky": "8.0.3",
+    "husky": "9.1.7",
     "in-publish": "2.0.1",
     "js-md5": "0.7.3",
     "jsdoc": "3.6.11",
