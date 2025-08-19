@@ -269,6 +269,39 @@ test('isTouchingPoint', t => {
     t.end();
 });
 
+test('isTouchingObjectOutsideStage', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const renderer = new FakeRenderer();
+    r.attachRenderer(renderer);
+    const a = new RenderedTarget(s, r);
+    a.renderer = renderer;
+    r.ioDevices.mouse.postData({
+        x: 1000,
+        y: -300
+    });
+    t.equals(a.isTouchingObject('_mouse_'), false);
+    t.end();
+});
+
+test('isTouchingMouse', t => {
+    const r = new Runtime();
+    const s = new Sprite(null, r);
+    const renderer = new FakeRenderer();
+    r.attachRenderer(renderer);
+    const a = new RenderedTarget(s, r);
+    a.renderer = renderer;
+    // (0, 0) is the top left, and (canvasWidth, canvasHeight) is the bottom right
+    r.ioDevices.mouse.postData({
+        canvasHeight: 360,
+        canvasWidth: 480,
+        x: 240,
+        y: 180
+    });
+    t.equals(a.isTouchingObject('_mouse_'), true);
+    t.end();
+});
+
 test('isTouchingEdge', t => {
     const r = new Runtime();
     const s = new Sprite(null, r);
