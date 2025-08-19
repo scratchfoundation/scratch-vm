@@ -229,8 +229,19 @@ class Scratch3SoundBlocks {
     stopAllSounds () {
         if (this.runtime.targets === null) return;
         const allTargets = this.runtime.targets;
-        for (let i = 0; i < allTargets.length; i++) {
-            this._stopAllSoundsForTarget(allTargets[i]);
+        for (const target of allTargets) {
+            if (target.sprite.soundBank) {
+                // stopAllSounds default to ALL_TARGETS.
+                // This function is supposed to stop all sounds, so it should be fine.
+                // Because of some weird clone handlings, SoundBank.playerTargets can
+                // contain targets that are no longer in runtime.targets.
+                // For this reason, passing targets to stopAllSounds is unreliable,
+                // so _stopAllSoundsForTarget is not used.
+                target.sprite.soundBank.stopAllSounds();
+                if (this.waitingSounds[target.id]) {
+                    this.waitingSounds[target.id].clear();
+                }
+            }
         }
     }
 
