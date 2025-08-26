@@ -34,17 +34,20 @@ return new F();
 
 var irrelevant = (function (exports) {
 
-  var global =
+  /* eslint-disable no-prototype-builtins */
+  var g =
     (typeof globalThis !== 'undefined' && globalThis) ||
     (typeof self !== 'undefined' && self) ||
-    (typeof global !== 'undefined' && global);
+    // eslint-disable-next-line no-undef
+    (typeof __webpack_require__.g !== 'undefined' && __webpack_require__.g) ||
+    {};
 
   var support = {
-    searchParams: 'URLSearchParams' in global,
-    iterable: 'Symbol' in global && 'iterator' in Symbol,
+    searchParams: 'URLSearchParams' in g,
+    iterable: 'Symbol' in g && 'iterator' in Symbol,
     blob:
-      'FileReader' in global &&
-      'Blob' in global &&
+      'FileReader' in g &&
+      'Blob' in g &&
       (function() {
         try {
           new Blob();
@@ -53,8 +56,8 @@ var irrelevant = (function (exports) {
           return false
         }
       })(),
-    formData: 'FormData' in global,
-    arrayBuffer: 'ArrayBuffer' in global
+    formData: 'FormData' in g,
+    arrayBuffer: 'ArrayBuffer' in g
   };
 
   function isDataView(obj) {
@@ -125,6 +128,9 @@ var irrelevant = (function (exports) {
       }, this);
     } else if (Array.isArray(headers)) {
       headers.forEach(function(header) {
+        if (header.length != 2) {
+          throw new TypeError('Headers constructor: expected name/value pair to be length 2, found' + header.length)
+        }
         this.append(header[0], header[1]);
       }, this);
     } else if (headers) {
@@ -195,6 +201,7 @@ var irrelevant = (function (exports) {
   }
 
   function consumed(body) {
+    if (body._noBody) return
     if (body.bodyUsed) {
       return Promise.reject(new TypeError('Already read'))
     }
@@ -222,7 +229,9 @@ var irrelevant = (function (exports) {
   function readBlobAsText(blob) {
     var reader = new FileReader();
     var promise = fileReaderReady(reader);
-    reader.readAsText(blob);
+    var match = /charset=([A-Za-z0-9_-]+)/.exec(blob.type);
+    var encoding = match ? match[1] : 'utf-8';
+    reader.readAsText(blob, encoding);
     return promise
   }
 
@@ -260,9 +269,11 @@ var irrelevant = (function (exports) {
         semantic of setting Request.bodyUsed in the constructor before
         _initBody is called.
       */
+      // eslint-disable-next-line no-self-assign
       this.bodyUsed = this.bodyUsed;
       this._bodyInit = body;
       if (!body) {
+        this._noBody = true;
         this._bodyText = '';
       } else if (typeof body === 'string') {
         this._bodyText = body;
@@ -310,28 +321,29 @@ var irrelevant = (function (exports) {
           return Promise.resolve(new Blob([this._bodyText]))
         }
       };
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          var isConsumed = consumed(this);
-          if (isConsumed) {
-            return isConsumed
-          }
-          if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
-            return Promise.resolve(
-              this._bodyArrayBuffer.buffer.slice(
-                this._bodyArrayBuffer.byteOffset,
-                this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
-              )
-            )
-          } else {
-            return Promise.resolve(this._bodyArrayBuffer)
-          }
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      };
     }
+
+    this.arrayBuffer = function() {
+      if (this._bodyArrayBuffer) {
+        var isConsumed = consumed(this);
+        if (isConsumed) {
+          return isConsumed
+        } else if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
+          return Promise.resolve(
+            this._bodyArrayBuffer.buffer.slice(
+              this._bodyArrayBuffer.byteOffset,
+              this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
+            )
+          )
+        } else {
+          return Promise.resolve(this._bodyArrayBuffer)
+        }
+      } else if (support.blob) {
+        return this.blob().then(readBlobAsArrayBuffer)
+      } else {
+        throw new Error('could not read as ArrayBuffer')
+      }
+    };
 
     this.text = function() {
       var rejected = consumed(this);
@@ -364,7 +376,7 @@ var irrelevant = (function (exports) {
   }
 
   // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
+  var methods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'];
 
   function normalizeMethod(method) {
     var upcased = method.toUpperCase();
@@ -405,7 +417,12 @@ var irrelevant = (function (exports) {
     }
     this.method = normalizeMethod(options.method || this.method || 'GET');
     this.mode = options.mode || this.mode || null;
-    this.signal = options.signal || this.signal;
+    this.signal = options.signal || this.signal || (function () {
+      if ('AbortController' in g) {
+        var ctrl = new AbortController();
+        return ctrl.signal;
+      }
+    }());
     this.referrer = null;
 
     if ((this.method === 'GET' || this.method === 'HEAD') && body) {
@@ -467,7 +484,11 @@ var irrelevant = (function (exports) {
         var key = parts.shift().trim();
         if (key) {
           var value = parts.join(':').trim();
-          headers.append(key, value);
+          try {
+            headers.append(key, value);
+          } catch (error) {
+            console.warn('Response ' + error.message);
+          }
         }
       });
     return headers
@@ -485,6 +506,9 @@ var irrelevant = (function (exports) {
 
     this.type = 'default';
     this.status = options.status === undefined ? 200 : options.status;
+    if (this.status < 200 || this.status > 599) {
+      throw new RangeError("Failed to construct 'Response': The status provided (0) is outside the range [200, 599].")
+    }
     this.ok = this.status >= 200 && this.status < 300;
     this.statusText = options.statusText === undefined ? '' : '' + options.statusText;
     this.headers = new Headers(options.headers);
@@ -504,7 +528,9 @@ var irrelevant = (function (exports) {
   };
 
   Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''});
+    var response = new Response(null, {status: 200, statusText: ''});
+    response.ok = false;
+    response.status = 0;
     response.type = 'error';
     return response
   };
@@ -519,7 +545,7 @@ var irrelevant = (function (exports) {
     return new Response(null, {status: status, headers: {location: url}})
   };
 
-  exports.DOMException = global.DOMException;
+  exports.DOMException = g.DOMException;
   try {
     new exports.DOMException();
   } catch (err) {
@@ -549,10 +575,16 @@ var irrelevant = (function (exports) {
 
       xhr.onload = function() {
         var options = {
-          status: xhr.status,
           statusText: xhr.statusText,
           headers: parseHeaders(xhr.getAllResponseHeaders() || '')
         };
+        // This check if specifically for when a user fetches a file locally from the file system
+        // Only if the status is out of a normal range
+        if (request.url.indexOf('file://') === 0 && (xhr.status < 200 || xhr.status > 599)) {
+          options.status = 200;
+        } else {
+          options.status = xhr.status;
+        }
         options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
         var body = 'response' in xhr ? xhr.response : xhr.responseText;
         setTimeout(function() {
@@ -568,7 +600,7 @@ var irrelevant = (function (exports) {
 
       xhr.ontimeout = function() {
         setTimeout(function() {
-          reject(new TypeError('Network request failed'));
+          reject(new TypeError('Network request timed out'));
         }, 0);
       };
 
@@ -580,7 +612,7 @@ var irrelevant = (function (exports) {
 
       function fixUrl(url) {
         try {
-          return url === '' && global.location.href ? global.location.href : url
+          return url === '' && g.location.href ? g.location.href : url
         } catch (e) {
           return url
         }
@@ -598,17 +630,22 @@ var irrelevant = (function (exports) {
         if (support.blob) {
           xhr.responseType = 'blob';
         } else if (
-          support.arrayBuffer &&
-          request.headers.get('Content-Type') &&
-          request.headers.get('Content-Type').indexOf('application/octet-stream') !== -1
+          support.arrayBuffer
         ) {
           xhr.responseType = 'arraybuffer';
         }
       }
 
-      if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
+      if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers || (g.Headers && init.headers instanceof g.Headers))) {
+        var names = [];
         Object.getOwnPropertyNames(init.headers).forEach(function(name) {
+          names.push(normalizeName(name));
           xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
+        });
+        request.headers.forEach(function(value, name) {
+          if (names.indexOf(name) === -1) {
+            xhr.setRequestHeader(name, value);
+          }
         });
       } else {
         request.headers.forEach(function(value, name) {
@@ -633,11 +670,11 @@ var irrelevant = (function (exports) {
 
   fetch.polyfill = true;
 
-  if (!global.fetch) {
-    global.fetch = fetch;
-    global.Headers = Headers;
-    global.Request = Request;
-    global.Response = Response;
+  if (!g.fetch) {
+    g.fetch = fetch;
+    g.Headers = Headers;
+    g.Request = Request;
+    g.Response = Response;
   }
 
   exports.Headers = Headers;
@@ -779,4 +816,4 @@ self.addEventListener('message', onMessage);
 /******/ })()
 ;
 });
-//# sourceMappingURL=fetch-worker.cd3a909d7b876aabf94a.js.map
+//# sourceMappingURL=fetch-worker.7a0adc94df277ffeb963.js.map

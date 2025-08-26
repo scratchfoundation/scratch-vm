@@ -165,136 +165,163 @@ module.exports = function getContext (options) {
 
 /***/ }),
 
-/***/ "./node_modules/base64-js/lib/b64.js":
-/*!*******************************************!*\
-  !*** ./node_modules/base64-js/lib/b64.js ***!
-  \*******************************************/
+/***/ "./node_modules/base64-js/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/base64-js/index.js ***!
+  \*****************************************/
 /***/ ((__unused_webpack_module, exports) => {
 
-var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+"use strict";
 
-;(function (exports) {
-	'use strict';
 
-  var Arr = (typeof Uint8Array !== 'undefined')
-    ? Uint8Array
-    : Array
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
 
-	var PLUS   = '+'.charCodeAt(0)
-	var SLASH  = '/'.charCodeAt(0)
-	var NUMBER = '0'.charCodeAt(0)
-	var LOWER  = 'a'.charCodeAt(0)
-	var UPPER  = 'A'.charCodeAt(0)
-	var PLUS_URL_SAFE = '-'.charCodeAt(0)
-	var SLASH_URL_SAFE = '_'.charCodeAt(0)
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
 
-	function decode (elt) {
-		var code = elt.charCodeAt(0)
-		if (code === PLUS ||
-		    code === PLUS_URL_SAFE)
-			return 62 // '+'
-		if (code === SLASH ||
-		    code === SLASH_URL_SAFE)
-			return 63 // '/'
-		if (code < NUMBER)
-			return -1 //no match
-		if (code < NUMBER + 10)
-			return code - NUMBER + 26 + 26
-		if (code < UPPER + 26)
-			return code - UPPER
-		if (code < LOWER + 26)
-			return code - LOWER + 26
-	}
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
 
-	function b64ToByteArray (b64) {
-		var i, j, l, tmp, placeHolders, arr
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
 
-		if (b64.length % 4 > 0) {
-			throw new Error('Invalid string. Length must be a multiple of 4')
-		}
+function getLens (b64) {
+  var len = b64.length
 
-		// the number of equal signs (place holders)
-		// if there are two placeholders, than the two characters before it
-		// represent one byte
-		// if there is only one, then the three characters before it represent 2 bytes
-		// this is just a cheap hack to not do indexOf twice
-		var len = b64.length
-		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
 
-		// base64 is 4/3 + up to two characters of the original data
-		arr = new Arr(b64.length * 3 / 4 - placeHolders)
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
 
-		// if there are placeholders, only get up to the last complete 4 chars
-		l = placeHolders > 0 ? b64.length - 4 : b64.length
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
 
-		var L = 0
+  return [validLen, placeHoldersLen]
+}
 
-		function push (v) {
-			arr[L++] = v
-		}
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
 
-		for (i = 0, j = 0; i < l; i += 4, j += 3) {
-			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-			push((tmp & 0xFF0000) >> 16)
-			push((tmp & 0xFF00) >> 8)
-			push(tmp & 0xFF)
-		}
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
 
-		if (placeHolders === 2) {
-			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-			push(tmp & 0xFF)
-		} else if (placeHolders === 1) {
-			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-			push((tmp >> 8) & 0xFF)
-			push(tmp & 0xFF)
-		}
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
 
-		return arr
-	}
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
 
-	function uint8ToBase64 (uint8) {
-		var i,
-			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-			output = "",
-			temp, length
+  var curByte = 0
 
-		function encode (num) {
-			return lookup.charAt(num)
-		}
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
 
-		function tripletToBase64 (num) {
-			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-		}
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
 
-		// go through the array every three bytes, we'll deal with trailing stuff later
-		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-			output += tripletToBase64(temp)
-		}
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
 
-		// pad the end with zeros, but make sure to not forget the extra bytes
-		switch (extraBytes) {
-			case 1:
-				temp = uint8[uint8.length - 1]
-				output += encode(temp >> 2)
-				output += encode((temp << 4) & 0x3F)
-				output += '=='
-				break
-			case 2:
-				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-				output += encode(temp >> 10)
-				output += encode((temp >> 4) & 0x3F)
-				output += encode((temp << 2) & 0x3F)
-				output += '='
-				break
-		}
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
 
-		return output
-	}
+  return arr
+}
 
-	exports.toByteArray = b64ToByteArray
-	exports.fromByteArray = uint8ToBase64
-}( false ? (0) : exports))
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
 
 
 /***/ }),
@@ -414,7 +441,7 @@ module.exports = "AAEAAAARAQAABAAQRFNJRwAAAAEAAHTYAAAACEZGVE1flIgzAACYwAAAABxHRE
 
 
 
-const base64 = __webpack_require__(/*! base64-js */ "./node_modules/buffer/node_modules/base64-js/index.js")
+const base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
 const ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
 const customInspectSymbol =
   (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
@@ -2509,167 +2536,6 @@ function defineBigIntMethod (fn) {
 
 function BufferBigIntNotDefined () {
   throw new Error('BigInt not supported')
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/buffer/node_modules/base64-js/index.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/buffer/node_modules/base64-js/index.js ***!
-  \*************************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function getLens (b64) {
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
-}
-
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
 }
 
 
@@ -16594,1573 +16460,1356 @@ Object.keys(domLvl1).forEach(function(key) {
 
 /***/ }),
 
-/***/ "./node_modules/dompurify/dist/purify.js":
-/*!***********************************************!*\
-  !*** ./node_modules/dompurify/dist/purify.js ***!
-  \***********************************************/
-/***/ (function(module) {
+/***/ "./node_modules/dompurify/dist/purify.cjs.js":
+/*!***************************************************!*\
+  !*** ./node_modules/dompurify/dist/purify.cjs.js ***!
+  \***************************************************/
+/***/ ((module) => {
 
-/*! @license DOMPurify 3.1.6 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.1.6/LICENSE */
+"use strict";
+/*! @license DOMPurify 3.2.5 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.2.5/LICENSE */
 
-(function (global, factory) {
-   true ? module.exports = factory() :
-  0;
-})(this, (function () { 'use strict';
 
-  const {
-    entries,
-    setPrototypeOf,
-    isFrozen,
-    getPrototypeOf,
-    getOwnPropertyDescriptor
-  } = Object;
-  let {
-    freeze,
-    seal,
-    create
-  } = Object; // eslint-disable-line import/no-mutable-exports
-  let {
-    apply,
-    construct
-  } = typeof Reflect !== 'undefined' && Reflect;
-  if (!freeze) {
-    freeze = function freeze(x) {
-      return x;
-    };
-  }
-  if (!seal) {
-    seal = function seal(x) {
-      return x;
-    };
-  }
-  if (!apply) {
-    apply = function apply(fun, thisValue, args) {
-      return fun.apply(thisValue, args);
-    };
-  }
-  if (!construct) {
-    construct = function construct(Func, args) {
-      return new Func(...args);
-    };
-  }
-  const arrayForEach = unapply(Array.prototype.forEach);
-  const arrayPop = unapply(Array.prototype.pop);
-  const arrayPush = unapply(Array.prototype.push);
-  const stringToLowerCase = unapply(String.prototype.toLowerCase);
-  const stringToString = unapply(String.prototype.toString);
-  const stringMatch = unapply(String.prototype.match);
-  const stringReplace = unapply(String.prototype.replace);
-  const stringIndexOf = unapply(String.prototype.indexOf);
-  const stringTrim = unapply(String.prototype.trim);
-  const objectHasOwnProperty = unapply(Object.prototype.hasOwnProperty);
-  const regExpTest = unapply(RegExp.prototype.test);
-  const typeErrorCreate = unconstruct(TypeError);
 
-  /**
-   * Creates a new function that calls the given function with a specified thisArg and arguments.
-   *
-   * @param {Function} func - The function to be wrapped and called.
-   * @returns {Function} A new function that calls the given function with a specified thisArg and arguments.
-   */
-  function unapply(func) {
-    return function (thisArg) {
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
-      }
-      return apply(func, thisArg, args);
-    };
-  }
-
-  /**
-   * Creates a new function that constructs an instance of the given constructor function with the provided arguments.
-   *
-   * @param {Function} func - The constructor function to be wrapped and called.
-   * @returns {Function} A new function that constructs an instance of the given constructor function with the provided arguments.
-   */
-  function unconstruct(func) {
-    return function () {
-      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
-      }
-      return construct(func, args);
-    };
-  }
-
-  /**
-   * Add properties to a lookup table
-   *
-   * @param {Object} set - The set to which elements will be added.
-   * @param {Array} array - The array containing elements to be added to the set.
-   * @param {Function} transformCaseFunc - An optional function to transform the case of each element before adding to the set.
-   * @returns {Object} The modified set with added elements.
-   */
-  function addToSet(set, array) {
-    let transformCaseFunc = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : stringToLowerCase;
-    if (setPrototypeOf) {
-      // Make 'in' and truthy checks like Boolean(set.constructor)
-      // independent of any properties defined on Object.prototype.
-      // Prevent prototype setters from intercepting set as a this value.
-      setPrototypeOf(set, null);
-    }
-    let l = array.length;
-    while (l--) {
-      let element = array[l];
-      if (typeof element === 'string') {
-        const lcElement = transformCaseFunc(element);
-        if (lcElement !== element) {
-          // Config presets (e.g. tags.js, attrs.js) are immutable.
-          if (!isFrozen(array)) {
-            array[l] = lcElement;
-          }
-          element = lcElement;
-        }
-      }
-      set[element] = true;
-    }
-    return set;
-  }
-
-  /**
-   * Clean up an array to harden against CSPP
-   *
-   * @param {Array} array - The array to be cleaned.
-   * @returns {Array} The cleaned version of the array
-   */
-  function cleanArray(array) {
-    for (let index = 0; index < array.length; index++) {
-      const isPropertyExist = objectHasOwnProperty(array, index);
-      if (!isPropertyExist) {
-        array[index] = null;
-      }
-    }
-    return array;
-  }
-
-  /**
-   * Shallow clone an object
-   *
-   * @param {Object} object - The object to be cloned.
-   * @returns {Object} A new object that copies the original.
-   */
-  function clone(object) {
-    const newObject = create(null);
-    for (const [property, value] of entries(object)) {
-      const isPropertyExist = objectHasOwnProperty(object, property);
-      if (isPropertyExist) {
-        if (Array.isArray(value)) {
-          newObject[property] = cleanArray(value);
-        } else if (value && typeof value === 'object' && value.constructor === Object) {
-          newObject[property] = clone(value);
-        } else {
-          newObject[property] = value;
-        }
-      }
-    }
-    return newObject;
-  }
-
-  /**
-   * This method automatically checks if the prop is function or getter and behaves accordingly.
-   *
-   * @param {Object} object - The object to look up the getter function in its prototype chain.
-   * @param {String} prop - The property name for which to find the getter function.
-   * @returns {Function} The getter function found in the prototype chain or a fallback function.
-   */
-  function lookupGetter(object, prop) {
-    while (object !== null) {
-      const desc = getOwnPropertyDescriptor(object, prop);
-      if (desc) {
-        if (desc.get) {
-          return unapply(desc.get);
-        }
-        if (typeof desc.value === 'function') {
-          return unapply(desc.value);
-        }
-      }
-      object = getPrototypeOf(object);
-    }
-    function fallbackValue() {
-      return null;
-    }
-    return fallbackValue;
-  }
-
-  const html$1 = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
-
-  // SVG
-  const svg$1 = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
-  const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropShadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
-
-  // List of SVG elements that are disallowed by default.
-  // We still need to know them so that we can do namespace
-  // checks properly in case one wants to add them to
-  // allow-list.
-  const svgDisallowed = freeze(['animate', 'color-profile', 'cursor', 'discard', 'font-face', 'font-face-format', 'font-face-name', 'font-face-src', 'font-face-uri', 'foreignobject', 'hatch', 'hatchpath', 'mesh', 'meshgradient', 'meshpatch', 'meshrow', 'missing-glyph', 'script', 'set', 'solidcolor', 'unknown', 'use']);
-  const mathMl$1 = freeze(['math', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'mprescripts']);
-
-  // Similarly to SVG, we want to know all MathML elements,
-  // even those that we disallow by default.
-  const mathMlDisallowed = freeze(['maction', 'maligngroup', 'malignmark', 'mlongdiv', 'mscarries', 'mscarry', 'msgroup', 'mstack', 'msline', 'msrow', 'semantics', 'annotation', 'annotation-xml', 'mprescripts', 'none']);
-  const text = freeze(['#text']);
-
-  const html = freeze(['accept', 'action', 'align', 'alt', 'autocapitalize', 'autocomplete', 'autopictureinpicture', 'autoplay', 'background', 'bgcolor', 'border', 'capture', 'cellpadding', 'cellspacing', 'checked', 'cite', 'class', 'clear', 'color', 'cols', 'colspan', 'controls', 'controlslist', 'coords', 'crossorigin', 'datetime', 'decoding', 'default', 'dir', 'disabled', 'disablepictureinpicture', 'disableremoteplayback', 'download', 'draggable', 'enctype', 'enterkeyhint', 'face', 'for', 'headers', 'height', 'hidden', 'high', 'href', 'hreflang', 'id', 'inputmode', 'integrity', 'ismap', 'kind', 'label', 'lang', 'list', 'loading', 'loop', 'low', 'max', 'maxlength', 'media', 'method', 'min', 'minlength', 'multiple', 'muted', 'name', 'nonce', 'noshade', 'novalidate', 'nowrap', 'open', 'optimum', 'pattern', 'placeholder', 'playsinline', 'popover', 'popovertarget', 'popovertargetaction', 'poster', 'preload', 'pubdate', 'radiogroup', 'readonly', 'rel', 'required', 'rev', 'reversed', 'role', 'rows', 'rowspan', 'spellcheck', 'scope', 'selected', 'shape', 'size', 'sizes', 'span', 'srclang', 'start', 'src', 'srcset', 'step', 'style', 'summary', 'tabindex', 'title', 'translate', 'type', 'usemap', 'valign', 'value', 'width', 'wrap', 'xmlns', 'slot']);
-  const svg = freeze(['accent-height', 'accumulate', 'additive', 'alignment-baseline', 'ascent', 'attributename', 'attributetype', 'azimuth', 'basefrequency', 'baseline-shift', 'begin', 'bias', 'by', 'class', 'clip', 'clippathunits', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'cx', 'cy', 'd', 'dx', 'dy', 'diffuseconstant', 'direction', 'display', 'divisor', 'dur', 'edgemode', 'elevation', 'end', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'filterunits', 'flood-color', 'flood-opacity', 'font-family', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-weight', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 'glyphref', 'gradientunits', 'gradienttransform', 'height', 'href', 'id', 'image-rendering', 'in', 'in2', 'k', 'k1', 'k2', 'k3', 'k4', 'kerning', 'keypoints', 'keysplines', 'keytimes', 'lang', 'lengthadjust', 'letter-spacing', 'kernelmatrix', 'kernelunitlength', 'lighting-color', 'local', 'marker-end', 'marker-mid', 'marker-start', 'markerheight', 'markerunits', 'markerwidth', 'maskcontentunits', 'maskunits', 'max', 'mask', 'media', 'method', 'mode', 'min', 'name', 'numoctaves', 'offset', 'operator', 'opacity', 'order', 'orient', 'orientation', 'origin', 'overflow', 'paint-order', 'path', 'pathlength', 'patterncontentunits', 'patterntransform', 'patternunits', 'points', 'preservealpha', 'preserveaspectratio', 'primitiveunits', 'r', 'rx', 'ry', 'radius', 'refx', 'refy', 'repeatcount', 'repeatdur', 'restart', 'result', 'rotate', 'scale', 'seed', 'shape-rendering', 'specularconstant', 'specularexponent', 'spreadmethod', 'startoffset', 'stddeviation', 'stitchtiles', 'stop-color', 'stop-opacity', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke', 'stroke-width', 'style', 'surfacescale', 'systemlanguage', 'tabindex', 'targetx', 'targety', 'transform', 'transform-origin', 'text-anchor', 'text-decoration', 'text-rendering', 'textlength', 'type', 'u1', 'u2', 'unicode', 'values', 'viewbox', 'visibility', 'version', 'vert-adv-y', 'vert-origin-x', 'vert-origin-y', 'width', 'word-spacing', 'wrap', 'writing-mode', 'xchannelselector', 'ychannelselector', 'x', 'x1', 'x2', 'xmlns', 'y', 'y1', 'y2', 'z', 'zoomandpan']);
-  const mathMl = freeze(['accent', 'accentunder', 'align', 'bevelled', 'close', 'columnsalign', 'columnlines', 'columnspan', 'denomalign', 'depth', 'dir', 'display', 'displaystyle', 'encoding', 'fence', 'frame', 'height', 'href', 'id', 'largeop', 'length', 'linethickness', 'lspace', 'lquote', 'mathbackground', 'mathcolor', 'mathsize', 'mathvariant', 'maxsize', 'minsize', 'movablelimits', 'notation', 'numalign', 'open', 'rowalign', 'rowlines', 'rowspacing', 'rowspan', 'rspace', 'rquote', 'scriptlevel', 'scriptminsize', 'scriptsizemultiplier', 'selection', 'separator', 'separators', 'stretchy', 'subscriptshift', 'supscriptshift', 'symmetric', 'voffset', 'width', 'xmlns']);
-  const xml = freeze(['xlink:href', 'xml:id', 'xlink:title', 'xml:space', 'xmlns:xlink']);
-
-  // eslint-disable-next-line unicorn/better-regex
-  const MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm); // Specify template detection regex for SAFE_FOR_TEMPLATES mode
-  const ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
-  const TMPLIT_EXPR = seal(/\${[\w\W]*}/gm);
-  const DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]/); // eslint-disable-line no-useless-escape
-  const ARIA_ATTR = seal(/^aria-[\-\w]+$/); // eslint-disable-line no-useless-escape
-  const IS_ALLOWED_URI = seal(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i // eslint-disable-line no-useless-escape
-  );
-  const IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
-  const ATTR_WHITESPACE = seal(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g // eslint-disable-line no-control-regex
-  );
-  const DOCTYPE_NAME = seal(/^html$/i);
-  const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
-
-  var EXPRESSIONS = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    MUSTACHE_EXPR: MUSTACHE_EXPR,
-    ERB_EXPR: ERB_EXPR,
-    TMPLIT_EXPR: TMPLIT_EXPR,
-    DATA_ATTR: DATA_ATTR,
-    ARIA_ATTR: ARIA_ATTR,
-    IS_ALLOWED_URI: IS_ALLOWED_URI,
-    IS_SCRIPT_OR_DATA: IS_SCRIPT_OR_DATA,
-    ATTR_WHITESPACE: ATTR_WHITESPACE,
-    DOCTYPE_NAME: DOCTYPE_NAME,
-    CUSTOM_ELEMENT: CUSTOM_ELEMENT
-  });
-
-  // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
-  const NODE_TYPE = {
-    element: 1,
-    attribute: 2,
-    text: 3,
-    cdataSection: 4,
-    entityReference: 5,
-    // Deprecated
-    entityNode: 6,
-    // Deprecated
-    progressingInstruction: 7,
-    comment: 8,
-    document: 9,
-    documentType: 10,
-    documentFragment: 11,
-    notation: 12 // Deprecated
+const {
+  entries,
+  setPrototypeOf,
+  isFrozen,
+  getPrototypeOf,
+  getOwnPropertyDescriptor
+} = Object;
+let {
+  freeze,
+  seal,
+  create
+} = Object; // eslint-disable-line import/no-mutable-exports
+let {
+  apply,
+  construct
+} = typeof Reflect !== 'undefined' && Reflect;
+if (!freeze) {
+  freeze = function freeze(x) {
+    return x;
   };
-  const getGlobal = function getGlobal() {
-    return typeof window === 'undefined' ? null : window;
+}
+if (!seal) {
+  seal = function seal(x) {
+    return x;
   };
-
-  /**
-   * Creates a no-op policy for internal use only.
-   * Don't export this function outside this module!
-   * @param {TrustedTypePolicyFactory} trustedTypes The policy factory.
-   * @param {HTMLScriptElement} purifyHostElement The Script element used to load DOMPurify (to determine policy name suffix).
-   * @return {TrustedTypePolicy} The policy created (or null, if Trusted Types
-   * are not supported or creating the policy failed).
-   */
-  const _createTrustedTypesPolicy = function _createTrustedTypesPolicy(trustedTypes, purifyHostElement) {
-    if (typeof trustedTypes !== 'object' || typeof trustedTypes.createPolicy !== 'function') {
-      return null;
+}
+if (!apply) {
+  apply = function apply(fun, thisValue, args) {
+    return fun.apply(thisValue, args);
+  };
+}
+if (!construct) {
+  construct = function construct(Func, args) {
+    return new Func(...args);
+  };
+}
+const arrayForEach = unapply(Array.prototype.forEach);
+const arrayLastIndexOf = unapply(Array.prototype.lastIndexOf);
+const arrayPop = unapply(Array.prototype.pop);
+const arrayPush = unapply(Array.prototype.push);
+const arraySplice = unapply(Array.prototype.splice);
+const stringToLowerCase = unapply(String.prototype.toLowerCase);
+const stringToString = unapply(String.prototype.toString);
+const stringMatch = unapply(String.prototype.match);
+const stringReplace = unapply(String.prototype.replace);
+const stringIndexOf = unapply(String.prototype.indexOf);
+const stringTrim = unapply(String.prototype.trim);
+const objectHasOwnProperty = unapply(Object.prototype.hasOwnProperty);
+const regExpTest = unapply(RegExp.prototype.test);
+const typeErrorCreate = unconstruct(TypeError);
+/**
+ * Creates a new function that calls the given function with a specified thisArg and arguments.
+ *
+ * @param func - The function to be wrapped and called.
+ * @returns A new function that calls the given function with a specified thisArg and arguments.
+ */
+function unapply(func) {
+  return function (thisArg) {
+    if (thisArg instanceof RegExp) {
+      thisArg.lastIndex = 0;
     }
-
-    // Allow the callers to control the unique policy name
-    // by adding a data-tt-policy-suffix to the script element with the DOMPurify.
-    // Policy creation with duplicate names throws in Trusted Types.
-    let suffix = null;
-    const ATTR_NAME = 'data-tt-policy-suffix';
-    if (purifyHostElement && purifyHostElement.hasAttribute(ATTR_NAME)) {
-      suffix = purifyHostElement.getAttribute(ATTR_NAME);
+    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
     }
-    const policyName = 'dompurify' + (suffix ? '#' + suffix : '');
-    try {
-      return trustedTypes.createPolicy(policyName, {
-        createHTML(html) {
-          return html;
-        },
-        createScriptURL(scriptUrl) {
-          return scriptUrl;
+    return apply(func, thisArg, args);
+  };
+}
+/**
+ * Creates a new function that constructs an instance of the given constructor function with the provided arguments.
+ *
+ * @param func - The constructor function to be wrapped and called.
+ * @returns A new function that constructs an instance of the given constructor function with the provided arguments.
+ */
+function unconstruct(func) {
+  return function () {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    return construct(func, args);
+  };
+}
+/**
+ * Add properties to a lookup table
+ *
+ * @param set - The set to which elements will be added.
+ * @param array - The array containing elements to be added to the set.
+ * @param transformCaseFunc - An optional function to transform the case of each element before adding to the set.
+ * @returns The modified set with added elements.
+ */
+function addToSet(set, array) {
+  let transformCaseFunc = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : stringToLowerCase;
+  if (setPrototypeOf) {
+    // Make 'in' and truthy checks like Boolean(set.constructor)
+    // independent of any properties defined on Object.prototype.
+    // Prevent prototype setters from intercepting set as a this value.
+    setPrototypeOf(set, null);
+  }
+  let l = array.length;
+  while (l--) {
+    let element = array[l];
+    if (typeof element === 'string') {
+      const lcElement = transformCaseFunc(element);
+      if (lcElement !== element) {
+        // Config presets (e.g. tags.js, attrs.js) are immutable.
+        if (!isFrozen(array)) {
+          array[l] = lcElement;
         }
-      });
-    } catch (_) {
-      // Policy creation failed (most likely another DOMPurify script has
-      // already run). Skip creating the policy, as this will only cause errors
-      // if TT are enforced.
-      console.warn('TrustedTypes policy ' + policyName + ' could not be created.');
-      return null;
-    }
-  };
-  function createDOMPurify() {
-    let window = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getGlobal();
-    const DOMPurify = root => createDOMPurify(root);
-
-    /**
-     * Version label, exposed for easier checks
-     * if DOMPurify is up to date or not
-     */
-    DOMPurify.version = '3.1.6';
-
-    /**
-     * Array of elements that DOMPurify removed during sanitation.
-     * Empty if nothing was removed.
-     */
-    DOMPurify.removed = [];
-    if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document) {
-      // Not running in a browser, provide a factory function
-      // so that you can pass your own Window
-      DOMPurify.isSupported = false;
-      return DOMPurify;
-    }
-    let {
-      document
-    } = window;
-    const originalDocument = document;
-    const currentScript = originalDocument.currentScript;
-    const {
-      DocumentFragment,
-      HTMLTemplateElement,
-      Node,
-      Element,
-      NodeFilter,
-      NamedNodeMap = window.NamedNodeMap || window.MozNamedAttrMap,
-      HTMLFormElement,
-      DOMParser,
-      trustedTypes
-    } = window;
-    const ElementPrototype = Element.prototype;
-    const cloneNode = lookupGetter(ElementPrototype, 'cloneNode');
-    const remove = lookupGetter(ElementPrototype, 'remove');
-    const getNextSibling = lookupGetter(ElementPrototype, 'nextSibling');
-    const getChildNodes = lookupGetter(ElementPrototype, 'childNodes');
-    const getParentNode = lookupGetter(ElementPrototype, 'parentNode');
-
-    // As per issue #47, the web-components registry is inherited by a
-    // new document created via createHTMLDocument. As per the spec
-    // (http://w3c.github.io/webcomponents/spec/custom/#creating-and-passing-registries)
-    // a new empty registry is used when creating a template contents owner
-    // document, so we use that as our parent document to ensure nothing
-    // is inherited.
-    if (typeof HTMLTemplateElement === 'function') {
-      const template = document.createElement('template');
-      if (template.content && template.content.ownerDocument) {
-        document = template.content.ownerDocument;
+        element = lcElement;
       }
     }
-    let trustedTypesPolicy;
-    let emptyHTML = '';
-    const {
-      implementation,
-      createNodeIterator,
-      createDocumentFragment,
-      getElementsByTagName
-    } = document;
-    const {
-      importNode
-    } = originalDocument;
-    let hooks = {};
+    set[element] = true;
+  }
+  return set;
+}
+/**
+ * Clean up an array to harden against CSPP
+ *
+ * @param array - The array to be cleaned.
+ * @returns The cleaned version of the array
+ */
+function cleanArray(array) {
+  for (let index = 0; index < array.length; index++) {
+    const isPropertyExist = objectHasOwnProperty(array, index);
+    if (!isPropertyExist) {
+      array[index] = null;
+    }
+  }
+  return array;
+}
+/**
+ * Shallow clone an object
+ *
+ * @param object - The object to be cloned.
+ * @returns A new object that copies the original.
+ */
+function clone(object) {
+  const newObject = create(null);
+  for (const [property, value] of entries(object)) {
+    const isPropertyExist = objectHasOwnProperty(object, property);
+    if (isPropertyExist) {
+      if (Array.isArray(value)) {
+        newObject[property] = cleanArray(value);
+      } else if (value && typeof value === 'object' && value.constructor === Object) {
+        newObject[property] = clone(value);
+      } else {
+        newObject[property] = value;
+      }
+    }
+  }
+  return newObject;
+}
+/**
+ * This method automatically checks if the prop is function or getter and behaves accordingly.
+ *
+ * @param object - The object to look up the getter function in its prototype chain.
+ * @param prop - The property name for which to find the getter function.
+ * @returns The getter function found in the prototype chain or a fallback function.
+ */
+function lookupGetter(object, prop) {
+  while (object !== null) {
+    const desc = getOwnPropertyDescriptor(object, prop);
+    if (desc) {
+      if (desc.get) {
+        return unapply(desc.get);
+      }
+      if (typeof desc.value === 'function') {
+        return unapply(desc.value);
+      }
+    }
+    object = getPrototypeOf(object);
+  }
+  function fallbackValue() {
+    return null;
+  }
+  return fallbackValue;
+}
 
-    /**
-     * Expose whether this browser supports running the full DOMPurify.
-     */
-    DOMPurify.isSupported = typeof entries === 'function' && typeof getParentNode === 'function' && implementation && implementation.createHTMLDocument !== undefined;
-    const {
-      MUSTACHE_EXPR,
-      ERB_EXPR,
-      TMPLIT_EXPR,
-      DATA_ATTR,
-      ARIA_ATTR,
-      IS_SCRIPT_OR_DATA,
-      ATTR_WHITESPACE,
-      CUSTOM_ELEMENT
-    } = EXPRESSIONS;
-    let {
-      IS_ALLOWED_URI: IS_ALLOWED_URI$1
-    } = EXPRESSIONS;
+const html$1 = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
+const svg$1 = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
+const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropShadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
+// List of SVG elements that are disallowed by default.
+// We still need to know them so that we can do namespace
+// checks properly in case one wants to add them to
+// allow-list.
+const svgDisallowed = freeze(['animate', 'color-profile', 'cursor', 'discard', 'font-face', 'font-face-format', 'font-face-name', 'font-face-src', 'font-face-uri', 'foreignobject', 'hatch', 'hatchpath', 'mesh', 'meshgradient', 'meshpatch', 'meshrow', 'missing-glyph', 'script', 'set', 'solidcolor', 'unknown', 'use']);
+const mathMl$1 = freeze(['math', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'mprescripts']);
+// Similarly to SVG, we want to know all MathML elements,
+// even those that we disallow by default.
+const mathMlDisallowed = freeze(['maction', 'maligngroup', 'malignmark', 'mlongdiv', 'mscarries', 'mscarry', 'msgroup', 'mstack', 'msline', 'msrow', 'semantics', 'annotation', 'annotation-xml', 'mprescripts', 'none']);
+const text = freeze(['#text']);
 
-    /**
-     * We consider the elements and attributes below to be safe. Ideally
-     * don't add any new ones but feel free to remove unwanted ones.
-     */
+const html = freeze(['accept', 'action', 'align', 'alt', 'autocapitalize', 'autocomplete', 'autopictureinpicture', 'autoplay', 'background', 'bgcolor', 'border', 'capture', 'cellpadding', 'cellspacing', 'checked', 'cite', 'class', 'clear', 'color', 'cols', 'colspan', 'controls', 'controlslist', 'coords', 'crossorigin', 'datetime', 'decoding', 'default', 'dir', 'disabled', 'disablepictureinpicture', 'disableremoteplayback', 'download', 'draggable', 'enctype', 'enterkeyhint', 'face', 'for', 'headers', 'height', 'hidden', 'high', 'href', 'hreflang', 'id', 'inputmode', 'integrity', 'ismap', 'kind', 'label', 'lang', 'list', 'loading', 'loop', 'low', 'max', 'maxlength', 'media', 'method', 'min', 'minlength', 'multiple', 'muted', 'name', 'nonce', 'noshade', 'novalidate', 'nowrap', 'open', 'optimum', 'pattern', 'placeholder', 'playsinline', 'popover', 'popovertarget', 'popovertargetaction', 'poster', 'preload', 'pubdate', 'radiogroup', 'readonly', 'rel', 'required', 'rev', 'reversed', 'role', 'rows', 'rowspan', 'spellcheck', 'scope', 'selected', 'shape', 'size', 'sizes', 'span', 'srclang', 'start', 'src', 'srcset', 'step', 'style', 'summary', 'tabindex', 'title', 'translate', 'type', 'usemap', 'valign', 'value', 'width', 'wrap', 'xmlns', 'slot']);
+const svg = freeze(['accent-height', 'accumulate', 'additive', 'alignment-baseline', 'amplitude', 'ascent', 'attributename', 'attributetype', 'azimuth', 'basefrequency', 'baseline-shift', 'begin', 'bias', 'by', 'class', 'clip', 'clippathunits', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'cx', 'cy', 'd', 'dx', 'dy', 'diffuseconstant', 'direction', 'display', 'divisor', 'dur', 'edgemode', 'elevation', 'end', 'exponent', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'filterunits', 'flood-color', 'flood-opacity', 'font-family', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-weight', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 'glyphref', 'gradientunits', 'gradienttransform', 'height', 'href', 'id', 'image-rendering', 'in', 'in2', 'intercept', 'k', 'k1', 'k2', 'k3', 'k4', 'kerning', 'keypoints', 'keysplines', 'keytimes', 'lang', 'lengthadjust', 'letter-spacing', 'kernelmatrix', 'kernelunitlength', 'lighting-color', 'local', 'marker-end', 'marker-mid', 'marker-start', 'markerheight', 'markerunits', 'markerwidth', 'maskcontentunits', 'maskunits', 'max', 'mask', 'media', 'method', 'mode', 'min', 'name', 'numoctaves', 'offset', 'operator', 'opacity', 'order', 'orient', 'orientation', 'origin', 'overflow', 'paint-order', 'path', 'pathlength', 'patterncontentunits', 'patterntransform', 'patternunits', 'points', 'preservealpha', 'preserveaspectratio', 'primitiveunits', 'r', 'rx', 'ry', 'radius', 'refx', 'refy', 'repeatcount', 'repeatdur', 'restart', 'result', 'rotate', 'scale', 'seed', 'shape-rendering', 'slope', 'specularconstant', 'specularexponent', 'spreadmethod', 'startoffset', 'stddeviation', 'stitchtiles', 'stop-color', 'stop-opacity', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke', 'stroke-width', 'style', 'surfacescale', 'systemlanguage', 'tabindex', 'tablevalues', 'targetx', 'targety', 'transform', 'transform-origin', 'text-anchor', 'text-decoration', 'text-rendering', 'textlength', 'type', 'u1', 'u2', 'unicode', 'values', 'viewbox', 'visibility', 'version', 'vert-adv-y', 'vert-origin-x', 'vert-origin-y', 'width', 'word-spacing', 'wrap', 'writing-mode', 'xchannelselector', 'ychannelselector', 'x', 'x1', 'x2', 'xmlns', 'y', 'y1', 'y2', 'z', 'zoomandpan']);
+const mathMl = freeze(['accent', 'accentunder', 'align', 'bevelled', 'close', 'columnsalign', 'columnlines', 'columnspan', 'denomalign', 'depth', 'dir', 'display', 'displaystyle', 'encoding', 'fence', 'frame', 'height', 'href', 'id', 'largeop', 'length', 'linethickness', 'lspace', 'lquote', 'mathbackground', 'mathcolor', 'mathsize', 'mathvariant', 'maxsize', 'minsize', 'movablelimits', 'notation', 'numalign', 'open', 'rowalign', 'rowlines', 'rowspacing', 'rowspan', 'rspace', 'rquote', 'scriptlevel', 'scriptminsize', 'scriptsizemultiplier', 'selection', 'separator', 'separators', 'stretchy', 'subscriptshift', 'supscriptshift', 'symmetric', 'voffset', 'width', 'xmlns']);
+const xml = freeze(['xlink:href', 'xml:id', 'xlink:title', 'xml:space', 'xmlns:xlink']);
 
-    /* allowed element names */
-    let ALLOWED_TAGS = null;
-    const DEFAULT_ALLOWED_TAGS = addToSet({}, [...html$1, ...svg$1, ...svgFilters, ...mathMl$1, ...text]);
+// eslint-disable-next-line unicorn/better-regex
+const MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm); // Specify template detection regex for SAFE_FOR_TEMPLATES mode
+const ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
+const TMPLIT_EXPR = seal(/\$\{[\w\W]*/gm); // eslint-disable-line unicorn/better-regex
+const DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]+$/); // eslint-disable-line no-useless-escape
+const ARIA_ATTR = seal(/^aria-[\-\w]+$/); // eslint-disable-line no-useless-escape
+const IS_ALLOWED_URI = seal(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i // eslint-disable-line no-useless-escape
+);
+const IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
+const ATTR_WHITESPACE = seal(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g // eslint-disable-line no-control-regex
+);
+const DOCTYPE_NAME = seal(/^html$/i);
+const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
 
-    /* Allowed attribute names */
-    let ALLOWED_ATTR = null;
-    const DEFAULT_ALLOWED_ATTR = addToSet({}, [...html, ...svg, ...mathMl, ...xml]);
+var EXPRESSIONS = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  ARIA_ATTR: ARIA_ATTR,
+  ATTR_WHITESPACE: ATTR_WHITESPACE,
+  CUSTOM_ELEMENT: CUSTOM_ELEMENT,
+  DATA_ATTR: DATA_ATTR,
+  DOCTYPE_NAME: DOCTYPE_NAME,
+  ERB_EXPR: ERB_EXPR,
+  IS_ALLOWED_URI: IS_ALLOWED_URI,
+  IS_SCRIPT_OR_DATA: IS_SCRIPT_OR_DATA,
+  MUSTACHE_EXPR: MUSTACHE_EXPR,
+  TMPLIT_EXPR: TMPLIT_EXPR
+});
 
-    /*
-     * Configure how DOMPUrify should handle custom elements and their attributes as well as customized built-in elements.
-     * @property {RegExp|Function|null} tagNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any custom elements)
-     * @property {RegExp|Function|null} attributeNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any attributes not on the allow list)
-     * @property {boolean} allowCustomizedBuiltInElements allow custom elements derived from built-ins if they pass CUSTOM_ELEMENT_HANDLING.tagNameCheck. Default: `false`.
-     */
-    let CUSTOM_ELEMENT_HANDLING = Object.seal(create(null, {
-      tagNameCheck: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: null
+/* eslint-disable @typescript-eslint/indent */
+// https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+const NODE_TYPE = {
+  element: 1,
+  attribute: 2,
+  text: 3,
+  cdataSection: 4,
+  entityReference: 5,
+  // Deprecated
+  entityNode: 6,
+  // Deprecated
+  progressingInstruction: 7,
+  comment: 8,
+  document: 9,
+  documentType: 10,
+  documentFragment: 11,
+  notation: 12 // Deprecated
+};
+const getGlobal = function getGlobal() {
+  return typeof window === 'undefined' ? null : window;
+};
+/**
+ * Creates a no-op policy for internal use only.
+ * Don't export this function outside this module!
+ * @param trustedTypes The policy factory.
+ * @param purifyHostElement The Script element used to load DOMPurify (to determine policy name suffix).
+ * @return The policy created (or null, if Trusted Types
+ * are not supported or creating the policy failed).
+ */
+const _createTrustedTypesPolicy = function _createTrustedTypesPolicy(trustedTypes, purifyHostElement) {
+  if (typeof trustedTypes !== 'object' || typeof trustedTypes.createPolicy !== 'function') {
+    return null;
+  }
+  // Allow the callers to control the unique policy name
+  // by adding a data-tt-policy-suffix to the script element with the DOMPurify.
+  // Policy creation with duplicate names throws in Trusted Types.
+  let suffix = null;
+  const ATTR_NAME = 'data-tt-policy-suffix';
+  if (purifyHostElement && purifyHostElement.hasAttribute(ATTR_NAME)) {
+    suffix = purifyHostElement.getAttribute(ATTR_NAME);
+  }
+  const policyName = 'dompurify' + (suffix ? '#' + suffix : '');
+  try {
+    return trustedTypes.createPolicy(policyName, {
+      createHTML(html) {
+        return html;
       },
-      attributeNameCheck: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: null
-      },
-      allowCustomizedBuiltInElements: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: false
+      createScriptURL(scriptUrl) {
+        return scriptUrl;
       }
-    }));
-
-    /* Explicitly forbidden tags (overrides ALLOWED_TAGS/ADD_TAGS) */
-    let FORBID_TAGS = null;
-
-    /* Explicitly forbidden attributes (overrides ALLOWED_ATTR/ADD_ATTR) */
-    let FORBID_ATTR = null;
-
-    /* Decide if ARIA attributes are okay */
-    let ALLOW_ARIA_ATTR = true;
-
-    /* Decide if custom data attributes are okay */
-    let ALLOW_DATA_ATTR = true;
-
-    /* Decide if unknown protocols are okay */
-    let ALLOW_UNKNOWN_PROTOCOLS = false;
-
-    /* Decide if self-closing tags in attributes are allowed.
-     * Usually removed due to a mXSS issue in jQuery 3.0 */
-    let ALLOW_SELF_CLOSE_IN_ATTR = true;
-
-    /* Output should be safe for common template engines.
-     * This means, DOMPurify removes data attributes, mustaches and ERB
-     */
-    let SAFE_FOR_TEMPLATES = false;
-
-    /* Output should be safe even for XML used within HTML and alike.
-     * This means, DOMPurify removes comments when containing risky content.
-     */
-    let SAFE_FOR_XML = true;
-
-    /* Decide if document with <html>... should be returned */
-    let WHOLE_DOCUMENT = false;
-
-    /* Track whether config is already set on this instance of DOMPurify. */
-    let SET_CONFIG = false;
-
-    /* Decide if all elements (e.g. style, script) must be children of
-     * document.body. By default, browsers might move them to document.head */
-    let FORCE_BODY = false;
-
-    /* Decide if a DOM `HTMLBodyElement` should be returned, instead of a html
-     * string (or a TrustedHTML object if Trusted Types are supported).
-     * If `WHOLE_DOCUMENT` is enabled a `HTMLHtmlElement` will be returned instead
-     */
-    let RETURN_DOM = false;
-
-    /* Decide if a DOM `DocumentFragment` should be returned, instead of a html
-     * string  (or a TrustedHTML object if Trusted Types are supported) */
-    let RETURN_DOM_FRAGMENT = false;
-
-    /* Try to return a Trusted Type object instead of a string, return a string in
-     * case Trusted Types are not supported  */
-    let RETURN_TRUSTED_TYPE = false;
-
-    /* Output should be free from DOM clobbering attacks?
-     * This sanitizes markups named with colliding, clobberable built-in DOM APIs.
-     */
-    let SANITIZE_DOM = true;
-
-    /* Achieve full DOM Clobbering protection by isolating the namespace of named
-     * properties and JS variables, mitigating attacks that abuse the HTML/DOM spec rules.
-     *
-     * HTML/DOM spec rules that enable DOM Clobbering:
-     *   - Named Access on Window (§7.3.3)
-     *   - DOM Tree Accessors (§3.1.5)
-     *   - Form Element Parent-Child Relations (§4.10.3)
-     *   - Iframe srcdoc / Nested WindowProxies (§4.8.5)
-     *   - HTMLCollection (§4.2.10.2)
-     *
-     * Namespace isolation is implemented by prefixing `id` and `name` attributes
-     * with a constant string, i.e., `user-content-`
-     */
-    let SANITIZE_NAMED_PROPS = false;
-    const SANITIZE_NAMED_PROPS_PREFIX = 'user-content-';
-
-    /* Keep element content when removing element? */
-    let KEEP_CONTENT = true;
-
-    /* If a `Node` is passed to sanitize(), then performs sanitization in-place instead
-     * of importing it into a new Document and returning a sanitized copy */
-    let IN_PLACE = false;
-
-    /* Allow usage of profiles like html, svg and mathMl */
-    let USE_PROFILES = {};
-
-    /* Tags to ignore content of when KEEP_CONTENT is true */
-    let FORBID_CONTENTS = null;
-    const DEFAULT_FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'noscript', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
-
-    /* Tags that are safe for data: URIs */
-    let DATA_URI_TAGS = null;
-    const DEFAULT_DATA_URI_TAGS = addToSet({}, ['audio', 'video', 'img', 'source', 'image', 'track']);
-
-    /* Attributes safe for values like "javascript:" */
-    let URI_SAFE_ATTRIBUTES = null;
-    const DEFAULT_URI_SAFE_ATTRIBUTES = addToSet({}, ['alt', 'class', 'for', 'id', 'label', 'name', 'pattern', 'placeholder', 'role', 'summary', 'title', 'value', 'style', 'xmlns']);
-    const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
-    const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-    const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
-    /* Document namespace */
-    let NAMESPACE = HTML_NAMESPACE;
-    let IS_EMPTY_INPUT = false;
-
-    /* Allowed XHTML+XML namespaces */
-    let ALLOWED_NAMESPACES = null;
-    const DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
-
-    /* Parsing of strict XHTML documents */
-    let PARSER_MEDIA_TYPE = null;
-    const SUPPORTED_PARSER_MEDIA_TYPES = ['application/xhtml+xml', 'text/html'];
-    const DEFAULT_PARSER_MEDIA_TYPE = 'text/html';
-    let transformCaseFunc = null;
-
-    /* Keep a reference to config to pass to hooks */
-    let CONFIG = null;
-
-    /* Ideally, do not touch anything below this line */
-    /* ______________________________________________ */
-
-    const formElement = document.createElement('form');
-    const isRegexOrFunction = function isRegexOrFunction(testValue) {
-      return testValue instanceof RegExp || testValue instanceof Function;
-    };
-
-    /**
-     * _parseConfig
-     *
-     * @param  {Object} cfg optional config literal
-     */
-    // eslint-disable-next-line complexity
-    const _parseConfig = function _parseConfig() {
-      let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      if (CONFIG && CONFIG === cfg) {
-        return;
-      }
-
-      /* Shield configuration object from tampering */
-      if (!cfg || typeof cfg !== 'object') {
-        cfg = {};
-      }
-
-      /* Shield configuration object from prototype pollution */
-      cfg = clone(cfg);
-      PARSER_MEDIA_TYPE =
-      // eslint-disable-next-line unicorn/prefer-includes
-      SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
-
-      // HTML tags and attributes are not case-sensitive, converting to lowercase. Keeping XHTML as is.
-      transformCaseFunc = PARSER_MEDIA_TYPE === 'application/xhtml+xml' ? stringToString : stringToLowerCase;
-
-      /* Set configuration parameters */
-      ALLOWED_TAGS = objectHasOwnProperty(cfg, 'ALLOWED_TAGS') ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
-      ALLOWED_ATTR = objectHasOwnProperty(cfg, 'ALLOWED_ATTR') ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
-      ALLOWED_NAMESPACES = objectHasOwnProperty(cfg, 'ALLOWED_NAMESPACES') ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
-      URI_SAFE_ATTRIBUTES = objectHasOwnProperty(cfg, 'ADD_URI_SAFE_ATTR') ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES),
-      // eslint-disable-line indent
-      cfg.ADD_URI_SAFE_ATTR,
-      // eslint-disable-line indent
-      transformCaseFunc // eslint-disable-line indent
-      ) // eslint-disable-line indent
-      : DEFAULT_URI_SAFE_ATTRIBUTES;
-      DATA_URI_TAGS = objectHasOwnProperty(cfg, 'ADD_DATA_URI_TAGS') ? addToSet(clone(DEFAULT_DATA_URI_TAGS),
-      // eslint-disable-line indent
-      cfg.ADD_DATA_URI_TAGS,
-      // eslint-disable-line indent
-      transformCaseFunc // eslint-disable-line indent
-      ) // eslint-disable-line indent
-      : DEFAULT_DATA_URI_TAGS;
-      FORBID_CONTENTS = objectHasOwnProperty(cfg, 'FORBID_CONTENTS') ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
-      FORBID_TAGS = objectHasOwnProperty(cfg, 'FORBID_TAGS') ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : {};
-      FORBID_ATTR = objectHasOwnProperty(cfg, 'FORBID_ATTR') ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : {};
-      USE_PROFILES = objectHasOwnProperty(cfg, 'USE_PROFILES') ? cfg.USE_PROFILES : false;
-      ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false; // Default true
-      ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false; // Default true
-      ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false; // Default false
-      ALLOW_SELF_CLOSE_IN_ATTR = cfg.ALLOW_SELF_CLOSE_IN_ATTR !== false; // Default true
-      SAFE_FOR_TEMPLATES = cfg.SAFE_FOR_TEMPLATES || false; // Default false
-      SAFE_FOR_XML = cfg.SAFE_FOR_XML !== false; // Default true
-      WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false; // Default false
-      RETURN_DOM = cfg.RETURN_DOM || false; // Default false
-      RETURN_DOM_FRAGMENT = cfg.RETURN_DOM_FRAGMENT || false; // Default false
-      RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false; // Default false
-      FORCE_BODY = cfg.FORCE_BODY || false; // Default false
-      SANITIZE_DOM = cfg.SANITIZE_DOM !== false; // Default true
-      SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false; // Default false
-      KEEP_CONTENT = cfg.KEEP_CONTENT !== false; // Default true
-      IN_PLACE = cfg.IN_PLACE || false; // Default false
-      IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI;
-      NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
-      CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
-      }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.attributeNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck;
-      }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === 'boolean') {
-        CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
-      }
-      if (SAFE_FOR_TEMPLATES) {
-        ALLOW_DATA_ATTR = false;
-      }
-      if (RETURN_DOM_FRAGMENT) {
-        RETURN_DOM = true;
-      }
-
-      /* Parse profile info */
-      if (USE_PROFILES) {
-        ALLOWED_TAGS = addToSet({}, text);
-        ALLOWED_ATTR = [];
-        if (USE_PROFILES.html === true) {
-          addToSet(ALLOWED_TAGS, html$1);
-          addToSet(ALLOWED_ATTR, html);
-        }
-        if (USE_PROFILES.svg === true) {
-          addToSet(ALLOWED_TAGS, svg$1);
-          addToSet(ALLOWED_ATTR, svg);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-        if (USE_PROFILES.svgFilters === true) {
-          addToSet(ALLOWED_TAGS, svgFilters);
-          addToSet(ALLOWED_ATTR, svg);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-        if (USE_PROFILES.mathMl === true) {
-          addToSet(ALLOWED_TAGS, mathMl$1);
-          addToSet(ALLOWED_ATTR, mathMl);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-      }
-
-      /* Merge configuration parameters */
-      if (cfg.ADD_TAGS) {
-        if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
-          ALLOWED_TAGS = clone(ALLOWED_TAGS);
-        }
-        addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
-      }
-      if (cfg.ADD_ATTR) {
-        if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
-          ALLOWED_ATTR = clone(ALLOWED_ATTR);
-        }
-        addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
-      }
-      if (cfg.ADD_URI_SAFE_ATTR) {
-        addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
-      }
-      if (cfg.FORBID_CONTENTS) {
-        if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
-          FORBID_CONTENTS = clone(FORBID_CONTENTS);
-        }
-        addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
-      }
-
-      /* Add #text in case KEEP_CONTENT is set to true */
-      if (KEEP_CONTENT) {
-        ALLOWED_TAGS['#text'] = true;
-      }
-
-      /* Add html, head and body to ALLOWED_TAGS in case WHOLE_DOCUMENT is true */
-      if (WHOLE_DOCUMENT) {
-        addToSet(ALLOWED_TAGS, ['html', 'head', 'body']);
-      }
-
-      /* Add tbody to ALLOWED_TAGS in case tables are permitted, see #286, #365 */
-      if (ALLOWED_TAGS.table) {
-        addToSet(ALLOWED_TAGS, ['tbody']);
-        delete FORBID_TAGS.tbody;
-      }
-      if (cfg.TRUSTED_TYPES_POLICY) {
-        if (typeof cfg.TRUSTED_TYPES_POLICY.createHTML !== 'function') {
-          throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');
-        }
-        if (typeof cfg.TRUSTED_TYPES_POLICY.createScriptURL !== 'function') {
-          throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');
-        }
-
-        // Overwrite existing TrustedTypes policy.
-        trustedTypesPolicy = cfg.TRUSTED_TYPES_POLICY;
-
-        // Sign local variables required by `sanitize`.
-        emptyHTML = trustedTypesPolicy.createHTML('');
-      } else {
-        // Uninitialized policy, attempt to initialize the internal dompurify policy.
-        if (trustedTypesPolicy === undefined) {
-          trustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
-        }
-
-        // If creating the internal policy succeeded sign internal variables.
-        if (trustedTypesPolicy !== null && typeof emptyHTML === 'string') {
-          emptyHTML = trustedTypesPolicy.createHTML('');
-        }
-      }
-
-      // Prevent further manipulation of configuration.
-      // Not available in IE8, Safari 5, etc.
-      if (freeze) {
-        freeze(cfg);
-      }
-      CONFIG = cfg;
-    };
-    const MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ['mi', 'mo', 'mn', 'ms', 'mtext']);
-    const HTML_INTEGRATION_POINTS = addToSet({}, ['foreignobject', 'annotation-xml']);
-
-    // Certain elements are allowed in both SVG and HTML
-    // namespace. We need to specify them explicitly
-    // so that they don't get erroneously deleted from
-    // HTML namespace.
-    const COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ['title', 'style', 'font', 'a', 'script']);
-
-    /* Keep track of all possible SVG and MathML tags
-     * so that we can perform the namespace checks
-     * correctly. */
-    const ALL_SVG_TAGS = addToSet({}, [...svg$1, ...svgFilters, ...svgDisallowed]);
-    const ALL_MATHML_TAGS = addToSet({}, [...mathMl$1, ...mathMlDisallowed]);
-
-    /**
-     * @param  {Element} element a DOM element whose namespace is being checked
-     * @returns {boolean} Return false if the element has a
-     *  namespace that a spec-compliant parser would never
-     *  return. Return true otherwise.
-     */
-    const _checkValidNamespace = function _checkValidNamespace(element) {
-      let parent = getParentNode(element);
-
-      // In JSDOM, if we're inside shadow DOM, then parentNode
-      // can be null. We just simulate parent in this case.
-      if (!parent || !parent.tagName) {
-        parent = {
-          namespaceURI: NAMESPACE,
-          tagName: 'template'
-        };
-      }
-      const tagName = stringToLowerCase(element.tagName);
-      const parentTagName = stringToLowerCase(parent.tagName);
-      if (!ALLOWED_NAMESPACES[element.namespaceURI]) {
-        return false;
-      }
-      if (element.namespaceURI === SVG_NAMESPACE) {
-        // The only way to switch from HTML namespace to SVG
-        // is via <svg>. If it happens via any other tag, then
-        // it should be killed.
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === 'svg';
-        }
-
-        // The only way to switch from MathML to SVG is via`
-        // svg if parent is either <annotation-xml> or MathML
-        // text integration points.
-        if (parent.namespaceURI === MATHML_NAMESPACE) {
-          return tagName === 'svg' && (parentTagName === 'annotation-xml' || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
-        }
-
-        // We only allow elements that are defined in SVG
-        // spec. All others are disallowed in SVG namespace.
-        return Boolean(ALL_SVG_TAGS[tagName]);
-      }
-      if (element.namespaceURI === MATHML_NAMESPACE) {
-        // The only way to switch from HTML namespace to MathML
-        // is via <math>. If it happens via any other tag, then
-        // it should be killed.
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === 'math';
-        }
-
-        // The only way to switch from SVG to MathML is via
-        // <math> and HTML integration points
-        if (parent.namespaceURI === SVG_NAMESPACE) {
-          return tagName === 'math' && HTML_INTEGRATION_POINTS[parentTagName];
-        }
-
-        // We only allow elements that are defined in MathML
-        // spec. All others are disallowed in MathML namespace.
-        return Boolean(ALL_MATHML_TAGS[tagName]);
-      }
-      if (element.namespaceURI === HTML_NAMESPACE) {
-        // The only way to switch from SVG to HTML is via
-        // HTML integration points, and from MathML to HTML
-        // is via MathML text integration points
-        if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-        if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-
-        // We disallow tags that are specific for MathML
-        // or SVG and should never appear in HTML namespace
-        return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
-      }
-
-      // For XHTML and XML documents that support custom namespaces
-      if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && ALLOWED_NAMESPACES[element.namespaceURI]) {
-        return true;
-      }
-
-      // The code should never reach this place (this means
-      // that the element somehow got namespace that is not
-      // HTML, SVG, MathML or allowed via ALLOWED_NAMESPACES).
-      // Return false just in case.
-      return false;
-    };
-
-    /**
-     * _forceRemove
-     *
-     * @param  {Node} node a DOM node
-     */
-    const _forceRemove = function _forceRemove(node) {
-      arrayPush(DOMPurify.removed, {
-        element: node
-      });
-      try {
-        // eslint-disable-next-line unicorn/prefer-dom-node-remove
-        getParentNode(node).removeChild(node);
-      } catch (_) {
-        remove(node);
-      }
-    };
-
-    /**
-     * _removeAttribute
-     *
-     * @param  {String} name an Attribute name
-     * @param  {Node} node a DOM node
-     */
-    const _removeAttribute = function _removeAttribute(name, node) {
-      try {
-        arrayPush(DOMPurify.removed, {
-          attribute: node.getAttributeNode(name),
-          from: node
-        });
-      } catch (_) {
-        arrayPush(DOMPurify.removed, {
-          attribute: null,
-          from: node
-        });
-      }
-      node.removeAttribute(name);
-
-      // We void attribute values for unremovable "is"" attributes
-      if (name === 'is' && !ALLOWED_ATTR[name]) {
-        if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
-          try {
-            _forceRemove(node);
-          } catch (_) {}
-        } else {
-          try {
-            node.setAttribute(name, '');
-          } catch (_) {}
-        }
-      }
-    };
-
-    /**
-     * _initDocument
-     *
-     * @param  {String} dirty a string of dirty markup
-     * @return {Document} a DOM, filled with the dirty markup
-     */
-    const _initDocument = function _initDocument(dirty) {
-      /* Create a HTML document */
-      let doc = null;
-      let leadingWhitespace = null;
-      if (FORCE_BODY) {
-        dirty = '<remove></remove>' + dirty;
-      } else {
-        /* If FORCE_BODY isn't used, leading whitespace needs to be preserved manually */
-        const matches = stringMatch(dirty, /^[\r\n\t ]+/);
-        leadingWhitespace = matches && matches[0];
-      }
-      if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && NAMESPACE === HTML_NAMESPACE) {
-        // Root of XHTML doc must contain xmlns declaration (see https://www.w3.org/TR/xhtml1/normative.html#strict)
-        dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + '</body></html>';
-      }
-      const dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
-      /*
-       * Use the DOMParser API by default, fallback later if needs be
-       * DOMParser not work for svg when has multiple root element.
-       */
-      if (NAMESPACE === HTML_NAMESPACE) {
-        try {
-          doc = new DOMParser().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
-        } catch (_) {}
-      }
-
-      /* Use createHTMLDocument in case DOMParser is not available */
-      if (!doc || !doc.documentElement) {
-        doc = implementation.createDocument(NAMESPACE, 'template', null);
-        try {
-          doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
-        } catch (_) {
-          // Syntax error if dirtyPayload is invalid xml
-        }
-      }
-      const body = doc.body || doc.documentElement;
-      if (dirty && leadingWhitespace) {
-        body.insertBefore(document.createTextNode(leadingWhitespace), body.childNodes[0] || null);
-      }
-
-      /* Work on whole document or just its body */
-      if (NAMESPACE === HTML_NAMESPACE) {
-        return getElementsByTagName.call(doc, WHOLE_DOCUMENT ? 'html' : 'body')[0];
-      }
-      return WHOLE_DOCUMENT ? doc.documentElement : body;
-    };
-
-    /**
-     * Creates a NodeIterator object that you can use to traverse filtered lists of nodes or elements in a document.
-     *
-     * @param  {Node} root The root element or node to start traversing on.
-     * @return {NodeIterator} The created NodeIterator
-     */
-    const _createNodeIterator = function _createNodeIterator(root) {
-      return createNodeIterator.call(root.ownerDocument || root, root,
-      // eslint-disable-next-line no-bitwise
-      NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
-    };
-
-    /**
-     * _isClobbered
-     *
-     * @param  {Node} elm element to check for clobbering attacks
-     * @return {Boolean} true if clobbered, false if safe
-     */
-    const _isClobbered = function _isClobbered(elm) {
-      return elm instanceof HTMLFormElement && (typeof elm.nodeName !== 'string' || typeof elm.textContent !== 'string' || typeof elm.removeChild !== 'function' || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== 'function' || typeof elm.setAttribute !== 'function' || typeof elm.namespaceURI !== 'string' || typeof elm.insertBefore !== 'function' || typeof elm.hasChildNodes !== 'function');
-    };
-
-    /**
-     * Checks whether the given object is a DOM node.
-     *
-     * @param  {Node} object object to check whether it's a DOM node
-     * @return {Boolean} true is object is a DOM node
-     */
-    const _isNode = function _isNode(object) {
-      return typeof Node === 'function' && object instanceof Node;
-    };
-
-    /**
-     * _executeHook
-     * Execute user configurable hooks
-     *
-     * @param  {String} entryPoint  Name of the hook's entry point
-     * @param  {Node} currentNode node to work on with the hook
-     * @param  {Object} data additional hook parameters
-     */
-    const _executeHook = function _executeHook(entryPoint, currentNode, data) {
-      if (!hooks[entryPoint]) {
-        return;
-      }
-      arrayForEach(hooks[entryPoint], hook => {
-        hook.call(DOMPurify, currentNode, data, CONFIG);
-      });
-    };
-
-    /**
-     * _sanitizeElements
-     *
-     * @protect nodeName
-     * @protect textContent
-     * @protect removeChild
-     *
-     * @param   {Node} currentNode to check for permission to exist
-     * @return  {Boolean} true if node was killed, false if left alive
-     */
-    const _sanitizeElements = function _sanitizeElements(currentNode) {
-      let content = null;
-
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeElements', currentNode, null);
-
-      /* Check if element is clobbered or can clobber */
-      if (_isClobbered(currentNode)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Now let's check the element's type and name */
-      const tagName = transformCaseFunc(currentNode.nodeName);
-
-      /* Execute a hook if present */
-      _executeHook('uponSanitizeElement', currentNode, {
-        tagName,
-        allowedTags: ALLOWED_TAGS
-      });
-
-      /* Detect mXSS attempts abusing namespace confusion */
-      if (currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(/<[/\w]/g, currentNode.innerHTML) && regExpTest(/<[/\w]/g, currentNode.textContent)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove any occurrence of processing instructions */
-      if (currentNode.nodeType === NODE_TYPE.progressingInstruction) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove any kind of possibly harmful comments */
-      if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(/<[/\w]/g, currentNode.data)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove element if anything forbids its presence */
-      if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
-        /* Check if we have a custom element to handle */
-        if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
-            return false;
-          }
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
-            return false;
-          }
-        }
-
-        /* Keep content except for bad-listed elements */
-        if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
-          const parentNode = getParentNode(currentNode) || currentNode.parentNode;
-          const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
-          if (childNodes && parentNode) {
-            const childCount = childNodes.length;
-            for (let i = childCount - 1; i >= 0; --i) {
-              const childClone = cloneNode(childNodes[i], true);
-              childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
-              parentNode.insertBefore(childClone, getNextSibling(currentNode));
-            }
-          }
-        }
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Check whether element has a valid namespace */
-      if (currentNode instanceof Element && !_checkValidNamespace(currentNode)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Make sure that older browsers don't get fallback-tag mXSS */
-      if ((tagName === 'noscript' || tagName === 'noembed' || tagName === 'noframes') && regExpTest(/<\/no(script|embed|frames)/i, currentNode.innerHTML)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Sanitize element content to be template-safe */
-      if (SAFE_FOR_TEMPLATES && currentNode.nodeType === NODE_TYPE.text) {
-        /* Get the element's text content */
-        content = currentNode.textContent;
-        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-          content = stringReplace(content, expr, ' ');
-        });
-        if (currentNode.textContent !== content) {
-          arrayPush(DOMPurify.removed, {
-            element: currentNode.cloneNode()
-          });
-          currentNode.textContent = content;
-        }
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeElements', currentNode, null);
-      return false;
-    };
-
-    /**
-     * _isValidAttribute
-     *
-     * @param  {string} lcTag Lowercase tag name of containing element.
-     * @param  {string} lcName Lowercase attribute name.
-     * @param  {string} value Attribute value.
-     * @return {Boolean} Returns true if `value` is valid, otherwise false.
-     */
-    // eslint-disable-next-line complexity
-    const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
-      /* Make sure attribute cannot clobber */
-      if (SANITIZE_DOM && (lcName === 'id' || lcName === 'name') && (value in document || value in formElement)) {
-        return false;
-      }
-
-      /* Allow valid data-* attributes: At least one character after "-"
-          (https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes)
-          XML-compatible (https://html.spec.whatwg.org/multipage/infrastructure.html#xml-compatible and http://www.w3.org/TR/xml/#d0e804)
-          We don't need to check the value; it's always URI safe. */
-      if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR, lcName)) ; else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR, lcName)) ; else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
-        if (
-        // First condition does a very basic check if a) it's basically a valid custom element tagname AND
-        // b) if the tagName passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-        // and c) if the attribute name passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.attributeNameCheck
-        _isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName)) ||
-        // Alternative, second condition checks if it's an `is`-attribute, AND
-        // the value passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-        lcName === 'is' && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))) ; else {
-          return false;
-        }
-        /* Check value is safe. First, is attr inert? If so, is safe */
-      } else if (URI_SAFE_ATTRIBUTES[lcName]) ; else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if ((lcName === 'src' || lcName === 'xlink:href' || lcName === 'href') && lcTag !== 'script' && stringIndexOf(value, 'data:') === 0 && DATA_URI_TAGS[lcTag]) ; else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if (value) {
-        return false;
-      } else ;
-      return true;
-    };
-
-    /**
-     * _isBasicCustomElement
-     * checks if at least one dash is included in tagName, and it's not the first char
-     * for more sophisticated checking see https://github.com/sindresorhus/validate-element-name
-     *
-     * @param {string} tagName name of the tag of the node to sanitize
-     * @returns {boolean} Returns true if the tag name meets the basic criteria for a custom element, otherwise false.
-     */
-    const _isBasicCustomElement = function _isBasicCustomElement(tagName) {
-      return tagName !== 'annotation-xml' && stringMatch(tagName, CUSTOM_ELEMENT);
-    };
-
-    /**
-     * _sanitizeAttributes
-     *
-     * @protect attributes
-     * @protect nodeName
-     * @protect removeAttribute
-     * @protect setAttribute
-     *
-     * @param  {Node} currentNode to sanitize
-     */
-    const _sanitizeAttributes = function _sanitizeAttributes(currentNode) {
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeAttributes', currentNode, null);
-      const {
-        attributes
-      } = currentNode;
-
-      /* Check if we have attributes; if not we might have a text node */
-      if (!attributes) {
-        return;
-      }
-      const hookEvent = {
-        attrName: '',
-        attrValue: '',
-        keepAttr: true,
-        allowedAttributes: ALLOWED_ATTR
-      };
-      let l = attributes.length;
-
-      /* Go backwards over all attributes; safely remove bad ones */
-      while (l--) {
-        const attr = attributes[l];
-        const {
-          name,
-          namespaceURI,
-          value: attrValue
-        } = attr;
-        const lcName = transformCaseFunc(name);
-        let value = name === 'value' ? attrValue : stringTrim(attrValue);
-
-        /* Execute a hook if present */
-        hookEvent.attrName = lcName;
-        hookEvent.attrValue = value;
-        hookEvent.keepAttr = true;
-        hookEvent.forceKeepAttr = undefined; // Allows developers to see this is a property they can set
-        _executeHook('uponSanitizeAttribute', currentNode, hookEvent);
-        value = hookEvent.attrValue;
-
-        /* Work around a security issue with comments inside attributes */
-        if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|title)/i, value)) {
-          _removeAttribute(name, currentNode);
-          continue;
-        }
-
-        /* Did the hooks approve of the attribute? */
-        if (hookEvent.forceKeepAttr) {
-          continue;
-        }
-
-        /* Remove attribute */
-        _removeAttribute(name, currentNode);
-
-        /* Did the hooks approve of the attribute? */
-        if (!hookEvent.keepAttr) {
-          continue;
-        }
-
-        /* Work around a security issue in jQuery 3.0 */
-        if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
-          _removeAttribute(name, currentNode);
-          continue;
-        }
-
-        /* Sanitize attribute content to be template-safe */
-        if (SAFE_FOR_TEMPLATES) {
-          arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-            value = stringReplace(value, expr, ' ');
-          });
-        }
-
-        /* Is `value` valid for this attribute? */
-        const lcTag = transformCaseFunc(currentNode.nodeName);
-        if (!_isValidAttribute(lcTag, lcName, value)) {
-          continue;
-        }
-
-        /* Full DOM Clobbering protection via namespace isolation,
-         * Prefix id and name attributes with `user-content-`
-         */
-        if (SANITIZE_NAMED_PROPS && (lcName === 'id' || lcName === 'name')) {
-          // Remove the attribute with this value
-          _removeAttribute(name, currentNode);
-
-          // Prefix the value and later re-create the attribute with the sanitized value
-          value = SANITIZE_NAMED_PROPS_PREFIX + value;
-        }
-
-        /* Handle attributes that require Trusted Types */
-        if (trustedTypesPolicy && typeof trustedTypes === 'object' && typeof trustedTypes.getAttributeType === 'function') {
-          if (namespaceURI) ; else {
-            switch (trustedTypes.getAttributeType(lcTag, lcName)) {
-              case 'TrustedHTML':
-                {
-                  value = trustedTypesPolicy.createHTML(value);
-                  break;
-                }
-              case 'TrustedScriptURL':
-                {
-                  value = trustedTypesPolicy.createScriptURL(value);
-                  break;
-                }
-            }
-          }
-        }
-
-        /* Handle invalid data-* attribute set by try-catching it */
-        try {
-          if (namespaceURI) {
-            currentNode.setAttributeNS(namespaceURI, name, value);
-          } else {
-            /* Fallback to setAttribute() for browser-unrecognized namespaces e.g. "x-schema". */
-            currentNode.setAttribute(name, value);
-          }
-          if (_isClobbered(currentNode)) {
-            _forceRemove(currentNode);
-          } else {
-            arrayPop(DOMPurify.removed);
-          }
-        } catch (_) {}
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeAttributes', currentNode, null);
-    };
-
-    /**
-     * _sanitizeShadowDOM
-     *
-     * @param  {DocumentFragment} fragment to iterate over recursively
-     */
-    const _sanitizeShadowDOM = function _sanitizeShadowDOM(fragment) {
-      let shadowNode = null;
-      const shadowIterator = _createNodeIterator(fragment);
-
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeShadowDOM', fragment, null);
-      while (shadowNode = shadowIterator.nextNode()) {
-        /* Execute a hook if present */
-        _executeHook('uponSanitizeShadowNode', shadowNode, null);
-
-        /* Sanitize tags and elements */
-        if (_sanitizeElements(shadowNode)) {
-          continue;
-        }
-
-        /* Deep shadow DOM detected */
-        if (shadowNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(shadowNode.content);
-        }
-
-        /* Check attributes, sanitize if necessary */
-        _sanitizeAttributes(shadowNode);
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeShadowDOM', fragment, null);
-    };
-
-    /**
-     * Sanitize
-     * Public method providing core sanitation functionality
-     *
-     * @param {String|Node} dirty string or DOM node
-     * @param {Object} cfg object
-     */
-    // eslint-disable-next-line complexity
-    DOMPurify.sanitize = function (dirty) {
-      let cfg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      let body = null;
-      let importedNode = null;
-      let currentNode = null;
-      let returnNode = null;
-      /* Make sure we have a string to sanitize.
-        DO NOT return early, as this will return the wrong type if
-        the user has requested a DOM object rather than a string */
-      IS_EMPTY_INPUT = !dirty;
-      if (IS_EMPTY_INPUT) {
-        dirty = '<!-->';
-      }
-
-      /* Stringify, in case dirty is an object */
-      if (typeof dirty !== 'string' && !_isNode(dirty)) {
-        if (typeof dirty.toString === 'function') {
-          dirty = dirty.toString();
-          if (typeof dirty !== 'string') {
-            throw typeErrorCreate('dirty is not a string, aborting');
-          }
-        } else {
-          throw typeErrorCreate('toString is not a function');
-        }
-      }
-
-      /* Return dirty HTML if DOMPurify cannot run */
-      if (!DOMPurify.isSupported) {
-        return dirty;
-      }
-
-      /* Assign config vars */
-      if (!SET_CONFIG) {
-        _parseConfig(cfg);
-      }
-
-      /* Clean up removed elements */
-      DOMPurify.removed = [];
-
-      /* Check if dirty is correctly typed for IN_PLACE */
-      if (typeof dirty === 'string') {
-        IN_PLACE = false;
-      }
-      if (IN_PLACE) {
-        /* Do some early pre-sanitization to avoid unsafe root nodes */
-        if (dirty.nodeName) {
-          const tagName = transformCaseFunc(dirty.nodeName);
-          if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
-            throw typeErrorCreate('root node is forbidden and cannot be sanitized in-place');
-          }
-        }
-      } else if (dirty instanceof Node) {
-        /* If dirty is a DOM element, append to an empty document to avoid
-           elements being stripped by the parser */
-        body = _initDocument('<!---->');
-        importedNode = body.ownerDocument.importNode(dirty, true);
-        if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === 'BODY') {
-          /* Node is already a body, use as is */
-          body = importedNode;
-        } else if (importedNode.nodeName === 'HTML') {
-          body = importedNode;
-        } else {
-          // eslint-disable-next-line unicorn/prefer-dom-node-append
-          body.appendChild(importedNode);
-        }
-      } else {
-        /* Exit directly if we have nothing to do */
-        if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
-        // eslint-disable-next-line unicorn/prefer-includes
-        dirty.indexOf('<') === -1) {
-          return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
-        }
-
-        /* Initialize the document to work on */
-        body = _initDocument(dirty);
-
-        /* Check we have a DOM node from the data */
-        if (!body) {
-          return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : '';
-        }
-      }
-
-      /* Remove first element node (ours) if FORCE_BODY is set */
-      if (body && FORCE_BODY) {
-        _forceRemove(body.firstChild);
-      }
-
-      /* Get node iterator */
-      const nodeIterator = _createNodeIterator(IN_PLACE ? dirty : body);
-
-      /* Now start iterating over the created document */
-      while (currentNode = nodeIterator.nextNode()) {
-        /* Sanitize tags and elements */
-        if (_sanitizeElements(currentNode)) {
-          continue;
-        }
-
-        /* Shadow DOM detected, sanitize it */
-        if (currentNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(currentNode.content);
-        }
-
-        /* Check attributes, sanitize if necessary */
-        _sanitizeAttributes(currentNode);
-      }
-
-      /* If we sanitized `dirty` in-place, return it. */
-      if (IN_PLACE) {
-        return dirty;
-      }
-
-      /* Return sanitized string or DOM */
-      if (RETURN_DOM) {
-        if (RETURN_DOM_FRAGMENT) {
-          returnNode = createDocumentFragment.call(body.ownerDocument);
-          while (body.firstChild) {
-            // eslint-disable-next-line unicorn/prefer-dom-node-append
-            returnNode.appendChild(body.firstChild);
-          }
-        } else {
-          returnNode = body;
-        }
-        if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmode) {
-          /*
-            AdoptNode() is not used because internal state is not reset
-            (e.g. the past names map of a HTMLFormElement), this is safe
-            in theory but we would rather not risk another attack vector.
-            The state that is cloned by importNode() is explicitly defined
-            by the specs.
-          */
-          returnNode = importNode.call(originalDocument, returnNode, true);
-        }
-        return returnNode;
-      }
-      let serializedHTML = WHOLE_DOCUMENT ? body.outerHTML : body.innerHTML;
-
-      /* Serialize doctype if allowed */
-      if (WHOLE_DOCUMENT && ALLOWED_TAGS['!doctype'] && body.ownerDocument && body.ownerDocument.doctype && body.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body.ownerDocument.doctype.name)) {
-        serializedHTML = '<!DOCTYPE ' + body.ownerDocument.doctype.name + '>\n' + serializedHTML;
-      }
-
-      /* Sanitize final string template-safe */
-      if (SAFE_FOR_TEMPLATES) {
-        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-          serializedHTML = stringReplace(serializedHTML, expr, ' ');
-        });
-      }
-      return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
-    };
-
-    /**
-     * Public method to set the configuration once
-     * setConfig
-     *
-     * @param {Object} cfg configuration object
-     */
-    DOMPurify.setConfig = function () {
-      let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      _parseConfig(cfg);
-      SET_CONFIG = true;
-    };
-
-    /**
-     * Public method to remove the configuration
-     * clearConfig
-     *
-     */
-    DOMPurify.clearConfig = function () {
-      CONFIG = null;
-      SET_CONFIG = false;
-    };
-
-    /**
-     * Public method to check if an attribute value is valid.
-     * Uses last set config, if any. Otherwise, uses config defaults.
-     * isValidAttribute
-     *
-     * @param  {String} tag Tag name of containing element.
-     * @param  {String} attr Attribute name.
-     * @param  {String} value Attribute value.
-     * @return {Boolean} Returns true if `value` is valid. Otherwise, returns false.
-     */
-    DOMPurify.isValidAttribute = function (tag, attr, value) {
-      /* Initialize shared config vars if necessary. */
-      if (!CONFIG) {
-        _parseConfig({});
-      }
-      const lcTag = transformCaseFunc(tag);
-      const lcName = transformCaseFunc(attr);
-      return _isValidAttribute(lcTag, lcName, value);
-    };
-
-    /**
-     * AddHook
-     * Public method to add DOMPurify hooks
-     *
-     * @param {String} entryPoint entry point for the hook to add
-     * @param {Function} hookFunction function to execute
-     */
-    DOMPurify.addHook = function (entryPoint, hookFunction) {
-      if (typeof hookFunction !== 'function') {
-        return;
-      }
-      hooks[entryPoint] = hooks[entryPoint] || [];
-      arrayPush(hooks[entryPoint], hookFunction);
-    };
-
-    /**
-     * RemoveHook
-     * Public method to remove a DOMPurify hook at a given entryPoint
-     * (pops it from the stack of hooks if more are present)
-     *
-     * @param {String} entryPoint entry point for the hook to remove
-     * @return {Function} removed(popped) hook
-     */
-    DOMPurify.removeHook = function (entryPoint) {
-      if (hooks[entryPoint]) {
-        return arrayPop(hooks[entryPoint]);
-      }
-    };
-
-    /**
-     * RemoveHooks
-     * Public method to remove all DOMPurify hooks at a given entryPoint
-     *
-     * @param  {String} entryPoint entry point for the hooks to remove
-     */
-    DOMPurify.removeHooks = function (entryPoint) {
-      if (hooks[entryPoint]) {
-        hooks[entryPoint] = [];
-      }
-    };
-
-    /**
-     * RemoveAllHooks
-     * Public method to remove all DOMPurify hooks
-     */
-    DOMPurify.removeAllHooks = function () {
-      hooks = {};
-    };
+    });
+  } catch (_) {
+    // Policy creation failed (most likely another DOMPurify script has
+    // already run). Skip creating the policy, as this will only cause errors
+    // if TT are enforced.
+    console.warn('TrustedTypes policy ' + policyName + ' could not be created.');
+    return null;
+  }
+};
+const _createHooksMap = function _createHooksMap() {
+  return {
+    afterSanitizeAttributes: [],
+    afterSanitizeElements: [],
+    afterSanitizeShadowDOM: [],
+    beforeSanitizeAttributes: [],
+    beforeSanitizeElements: [],
+    beforeSanitizeShadowDOM: [],
+    uponSanitizeAttribute: [],
+    uponSanitizeElement: [],
+    uponSanitizeShadowNode: []
+  };
+};
+function createDOMPurify() {
+  let window = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getGlobal();
+  const DOMPurify = root => createDOMPurify(root);
+  DOMPurify.version = '3.2.5';
+  DOMPurify.removed = [];
+  if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document || !window.Element) {
+    // Not running in a browser, provide a factory function
+    // so that you can pass your own Window
+    DOMPurify.isSupported = false;
     return DOMPurify;
   }
-  var purify = createDOMPurify();
+  let {
+    document
+  } = window;
+  const originalDocument = document;
+  const currentScript = originalDocument.currentScript;
+  const {
+    DocumentFragment,
+    HTMLTemplateElement,
+    Node,
+    Element,
+    NodeFilter,
+    NamedNodeMap = window.NamedNodeMap || window.MozNamedAttrMap,
+    HTMLFormElement,
+    DOMParser,
+    trustedTypes
+  } = window;
+  const ElementPrototype = Element.prototype;
+  const cloneNode = lookupGetter(ElementPrototype, 'cloneNode');
+  const remove = lookupGetter(ElementPrototype, 'remove');
+  const getNextSibling = lookupGetter(ElementPrototype, 'nextSibling');
+  const getChildNodes = lookupGetter(ElementPrototype, 'childNodes');
+  const getParentNode = lookupGetter(ElementPrototype, 'parentNode');
+  // As per issue #47, the web-components registry is inherited by a
+  // new document created via createHTMLDocument. As per the spec
+  // (http://w3c.github.io/webcomponents/spec/custom/#creating-and-passing-registries)
+  // a new empty registry is used when creating a template contents owner
+  // document, so we use that as our parent document to ensure nothing
+  // is inherited.
+  if (typeof HTMLTemplateElement === 'function') {
+    const template = document.createElement('template');
+    if (template.content && template.content.ownerDocument) {
+      document = template.content.ownerDocument;
+    }
+  }
+  let trustedTypesPolicy;
+  let emptyHTML = '';
+  const {
+    implementation,
+    createNodeIterator,
+    createDocumentFragment,
+    getElementsByTagName
+  } = document;
+  const {
+    importNode
+  } = originalDocument;
+  let hooks = _createHooksMap();
+  /**
+   * Expose whether this browser supports running the full DOMPurify.
+   */
+  DOMPurify.isSupported = typeof entries === 'function' && typeof getParentNode === 'function' && implementation && implementation.createHTMLDocument !== undefined;
+  const {
+    MUSTACHE_EXPR,
+    ERB_EXPR,
+    TMPLIT_EXPR,
+    DATA_ATTR,
+    ARIA_ATTR,
+    IS_SCRIPT_OR_DATA,
+    ATTR_WHITESPACE,
+    CUSTOM_ELEMENT
+  } = EXPRESSIONS;
+  let {
+    IS_ALLOWED_URI: IS_ALLOWED_URI$1
+  } = EXPRESSIONS;
+  /**
+   * We consider the elements and attributes below to be safe. Ideally
+   * don't add any new ones but feel free to remove unwanted ones.
+   */
+  /* allowed element names */
+  let ALLOWED_TAGS = null;
+  const DEFAULT_ALLOWED_TAGS = addToSet({}, [...html$1, ...svg$1, ...svgFilters, ...mathMl$1, ...text]);
+  /* Allowed attribute names */
+  let ALLOWED_ATTR = null;
+  const DEFAULT_ALLOWED_ATTR = addToSet({}, [...html, ...svg, ...mathMl, ...xml]);
+  /*
+   * Configure how DOMPurify should handle custom elements and their attributes as well as customized built-in elements.
+   * @property {RegExp|Function|null} tagNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any custom elements)
+   * @property {RegExp|Function|null} attributeNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any attributes not on the allow list)
+   * @property {boolean} allowCustomizedBuiltInElements allow custom elements derived from built-ins if they pass CUSTOM_ELEMENT_HANDLING.tagNameCheck. Default: `false`.
+   */
+  let CUSTOM_ELEMENT_HANDLING = Object.seal(create(null, {
+    tagNameCheck: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: null
+    },
+    attributeNameCheck: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: null
+    },
+    allowCustomizedBuiltInElements: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: false
+    }
+  }));
+  /* Explicitly forbidden tags (overrides ALLOWED_TAGS/ADD_TAGS) */
+  let FORBID_TAGS = null;
+  /* Explicitly forbidden attributes (overrides ALLOWED_ATTR/ADD_ATTR) */
+  let FORBID_ATTR = null;
+  /* Decide if ARIA attributes are okay */
+  let ALLOW_ARIA_ATTR = true;
+  /* Decide if custom data attributes are okay */
+  let ALLOW_DATA_ATTR = true;
+  /* Decide if unknown protocols are okay */
+  let ALLOW_UNKNOWN_PROTOCOLS = false;
+  /* Decide if self-closing tags in attributes are allowed.
+   * Usually removed due to a mXSS issue in jQuery 3.0 */
+  let ALLOW_SELF_CLOSE_IN_ATTR = true;
+  /* Output should be safe for common template engines.
+   * This means, DOMPurify removes data attributes, mustaches and ERB
+   */
+  let SAFE_FOR_TEMPLATES = false;
+  /* Output should be safe even for XML used within HTML and alike.
+   * This means, DOMPurify removes comments when containing risky content.
+   */
+  let SAFE_FOR_XML = true;
+  /* Decide if document with <html>... should be returned */
+  let WHOLE_DOCUMENT = false;
+  /* Track whether config is already set on this instance of DOMPurify. */
+  let SET_CONFIG = false;
+  /* Decide if all elements (e.g. style, script) must be children of
+   * document.body. By default, browsers might move them to document.head */
+  let FORCE_BODY = false;
+  /* Decide if a DOM `HTMLBodyElement` should be returned, instead of a html
+   * string (or a TrustedHTML object if Trusted Types are supported).
+   * If `WHOLE_DOCUMENT` is enabled a `HTMLHtmlElement` will be returned instead
+   */
+  let RETURN_DOM = false;
+  /* Decide if a DOM `DocumentFragment` should be returned, instead of a html
+   * string  (or a TrustedHTML object if Trusted Types are supported) */
+  let RETURN_DOM_FRAGMENT = false;
+  /* Try to return a Trusted Type object instead of a string, return a string in
+   * case Trusted Types are not supported  */
+  let RETURN_TRUSTED_TYPE = false;
+  /* Output should be free from DOM clobbering attacks?
+   * This sanitizes markups named with colliding, clobberable built-in DOM APIs.
+   */
+  let SANITIZE_DOM = true;
+  /* Achieve full DOM Clobbering protection by isolating the namespace of named
+   * properties and JS variables, mitigating attacks that abuse the HTML/DOM spec rules.
+   *
+   * HTML/DOM spec rules that enable DOM Clobbering:
+   *   - Named Access on Window (§7.3.3)
+   *   - DOM Tree Accessors (§3.1.5)
+   *   - Form Element Parent-Child Relations (§4.10.3)
+   *   - Iframe srcdoc / Nested WindowProxies (§4.8.5)
+   *   - HTMLCollection (§4.2.10.2)
+   *
+   * Namespace isolation is implemented by prefixing `id` and `name` attributes
+   * with a constant string, i.e., `user-content-`
+   */
+  let SANITIZE_NAMED_PROPS = false;
+  const SANITIZE_NAMED_PROPS_PREFIX = 'user-content-';
+  /* Keep element content when removing element? */
+  let KEEP_CONTENT = true;
+  /* If a `Node` is passed to sanitize(), then performs sanitization in-place instead
+   * of importing it into a new Document and returning a sanitized copy */
+  let IN_PLACE = false;
+  /* Allow usage of profiles like html, svg and mathMl */
+  let USE_PROFILES = {};
+  /* Tags to ignore content of when KEEP_CONTENT is true */
+  let FORBID_CONTENTS = null;
+  const DEFAULT_FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'noscript', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
+  /* Tags that are safe for data: URIs */
+  let DATA_URI_TAGS = null;
+  const DEFAULT_DATA_URI_TAGS = addToSet({}, ['audio', 'video', 'img', 'source', 'image', 'track']);
+  /* Attributes safe for values like "javascript:" */
+  let URI_SAFE_ATTRIBUTES = null;
+  const DEFAULT_URI_SAFE_ATTRIBUTES = addToSet({}, ['alt', 'class', 'for', 'id', 'label', 'name', 'pattern', 'placeholder', 'role', 'summary', 'title', 'value', 'style', 'xmlns']);
+  const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
+  const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+  const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
+  /* Document namespace */
+  let NAMESPACE = HTML_NAMESPACE;
+  let IS_EMPTY_INPUT = false;
+  /* Allowed XHTML+XML namespaces */
+  let ALLOWED_NAMESPACES = null;
+  const DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
+  let MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ['mi', 'mo', 'mn', 'ms', 'mtext']);
+  let HTML_INTEGRATION_POINTS = addToSet({}, ['annotation-xml']);
+  // Certain elements are allowed in both SVG and HTML
+  // namespace. We need to specify them explicitly
+  // so that they don't get erroneously deleted from
+  // HTML namespace.
+  const COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ['title', 'style', 'font', 'a', 'script']);
+  /* Parsing of strict XHTML documents */
+  let PARSER_MEDIA_TYPE = null;
+  const SUPPORTED_PARSER_MEDIA_TYPES = ['application/xhtml+xml', 'text/html'];
+  const DEFAULT_PARSER_MEDIA_TYPE = 'text/html';
+  let transformCaseFunc = null;
+  /* Keep a reference to config to pass to hooks */
+  let CONFIG = null;
+  /* Ideally, do not touch anything below this line */
+  /* ______________________________________________ */
+  const formElement = document.createElement('form');
+  const isRegexOrFunction = function isRegexOrFunction(testValue) {
+    return testValue instanceof RegExp || testValue instanceof Function;
+  };
+  /**
+   * _parseConfig
+   *
+   * @param cfg optional config literal
+   */
+  // eslint-disable-next-line complexity
+  const _parseConfig = function _parseConfig() {
+    let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    if (CONFIG && CONFIG === cfg) {
+      return;
+    }
+    /* Shield configuration object from tampering */
+    if (!cfg || typeof cfg !== 'object') {
+      cfg = {};
+    }
+    /* Shield configuration object from prototype pollution */
+    cfg = clone(cfg);
+    PARSER_MEDIA_TYPE =
+    // eslint-disable-next-line unicorn/prefer-includes
+    SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
+    // HTML tags and attributes are not case-sensitive, converting to lowercase. Keeping XHTML as is.
+    transformCaseFunc = PARSER_MEDIA_TYPE === 'application/xhtml+xml' ? stringToString : stringToLowerCase;
+    /* Set configuration parameters */
+    ALLOWED_TAGS = objectHasOwnProperty(cfg, 'ALLOWED_TAGS') ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
+    ALLOWED_ATTR = objectHasOwnProperty(cfg, 'ALLOWED_ATTR') ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
+    ALLOWED_NAMESPACES = objectHasOwnProperty(cfg, 'ALLOWED_NAMESPACES') ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
+    URI_SAFE_ATTRIBUTES = objectHasOwnProperty(cfg, 'ADD_URI_SAFE_ATTR') ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES), cfg.ADD_URI_SAFE_ATTR, transformCaseFunc) : DEFAULT_URI_SAFE_ATTRIBUTES;
+    DATA_URI_TAGS = objectHasOwnProperty(cfg, 'ADD_DATA_URI_TAGS') ? addToSet(clone(DEFAULT_DATA_URI_TAGS), cfg.ADD_DATA_URI_TAGS, transformCaseFunc) : DEFAULT_DATA_URI_TAGS;
+    FORBID_CONTENTS = objectHasOwnProperty(cfg, 'FORBID_CONTENTS') ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
+    FORBID_TAGS = objectHasOwnProperty(cfg, 'FORBID_TAGS') ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : {};
+    FORBID_ATTR = objectHasOwnProperty(cfg, 'FORBID_ATTR') ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : {};
+    USE_PROFILES = objectHasOwnProperty(cfg, 'USE_PROFILES') ? cfg.USE_PROFILES : false;
+    ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false; // Default true
+    ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false; // Default true
+    ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false; // Default false
+    ALLOW_SELF_CLOSE_IN_ATTR = cfg.ALLOW_SELF_CLOSE_IN_ATTR !== false; // Default true
+    SAFE_FOR_TEMPLATES = cfg.SAFE_FOR_TEMPLATES || false; // Default false
+    SAFE_FOR_XML = cfg.SAFE_FOR_XML !== false; // Default true
+    WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false; // Default false
+    RETURN_DOM = cfg.RETURN_DOM || false; // Default false
+    RETURN_DOM_FRAGMENT = cfg.RETURN_DOM_FRAGMENT || false; // Default false
+    RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false; // Default false
+    FORCE_BODY = cfg.FORCE_BODY || false; // Default false
+    SANITIZE_DOM = cfg.SANITIZE_DOM !== false; // Default true
+    SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false; // Default false
+    KEEP_CONTENT = cfg.KEEP_CONTENT !== false; // Default true
+    IN_PLACE = cfg.IN_PLACE || false; // Default false
+    IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI;
+    NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
+    MATHML_TEXT_INTEGRATION_POINTS = cfg.MATHML_TEXT_INTEGRATION_POINTS || MATHML_TEXT_INTEGRATION_POINTS;
+    HTML_INTEGRATION_POINTS = cfg.HTML_INTEGRATION_POINTS || HTML_INTEGRATION_POINTS;
+    CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
+    if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
+      CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
+    }
+    if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)) {
+      CUSTOM_ELEMENT_HANDLING.attributeNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck;
+    }
+    if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === 'boolean') {
+      CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
+    }
+    if (SAFE_FOR_TEMPLATES) {
+      ALLOW_DATA_ATTR = false;
+    }
+    if (RETURN_DOM_FRAGMENT) {
+      RETURN_DOM = true;
+    }
+    /* Parse profile info */
+    if (USE_PROFILES) {
+      ALLOWED_TAGS = addToSet({}, text);
+      ALLOWED_ATTR = [];
+      if (USE_PROFILES.html === true) {
+        addToSet(ALLOWED_TAGS, html$1);
+        addToSet(ALLOWED_ATTR, html);
+      }
+      if (USE_PROFILES.svg === true) {
+        addToSet(ALLOWED_TAGS, svg$1);
+        addToSet(ALLOWED_ATTR, svg);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+      if (USE_PROFILES.svgFilters === true) {
+        addToSet(ALLOWED_TAGS, svgFilters);
+        addToSet(ALLOWED_ATTR, svg);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+      if (USE_PROFILES.mathMl === true) {
+        addToSet(ALLOWED_TAGS, mathMl$1);
+        addToSet(ALLOWED_ATTR, mathMl);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+    }
+    /* Merge configuration parameters */
+    if (cfg.ADD_TAGS) {
+      if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
+        ALLOWED_TAGS = clone(ALLOWED_TAGS);
+      }
+      addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
+    }
+    if (cfg.ADD_ATTR) {
+      if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
+        ALLOWED_ATTR = clone(ALLOWED_ATTR);
+      }
+      addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
+    }
+    if (cfg.ADD_URI_SAFE_ATTR) {
+      addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
+    }
+    if (cfg.FORBID_CONTENTS) {
+      if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
+        FORBID_CONTENTS = clone(FORBID_CONTENTS);
+      }
+      addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
+    }
+    /* Add #text in case KEEP_CONTENT is set to true */
+    if (KEEP_CONTENT) {
+      ALLOWED_TAGS['#text'] = true;
+    }
+    /* Add html, head and body to ALLOWED_TAGS in case WHOLE_DOCUMENT is true */
+    if (WHOLE_DOCUMENT) {
+      addToSet(ALLOWED_TAGS, ['html', 'head', 'body']);
+    }
+    /* Add tbody to ALLOWED_TAGS in case tables are permitted, see #286, #365 */
+    if (ALLOWED_TAGS.table) {
+      addToSet(ALLOWED_TAGS, ['tbody']);
+      delete FORBID_TAGS.tbody;
+    }
+    if (cfg.TRUSTED_TYPES_POLICY) {
+      if (typeof cfg.TRUSTED_TYPES_POLICY.createHTML !== 'function') {
+        throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');
+      }
+      if (typeof cfg.TRUSTED_TYPES_POLICY.createScriptURL !== 'function') {
+        throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');
+      }
+      // Overwrite existing TrustedTypes policy.
+      trustedTypesPolicy = cfg.TRUSTED_TYPES_POLICY;
+      // Sign local variables required by `sanitize`.
+      emptyHTML = trustedTypesPolicy.createHTML('');
+    } else {
+      // Uninitialized policy, attempt to initialize the internal dompurify policy.
+      if (trustedTypesPolicy === undefined) {
+        trustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
+      }
+      // If creating the internal policy succeeded sign internal variables.
+      if (trustedTypesPolicy !== null && typeof emptyHTML === 'string') {
+        emptyHTML = trustedTypesPolicy.createHTML('');
+      }
+    }
+    // Prevent further manipulation of configuration.
+    // Not available in IE8, Safari 5, etc.
+    if (freeze) {
+      freeze(cfg);
+    }
+    CONFIG = cfg;
+  };
+  /* Keep track of all possible SVG and MathML tags
+   * so that we can perform the namespace checks
+   * correctly. */
+  const ALL_SVG_TAGS = addToSet({}, [...svg$1, ...svgFilters, ...svgDisallowed]);
+  const ALL_MATHML_TAGS = addToSet({}, [...mathMl$1, ...mathMlDisallowed]);
+  /**
+   * @param element a DOM element whose namespace is being checked
+   * @returns Return false if the element has a
+   *  namespace that a spec-compliant parser would never
+   *  return. Return true otherwise.
+   */
+  const _checkValidNamespace = function _checkValidNamespace(element) {
+    let parent = getParentNode(element);
+    // In JSDOM, if we're inside shadow DOM, then parentNode
+    // can be null. We just simulate parent in this case.
+    if (!parent || !parent.tagName) {
+      parent = {
+        namespaceURI: NAMESPACE,
+        tagName: 'template'
+      };
+    }
+    const tagName = stringToLowerCase(element.tagName);
+    const parentTagName = stringToLowerCase(parent.tagName);
+    if (!ALLOWED_NAMESPACES[element.namespaceURI]) {
+      return false;
+    }
+    if (element.namespaceURI === SVG_NAMESPACE) {
+      // The only way to switch from HTML namespace to SVG
+      // is via <svg>. If it happens via any other tag, then
+      // it should be killed.
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === 'svg';
+      }
+      // The only way to switch from MathML to SVG is via`
+      // svg if parent is either <annotation-xml> or MathML
+      // text integration points.
+      if (parent.namespaceURI === MATHML_NAMESPACE) {
+        return tagName === 'svg' && (parentTagName === 'annotation-xml' || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
+      }
+      // We only allow elements that are defined in SVG
+      // spec. All others are disallowed in SVG namespace.
+      return Boolean(ALL_SVG_TAGS[tagName]);
+    }
+    if (element.namespaceURI === MATHML_NAMESPACE) {
+      // The only way to switch from HTML namespace to MathML
+      // is via <math>. If it happens via any other tag, then
+      // it should be killed.
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === 'math';
+      }
+      // The only way to switch from SVG to MathML is via
+      // <math> and HTML integration points
+      if (parent.namespaceURI === SVG_NAMESPACE) {
+        return tagName === 'math' && HTML_INTEGRATION_POINTS[parentTagName];
+      }
+      // We only allow elements that are defined in MathML
+      // spec. All others are disallowed in MathML namespace.
+      return Boolean(ALL_MATHML_TAGS[tagName]);
+    }
+    if (element.namespaceURI === HTML_NAMESPACE) {
+      // The only way to switch from SVG to HTML is via
+      // HTML integration points, and from MathML to HTML
+      // is via MathML text integration points
+      if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      // We disallow tags that are specific for MathML
+      // or SVG and should never appear in HTML namespace
+      return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
+    }
+    // For XHTML and XML documents that support custom namespaces
+    if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && ALLOWED_NAMESPACES[element.namespaceURI]) {
+      return true;
+    }
+    // The code should never reach this place (this means
+    // that the element somehow got namespace that is not
+    // HTML, SVG, MathML or allowed via ALLOWED_NAMESPACES).
+    // Return false just in case.
+    return false;
+  };
+  /**
+   * _forceRemove
+   *
+   * @param node a DOM node
+   */
+  const _forceRemove = function _forceRemove(node) {
+    arrayPush(DOMPurify.removed, {
+      element: node
+    });
+    try {
+      // eslint-disable-next-line unicorn/prefer-dom-node-remove
+      getParentNode(node).removeChild(node);
+    } catch (_) {
+      remove(node);
+    }
+  };
+  /**
+   * _removeAttribute
+   *
+   * @param name an Attribute name
+   * @param element a DOM node
+   */
+  const _removeAttribute = function _removeAttribute(name, element) {
+    try {
+      arrayPush(DOMPurify.removed, {
+        attribute: element.getAttributeNode(name),
+        from: element
+      });
+    } catch (_) {
+      arrayPush(DOMPurify.removed, {
+        attribute: null,
+        from: element
+      });
+    }
+    element.removeAttribute(name);
+    // We void attribute values for unremovable "is" attributes
+    if (name === 'is') {
+      if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
+        try {
+          _forceRemove(element);
+        } catch (_) {}
+      } else {
+        try {
+          element.setAttribute(name, '');
+        } catch (_) {}
+      }
+    }
+  };
+  /**
+   * _initDocument
+   *
+   * @param dirty - a string of dirty markup
+   * @return a DOM, filled with the dirty markup
+   */
+  const _initDocument = function _initDocument(dirty) {
+    /* Create a HTML document */
+    let doc = null;
+    let leadingWhitespace = null;
+    if (FORCE_BODY) {
+      dirty = '<remove></remove>' + dirty;
+    } else {
+      /* If FORCE_BODY isn't used, leading whitespace needs to be preserved manually */
+      const matches = stringMatch(dirty, /^[\r\n\t ]+/);
+      leadingWhitespace = matches && matches[0];
+    }
+    if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && NAMESPACE === HTML_NAMESPACE) {
+      // Root of XHTML doc must contain xmlns declaration (see https://www.w3.org/TR/xhtml1/normative.html#strict)
+      dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + '</body></html>';
+    }
+    const dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
+    /*
+     * Use the DOMParser API by default, fallback later if needs be
+     * DOMParser not work for svg when has multiple root element.
+     */
+    if (NAMESPACE === HTML_NAMESPACE) {
+      try {
+        doc = new DOMParser().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
+      } catch (_) {}
+    }
+    /* Use createHTMLDocument in case DOMParser is not available */
+    if (!doc || !doc.documentElement) {
+      doc = implementation.createDocument(NAMESPACE, 'template', null);
+      try {
+        doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
+      } catch (_) {
+        // Syntax error if dirtyPayload is invalid xml
+      }
+    }
+    const body = doc.body || doc.documentElement;
+    if (dirty && leadingWhitespace) {
+      body.insertBefore(document.createTextNode(leadingWhitespace), body.childNodes[0] || null);
+    }
+    /* Work on whole document or just its body */
+    if (NAMESPACE === HTML_NAMESPACE) {
+      return getElementsByTagName.call(doc, WHOLE_DOCUMENT ? 'html' : 'body')[0];
+    }
+    return WHOLE_DOCUMENT ? doc.documentElement : body;
+  };
+  /**
+   * Creates a NodeIterator object that you can use to traverse filtered lists of nodes or elements in a document.
+   *
+   * @param root The root element or node to start traversing on.
+   * @return The created NodeIterator
+   */
+  const _createNodeIterator = function _createNodeIterator(root) {
+    return createNodeIterator.call(root.ownerDocument || root, root,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
+  };
+  /**
+   * _isClobbered
+   *
+   * @param element element to check for clobbering attacks
+   * @return true if clobbered, false if safe
+   */
+  const _isClobbered = function _isClobbered(element) {
+    return element instanceof HTMLFormElement && (typeof element.nodeName !== 'string' || typeof element.textContent !== 'string' || typeof element.removeChild !== 'function' || !(element.attributes instanceof NamedNodeMap) || typeof element.removeAttribute !== 'function' || typeof element.setAttribute !== 'function' || typeof element.namespaceURI !== 'string' || typeof element.insertBefore !== 'function' || typeof element.hasChildNodes !== 'function');
+  };
+  /**
+   * Checks whether the given object is a DOM node.
+   *
+   * @param value object to check whether it's a DOM node
+   * @return true is object is a DOM node
+   */
+  const _isNode = function _isNode(value) {
+    return typeof Node === 'function' && value instanceof Node;
+  };
+  function _executeHooks(hooks, currentNode, data) {
+    arrayForEach(hooks, hook => {
+      hook.call(DOMPurify, currentNode, data, CONFIG);
+    });
+  }
+  /**
+   * _sanitizeElements
+   *
+   * @protect nodeName
+   * @protect textContent
+   * @protect removeChild
+   * @param currentNode to check for permission to exist
+   * @return true if node was killed, false if left alive
+   */
+  const _sanitizeElements = function _sanitizeElements(currentNode) {
+    let content = null;
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeElements, currentNode, null);
+    /* Check if element is clobbered or can clobber */
+    if (_isClobbered(currentNode)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Now let's check the element's type and name */
+    const tagName = transformCaseFunc(currentNode.nodeName);
+    /* Execute a hook if present */
+    _executeHooks(hooks.uponSanitizeElement, currentNode, {
+      tagName,
+      allowedTags: ALLOWED_TAGS
+    });
+    /* Detect mXSS attempts abusing namespace confusion */
+    if (currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(/<[/\w!]/g, currentNode.innerHTML) && regExpTest(/<[/\w!]/g, currentNode.textContent)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove any occurrence of processing instructions */
+    if (currentNode.nodeType === NODE_TYPE.progressingInstruction) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove any kind of possibly harmful comments */
+    if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(/<[/\w]/g, currentNode.data)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove element if anything forbids its presence */
+    if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
+      /* Check if we have a custom element to handle */
+      if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
+          return false;
+        }
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
+          return false;
+        }
+      }
+      /* Keep content except for bad-listed elements */
+      if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
+        const parentNode = getParentNode(currentNode) || currentNode.parentNode;
+        const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
+        if (childNodes && parentNode) {
+          const childCount = childNodes.length;
+          for (let i = childCount - 1; i >= 0; --i) {
+            const childClone = cloneNode(childNodes[i], true);
+            childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
+            parentNode.insertBefore(childClone, getNextSibling(currentNode));
+          }
+        }
+      }
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Check whether element has a valid namespace */
+    if (currentNode instanceof Element && !_checkValidNamespace(currentNode)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Make sure that older browsers don't get fallback-tag mXSS */
+    if ((tagName === 'noscript' || tagName === 'noembed' || tagName === 'noframes') && regExpTest(/<\/no(script|embed|frames)/i, currentNode.innerHTML)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Sanitize element content to be template-safe */
+    if (SAFE_FOR_TEMPLATES && currentNode.nodeType === NODE_TYPE.text) {
+      /* Get the element's text content */
+      content = currentNode.textContent;
+      arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+        content = stringReplace(content, expr, ' ');
+      });
+      if (currentNode.textContent !== content) {
+        arrayPush(DOMPurify.removed, {
+          element: currentNode.cloneNode()
+        });
+        currentNode.textContent = content;
+      }
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeElements, currentNode, null);
+    return false;
+  };
+  /**
+   * _isValidAttribute
+   *
+   * @param lcTag Lowercase tag name of containing element.
+   * @param lcName Lowercase attribute name.
+   * @param value Attribute value.
+   * @return Returns true if `value` is valid, otherwise false.
+   */
+  // eslint-disable-next-line complexity
+  const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
+    /* Make sure attribute cannot clobber */
+    if (SANITIZE_DOM && (lcName === 'id' || lcName === 'name') && (value in document || value in formElement)) {
+      return false;
+    }
+    /* Allow valid data-* attributes: At least one character after "-"
+        (https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes)
+        XML-compatible (https://html.spec.whatwg.org/multipage/infrastructure.html#xml-compatible and http://www.w3.org/TR/xml/#d0e804)
+        We don't need to check the value; it's always URI safe. */
+    if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR, lcName)) ; else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR, lcName)) ; else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
+      if (
+      // First condition does a very basic check if a) it's basically a valid custom element tagname AND
+      // b) if the tagName passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
+      // and c) if the attribute name passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.attributeNameCheck
+      _isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName)) ||
+      // Alternative, second condition checks if it's an `is`-attribute, AND
+      // the value passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
+      lcName === 'is' && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))) ; else {
+        return false;
+      }
+      /* Check value is safe. First, is attr inert? If so, is safe */
+    } else if (URI_SAFE_ATTRIBUTES[lcName]) ; else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if ((lcName === 'src' || lcName === 'xlink:href' || lcName === 'href') && lcTag !== 'script' && stringIndexOf(value, 'data:') === 0 && DATA_URI_TAGS[lcTag]) ; else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if (value) {
+      return false;
+    } else ;
+    return true;
+  };
+  /**
+   * _isBasicCustomElement
+   * checks if at least one dash is included in tagName, and it's not the first char
+   * for more sophisticated checking see https://github.com/sindresorhus/validate-element-name
+   *
+   * @param tagName name of the tag of the node to sanitize
+   * @returns Returns true if the tag name meets the basic criteria for a custom element, otherwise false.
+   */
+  const _isBasicCustomElement = function _isBasicCustomElement(tagName) {
+    return tagName !== 'annotation-xml' && stringMatch(tagName, CUSTOM_ELEMENT);
+  };
+  /**
+   * _sanitizeAttributes
+   *
+   * @protect attributes
+   * @protect nodeName
+   * @protect removeAttribute
+   * @protect setAttribute
+   *
+   * @param currentNode to sanitize
+   */
+  const _sanitizeAttributes = function _sanitizeAttributes(currentNode) {
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeAttributes, currentNode, null);
+    const {
+      attributes
+    } = currentNode;
+    /* Check if we have attributes; if not we might have a text node */
+    if (!attributes || _isClobbered(currentNode)) {
+      return;
+    }
+    const hookEvent = {
+      attrName: '',
+      attrValue: '',
+      keepAttr: true,
+      allowedAttributes: ALLOWED_ATTR,
+      forceKeepAttr: undefined
+    };
+    let l = attributes.length;
+    /* Go backwards over all attributes; safely remove bad ones */
+    while (l--) {
+      const attr = attributes[l];
+      const {
+        name,
+        namespaceURI,
+        value: attrValue
+      } = attr;
+      const lcName = transformCaseFunc(name);
+      let value = name === 'value' ? attrValue : stringTrim(attrValue);
+      /* Execute a hook if present */
+      hookEvent.attrName = lcName;
+      hookEvent.attrValue = value;
+      hookEvent.keepAttr = true;
+      hookEvent.forceKeepAttr = undefined; // Allows developers to see this is a property they can set
+      _executeHooks(hooks.uponSanitizeAttribute, currentNode, hookEvent);
+      value = hookEvent.attrValue;
+      /* Full DOM Clobbering protection via namespace isolation,
+       * Prefix id and name attributes with `user-content-`
+       */
+      if (SANITIZE_NAMED_PROPS && (lcName === 'id' || lcName === 'name')) {
+        // Remove the attribute with this value
+        _removeAttribute(name, currentNode);
+        // Prefix the value and later re-create the attribute with the sanitized value
+        value = SANITIZE_NAMED_PROPS_PREFIX + value;
+      }
+      /* Work around a security issue with comments inside attributes */
+      if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|title)/i, value)) {
+        _removeAttribute(name, currentNode);
+        continue;
+      }
+      /* Did the hooks approve of the attribute? */
+      if (hookEvent.forceKeepAttr) {
+        continue;
+      }
+      /* Remove attribute */
+      _removeAttribute(name, currentNode);
+      /* Did the hooks approve of the attribute? */
+      if (!hookEvent.keepAttr) {
+        continue;
+      }
+      /* Work around a security issue in jQuery 3.0 */
+      if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
+        _removeAttribute(name, currentNode);
+        continue;
+      }
+      /* Sanitize attribute content to be template-safe */
+      if (SAFE_FOR_TEMPLATES) {
+        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+          value = stringReplace(value, expr, ' ');
+        });
+      }
+      /* Is `value` valid for this attribute? */
+      const lcTag = transformCaseFunc(currentNode.nodeName);
+      if (!_isValidAttribute(lcTag, lcName, value)) {
+        continue;
+      }
+      /* Handle attributes that require Trusted Types */
+      if (trustedTypesPolicy && typeof trustedTypes === 'object' && typeof trustedTypes.getAttributeType === 'function') {
+        if (namespaceURI) ; else {
+          switch (trustedTypes.getAttributeType(lcTag, lcName)) {
+            case 'TrustedHTML':
+              {
+                value = trustedTypesPolicy.createHTML(value);
+                break;
+              }
+            case 'TrustedScriptURL':
+              {
+                value = trustedTypesPolicy.createScriptURL(value);
+                break;
+              }
+          }
+        }
+      }
+      /* Handle invalid data-* attribute set by try-catching it */
+      try {
+        if (namespaceURI) {
+          currentNode.setAttributeNS(namespaceURI, name, value);
+        } else {
+          /* Fallback to setAttribute() for browser-unrecognized namespaces e.g. "x-schema". */
+          currentNode.setAttribute(name, value);
+        }
+        if (_isClobbered(currentNode)) {
+          _forceRemove(currentNode);
+        } else {
+          arrayPop(DOMPurify.removed);
+        }
+      } catch (_) {}
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
+  };
+  /**
+   * _sanitizeShadowDOM
+   *
+   * @param fragment to iterate over recursively
+   */
+  const _sanitizeShadowDOM = function _sanitizeShadowDOM(fragment) {
+    let shadowNode = null;
+    const shadowIterator = _createNodeIterator(fragment);
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeShadowDOM, fragment, null);
+    while (shadowNode = shadowIterator.nextNode()) {
+      /* Execute a hook if present */
+      _executeHooks(hooks.uponSanitizeShadowNode, shadowNode, null);
+      /* Sanitize tags and elements */
+      _sanitizeElements(shadowNode);
+      /* Check attributes next */
+      _sanitizeAttributes(shadowNode);
+      /* Deep shadow DOM detected */
+      if (shadowNode.content instanceof DocumentFragment) {
+        _sanitizeShadowDOM(shadowNode.content);
+      }
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeShadowDOM, fragment, null);
+  };
+  // eslint-disable-next-line complexity
+  DOMPurify.sanitize = function (dirty) {
+    let cfg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    let body = null;
+    let importedNode = null;
+    let currentNode = null;
+    let returnNode = null;
+    /* Make sure we have a string to sanitize.
+      DO NOT return early, as this will return the wrong type if
+      the user has requested a DOM object rather than a string */
+    IS_EMPTY_INPUT = !dirty;
+    if (IS_EMPTY_INPUT) {
+      dirty = '<!-->';
+    }
+    /* Stringify, in case dirty is an object */
+    if (typeof dirty !== 'string' && !_isNode(dirty)) {
+      if (typeof dirty.toString === 'function') {
+        dirty = dirty.toString();
+        if (typeof dirty !== 'string') {
+          throw typeErrorCreate('dirty is not a string, aborting');
+        }
+      } else {
+        throw typeErrorCreate('toString is not a function');
+      }
+    }
+    /* Return dirty HTML if DOMPurify cannot run */
+    if (!DOMPurify.isSupported) {
+      return dirty;
+    }
+    /* Assign config vars */
+    if (!SET_CONFIG) {
+      _parseConfig(cfg);
+    }
+    /* Clean up removed elements */
+    DOMPurify.removed = [];
+    /* Check if dirty is correctly typed for IN_PLACE */
+    if (typeof dirty === 'string') {
+      IN_PLACE = false;
+    }
+    if (IN_PLACE) {
+      /* Do some early pre-sanitization to avoid unsafe root nodes */
+      if (dirty.nodeName) {
+        const tagName = transformCaseFunc(dirty.nodeName);
+        if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
+          throw typeErrorCreate('root node is forbidden and cannot be sanitized in-place');
+        }
+      }
+    } else if (dirty instanceof Node) {
+      /* If dirty is a DOM element, append to an empty document to avoid
+         elements being stripped by the parser */
+      body = _initDocument('<!---->');
+      importedNode = body.ownerDocument.importNode(dirty, true);
+      if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === 'BODY') {
+        /* Node is already a body, use as is */
+        body = importedNode;
+      } else if (importedNode.nodeName === 'HTML') {
+        body = importedNode;
+      } else {
+        // eslint-disable-next-line unicorn/prefer-dom-node-append
+        body.appendChild(importedNode);
+      }
+    } else {
+      /* Exit directly if we have nothing to do */
+      if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
+      // eslint-disable-next-line unicorn/prefer-includes
+      dirty.indexOf('<') === -1) {
+        return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
+      }
+      /* Initialize the document to work on */
+      body = _initDocument(dirty);
+      /* Check we have a DOM node from the data */
+      if (!body) {
+        return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : '';
+      }
+    }
+    /* Remove first element node (ours) if FORCE_BODY is set */
+    if (body && FORCE_BODY) {
+      _forceRemove(body.firstChild);
+    }
+    /* Get node iterator */
+    const nodeIterator = _createNodeIterator(IN_PLACE ? dirty : body);
+    /* Now start iterating over the created document */
+    while (currentNode = nodeIterator.nextNode()) {
+      /* Sanitize tags and elements */
+      _sanitizeElements(currentNode);
+      /* Check attributes next */
+      _sanitizeAttributes(currentNode);
+      /* Shadow DOM detected, sanitize it */
+      if (currentNode.content instanceof DocumentFragment) {
+        _sanitizeShadowDOM(currentNode.content);
+      }
+    }
+    /* If we sanitized `dirty` in-place, return it. */
+    if (IN_PLACE) {
+      return dirty;
+    }
+    /* Return sanitized string or DOM */
+    if (RETURN_DOM) {
+      if (RETURN_DOM_FRAGMENT) {
+        returnNode = createDocumentFragment.call(body.ownerDocument);
+        while (body.firstChild) {
+          // eslint-disable-next-line unicorn/prefer-dom-node-append
+          returnNode.appendChild(body.firstChild);
+        }
+      } else {
+        returnNode = body;
+      }
+      if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmode) {
+        /*
+          AdoptNode() is not used because internal state is not reset
+          (e.g. the past names map of a HTMLFormElement), this is safe
+          in theory but we would rather not risk another attack vector.
+          The state that is cloned by importNode() is explicitly defined
+          by the specs.
+        */
+        returnNode = importNode.call(originalDocument, returnNode, true);
+      }
+      return returnNode;
+    }
+    let serializedHTML = WHOLE_DOCUMENT ? body.outerHTML : body.innerHTML;
+    /* Serialize doctype if allowed */
+    if (WHOLE_DOCUMENT && ALLOWED_TAGS['!doctype'] && body.ownerDocument && body.ownerDocument.doctype && body.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body.ownerDocument.doctype.name)) {
+      serializedHTML = '<!DOCTYPE ' + body.ownerDocument.doctype.name + '>\n' + serializedHTML;
+    }
+    /* Sanitize final string template-safe */
+    if (SAFE_FOR_TEMPLATES) {
+      arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+        serializedHTML = stringReplace(serializedHTML, expr, ' ');
+      });
+    }
+    return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
+  };
+  DOMPurify.setConfig = function () {
+    let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    _parseConfig(cfg);
+    SET_CONFIG = true;
+  };
+  DOMPurify.clearConfig = function () {
+    CONFIG = null;
+    SET_CONFIG = false;
+  };
+  DOMPurify.isValidAttribute = function (tag, attr, value) {
+    /* Initialize shared config vars if necessary. */
+    if (!CONFIG) {
+      _parseConfig({});
+    }
+    const lcTag = transformCaseFunc(tag);
+    const lcName = transformCaseFunc(attr);
+    return _isValidAttribute(lcTag, lcName, value);
+  };
+  DOMPurify.addHook = function (entryPoint, hookFunction) {
+    if (typeof hookFunction !== 'function') {
+      return;
+    }
+    arrayPush(hooks[entryPoint], hookFunction);
+  };
+  DOMPurify.removeHook = function (entryPoint, hookFunction) {
+    if (hookFunction !== undefined) {
+      const index = arrayLastIndexOf(hooks[entryPoint], hookFunction);
+      return index === -1 ? undefined : arraySplice(hooks[entryPoint], index, 1)[0];
+    }
+    return arrayPop(hooks[entryPoint]);
+  };
+  DOMPurify.removeHooks = function (entryPoint) {
+    hooks[entryPoint] = [];
+  };
+  DOMPurify.removeAllHooks = function () {
+    hooks = _createHooksMap();
+  };
+  return DOMPurify;
+}
+var purify = createDOMPurify();
 
-  return purify;
-
-}));
-//# sourceMappingURL=purify.js.map
+module.exports = purify;
+//# sourceMappingURL=purify.cjs.js.map
 
 
 /***/ }),
@@ -23584,7 +23233,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 
   
 
-  base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/lib/b64.js");
+  base64 = __webpack_require__(/*! base64-js */ "./node_modules/linebreak/node_modules/base64-js/lib/b64.js");
 
   _ref = __webpack_require__(/*! ./classes */ "./node_modules/linebreak/src/classes.js"), BK = _ref.BK, CR = _ref.CR, LF = _ref.LF, NL = _ref.NL, CB = _ref.CB, BA = _ref.BA, SP = _ref.SP, WJ = _ref.WJ, SP = _ref.SP, BK = _ref.BK, LF = _ref.LF, NL = _ref.NL, AI = _ref.AI, AL = _ref.AL, SA = _ref.SA, SG = _ref.SG, XX = _ref.XX, CJ = _ref.CJ, ID = _ref.ID, NS = _ref.NS, characterClasses = _ref.characterClasses;
 
@@ -28769,7 +28418,7 @@ if (typeof Object.create === 'function') {
   \******************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-module.exports = window.DOMPurify || (window.DOMPurify = (__webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.js")["default"]) || __webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.js"));
+module.exports = window.DOMPurify || (window.DOMPurify = (__webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js")["default"]) || __webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js"));
 
 
 /***/ }),
@@ -29488,6 +29137,140 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 */
 
 !function(e){if(true)module.exports=e();else {}}(function(){return function s(a,o,h){function u(r,e){if(!o[r]){if(!a[r]){var t=undefined;if(!e&&t)return require(r,!0);if(l)return l(r,!0);var n=new Error("Cannot find module '"+r+"'");throw n.code="MODULE_NOT_FOUND",n}var i=o[r]={exports:{}};a[r][0].call(i.exports,function(e){var t=a[r][1][e];return u(t||e)},i,i.exports,s,a,o,h)}return o[r].exports}for(var l=undefined,e=0;e<h.length;e++)u(h[e]);return u}({1:[function(e,t,r){"use strict";var d=e("./utils"),c=e("./support"),p="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";r.encode=function(e){for(var t,r,n,i,s,a,o,h=[],u=0,l=e.length,f=l,c="string"!==d.getTypeOf(e);u<e.length;)f=l-u,n=c?(t=e[u++],r=u<l?e[u++]:0,u<l?e[u++]:0):(t=e.charCodeAt(u++),r=u<l?e.charCodeAt(u++):0,u<l?e.charCodeAt(u++):0),i=t>>2,s=(3&t)<<4|r>>4,a=1<f?(15&r)<<2|n>>6:64,o=2<f?63&n:64,h.push(p.charAt(i)+p.charAt(s)+p.charAt(a)+p.charAt(o));return h.join("")},r.decode=function(e){var t,r,n,i,s,a,o=0,h=0,u="data:";if(e.substr(0,u.length)===u)throw new Error("Invalid base64 input, it looks like a data url.");var l,f=3*(e=e.replace(/[^A-Za-z0-9+/=]/g,"")).length/4;if(e.charAt(e.length-1)===p.charAt(64)&&f--,e.charAt(e.length-2)===p.charAt(64)&&f--,f%1!=0)throw new Error("Invalid base64 input, bad content length.");for(l=c.uint8array?new Uint8Array(0|f):new Array(0|f);o<e.length;)t=p.indexOf(e.charAt(o++))<<2|(i=p.indexOf(e.charAt(o++)))>>4,r=(15&i)<<4|(s=p.indexOf(e.charAt(o++)))>>2,n=(3&s)<<6|(a=p.indexOf(e.charAt(o++))),l[h++]=t,64!==s&&(l[h++]=r),64!==a&&(l[h++]=n);return l}},{"./support":30,"./utils":32}],2:[function(e,t,r){"use strict";var n=e("./external"),i=e("./stream/DataWorker"),s=e("./stream/Crc32Probe"),a=e("./stream/DataLengthProbe");function o(e,t,r,n,i){this.compressedSize=e,this.uncompressedSize=t,this.crc32=r,this.compression=n,this.compressedContent=i}o.prototype={getContentWorker:function(){var e=new i(n.Promise.resolve(this.compressedContent)).pipe(this.compression.uncompressWorker()).pipe(new a("data_length")),t=this;return e.on("end",function(){if(this.streamInfo.data_length!==t.uncompressedSize)throw new Error("Bug : uncompressed data size mismatch")}),e},getCompressedWorker:function(){return new i(n.Promise.resolve(this.compressedContent)).withStreamInfo("compressedSize",this.compressedSize).withStreamInfo("uncompressedSize",this.uncompressedSize).withStreamInfo("crc32",this.crc32).withStreamInfo("compression",this.compression)}},o.createWorkerFrom=function(e,t,r){return e.pipe(new s).pipe(new a("uncompressedSize")).pipe(t.compressWorker(r)).pipe(new a("compressedSize")).withStreamInfo("compression",t)},t.exports=o},{"./external":6,"./stream/Crc32Probe":25,"./stream/DataLengthProbe":26,"./stream/DataWorker":27}],3:[function(e,t,r){"use strict";var n=e("./stream/GenericWorker");r.STORE={magic:"\0\0",compressWorker:function(){return new n("STORE compression")},uncompressWorker:function(){return new n("STORE decompression")}},r.DEFLATE=e("./flate")},{"./flate":7,"./stream/GenericWorker":28}],4:[function(e,t,r){"use strict";var n=e("./utils");var o=function(){for(var e,t=[],r=0;r<256;r++){e=r;for(var n=0;n<8;n++)e=1&e?3988292384^e>>>1:e>>>1;t[r]=e}return t}();t.exports=function(e,t){return void 0!==e&&e.length?"string"!==n.getTypeOf(e)?function(e,t,r,n){var i=o,s=n+r;e^=-1;for(var a=n;a<s;a++)e=e>>>8^i[255&(e^t[a])];return-1^e}(0|t,e,e.length,0):function(e,t,r,n){var i=o,s=n+r;e^=-1;for(var a=n;a<s;a++)e=e>>>8^i[255&(e^t.charCodeAt(a))];return-1^e}(0|t,e,e.length,0):0}},{"./utils":32}],5:[function(e,t,r){"use strict";r.base64=!1,r.binary=!1,r.dir=!1,r.createFolders=!0,r.date=null,r.compression=null,r.compressionOptions=null,r.comment=null,r.unixPermissions=null,r.dosPermissions=null},{}],6:[function(e,t,r){"use strict";var n=null;n="undefined"!=typeof Promise?Promise:e("lie"),t.exports={Promise:n}},{lie:37}],7:[function(e,t,r){"use strict";var n="undefined"!=typeof Uint8Array&&"undefined"!=typeof Uint16Array&&"undefined"!=typeof Uint32Array,i=e("pako"),s=e("./utils"),a=e("./stream/GenericWorker"),o=n?"uint8array":"array";function h(e,t){a.call(this,"FlateWorker/"+e),this._pako=null,this._pakoAction=e,this._pakoOptions=t,this.meta={}}r.magic="\b\0",s.inherits(h,a),h.prototype.processChunk=function(e){this.meta=e.meta,null===this._pako&&this._createPako(),this._pako.push(s.transformTo(o,e.data),!1)},h.prototype.flush=function(){a.prototype.flush.call(this),null===this._pako&&this._createPako(),this._pako.push([],!0)},h.prototype.cleanUp=function(){a.prototype.cleanUp.call(this),this._pako=null},h.prototype._createPako=function(){this._pako=new i[this._pakoAction]({raw:!0,level:this._pakoOptions.level||-1});var t=this;this._pako.onData=function(e){t.push({data:e,meta:t.meta})}},r.compressWorker=function(e){return new h("Deflate",e)},r.uncompressWorker=function(){return new h("Inflate",{})}},{"./stream/GenericWorker":28,"./utils":32,pako:38}],8:[function(e,t,r){"use strict";function A(e,t){var r,n="";for(r=0;r<t;r++)n+=String.fromCharCode(255&e),e>>>=8;return n}function n(e,t,r,n,i,s){var a,o,h=e.file,u=e.compression,l=s!==O.utf8encode,f=I.transformTo("string",s(h.name)),c=I.transformTo("string",O.utf8encode(h.name)),d=h.comment,p=I.transformTo("string",s(d)),m=I.transformTo("string",O.utf8encode(d)),_=c.length!==h.name.length,g=m.length!==d.length,b="",v="",y="",w=h.dir,k=h.date,x={crc32:0,compressedSize:0,uncompressedSize:0};t&&!r||(x.crc32=e.crc32,x.compressedSize=e.compressedSize,x.uncompressedSize=e.uncompressedSize);var S=0;t&&(S|=8),l||!_&&!g||(S|=2048);var z=0,C=0;w&&(z|=16),"UNIX"===i?(C=798,z|=function(e,t){var r=e;return e||(r=t?16893:33204),(65535&r)<<16}(h.unixPermissions,w)):(C=20,z|=function(e){return 63&(e||0)}(h.dosPermissions)),a=k.getUTCHours(),a<<=6,a|=k.getUTCMinutes(),a<<=5,a|=k.getUTCSeconds()/2,o=k.getUTCFullYear()-1980,o<<=4,o|=k.getUTCMonth()+1,o<<=5,o|=k.getUTCDate(),_&&(v=A(1,1)+A(B(f),4)+c,b+="up"+A(v.length,2)+v),g&&(y=A(1,1)+A(B(p),4)+m,b+="uc"+A(y.length,2)+y);var E="";return E+="\n\0",E+=A(S,2),E+=u.magic,E+=A(a,2),E+=A(o,2),E+=A(x.crc32,4),E+=A(x.compressedSize,4),E+=A(x.uncompressedSize,4),E+=A(f.length,2),E+=A(b.length,2),{fileRecord:R.LOCAL_FILE_HEADER+E+f+b,dirRecord:R.CENTRAL_FILE_HEADER+A(C,2)+E+A(p.length,2)+"\0\0\0\0"+A(z,4)+A(n,4)+f+b+p}}var I=e("../utils"),i=e("../stream/GenericWorker"),O=e("../utf8"),B=e("../crc32"),R=e("../signature");function s(e,t,r,n){i.call(this,"ZipFileWorker"),this.bytesWritten=0,this.zipComment=t,this.zipPlatform=r,this.encodeFileName=n,this.streamFiles=e,this.accumulate=!1,this.contentBuffer=[],this.dirRecords=[],this.currentSourceOffset=0,this.entriesCount=0,this.currentFile=null,this._sources=[]}I.inherits(s,i),s.prototype.push=function(e){var t=e.meta.percent||0,r=this.entriesCount,n=this._sources.length;this.accumulate?this.contentBuffer.push(e):(this.bytesWritten+=e.data.length,i.prototype.push.call(this,{data:e.data,meta:{currentFile:this.currentFile,percent:r?(t+100*(r-n-1))/r:100}}))},s.prototype.openedSource=function(e){this.currentSourceOffset=this.bytesWritten,this.currentFile=e.file.name;var t=this.streamFiles&&!e.file.dir;if(t){var r=n(e,t,!1,this.currentSourceOffset,this.zipPlatform,this.encodeFileName);this.push({data:r.fileRecord,meta:{percent:0}})}else this.accumulate=!0},s.prototype.closedSource=function(e){this.accumulate=!1;var t=this.streamFiles&&!e.file.dir,r=n(e,t,!0,this.currentSourceOffset,this.zipPlatform,this.encodeFileName);if(this.dirRecords.push(r.dirRecord),t)this.push({data:function(e){return R.DATA_DESCRIPTOR+A(e.crc32,4)+A(e.compressedSize,4)+A(e.uncompressedSize,4)}(e),meta:{percent:100}});else for(this.push({data:r.fileRecord,meta:{percent:0}});this.contentBuffer.length;)this.push(this.contentBuffer.shift());this.currentFile=null},s.prototype.flush=function(){for(var e=this.bytesWritten,t=0;t<this.dirRecords.length;t++)this.push({data:this.dirRecords[t],meta:{percent:100}});var r=this.bytesWritten-e,n=function(e,t,r,n,i){var s=I.transformTo("string",i(n));return R.CENTRAL_DIRECTORY_END+"\0\0\0\0"+A(e,2)+A(e,2)+A(t,4)+A(r,4)+A(s.length,2)+s}(this.dirRecords.length,r,e,this.zipComment,this.encodeFileName);this.push({data:n,meta:{percent:100}})},s.prototype.prepareNextSource=function(){this.previous=this._sources.shift(),this.openedSource(this.previous.streamInfo),this.isPaused?this.previous.pause():this.previous.resume()},s.prototype.registerPrevious=function(e){this._sources.push(e);var t=this;return e.on("data",function(e){t.processChunk(e)}),e.on("end",function(){t.closedSource(t.previous.streamInfo),t._sources.length?t.prepareNextSource():t.end()}),e.on("error",function(e){t.error(e)}),this},s.prototype.resume=function(){return!!i.prototype.resume.call(this)&&(!this.previous&&this._sources.length?(this.prepareNextSource(),!0):this.previous||this._sources.length||this.generatedError?void 0:(this.end(),!0))},s.prototype.error=function(e){var t=this._sources;if(!i.prototype.error.call(this,e))return!1;for(var r=0;r<t.length;r++)try{t[r].error(e)}catch(e){}return!0},s.prototype.lock=function(){i.prototype.lock.call(this);for(var e=this._sources,t=0;t<e.length;t++)e[t].lock()},t.exports=s},{"../crc32":4,"../signature":23,"../stream/GenericWorker":28,"../utf8":31,"../utils":32}],9:[function(e,t,r){"use strict";var u=e("../compressions"),n=e("./ZipFileWorker");r.generateWorker=function(e,a,t){var o=new n(a.streamFiles,t,a.platform,a.encodeFileName),h=0;try{e.forEach(function(e,t){h++;var r=function(e,t){var r=e||t,n=u[r];if(!n)throw new Error(r+" is not a valid compression method !");return n}(t.options.compression,a.compression),n=t.options.compressionOptions||a.compressionOptions||{},i=t.dir,s=t.date;t._compressWorker(r,n).withStreamInfo("file",{name:e,dir:i,date:s,comment:t.comment||"",unixPermissions:t.unixPermissions,dosPermissions:t.dosPermissions}).pipe(o)}),o.entriesCount=h}catch(e){o.error(e)}return o}},{"../compressions":3,"./ZipFileWorker":8}],10:[function(e,t,r){"use strict";function n(){if(!(this instanceof n))return new n;if(arguments.length)throw new Error("The constructor with parameters has been removed in JSZip 3.0, please check the upgrade guide.");this.files=Object.create(null),this.comment=null,this.root="",this.clone=function(){var e=new n;for(var t in this)"function"!=typeof this[t]&&(e[t]=this[t]);return e}}(n.prototype=e("./object")).loadAsync=e("./load"),n.support=e("./support"),n.defaults=e("./defaults"),n.version="3.10.1",n.loadAsync=function(e,t){return(new n).loadAsync(e,t)},n.external=e("./external"),t.exports=n},{"./defaults":5,"./external":6,"./load":11,"./object":15,"./support":30}],11:[function(e,t,r){"use strict";var u=e("./utils"),i=e("./external"),n=e("./utf8"),s=e("./zipEntries"),a=e("./stream/Crc32Probe"),l=e("./nodejsUtils");function f(n){return new i.Promise(function(e,t){var r=n.decompressed.getContentWorker().pipe(new a);r.on("error",function(e){t(e)}).on("end",function(){r.streamInfo.crc32!==n.decompressed.crc32?t(new Error("Corrupted zip : CRC32 mismatch")):e()}).resume()})}t.exports=function(e,o){var h=this;return o=u.extend(o||{},{base64:!1,checkCRC32:!1,optimizedBinaryString:!1,createFolders:!1,decodeFileName:n.utf8decode}),l.isNode&&l.isStream(e)?i.Promise.reject(new Error("JSZip can't accept a stream when loading a zip file.")):u.prepareContent("the loaded zip file",e,!0,o.optimizedBinaryString,o.base64).then(function(e){var t=new s(o);return t.load(e),t}).then(function(e){var t=[i.Promise.resolve(e)],r=e.files;if(o.checkCRC32)for(var n=0;n<r.length;n++)t.push(f(r[n]));return i.Promise.all(t)}).then(function(e){for(var t=e.shift(),r=t.files,n=0;n<r.length;n++){var i=r[n],s=i.fileNameStr,a=u.resolve(i.fileNameStr);h.file(a,i.decompressed,{binary:!0,optimizedBinaryString:!0,date:i.date,dir:i.dir,comment:i.fileCommentStr.length?i.fileCommentStr:null,unixPermissions:i.unixPermissions,dosPermissions:i.dosPermissions,createFolders:o.createFolders}),i.dir||(h.file(a).unsafeOriginalName=s)}return t.zipComment.length&&(h.comment=t.zipComment),h})}},{"./external":6,"./nodejsUtils":14,"./stream/Crc32Probe":25,"./utf8":31,"./utils":32,"./zipEntries":33}],12:[function(e,t,r){"use strict";var n=e("../utils"),i=e("../stream/GenericWorker");function s(e,t){i.call(this,"Nodejs stream input adapter for "+e),this._upstreamEnded=!1,this._bindStream(t)}n.inherits(s,i),s.prototype._bindStream=function(e){var t=this;(this._stream=e).pause(),e.on("data",function(e){t.push({data:e,meta:{percent:0}})}).on("error",function(e){t.isPaused?this.generatedError=e:t.error(e)}).on("end",function(){t.isPaused?t._upstreamEnded=!0:t.end()})},s.prototype.pause=function(){return!!i.prototype.pause.call(this)&&(this._stream.pause(),!0)},s.prototype.resume=function(){return!!i.prototype.resume.call(this)&&(this._upstreamEnded?this.end():this._stream.resume(),!0)},t.exports=s},{"../stream/GenericWorker":28,"../utils":32}],13:[function(e,t,r){"use strict";var i=e("readable-stream").Readable;function n(e,t,r){i.call(this,t),this._helper=e;var n=this;e.on("data",function(e,t){n.push(e)||n._helper.pause(),r&&r(t)}).on("error",function(e){n.emit("error",e)}).on("end",function(){n.push(null)})}e("../utils").inherits(n,i),n.prototype._read=function(){this._helper.resume()},t.exports=n},{"../utils":32,"readable-stream":16}],14:[function(e,t,r){"use strict";t.exports={isNode:"undefined"!=typeof Buffer,newBufferFrom:function(e,t){if(Buffer.from&&Buffer.from!==Uint8Array.from)return Buffer.from(e,t);if("number"==typeof e)throw new Error('The "data" argument must not be a number');return new Buffer(e,t)},allocBuffer:function(e){if(Buffer.alloc)return Buffer.alloc(e);var t=new Buffer(e);return t.fill(0),t},isBuffer:function(e){return Buffer.isBuffer(e)},isStream:function(e){return e&&"function"==typeof e.on&&"function"==typeof e.pause&&"function"==typeof e.resume}}},{}],15:[function(e,t,r){"use strict";function s(e,t,r){var n,i=u.getTypeOf(t),s=u.extend(r||{},f);s.date=s.date||new Date,null!==s.compression&&(s.compression=s.compression.toUpperCase()),"string"==typeof s.unixPermissions&&(s.unixPermissions=parseInt(s.unixPermissions,8)),s.unixPermissions&&16384&s.unixPermissions&&(s.dir=!0),s.dosPermissions&&16&s.dosPermissions&&(s.dir=!0),s.dir&&(e=g(e)),s.createFolders&&(n=_(e))&&b.call(this,n,!0);var a="string"===i&&!1===s.binary&&!1===s.base64;r&&void 0!==r.binary||(s.binary=!a),(t instanceof c&&0===t.uncompressedSize||s.dir||!t||0===t.length)&&(s.base64=!1,s.binary=!0,t="",s.compression="STORE",i="string");var o=null;o=t instanceof c||t instanceof l?t:p.isNode&&p.isStream(t)?new m(e,t):u.prepareContent(e,t,s.binary,s.optimizedBinaryString,s.base64);var h=new d(e,o,s);this.files[e]=h}var i=e("./utf8"),u=e("./utils"),l=e("./stream/GenericWorker"),a=e("./stream/StreamHelper"),f=e("./defaults"),c=e("./compressedObject"),d=e("./zipObject"),o=e("./generate"),p=e("./nodejsUtils"),m=e("./nodejs/NodejsStreamInputAdapter"),_=function(e){"/"===e.slice(-1)&&(e=e.substring(0,e.length-1));var t=e.lastIndexOf("/");return 0<t?e.substring(0,t):""},g=function(e){return"/"!==e.slice(-1)&&(e+="/"),e},b=function(e,t){return t=void 0!==t?t:f.createFolders,e=g(e),this.files[e]||s.call(this,e,null,{dir:!0,createFolders:t}),this.files[e]};function h(e){return"[object RegExp]"===Object.prototype.toString.call(e)}var n={load:function(){throw new Error("This method has been removed in JSZip 3.0, please check the upgrade guide.")},forEach:function(e){var t,r,n;for(t in this.files)n=this.files[t],(r=t.slice(this.root.length,t.length))&&t.slice(0,this.root.length)===this.root&&e(r,n)},filter:function(r){var n=[];return this.forEach(function(e,t){r(e,t)&&n.push(t)}),n},file:function(e,t,r){if(1!==arguments.length)return e=this.root+e,s.call(this,e,t,r),this;if(h(e)){var n=e;return this.filter(function(e,t){return!t.dir&&n.test(e)})}var i=this.files[this.root+e];return i&&!i.dir?i:null},folder:function(r){if(!r)return this;if(h(r))return this.filter(function(e,t){return t.dir&&r.test(e)});var e=this.root+r,t=b.call(this,e),n=this.clone();return n.root=t.name,n},remove:function(r){r=this.root+r;var e=this.files[r];if(e||("/"!==r.slice(-1)&&(r+="/"),e=this.files[r]),e&&!e.dir)delete this.files[r];else for(var t=this.filter(function(e,t){return t.name.slice(0,r.length)===r}),n=0;n<t.length;n++)delete this.files[t[n].name];return this},generate:function(){throw new Error("This method has been removed in JSZip 3.0, please check the upgrade guide.")},generateInternalStream:function(e){var t,r={};try{if((r=u.extend(e||{},{streamFiles:!1,compression:"STORE",compressionOptions:null,type:"",platform:"DOS",comment:null,mimeType:"application/zip",encodeFileName:i.utf8encode})).type=r.type.toLowerCase(),r.compression=r.compression.toUpperCase(),"binarystring"===r.type&&(r.type="string"),!r.type)throw new Error("No output type specified.");u.checkSupport(r.type),"darwin"!==r.platform&&"freebsd"!==r.platform&&"linux"!==r.platform&&"sunos"!==r.platform||(r.platform="UNIX"),"win32"===r.platform&&(r.platform="DOS");var n=r.comment||this.comment||"";t=o.generateWorker(this,r,n)}catch(e){(t=new l("error")).error(e)}return new a(t,r.type||"string",r.mimeType)},generateAsync:function(e,t){return this.generateInternalStream(e).accumulate(t)},generateNodeStream:function(e,t){return(e=e||{}).type||(e.type="nodebuffer"),this.generateInternalStream(e).toNodejsStream(t)}};t.exports=n},{"./compressedObject":2,"./defaults":5,"./generate":9,"./nodejs/NodejsStreamInputAdapter":12,"./nodejsUtils":14,"./stream/GenericWorker":28,"./stream/StreamHelper":29,"./utf8":31,"./utils":32,"./zipObject":35}],16:[function(e,t,r){"use strict";t.exports=e("stream")},{stream:void 0}],17:[function(e,t,r){"use strict";var n=e("./DataReader");function i(e){n.call(this,e);for(var t=0;t<this.data.length;t++)e[t]=255&e[t]}e("../utils").inherits(i,n),i.prototype.byteAt=function(e){return this.data[this.zero+e]},i.prototype.lastIndexOfSignature=function(e){for(var t=e.charCodeAt(0),r=e.charCodeAt(1),n=e.charCodeAt(2),i=e.charCodeAt(3),s=this.length-4;0<=s;--s)if(this.data[s]===t&&this.data[s+1]===r&&this.data[s+2]===n&&this.data[s+3]===i)return s-this.zero;return-1},i.prototype.readAndCheckSignature=function(e){var t=e.charCodeAt(0),r=e.charCodeAt(1),n=e.charCodeAt(2),i=e.charCodeAt(3),s=this.readData(4);return t===s[0]&&r===s[1]&&n===s[2]&&i===s[3]},i.prototype.readData=function(e){if(this.checkOffset(e),0===e)return[];var t=this.data.slice(this.zero+this.index,this.zero+this.index+e);return this.index+=e,t},t.exports=i},{"../utils":32,"./DataReader":18}],18:[function(e,t,r){"use strict";var n=e("../utils");function i(e){this.data=e,this.length=e.length,this.index=0,this.zero=0}i.prototype={checkOffset:function(e){this.checkIndex(this.index+e)},checkIndex:function(e){if(this.length<this.zero+e||e<0)throw new Error("End of data reached (data length = "+this.length+", asked index = "+e+"). Corrupted zip ?")},setIndex:function(e){this.checkIndex(e),this.index=e},skip:function(e){this.setIndex(this.index+e)},byteAt:function(){},readInt:function(e){var t,r=0;for(this.checkOffset(e),t=this.index+e-1;t>=this.index;t--)r=(r<<8)+this.byteAt(t);return this.index+=e,r},readString:function(e){return n.transformTo("string",this.readData(e))},readData:function(){},lastIndexOfSignature:function(){},readAndCheckSignature:function(){},readDate:function(){var e=this.readInt(4);return new Date(Date.UTC(1980+(e>>25&127),(e>>21&15)-1,e>>16&31,e>>11&31,e>>5&63,(31&e)<<1))}},t.exports=i},{"../utils":32}],19:[function(e,t,r){"use strict";var n=e("./Uint8ArrayReader");function i(e){n.call(this,e)}e("../utils").inherits(i,n),i.prototype.readData=function(e){this.checkOffset(e);var t=this.data.slice(this.zero+this.index,this.zero+this.index+e);return this.index+=e,t},t.exports=i},{"../utils":32,"./Uint8ArrayReader":21}],20:[function(e,t,r){"use strict";var n=e("./DataReader");function i(e){n.call(this,e)}e("../utils").inherits(i,n),i.prototype.byteAt=function(e){return this.data.charCodeAt(this.zero+e)},i.prototype.lastIndexOfSignature=function(e){return this.data.lastIndexOf(e)-this.zero},i.prototype.readAndCheckSignature=function(e){return e===this.readData(4)},i.prototype.readData=function(e){this.checkOffset(e);var t=this.data.slice(this.zero+this.index,this.zero+this.index+e);return this.index+=e,t},t.exports=i},{"../utils":32,"./DataReader":18}],21:[function(e,t,r){"use strict";var n=e("./ArrayReader");function i(e){n.call(this,e)}e("../utils").inherits(i,n),i.prototype.readData=function(e){if(this.checkOffset(e),0===e)return new Uint8Array(0);var t=this.data.subarray(this.zero+this.index,this.zero+this.index+e);return this.index+=e,t},t.exports=i},{"../utils":32,"./ArrayReader":17}],22:[function(e,t,r){"use strict";var n=e("../utils"),i=e("../support"),s=e("./ArrayReader"),a=e("./StringReader"),o=e("./NodeBufferReader"),h=e("./Uint8ArrayReader");t.exports=function(e){var t=n.getTypeOf(e);return n.checkSupport(t),"string"!==t||i.uint8array?"nodebuffer"===t?new o(e):i.uint8array?new h(n.transformTo("uint8array",e)):new s(n.transformTo("array",e)):new a(e)}},{"../support":30,"../utils":32,"./ArrayReader":17,"./NodeBufferReader":19,"./StringReader":20,"./Uint8ArrayReader":21}],23:[function(e,t,r){"use strict";r.LOCAL_FILE_HEADER="PK",r.CENTRAL_FILE_HEADER="PK",r.CENTRAL_DIRECTORY_END="PK",r.ZIP64_CENTRAL_DIRECTORY_LOCATOR="PK",r.ZIP64_CENTRAL_DIRECTORY_END="PK",r.DATA_DESCRIPTOR="PK\b"},{}],24:[function(e,t,r){"use strict";var n=e("./GenericWorker"),i=e("../utils");function s(e){n.call(this,"ConvertWorker to "+e),this.destType=e}i.inherits(s,n),s.prototype.processChunk=function(e){this.push({data:i.transformTo(this.destType,e.data),meta:e.meta})},t.exports=s},{"../utils":32,"./GenericWorker":28}],25:[function(e,t,r){"use strict";var n=e("./GenericWorker"),i=e("../crc32");function s(){n.call(this,"Crc32Probe"),this.withStreamInfo("crc32",0)}e("../utils").inherits(s,n),s.prototype.processChunk=function(e){this.streamInfo.crc32=i(e.data,this.streamInfo.crc32||0),this.push(e)},t.exports=s},{"../crc32":4,"../utils":32,"./GenericWorker":28}],26:[function(e,t,r){"use strict";var n=e("../utils"),i=e("./GenericWorker");function s(e){i.call(this,"DataLengthProbe for "+e),this.propName=e,this.withStreamInfo(e,0)}n.inherits(s,i),s.prototype.processChunk=function(e){if(e){var t=this.streamInfo[this.propName]||0;this.streamInfo[this.propName]=t+e.data.length}i.prototype.processChunk.call(this,e)},t.exports=s},{"../utils":32,"./GenericWorker":28}],27:[function(e,t,r){"use strict";var n=e("../utils"),i=e("./GenericWorker");function s(e){i.call(this,"DataWorker");var t=this;this.dataIsReady=!1,this.index=0,this.max=0,this.data=null,this.type="",this._tickScheduled=!1,e.then(function(e){t.dataIsReady=!0,t.data=e,t.max=e&&e.length||0,t.type=n.getTypeOf(e),t.isPaused||t._tickAndRepeat()},function(e){t.error(e)})}n.inherits(s,i),s.prototype.cleanUp=function(){i.prototype.cleanUp.call(this),this.data=null},s.prototype.resume=function(){return!!i.prototype.resume.call(this)&&(!this._tickScheduled&&this.dataIsReady&&(this._tickScheduled=!0,n.delay(this._tickAndRepeat,[],this)),!0)},s.prototype._tickAndRepeat=function(){this._tickScheduled=!1,this.isPaused||this.isFinished||(this._tick(),this.isFinished||(n.delay(this._tickAndRepeat,[],this),this._tickScheduled=!0))},s.prototype._tick=function(){if(this.isPaused||this.isFinished)return!1;var e=null,t=Math.min(this.max,this.index+16384);if(this.index>=this.max)return this.end();switch(this.type){case"string":e=this.data.substring(this.index,t);break;case"uint8array":e=this.data.subarray(this.index,t);break;case"array":case"nodebuffer":e=this.data.slice(this.index,t)}return this.index=t,this.push({data:e,meta:{percent:this.max?this.index/this.max*100:0}})},t.exports=s},{"../utils":32,"./GenericWorker":28}],28:[function(e,t,r){"use strict";function n(e){this.name=e||"default",this.streamInfo={},this.generatedError=null,this.extraStreamInfo={},this.isPaused=!0,this.isFinished=!1,this.isLocked=!1,this._listeners={data:[],end:[],error:[]},this.previous=null}n.prototype={push:function(e){this.emit("data",e)},end:function(){if(this.isFinished)return!1;this.flush();try{this.emit("end"),this.cleanUp(),this.isFinished=!0}catch(e){this.emit("error",e)}return!0},error:function(e){return!this.isFinished&&(this.isPaused?this.generatedError=e:(this.isFinished=!0,this.emit("error",e),this.previous&&this.previous.error(e),this.cleanUp()),!0)},on:function(e,t){return this._listeners[e].push(t),this},cleanUp:function(){this.streamInfo=this.generatedError=this.extraStreamInfo=null,this._listeners=[]},emit:function(e,t){if(this._listeners[e])for(var r=0;r<this._listeners[e].length;r++)this._listeners[e][r].call(this,t)},pipe:function(e){return e.registerPrevious(this)},registerPrevious:function(e){if(this.isLocked)throw new Error("The stream '"+this+"' has already been used.");this.streamInfo=e.streamInfo,this.mergeStreamInfo(),this.previous=e;var t=this;return e.on("data",function(e){t.processChunk(e)}),e.on("end",function(){t.end()}),e.on("error",function(e){t.error(e)}),this},pause:function(){return!this.isPaused&&!this.isFinished&&(this.isPaused=!0,this.previous&&this.previous.pause(),!0)},resume:function(){if(!this.isPaused||this.isFinished)return!1;var e=this.isPaused=!1;return this.generatedError&&(this.error(this.generatedError),e=!0),this.previous&&this.previous.resume(),!e},flush:function(){},processChunk:function(e){this.push(e)},withStreamInfo:function(e,t){return this.extraStreamInfo[e]=t,this.mergeStreamInfo(),this},mergeStreamInfo:function(){for(var e in this.extraStreamInfo)Object.prototype.hasOwnProperty.call(this.extraStreamInfo,e)&&(this.streamInfo[e]=this.extraStreamInfo[e])},lock:function(){if(this.isLocked)throw new Error("The stream '"+this+"' has already been used.");this.isLocked=!0,this.previous&&this.previous.lock()},toString:function(){var e="Worker "+this.name;return this.previous?this.previous+" -> "+e:e}},t.exports=n},{}],29:[function(e,t,r){"use strict";var h=e("../utils"),i=e("./ConvertWorker"),s=e("./GenericWorker"),u=e("../base64"),n=e("../support"),a=e("../external"),o=null;if(n.nodestream)try{o=e("../nodejs/NodejsStreamOutputAdapter")}catch(e){}function l(e,o){return new a.Promise(function(t,r){var n=[],i=e._internalType,s=e._outputType,a=e._mimeType;e.on("data",function(e,t){n.push(e),o&&o(t)}).on("error",function(e){n=[],r(e)}).on("end",function(){try{var e=function(e,t,r){switch(e){case"blob":return h.newBlob(h.transformTo("arraybuffer",t),r);case"base64":return u.encode(t);default:return h.transformTo(e,t)}}(s,function(e,t){var r,n=0,i=null,s=0;for(r=0;r<t.length;r++)s+=t[r].length;switch(e){case"string":return t.join("");case"array":return Array.prototype.concat.apply([],t);case"uint8array":for(i=new Uint8Array(s),r=0;r<t.length;r++)i.set(t[r],n),n+=t[r].length;return i;case"nodebuffer":return Buffer.concat(t);default:throw new Error("concat : unsupported type '"+e+"'")}}(i,n),a);t(e)}catch(e){r(e)}n=[]}).resume()})}function f(e,t,r){var n=t;switch(t){case"blob":case"arraybuffer":n="uint8array";break;case"base64":n="string"}try{this._internalType=n,this._outputType=t,this._mimeType=r,h.checkSupport(n),this._worker=e.pipe(new i(n)),e.lock()}catch(e){this._worker=new s("error"),this._worker.error(e)}}f.prototype={accumulate:function(e){return l(this,e)},on:function(e,t){var r=this;return"data"===e?this._worker.on(e,function(e){t.call(r,e.data,e.meta)}):this._worker.on(e,function(){h.delay(t,arguments,r)}),this},resume:function(){return h.delay(this._worker.resume,[],this._worker),this},pause:function(){return this._worker.pause(),this},toNodejsStream:function(e){if(h.checkSupport("nodestream"),"nodebuffer"!==this._outputType)throw new Error(this._outputType+" is not supported by this method");return new o(this,{objectMode:"nodebuffer"!==this._outputType},e)}},t.exports=f},{"../base64":1,"../external":6,"../nodejs/NodejsStreamOutputAdapter":13,"../support":30,"../utils":32,"./ConvertWorker":24,"./GenericWorker":28}],30:[function(e,t,r){"use strict";if(r.base64=!0,r.array=!0,r.string=!0,r.arraybuffer="undefined"!=typeof ArrayBuffer&&"undefined"!=typeof Uint8Array,r.nodebuffer="undefined"!=typeof Buffer,r.uint8array="undefined"!=typeof Uint8Array,"undefined"==typeof ArrayBuffer)r.blob=!1;else{var n=new ArrayBuffer(0);try{r.blob=0===new Blob([n],{type:"application/zip"}).size}catch(e){try{var i=new(self.BlobBuilder||self.WebKitBlobBuilder||self.MozBlobBuilder||self.MSBlobBuilder);i.append(n),r.blob=0===i.getBlob("application/zip").size}catch(e){r.blob=!1}}}try{r.nodestream=!!e("readable-stream").Readable}catch(e){r.nodestream=!1}},{"readable-stream":16}],31:[function(e,t,s){"use strict";for(var o=e("./utils"),h=e("./support"),r=e("./nodejsUtils"),n=e("./stream/GenericWorker"),u=new Array(256),i=0;i<256;i++)u[i]=252<=i?6:248<=i?5:240<=i?4:224<=i?3:192<=i?2:1;u[254]=u[254]=1;function a(){n.call(this,"utf-8 decode"),this.leftOver=null}function l(){n.call(this,"utf-8 encode")}s.utf8encode=function(e){return h.nodebuffer?r.newBufferFrom(e,"utf-8"):function(e){var t,r,n,i,s,a=e.length,o=0;for(i=0;i<a;i++)55296==(64512&(r=e.charCodeAt(i)))&&i+1<a&&56320==(64512&(n=e.charCodeAt(i+1)))&&(r=65536+(r-55296<<10)+(n-56320),i++),o+=r<128?1:r<2048?2:r<65536?3:4;for(t=h.uint8array?new Uint8Array(o):new Array(o),i=s=0;s<o;i++)55296==(64512&(r=e.charCodeAt(i)))&&i+1<a&&56320==(64512&(n=e.charCodeAt(i+1)))&&(r=65536+(r-55296<<10)+(n-56320),i++),r<128?t[s++]=r:(r<2048?t[s++]=192|r>>>6:(r<65536?t[s++]=224|r>>>12:(t[s++]=240|r>>>18,t[s++]=128|r>>>12&63),t[s++]=128|r>>>6&63),t[s++]=128|63&r);return t}(e)},s.utf8decode=function(e){return h.nodebuffer?o.transformTo("nodebuffer",e).toString("utf-8"):function(e){var t,r,n,i,s=e.length,a=new Array(2*s);for(t=r=0;t<s;)if((n=e[t++])<128)a[r++]=n;else if(4<(i=u[n]))a[r++]=65533,t+=i-1;else{for(n&=2===i?31:3===i?15:7;1<i&&t<s;)n=n<<6|63&e[t++],i--;1<i?a[r++]=65533:n<65536?a[r++]=n:(n-=65536,a[r++]=55296|n>>10&1023,a[r++]=56320|1023&n)}return a.length!==r&&(a.subarray?a=a.subarray(0,r):a.length=r),o.applyFromCharCode(a)}(e=o.transformTo(h.uint8array?"uint8array":"array",e))},o.inherits(a,n),a.prototype.processChunk=function(e){var t=o.transformTo(h.uint8array?"uint8array":"array",e.data);if(this.leftOver&&this.leftOver.length){if(h.uint8array){var r=t;(t=new Uint8Array(r.length+this.leftOver.length)).set(this.leftOver,0),t.set(r,this.leftOver.length)}else t=this.leftOver.concat(t);this.leftOver=null}var n=function(e,t){var r;for((t=t||e.length)>e.length&&(t=e.length),r=t-1;0<=r&&128==(192&e[r]);)r--;return r<0?t:0===r?t:r+u[e[r]]>t?r:t}(t),i=t;n!==t.length&&(h.uint8array?(i=t.subarray(0,n),this.leftOver=t.subarray(n,t.length)):(i=t.slice(0,n),this.leftOver=t.slice(n,t.length))),this.push({data:s.utf8decode(i),meta:e.meta})},a.prototype.flush=function(){this.leftOver&&this.leftOver.length&&(this.push({data:s.utf8decode(this.leftOver),meta:{}}),this.leftOver=null)},s.Utf8DecodeWorker=a,o.inherits(l,n),l.prototype.processChunk=function(e){this.push({data:s.utf8encode(e.data),meta:e.meta})},s.Utf8EncodeWorker=l},{"./nodejsUtils":14,"./stream/GenericWorker":28,"./support":30,"./utils":32}],32:[function(e,t,a){"use strict";var o=e("./support"),h=e("./base64"),r=e("./nodejsUtils"),u=e("./external");function n(e){return e}function l(e,t){for(var r=0;r<e.length;++r)t[r]=255&e.charCodeAt(r);return t}e("setimmediate"),a.newBlob=function(t,r){a.checkSupport("blob");try{return new Blob([t],{type:r})}catch(e){try{var n=new(self.BlobBuilder||self.WebKitBlobBuilder||self.MozBlobBuilder||self.MSBlobBuilder);return n.append(t),n.getBlob(r)}catch(e){throw new Error("Bug : can't construct the Blob.")}}};var i={stringifyByChunk:function(e,t,r){var n=[],i=0,s=e.length;if(s<=r)return String.fromCharCode.apply(null,e);for(;i<s;)"array"===t||"nodebuffer"===t?n.push(String.fromCharCode.apply(null,e.slice(i,Math.min(i+r,s)))):n.push(String.fromCharCode.apply(null,e.subarray(i,Math.min(i+r,s)))),i+=r;return n.join("")},stringifyByChar:function(e){for(var t="",r=0;r<e.length;r++)t+=String.fromCharCode(e[r]);return t},applyCanBeUsed:{uint8array:function(){try{return o.uint8array&&1===String.fromCharCode.apply(null,new Uint8Array(1)).length}catch(e){return!1}}(),nodebuffer:function(){try{return o.nodebuffer&&1===String.fromCharCode.apply(null,r.allocBuffer(1)).length}catch(e){return!1}}()}};function s(e){var t=65536,r=a.getTypeOf(e),n=!0;if("uint8array"===r?n=i.applyCanBeUsed.uint8array:"nodebuffer"===r&&(n=i.applyCanBeUsed.nodebuffer),n)for(;1<t;)try{return i.stringifyByChunk(e,r,t)}catch(e){t=Math.floor(t/2)}return i.stringifyByChar(e)}function f(e,t){for(var r=0;r<e.length;r++)t[r]=e[r];return t}a.applyFromCharCode=s;var c={};c.string={string:n,array:function(e){return l(e,new Array(e.length))},arraybuffer:function(e){return c.string.uint8array(e).buffer},uint8array:function(e){return l(e,new Uint8Array(e.length))},nodebuffer:function(e){return l(e,r.allocBuffer(e.length))}},c.array={string:s,array:n,arraybuffer:function(e){return new Uint8Array(e).buffer},uint8array:function(e){return new Uint8Array(e)},nodebuffer:function(e){return r.newBufferFrom(e)}},c.arraybuffer={string:function(e){return s(new Uint8Array(e))},array:function(e){return f(new Uint8Array(e),new Array(e.byteLength))},arraybuffer:n,uint8array:function(e){return new Uint8Array(e)},nodebuffer:function(e){return r.newBufferFrom(new Uint8Array(e))}},c.uint8array={string:s,array:function(e){return f(e,new Array(e.length))},arraybuffer:function(e){return e.buffer},uint8array:n,nodebuffer:function(e){return r.newBufferFrom(e)}},c.nodebuffer={string:s,array:function(e){return f(e,new Array(e.length))},arraybuffer:function(e){return c.nodebuffer.uint8array(e).buffer},uint8array:function(e){return f(e,new Uint8Array(e.length))},nodebuffer:n},a.transformTo=function(e,t){if(t=t||"",!e)return t;a.checkSupport(e);var r=a.getTypeOf(t);return c[r][e](t)},a.resolve=function(e){for(var t=e.split("/"),r=[],n=0;n<t.length;n++){var i=t[n];"."===i||""===i&&0!==n&&n!==t.length-1||(".."===i?r.pop():r.push(i))}return r.join("/")},a.getTypeOf=function(e){return"string"==typeof e?"string":"[object Array]"===Object.prototype.toString.call(e)?"array":o.nodebuffer&&r.isBuffer(e)?"nodebuffer":o.uint8array&&e instanceof Uint8Array?"uint8array":o.arraybuffer&&e instanceof ArrayBuffer?"arraybuffer":void 0},a.checkSupport=function(e){if(!o[e.toLowerCase()])throw new Error(e+" is not supported by this platform")},a.MAX_VALUE_16BITS=65535,a.MAX_VALUE_32BITS=-1,a.pretty=function(e){var t,r,n="";for(r=0;r<(e||"").length;r++)n+="\\x"+((t=e.charCodeAt(r))<16?"0":"")+t.toString(16).toUpperCase();return n},a.delay=function(e,t,r){setImmediate(function(){e.apply(r||null,t||[])})},a.inherits=function(e,t){function r(){}r.prototype=t.prototype,e.prototype=new r},a.extend=function(){var e,t,r={};for(e=0;e<arguments.length;e++)for(t in arguments[e])Object.prototype.hasOwnProperty.call(arguments[e],t)&&void 0===r[t]&&(r[t]=arguments[e][t]);return r},a.prepareContent=function(r,e,n,i,s){return u.Promise.resolve(e).then(function(n){return o.blob&&(n instanceof Blob||-1!==["[object File]","[object Blob]"].indexOf(Object.prototype.toString.call(n)))&&"undefined"!=typeof FileReader?new u.Promise(function(t,r){var e=new FileReader;e.onload=function(e){t(e.target.result)},e.onerror=function(e){r(e.target.error)},e.readAsArrayBuffer(n)}):n}).then(function(e){var t=a.getTypeOf(e);return t?("arraybuffer"===t?e=a.transformTo("uint8array",e):"string"===t&&(s?e=h.decode(e):n&&!0!==i&&(e=function(e){return l(e,o.uint8array?new Uint8Array(e.length):new Array(e.length))}(e))),e):u.Promise.reject(new Error("Can't read the data of '"+r+"'. Is it in a supported JavaScript type (String, Blob, ArrayBuffer, etc) ?"))})}},{"./base64":1,"./external":6,"./nodejsUtils":14,"./support":30,setimmediate:54}],33:[function(e,t,r){"use strict";var n=e("./reader/readerFor"),i=e("./utils"),s=e("./signature"),a=e("./zipEntry"),o=e("./support");function h(e){this.files=[],this.loadOptions=e}h.prototype={checkSignature:function(e){if(!this.reader.readAndCheckSignature(e)){this.reader.index-=4;var t=this.reader.readString(4);throw new Error("Corrupted zip or bug: unexpected signature ("+i.pretty(t)+", expected "+i.pretty(e)+")")}},isSignature:function(e,t){var r=this.reader.index;this.reader.setIndex(e);var n=this.reader.readString(4)===t;return this.reader.setIndex(r),n},readBlockEndOfCentral:function(){this.diskNumber=this.reader.readInt(2),this.diskWithCentralDirStart=this.reader.readInt(2),this.centralDirRecordsOnThisDisk=this.reader.readInt(2),this.centralDirRecords=this.reader.readInt(2),this.centralDirSize=this.reader.readInt(4),this.centralDirOffset=this.reader.readInt(4),this.zipCommentLength=this.reader.readInt(2);var e=this.reader.readData(this.zipCommentLength),t=o.uint8array?"uint8array":"array",r=i.transformTo(t,e);this.zipComment=this.loadOptions.decodeFileName(r)},readBlockZip64EndOfCentral:function(){this.zip64EndOfCentralSize=this.reader.readInt(8),this.reader.skip(4),this.diskNumber=this.reader.readInt(4),this.diskWithCentralDirStart=this.reader.readInt(4),this.centralDirRecordsOnThisDisk=this.reader.readInt(8),this.centralDirRecords=this.reader.readInt(8),this.centralDirSize=this.reader.readInt(8),this.centralDirOffset=this.reader.readInt(8),this.zip64ExtensibleData={};for(var e,t,r,n=this.zip64EndOfCentralSize-44;0<n;)e=this.reader.readInt(2),t=this.reader.readInt(4),r=this.reader.readData(t),this.zip64ExtensibleData[e]={id:e,length:t,value:r}},readBlockZip64EndOfCentralLocator:function(){if(this.diskWithZip64CentralDirStart=this.reader.readInt(4),this.relativeOffsetEndOfZip64CentralDir=this.reader.readInt(8),this.disksCount=this.reader.readInt(4),1<this.disksCount)throw new Error("Multi-volumes zip are not supported")},readLocalFiles:function(){var e,t;for(e=0;e<this.files.length;e++)t=this.files[e],this.reader.setIndex(t.localHeaderOffset),this.checkSignature(s.LOCAL_FILE_HEADER),t.readLocalPart(this.reader),t.handleUTF8(),t.processAttributes()},readCentralDir:function(){var e;for(this.reader.setIndex(this.centralDirOffset);this.reader.readAndCheckSignature(s.CENTRAL_FILE_HEADER);)(e=new a({zip64:this.zip64},this.loadOptions)).readCentralPart(this.reader),this.files.push(e);if(this.centralDirRecords!==this.files.length&&0!==this.centralDirRecords&&0===this.files.length)throw new Error("Corrupted zip or bug: expected "+this.centralDirRecords+" records in central dir, got "+this.files.length)},readEndOfCentral:function(){var e=this.reader.lastIndexOfSignature(s.CENTRAL_DIRECTORY_END);if(e<0)throw!this.isSignature(0,s.LOCAL_FILE_HEADER)?new Error("Can't find end of central directory : is this a zip file ? If it is, see https://stuk.github.io/jszip/documentation/howto/read_zip.html"):new Error("Corrupted zip: can't find end of central directory");this.reader.setIndex(e);var t=e;if(this.checkSignature(s.CENTRAL_DIRECTORY_END),this.readBlockEndOfCentral(),this.diskNumber===i.MAX_VALUE_16BITS||this.diskWithCentralDirStart===i.MAX_VALUE_16BITS||this.centralDirRecordsOnThisDisk===i.MAX_VALUE_16BITS||this.centralDirRecords===i.MAX_VALUE_16BITS||this.centralDirSize===i.MAX_VALUE_32BITS||this.centralDirOffset===i.MAX_VALUE_32BITS){if(this.zip64=!0,(e=this.reader.lastIndexOfSignature(s.ZIP64_CENTRAL_DIRECTORY_LOCATOR))<0)throw new Error("Corrupted zip: can't find the ZIP64 end of central directory locator");if(this.reader.setIndex(e),this.checkSignature(s.ZIP64_CENTRAL_DIRECTORY_LOCATOR),this.readBlockZip64EndOfCentralLocator(),!this.isSignature(this.relativeOffsetEndOfZip64CentralDir,s.ZIP64_CENTRAL_DIRECTORY_END)&&(this.relativeOffsetEndOfZip64CentralDir=this.reader.lastIndexOfSignature(s.ZIP64_CENTRAL_DIRECTORY_END),this.relativeOffsetEndOfZip64CentralDir<0))throw new Error("Corrupted zip: can't find the ZIP64 end of central directory");this.reader.setIndex(this.relativeOffsetEndOfZip64CentralDir),this.checkSignature(s.ZIP64_CENTRAL_DIRECTORY_END),this.readBlockZip64EndOfCentral()}var r=this.centralDirOffset+this.centralDirSize;this.zip64&&(r+=20,r+=12+this.zip64EndOfCentralSize);var n=t-r;if(0<n)this.isSignature(t,s.CENTRAL_FILE_HEADER)||(this.reader.zero=n);else if(n<0)throw new Error("Corrupted zip: missing "+Math.abs(n)+" bytes.")},prepareReader:function(e){this.reader=n(e)},load:function(e){this.prepareReader(e),this.readEndOfCentral(),this.readCentralDir(),this.readLocalFiles()}},t.exports=h},{"./reader/readerFor":22,"./signature":23,"./support":30,"./utils":32,"./zipEntry":34}],34:[function(e,t,r){"use strict";var n=e("./reader/readerFor"),s=e("./utils"),i=e("./compressedObject"),a=e("./crc32"),o=e("./utf8"),h=e("./compressions"),u=e("./support");function l(e,t){this.options=e,this.loadOptions=t}l.prototype={isEncrypted:function(){return 1==(1&this.bitFlag)},useUTF8:function(){return 2048==(2048&this.bitFlag)},readLocalPart:function(e){var t,r;if(e.skip(22),this.fileNameLength=e.readInt(2),r=e.readInt(2),this.fileName=e.readData(this.fileNameLength),e.skip(r),-1===this.compressedSize||-1===this.uncompressedSize)throw new Error("Bug or corrupted zip : didn't get enough information from the central directory (compressedSize === -1 || uncompressedSize === -1)");if(null===(t=function(e){for(var t in h)if(Object.prototype.hasOwnProperty.call(h,t)&&h[t].magic===e)return h[t];return null}(this.compressionMethod)))throw new Error("Corrupted zip : compression "+s.pretty(this.compressionMethod)+" unknown (inner file : "+s.transformTo("string",this.fileName)+")");this.decompressed=new i(this.compressedSize,this.uncompressedSize,this.crc32,t,e.readData(this.compressedSize))},readCentralPart:function(e){this.versionMadeBy=e.readInt(2),e.skip(2),this.bitFlag=e.readInt(2),this.compressionMethod=e.readString(2),this.date=e.readDate(),this.crc32=e.readInt(4),this.compressedSize=e.readInt(4),this.uncompressedSize=e.readInt(4);var t=e.readInt(2);if(this.extraFieldsLength=e.readInt(2),this.fileCommentLength=e.readInt(2),this.diskNumberStart=e.readInt(2),this.internalFileAttributes=e.readInt(2),this.externalFileAttributes=e.readInt(4),this.localHeaderOffset=e.readInt(4),this.isEncrypted())throw new Error("Encrypted zip are not supported");e.skip(t),this.readExtraFields(e),this.parseZIP64ExtraField(e),this.fileComment=e.readData(this.fileCommentLength)},processAttributes:function(){this.unixPermissions=null,this.dosPermissions=null;var e=this.versionMadeBy>>8;this.dir=!!(16&this.externalFileAttributes),0==e&&(this.dosPermissions=63&this.externalFileAttributes),3==e&&(this.unixPermissions=this.externalFileAttributes>>16&65535),this.dir||"/"!==this.fileNameStr.slice(-1)||(this.dir=!0)},parseZIP64ExtraField:function(){if(this.extraFields[1]){var e=n(this.extraFields[1].value);this.uncompressedSize===s.MAX_VALUE_32BITS&&(this.uncompressedSize=e.readInt(8)),this.compressedSize===s.MAX_VALUE_32BITS&&(this.compressedSize=e.readInt(8)),this.localHeaderOffset===s.MAX_VALUE_32BITS&&(this.localHeaderOffset=e.readInt(8)),this.diskNumberStart===s.MAX_VALUE_32BITS&&(this.diskNumberStart=e.readInt(4))}},readExtraFields:function(e){var t,r,n,i=e.index+this.extraFieldsLength;for(this.extraFields||(this.extraFields={});e.index+4<i;)t=e.readInt(2),r=e.readInt(2),n=e.readData(r),this.extraFields[t]={id:t,length:r,value:n};e.setIndex(i)},handleUTF8:function(){var e=u.uint8array?"uint8array":"array";if(this.useUTF8())this.fileNameStr=o.utf8decode(this.fileName),this.fileCommentStr=o.utf8decode(this.fileComment);else{var t=this.findExtraFieldUnicodePath();if(null!==t)this.fileNameStr=t;else{var r=s.transformTo(e,this.fileName);this.fileNameStr=this.loadOptions.decodeFileName(r)}var n=this.findExtraFieldUnicodeComment();if(null!==n)this.fileCommentStr=n;else{var i=s.transformTo(e,this.fileComment);this.fileCommentStr=this.loadOptions.decodeFileName(i)}}},findExtraFieldUnicodePath:function(){var e=this.extraFields[28789];if(e){var t=n(e.value);return 1!==t.readInt(1)?null:a(this.fileName)!==t.readInt(4)?null:o.utf8decode(t.readData(e.length-5))}return null},findExtraFieldUnicodeComment:function(){var e=this.extraFields[25461];if(e){var t=n(e.value);return 1!==t.readInt(1)?null:a(this.fileComment)!==t.readInt(4)?null:o.utf8decode(t.readData(e.length-5))}return null}},t.exports=l},{"./compressedObject":2,"./compressions":3,"./crc32":4,"./reader/readerFor":22,"./support":30,"./utf8":31,"./utils":32}],35:[function(e,t,r){"use strict";function n(e,t,r){this.name=e,this.dir=r.dir,this.date=r.date,this.comment=r.comment,this.unixPermissions=r.unixPermissions,this.dosPermissions=r.dosPermissions,this._data=t,this._dataBinary=r.binary,this.options={compression:r.compression,compressionOptions:r.compressionOptions}}var s=e("./stream/StreamHelper"),i=e("./stream/DataWorker"),a=e("./utf8"),o=e("./compressedObject"),h=e("./stream/GenericWorker");n.prototype={internalStream:function(e){var t=null,r="string";try{if(!e)throw new Error("No output type specified.");var n="string"===(r=e.toLowerCase())||"text"===r;"binarystring"!==r&&"text"!==r||(r="string"),t=this._decompressWorker();var i=!this._dataBinary;i&&!n&&(t=t.pipe(new a.Utf8EncodeWorker)),!i&&n&&(t=t.pipe(new a.Utf8DecodeWorker))}catch(e){(t=new h("error")).error(e)}return new s(t,r,"")},async:function(e,t){return this.internalStream(e).accumulate(t)},nodeStream:function(e,t){return this.internalStream(e||"nodebuffer").toNodejsStream(t)},_compressWorker:function(e,t){if(this._data instanceof o&&this._data.compression.magic===e.magic)return this._data.getCompressedWorker();var r=this._decompressWorker();return this._dataBinary||(r=r.pipe(new a.Utf8EncodeWorker)),o.createWorkerFrom(r,e,t)},_decompressWorker:function(){return this._data instanceof o?this._data.getContentWorker():this._data instanceof h?this._data:new i(this._data)}};for(var u=["asText","asBinary","asNodeBuffer","asUint8Array","asArrayBuffer"],l=function(){throw new Error("This method has been removed in JSZip 3.0, please check the upgrade guide.")},f=0;f<u.length;f++)n.prototype[u[f]]=l;t.exports=n},{"./compressedObject":2,"./stream/DataWorker":27,"./stream/GenericWorker":28,"./stream/StreamHelper":29,"./utf8":31}],36:[function(e,l,t){(function(t){"use strict";var r,n,e=t.MutationObserver||t.WebKitMutationObserver;if(e){var i=0,s=new e(u),a=t.document.createTextNode("");s.observe(a,{characterData:!0}),r=function(){a.data=i=++i%2}}else if(t.setImmediate||void 0===t.MessageChannel)r="document"in t&&"onreadystatechange"in t.document.createElement("script")?function(){var e=t.document.createElement("script");e.onreadystatechange=function(){u(),e.onreadystatechange=null,e.parentNode.removeChild(e),e=null},t.document.documentElement.appendChild(e)}:function(){setTimeout(u,0)};else{var o=new t.MessageChannel;o.port1.onmessage=u,r=function(){o.port2.postMessage(0)}}var h=[];function u(){var e,t;n=!0;for(var r=h.length;r;){for(t=h,h=[],e=-1;++e<r;)t[e]();r=h.length}n=!1}l.exports=function(e){1!==h.push(e)||n||r()}}).call(this,"undefined"!=typeof __webpack_require__.g?__webpack_require__.g:"undefined"!=typeof self?self:"undefined"!=typeof window?window:{})},{}],37:[function(e,t,r){"use strict";var i=e("immediate");function u(){}var l={},s=["REJECTED"],a=["FULFILLED"],n=["PENDING"];function o(e){if("function"!=typeof e)throw new TypeError("resolver must be a function");this.state=n,this.queue=[],this.outcome=void 0,e!==u&&d(this,e)}function h(e,t,r){this.promise=e,"function"==typeof t&&(this.onFulfilled=t,this.callFulfilled=this.otherCallFulfilled),"function"==typeof r&&(this.onRejected=r,this.callRejected=this.otherCallRejected)}function f(t,r,n){i(function(){var e;try{e=r(n)}catch(e){return l.reject(t,e)}e===t?l.reject(t,new TypeError("Cannot resolve promise with itself")):l.resolve(t,e)})}function c(e){var t=e&&e.then;if(e&&("object"==typeof e||"function"==typeof e)&&"function"==typeof t)return function(){t.apply(e,arguments)}}function d(t,e){var r=!1;function n(e){r||(r=!0,l.reject(t,e))}function i(e){r||(r=!0,l.resolve(t,e))}var s=p(function(){e(i,n)});"error"===s.status&&n(s.value)}function p(e,t){var r={};try{r.value=e(t),r.status="success"}catch(e){r.status="error",r.value=e}return r}(t.exports=o).prototype.finally=function(t){if("function"!=typeof t)return this;var r=this.constructor;return this.then(function(e){return r.resolve(t()).then(function(){return e})},function(e){return r.resolve(t()).then(function(){throw e})})},o.prototype.catch=function(e){return this.then(null,e)},o.prototype.then=function(e,t){if("function"!=typeof e&&this.state===a||"function"!=typeof t&&this.state===s)return this;var r=new this.constructor(u);this.state!==n?f(r,this.state===a?e:t,this.outcome):this.queue.push(new h(r,e,t));return r},h.prototype.callFulfilled=function(e){l.resolve(this.promise,e)},h.prototype.otherCallFulfilled=function(e){f(this.promise,this.onFulfilled,e)},h.prototype.callRejected=function(e){l.reject(this.promise,e)},h.prototype.otherCallRejected=function(e){f(this.promise,this.onRejected,e)},l.resolve=function(e,t){var r=p(c,t);if("error"===r.status)return l.reject(e,r.value);var n=r.value;if(n)d(e,n);else{e.state=a,e.outcome=t;for(var i=-1,s=e.queue.length;++i<s;)e.queue[i].callFulfilled(t)}return e},l.reject=function(e,t){e.state=s,e.outcome=t;for(var r=-1,n=e.queue.length;++r<n;)e.queue[r].callRejected(t);return e},o.resolve=function(e){if(e instanceof this)return e;return l.resolve(new this(u),e)},o.reject=function(e){var t=new this(u);return l.reject(t,e)},o.all=function(e){var r=this;if("[object Array]"!==Object.prototype.toString.call(e))return this.reject(new TypeError("must be an array"));var n=e.length,i=!1;if(!n)return this.resolve([]);var s=new Array(n),a=0,t=-1,o=new this(u);for(;++t<n;)h(e[t],t);return o;function h(e,t){r.resolve(e).then(function(e){s[t]=e,++a!==n||i||(i=!0,l.resolve(o,s))},function(e){i||(i=!0,l.reject(o,e))})}},o.race=function(e){var t=this;if("[object Array]"!==Object.prototype.toString.call(e))return this.reject(new TypeError("must be an array"));var r=e.length,n=!1;if(!r)return this.resolve([]);var i=-1,s=new this(u);for(;++i<r;)a=e[i],t.resolve(a).then(function(e){n||(n=!0,l.resolve(s,e))},function(e){n||(n=!0,l.reject(s,e))});var a;return s}},{immediate:36}],38:[function(e,t,r){"use strict";var n={};(0,e("./lib/utils/common").assign)(n,e("./lib/deflate"),e("./lib/inflate"),e("./lib/zlib/constants")),t.exports=n},{"./lib/deflate":39,"./lib/inflate":40,"./lib/utils/common":41,"./lib/zlib/constants":44}],39:[function(e,t,r){"use strict";var a=e("./zlib/deflate"),o=e("./utils/common"),h=e("./utils/strings"),i=e("./zlib/messages"),s=e("./zlib/zstream"),u=Object.prototype.toString,l=0,f=-1,c=0,d=8;function p(e){if(!(this instanceof p))return new p(e);this.options=o.assign({level:f,method:d,chunkSize:16384,windowBits:15,memLevel:8,strategy:c,to:""},e||{});var t=this.options;t.raw&&0<t.windowBits?t.windowBits=-t.windowBits:t.gzip&&0<t.windowBits&&t.windowBits<16&&(t.windowBits+=16),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new s,this.strm.avail_out=0;var r=a.deflateInit2(this.strm,t.level,t.method,t.windowBits,t.memLevel,t.strategy);if(r!==l)throw new Error(i[r]);if(t.header&&a.deflateSetHeader(this.strm,t.header),t.dictionary){var n;if(n="string"==typeof t.dictionary?h.string2buf(t.dictionary):"[object ArrayBuffer]"===u.call(t.dictionary)?new Uint8Array(t.dictionary):t.dictionary,(r=a.deflateSetDictionary(this.strm,n))!==l)throw new Error(i[r]);this._dict_set=!0}}function n(e,t){var r=new p(t);if(r.push(e,!0),r.err)throw r.msg||i[r.err];return r.result}p.prototype.push=function(e,t){var r,n,i=this.strm,s=this.options.chunkSize;if(this.ended)return!1;n=t===~~t?t:!0===t?4:0,"string"==typeof e?i.input=h.string2buf(e):"[object ArrayBuffer]"===u.call(e)?i.input=new Uint8Array(e):i.input=e,i.next_in=0,i.avail_in=i.input.length;do{if(0===i.avail_out&&(i.output=new o.Buf8(s),i.next_out=0,i.avail_out=s),1!==(r=a.deflate(i,n))&&r!==l)return this.onEnd(r),!(this.ended=!0);0!==i.avail_out&&(0!==i.avail_in||4!==n&&2!==n)||("string"===this.options.to?this.onData(h.buf2binstring(o.shrinkBuf(i.output,i.next_out))):this.onData(o.shrinkBuf(i.output,i.next_out)))}while((0<i.avail_in||0===i.avail_out)&&1!==r);return 4===n?(r=a.deflateEnd(this.strm),this.onEnd(r),this.ended=!0,r===l):2!==n||(this.onEnd(l),!(i.avail_out=0))},p.prototype.onData=function(e){this.chunks.push(e)},p.prototype.onEnd=function(e){e===l&&("string"===this.options.to?this.result=this.chunks.join(""):this.result=o.flattenChunks(this.chunks)),this.chunks=[],this.err=e,this.msg=this.strm.msg},r.Deflate=p,r.deflate=n,r.deflateRaw=function(e,t){return(t=t||{}).raw=!0,n(e,t)},r.gzip=function(e,t){return(t=t||{}).gzip=!0,n(e,t)}},{"./utils/common":41,"./utils/strings":42,"./zlib/deflate":46,"./zlib/messages":51,"./zlib/zstream":53}],40:[function(e,t,r){"use strict";var c=e("./zlib/inflate"),d=e("./utils/common"),p=e("./utils/strings"),m=e("./zlib/constants"),n=e("./zlib/messages"),i=e("./zlib/zstream"),s=e("./zlib/gzheader"),_=Object.prototype.toString;function a(e){if(!(this instanceof a))return new a(e);this.options=d.assign({chunkSize:16384,windowBits:0,to:""},e||{});var t=this.options;t.raw&&0<=t.windowBits&&t.windowBits<16&&(t.windowBits=-t.windowBits,0===t.windowBits&&(t.windowBits=-15)),!(0<=t.windowBits&&t.windowBits<16)||e&&e.windowBits||(t.windowBits+=32),15<t.windowBits&&t.windowBits<48&&0==(15&t.windowBits)&&(t.windowBits|=15),this.err=0,this.msg="",this.ended=!1,this.chunks=[],this.strm=new i,this.strm.avail_out=0;var r=c.inflateInit2(this.strm,t.windowBits);if(r!==m.Z_OK)throw new Error(n[r]);this.header=new s,c.inflateGetHeader(this.strm,this.header)}function o(e,t){var r=new a(t);if(r.push(e,!0),r.err)throw r.msg||n[r.err];return r.result}a.prototype.push=function(e,t){var r,n,i,s,a,o,h=this.strm,u=this.options.chunkSize,l=this.options.dictionary,f=!1;if(this.ended)return!1;n=t===~~t?t:!0===t?m.Z_FINISH:m.Z_NO_FLUSH,"string"==typeof e?h.input=p.binstring2buf(e):"[object ArrayBuffer]"===_.call(e)?h.input=new Uint8Array(e):h.input=e,h.next_in=0,h.avail_in=h.input.length;do{if(0===h.avail_out&&(h.output=new d.Buf8(u),h.next_out=0,h.avail_out=u),(r=c.inflate(h,m.Z_NO_FLUSH))===m.Z_NEED_DICT&&l&&(o="string"==typeof l?p.string2buf(l):"[object ArrayBuffer]"===_.call(l)?new Uint8Array(l):l,r=c.inflateSetDictionary(this.strm,o)),r===m.Z_BUF_ERROR&&!0===f&&(r=m.Z_OK,f=!1),r!==m.Z_STREAM_END&&r!==m.Z_OK)return this.onEnd(r),!(this.ended=!0);h.next_out&&(0!==h.avail_out&&r!==m.Z_STREAM_END&&(0!==h.avail_in||n!==m.Z_FINISH&&n!==m.Z_SYNC_FLUSH)||("string"===this.options.to?(i=p.utf8border(h.output,h.next_out),s=h.next_out-i,a=p.buf2string(h.output,i),h.next_out=s,h.avail_out=u-s,s&&d.arraySet(h.output,h.output,i,s,0),this.onData(a)):this.onData(d.shrinkBuf(h.output,h.next_out)))),0===h.avail_in&&0===h.avail_out&&(f=!0)}while((0<h.avail_in||0===h.avail_out)&&r!==m.Z_STREAM_END);return r===m.Z_STREAM_END&&(n=m.Z_FINISH),n===m.Z_FINISH?(r=c.inflateEnd(this.strm),this.onEnd(r),this.ended=!0,r===m.Z_OK):n!==m.Z_SYNC_FLUSH||(this.onEnd(m.Z_OK),!(h.avail_out=0))},a.prototype.onData=function(e){this.chunks.push(e)},a.prototype.onEnd=function(e){e===m.Z_OK&&("string"===this.options.to?this.result=this.chunks.join(""):this.result=d.flattenChunks(this.chunks)),this.chunks=[],this.err=e,this.msg=this.strm.msg},r.Inflate=a,r.inflate=o,r.inflateRaw=function(e,t){return(t=t||{}).raw=!0,o(e,t)},r.ungzip=o},{"./utils/common":41,"./utils/strings":42,"./zlib/constants":44,"./zlib/gzheader":47,"./zlib/inflate":49,"./zlib/messages":51,"./zlib/zstream":53}],41:[function(e,t,r){"use strict";var n="undefined"!=typeof Uint8Array&&"undefined"!=typeof Uint16Array&&"undefined"!=typeof Int32Array;r.assign=function(e){for(var t=Array.prototype.slice.call(arguments,1);t.length;){var r=t.shift();if(r){if("object"!=typeof r)throw new TypeError(r+"must be non-object");for(var n in r)r.hasOwnProperty(n)&&(e[n]=r[n])}}return e},r.shrinkBuf=function(e,t){return e.length===t?e:e.subarray?e.subarray(0,t):(e.length=t,e)};var i={arraySet:function(e,t,r,n,i){if(t.subarray&&e.subarray)e.set(t.subarray(r,r+n),i);else for(var s=0;s<n;s++)e[i+s]=t[r+s]},flattenChunks:function(e){var t,r,n,i,s,a;for(t=n=0,r=e.length;t<r;t++)n+=e[t].length;for(a=new Uint8Array(n),t=i=0,r=e.length;t<r;t++)s=e[t],a.set(s,i),i+=s.length;return a}},s={arraySet:function(e,t,r,n,i){for(var s=0;s<n;s++)e[i+s]=t[r+s]},flattenChunks:function(e){return[].concat.apply([],e)}};r.setTyped=function(e){e?(r.Buf8=Uint8Array,r.Buf16=Uint16Array,r.Buf32=Int32Array,r.assign(r,i)):(r.Buf8=Array,r.Buf16=Array,r.Buf32=Array,r.assign(r,s))},r.setTyped(n)},{}],42:[function(e,t,r){"use strict";var h=e("./common"),i=!0,s=!0;try{String.fromCharCode.apply(null,[0])}catch(e){i=!1}try{String.fromCharCode.apply(null,new Uint8Array(1))}catch(e){s=!1}for(var u=new h.Buf8(256),n=0;n<256;n++)u[n]=252<=n?6:248<=n?5:240<=n?4:224<=n?3:192<=n?2:1;function l(e,t){if(t<65537&&(e.subarray&&s||!e.subarray&&i))return String.fromCharCode.apply(null,h.shrinkBuf(e,t));for(var r="",n=0;n<t;n++)r+=String.fromCharCode(e[n]);return r}u[254]=u[254]=1,r.string2buf=function(e){var t,r,n,i,s,a=e.length,o=0;for(i=0;i<a;i++)55296==(64512&(r=e.charCodeAt(i)))&&i+1<a&&56320==(64512&(n=e.charCodeAt(i+1)))&&(r=65536+(r-55296<<10)+(n-56320),i++),o+=r<128?1:r<2048?2:r<65536?3:4;for(t=new h.Buf8(o),i=s=0;s<o;i++)55296==(64512&(r=e.charCodeAt(i)))&&i+1<a&&56320==(64512&(n=e.charCodeAt(i+1)))&&(r=65536+(r-55296<<10)+(n-56320),i++),r<128?t[s++]=r:(r<2048?t[s++]=192|r>>>6:(r<65536?t[s++]=224|r>>>12:(t[s++]=240|r>>>18,t[s++]=128|r>>>12&63),t[s++]=128|r>>>6&63),t[s++]=128|63&r);return t},r.buf2binstring=function(e){return l(e,e.length)},r.binstring2buf=function(e){for(var t=new h.Buf8(e.length),r=0,n=t.length;r<n;r++)t[r]=e.charCodeAt(r);return t},r.buf2string=function(e,t){var r,n,i,s,a=t||e.length,o=new Array(2*a);for(r=n=0;r<a;)if((i=e[r++])<128)o[n++]=i;else if(4<(s=u[i]))o[n++]=65533,r+=s-1;else{for(i&=2===s?31:3===s?15:7;1<s&&r<a;)i=i<<6|63&e[r++],s--;1<s?o[n++]=65533:i<65536?o[n++]=i:(i-=65536,o[n++]=55296|i>>10&1023,o[n++]=56320|1023&i)}return l(o,n)},r.utf8border=function(e,t){var r;for((t=t||e.length)>e.length&&(t=e.length),r=t-1;0<=r&&128==(192&e[r]);)r--;return r<0?t:0===r?t:r+u[e[r]]>t?r:t}},{"./common":41}],43:[function(e,t,r){"use strict";t.exports=function(e,t,r,n){for(var i=65535&e|0,s=e>>>16&65535|0,a=0;0!==r;){for(r-=a=2e3<r?2e3:r;s=s+(i=i+t[n++]|0)|0,--a;);i%=65521,s%=65521}return i|s<<16|0}},{}],44:[function(e,t,r){"use strict";t.exports={Z_NO_FLUSH:0,Z_PARTIAL_FLUSH:1,Z_SYNC_FLUSH:2,Z_FULL_FLUSH:3,Z_FINISH:4,Z_BLOCK:5,Z_TREES:6,Z_OK:0,Z_STREAM_END:1,Z_NEED_DICT:2,Z_ERRNO:-1,Z_STREAM_ERROR:-2,Z_DATA_ERROR:-3,Z_BUF_ERROR:-5,Z_NO_COMPRESSION:0,Z_BEST_SPEED:1,Z_BEST_COMPRESSION:9,Z_DEFAULT_COMPRESSION:-1,Z_FILTERED:1,Z_HUFFMAN_ONLY:2,Z_RLE:3,Z_FIXED:4,Z_DEFAULT_STRATEGY:0,Z_BINARY:0,Z_TEXT:1,Z_UNKNOWN:2,Z_DEFLATED:8}},{}],45:[function(e,t,r){"use strict";var o=function(){for(var e,t=[],r=0;r<256;r++){e=r;for(var n=0;n<8;n++)e=1&e?3988292384^e>>>1:e>>>1;t[r]=e}return t}();t.exports=function(e,t,r,n){var i=o,s=n+r;e^=-1;for(var a=n;a<s;a++)e=e>>>8^i[255&(e^t[a])];return-1^e}},{}],46:[function(e,t,r){"use strict";var h,c=e("../utils/common"),u=e("./trees"),d=e("./adler32"),p=e("./crc32"),n=e("./messages"),l=0,f=4,m=0,_=-2,g=-1,b=4,i=2,v=8,y=9,s=286,a=30,o=19,w=2*s+1,k=15,x=3,S=258,z=S+x+1,C=42,E=113,A=1,I=2,O=3,B=4;function R(e,t){return e.msg=n[t],t}function T(e){return(e<<1)-(4<e?9:0)}function D(e){for(var t=e.length;0<=--t;)e[t]=0}function F(e){var t=e.state,r=t.pending;r>e.avail_out&&(r=e.avail_out),0!==r&&(c.arraySet(e.output,t.pending_buf,t.pending_out,r,e.next_out),e.next_out+=r,t.pending_out+=r,e.total_out+=r,e.avail_out-=r,t.pending-=r,0===t.pending&&(t.pending_out=0))}function N(e,t){u._tr_flush_block(e,0<=e.block_start?e.block_start:-1,e.strstart-e.block_start,t),e.block_start=e.strstart,F(e.strm)}function U(e,t){e.pending_buf[e.pending++]=t}function P(e,t){e.pending_buf[e.pending++]=t>>>8&255,e.pending_buf[e.pending++]=255&t}function L(e,t){var r,n,i=e.max_chain_length,s=e.strstart,a=e.prev_length,o=e.nice_match,h=e.strstart>e.w_size-z?e.strstart-(e.w_size-z):0,u=e.window,l=e.w_mask,f=e.prev,c=e.strstart+S,d=u[s+a-1],p=u[s+a];e.prev_length>=e.good_match&&(i>>=2),o>e.lookahead&&(o=e.lookahead);do{if(u[(r=t)+a]===p&&u[r+a-1]===d&&u[r]===u[s]&&u[++r]===u[s+1]){s+=2,r++;do{}while(u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&u[++s]===u[++r]&&s<c);if(n=S-(c-s),s=c-S,a<n){if(e.match_start=t,o<=(a=n))break;d=u[s+a-1],p=u[s+a]}}}while((t=f[t&l])>h&&0!=--i);return a<=e.lookahead?a:e.lookahead}function j(e){var t,r,n,i,s,a,o,h,u,l,f=e.w_size;do{if(i=e.window_size-e.lookahead-e.strstart,e.strstart>=f+(f-z)){for(c.arraySet(e.window,e.window,f,f,0),e.match_start-=f,e.strstart-=f,e.block_start-=f,t=r=e.hash_size;n=e.head[--t],e.head[t]=f<=n?n-f:0,--r;);for(t=r=f;n=e.prev[--t],e.prev[t]=f<=n?n-f:0,--r;);i+=f}if(0===e.strm.avail_in)break;if(a=e.strm,o=e.window,h=e.strstart+e.lookahead,u=i,l=void 0,l=a.avail_in,u<l&&(l=u),r=0===l?0:(a.avail_in-=l,c.arraySet(o,a.input,a.next_in,l,h),1===a.state.wrap?a.adler=d(a.adler,o,l,h):2===a.state.wrap&&(a.adler=p(a.adler,o,l,h)),a.next_in+=l,a.total_in+=l,l),e.lookahead+=r,e.lookahead+e.insert>=x)for(s=e.strstart-e.insert,e.ins_h=e.window[s],e.ins_h=(e.ins_h<<e.hash_shift^e.window[s+1])&e.hash_mask;e.insert&&(e.ins_h=(e.ins_h<<e.hash_shift^e.window[s+x-1])&e.hash_mask,e.prev[s&e.w_mask]=e.head[e.ins_h],e.head[e.ins_h]=s,s++,e.insert--,!(e.lookahead+e.insert<x)););}while(e.lookahead<z&&0!==e.strm.avail_in)}function Z(e,t){for(var r,n;;){if(e.lookahead<z){if(j(e),e.lookahead<z&&t===l)return A;if(0===e.lookahead)break}if(r=0,e.lookahead>=x&&(e.ins_h=(e.ins_h<<e.hash_shift^e.window[e.strstart+x-1])&e.hash_mask,r=e.prev[e.strstart&e.w_mask]=e.head[e.ins_h],e.head[e.ins_h]=e.strstart),0!==r&&e.strstart-r<=e.w_size-z&&(e.match_length=L(e,r)),e.match_length>=x)if(n=u._tr_tally(e,e.strstart-e.match_start,e.match_length-x),e.lookahead-=e.match_length,e.match_length<=e.max_lazy_match&&e.lookahead>=x){for(e.match_length--;e.strstart++,e.ins_h=(e.ins_h<<e.hash_shift^e.window[e.strstart+x-1])&e.hash_mask,r=e.prev[e.strstart&e.w_mask]=e.head[e.ins_h],e.head[e.ins_h]=e.strstart,0!=--e.match_length;);e.strstart++}else e.strstart+=e.match_length,e.match_length=0,e.ins_h=e.window[e.strstart],e.ins_h=(e.ins_h<<e.hash_shift^e.window[e.strstart+1])&e.hash_mask;else n=u._tr_tally(e,0,e.window[e.strstart]),e.lookahead--,e.strstart++;if(n&&(N(e,!1),0===e.strm.avail_out))return A}return e.insert=e.strstart<x-1?e.strstart:x-1,t===f?(N(e,!0),0===e.strm.avail_out?O:B):e.last_lit&&(N(e,!1),0===e.strm.avail_out)?A:I}function W(e,t){for(var r,n,i;;){if(e.lookahead<z){if(j(e),e.lookahead<z&&t===l)return A;if(0===e.lookahead)break}if(r=0,e.lookahead>=x&&(e.ins_h=(e.ins_h<<e.hash_shift^e.window[e.strstart+x-1])&e.hash_mask,r=e.prev[e.strstart&e.w_mask]=e.head[e.ins_h],e.head[e.ins_h]=e.strstart),e.prev_length=e.match_length,e.prev_match=e.match_start,e.match_length=x-1,0!==r&&e.prev_length<e.max_lazy_match&&e.strstart-r<=e.w_size-z&&(e.match_length=L(e,r),e.match_length<=5&&(1===e.strategy||e.match_length===x&&4096<e.strstart-e.match_start)&&(e.match_length=x-1)),e.prev_length>=x&&e.match_length<=e.prev_length){for(i=e.strstart+e.lookahead-x,n=u._tr_tally(e,e.strstart-1-e.prev_match,e.prev_length-x),e.lookahead-=e.prev_length-1,e.prev_length-=2;++e.strstart<=i&&(e.ins_h=(e.ins_h<<e.hash_shift^e.window[e.strstart+x-1])&e.hash_mask,r=e.prev[e.strstart&e.w_mask]=e.head[e.ins_h],e.head[e.ins_h]=e.strstart),0!=--e.prev_length;);if(e.match_available=0,e.match_length=x-1,e.strstart++,n&&(N(e,!1),0===e.strm.avail_out))return A}else if(e.match_available){if((n=u._tr_tally(e,0,e.window[e.strstart-1]))&&N(e,!1),e.strstart++,e.lookahead--,0===e.strm.avail_out)return A}else e.match_available=1,e.strstart++,e.lookahead--}return e.match_available&&(n=u._tr_tally(e,0,e.window[e.strstart-1]),e.match_available=0),e.insert=e.strstart<x-1?e.strstart:x-1,t===f?(N(e,!0),0===e.strm.avail_out?O:B):e.last_lit&&(N(e,!1),0===e.strm.avail_out)?A:I}function M(e,t,r,n,i){this.good_length=e,this.max_lazy=t,this.nice_length=r,this.max_chain=n,this.func=i}function H(){this.strm=null,this.status=0,this.pending_buf=null,this.pending_buf_size=0,this.pending_out=0,this.pending=0,this.wrap=0,this.gzhead=null,this.gzindex=0,this.method=v,this.last_flush=-1,this.w_size=0,this.w_bits=0,this.w_mask=0,this.window=null,this.window_size=0,this.prev=null,this.head=null,this.ins_h=0,this.hash_size=0,this.hash_bits=0,this.hash_mask=0,this.hash_shift=0,this.block_start=0,this.match_length=0,this.prev_match=0,this.match_available=0,this.strstart=0,this.match_start=0,this.lookahead=0,this.prev_length=0,this.max_chain_length=0,this.max_lazy_match=0,this.level=0,this.strategy=0,this.good_match=0,this.nice_match=0,this.dyn_ltree=new c.Buf16(2*w),this.dyn_dtree=new c.Buf16(2*(2*a+1)),this.bl_tree=new c.Buf16(2*(2*o+1)),D(this.dyn_ltree),D(this.dyn_dtree),D(this.bl_tree),this.l_desc=null,this.d_desc=null,this.bl_desc=null,this.bl_count=new c.Buf16(k+1),this.heap=new c.Buf16(2*s+1),D(this.heap),this.heap_len=0,this.heap_max=0,this.depth=new c.Buf16(2*s+1),D(this.depth),this.l_buf=0,this.lit_bufsize=0,this.last_lit=0,this.d_buf=0,this.opt_len=0,this.static_len=0,this.matches=0,this.insert=0,this.bi_buf=0,this.bi_valid=0}function G(e){var t;return e&&e.state?(e.total_in=e.total_out=0,e.data_type=i,(t=e.state).pending=0,t.pending_out=0,t.wrap<0&&(t.wrap=-t.wrap),t.status=t.wrap?C:E,e.adler=2===t.wrap?0:1,t.last_flush=l,u._tr_init(t),m):R(e,_)}function K(e){var t=G(e);return t===m&&function(e){e.window_size=2*e.w_size,D(e.head),e.max_lazy_match=h[e.level].max_lazy,e.good_match=h[e.level].good_length,e.nice_match=h[e.level].nice_length,e.max_chain_length=h[e.level].max_chain,e.strstart=0,e.block_start=0,e.lookahead=0,e.insert=0,e.match_length=e.prev_length=x-1,e.match_available=0,e.ins_h=0}(e.state),t}function Y(e,t,r,n,i,s){if(!e)return _;var a=1;if(t===g&&(t=6),n<0?(a=0,n=-n):15<n&&(a=2,n-=16),i<1||y<i||r!==v||n<8||15<n||t<0||9<t||s<0||b<s)return R(e,_);8===n&&(n=9);var o=new H;return(e.state=o).strm=e,o.wrap=a,o.gzhead=null,o.w_bits=n,o.w_size=1<<o.w_bits,o.w_mask=o.w_size-1,o.hash_bits=i+7,o.hash_size=1<<o.hash_bits,o.hash_mask=o.hash_size-1,o.hash_shift=~~((o.hash_bits+x-1)/x),o.window=new c.Buf8(2*o.w_size),o.head=new c.Buf16(o.hash_size),o.prev=new c.Buf16(o.w_size),o.lit_bufsize=1<<i+6,o.pending_buf_size=4*o.lit_bufsize,o.pending_buf=new c.Buf8(o.pending_buf_size),o.d_buf=1*o.lit_bufsize,o.l_buf=3*o.lit_bufsize,o.level=t,o.strategy=s,o.method=r,K(e)}h=[new M(0,0,0,0,function(e,t){var r=65535;for(r>e.pending_buf_size-5&&(r=e.pending_buf_size-5);;){if(e.lookahead<=1){if(j(e),0===e.lookahead&&t===l)return A;if(0===e.lookahead)break}e.strstart+=e.lookahead,e.lookahead=0;var n=e.block_start+r;if((0===e.strstart||e.strstart>=n)&&(e.lookahead=e.strstart-n,e.strstart=n,N(e,!1),0===e.strm.avail_out))return A;if(e.strstart-e.block_start>=e.w_size-z&&(N(e,!1),0===e.strm.avail_out))return A}return e.insert=0,t===f?(N(e,!0),0===e.strm.avail_out?O:B):(e.strstart>e.block_start&&(N(e,!1),e.strm.avail_out),A)}),new M(4,4,8,4,Z),new M(4,5,16,8,Z),new M(4,6,32,32,Z),new M(4,4,16,16,W),new M(8,16,32,32,W),new M(8,16,128,128,W),new M(8,32,128,256,W),new M(32,128,258,1024,W),new M(32,258,258,4096,W)],r.deflateInit=function(e,t){return Y(e,t,v,15,8,0)},r.deflateInit2=Y,r.deflateReset=K,r.deflateResetKeep=G,r.deflateSetHeader=function(e,t){return e&&e.state?2!==e.state.wrap?_:(e.state.gzhead=t,m):_},r.deflate=function(e,t){var r,n,i,s;if(!e||!e.state||5<t||t<0)return e?R(e,_):_;if(n=e.state,!e.output||!e.input&&0!==e.avail_in||666===n.status&&t!==f)return R(e,0===e.avail_out?-5:_);if(n.strm=e,r=n.last_flush,n.last_flush=t,n.status===C)if(2===n.wrap)e.adler=0,U(n,31),U(n,139),U(n,8),n.gzhead?(U(n,(n.gzhead.text?1:0)+(n.gzhead.hcrc?2:0)+(n.gzhead.extra?4:0)+(n.gzhead.name?8:0)+(n.gzhead.comment?16:0)),U(n,255&n.gzhead.time),U(n,n.gzhead.time>>8&255),U(n,n.gzhead.time>>16&255),U(n,n.gzhead.time>>24&255),U(n,9===n.level?2:2<=n.strategy||n.level<2?4:0),U(n,255&n.gzhead.os),n.gzhead.extra&&n.gzhead.extra.length&&(U(n,255&n.gzhead.extra.length),U(n,n.gzhead.extra.length>>8&255)),n.gzhead.hcrc&&(e.adler=p(e.adler,n.pending_buf,n.pending,0)),n.gzindex=0,n.status=69):(U(n,0),U(n,0),U(n,0),U(n,0),U(n,0),U(n,9===n.level?2:2<=n.strategy||n.level<2?4:0),U(n,3),n.status=E);else{var a=v+(n.w_bits-8<<4)<<8;a|=(2<=n.strategy||n.level<2?0:n.level<6?1:6===n.level?2:3)<<6,0!==n.strstart&&(a|=32),a+=31-a%31,n.status=E,P(n,a),0!==n.strstart&&(P(n,e.adler>>>16),P(n,65535&e.adler)),e.adler=1}if(69===n.status)if(n.gzhead.extra){for(i=n.pending;n.gzindex<(65535&n.gzhead.extra.length)&&(n.pending!==n.pending_buf_size||(n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),F(e),i=n.pending,n.pending!==n.pending_buf_size));)U(n,255&n.gzhead.extra[n.gzindex]),n.gzindex++;n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),n.gzindex===n.gzhead.extra.length&&(n.gzindex=0,n.status=73)}else n.status=73;if(73===n.status)if(n.gzhead.name){i=n.pending;do{if(n.pending===n.pending_buf_size&&(n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),F(e),i=n.pending,n.pending===n.pending_buf_size)){s=1;break}s=n.gzindex<n.gzhead.name.length?255&n.gzhead.name.charCodeAt(n.gzindex++):0,U(n,s)}while(0!==s);n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),0===s&&(n.gzindex=0,n.status=91)}else n.status=91;if(91===n.status)if(n.gzhead.comment){i=n.pending;do{if(n.pending===n.pending_buf_size&&(n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),F(e),i=n.pending,n.pending===n.pending_buf_size)){s=1;break}s=n.gzindex<n.gzhead.comment.length?255&n.gzhead.comment.charCodeAt(n.gzindex++):0,U(n,s)}while(0!==s);n.gzhead.hcrc&&n.pending>i&&(e.adler=p(e.adler,n.pending_buf,n.pending-i,i)),0===s&&(n.status=103)}else n.status=103;if(103===n.status&&(n.gzhead.hcrc?(n.pending+2>n.pending_buf_size&&F(e),n.pending+2<=n.pending_buf_size&&(U(n,255&e.adler),U(n,e.adler>>8&255),e.adler=0,n.status=E)):n.status=E),0!==n.pending){if(F(e),0===e.avail_out)return n.last_flush=-1,m}else if(0===e.avail_in&&T(t)<=T(r)&&t!==f)return R(e,-5);if(666===n.status&&0!==e.avail_in)return R(e,-5);if(0!==e.avail_in||0!==n.lookahead||t!==l&&666!==n.status){var o=2===n.strategy?function(e,t){for(var r;;){if(0===e.lookahead&&(j(e),0===e.lookahead)){if(t===l)return A;break}if(e.match_length=0,r=u._tr_tally(e,0,e.window[e.strstart]),e.lookahead--,e.strstart++,r&&(N(e,!1),0===e.strm.avail_out))return A}return e.insert=0,t===f?(N(e,!0),0===e.strm.avail_out?O:B):e.last_lit&&(N(e,!1),0===e.strm.avail_out)?A:I}(n,t):3===n.strategy?function(e,t){for(var r,n,i,s,a=e.window;;){if(e.lookahead<=S){if(j(e),e.lookahead<=S&&t===l)return A;if(0===e.lookahead)break}if(e.match_length=0,e.lookahead>=x&&0<e.strstart&&(n=a[i=e.strstart-1])===a[++i]&&n===a[++i]&&n===a[++i]){s=e.strstart+S;do{}while(n===a[++i]&&n===a[++i]&&n===a[++i]&&n===a[++i]&&n===a[++i]&&n===a[++i]&&n===a[++i]&&n===a[++i]&&i<s);e.match_length=S-(s-i),e.match_length>e.lookahead&&(e.match_length=e.lookahead)}if(e.match_length>=x?(r=u._tr_tally(e,1,e.match_length-x),e.lookahead-=e.match_length,e.strstart+=e.match_length,e.match_length=0):(r=u._tr_tally(e,0,e.window[e.strstart]),e.lookahead--,e.strstart++),r&&(N(e,!1),0===e.strm.avail_out))return A}return e.insert=0,t===f?(N(e,!0),0===e.strm.avail_out?O:B):e.last_lit&&(N(e,!1),0===e.strm.avail_out)?A:I}(n,t):h[n.level].func(n,t);if(o!==O&&o!==B||(n.status=666),o===A||o===O)return 0===e.avail_out&&(n.last_flush=-1),m;if(o===I&&(1===t?u._tr_align(n):5!==t&&(u._tr_stored_block(n,0,0,!1),3===t&&(D(n.head),0===n.lookahead&&(n.strstart=0,n.block_start=0,n.insert=0))),F(e),0===e.avail_out))return n.last_flush=-1,m}return t!==f?m:n.wrap<=0?1:(2===n.wrap?(U(n,255&e.adler),U(n,e.adler>>8&255),U(n,e.adler>>16&255),U(n,e.adler>>24&255),U(n,255&e.total_in),U(n,e.total_in>>8&255),U(n,e.total_in>>16&255),U(n,e.total_in>>24&255)):(P(n,e.adler>>>16),P(n,65535&e.adler)),F(e),0<n.wrap&&(n.wrap=-n.wrap),0!==n.pending?m:1)},r.deflateEnd=function(e){var t;return e&&e.state?(t=e.state.status)!==C&&69!==t&&73!==t&&91!==t&&103!==t&&t!==E&&666!==t?R(e,_):(e.state=null,t===E?R(e,-3):m):_},r.deflateSetDictionary=function(e,t){var r,n,i,s,a,o,h,u,l=t.length;if(!e||!e.state)return _;if(2===(s=(r=e.state).wrap)||1===s&&r.status!==C||r.lookahead)return _;for(1===s&&(e.adler=d(e.adler,t,l,0)),r.wrap=0,l>=r.w_size&&(0===s&&(D(r.head),r.strstart=0,r.block_start=0,r.insert=0),u=new c.Buf8(r.w_size),c.arraySet(u,t,l-r.w_size,r.w_size,0),t=u,l=r.w_size),a=e.avail_in,o=e.next_in,h=e.input,e.avail_in=l,e.next_in=0,e.input=t,j(r);r.lookahead>=x;){for(n=r.strstart,i=r.lookahead-(x-1);r.ins_h=(r.ins_h<<r.hash_shift^r.window[n+x-1])&r.hash_mask,r.prev[n&r.w_mask]=r.head[r.ins_h],r.head[r.ins_h]=n,n++,--i;);r.strstart=n,r.lookahead=x-1,j(r)}return r.strstart+=r.lookahead,r.block_start=r.strstart,r.insert=r.lookahead,r.lookahead=0,r.match_length=r.prev_length=x-1,r.match_available=0,e.next_in=o,e.input=h,e.avail_in=a,r.wrap=s,m},r.deflateInfo="pako deflate (from Nodeca project)"},{"../utils/common":41,"./adler32":43,"./crc32":45,"./messages":51,"./trees":52}],47:[function(e,t,r){"use strict";t.exports=function(){this.text=0,this.time=0,this.xflags=0,this.os=0,this.extra=null,this.extra_len=0,this.name="",this.comment="",this.hcrc=0,this.done=!1}},{}],48:[function(e,t,r){"use strict";t.exports=function(e,t){var r,n,i,s,a,o,h,u,l,f,c,d,p,m,_,g,b,v,y,w,k,x,S,z,C;r=e.state,n=e.next_in,z=e.input,i=n+(e.avail_in-5),s=e.next_out,C=e.output,a=s-(t-e.avail_out),o=s+(e.avail_out-257),h=r.dmax,u=r.wsize,l=r.whave,f=r.wnext,c=r.window,d=r.hold,p=r.bits,m=r.lencode,_=r.distcode,g=(1<<r.lenbits)-1,b=(1<<r.distbits)-1;e:do{p<15&&(d+=z[n++]<<p,p+=8,d+=z[n++]<<p,p+=8),v=m[d&g];t:for(;;){if(d>>>=y=v>>>24,p-=y,0===(y=v>>>16&255))C[s++]=65535&v;else{if(!(16&y)){if(0==(64&y)){v=m[(65535&v)+(d&(1<<y)-1)];continue t}if(32&y){r.mode=12;break e}e.msg="invalid literal/length code",r.mode=30;break e}w=65535&v,(y&=15)&&(p<y&&(d+=z[n++]<<p,p+=8),w+=d&(1<<y)-1,d>>>=y,p-=y),p<15&&(d+=z[n++]<<p,p+=8,d+=z[n++]<<p,p+=8),v=_[d&b];r:for(;;){if(d>>>=y=v>>>24,p-=y,!(16&(y=v>>>16&255))){if(0==(64&y)){v=_[(65535&v)+(d&(1<<y)-1)];continue r}e.msg="invalid distance code",r.mode=30;break e}if(k=65535&v,p<(y&=15)&&(d+=z[n++]<<p,(p+=8)<y&&(d+=z[n++]<<p,p+=8)),h<(k+=d&(1<<y)-1)){e.msg="invalid distance too far back",r.mode=30;break e}if(d>>>=y,p-=y,(y=s-a)<k){if(l<(y=k-y)&&r.sane){e.msg="invalid distance too far back",r.mode=30;break e}if(S=c,(x=0)===f){if(x+=u-y,y<w){for(w-=y;C[s++]=c[x++],--y;);x=s-k,S=C}}else if(f<y){if(x+=u+f-y,(y-=f)<w){for(w-=y;C[s++]=c[x++],--y;);if(x=0,f<w){for(w-=y=f;C[s++]=c[x++],--y;);x=s-k,S=C}}}else if(x+=f-y,y<w){for(w-=y;C[s++]=c[x++],--y;);x=s-k,S=C}for(;2<w;)C[s++]=S[x++],C[s++]=S[x++],C[s++]=S[x++],w-=3;w&&(C[s++]=S[x++],1<w&&(C[s++]=S[x++]))}else{for(x=s-k;C[s++]=C[x++],C[s++]=C[x++],C[s++]=C[x++],2<(w-=3););w&&(C[s++]=C[x++],1<w&&(C[s++]=C[x++]))}break}}break}}while(n<i&&s<o);n-=w=p>>3,d&=(1<<(p-=w<<3))-1,e.next_in=n,e.next_out=s,e.avail_in=n<i?i-n+5:5-(n-i),e.avail_out=s<o?o-s+257:257-(s-o),r.hold=d,r.bits=p}},{}],49:[function(e,t,r){"use strict";var I=e("../utils/common"),O=e("./adler32"),B=e("./crc32"),R=e("./inffast"),T=e("./inftrees"),D=1,F=2,N=0,U=-2,P=1,n=852,i=592;function L(e){return(e>>>24&255)+(e>>>8&65280)+((65280&e)<<8)+((255&e)<<24)}function s(){this.mode=0,this.last=!1,this.wrap=0,this.havedict=!1,this.flags=0,this.dmax=0,this.check=0,this.total=0,this.head=null,this.wbits=0,this.wsize=0,this.whave=0,this.wnext=0,this.window=null,this.hold=0,this.bits=0,this.length=0,this.offset=0,this.extra=0,this.lencode=null,this.distcode=null,this.lenbits=0,this.distbits=0,this.ncode=0,this.nlen=0,this.ndist=0,this.have=0,this.next=null,this.lens=new I.Buf16(320),this.work=new I.Buf16(288),this.lendyn=null,this.distdyn=null,this.sane=0,this.back=0,this.was=0}function a(e){var t;return e&&e.state?(t=e.state,e.total_in=e.total_out=t.total=0,e.msg="",t.wrap&&(e.adler=1&t.wrap),t.mode=P,t.last=0,t.havedict=0,t.dmax=32768,t.head=null,t.hold=0,t.bits=0,t.lencode=t.lendyn=new I.Buf32(n),t.distcode=t.distdyn=new I.Buf32(i),t.sane=1,t.back=-1,N):U}function o(e){var t;return e&&e.state?((t=e.state).wsize=0,t.whave=0,t.wnext=0,a(e)):U}function h(e,t){var r,n;return e&&e.state?(n=e.state,t<0?(r=0,t=-t):(r=1+(t>>4),t<48&&(t&=15)),t&&(t<8||15<t)?U:(null!==n.window&&n.wbits!==t&&(n.window=null),n.wrap=r,n.wbits=t,o(e))):U}function u(e,t){var r,n;return e?(n=new s,(e.state=n).window=null,(r=h(e,t))!==N&&(e.state=null),r):U}var l,f,c=!0;function j(e){if(c){var t;for(l=new I.Buf32(512),f=new I.Buf32(32),t=0;t<144;)e.lens[t++]=8;for(;t<256;)e.lens[t++]=9;for(;t<280;)e.lens[t++]=7;for(;t<288;)e.lens[t++]=8;for(T(D,e.lens,0,288,l,0,e.work,{bits:9}),t=0;t<32;)e.lens[t++]=5;T(F,e.lens,0,32,f,0,e.work,{bits:5}),c=!1}e.lencode=l,e.lenbits=9,e.distcode=f,e.distbits=5}function Z(e,t,r,n){var i,s=e.state;return null===s.window&&(s.wsize=1<<s.wbits,s.wnext=0,s.whave=0,s.window=new I.Buf8(s.wsize)),n>=s.wsize?(I.arraySet(s.window,t,r-s.wsize,s.wsize,0),s.wnext=0,s.whave=s.wsize):(n<(i=s.wsize-s.wnext)&&(i=n),I.arraySet(s.window,t,r-n,i,s.wnext),(n-=i)?(I.arraySet(s.window,t,r-n,n,0),s.wnext=n,s.whave=s.wsize):(s.wnext+=i,s.wnext===s.wsize&&(s.wnext=0),s.whave<s.wsize&&(s.whave+=i))),0}r.inflateReset=o,r.inflateReset2=h,r.inflateResetKeep=a,r.inflateInit=function(e){return u(e,15)},r.inflateInit2=u,r.inflate=function(e,t){var r,n,i,s,a,o,h,u,l,f,c,d,p,m,_,g,b,v,y,w,k,x,S,z,C=0,E=new I.Buf8(4),A=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];if(!e||!e.state||!e.output||!e.input&&0!==e.avail_in)return U;12===(r=e.state).mode&&(r.mode=13),a=e.next_out,i=e.output,h=e.avail_out,s=e.next_in,n=e.input,o=e.avail_in,u=r.hold,l=r.bits,f=o,c=h,x=N;e:for(;;)switch(r.mode){case P:if(0===r.wrap){r.mode=13;break}for(;l<16;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(2&r.wrap&&35615===u){E[r.check=0]=255&u,E[1]=u>>>8&255,r.check=B(r.check,E,2,0),l=u=0,r.mode=2;break}if(r.flags=0,r.head&&(r.head.done=!1),!(1&r.wrap)||(((255&u)<<8)+(u>>8))%31){e.msg="incorrect header check",r.mode=30;break}if(8!=(15&u)){e.msg="unknown compression method",r.mode=30;break}if(l-=4,k=8+(15&(u>>>=4)),0===r.wbits)r.wbits=k;else if(k>r.wbits){e.msg="invalid window size",r.mode=30;break}r.dmax=1<<k,e.adler=r.check=1,r.mode=512&u?10:12,l=u=0;break;case 2:for(;l<16;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(r.flags=u,8!=(255&r.flags)){e.msg="unknown compression method",r.mode=30;break}if(57344&r.flags){e.msg="unknown header flags set",r.mode=30;break}r.head&&(r.head.text=u>>8&1),512&r.flags&&(E[0]=255&u,E[1]=u>>>8&255,r.check=B(r.check,E,2,0)),l=u=0,r.mode=3;case 3:for(;l<32;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.head&&(r.head.time=u),512&r.flags&&(E[0]=255&u,E[1]=u>>>8&255,E[2]=u>>>16&255,E[3]=u>>>24&255,r.check=B(r.check,E,4,0)),l=u=0,r.mode=4;case 4:for(;l<16;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.head&&(r.head.xflags=255&u,r.head.os=u>>8),512&r.flags&&(E[0]=255&u,E[1]=u>>>8&255,r.check=B(r.check,E,2,0)),l=u=0,r.mode=5;case 5:if(1024&r.flags){for(;l<16;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.length=u,r.head&&(r.head.extra_len=u),512&r.flags&&(E[0]=255&u,E[1]=u>>>8&255,r.check=B(r.check,E,2,0)),l=u=0}else r.head&&(r.head.extra=null);r.mode=6;case 6:if(1024&r.flags&&(o<(d=r.length)&&(d=o),d&&(r.head&&(k=r.head.extra_len-r.length,r.head.extra||(r.head.extra=new Array(r.head.extra_len)),I.arraySet(r.head.extra,n,s,d,k)),512&r.flags&&(r.check=B(r.check,n,d,s)),o-=d,s+=d,r.length-=d),r.length))break e;r.length=0,r.mode=7;case 7:if(2048&r.flags){if(0===o)break e;for(d=0;k=n[s+d++],r.head&&k&&r.length<65536&&(r.head.name+=String.fromCharCode(k)),k&&d<o;);if(512&r.flags&&(r.check=B(r.check,n,d,s)),o-=d,s+=d,k)break e}else r.head&&(r.head.name=null);r.length=0,r.mode=8;case 8:if(4096&r.flags){if(0===o)break e;for(d=0;k=n[s+d++],r.head&&k&&r.length<65536&&(r.head.comment+=String.fromCharCode(k)),k&&d<o;);if(512&r.flags&&(r.check=B(r.check,n,d,s)),o-=d,s+=d,k)break e}else r.head&&(r.head.comment=null);r.mode=9;case 9:if(512&r.flags){for(;l<16;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(u!==(65535&r.check)){e.msg="header crc mismatch",r.mode=30;break}l=u=0}r.head&&(r.head.hcrc=r.flags>>9&1,r.head.done=!0),e.adler=r.check=0,r.mode=12;break;case 10:for(;l<32;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}e.adler=r.check=L(u),l=u=0,r.mode=11;case 11:if(0===r.havedict)return e.next_out=a,e.avail_out=h,e.next_in=s,e.avail_in=o,r.hold=u,r.bits=l,2;e.adler=r.check=1,r.mode=12;case 12:if(5===t||6===t)break e;case 13:if(r.last){u>>>=7&l,l-=7&l,r.mode=27;break}for(;l<3;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}switch(r.last=1&u,l-=1,3&(u>>>=1)){case 0:r.mode=14;break;case 1:if(j(r),r.mode=20,6!==t)break;u>>>=2,l-=2;break e;case 2:r.mode=17;break;case 3:e.msg="invalid block type",r.mode=30}u>>>=2,l-=2;break;case 14:for(u>>>=7&l,l-=7&l;l<32;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if((65535&u)!=(u>>>16^65535)){e.msg="invalid stored block lengths",r.mode=30;break}if(r.length=65535&u,l=u=0,r.mode=15,6===t)break e;case 15:r.mode=16;case 16:if(d=r.length){if(o<d&&(d=o),h<d&&(d=h),0===d)break e;I.arraySet(i,n,s,d,a),o-=d,s+=d,h-=d,a+=d,r.length-=d;break}r.mode=12;break;case 17:for(;l<14;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(r.nlen=257+(31&u),u>>>=5,l-=5,r.ndist=1+(31&u),u>>>=5,l-=5,r.ncode=4+(15&u),u>>>=4,l-=4,286<r.nlen||30<r.ndist){e.msg="too many length or distance symbols",r.mode=30;break}r.have=0,r.mode=18;case 18:for(;r.have<r.ncode;){for(;l<3;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.lens[A[r.have++]]=7&u,u>>>=3,l-=3}for(;r.have<19;)r.lens[A[r.have++]]=0;if(r.lencode=r.lendyn,r.lenbits=7,S={bits:r.lenbits},x=T(0,r.lens,0,19,r.lencode,0,r.work,S),r.lenbits=S.bits,x){e.msg="invalid code lengths set",r.mode=30;break}r.have=0,r.mode=19;case 19:for(;r.have<r.nlen+r.ndist;){for(;g=(C=r.lencode[u&(1<<r.lenbits)-1])>>>16&255,b=65535&C,!((_=C>>>24)<=l);){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(b<16)u>>>=_,l-=_,r.lens[r.have++]=b;else{if(16===b){for(z=_+2;l<z;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(u>>>=_,l-=_,0===r.have){e.msg="invalid bit length repeat",r.mode=30;break}k=r.lens[r.have-1],d=3+(3&u),u>>>=2,l-=2}else if(17===b){for(z=_+3;l<z;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}l-=_,k=0,d=3+(7&(u>>>=_)),u>>>=3,l-=3}else{for(z=_+7;l<z;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}l-=_,k=0,d=11+(127&(u>>>=_)),u>>>=7,l-=7}if(r.have+d>r.nlen+r.ndist){e.msg="invalid bit length repeat",r.mode=30;break}for(;d--;)r.lens[r.have++]=k}}if(30===r.mode)break;if(0===r.lens[256]){e.msg="invalid code -- missing end-of-block",r.mode=30;break}if(r.lenbits=9,S={bits:r.lenbits},x=T(D,r.lens,0,r.nlen,r.lencode,0,r.work,S),r.lenbits=S.bits,x){e.msg="invalid literal/lengths set",r.mode=30;break}if(r.distbits=6,r.distcode=r.distdyn,S={bits:r.distbits},x=T(F,r.lens,r.nlen,r.ndist,r.distcode,0,r.work,S),r.distbits=S.bits,x){e.msg="invalid distances set",r.mode=30;break}if(r.mode=20,6===t)break e;case 20:r.mode=21;case 21:if(6<=o&&258<=h){e.next_out=a,e.avail_out=h,e.next_in=s,e.avail_in=o,r.hold=u,r.bits=l,R(e,c),a=e.next_out,i=e.output,h=e.avail_out,s=e.next_in,n=e.input,o=e.avail_in,u=r.hold,l=r.bits,12===r.mode&&(r.back=-1);break}for(r.back=0;g=(C=r.lencode[u&(1<<r.lenbits)-1])>>>16&255,b=65535&C,!((_=C>>>24)<=l);){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(g&&0==(240&g)){for(v=_,y=g,w=b;g=(C=r.lencode[w+((u&(1<<v+y)-1)>>v)])>>>16&255,b=65535&C,!(v+(_=C>>>24)<=l);){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}u>>>=v,l-=v,r.back+=v}if(u>>>=_,l-=_,r.back+=_,r.length=b,0===g){r.mode=26;break}if(32&g){r.back=-1,r.mode=12;break}if(64&g){e.msg="invalid literal/length code",r.mode=30;break}r.extra=15&g,r.mode=22;case 22:if(r.extra){for(z=r.extra;l<z;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.length+=u&(1<<r.extra)-1,u>>>=r.extra,l-=r.extra,r.back+=r.extra}r.was=r.length,r.mode=23;case 23:for(;g=(C=r.distcode[u&(1<<r.distbits)-1])>>>16&255,b=65535&C,!((_=C>>>24)<=l);){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(0==(240&g)){for(v=_,y=g,w=b;g=(C=r.distcode[w+((u&(1<<v+y)-1)>>v)])>>>16&255,b=65535&C,!(v+(_=C>>>24)<=l);){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}u>>>=v,l-=v,r.back+=v}if(u>>>=_,l-=_,r.back+=_,64&g){e.msg="invalid distance code",r.mode=30;break}r.offset=b,r.extra=15&g,r.mode=24;case 24:if(r.extra){for(z=r.extra;l<z;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}r.offset+=u&(1<<r.extra)-1,u>>>=r.extra,l-=r.extra,r.back+=r.extra}if(r.offset>r.dmax){e.msg="invalid distance too far back",r.mode=30;break}r.mode=25;case 25:if(0===h)break e;if(d=c-h,r.offset>d){if((d=r.offset-d)>r.whave&&r.sane){e.msg="invalid distance too far back",r.mode=30;break}p=d>r.wnext?(d-=r.wnext,r.wsize-d):r.wnext-d,d>r.length&&(d=r.length),m=r.window}else m=i,p=a-r.offset,d=r.length;for(h<d&&(d=h),h-=d,r.length-=d;i[a++]=m[p++],--d;);0===r.length&&(r.mode=21);break;case 26:if(0===h)break e;i[a++]=r.length,h--,r.mode=21;break;case 27:if(r.wrap){for(;l<32;){if(0===o)break e;o--,u|=n[s++]<<l,l+=8}if(c-=h,e.total_out+=c,r.total+=c,c&&(e.adler=r.check=r.flags?B(r.check,i,c,a-c):O(r.check,i,c,a-c)),c=h,(r.flags?u:L(u))!==r.check){e.msg="incorrect data check",r.mode=30;break}l=u=0}r.mode=28;case 28:if(r.wrap&&r.flags){for(;l<32;){if(0===o)break e;o--,u+=n[s++]<<l,l+=8}if(u!==(4294967295&r.total)){e.msg="incorrect length check",r.mode=30;break}l=u=0}r.mode=29;case 29:x=1;break e;case 30:x=-3;break e;case 31:return-4;case 32:default:return U}return e.next_out=a,e.avail_out=h,e.next_in=s,e.avail_in=o,r.hold=u,r.bits=l,(r.wsize||c!==e.avail_out&&r.mode<30&&(r.mode<27||4!==t))&&Z(e,e.output,e.next_out,c-e.avail_out)?(r.mode=31,-4):(f-=e.avail_in,c-=e.avail_out,e.total_in+=f,e.total_out+=c,r.total+=c,r.wrap&&c&&(e.adler=r.check=r.flags?B(r.check,i,c,e.next_out-c):O(r.check,i,c,e.next_out-c)),e.data_type=r.bits+(r.last?64:0)+(12===r.mode?128:0)+(20===r.mode||15===r.mode?256:0),(0==f&&0===c||4===t)&&x===N&&(x=-5),x)},r.inflateEnd=function(e){if(!e||!e.state)return U;var t=e.state;return t.window&&(t.window=null),e.state=null,N},r.inflateGetHeader=function(e,t){var r;return e&&e.state?0==(2&(r=e.state).wrap)?U:((r.head=t).done=!1,N):U},r.inflateSetDictionary=function(e,t){var r,n=t.length;return e&&e.state?0!==(r=e.state).wrap&&11!==r.mode?U:11===r.mode&&O(1,t,n,0)!==r.check?-3:Z(e,t,n,n)?(r.mode=31,-4):(r.havedict=1,N):U},r.inflateInfo="pako inflate (from Nodeca project)"},{"../utils/common":41,"./adler32":43,"./crc32":45,"./inffast":48,"./inftrees":50}],50:[function(e,t,r){"use strict";var D=e("../utils/common"),F=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258,0,0],N=[16,16,16,16,16,16,16,16,17,17,17,17,18,18,18,18,19,19,19,19,20,20,20,20,21,21,21,21,16,72,78],U=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577,0,0],P=[16,16,16,16,17,17,18,18,19,19,20,20,21,21,22,22,23,23,24,24,25,25,26,26,27,27,28,28,29,29,64,64];t.exports=function(e,t,r,n,i,s,a,o){var h,u,l,f,c,d,p,m,_,g=o.bits,b=0,v=0,y=0,w=0,k=0,x=0,S=0,z=0,C=0,E=0,A=null,I=0,O=new D.Buf16(16),B=new D.Buf16(16),R=null,T=0;for(b=0;b<=15;b++)O[b]=0;for(v=0;v<n;v++)O[t[r+v]]++;for(k=g,w=15;1<=w&&0===O[w];w--);if(w<k&&(k=w),0===w)return i[s++]=20971520,i[s++]=20971520,o.bits=1,0;for(y=1;y<w&&0===O[y];y++);for(k<y&&(k=y),b=z=1;b<=15;b++)if(z<<=1,(z-=O[b])<0)return-1;if(0<z&&(0===e||1!==w))return-1;for(B[1]=0,b=1;b<15;b++)B[b+1]=B[b]+O[b];for(v=0;v<n;v++)0!==t[r+v]&&(a[B[t[r+v]]++]=v);if(d=0===e?(A=R=a,19):1===e?(A=F,I-=257,R=N,T-=257,256):(A=U,R=P,-1),b=y,c=s,S=v=E=0,l=-1,f=(C=1<<(x=k))-1,1===e&&852<C||2===e&&592<C)return 1;for(;;){for(p=b-S,_=a[v]<d?(m=0,a[v]):a[v]>d?(m=R[T+a[v]],A[I+a[v]]):(m=96,0),h=1<<b-S,y=u=1<<x;i[c+(E>>S)+(u-=h)]=p<<24|m<<16|_|0,0!==u;);for(h=1<<b-1;E&h;)h>>=1;if(0!==h?(E&=h-1,E+=h):E=0,v++,0==--O[b]){if(b===w)break;b=t[r+a[v]]}if(k<b&&(E&f)!==l){for(0===S&&(S=k),c+=y,z=1<<(x=b-S);x+S<w&&!((z-=O[x+S])<=0);)x++,z<<=1;if(C+=1<<x,1===e&&852<C||2===e&&592<C)return 1;i[l=E&f]=k<<24|x<<16|c-s|0}}return 0!==E&&(i[c+E]=b-S<<24|64<<16|0),o.bits=k,0}},{"../utils/common":41}],51:[function(e,t,r){"use strict";t.exports={2:"need dictionary",1:"stream end",0:"","-1":"file error","-2":"stream error","-3":"data error","-4":"insufficient memory","-5":"buffer error","-6":"incompatible version"}},{}],52:[function(e,t,r){"use strict";var i=e("../utils/common"),o=0,h=1;function n(e){for(var t=e.length;0<=--t;)e[t]=0}var s=0,a=29,u=256,l=u+1+a,f=30,c=19,_=2*l+1,g=15,d=16,p=7,m=256,b=16,v=17,y=18,w=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0],k=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13],x=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7],S=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],z=new Array(2*(l+2));n(z);var C=new Array(2*f);n(C);var E=new Array(512);n(E);var A=new Array(256);n(A);var I=new Array(a);n(I);var O,B,R,T=new Array(f);function D(e,t,r,n,i){this.static_tree=e,this.extra_bits=t,this.extra_base=r,this.elems=n,this.max_length=i,this.has_stree=e&&e.length}function F(e,t){this.dyn_tree=e,this.max_code=0,this.stat_desc=t}function N(e){return e<256?E[e]:E[256+(e>>>7)]}function U(e,t){e.pending_buf[e.pending++]=255&t,e.pending_buf[e.pending++]=t>>>8&255}function P(e,t,r){e.bi_valid>d-r?(e.bi_buf|=t<<e.bi_valid&65535,U(e,e.bi_buf),e.bi_buf=t>>d-e.bi_valid,e.bi_valid+=r-d):(e.bi_buf|=t<<e.bi_valid&65535,e.bi_valid+=r)}function L(e,t,r){P(e,r[2*t],r[2*t+1])}function j(e,t){for(var r=0;r|=1&e,e>>>=1,r<<=1,0<--t;);return r>>>1}function Z(e,t,r){var n,i,s=new Array(g+1),a=0;for(n=1;n<=g;n++)s[n]=a=a+r[n-1]<<1;for(i=0;i<=t;i++){var o=e[2*i+1];0!==o&&(e[2*i]=j(s[o]++,o))}}function W(e){var t;for(t=0;t<l;t++)e.dyn_ltree[2*t]=0;for(t=0;t<f;t++)e.dyn_dtree[2*t]=0;for(t=0;t<c;t++)e.bl_tree[2*t]=0;e.dyn_ltree[2*m]=1,e.opt_len=e.static_len=0,e.last_lit=e.matches=0}function M(e){8<e.bi_valid?U(e,e.bi_buf):0<e.bi_valid&&(e.pending_buf[e.pending++]=e.bi_buf),e.bi_buf=0,e.bi_valid=0}function H(e,t,r,n){var i=2*t,s=2*r;return e[i]<e[s]||e[i]===e[s]&&n[t]<=n[r]}function G(e,t,r){for(var n=e.heap[r],i=r<<1;i<=e.heap_len&&(i<e.heap_len&&H(t,e.heap[i+1],e.heap[i],e.depth)&&i++,!H(t,n,e.heap[i],e.depth));)e.heap[r]=e.heap[i],r=i,i<<=1;e.heap[r]=n}function K(e,t,r){var n,i,s,a,o=0;if(0!==e.last_lit)for(;n=e.pending_buf[e.d_buf+2*o]<<8|e.pending_buf[e.d_buf+2*o+1],i=e.pending_buf[e.l_buf+o],o++,0===n?L(e,i,t):(L(e,(s=A[i])+u+1,t),0!==(a=w[s])&&P(e,i-=I[s],a),L(e,s=N(--n),r),0!==(a=k[s])&&P(e,n-=T[s],a)),o<e.last_lit;);L(e,m,t)}function Y(e,t){var r,n,i,s=t.dyn_tree,a=t.stat_desc.static_tree,o=t.stat_desc.has_stree,h=t.stat_desc.elems,u=-1;for(e.heap_len=0,e.heap_max=_,r=0;r<h;r++)0!==s[2*r]?(e.heap[++e.heap_len]=u=r,e.depth[r]=0):s[2*r+1]=0;for(;e.heap_len<2;)s[2*(i=e.heap[++e.heap_len]=u<2?++u:0)]=1,e.depth[i]=0,e.opt_len--,o&&(e.static_len-=a[2*i+1]);for(t.max_code=u,r=e.heap_len>>1;1<=r;r--)G(e,s,r);for(i=h;r=e.heap[1],e.heap[1]=e.heap[e.heap_len--],G(e,s,1),n=e.heap[1],e.heap[--e.heap_max]=r,e.heap[--e.heap_max]=n,s[2*i]=s[2*r]+s[2*n],e.depth[i]=(e.depth[r]>=e.depth[n]?e.depth[r]:e.depth[n])+1,s[2*r+1]=s[2*n+1]=i,e.heap[1]=i++,G(e,s,1),2<=e.heap_len;);e.heap[--e.heap_max]=e.heap[1],function(e,t){var r,n,i,s,a,o,h=t.dyn_tree,u=t.max_code,l=t.stat_desc.static_tree,f=t.stat_desc.has_stree,c=t.stat_desc.extra_bits,d=t.stat_desc.extra_base,p=t.stat_desc.max_length,m=0;for(s=0;s<=g;s++)e.bl_count[s]=0;for(h[2*e.heap[e.heap_max]+1]=0,r=e.heap_max+1;r<_;r++)p<(s=h[2*h[2*(n=e.heap[r])+1]+1]+1)&&(s=p,m++),h[2*n+1]=s,u<n||(e.bl_count[s]++,a=0,d<=n&&(a=c[n-d]),o=h[2*n],e.opt_len+=o*(s+a),f&&(e.static_len+=o*(l[2*n+1]+a)));if(0!==m){do{for(s=p-1;0===e.bl_count[s];)s--;e.bl_count[s]--,e.bl_count[s+1]+=2,e.bl_count[p]--,m-=2}while(0<m);for(s=p;0!==s;s--)for(n=e.bl_count[s];0!==n;)u<(i=e.heap[--r])||(h[2*i+1]!==s&&(e.opt_len+=(s-h[2*i+1])*h[2*i],h[2*i+1]=s),n--)}}(e,t),Z(s,u,e.bl_count)}function X(e,t,r){var n,i,s=-1,a=t[1],o=0,h=7,u=4;for(0===a&&(h=138,u=3),t[2*(r+1)+1]=65535,n=0;n<=r;n++)i=a,a=t[2*(n+1)+1],++o<h&&i===a||(o<u?e.bl_tree[2*i]+=o:0!==i?(i!==s&&e.bl_tree[2*i]++,e.bl_tree[2*b]++):o<=10?e.bl_tree[2*v]++:e.bl_tree[2*y]++,s=i,u=(o=0)===a?(h=138,3):i===a?(h=6,3):(h=7,4))}function V(e,t,r){var n,i,s=-1,a=t[1],o=0,h=7,u=4;for(0===a&&(h=138,u=3),n=0;n<=r;n++)if(i=a,a=t[2*(n+1)+1],!(++o<h&&i===a)){if(o<u)for(;L(e,i,e.bl_tree),0!=--o;);else 0!==i?(i!==s&&(L(e,i,e.bl_tree),o--),L(e,b,e.bl_tree),P(e,o-3,2)):o<=10?(L(e,v,e.bl_tree),P(e,o-3,3)):(L(e,y,e.bl_tree),P(e,o-11,7));s=i,u=(o=0)===a?(h=138,3):i===a?(h=6,3):(h=7,4)}}n(T);var q=!1;function J(e,t,r,n){P(e,(s<<1)+(n?1:0),3),function(e,t,r,n){M(e),n&&(U(e,r),U(e,~r)),i.arraySet(e.pending_buf,e.window,t,r,e.pending),e.pending+=r}(e,t,r,!0)}r._tr_init=function(e){q||(function(){var e,t,r,n,i,s=new Array(g+1);for(n=r=0;n<a-1;n++)for(I[n]=r,e=0;e<1<<w[n];e++)A[r++]=n;for(A[r-1]=n,n=i=0;n<16;n++)for(T[n]=i,e=0;e<1<<k[n];e++)E[i++]=n;for(i>>=7;n<f;n++)for(T[n]=i<<7,e=0;e<1<<k[n]-7;e++)E[256+i++]=n;for(t=0;t<=g;t++)s[t]=0;for(e=0;e<=143;)z[2*e+1]=8,e++,s[8]++;for(;e<=255;)z[2*e+1]=9,e++,s[9]++;for(;e<=279;)z[2*e+1]=7,e++,s[7]++;for(;e<=287;)z[2*e+1]=8,e++,s[8]++;for(Z(z,l+1,s),e=0;e<f;e++)C[2*e+1]=5,C[2*e]=j(e,5);O=new D(z,w,u+1,l,g),B=new D(C,k,0,f,g),R=new D(new Array(0),x,0,c,p)}(),q=!0),e.l_desc=new F(e.dyn_ltree,O),e.d_desc=new F(e.dyn_dtree,B),e.bl_desc=new F(e.bl_tree,R),e.bi_buf=0,e.bi_valid=0,W(e)},r._tr_stored_block=J,r._tr_flush_block=function(e,t,r,n){var i,s,a=0;0<e.level?(2===e.strm.data_type&&(e.strm.data_type=function(e){var t,r=4093624447;for(t=0;t<=31;t++,r>>>=1)if(1&r&&0!==e.dyn_ltree[2*t])return o;if(0!==e.dyn_ltree[18]||0!==e.dyn_ltree[20]||0!==e.dyn_ltree[26])return h;for(t=32;t<u;t++)if(0!==e.dyn_ltree[2*t])return h;return o}(e)),Y(e,e.l_desc),Y(e,e.d_desc),a=function(e){var t;for(X(e,e.dyn_ltree,e.l_desc.max_code),X(e,e.dyn_dtree,e.d_desc.max_code),Y(e,e.bl_desc),t=c-1;3<=t&&0===e.bl_tree[2*S[t]+1];t--);return e.opt_len+=3*(t+1)+5+5+4,t}(e),i=e.opt_len+3+7>>>3,(s=e.static_len+3+7>>>3)<=i&&(i=s)):i=s=r+5,r+4<=i&&-1!==t?J(e,t,r,n):4===e.strategy||s===i?(P(e,2+(n?1:0),3),K(e,z,C)):(P(e,4+(n?1:0),3),function(e,t,r,n){var i;for(P(e,t-257,5),P(e,r-1,5),P(e,n-4,4),i=0;i<n;i++)P(e,e.bl_tree[2*S[i]+1],3);V(e,e.dyn_ltree,t-1),V(e,e.dyn_dtree,r-1)}(e,e.l_desc.max_code+1,e.d_desc.max_code+1,a+1),K(e,e.dyn_ltree,e.dyn_dtree)),W(e),n&&M(e)},r._tr_tally=function(e,t,r){return e.pending_buf[e.d_buf+2*e.last_lit]=t>>>8&255,e.pending_buf[e.d_buf+2*e.last_lit+1]=255&t,e.pending_buf[e.l_buf+e.last_lit]=255&r,e.last_lit++,0===t?e.dyn_ltree[2*r]++:(e.matches++,t--,e.dyn_ltree[2*(A[r]+u+1)]++,e.dyn_dtree[2*N(t)]++),e.last_lit===e.lit_bufsize-1},r._tr_align=function(e){P(e,2,3),L(e,m,z),function(e){16===e.bi_valid?(U(e,e.bi_buf),e.bi_buf=0,e.bi_valid=0):8<=e.bi_valid&&(e.pending_buf[e.pending++]=255&e.bi_buf,e.bi_buf>>=8,e.bi_valid-=8)}(e)}},{"../utils/common":41}],53:[function(e,t,r){"use strict";t.exports=function(){this.input=null,this.next_in=0,this.avail_in=0,this.total_in=0,this.output=null,this.next_out=0,this.avail_out=0,this.total_out=0,this.msg="",this.state=null,this.data_type=2,this.adler=0}},{}],54:[function(e,t,r){(function(e){!function(r,n){"use strict";if(!r.setImmediate){var i,s,t,a,o=1,h={},u=!1,l=r.document,e=Object.getPrototypeOf&&Object.getPrototypeOf(r);e=e&&e.setTimeout?e:r,i="[object process]"==={}.toString.call(r.process)?function(e){process.nextTick(function(){c(e)})}:function(){if(r.postMessage&&!r.importScripts){var e=!0,t=r.onmessage;return r.onmessage=function(){e=!1},r.postMessage("","*"),r.onmessage=t,e}}()?(a="setImmediate$"+Math.random()+"$",r.addEventListener?r.addEventListener("message",d,!1):r.attachEvent("onmessage",d),function(e){r.postMessage(a+e,"*")}):r.MessageChannel?((t=new MessageChannel).port1.onmessage=function(e){c(e.data)},function(e){t.port2.postMessage(e)}):l&&"onreadystatechange"in l.createElement("script")?(s=l.documentElement,function(e){var t=l.createElement("script");t.onreadystatechange=function(){c(e),t.onreadystatechange=null,s.removeChild(t),t=null},s.appendChild(t)}):function(e){setTimeout(c,0,e)},e.setImmediate=function(e){"function"!=typeof e&&(e=new Function(""+e));for(var t=new Array(arguments.length-1),r=0;r<t.length;r++)t[r]=arguments[r+1];var n={callback:e,args:t};return h[o]=n,i(o),o++},e.clearImmediate=f}function f(e){delete h[e]}function c(e){if(u)setTimeout(c,0,e);else{var t=h[e];if(t){u=!0;try{!function(e){var t=e.callback,r=e.args;switch(r.length){case 0:t();break;case 1:t(r[0]);break;case 2:t(r[0],r[1]);break;case 3:t(r[0],r[1],r[2]);break;default:t.apply(n,r)}}(t)}finally{f(e),u=!1}}}}function d(e){e.source===r&&"string"==typeof e.data&&0===e.data.indexOf(a)&&c(+e.data.slice(a.length))}}("undefined"==typeof self?void 0===e?this:e:self)}).call(this,"undefined"!=typeof __webpack_require__.g?__webpack_require__.g:"undefined"!=typeof self?self:"undefined"!=typeof window?window:{})},{}]},{},[10])(10)});
+
+/***/ }),
+
+/***/ "./node_modules/linebreak/node_modules/base64-js/lib/b64.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/linebreak/node_modules/base64-js/lib/b64.js ***!
+  \******************************************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+;(function (exports) {
+	'use strict';
+
+  var Arr = (typeof Uint8Array !== 'undefined')
+    ? Uint8Array
+    : Array
+
+	var PLUS   = '+'.charCodeAt(0)
+	var SLASH  = '/'.charCodeAt(0)
+	var NUMBER = '0'.charCodeAt(0)
+	var LOWER  = 'a'.charCodeAt(0)
+	var UPPER  = 'A'.charCodeAt(0)
+	var PLUS_URL_SAFE = '-'.charCodeAt(0)
+	var SLASH_URL_SAFE = '_'.charCodeAt(0)
+
+	function decode (elt) {
+		var code = elt.charCodeAt(0)
+		if (code === PLUS ||
+		    code === PLUS_URL_SAFE)
+			return 62 // '+'
+		if (code === SLASH ||
+		    code === SLASH_URL_SAFE)
+			return 63 // '/'
+		if (code < NUMBER)
+			return -1 //no match
+		if (code < NUMBER + 10)
+			return code - NUMBER + 26 + 26
+		if (code < UPPER + 26)
+			return code - UPPER
+		if (code < LOWER + 26)
+			return code - LOWER + 26
+	}
+
+	function b64ToByteArray (b64) {
+		var i, j, l, tmp, placeHolders, arr
+
+		if (b64.length % 4 > 0) {
+			throw new Error('Invalid string. Length must be a multiple of 4')
+		}
+
+		// the number of equal signs (place holders)
+		// if there are two placeholders, than the two characters before it
+		// represent one byte
+		// if there is only one, then the three characters before it represent 2 bytes
+		// this is just a cheap hack to not do indexOf twice
+		var len = b64.length
+		placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+
+		// base64 is 4/3 + up to two characters of the original data
+		arr = new Arr(b64.length * 3 / 4 - placeHolders)
+
+		// if there are placeholders, only get up to the last complete 4 chars
+		l = placeHolders > 0 ? b64.length - 4 : b64.length
+
+		var L = 0
+
+		function push (v) {
+			arr[L++] = v
+		}
+
+		for (i = 0, j = 0; i < l; i += 4, j += 3) {
+			tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+			push((tmp & 0xFF0000) >> 16)
+			push((tmp & 0xFF00) >> 8)
+			push(tmp & 0xFF)
+		}
+
+		if (placeHolders === 2) {
+			tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+			push(tmp & 0xFF)
+		} else if (placeHolders === 1) {
+			tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+			push((tmp >> 8) & 0xFF)
+			push(tmp & 0xFF)
+		}
+
+		return arr
+	}
+
+	function uint8ToBase64 (uint8) {
+		var i,
+			extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+			output = "",
+			temp, length
+
+		function encode (num) {
+			return lookup.charAt(num)
+		}
+
+		function tripletToBase64 (num) {
+			return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+		}
+
+		// go through the array every three bytes, we'll deal with trailing stuff later
+		for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+			temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+			output += tripletToBase64(temp)
+		}
+
+		// pad the end with zeros, but make sure to not forget the extra bytes
+		switch (extraBytes) {
+			case 1:
+				temp = uint8[uint8.length - 1]
+				output += encode(temp >> 2)
+				output += encode((temp << 4) & 0x3F)
+				output += '=='
+				break
+			case 2:
+				temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+				output += encode(temp >> 10)
+				output += encode((temp >> 4) & 0x3F)
+				output += encode((temp << 2) & 0x3F)
+				output += '='
+				break
+		}
+
+		return output
+	}
+
+	exports.toByteArray = b64ToByteArray
+	exports.fromByteArray = uint8ToBase64
+}( false ? (0) : exports))
+
 
 /***/ }),
 
@@ -38749,1917 +38532,6 @@ module.exports = getFonts;
 
 /***/ }),
 
-/***/ "./node_modules/scratch-render/node_modules/base64-js/index.js":
-/*!*********************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/base64-js/index.js ***!
-  \*********************************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function getLens (b64) {
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
-}
-
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/bitmap-adapter.js":
-/*!*********************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/bitmap-adapter.js ***!
-  \*********************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const base64js = __webpack_require__(/*! base64-js */ "./node_modules/scratch-render/node_modules/base64-js/index.js");
-
-/**
- * Adapts Scratch 2.0 bitmaps for use in scratch 3.0
- */
-class BitmapAdapter {
-  /**
-   * @param {?function} makeImage HTML image constructor. Tests can provide this.
-   * @param {?function} makeCanvas HTML canvas constructor. Tests can provide this.
-   */
-  constructor(makeImage, makeCanvas) {
-    this._makeImage = makeImage ? makeImage : () => new Image();
-    this._makeCanvas = makeCanvas ? makeCanvas : () => document.createElement('canvas');
-  }
-
-  /**
-   * Return a canvas with the resized version of the given image, done using nearest-neighbor interpolation
-   * @param {CanvasImageSource} image The image to resize
-   * @param {int} newWidth The desired post-resize width of the image
-   * @param {int} newHeight The desired post-resize height of the image
-   * @returns {HTMLCanvasElement} A canvas with the resized image drawn on it.
-   */
-  resize(image, newWidth, newHeight) {
-    // We want to always resize using nearest-neighbor interpolation. However, canvas implementations are free to
-    // use linear interpolation (or other "smooth" interpolation methods) when downscaling:
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1360415
-    // It seems we can get around this by resizing in two steps: first width, then height. This will always result
-    // in nearest-neighbor interpolation, even when downscaling.
-    const stretchWidthCanvas = this._makeCanvas();
-    stretchWidthCanvas.width = newWidth;
-    stretchWidthCanvas.height = image.height;
-    let context = stretchWidthCanvas.getContext('2d');
-    context.imageSmoothingEnabled = false;
-    context.drawImage(image, 0, 0, stretchWidthCanvas.width, stretchWidthCanvas.height);
-    const stretchHeightCanvas = this._makeCanvas();
-    stretchHeightCanvas.width = newWidth;
-    stretchHeightCanvas.height = newHeight;
-    context = stretchHeightCanvas.getContext('2d');
-    context.imageSmoothingEnabled = false;
-    context.drawImage(stretchWidthCanvas, 0, 0, stretchHeightCanvas.width, stretchHeightCanvas.height);
-    return stretchHeightCanvas;
-  }
-
-  /**
-   * Scratch 2.0 had resolution 1 and 2 bitmaps. All bitmaps in Scratch 3.0 are equivalent
-   * to resolution 2 bitmaps. Therefore, converting a resolution 1 bitmap means doubling
-   * it in width and height.
-   * @param {!string} dataURI Base 64 encoded image data of the bitmap
-   * @param {!function} callback Node-style callback that returns updated dataURI if conversion succeeded
-   */
-  convertResolution1Bitmap(dataURI, callback) {
-    const image = this._makeImage();
-    image.src = dataURI;
-    image.onload = () => {
-      callback(null, this.resize(image, image.width * 2, image.height * 2).toDataURL());
-    };
-    image.onerror = () => {
-      callback('Image load failed');
-    };
-  }
-
-  /**
-   * Given width/height of an uploaded item, return width/height the image will be resized
-   * to in Scratch 3.0
-   * @param {!number} oldWidth original width
-   * @param {!number} oldHeight original height
-   * @return {object} Array of new width, new height
-   */
-  getResizedWidthHeight(oldWidth, oldHeight) {
-    const STAGE_WIDTH = 480;
-    const STAGE_HEIGHT = 360;
-    const STAGE_RATIO = STAGE_WIDTH / STAGE_HEIGHT;
-
-    // If both dimensions are smaller than or equal to corresponding stage dimension,
-    // double both dimensions
-    if (oldWidth <= STAGE_WIDTH && oldHeight <= STAGE_HEIGHT) {
-      return {
-        width: oldWidth * 2,
-        height: oldHeight * 2
-      };
-    }
-
-    // If neither dimension is larger than 2x corresponding stage dimension,
-    // this is an in-between image, return it as is
-    if (oldWidth <= STAGE_WIDTH * 2 && oldHeight <= STAGE_HEIGHT * 2) {
-      return {
-        width: oldWidth,
-        height: oldHeight
-      };
-    }
-    const imageRatio = oldWidth / oldHeight;
-    // Otherwise, figure out how to resize
-    if (imageRatio >= STAGE_RATIO) {
-      // Wide Image
-      return {
-        width: STAGE_WIDTH * 2,
-        height: STAGE_WIDTH * 2 / imageRatio
-      };
-    }
-    // In this case we have either:
-    // - A wide image, but not with as big a ratio between width and height,
-    // making it so that fitting the width to double stage size would leave
-    // the height too big to fit in double the stage height
-    // - A square image that's still larger than the double at least
-    // one of the stage dimensions, so pick the smaller of the two dimensions (to fit)
-    // - A tall image
-    // In any of these cases, resize the image to fit the height to double the stage height
-    return {
-      width: STAGE_HEIGHT * 2 * imageRatio,
-      height: STAGE_HEIGHT * 2
-    };
-  }
-
-  /**
-   * Given bitmap data, resize as necessary.
-   * @param {ArrayBuffer | string} fileData Base 64 encoded image data of the bitmap
-   * @param {string} fileType The MIME type of this file
-   * @returns {Promise} Resolves to resized image data Uint8Array
-   */
-  importBitmap(fileData, fileType) {
-    let dataURI = fileData;
-    if (fileData instanceof ArrayBuffer) {
-      dataURI = this.convertBinaryToDataURI(fileData, fileType);
-    }
-    return new Promise((resolve, reject) => {
-      const image = this._makeImage();
-      image.src = dataURI;
-      image.onload = () => {
-        const newSize = this.getResizedWidthHeight(image.width, image.height);
-        if (newSize.width === image.width && newSize.height === image.height) {
-          // No change
-          resolve(this.convertDataURIToBinary(dataURI));
-        } else {
-          const resizedDataURI = this.resize(image, newSize.width, newSize.height).toDataURL();
-          resolve(this.convertDataURIToBinary(resizedDataURI));
-        }
-      };
-      image.onerror = () => {
-        // TODO: reject with an Error (breaking API change!)
-        // eslint-disable-next-line prefer-promise-reject-errors
-        reject('Image load failed');
-      };
-    });
-  }
-
-  // TODO consolidate with scratch-vm/src/util/base64-util.js
-  // From https://gist.github.com/borismus/1032746
-  convertDataURIToBinary(dataURI) {
-    const BASE64_MARKER = ';base64,';
-    const base64Index = dataURI.indexOf(BASE64_MARKER) + BASE64_MARKER.length;
-    const base64 = dataURI.substring(base64Index);
-    const raw = window.atob(base64);
-    const rawLength = raw.length;
-    const array = new Uint8Array(new ArrayBuffer(rawLength));
-    for (let i = 0; i < rawLength; i++) {
-      array[i] = raw.charCodeAt(i);
-    }
-    return array;
-  }
-  convertBinaryToDataURI(arrayBuffer, contentType) {
-    return "data:".concat(contentType, ";base64,").concat(base64js.fromByteArray(new Uint8Array(arrayBuffer)));
-  }
-}
-module.exports = BitmapAdapter;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/fixup-svg-string.js":
-/*!***********************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/fixup-svg-string.js ***!
-  \***********************************************************************************************/
-/***/ ((module) => {
-
-/**
- * Fixup svg string prior to parsing.
- * @param {!string} svgString String of the svg to fix.
- * @returns {!string} fixed svg that should be parseable.
- */
-module.exports = function (svgString) {
-  // Add root svg namespace if it does not exist.
-  const svgAttrs = svgString.match(/<svg [^>]*>/);
-  if (svgAttrs && svgAttrs[0].indexOf('xmlns=') === -1) {
-    svgString = svgString.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
-  }
-
-  // There are some SVGs from Illustrator that use undeclared entities.
-  // Just replace those entities with fake namespace references to prevent
-  // DOMParser from crashing
-  if (svgAttrs && svgAttrs[0].indexOf('&ns_') !== -1 && svgString.indexOf('<!DOCTYPE') === -1) {
-    svgString = svgString.replace(svgAttrs[0], svgAttrs[0].replace(/&ns_[^;]+;/g, 'http://ns.adobe.com/Extensibility/1.0/'));
-  }
-
-  // Some SVGs exported from Photoshop have been found to have an invalid mime type
-  // Chrome and Safari won't render these SVGs, so we correct it here
-  if (svgString.includes('data:img/png')) {
-    svgString = svgString.replace(
-    // capture entire image tag with xlink:href=and the quote - dont capture data: bit
-    /(<image[^>]+?xlink:href=["'])data:img\/png/g,
-    // use the captured <image ..... xlink:href=" then append the right data uri mime type
-    ($0, $1) => "".concat($1, "data:image/png"));
-  }
-
-  // Some SVGs from Inkscape attempt to bind a prefix to a reserved namespace name.
-  // This will cause SVG parsing to fail, so replace these with a dummy namespace name.
-  // This namespace name is only valid for "xml", and if we bind "xmlns:xml" to the dummy namespace,
-  // parsing will fail yet again, so exclude "xmlns:xml" declarations.
-  const xmlnsRegex = /(<[^>]+?xmlns:(?!xml=)[^ ]+=)"http:\/\/www.w3.org\/XML\/1998\/namespace"/g;
-  if (svgString.match(xmlnsRegex) !== null) {
-    svgString = svgString.replace(
-    // capture the entire attribute
-    xmlnsRegex,
-    // use the captured attribute name; replace only the URL
-    ($0, $1) => "".concat($1, "\"http://dummy.namespace\""));
-  }
-
-  // Strip `svg:` prefix (sometimes added by Inkscape) from all tags. They interfere with DOMPurify (prefixed tag
-  // names are not recognized) and the paint editor.
-  // This matches opening and closing tags--the capture group captures the slash if it exists, and it is reinserted
-  // in the replacement text.
-  svgString = svgString.replace(/<(\/?)\s*svg:/g, '<$1');
-
-  // The <metadata> element is not needed for rendering and sometimes contains
-  // unparseable garbage from Illustrator :( Empty out the contents.
-  // Note: [\s\S] matches everything including newlines, which .* does not
-  svgString = svgString.replace(/<metadata>[\s\S]*<\/metadata>/, '<metadata></metadata>');
-
-  // Empty script tags and javascript executing
-  svgString = svgString.replace(/<script[\s\S]*>[\s\S]*<\/script>/, '<script></script>');
-  return svgString;
-};
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-converter.js":
-/*!*********************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-converter.js ***!
-  \*********************************************************************************************/
-/***/ ((module) => {
-
-/**
- * @fileOverview Convert 2.0 fonts to 3.0 fonts.
- */
-
-/**
- * Given an SVG, replace Scratch 2.0 fonts with new 3.0 fonts. Add defaults where there are none.
- * @param {SVGElement} svgTag The SVG dom object
- * @return {void}
- */
-const convertFonts = function convertFonts(svgTag) {
-  // Collect all text elements into a list.
-  const textElements = [];
-  const collectText = domElement => {
-    if (domElement.localName === 'text') {
-      textElements.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectText(domElement.childNodes[i]);
-    }
-  };
-  collectText(svgTag);
-  // If there's an old font-family, switch to the new one.
-  for (const textElement of textElements) {
-    // If there's no font-family provided, provide one.
-    if (!textElement.getAttribute('font-family') || textElement.getAttribute('font-family') === 'Helvetica') {
-      textElement.setAttribute('font-family', 'Sans Serif');
-    } else if (textElement.getAttribute('font-family') === 'Mystery') {
-      textElement.setAttribute('font-family', 'Curly');
-    } else if (textElement.getAttribute('font-family') === 'Gloria') {
-      textElement.setAttribute('font-family', 'Handwriting');
-    } else if (textElement.getAttribute('font-family') === 'Donegal') {
-      textElement.setAttribute('font-family', 'Serif');
-    }
-  }
-};
-module.exports = convertFonts;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-inliner.js":
-/*!*******************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-inliner.js ***!
-  \*******************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/**
- * @fileOverview Import bitmap data into Scratch 3.0, resizing image as necessary.
- */
-const getFonts = __webpack_require__(/*! scratch-render-fonts */ "./node_modules/scratch-render-fonts/src/index.js");
-
-/**
- * Given SVG data, inline the fonts. This allows them to be rendered correctly when set
- * as the source of an HTMLImageElement. Here is a note from tmickel:
- *   // Inject fonts that are needed.
- *   // It would be nice if there were another way to get the SVG-in-canvas
- *   // to render the correct font family, but I couldn't find any other way.
- *   // Other things I tried:
- *   // Just injecting the font-family into the document: no effect.
- *   // External stylesheet linked to by SVG: no effect.
- *   // Using a <link> or <style>@import</style> to link to font-family
- *   // injected into the document: no effect.
- * @param {string} svgString The string representation of the svg to modify
- * @return {string} The svg with any needed fonts inlined
- */
-const inlineSvgFonts = function inlineSvgFonts(svgString) {
-  const FONTS = getFonts();
-  // Make it clear that this function only operates on strings.
-  // If we don't explicitly throw this here, the function silently fails.
-  if (typeof svgString !== 'string') {
-    throw new Error('SVG to be inlined is not a string');
-  }
-
-  // Collect fonts that need injection.
-  const fontsNeeded = new Set();
-  const fontRegex = /font-family="([^"]*)"/g;
-  let matches = fontRegex.exec(svgString);
-  while (matches) {
-    fontsNeeded.add(matches[1]);
-    matches = fontRegex.exec(svgString);
-  }
-  if (fontsNeeded.size > 0) {
-    let str = '<defs><style>';
-    for (const font of fontsNeeded) {
-      if (Object.prototype.hasOwnProperty.call(FONTS, font)) {
-        str += "".concat(FONTS[font]);
-      }
-    }
-    str += '</style></defs>';
-    svgString = svgString.replace(/<svg[^>]*>/, "$&".concat(str));
-    return svgString;
-  }
-  return svgString;
-};
-module.exports = inlineSvgFonts;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/index.js":
-/*!************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/index.js ***!
-  \************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const SVGRenderer = __webpack_require__(/*! ./svg-renderer */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-renderer.js");
-const BitmapAdapter = __webpack_require__(/*! ./bitmap-adapter */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/bitmap-adapter.js");
-const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-inliner.js");
-const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/load-svg-string.js");
-const sanitizeSvg = __webpack_require__(/*! ./sanitize-svg */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/sanitize-svg.js");
-const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/serialize-svg-to-string.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-element.js");
-const convertFonts = __webpack_require__(/*! ./font-converter */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-converter.js");
-// /**
-//  * Export for NPM & Node.js
-//  * @type {RenderWebGL}
-//  */
-module.exports = {
-  BitmapAdapter: BitmapAdapter,
-  convertFonts: convertFonts,
-  inlineSvgFonts: inlineSvgFonts,
-  loadSvgString: loadSvgString,
-  sanitizeSvg: sanitizeSvg,
-  serializeSvgToString: serializeSvgToString,
-  SvgElement: SvgElement,
-  SVGRenderer: SVGRenderer
-};
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/load-svg-string.js":
-/*!**********************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/load-svg-string.js ***!
-  \**********************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-element.js");
-const convertFonts = __webpack_require__(/*! ./font-converter */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-converter.js");
-const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/fixup-svg-string.js");
-const transformStrokeWidths = __webpack_require__(/*! ./transform-applier */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/transform-applier.js");
-
-/**
- * @param {SVGElement} svgTag the tag to search within
- * @param {string} [tagName] svg tag to search for (or collect all elements if not given)
- * @return {Array} a list of elements with the given tagname
- */
-const collectElements = (svgTag, tagName) => {
-  const elts = [];
-  const collectElementsInner = domElement => {
-    if ((domElement.localName === tagName || typeof tagName === 'undefined') && domElement.getAttribute) {
-      elts.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectElementsInner(domElement.childNodes[i]);
-    }
-  };
-  collectElementsInner(svgTag);
-  return elts;
-};
-
-/**
- * Fix SVGs to comply with SVG spec. Scratch 2 defaults to x2 = 0 when x2 is missing, but
- * SVG defaults to x2 = 1 when missing.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformGradients = svgTag => {
-  const linearGradientElements = collectElements(svgTag, 'linearGradient');
-
-  // For each gradient element, supply x2 if necessary.
-  for (const gradientElement of linearGradientElements) {
-    if (!gradientElement.getAttribute('x2')) {
-      gradientElement.setAttribute('x2', '0');
-    }
-  }
-};
-
-/**
- * Fix SVGs to match appearance in Scratch 2, which used nearest neighbor scaling for bitmaps
- * within SVGs.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformImages = svgTag => {
-  const imageElements = collectElements(svgTag, 'image');
-
-  // For each image element, set image rendering to pixelated
-  const pixelatedImages = 'image-rendering: optimizespeed; image-rendering: pixelated;';
-  for (const elt of imageElements) {
-    if (elt.getAttribute('style')) {
-      elt.setAttribute('style', "".concat(pixelatedImages, " ").concat(elt.getAttribute('style')));
-    } else {
-      elt.setAttribute('style', pixelatedImages);
-    }
-  }
-};
-
-/**
- * Transforms an SVG's text elements for Scratch 2.0 quirks.
- * These quirks include:
- * 1. `x` and `y` properties are removed/ignored.
- * 2. Alignment is set to `text-before-edge`.
- * 3. Line-breaks are converted to explicit <tspan> elements.
- * 4. Any required fonts are injected.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformText = svgTag => {
-  // Collect all text elements into a list.
-  const textElements = [];
-  const collectText = domElement => {
-    if (domElement.localName === 'text') {
-      textElements.push(domElement);
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectText(domElement.childNodes[i]);
-    }
-  };
-  collectText(svgTag);
-  convertFonts(svgTag);
-  // For each text element, apply quirks.
-  for (const textElement of textElements) {
-    // Remove x and y attributes - they are not used in Scratch.
-    textElement.removeAttribute('x');
-    textElement.removeAttribute('y');
-    // Set text-before-edge alignment:
-    // Scratch renders all text like this.
-    textElement.setAttribute('alignment-baseline', 'text-before-edge');
-    textElement.setAttribute('xml:space', 'preserve');
-    // If there's no font size provided, provide one.
-    if (!textElement.getAttribute('font-size')) {
-      textElement.setAttribute('font-size', '18');
-    }
-    let text = textElement.textContent;
-
-    // Fix line breaks in text, which are not natively supported by SVG.
-    // Only fix if text does not have child tspans.
-    // @todo this will not work for font sizes with units such as em, percent
-    // However, text made in scratch 2 should only ever export size 22 font.
-    const fontSize = parseFloat(textElement.getAttribute('font-size'));
-    const tx = 2;
-    let ty = 0;
-    let spacing = 1.2;
-    // Try to match the position and spacing of Scratch 2.0's fonts.
-    // Different fonts seem to use different line spacing.
-    // Scratch 2 always uses alignment-baseline=text-before-edge
-    // However, most SVG readers don't support this attribute
-    // or don't support it alongside use of tspan, so the translations
-    // here are to make up for that.
-    if (textElement.getAttribute('font-family') === 'Handwriting') {
-      spacing = 2;
-      ty = -11 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Scratch') {
-      spacing = 0.89;
-      ty = -3 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Curly') {
-      spacing = 1.38;
-      ty = -6 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Marker') {
-      spacing = 1.45;
-      ty = -6 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Sans Serif') {
-      spacing = 1.13;
-      ty = -3 * fontSize / 22;
-    } else if (textElement.getAttribute('font-family') === 'Serif') {
-      spacing = 1.25;
-      ty = -4 * fontSize / 22;
-    }
-    if (textElement.transform.baseVal.numberOfItems === 0) {
-      const transform = svgTag.createSVGTransform();
-      textElement.transform.baseVal.appendItem(transform);
-    }
-
-    // Right multiply matrix by a translation of (tx, ty)
-    const mtx = textElement.transform.baseVal.getItem(0).matrix;
-    mtx.e += mtx.a * tx + mtx.c * ty;
-    mtx.f += mtx.b * tx + mtx.d * ty;
-    if (text && textElement.childElementCount === 0) {
-      textElement.textContent = '';
-      const lines = text.split('\n');
-      text = '';
-      for (const line of lines) {
-        const tspanNode = SvgElement.create('tspan');
-        tspanNode.setAttribute('x', '0');
-        tspanNode.setAttribute('style', 'white-space: pre');
-        tspanNode.setAttribute('dy', "".concat(spacing, "em"));
-        tspanNode.textContent = line ? line : ' ';
-        textElement.appendChild(tspanNode);
-      }
-    }
-  }
-};
-
-/**
- * Find the largest stroke width in the svg. If a shape has no
- * `stroke` property, it has a stroke-width of 0. If it has a `stroke`,
- * it is by default a stroke-width of 1.
- * This is used to enlarge the computed bounding box, which doesn't take
- * stroke width into account.
- * @param {SVGSVGElement} rootNode The root SVG node to traverse.
- * @return {number} The largest stroke width in the SVG.
- */
-const findLargestStrokeWidth = rootNode => {
-  let largestStrokeWidth = 0;
-  const collectStrokeWidths = domElement => {
-    if (domElement.getAttribute) {
-      if (domElement.getAttribute('stroke')) {
-        largestStrokeWidth = Math.max(largestStrokeWidth, 1);
-      }
-      if (domElement.getAttribute('stroke-width')) {
-        largestStrokeWidth = Math.max(largestStrokeWidth, Number(domElement.getAttribute('stroke-width')) || 0);
-      }
-    }
-    for (let i = 0; i < domElement.childNodes.length; i++) {
-      collectStrokeWidths(domElement.childNodes[i]);
-    }
-  };
-  collectStrokeWidths(rootNode);
-  return largestStrokeWidth;
-};
-
-/**
- * Transform the measurements of the SVG.
- * In Scratch 2.0, SVGs are drawn without respect to the width,
- * height, and viewBox attribute on the tag. The exporter
- * does output these properties - but they appear to be incorrect often.
- * To address the incorrect measurements, we append the DOM to the
- * document, and then use SVG's native `getBBox` to find the real
- * drawn dimensions. This ensures things drawn in negative dimensions,
- * outside the given viewBox, etc., are all eventually drawn to the canvas.
- * I tried to do this several other ways: stripping the width/height/viewBox
- * attributes and then drawing (Firefox won't draw anything),
- * or inflating them and then measuring a canvas. But this seems to be
- * a natural and performant way.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const transformMeasurements = svgTag => {
-  // Append the SVG dom to the document.
-  // This allows us to use `getBBox` on the page,
-  // which returns the full bounding-box of all drawn SVG
-  // elements, similar to how Scratch 2.0 did measurement.
-  const svgSpot = document.createElement('span');
-  // Since we're adding user-provided SVG to document.body,
-  // sanitizing is required. This should not affect bounding box calculation.
-  // outerHTML is attribute of Element (and not HTMLElement), so use it instead of
-  // calling serializer or toString()
-  // NOTE: svgTag remains untouched!
-  const rawValue = svgTag.outerHTML;
-  const sanitizedValue = DOMPurify.sanitize(rawValue, {
-    // Use SVG profile (no HTML elements)
-    USE_PROFILES: {
-      svg: true
-    },
-    // Remove some tags that Scratch does not use.
-    FORBID_TAGS: ['a', 'audio', 'canvas', 'video'],
-    // Allow data URI in image tags (e.g. SVGs converted from bitmap)
-    ADD_DATA_URI_TAGS: ['image']
-  });
-  let bbox;
-  try {
-    // Insert sanitized value.
-    svgSpot.innerHTML = sanitizedValue;
-    document.body.appendChild(svgSpot);
-    // Take the bounding box. We have to get elements via svgSpot
-    // because we added it via innerHTML.
-    bbox = svgSpot.children[0].getBBox();
-  } finally {
-    // Always destroy the element, even if, for example, getBBox throws.
-    document.body.removeChild(svgSpot);
-  }
-
-  // Enlarge the bbox from the largest found stroke width
-  // This may have false-positives, but at least the bbox will always
-  // contain the full graphic including strokes.
-  // If the width or height is zero however, don't enlarge since
-  // they won't have a stroke width that needs to be enlarged.
-  let halfStrokeWidth;
-  if (bbox.width === 0 || bbox.height === 0) {
-    halfStrokeWidth = 0;
-  } else {
-    halfStrokeWidth = findLargestStrokeWidth(svgTag) / 2;
-  }
-  const width = bbox.width + halfStrokeWidth * 2;
-  const height = bbox.height + halfStrokeWidth * 2;
-  const x = bbox.x - halfStrokeWidth;
-  const y = bbox.y - halfStrokeWidth;
-
-  // Set the correct measurements on the SVG tag
-  svgTag.setAttribute('width', width);
-  svgTag.setAttribute('height', height);
-  svgTag.setAttribute('viewBox', "".concat(x, " ").concat(y, " ").concat(width, " ").concat(height));
-};
-
-/**
- * Find all instances of a URL-referenced `stroke` in the svg. In 2.0, all gradient strokes
- * have a round `stroke-linejoin` and `stroke-linecap`... for some reason.
- * @param {SVGSVGElement} svgTag the SVG tag to apply the transformation to
- */
-const setGradientStrokeRoundedness = svgTag => {
-  const elements = collectElements(svgTag);
-  for (const elt of elements) {
-    if (!elt.style) continue;
-    const stroke = elt.style.stroke || elt.getAttribute('stroke');
-    if (stroke && stroke.match(/^url\(#.*\)$/)) {
-      elt.style['stroke-linejoin'] = 'round';
-      elt.style['stroke-linecap'] = 'round';
-    }
-  }
-};
-
-/**
- * In-place, convert passed SVG to something consistent that will be rendered the way we want them to be.
- * @param {SVGSvgElement} svgTag root SVG node to operate upon
- * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
- */
-const normalizeSvg = (svgTag, fromVersion2) => {
-  if (fromVersion2) {
-    // Fix gradients. Scratch 2 exports no x2 when x2 = 0, but
-    // SVG default is that x2 is 1. This must be done before
-    // transformStrokeWidths since transformStrokeWidths affects
-    // gradients.
-    transformGradients(svgTag);
-  }
-  transformStrokeWidths(svgTag, window);
-  transformImages(svgTag);
-  if (fromVersion2) {
-    // Transform all text elements.
-    transformText(svgTag);
-    // Transform measurements.
-    transformMeasurements(svgTag);
-    // Fix stroke roundedness.
-    setGradientStrokeRoundedness(svgTag);
-  } else if (!svgTag.getAttribute('viewBox')) {
-    // Renderer expects a view box.
-    transformMeasurements(svgTag);
-  } else if (!svgTag.getAttribute('width') || !svgTag.getAttribute('height')) {
-    svgTag.setAttribute('width', svgTag.viewBox.baseVal.width);
-    svgTag.setAttribute('height', svgTag.viewBox.baseVal.height);
-  }
-};
-
-/**
- * Load an SVG string and normalize it. All the steps before drawing/measuring.
- * Currently, this will normalize stroke widths (see transform-applier.js) and render all embedded images pixelated.
- * The returned SVG will be guaranteed to always have a `width`, `height` and `viewBox`.
- * In addition, if the `fromVersion2` parameter is `true`, several "quirks-mode" transformations will be applied which
- * mimic Scratch 2.0's SVG rendering.
- * @param {!string} svgString String of SVG data to draw in quirks-mode.
- * @param {boolean} [fromVersion2] True if we should perform conversion from version 2 to version 3 svg.
- * @return {SVGSVGElement} The normalized SVG element.
- */
-const loadSvgString = (svgString, fromVersion2) => {
-  // Parse string into SVG XML.
-  const parser = new DOMParser();
-  svgString = fixupSvgString(svgString);
-  const svgDom = parser.parseFromString(svgString, 'text/xml');
-  if (svgDom.childNodes.length < 1 || svgDom.documentElement.localName !== 'svg') {
-    throw new Error('Document does not appear to be SVG.');
-  }
-  const svgTag = svgDom.documentElement;
-  normalizeSvg(svgTag, fromVersion2);
-  return svgTag;
-};
-module.exports = loadSvgString;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/sanitize-svg.js":
-/*!*******************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/sanitize-svg.js ***!
-  \*******************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-/**
- * @fileOverview Sanitize the content of an SVG aggressively, to make it as safe
- * as possible
- */
-const fixupSvgString = __webpack_require__(/*! ./fixup-svg-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/fixup-svg-string.js");
-const {
-  generate,
-  parse,
-  walk
-} = __webpack_require__(/*! css-tree */ "./node_modules/css-tree/lib/index.js");
-const DOMPurify = __webpack_require__(/*! isomorphic-dompurify */ "./node_modules/isomorphic-dompurify/browser.js");
-const sanitizeSvg = {};
-DOMPurify.addHook('beforeSanitizeAttributes', currentNode => {
-  if (currentNode && currentNode.href && currentNode.href.baseVal) {
-    const href = currentNode.href.baseVal.replace(/\s/g, '');
-    // "data:" and "#" are valid hrefs
-    if (href.slice(0, 5) !== 'data:' && href.slice(0, 1) !== '#') {
-      if (currentNode.attributes.getNamedItem('xlink:href')) {
-        currentNode.attributes.removeNamedItem('xlink:href');
-        delete currentNode['xlink:href'];
-      }
-      if (currentNode.attributes.getNamedItem('href')) {
-        currentNode.attributes.removeNamedItem('href');
-        delete currentNode.href;
-      }
-    }
-  }
-  return currentNode;
-});
-DOMPurify.addHook('uponSanitizeElement', (node, data) => {
-  if (data.tagName === 'style') {
-    const ast = parse(node.textContent);
-    let isModified = false;
-    // Remove any @import rules as it could leak HTTP requests
-    walk(ast, (astNode, item, list) => {
-      if (astNode.type === 'Atrule' && astNode.name === 'import') {
-        list.remove(item);
-        isModified = true;
-      }
-    });
-    if (isModified) {
-      node.textContent = generate(ast);
-    }
-  }
-});
-
-// Use JS implemented TextDecoder and TextEncoder if it is not provided by the
-// browser.
-let _TextDecoder;
-let _TextEncoder;
-if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
-  // Wait to require the text encoding polyfill until we know it's needed.
-  // eslint-disable-next-line global-require
-  const encoding = __webpack_require__(/*! fastestsmallesttextencoderdecoder */ "./node_modules/fastestsmallesttextencoderdecoder/EncoderDecoderTogether.min.js");
-  _TextDecoder = encoding.TextDecoder;
-  _TextEncoder = encoding.TextEncoder;
-} else {
-  _TextDecoder = TextDecoder;
-  _TextEncoder = TextEncoder;
-}
-
-/**
- * Load an SVG Uint8Array of bytes and "sanitize" it
- * @param {!Uint8Array} rawData unsanitized SVG daata
- * @return {Uint8Array} sanitized SVG data
- */
-sanitizeSvg.sanitizeByteStream = function (rawData) {
-  const decoder = new _TextDecoder();
-  const encoder = new _TextEncoder();
-  const sanitizedText = sanitizeSvg.sanitizeSvgText(decoder.decode(rawData));
-  return encoder.encode(sanitizedText);
-};
-
-/**
- * Load an SVG string and "sanitize" it. This is more aggressive than the handling in
- * fixup-svg-string.js, and thus more risky; there are known examples of SVGs that
- * it will clobber. We use DOMPurify's svg profile, which restricts many types of tag.
- * @param {!string} rawSvgText unsanitized SVG string
- * @return {string} sanitized SVG text
- */
-sanitizeSvg.sanitizeSvgText = function (rawSvgText) {
-  let sanitizedText = DOMPurify.sanitize(rawSvgText, {
-    USE_PROFILES: {
-      svg: true
-    }
-  });
-
-  // Remove partial XML comment that is sometimes left in the HTML
-  const badTag = sanitizedText.indexOf(']&gt;');
-  if (badTag >= 0) {
-    sanitizedText = sanitizedText.substring(5, sanitizedText.length);
-  }
-
-  // also use our custom fixup rules
-  sanitizedText = fixupSvgString(sanitizedText);
-  return sanitizedText;
-};
-module.exports = sanitizeSvg;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/serialize-svg-to-string.js":
-/*!******************************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/serialize-svg-to-string.js ***!
-  \******************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const inlineSvgFonts = __webpack_require__(/*! ./font-inliner */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/font-inliner.js");
-
-/**
- * Serialize a given SVG DOM to a string.
- * @param {SVGSVGElement} svgTag The SVG element to serialize.
- * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
- *     base64 data.
- * @returns {string} String representing current SVG data.
- */
-const serializeSvgToString = (svgTag, shouldInjectFonts) => {
-  const serializer = new XMLSerializer();
-  let string = serializer.serializeToString(svgTag);
-  if (shouldInjectFonts) {
-    string = inlineSvgFonts(string);
-  }
-  return string;
-};
-module.exports = serializeSvgToString;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-element.js":
-/*!******************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-element.js ***!
-  \******************************************************************************************/
-/***/ ((module) => {
-
-/* Adapted from
- * Paper.js - The Swiss Army Knife of Vector Graphics Scripting.
- * http://paperjs.org/
- *
- * Copyright (c) 2011 - 2016, Juerg Lehni & Jonathan Puckey
- * http://scratchdisk.com/ & http://jonathanpuckey.com/
- *
- * Distributed under the MIT license. See LICENSE file for details.
- *
- * All rights reserved.
- */
-
-/**
- * @name SvgElement
- * @namespace
- * @private
- */
-class SvgElement {
-  // SVG related namespaces
-  static get svg() {
-    return 'http://www.w3.org/2000/svg';
-  }
-  static get xmlns() {
-    return 'http://www.w3.org/2000/xmlns';
-  }
-  static get xlink() {
-    return 'http://www.w3.org/1999/xlink';
-  }
-
-  // Mapping of attribute names to required namespaces:
-  static attributeNamespace() {
-    return {
-      'href': SvgElement.xlink,
-      'xlink': SvgElement.xmlns,
-      // Only the xmlns attribute needs the trailing slash. See #984
-      'xmlns': "".concat(SvgElement.xmlns, "/"),
-      // IE needs the xmlns namespace when setting 'xmlns:xlink'. See #984
-      'xmlns:xlink': "".concat(SvgElement.xmlns, "/")
-    };
-  }
-  static create(tag, attributes, formatter) {
-    return SvgElement.set(document.createElementNS(SvgElement.svg, tag), attributes, formatter);
-  }
-  static get(node, name) {
-    const namespace = SvgElement.attributeNamespace[name];
-    const value = namespace ? node.getAttributeNS(namespace, name) : node.getAttribute(name);
-    return value === 'null' ? null : value;
-  }
-  static set(node, attributes, formatter) {
-    for (const name in attributes) {
-      let value = attributes[name];
-      const namespace = SvgElement.attributeNamespace[name];
-      if (typeof value === 'number' && formatter) {
-        value = formatter.number(value);
-      }
-      if (namespace) {
-        node.setAttributeNS(namespace, name, value);
-      } else {
-        node.setAttribute(name, value);
-      }
-    }
-    return node;
-  }
-}
-module.exports = SvgElement;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-renderer.js":
-/*!*******************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-renderer.js ***!
-  \*******************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const loadSvgString = __webpack_require__(/*! ./load-svg-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/load-svg-string.js");
-const serializeSvgToString = __webpack_require__(/*! ./serialize-svg-to-string */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/serialize-svg-to-string.js");
-
-/**
- * Main quirks-mode SVG rendering code.
- * @deprecated Call into individual methods exported from this library instead.
- */
-class SvgRenderer {
-  /**
-   * Create a quirks-mode SVG renderer for a particular canvas.
-   * @param {HTMLCanvasElement} [canvas] An optional canvas element to draw to. If this is not provided, the renderer
-   * will create a new canvas.
-   * @constructor
-   */
-  constructor(canvas) {
-    /**
-     * The canvas that this SVG renderer will render to.
-     * @type {HTMLCanvasElement}
-     * @private
-     */
-    this._canvas = canvas || document.createElement('canvas');
-    this._context = this._canvas.getContext('2d');
-
-    /**
-     * A measured SVG "viewbox"
-     * @typedef {object} SvgRenderer#SvgMeasurements
-     * @property {number} x - The left edge of the SVG viewbox.
-     * @property {number} y - The top edge of the SVG viewbox.
-     * @property {number} width - The width of the SVG viewbox.
-     * @property {number} height - The height of the SVG viewbox.
-     */
-
-    /**
-     * The measurement box of the currently loaded SVG.
-     * @type {SvgRenderer#SvgMeasurements}
-     * @private
-     */
-    this._measurements = {
-      x: 0,
-      y: 0,
-      width: 0,
-      height: 0
-    };
-
-    /**
-     * The `<img>` element with the contents of the currently loaded SVG.
-     * @type {?HTMLImageElement}
-     * @private
-     */
-    this._cachedImage = null;
-
-    /**
-     * True if this renderer's current SVG is loaded and can be rendered to the canvas.
-     * @type {boolean}
-     */
-    this.loaded = false;
-  }
-
-  /**
-   * @returns {!HTMLCanvasElement} this renderer's target canvas.
-   */
-  get canvas() {
-    return this._canvas;
-  }
-
-  /**
-   * @return {Array<number>} the natural size, in Scratch units, of this SVG.
-   */
-  get size() {
-    return [this._measurements.width, this._measurements.height];
-  }
-
-  /**
-   * @return {Array<number>} the offset (upper left corner) of the SVG's view box.
-   */
-  get viewOffset() {
-    return [this._measurements.x, this._measurements.y];
-  }
-
-  /**
-   * Load an SVG string and normalize it. All the steps before drawing/measuring.
-   * @param {!string} svgString String of SVG data to draw in quirks-mode.
-   * @param {?boolean} fromVersion2 True if we should perform conversion from
-   *     version 2 to version 3 svg.
-   */
-  loadString(svgString, fromVersion2) {
-    // New svg string invalidates the cached image
-    this._cachedImage = null;
-    const svgTag = loadSvgString(svgString, fromVersion2);
-    this._svgTag = svgTag;
-    this._measurements = {
-      width: svgTag.viewBox.baseVal.width,
-      height: svgTag.viewBox.baseVal.height,
-      x: svgTag.viewBox.baseVal.x,
-      y: svgTag.viewBox.baseVal.y
-    };
-  }
-
-  /**
-   * Load an SVG string, normalize it, and prepare it for (synchronous) rendering.
-   * @param {!string} svgString String of SVG data to draw in quirks-mode.
-   * @param {?boolean} fromVersion2 True if we should perform conversion from version 2 to version 3 svg.
-   * @param {Function} [onFinish] - An optional callback to call when the SVG is loaded and can be rendered.
-   */
-  loadSVG(svgString, fromVersion2, onFinish) {
-    this.loadString(svgString, fromVersion2);
-    this._createSVGImage(onFinish);
-  }
-
-  /**
-   * Creates an <img> element for the currently loaded SVG string, then calls the callback once it's loaded.
-   * @param {Function} [onFinish] - An optional callback to call when the <img> has loaded.
-   */
-  _createSVGImage(onFinish) {
-    if (this._cachedImage === null) this._cachedImage = new Image();
-    const img = this._cachedImage;
-    img.onload = () => {
-      this.loaded = true;
-      if (onFinish) onFinish();
-    };
-    const svgText = this.toString(true /* shouldInjectFonts */);
-    img.src = "data:image/svg+xml;utf8,".concat(encodeURIComponent(svgText));
-    this.loaded = false;
-  }
-
-  /**
-   * Serialize the active SVG DOM to a string.
-   * @param {?boolean} shouldInjectFonts True if fonts should be included in the SVG as
-   *     base64 data.
-   * @returns {string} String representing current SVG data.
-   * @deprecated Use the standalone `serializeSvgToString` export instead.
-   */
-  toString(shouldInjectFonts) {
-    return serializeSvgToString(this._svgTag, shouldInjectFonts);
-  }
-
-  /**
-   * Synchronously draw the loaded SVG to this renderer's `canvas`.
-   * @param {number} [scale] - Optionally, also scale the image by this factor.
-   */
-  draw(scale) {
-    if (!this.loaded) throw new Error('SVG image has not finished loading');
-    this._drawFromImage(scale);
-  }
-
-  /**
-   * Draw to the canvas from a loaded image element.
-   * @param {number} [scale] - Optionally, also scale the image by this factor.
-   **/
-  _drawFromImage(scale) {
-    if (this._cachedImage === null) return;
-    const ratio = Number.isFinite(scale) ? scale : 1;
-    const bbox = this._measurements;
-    this._canvas.width = bbox.width * ratio;
-    this._canvas.height = bbox.height * ratio;
-    // Even if the canvas at the current scale has a nonzero size, the image's dimensions are floored pre-scaling.
-    // e.g. if an image has a width of 0.4 and is being rendered at 3x scale, the canvas will have a width of 1, but
-    // the image's width will be rounded down to 0 on some browsers (Firefox) prior to being drawn at that scale.
-    if (this._canvas.width <= 0 || this._canvas.height <= 0 || this._cachedImage.naturalWidth <= 0 || this._cachedImage.naturalHeight <= 0) return;
-    this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-    this._context.setTransform(ratio, 0, 0, ratio, 0, 0);
-    this._context.drawImage(this._cachedImage, 0, 0);
-  }
-}
-module.exports = SvgRenderer;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/transform-applier.js":
-/*!************************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/transform-applier.js ***!
-  \************************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const Matrix = __webpack_require__(/*! transformation-matrix */ "./node_modules/transformation-matrix/build-es/index.js");
-const SvgElement = __webpack_require__(/*! ./svg-element */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/svg-element.js");
-const log = __webpack_require__(/*! ./util/log */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/util/log.js");
-
-/**
- * @fileOverview Apply transforms to match stroke width appearance in 2.0 and 3.0
- */
-
-// Adapted from paper.js's Path.applyTransform
-const _parseTransform = function _parseTransform(domElement) {
-  let matrix = Matrix.identity();
-  const string = domElement.attributes && domElement.attributes.transform && domElement.attributes.transform.value;
-  if (!string) return matrix;
-  // https://www.w3.org/TR/SVG/types.html#DataTypeTransformList
-  // Parse SVG transform string. First we split at /)\s*/, to separate
-  // commands
-  const transforms = string.split(/\)\s*/g);
-  for (const transform of transforms) {
-    if (!transform) break;
-    // Command come before the '(', values after
-    const parts = transform.split(/\(\s*/);
-    const command = parts[0].trim();
-    const v = parts[1].split(/[\s,]+/g);
-    // Convert values to floats
-    for (let j = 0; j < v.length; j++) {
-      v[j] = parseFloat(v[j]);
-    }
-    switch (command) {
-      case 'matrix':
-        matrix = Matrix.compose(matrix, {
-          a: v[0],
-          b: v[1],
-          c: v[2],
-          d: v[3],
-          e: v[4],
-          f: v[5]
-        });
-        break;
-      case 'rotate':
-        matrix = Matrix.compose(matrix, Matrix.rotateDEG(v[0], v[1] || 0, v[2] || 0));
-        break;
-      case 'translate':
-        matrix = Matrix.compose(matrix, Matrix.translate(v[0], v[1] || 0));
-        break;
-      case 'scale':
-        matrix = Matrix.compose(matrix, Matrix.scale(v[0], v[1] || v[0]));
-        break;
-      case 'skewX':
-        matrix = Matrix.compose(matrix, Matrix.skewDEG(v[0], 0));
-        break;
-      case 'skewY':
-        matrix = Matrix.compose(matrix, Matrix.skewDEG(0, v[0]));
-        break;
-      default:
-        log.error("Couldn't parse: ".concat(command));
-    }
-  }
-  return matrix;
-};
-
-// Adapted from paper.js's Matrix.decompose
-// Given a matrix, return the x and y scale factors of the matrix
-const _getScaleFactor = function _getScaleFactor(matrix) {
-  const a = matrix.a;
-  const b = matrix.b;
-  const c = matrix.c;
-  const d = matrix.d;
-  const det = a * d - b * c;
-  if (a !== 0 || b !== 0) {
-    const r = Math.sqrt(a * a + b * b);
-    return {
-      x: r,
-      y: det / r
-    };
-  }
-  if (c !== 0 || d !== 0) {
-    const s = Math.sqrt(c * c + d * d);
-    return {
-      x: det / s,
-      y: s
-    };
-  }
-  // a = b = c = d = 0
-  return {
-    x: 0,
-    y: 0
-  };
-};
-
-// Returns null if matrix is not invertible. Otherwise returns given ellipse
-// transformed by transform, an object {radiusX, radiusY, rotation}.
-const _calculateTransformedEllipse = function _calculateTransformedEllipse(radiusX, radiusY, theta, transform) {
-  theta = -theta * Math.PI / 180;
-  const a = transform.a;
-  const b = -transform.c;
-  const c = -transform.b;
-  const d = transform.d;
-  // Since other parameters determine the translation of the ellipse in SVG, we do not need to worry
-  // about what e and f are.
-  const det = a * d - b * c;
-  // Non-invertible matrix
-  if (det === 0) return null;
-
-  // rotA, rotB, and rotC represent Ax^2 + Bxy + Cy^2 = 1 coefficients for a rotated ellipse formula
-  const sinT = Math.sin(theta);
-  const cosT = Math.cos(theta);
-  const sin2T = Math.sin(2 * theta);
-  const rotA = cosT * cosT / radiusX / radiusX + sinT * sinT / radiusY / radiusY;
-  const rotB = sin2T / radiusX / radiusX - sin2T / radiusY / radiusY;
-  const rotC = sinT * sinT / radiusX / radiusX + cosT * cosT / radiusY / radiusY;
-
-  // Calculate the ellipse formula of the transformed ellipse
-  // A, B, and C represent Ax^2 + Bxy + Cy^2 = 1 / det / det coefficients in a transformed ellipse formula
-  // scaled by inverse det squared (to preserve accuracy)
-  const A = rotA * d * d - rotB * d * c + rotC * c * c;
-  const B = -2 * rotA * b * d + rotB * a * d + rotB * b * c - 2 * rotC * a * c;
-  const C = rotA * b * b - rotB * a * b + rotC * a * a;
-
-  // Derive new radii and theta from the transformed ellipse formula
-  const newRadiusXOverDet = Math.sqrt(2) * Math.sqrt((A + C - Math.sqrt(A * A + B * B - 2 * A * C + C * C)) / (-B * B + 4 * A * C));
-  const newRadiusYOverDet = 1 / Math.sqrt(A + C - 1 / newRadiusXOverDet / newRadiusXOverDet);
-  let temp = (A - 1 / newRadiusXOverDet / newRadiusXOverDet) / (1 / newRadiusYOverDet / newRadiusYOverDet - 1 / newRadiusXOverDet / newRadiusXOverDet);
-  if (temp < 0 && Math.abs(temp) < 1e-8) temp = 0; // Fix floating point issue
-  temp = Math.sqrt(temp);
-  if (Math.abs(1 - temp) < 1e-8) temp = 1; // Fix floating point issue
-  // Solve for which of the two possible thetas is correct
-  let newTheta = Math.asin(temp);
-  temp = B / (1 / newRadiusXOverDet / newRadiusXOverDet - 1 / newRadiusYOverDet / newRadiusYOverDet);
-  const newTheta2 = -newTheta;
-  if (Math.abs(Math.sin(2 * newTheta2) - temp) < Math.abs(Math.sin(2 * newTheta) - temp)) {
-    newTheta = newTheta2;
-  }
-  return {
-    radiusX: newRadiusXOverDet * det,
-    radiusY: newRadiusYOverDet * det,
-    rotation: -newTheta * 180 / Math.PI
-  };
-};
-
-// Adapted from paper.js's PathItem.setPathData
-const _transformPath = function _transformPath(pathString, transform) {
-  if (!transform || Matrix.toString(transform) === Matrix.toString(Matrix.identity())) return pathString;
-  // First split the path data into parts of command-coordinates pairs
-  // Commands are any of these characters: mzlhvcsqta
-  const parts = pathString && pathString.match(/[mlhvcsqtaz][^mlhvcsqtaz]*/ig);
-  let coords;
-  let relative = false;
-  let previous;
-  let control;
-  let current = {
-    x: 0,
-    y: 0
-  };
-  let start = {
-    x: 0,
-    y: 0
-  };
-  let result = '';
-  const getCoord = function getCoord(index, coord) {
-    let val = +coords[index];
-    if (relative) {
-      val += current[coord];
-    }
-    return val;
-  };
-  const getPoint = function getPoint(index) {
-    return {
-      x: getCoord(index, 'x'),
-      y: getCoord(index + 1, 'y')
-    };
-  };
-  const roundTo4Places = function roundTo4Places(num) {
-    return Number(num.toFixed(4));
-  };
-
-  // Returns the transformed point as a string
-  const getString = function getString(point) {
-    const transformed = Matrix.applyToPoint(transform, point);
-    return "".concat(roundTo4Places(transformed.x), " ").concat(roundTo4Places(transformed.y), " ");
-  };
-  for (let i = 0, l = parts && parts.length; i < l; i++) {
-    const part = parts[i];
-    const command = part[0];
-    const lower = command.toLowerCase();
-    // Match all coordinate values
-    coords = part.match(/[+-]?(?:\d*\.\d+|\d+\.?)(?:[eE][+-]?\d+)?/g);
-    const length = coords && coords.length;
-    relative = command === lower;
-    // Fix issues with z in the middle of SVG path data, not followed by
-    // a m command, see paper.js#413:
-    if (previous === 'z' && !/[mz]/.test(lower)) {
-      result += "M ".concat(current.x, " ").concat(current.y, " ");
-    }
-    switch (lower) {
-      case 'm': // Move to
-      case 'l':
-        // Line to
-        {
-          let move = lower === 'm';
-          for (let j = 0; j < length; j += 2) {
-            result += move ? 'M ' : 'L ';
-            current = getPoint(j);
-            result += getString(current);
-            if (move) {
-              start = current;
-              move = false;
-            }
-          }
-          control = current;
-          break;
-        }
-      case 'h': // Horizontal line
-      case 'v':
-        // Vertical line
-        {
-          const coord = lower === 'h' ? 'x' : 'y';
-          current = {
-            x: current.x,
-            y: current.y
-          }; // Clone as we're going to modify it.
-          for (let j = 0; j < length; j++) {
-            current[coord] = getCoord(j, coord);
-            result += "L ".concat(getString(current));
-          }
-          control = current;
-          break;
-        }
-      case 'c':
-        // Cubic Bezier curve
-        for (let j = 0; j < length; j += 6) {
-          const handle1 = getPoint(j);
-          control = getPoint(j + 2);
-          current = getPoint(j + 4);
-          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
-        }
-        break;
-      case 's':
-        // Smooth cubic Bezier curve
-        for (let j = 0; j < length; j += 4) {
-          const handle1 = /[cs]/.test(previous) ? {
-            x: current.x * 2 - control.x,
-            y: current.y * 2 - control.y
-          } : current;
-          control = getPoint(j);
-          current = getPoint(j + 2);
-          result += "C ".concat(getString(handle1)).concat(getString(control)).concat(getString(current));
-          previous = lower;
-        }
-        break;
-      case 'q':
-        // Quadratic Bezier curve
-        for (let j = 0; j < length; j += 4) {
-          control = getPoint(j);
-          current = getPoint(j + 2);
-          result += "Q ".concat(getString(control)).concat(getString(current));
-        }
-        break;
-      case 't':
-        // Smooth quadratic Bezier curve
-        for (let j = 0; j < length; j += 2) {
-          control = /[qt]/.test(previous) ? {
-            x: current.x * 2 - control.x,
-            y: current.y * 2 - control.y
-          } : current;
-          current = getPoint(j);
-          result += "Q ".concat(getString(control)).concat(getString(current));
-          previous = lower;
-        }
-        break;
-      case 'a':
-        // Elliptical arc curve
-        for (let j = 0; j < length; j += 7) {
-          current = getPoint(j + 5);
-          const rx = +coords[j];
-          const ry = +coords[j + 1];
-          const rotation = +coords[j + 2];
-          const largeArcFlag = +coords[j + 3];
-          let clockwiseFlag = +coords[j + 4];
-          const newEllipse = _calculateTransformedEllipse(rx, ry, rotation, transform);
-          const matrixScale = _getScaleFactor(transform);
-          if (newEllipse) {
-            if (matrixScale.x > 0 && matrixScale.y < 0 || matrixScale.x < 0 && matrixScale.y > 0) {
-              clockwiseFlag = clockwiseFlag ^ 1;
-            }
-            result += "A ".concat(roundTo4Places(Math.abs(newEllipse.radiusX)), " ") + "".concat(roundTo4Places(Math.abs(newEllipse.radiusY)), " ") + "".concat(roundTo4Places(newEllipse.rotation), " ").concat(largeArcFlag, " ") + "".concat(clockwiseFlag, " ").concat(getString(current));
-          } else {
-            result += "L ".concat(getString(current));
-          }
-        }
-        break;
-      case 'z':
-        // Close path
-        result += "Z ";
-        // Correctly handle relative m commands, see paper.js#1101:
-        current = start;
-        break;
-    }
-    previous = lower;
-  }
-  return result;
-};
-const GRAPHICS_ELEMENTS = ['circle', 'ellipse', 'image', 'line', 'path', 'polygon', 'polyline', 'rect', 'text', 'use'];
-const CONTAINER_ELEMENTS = ['a', 'defs', 'g', 'marker', 'glyph', 'missing-glyph', 'pattern', 'svg', 'switch', 'symbol'];
-const _isContainerElement = function _isContainerElement(element) {
-  return element.tagName && CONTAINER_ELEMENTS.includes(element.tagName.toLowerCase());
-};
-const _isGraphicsElement = function _isGraphicsElement(element) {
-  return element.tagName && GRAPHICS_ELEMENTS.includes(element.tagName.toLowerCase());
-};
-const _isPathWithTransformAndStroke = function _isPathWithTransformAndStroke(element, strokeWidth) {
-  if (!element.attributes) return false;
-  strokeWidth = element.attributes['stroke-width'] ? Number(element.attributes['stroke-width'].value) : Number(strokeWidth);
-  return strokeWidth && element.tagName && element.tagName.toLowerCase() === 'path' && element.attributes.d && element.attributes.d.value;
-};
-const _quadraticMean = function _quadraticMean(a, b) {
-  return Math.sqrt((a * a + b * b) / 2);
-};
-const _createGradient = function _createGradient(gradientId, svgTag, bbox, matrix) {
-  // Adapted from Paper.js's SvgImport.getValue
-  const getValue = function getValue(node, name, isString, allowNull, allowPercent, defaultValue) {
-    // Interpret value as number. Never return NaN, but 0 instead.
-    // If the value is a sequence of numbers, parseFloat will
-    // return the first occurring number, which is enough for now.
-    let value = SvgElement.get(node, name);
-    let res;
-    if (value === null) {
-      if (defaultValue) {
-        res = defaultValue;
-        if (/%\s*$/.test(res)) {
-          value = defaultValue;
-          res = parseFloat(value);
-        }
-      } else if (allowNull) {
-        res = null;
-      } else if (isString) {
-        res = '';
-      } else {
-        res = 0;
-      }
-    } else if (isString) {
-      res = value;
-    } else {
-      res = parseFloat(value);
-    }
-    // Support for dimensions in percentage of the root size. If root-size
-    // is not set (e.g. during <defs>), just scale the percentage value to
-    // 0..1, as required by gradients with gradientUnits="objectBoundingBox"
-    if (/%\s*$/.test(value)) {
-      const size = allowPercent ? 1 : bbox[/x|^width/.test(name) ? 'width' : 'height'];
-      return res / 100 * size;
-    }
-    return res;
-  };
-  const getPoint = function getPoint(node, x, y, allowNull, allowPercent, defaultX, defaultY) {
-    x = getValue(node, x || 'x', false, allowNull, allowPercent, defaultX);
-    y = getValue(node, y || 'y', false, allowNull, allowPercent, defaultY);
-    return allowNull && (x === null || y === null) ? null : {
-      x,
-      y
-    };
-  };
-  let defs = svgTag.getElementsByTagName('defs');
-  if (defs.length === 0) {
-    defs = SvgElement.create('defs');
-    svgTag.appendChild(defs);
-  } else {
-    defs = defs[0];
-  }
-
-  // Clone the old gradient. We'll make a new one, since the gradient might be reused elsewhere
-  // with different transform matrix
-  const oldGradient = svgTag.getElementById(gradientId);
-  if (!oldGradient) return;
-  const radial = oldGradient.tagName.toLowerCase() === 'radialgradient';
-  const newGradient = svgTag.getElementById(gradientId).cloneNode(true /* deep */);
-
-  // Give the new gradient a new ID
-  let matrixString = Matrix.toString(matrix);
-  matrixString = matrixString.substring(8, matrixString.length - 1);
-  const newGradientId = "".concat(gradientId, "-").concat(matrixString);
-  newGradient.setAttribute('id', newGradientId);
-
-  // This gradient already exists and was transformed before. Just reuse the already-transformed one.
-  if (svgTag.getElementById(newGradientId)) {
-    // This is the same code as in the end of the function, but I don't feel like wrapping the next 80 lines
-    // in an `if (!svgTag.getElementById(newGradientId))` block
-    return "url(#".concat(newGradientId, ")");
-  }
-  const scaleToBounds = getValue(newGradient, 'gradientUnits', true) !== 'userSpaceOnUse';
-  let origin;
-  let destination;
-  let radius;
-  let focal;
-  if (radial) {
-    origin = getPoint(newGradient, 'cx', 'cy', false, scaleToBounds, '50%', '50%');
-    radius = getValue(newGradient, 'r', false, false, scaleToBounds, '50%');
-    focal = getPoint(newGradient, 'fx', 'fy', true, scaleToBounds);
-  } else {
-    origin = getPoint(newGradient, 'x1', 'y1', false, scaleToBounds);
-    destination = getPoint(newGradient, 'x2', 'y2', false, scaleToBounds, '1');
-    if (origin.x === destination.x && origin.y === destination.y) {
-      // If it's degenerate, use the color of the last stop, as described by
-      // https://www.w3.org/TR/SVG/pservers.html#LinearGradientNotes
-      const stops = newGradient.getElementsByTagName('stop');
-      if (!stops.length || !stops[stops.length - 1].attributes || !stops[stops.length - 1].attributes['stop-color']) {
-        return null;
-      }
-      return stops[stops.length - 1].attributes['stop-color'].value;
-    }
-  }
-
-  // Transform points
-  // Emulate SVG's gradientUnits="objectBoundingBox"
-  if (scaleToBounds) {
-    const boundsMatrix = Matrix.compose(Matrix.translate(bbox.x, bbox.y), Matrix.scale(bbox.width, bbox.height));
-    origin = Matrix.applyToPoint(boundsMatrix, origin);
-    if (destination) destination = Matrix.applyToPoint(boundsMatrix, destination);
-    if (radius) {
-      radius = _quadraticMean(bbox.width, bbox.height) * radius;
-    }
-    if (focal) focal = Matrix.applyToPoint(boundsMatrix, focal);
-  }
-  if (radial) {
-    origin = Matrix.applyToPoint(matrix, origin);
-    const matrixScale = _getScaleFactor(matrix);
-    radius = _quadraticMean(matrixScale.x, matrixScale.y) * radius;
-    if (focal) focal = Matrix.applyToPoint(matrix, focal);
-  } else {
-    const dot = (a, b) => a.x * b.x + a.y * b.y;
-    const multiply = (coefficient, v) => ({
-      x: coefficient * v.x,
-      y: coefficient * v.y
-    });
-    const add = (a, b) => ({
-      x: a.x + b.x,
-      y: a.y + b.y
-    });
-    const subtract = (a, b) => ({
-      x: a.x - b.x,
-      y: a.y - b.y
-    });
-
-    // The line through origin and gradientPerpendicular is the line at which the gradient starts
-    let gradientPerpendicular = Math.abs(origin.x - destination.x) < 1e-8 ? add(origin, {
-      x: 1,
-      y: (origin.x - destination.x) / (destination.y - origin.y)
-    }) : add(origin, {
-      x: (destination.y - origin.y) / (origin.x - destination.x),
-      y: 1
-    });
-
-    // Transform points
-    gradientPerpendicular = Matrix.applyToPoint(matrix, gradientPerpendicular);
-    origin = Matrix.applyToPoint(matrix, origin);
-    destination = Matrix.applyToPoint(matrix, destination);
-
-    // Calculate the direction that the gradient has changed to
-    const originToPerpendicular = subtract(gradientPerpendicular, origin);
-    const originToDestination = subtract(destination, origin);
-    const gradientDirection = Math.abs(originToPerpendicular.x) < 1e-8 ? {
-      x: 1,
-      y: -originToPerpendicular.x / originToPerpendicular.y
-    } : {
-      x: -originToPerpendicular.y / originToPerpendicular.x,
-      y: 1
-    };
-
-    // Set the destination so that the gradient moves in the correct direction, by projecting the destination vector
-    // onto the gradient direction vector
-    const projectionCoeff = dot(originToDestination, gradientDirection) / dot(gradientDirection, gradientDirection);
-    const projection = multiply(projectionCoeff, gradientDirection);
-    destination = {
-      x: origin.x + projection.x,
-      y: origin.y + projection.y
-    };
-  }
-
-  // Put values back into svg
-  if (radial) {
-    newGradient.setAttribute('cx', Number(origin.x.toFixed(4)));
-    newGradient.setAttribute('cy', Number(origin.y.toFixed(4)));
-    newGradient.setAttribute('r', Number(radius.toFixed(4)));
-    if (focal) {
-      newGradient.setAttribute('fx', Number(focal.x.toFixed(4)));
-      newGradient.setAttribute('fy', Number(focal.y.toFixed(4)));
-    }
-  } else {
-    newGradient.setAttribute('x1', Number(origin.x.toFixed(4)));
-    newGradient.setAttribute('y1', Number(origin.y.toFixed(4)));
-    newGradient.setAttribute('x2', Number(destination.x.toFixed(4)));
-    newGradient.setAttribute('y2', Number(destination.y.toFixed(4)));
-  }
-  newGradient.setAttribute('gradientUnits', 'userSpaceOnUse');
-  defs.appendChild(newGradient);
-  return "url(#".concat(newGradientId, ")");
-};
-
-// Adapted from paper.js's SvgImport.getDefinition
-const _parseUrl = (value, windowRef) => {
-  // When url() comes from a style property, '#'' seems to be missing on
-  // WebKit. We also get variations of quotes or no quotes, single or
-  // double, so handle it all with one regular expression:
-  const match = value && value.match(/\((?:["'#]*)([^"')]+)/);
-  const name = match && match[1];
-  const res = name && windowRef ?
-  // This is required by Firefox, which can produce absolute
-  // urls for local gradients, see paperjs#1001:
-  name.replace("".concat(windowRef.location.href.split('#')[0], "#"), '') : name;
-  return res;
-};
-
-/**
- * Scratch 2.0 displays stroke widths in a "normalized" way, that is,
- * if a shape with a stroke width has a transform applied, it will be
- * rendered with a stroke that is the same width all the way around,
- * instead of stretched looking.
- *
- * The vector paint editor also prefers to normalize the stroke width,
- * rather than keep track of transforms at the group level, as this
- * simplifies editing (e.g. stroke width 3 always means the same thickness)
- *
- * This function performs that normalization process, pushing transforms
- * on groups down to the leaf level and averaging out the stroke width
- * around the shapes. Note that this doens't just change stroke widths, it
- * changes path data and attributes throughout the SVG.
- *
- * @param {SVGElement} svgTag The SVG dom object
- * @param {Window} windowRef The window to use. Need to pass in for
- *     tests to work, as they get angry at even the mention of window.
- * @param {object} bboxForTesting The bounds to use. Need to pass in for
- *     tests only, because getBBox doesn't work in Node. This should
- *     be the bounds of the svgTag without including stroke width or transforms.
- * @return {void}
- */
-const transformStrokeWidths = function transformStrokeWidths(svgTag, windowRef, bboxForTesting) {
-  const inherited = Matrix.identity();
-  const applyTransforms = (element, matrix, strokeWidth, fill, stroke) => {
-    if (_isContainerElement(element)) {
-      // Push fills and stroke width down to leaves
-      if (element.attributes['stroke-width']) {
-        strokeWidth = element.attributes['stroke-width'].value;
-      }
-      if (element.attributes) {
-        if (element.attributes.fill) fill = element.attributes.fill.value;
-        if (element.attributes.stroke) stroke = element.attributes.stroke.value;
-      }
-
-      // If any child nodes don't take attributes, leave the attributes
-      // at the parent level.
-      for (let i = 0; i < element.childNodes.length; i++) {
-        applyTransforms(element.childNodes[i], Matrix.compose(matrix, _parseTransform(element)), strokeWidth, fill, stroke);
-      }
-      element.removeAttribute('transform');
-      element.removeAttribute('stroke-width');
-      element.removeAttribute('fill');
-      element.removeAttribute('stroke');
-    } else if (_isPathWithTransformAndStroke(element, strokeWidth)) {
-      if (element.attributes['stroke-width']) {
-        strokeWidth = element.attributes['stroke-width'].value;
-      }
-      if (element.attributes.fill) fill = element.attributes.fill.value;
-      if (element.attributes.stroke) stroke = element.attributes.stroke.value;
-      matrix = Matrix.compose(matrix, _parseTransform(element));
-      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
-        element.removeAttribute('transform');
-        element.setAttribute('stroke-width', strokeWidth);
-        if (fill) element.setAttribute('fill', fill);
-        if (stroke) element.setAttribute('stroke', stroke);
-        return;
-      }
-
-      // Transform gradient
-      const fillGradientId = _parseUrl(fill, windowRef);
-      const strokeGradientId = _parseUrl(stroke, windowRef);
-      if (fillGradientId || strokeGradientId) {
-        const doc = windowRef.document;
-        // Need path bounds to transform gradient
-        const svgSpot = doc.createElement('span');
-        let bbox;
-        if (bboxForTesting) {
-          bbox = bboxForTesting;
-        } else {
-          try {
-            doc.body.appendChild(svgSpot);
-            const svg = SvgElement.set(doc.createElementNS(SvgElement.svg, 'svg'));
-            const path = SvgElement.set(doc.createElementNS(SvgElement.svg, 'path'));
-            path.setAttribute('d', element.attributes.d.value);
-            svg.appendChild(path);
-            svgSpot.appendChild(svg);
-            // Take the bounding box.
-            bbox = svg.getBBox();
-          } finally {
-            // Always destroy the element, even if, for example, getBBox throws.
-            doc.body.removeChild(svgSpot);
-          }
-        }
-        if (fillGradientId) {
-          const newFillRef = _createGradient(fillGradientId, svgTag, bbox, matrix);
-          if (newFillRef) fill = newFillRef;
-        }
-        if (strokeGradientId) {
-          const newStrokeRef = _createGradient(strokeGradientId, svgTag, bbox, matrix);
-          if (newStrokeRef) stroke = newStrokeRef;
-        }
-      }
-
-      // Transform path data
-      element.setAttribute('d', _transformPath(element.attributes.d.value, matrix));
-      element.removeAttribute('transform');
-
-      // Transform stroke width
-      const matrixScale = _getScaleFactor(matrix);
-      element.setAttribute('stroke-width', _quadraticMean(matrixScale.x, matrixScale.y) * strokeWidth);
-      if (fill) element.setAttribute('fill', fill);
-      if (stroke) element.setAttribute('stroke', stroke);
-    } else if (_isGraphicsElement(element)) {
-      // Push stroke width, fill, and stroke down to leaves
-      if (strokeWidth && !element.attributes['stroke-width']) {
-        element.setAttribute('stroke-width', strokeWidth);
-      }
-      if (fill && !element.attributes.fill) {
-        element.setAttribute('fill', fill);
-      }
-      if (stroke && !element.attributes.stroke) {
-        element.setAttribute('stroke', stroke);
-      }
-
-      // Push transform down to leaves
-      matrix = Matrix.compose(matrix, _parseTransform(element));
-      if (Matrix.toString(matrix) === Matrix.toString(Matrix.identity())) {
-        element.removeAttribute('transform');
-      } else {
-        element.setAttribute('transform', Matrix.toString(matrix));
-      }
-    }
-  };
-  applyTransforms(svgTag, inherited, 1 /* default SVG stroke width */);
-};
-module.exports = transformStrokeWidths;
-
-/***/ }),
-
-/***/ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/util/log.js":
-/*!***************************************************************************************!*\
-  !*** ./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/util/log.js ***!
-  \***************************************************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-const minilog = __webpack_require__(/*! minilog */ "./node_modules/minilog/lib/web/index.js");
-minilog.enable();
-module.exports = minilog('scratch-svg-render');
-
-/***/ }),
-
 /***/ "./node_modules/scratch-render/src/BitmapSkin.js":
 /*!*******************************************************!*\
   !*** ./node_modules/scratch-render/src/BitmapSkin.js ***!
@@ -44115,7 +41987,7 @@ const Skin = __webpack_require__(/*! ./Skin */ "./node_modules/scratch-render/sr
 const {
   loadSvgString,
   serializeSvgToString
-} = __webpack_require__(/*! scratch-svg-renderer */ "./node_modules/scratch-render/node_modules/scratch-svg-renderer/src/index.js");
+} = __webpack_require__(/*! scratch-svg-renderer */ "./node_modules/scratch-svg-renderer/src/index.js");
 const ShaderManager = __webpack_require__(/*! ./ShaderManager */ "./node_modules/scratch-render/src/ShaderManager.js");
 const MAX_TEXTURE_DIMENSION = 2048;
 
@@ -49551,25 +47423,11 @@ module.exports = __nested_webpack_require_505__(14)("iVBORw0KGgoAAAANSUhEUgAAAIA
 
 /***/ }),
 
-/***/ 680:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_1878__) => {
-
-module.exports = __nested_webpack_require_1878__(14)("UklGRiYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQIAAAAAAA==")
-
-/***/ }),
-
-/***/ 914:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_2079__) => {
-
-module.exports = __nested_webpack_require_2079__(14)("PD94bWwgdmVyc2lvbj0iMS4wIj8+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8Zz4KICA8cmVjdCBmaWxsPSIjQ0NDIiBoZWlnaHQ9IjEyOCIgd2lkdGg9IjEyOCIvPgogIDx0ZXh0IGZpbGw9ImJsYWNrIiB5PSIxMDciIHg9IjM1LjUiIGZvbnQtc2l6ZT0iMTI4Ij4/PC90ZXh0PgogPC9nPgo8L3N2Zz4K")
-
-/***/ }),
-
 /***/ 14:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_2555__) => {
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_1877__) => {
 
 "use strict";
-/* provided dependency */ var Buffer = __nested_webpack_require_2555__(287)["hp"];
+/* provided dependency */ var Buffer = __nested_webpack_require_1877__(287)["hp"];
 
 
 module.exports = function (base64Data) {
@@ -49587,285 +47445,359 @@ module.exports = function (base64Data) {
 
 /***/ }),
 
-/***/ 953:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_3121__) => {
+/***/ 15:
+/***/ ((module, exports, __nested_webpack_require_2425__) => {
 
-const crossFetch = __nested_webpack_require_3121__(945);
+var Transform = __nested_webpack_require_2425__(408),
+    Filter = __nested_webpack_require_2425__(84);
 
-/**
- * Metadata header names
- * @enum {string} The enum value is the name of the associated header.
- * @readonly
- */
-const RequestMetadata = {
-  /** The ID of the project associated with this request */
-  ProjectId: 'X-Project-ID',
-  /** The ID of the project run associated with this request */
-  RunId: 'X-Run-ID'
+var log = new Transform(),
+    slice = Array.prototype.slice;
+
+exports = module.exports = function create(name) {
+  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
+  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
+  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
+  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
+  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
+  o.log   = o.debug; // for interface compliance with Node and browser consoles
+  o.suggest = exports.suggest;
+  o.format = log.format;
+  return o;
 };
 
-/**
- * Metadata headers for requests
- * @type {Headers}
- */
-const metadata = new crossFetch.Headers();
+// filled in separately
+exports.defaultBackend = exports.defaultFormatter = null;
 
-/**
- * Check if there is any metadata to apply.
- * @returns {boolean} true if `metadata` has contents, or false if it is empty.
- */
-const hasMetadata = () => {
-  /* global self */
-  const searchParams = typeof self !== 'undefined' && self && self.location && self.location.search && self.location.search.split(/[?&]/) || [];
-  if (!searchParams.includes('scratchMetadata=1')) {
-    // for now, disable this feature unless scratchMetadata=1
-    // TODO: remove this check once we're sure the feature works correctly in production
-    return false;
+exports.pipe = function(dest) {
+  return log.pipe(dest);
+};
+
+exports.end = exports.unpipe = exports.disable = function(from) {
+  return log.unpipe(from);
+};
+
+exports.Transform = Transform;
+exports.Filter = Filter;
+// this is the default filter that's applied when .enable() is called normally
+// you can bypass it completely and set up your own pipes
+exports.suggest = new Filter();
+
+exports.enable = function() {
+  if(exports.defaultFormatter) {
+    return log.pipe(exports.suggest) // filter
+              .pipe(exports.defaultFormatter) // formatter
+              .pipe(exports.defaultBackend); // backend
   }
-  for (const _ of metadata) {
-    return true;
-  }
-  return false;
+  return log.pipe(exports.suggest) // filter
+            .pipe(exports.defaultBackend); // formatter
 };
 
-/**
- * Non-destructively merge any metadata state (if any) with the provided options object (if any).
- * If there is metadata state but no options object is provided, make a new object.
- * If there is no metadata state, return the provided options parameter without modification.
- * If there is metadata and an options object is provided, modify a copy and return it.
- * Headers in the provided options object may override headers generated from metadata state.
- * @param {RequestInit} [options] The initial request options. May be null or undefined.
- * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
- */
-const applyMetadata = options => {
-  if (hasMetadata()) {
-    const augmentedOptions = Object.assign({}, options);
-    augmentedOptions.headers = new crossFetch.Headers(metadata);
-    if (options && options.headers) {
-      // the Fetch spec says options.headers could be:
-      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
-      // turn it into a Headers object to be sure of how to interact with it
-      const overrideHeaders = options.headers instanceof crossFetch.Headers ? options.headers : new crossFetch.Headers(options.headers);
-      for (const [name, value] of overrideHeaders.entries()) {
-        augmentedOptions.headers.set(name, value);
-      }
-    }
-    return augmentedOptions;
-  }
-  return options;
-};
 
-/**
- * Make a network request.
- * This is a wrapper for the global fetch method, adding some Scratch-specific functionality.
- * @param {RequestInfo|URL} resource The resource to fetch.
- * @param {RequestInit} options Optional object containing custom settings for this request.
- * @see {@link https://developer.mozilla.org/docs/Web/API/fetch} for more about the fetch API.
- * @returns {Promise<Response>} A promise for the response to the request.
- */
-const scratchFetch = (resource, options) => {
-  const augmentedOptions = applyMetadata(options);
-  return crossFetch.fetch(resource, augmentedOptions);
-};
-
-/**
- * Set the value of a named request metadata item.
- * Setting the value to `null` or `undefined` will NOT remove the item.
- * Use `unsetMetadata` for that.
- * @param {RequestMetadata} name The name of the metadata item to set.
- * @param {any} value The value to set (will be converted to a string).
- */
-const setMetadata = (name, value) => {
-  metadata.set(name, value);
-};
-
-/**
- * Remove a named request metadata item.
- * @param {RequestMetadata} name The name of the metadata item to remove.
- */
-const unsetMetadata = name => {
-  metadata.delete(name);
-};
-
-/**
- * Retrieve a named request metadata item.
- * Only for use in tests. At the time of writing, used in scratch-vm tests.
- * @param {RequestMetadata} name The name of the metadata item to retrieve.
- * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
- */
-const getMetadata = name => metadata.get(name);
-module.exports = {
-  Headers: crossFetch.Headers,
-  RequestMetadata,
-  applyMetadata,
-  scratchFetch,
-  setMetadata,
-  unsetMetadata,
-  getMetadata
-};
 
 /***/ }),
 
-/***/ 526:
+/***/ 84:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_4102__) => {
+
+// default filter
+var Transform = __nested_webpack_require_4102__(408);
+
+var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
+
+function Filter() {
+  this.enabled = true;
+  this.defaultResult = true;
+  this.clear();
+}
+
+Transform.mixin(Filter);
+
+// allow all matching, with level >= given level
+Filter.prototype.allow = function(name, level) {
+  this._white.push({ n: name, l: levelMap[level] });
+  return this;
+};
+
+// deny all matching, with level <= given level
+Filter.prototype.deny = function(name, level) {
+  this._black.push({ n: name, l: levelMap[level] });
+  return this;
+};
+
+Filter.prototype.clear = function() {
+  this._white = [];
+  this._black = [];
+  return this;
+};
+
+function test(rule, name) {
+  // use .test for RegExps
+  return (rule.n.test ? rule.n.test(name) : rule.n == name);
+};
+
+Filter.prototype.test = function(name, level) {
+  var i, len = Math.max(this._white.length, this._black.length);
+  for(i = 0; i < len; i++) {
+    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
+      return true;
+    }
+    if(this._black[i] && test(this._black[i], name) && levelMap[level] <= this._black[i].l) {
+      return false;
+    }
+  }
+  return this.defaultResult;
+};
+
+Filter.prototype.write = function(name, level, args) {
+  if(!this.enabled || this.test(name, level)) {
+    return this.emit('item', name, level, args);
+  }
+};
+
+module.exports = Filter;
+
+
+/***/ }),
+
+/***/ 113:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_5589__) => {
+
+var Transform = __nested_webpack_require_5589__(408),
+    cache = false;
+
+var logger = new Transform();
+
+logger.write = function(name, level, args) {
+  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
+  try {
+    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
+    cache.push([ new Date().toString(), name, level, args ]);
+    window.localStorage.minilog = JSON.stringify(cache);
+  } catch(e) {}
+};
+
+module.exports = logger;
+
+/***/ }),
+
+/***/ 173:
+/***/ ((module) => {
+
+function M() { this._events = {}; }
+M.prototype = {
+  on: function(ev, cb) {
+    this._events || (this._events = {});
+    var e = this._events;
+    (e[ev] || (e[ev] = [])).push(cb);
+    return this;
+  },
+  removeListener: function(ev, cb) {
+    var e = this._events[ev] || [], i;
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
+    }
+  },
+  removeAllListeners: function(ev) {
+    if(!ev) { this._events = {}; }
+    else { this._events[ev] && (this._events[ev] = []); }
+  },
+  listeners: function(ev) {
+    return (this._events ? this._events[ev] || [] : []);
+  },
+  emit: function(ev) {
+    this._events || (this._events = {});
+    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
+    for(i = e.length-1; i >= 0 && e[i]; i--){
+      e[i].apply(this, args);
+    }
+    return this;
+  },
+  when: function(ev, cb) {
+    return this.once(ev, cb, true);
+  },
+  once: function(ev, cb, when) {
+    if(!cb) return this;
+    function c() {
+      if(!when) this.removeListener(ev, c);
+      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
+    }
+    c.cb = cb;
+    this.on(ev, c);
+    return this;
+  }
+};
+M.mixin = function(dest) {
+  var o = M.prototype, k;
+  for (k in o) {
+    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
+  }
+};
+module.exports = M;
+
+
+/***/ }),
+
+/***/ 193:
+/***/ ((module) => {
+
+var hex = {
+  black: '#000',
+  red: '#c23621',
+  green: '#25bc26',
+  yellow: '#bbbb00',
+  blue:  '#492ee1',
+  magenta: '#d338d3',
+  cyan: '#33bbc8',
+  gray: '#808080',
+  purple: '#708'
+};
+function color(fg, isInverse) {
+  if(isInverse) {
+    return 'color: #fff; background: '+hex[fg]+';';
+  } else {
+    return 'color: '+hex[fg]+';';
+  }
+}
+
+module.exports = color;
+
+
+/***/ }),
+
+/***/ 251:
 /***/ ((__unused_webpack_module, exports) => {
 
-"use strict";
+/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
 
+  i += d
 
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
 }
 
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = (nBytes * 8) - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
 
-function getLens (b64) {
-  var len = b64.length
+  value = Math.abs(value)
 
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = ((value * c) - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
   }
 
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
 
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
 
-  return [validLen, placeHoldersLen]
+  buffer[offset + i - d] |= s * 128
 }
 
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
 
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
+/***/ }),
 
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
+/***/ 260:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_10243__) => {
 
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+var Transform = __nested_webpack_require_10243__(408);
 
-  var curByte = 0
+var newlines = /\n+$/,
+    logger = new Transform();
 
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
+logger.write = function(name, level, args) {
+  var i = args.length-1;
+  if (typeof console === 'undefined' || !console.log) {
+    return;
   }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
+  if(console.log.apply) {
+    return console.log.apply(console, [name, level].concat(args));
+  } else if(JSON && JSON.stringify) {
+    // console.log.apply is undefined in IE8 and IE9
+    // for IE8/9: make console.log at least a bit less awful
+    if(args[i] && typeof args[i] == 'string') {
+      args[i] = args[i].replace(newlines, '');
+    }
+    try {
+      for(i = 0; i < args.length; i++) {
+        args[i] = JSON.stringify(args[i]);
+      }
+    } catch(e) {}
+    console.log(args.join(' '));
   }
+};
 
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
+logger.formatters = ['color', 'minilog'];
+logger.color = __nested_webpack_require_10243__(638);
+logger.minilog = __nested_webpack_require_10243__(658);
 
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
-}
+module.exports = logger;
 
 
 /***/ }),
 
 /***/ 287:
-/***/ ((__unused_webpack_module, exports, __nested_webpack_require_11420__) => {
+/***/ ((__unused_webpack_module, exports, __nested_webpack_require_11234__) => {
 
 "use strict";
 var __webpack_unused_export__;
@@ -49879,8 +47811,8 @@ var __webpack_unused_export__;
 
 
 
-const base64 = __nested_webpack_require_11420__(526)
-const ieee754 = __nested_webpack_require_11420__(251)
+const base64 = __nested_webpack_require_11234__(526)
+const ieee754 = __nested_webpack_require_11234__(251)
 const customInspectSymbol =
   (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
     ? Symbol['for']('nodejs.util.inspect.custom') // eslint-disable-line dot-notation
@@ -51979,768 +49911,8 @@ function BufferBigIntNotDefined () {
 
 /***/ }),
 
-/***/ 945:
-/***/ ((module, exports, __nested_webpack_require_69872__) => {
-
-// Save global object in a variable
-var __global__ =
-(typeof globalThis !== 'undefined' && globalThis) ||
-(typeof self !== 'undefined' && self) ||
-(typeof __nested_webpack_require_69872__.g !== 'undefined' && __nested_webpack_require_69872__.g);
-// Create an object that extends from __global__ without the fetch function
-var __globalThis__ = (function () {
-function F() {
-this.fetch = false;
-this.DOMException = __global__.DOMException
-}
-F.prototype = __global__; // Needed for feature detection on whatwg-fetch's code
-return new F();
-})();
-// Wraps whatwg-fetch with a function scope to hijack the global object
-// "globalThis" that's going to be patched
-(function(globalThis) {
-
-var irrelevant = (function (exports) {
-
-  var global =
-    (typeof globalThis !== 'undefined' && globalThis) ||
-    (typeof self !== 'undefined' && self) ||
-    (typeof global !== 'undefined' && global);
-
-  var support = {
-    searchParams: 'URLSearchParams' in global,
-    iterable: 'Symbol' in global && 'iterator' in Symbol,
-    blob:
-      'FileReader' in global &&
-      'Blob' in global &&
-      (function() {
-        try {
-          new Blob();
-          return true
-        } catch (e) {
-          return false
-        }
-      })(),
-    formData: 'FormData' in global,
-    arrayBuffer: 'ArrayBuffer' in global
-  };
-
-  function isDataView(obj) {
-    return obj && DataView.prototype.isPrototypeOf(obj)
-  }
-
-  if (support.arrayBuffer) {
-    var viewClasses = [
-      '[object Int8Array]',
-      '[object Uint8Array]',
-      '[object Uint8ClampedArray]',
-      '[object Int16Array]',
-      '[object Uint16Array]',
-      '[object Int32Array]',
-      '[object Uint32Array]',
-      '[object Float32Array]',
-      '[object Float64Array]'
-    ];
-
-    var isArrayBufferView =
-      ArrayBuffer.isView ||
-      function(obj) {
-        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
-      };
-  }
-
-  function normalizeName(name) {
-    if (typeof name !== 'string') {
-      name = String(name);
-    }
-    if (/[^a-z0-9\-#$%&'*+.^_`|~!]/i.test(name) || name === '') {
-      throw new TypeError('Invalid character in header field name: "' + name + '"')
-    }
-    return name.toLowerCase()
-  }
-
-  function normalizeValue(value) {
-    if (typeof value !== 'string') {
-      value = String(value);
-    }
-    return value
-  }
-
-  // Build a destructive iterator for the value list
-  function iteratorFor(items) {
-    var iterator = {
-      next: function() {
-        var value = items.shift();
-        return {done: value === undefined, value: value}
-      }
-    };
-
-    if (support.iterable) {
-      iterator[Symbol.iterator] = function() {
-        return iterator
-      };
-    }
-
-    return iterator
-  }
-
-  function Headers(headers) {
-    this.map = {};
-
-    if (headers instanceof Headers) {
-      headers.forEach(function(value, name) {
-        this.append(name, value);
-      }, this);
-    } else if (Array.isArray(headers)) {
-      headers.forEach(function(header) {
-        this.append(header[0], header[1]);
-      }, this);
-    } else if (headers) {
-      Object.getOwnPropertyNames(headers).forEach(function(name) {
-        this.append(name, headers[name]);
-      }, this);
-    }
-  }
-
-  Headers.prototype.append = function(name, value) {
-    name = normalizeName(name);
-    value = normalizeValue(value);
-    var oldValue = this.map[name];
-    this.map[name] = oldValue ? oldValue + ', ' + value : value;
-  };
-
-  Headers.prototype['delete'] = function(name) {
-    delete this.map[normalizeName(name)];
-  };
-
-  Headers.prototype.get = function(name) {
-    name = normalizeName(name);
-    return this.has(name) ? this.map[name] : null
-  };
-
-  Headers.prototype.has = function(name) {
-    return this.map.hasOwnProperty(normalizeName(name))
-  };
-
-  Headers.prototype.set = function(name, value) {
-    this.map[normalizeName(name)] = normalizeValue(value);
-  };
-
-  Headers.prototype.forEach = function(callback, thisArg) {
-    for (var name in this.map) {
-      if (this.map.hasOwnProperty(name)) {
-        callback.call(thisArg, this.map[name], name, this);
-      }
-    }
-  };
-
-  Headers.prototype.keys = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push(name);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.values = function() {
-    var items = [];
-    this.forEach(function(value) {
-      items.push(value);
-    });
-    return iteratorFor(items)
-  };
-
-  Headers.prototype.entries = function() {
-    var items = [];
-    this.forEach(function(value, name) {
-      items.push([name, value]);
-    });
-    return iteratorFor(items)
-  };
-
-  if (support.iterable) {
-    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
-  }
-
-  function consumed(body) {
-    if (body.bodyUsed) {
-      return Promise.reject(new TypeError('Already read'))
-    }
-    body.bodyUsed = true;
-  }
-
-  function fileReaderReady(reader) {
-    return new Promise(function(resolve, reject) {
-      reader.onload = function() {
-        resolve(reader.result);
-      };
-      reader.onerror = function() {
-        reject(reader.error);
-      };
-    })
-  }
-
-  function readBlobAsArrayBuffer(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsArrayBuffer(blob);
-    return promise
-  }
-
-  function readBlobAsText(blob) {
-    var reader = new FileReader();
-    var promise = fileReaderReady(reader);
-    reader.readAsText(blob);
-    return promise
-  }
-
-  function readArrayBufferAsText(buf) {
-    var view = new Uint8Array(buf);
-    var chars = new Array(view.length);
-
-    for (var i = 0; i < view.length; i++) {
-      chars[i] = String.fromCharCode(view[i]);
-    }
-    return chars.join('')
-  }
-
-  function bufferClone(buf) {
-    if (buf.slice) {
-      return buf.slice(0)
-    } else {
-      var view = new Uint8Array(buf.byteLength);
-      view.set(new Uint8Array(buf));
-      return view.buffer
-    }
-  }
-
-  function Body() {
-    this.bodyUsed = false;
-
-    this._initBody = function(body) {
-      /*
-        fetch-mock wraps the Response object in an ES6 Proxy to
-        provide useful test harness features such as flush. However, on
-        ES5 browsers without fetch or Proxy support pollyfills must be used;
-        the proxy-pollyfill is unable to proxy an attribute unless it exists
-        on the object before the Proxy is created. This change ensures
-        Response.bodyUsed exists on the instance, while maintaining the
-        semantic of setting Request.bodyUsed in the constructor before
-        _initBody is called.
-      */
-      this.bodyUsed = this.bodyUsed;
-      this._bodyInit = body;
-      if (!body) {
-        this._bodyText = '';
-      } else if (typeof body === 'string') {
-        this._bodyText = body;
-      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
-        this._bodyBlob = body;
-      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
-        this._bodyFormData = body;
-      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-        this._bodyText = body.toString();
-      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
-        this._bodyArrayBuffer = bufferClone(body.buffer);
-        // IE 10-11 can't handle a DataView body.
-        this._bodyInit = new Blob([this._bodyArrayBuffer]);
-      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
-        this._bodyArrayBuffer = bufferClone(body);
-      } else {
-        this._bodyText = body = Object.prototype.toString.call(body);
-      }
-
-      if (!this.headers.get('content-type')) {
-        if (typeof body === 'string') {
-          this.headers.set('content-type', 'text/plain;charset=UTF-8');
-        } else if (this._bodyBlob && this._bodyBlob.type) {
-          this.headers.set('content-type', this._bodyBlob.type);
-        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
-          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
-        }
-      }
-    };
-
-    if (support.blob) {
-      this.blob = function() {
-        var rejected = consumed(this);
-        if (rejected) {
-          return rejected
-        }
-
-        if (this._bodyBlob) {
-          return Promise.resolve(this._bodyBlob)
-        } else if (this._bodyArrayBuffer) {
-          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
-        } else if (this._bodyFormData) {
-          throw new Error('could not read FormData body as blob')
-        } else {
-          return Promise.resolve(new Blob([this._bodyText]))
-        }
-      };
-
-      this.arrayBuffer = function() {
-        if (this._bodyArrayBuffer) {
-          var isConsumed = consumed(this);
-          if (isConsumed) {
-            return isConsumed
-          }
-          if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
-            return Promise.resolve(
-              this._bodyArrayBuffer.buffer.slice(
-                this._bodyArrayBuffer.byteOffset,
-                this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
-              )
-            )
-          } else {
-            return Promise.resolve(this._bodyArrayBuffer)
-          }
-        } else {
-          return this.blob().then(readBlobAsArrayBuffer)
-        }
-      };
-    }
-
-    this.text = function() {
-      var rejected = consumed(this);
-      if (rejected) {
-        return rejected
-      }
-
-      if (this._bodyBlob) {
-        return readBlobAsText(this._bodyBlob)
-      } else if (this._bodyArrayBuffer) {
-        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
-      } else if (this._bodyFormData) {
-        throw new Error('could not read FormData body as text')
-      } else {
-        return Promise.resolve(this._bodyText)
-      }
-    };
-
-    if (support.formData) {
-      this.formData = function() {
-        return this.text().then(decode)
-      };
-    }
-
-    this.json = function() {
-      return this.text().then(JSON.parse)
-    };
-
-    return this
-  }
-
-  // HTTP methods whose capitalization should be normalized
-  var methods = ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST', 'PUT'];
-
-  function normalizeMethod(method) {
-    var upcased = method.toUpperCase();
-    return methods.indexOf(upcased) > -1 ? upcased : method
-  }
-
-  function Request(input, options) {
-    if (!(this instanceof Request)) {
-      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
-    }
-
-    options = options || {};
-    var body = options.body;
-
-    if (input instanceof Request) {
-      if (input.bodyUsed) {
-        throw new TypeError('Already read')
-      }
-      this.url = input.url;
-      this.credentials = input.credentials;
-      if (!options.headers) {
-        this.headers = new Headers(input.headers);
-      }
-      this.method = input.method;
-      this.mode = input.mode;
-      this.signal = input.signal;
-      if (!body && input._bodyInit != null) {
-        body = input._bodyInit;
-        input.bodyUsed = true;
-      }
-    } else {
-      this.url = String(input);
-    }
-
-    this.credentials = options.credentials || this.credentials || 'same-origin';
-    if (options.headers || !this.headers) {
-      this.headers = new Headers(options.headers);
-    }
-    this.method = normalizeMethod(options.method || this.method || 'GET');
-    this.mode = options.mode || this.mode || null;
-    this.signal = options.signal || this.signal;
-    this.referrer = null;
-
-    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
-      throw new TypeError('Body not allowed for GET or HEAD requests')
-    }
-    this._initBody(body);
-
-    if (this.method === 'GET' || this.method === 'HEAD') {
-      if (options.cache === 'no-store' || options.cache === 'no-cache') {
-        // Search for a '_' parameter in the query string
-        var reParamSearch = /([?&])_=[^&]*/;
-        if (reParamSearch.test(this.url)) {
-          // If it already exists then set the value with the current time
-          this.url = this.url.replace(reParamSearch, '$1_=' + new Date().getTime());
-        } else {
-          // Otherwise add a new '_' parameter to the end with the current time
-          var reQueryString = /\?/;
-          this.url += (reQueryString.test(this.url) ? '&' : '?') + '_=' + new Date().getTime();
-        }
-      }
-    }
-  }
-
-  Request.prototype.clone = function() {
-    return new Request(this, {body: this._bodyInit})
-  };
-
-  function decode(body) {
-    var form = new FormData();
-    body
-      .trim()
-      .split('&')
-      .forEach(function(bytes) {
-        if (bytes) {
-          var split = bytes.split('=');
-          var name = split.shift().replace(/\+/g, ' ');
-          var value = split.join('=').replace(/\+/g, ' ');
-          form.append(decodeURIComponent(name), decodeURIComponent(value));
-        }
-      });
-    return form
-  }
-
-  function parseHeaders(rawHeaders) {
-    var headers = new Headers();
-    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
-    // https://tools.ietf.org/html/rfc7230#section-3.2
-    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
-    // Avoiding split via regex to work around a common IE11 bug with the core-js 3.6.0 regex polyfill
-    // https://github.com/github/fetch/issues/748
-    // https://github.com/zloirock/core-js/issues/751
-    preProcessedHeaders
-      .split('\r')
-      .map(function(header) {
-        return header.indexOf('\n') === 0 ? header.substr(1, header.length) : header
-      })
-      .forEach(function(line) {
-        var parts = line.split(':');
-        var key = parts.shift().trim();
-        if (key) {
-          var value = parts.join(':').trim();
-          headers.append(key, value);
-        }
-      });
-    return headers
-  }
-
-  Body.call(Request.prototype);
-
-  function Response(bodyInit, options) {
-    if (!(this instanceof Response)) {
-      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
-    }
-    if (!options) {
-      options = {};
-    }
-
-    this.type = 'default';
-    this.status = options.status === undefined ? 200 : options.status;
-    this.ok = this.status >= 200 && this.status < 300;
-    this.statusText = options.statusText === undefined ? '' : '' + options.statusText;
-    this.headers = new Headers(options.headers);
-    this.url = options.url || '';
-    this._initBody(bodyInit);
-  }
-
-  Body.call(Response.prototype);
-
-  Response.prototype.clone = function() {
-    return new Response(this._bodyInit, {
-      status: this.status,
-      statusText: this.statusText,
-      headers: new Headers(this.headers),
-      url: this.url
-    })
-  };
-
-  Response.error = function() {
-    var response = new Response(null, {status: 0, statusText: ''});
-    response.type = 'error';
-    return response
-  };
-
-  var redirectStatuses = [301, 302, 303, 307, 308];
-
-  Response.redirect = function(url, status) {
-    if (redirectStatuses.indexOf(status) === -1) {
-      throw new RangeError('Invalid status code')
-    }
-
-    return new Response(null, {status: status, headers: {location: url}})
-  };
-
-  exports.DOMException = global.DOMException;
-  try {
-    new exports.DOMException();
-  } catch (err) {
-    exports.DOMException = function(message, name) {
-      this.message = message;
-      this.name = name;
-      var error = Error(message);
-      this.stack = error.stack;
-    };
-    exports.DOMException.prototype = Object.create(Error.prototype);
-    exports.DOMException.prototype.constructor = exports.DOMException;
-  }
-
-  function fetch(input, init) {
-    return new Promise(function(resolve, reject) {
-      var request = new Request(input, init);
-
-      if (request.signal && request.signal.aborted) {
-        return reject(new exports.DOMException('Aborted', 'AbortError'))
-      }
-
-      var xhr = new XMLHttpRequest();
-
-      function abortXhr() {
-        xhr.abort();
-      }
-
-      xhr.onload = function() {
-        var options = {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
-        };
-        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
-        var body = 'response' in xhr ? xhr.response : xhr.responseText;
-        setTimeout(function() {
-          resolve(new Response(body, options));
-        }, 0);
-      };
-
-      xhr.onerror = function() {
-        setTimeout(function() {
-          reject(new TypeError('Network request failed'));
-        }, 0);
-      };
-
-      xhr.ontimeout = function() {
-        setTimeout(function() {
-          reject(new TypeError('Network request failed'));
-        }, 0);
-      };
-
-      xhr.onabort = function() {
-        setTimeout(function() {
-          reject(new exports.DOMException('Aborted', 'AbortError'));
-        }, 0);
-      };
-
-      function fixUrl(url) {
-        try {
-          return url === '' && global.location.href ? global.location.href : url
-        } catch (e) {
-          return url
-        }
-      }
-
-      xhr.open(request.method, fixUrl(request.url), true);
-
-      if (request.credentials === 'include') {
-        xhr.withCredentials = true;
-      } else if (request.credentials === 'omit') {
-        xhr.withCredentials = false;
-      }
-
-      if ('responseType' in xhr) {
-        if (support.blob) {
-          xhr.responseType = 'blob';
-        } else if (
-          support.arrayBuffer &&
-          request.headers.get('Content-Type') &&
-          request.headers.get('Content-Type').indexOf('application/octet-stream') !== -1
-        ) {
-          xhr.responseType = 'arraybuffer';
-        }
-      }
-
-      if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers)) {
-        Object.getOwnPropertyNames(init.headers).forEach(function(name) {
-          xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
-        });
-      } else {
-        request.headers.forEach(function(value, name) {
-          xhr.setRequestHeader(name, value);
-        });
-      }
-
-      if (request.signal) {
-        request.signal.addEventListener('abort', abortXhr);
-
-        xhr.onreadystatechange = function() {
-          // DONE (success or failure)
-          if (xhr.readyState === 4) {
-            request.signal.removeEventListener('abort', abortXhr);
-          }
-        };
-      }
-
-      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
-    })
-  }
-
-  fetch.polyfill = true;
-
-  if (!global.fetch) {
-    global.fetch = fetch;
-    global.Headers = Headers;
-    global.Request = Request;
-    global.Response = Response;
-  }
-
-  exports.Headers = Headers;
-  exports.Request = Request;
-  exports.Response = Response;
-  exports.fetch = fetch;
-
-  return exports;
-
-})({});
-})(__globalThis__);
-// This is a ponyfill, so...
-__globalThis__.fetch.ponyfill = true;
-delete __globalThis__.fetch.polyfill;
-// Choose between native implementation (__global__) or custom implementation (__globalThis__)
-var ctx = __global__.fetch ? __global__ : __globalThis__;
-exports = ctx.fetch // To enable: import fetch from 'cross-fetch'
-exports["default"] = ctx.fetch // For TypeScript consumers without esModuleInterop.
-exports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'
-exports.Headers = ctx.Headers
-exports.Request = ctx.Request
-exports.Response = ctx.Response
-module.exports = exports
-
-
-/***/ }),
-
-/***/ 767:
-/***/ (function(__unused_webpack_module, __unused_webpack_exports, __nested_webpack_require_89368__) {
-
-"use strict";
-(function(r){function x(){}function y(){}var z=String.fromCharCode,v={}.toString,A=v.call(r.SharedArrayBuffer),B=v(),q=r.Uint8Array,t=q||Array,w=q?ArrayBuffer:t,C=w.isView||function(g){return g&&"length"in g},D=v.call(w.prototype);w=y.prototype;var E=r.TextEncoder,a=new (q?Uint16Array:t)(32);x.prototype.decode=function(g){if(!C(g)){var l=v.call(g);if(l!==D&&l!==A&&l!==B)throw TypeError("Failed to execute 'decode' on 'TextDecoder': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
-g=q?new t(g):g||[]}for(var f=l="",b=0,c=g.length|0,u=c-32|0,e,d,h=0,p=0,m,k=0,n=-1;b<c;){for(e=b<=u?32:c-b|0;k<e;b=b+1|0,k=k+1|0){d=g[b]&255;switch(d>>4){case 15:m=g[b=b+1|0]&255;if(2!==m>>6||247<d){b=b-1|0;break}h=(d&7)<<6|m&63;p=5;d=256;case 14:m=g[b=b+1|0]&255,h<<=6,h|=(d&15)<<6|m&63,p=2===m>>6?p+4|0:24,d=d+256&768;case 13:case 12:m=g[b=b+1|0]&255,h<<=6,h|=(d&31)<<6|m&63,p=p+7|0,b<c&&2===m>>6&&h>>p&&1114112>h?(d=h,h=h-65536|0,0<=h&&(n=(h>>10)+55296|0,d=(h&1023)+56320|0,31>k?(a[k]=n,k=k+1|0,n=-1):
-(m=n,n=d,d=m))):(d>>=8,b=b-d-1|0,d=65533),h=p=0,e=b<=u?32:c-b|0;default:a[k]=d;continue;case 11:case 10:case 9:case 8:}a[k]=65533}f+=z(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16],a[17],a[18],a[19],a[20],a[21],a[22],a[23],a[24],a[25],a[26],a[27],a[28],a[29],a[30],a[31]);32>k&&(f=f.slice(0,k-32|0));if(b<c){if(a[0]=n,k=~n>>>31,n=-1,f.length<l.length)continue}else-1!==n&&(f+=z(n));l+=f;f=""}return l};w.encode=function(g){g=void 0===g?"":""+g;var l=g.length|
-0,f=new t((l<<1)+8|0),b,c=0,u=!q;for(b=0;b<l;b=b+1|0,c=c+1|0){var e=g.charCodeAt(b)|0;if(127>=e)f[c]=e;else{if(2047>=e)f[c]=192|e>>6;else{a:{if(55296<=e)if(56319>=e){var d=g.charCodeAt(b=b+1|0)|0;if(56320<=d&&57343>=d){e=(e<<10)+d-56613888|0;if(65535<e){f[c]=240|e>>18;f[c=c+1|0]=128|e>>12&63;f[c=c+1|0]=128|e>>6&63;f[c=c+1|0]=128|e&63;continue}break a}e=65533}else 57343>=e&&(e=65533);!u&&b<<1<c&&b<<1<(c-7|0)&&(u=!0,d=new t(3*l),d.set(f),f=d)}f[c]=224|e>>12;f[c=c+1|0]=128|e>>6&63}f[c=c+1|0]=128|e&63}}return q?
-f.subarray(0,c):f.slice(0,c)};E||(r.TextDecoder=x,r.TextEncoder=y)})(""+void 0==typeof __nested_webpack_require_89368__.g?""+void 0==typeof self?this:self:__nested_webpack_require_89368__.g);//AnonyCo
-//# sourceMappingURL=https://cdn.jsdelivr.net/gh/AnonyCo/FastestSmallestTextEncoderDecoder/EncoderDecoderTogether.min.js.map
-
-
-/***/ }),
-
-/***/ 251:
-/***/ ((__unused_webpack_module, exports) => {
-
-/*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = (nBytes * 8) - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = ((value * c) - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-
-/***/ }),
-
 /***/ 386:
-/***/ ((module, exports, __nested_webpack_require_94013__) => {
+/***/ ((module, exports, __nested_webpack_require_69686__) => {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/**
  * [js-md5]{@link https://github.com/emn178/js-md5}
@@ -52763,12 +49935,12 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/**
   var WEB_WORKER = !WINDOW && typeof self === 'object';
   var NODE_JS = !root.JS_MD5_NO_NODE_JS && typeof process === 'object' && process.versions && process.versions.node;
   if (NODE_JS) {
-    root = __nested_webpack_require_94013__.g;
+    root = __nested_webpack_require_69686__.g;
   } else if (WEB_WORKER) {
     root = self;
   }
   var COMMON_JS = !root.JS_MD5_NO_COMMON_JS && "object" === 'object' && module.exports;
-  var AMD =   true && __nested_webpack_require_94013__.amdO;
+  var AMD =   true && __nested_webpack_require_69686__.amdO;
   var ARRAY_BUFFER = !root.JS_MD5_NO_ARRAY_BUFFER && typeof ArrayBuffer !== 'undefined';
   var HEX_CHARS = '0123456789abcdef'.split('');
   var EXTRA = [128, 32768, 8388608, -2147483648];
@@ -53421,7 +50593,7 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/**
     if (AMD) {
       !(__WEBPACK_AMD_DEFINE_RESULT__ = (function () {
         return exports;
-      }).call(exports, __nested_webpack_require_94013__, exports, module),
+      }).call(exports, __nested_webpack_require_69686__, exports, module),
 		__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
     }
   }
@@ -53430,182 +50602,10 @@ var __WEBPACK_AMD_DEFINE_RESULT__;/**
 
 /***/ }),
 
-/***/ 173:
-/***/ ((module) => {
-
-function M() { this._events = {}; }
-M.prototype = {
-  on: function(ev, cb) {
-    this._events || (this._events = {});
-    var e = this._events;
-    (e[ev] || (e[ev] = [])).push(cb);
-    return this;
-  },
-  removeListener: function(ev, cb) {
-    var e = this._events[ev] || [], i;
-    for(i = e.length-1; i >= 0 && e[i]; i--){
-      if(e[i] === cb || e[i].cb === cb) { e.splice(i, 1); }
-    }
-  },
-  removeAllListeners: function(ev) {
-    if(!ev) { this._events = {}; }
-    else { this._events[ev] && (this._events[ev] = []); }
-  },
-  listeners: function(ev) {
-    return (this._events ? this._events[ev] || [] : []);
-  },
-  emit: function(ev) {
-    this._events || (this._events = {});
-    var args = Array.prototype.slice.call(arguments, 1), i, e = this._events[ev] || [];
-    for(i = e.length-1; i >= 0 && e[i]; i--){
-      e[i].apply(this, args);
-    }
-    return this;
-  },
-  when: function(ev, cb) {
-    return this.once(ev, cb, true);
-  },
-  once: function(ev, cb, when) {
-    if(!cb) return this;
-    function c() {
-      if(!when) this.removeListener(ev, c);
-      if(cb.apply(this, arguments) && when) this.removeListener(ev, c);
-    }
-    c.cb = cb;
-    this.on(ev, c);
-    return this;
-  }
-};
-M.mixin = function(dest) {
-  var o = M.prototype, k;
-  for (k in o) {
-    o.hasOwnProperty(k) && (dest.prototype[k] = o[k]);
-  }
-};
-module.exports = M;
-
-
-/***/ }),
-
-/***/ 84:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_118993__) => {
-
-// default filter
-var Transform = __nested_webpack_require_118993__(408);
-
-var levelMap = { debug: 1, info: 2, warn: 3, error: 4 };
-
-function Filter() {
-  this.enabled = true;
-  this.defaultResult = true;
-  this.clear();
-}
-
-Transform.mixin(Filter);
-
-// allow all matching, with level >= given level
-Filter.prototype.allow = function(name, level) {
-  this._white.push({ n: name, l: levelMap[level] });
-  return this;
-};
-
-// deny all matching, with level <= given level
-Filter.prototype.deny = function(name, level) {
-  this._black.push({ n: name, l: levelMap[level] });
-  return this;
-};
-
-Filter.prototype.clear = function() {
-  this._white = [];
-  this._black = [];
-  return this;
-};
-
-function test(rule, name) {
-  // use .test for RegExps
-  return (rule.n.test ? rule.n.test(name) : rule.n == name);
-};
-
-Filter.prototype.test = function(name, level) {
-  var i, len = Math.max(this._white.length, this._black.length);
-  for(i = 0; i < len; i++) {
-    if(this._white[i] && test(this._white[i], name) && levelMap[level] >= this._white[i].l) {
-      return true;
-    }
-    if(this._black[i] && test(this._black[i], name) && levelMap[level] <= this._black[i].l) {
-      return false;
-    }
-  }
-  return this.defaultResult;
-};
-
-Filter.prototype.write = function(name, level, args) {
-  if(!this.enabled || this.test(name, level)) {
-    return this.emit('item', name, level, args);
-  }
-};
-
-module.exports = Filter;
-
-
-/***/ }),
-
-/***/ 15:
-/***/ ((module, exports, __nested_webpack_require_120462__) => {
-
-var Transform = __nested_webpack_require_120462__(408),
-    Filter = __nested_webpack_require_120462__(84);
-
-var log = new Transform(),
-    slice = Array.prototype.slice;
-
-exports = module.exports = function create(name) {
-  var o   = function() { log.write(name, undefined, slice.call(arguments)); return o; };
-  o.debug = function() { log.write(name, 'debug', slice.call(arguments)); return o; };
-  o.info  = function() { log.write(name, 'info',  slice.call(arguments)); return o; };
-  o.warn  = function() { log.write(name, 'warn',  slice.call(arguments)); return o; };
-  o.error = function() { log.write(name, 'error', slice.call(arguments)); return o; };
-  o.log   = o.debug; // for interface compliance with Node and browser consoles
-  o.suggest = exports.suggest;
-  o.format = log.format;
-  return o;
-};
-
-// filled in separately
-exports.defaultBackend = exports.defaultFormatter = null;
-
-exports.pipe = function(dest) {
-  return log.pipe(dest);
-};
-
-exports.end = exports.unpipe = exports.disable = function(from) {
-  return log.unpipe(from);
-};
-
-exports.Transform = Transform;
-exports.Filter = Filter;
-// this is the default filter that's applied when .enable() is called normally
-// you can bypass it completely and set up your own pipes
-exports.suggest = new Filter();
-
-exports.enable = function() {
-  if(exports.defaultFormatter) {
-    return log.pipe(exports.suggest) // filter
-              .pipe(exports.defaultFormatter) // formatter
-              .pipe(exports.defaultBackend); // backend
-  }
-  return log.pipe(exports.suggest) // filter
-            .pipe(exports.defaultBackend); // formatter
-};
-
-
-
-/***/ }),
-
 /***/ 408:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_122140__) => {
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_93265__) => {
 
-var microee = __nested_webpack_require_122140__(173);
+var microee = __nested_webpack_require_93265__(173);
 
 // Implements a subset of Node's stream.Transform - in a cross-platform manner.
 function Transform() {}
@@ -53681,160 +50681,173 @@ module.exports = Transform;
 
 /***/ }),
 
-/***/ 692:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_124158__) => {
+/***/ 526:
+/***/ ((__unused_webpack_module, exports) => {
 
-var Transform = __nested_webpack_require_124158__(408),
-    cache = [ ];
-
-var logger = new Transform();
-
-logger.write = function(name, level, args) {
-  cache.push([ name, level, args ]);
-};
-
-// utility functions
-logger.get = function() { return cache; };
-logger.empty = function() { cache = []; };
-
-module.exports = logger;
+"use strict";
 
 
-/***/ }),
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
 
-/***/ 260:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_124561__) => {
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
 
-var Transform = __nested_webpack_require_124561__(408);
-
-var newlines = /\n+$/,
-    logger = new Transform();
-
-logger.write = function(name, level, args) {
-  var i = args.length-1;
-  if (typeof console === 'undefined' || !console.log) {
-    return;
-  }
-  if(console.log.apply) {
-    return console.log.apply(console, [name, level].concat(args));
-  } else if(JSON && JSON.stringify) {
-    // console.log.apply is undefined in IE8 and IE9
-    // for IE8/9: make console.log at least a bit less awful
-    if(args[i] && typeof args[i] == 'string') {
-      args[i] = args[i].replace(newlines, '');
-    }
-    try {
-      for(i = 0; i < args.length; i++) {
-        args[i] = JSON.stringify(args[i]);
-      }
-    } catch(e) {}
-    console.log(args.join(' '));
-  }
-};
-
-logger.formatters = ['color', 'minilog'];
-logger.color = __nested_webpack_require_124561__(638);
-logger.minilog = __nested_webpack_require_124561__(658);
-
-module.exports = logger;
-
-
-/***/ }),
-
-/***/ 638:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_125552__) => {
-
-var Transform = __nested_webpack_require_125552__(408),
-    color = __nested_webpack_require_125552__(193);
-
-var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
-    logger = new Transform();
-
-logger.write = function(name, level, args) {
-  var fn = console.log;
-  if(console[level] && console[level].apply) {
-    fn = console[level];
-    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
-  }
-};
-
-// NOP, because piping the formatted logs can only cause trouble.
-logger.pipe = function() { };
-
-module.exports = logger;
-
-
-/***/ }),
-
-/***/ 658:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_126243__) => {
-
-var Transform = __nested_webpack_require_126243__(408),
-    color = __nested_webpack_require_126243__(193),
-    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
-    logger = new Transform();
-
-logger.write = function(name, level, args) {
-  var fn = console.log;
-  if(level != 'debug' && console[level]) {
-    fn = console[level];
-  }
-
-  var subset = [], i = 0;
-  if(level != 'info') {
-    for(; i < args.length; i++) {
-      if(typeof args[i] != 'string') break;
-    }
-    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
-  } else {
-    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
-  }
-};
-
-// NOP, because piping the formatted logs can only cause trouble.
-logger.pipe = function() { };
-
-module.exports = logger;
-
-
-/***/ }),
-
-/***/ 193:
-/***/ ((module) => {
-
-var hex = {
-  black: '#000',
-  red: '#c23621',
-  green: '#25bc26',
-  yellow: '#bbbb00',
-  blue:  '#492ee1',
-  magenta: '#d338d3',
-  cyan: '#33bbc8',
-  gray: '#808080',
-  purple: '#708'
-};
-function color(fg, isInverse) {
-  if(isInverse) {
-    return 'color: #fff; background: '+hex[fg]+';';
-  } else {
-    return 'color: '+hex[fg]+';';
-  }
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
 }
 
-module.exports = color;
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
 
 
 /***/ }),
 
 /***/ 557:
-/***/ ((module, exports, __nested_webpack_require_127576__) => {
+/***/ ((module, exports, __nested_webpack_require_99272__) => {
 
-var Minilog = __nested_webpack_require_127576__(15);
+var Minilog = __nested_webpack_require_99272__(15);
 
 var oldEnable = Minilog.enable,
     oldDisable = Minilog.disable,
     isChrome = (typeof navigator != 'undefined' && /chrome/i.test(navigator.userAgent)),
-    console = __nested_webpack_require_127576__(260);
+    console = __nested_webpack_require_99272__(260);
 
 // Use a more capable logging backend if on Chrome
 Minilog.defaultBackend = (isChrome ? console.minilog : console);
@@ -53866,19 +50879,105 @@ Minilog.disable = function() {
 exports = module.exports = Minilog;
 
 exports.backends = {
-  array: __nested_webpack_require_127576__(692),
+  array: __nested_webpack_require_99272__(692),
   browser: Minilog.defaultBackend,
-  localStorage: __nested_webpack_require_127576__(113),
-  jQuery: __nested_webpack_require_127576__(740)
+  localStorage: __nested_webpack_require_99272__(113),
+  jQuery: __nested_webpack_require_99272__(740)
 };
 
 
 /***/ }),
 
-/***/ 740:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_128962__) => {
+/***/ 638:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_100658__) => {
 
-var Transform = __nested_webpack_require_128962__(408);
+var Transform = __nested_webpack_require_100658__(408),
+    color = __nested_webpack_require_100658__(193);
+
+var colors = { debug: ['cyan'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+    logger = new Transform();
+
+logger.write = function(name, level, args) {
+  var fn = console.log;
+  if(console[level] && console[level].apply) {
+    fn = console[level];
+    fn.apply(console, [ '%c'+name+' %c'+level, color('gray'), color.apply(color, colors[level])].concat(args));
+  }
+};
+
+// NOP, because piping the formatted logs can only cause trouble.
+logger.pipe = function() { };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ 658:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_101349__) => {
+
+var Transform = __nested_webpack_require_101349__(408),
+    color = __nested_webpack_require_101349__(193),
+    colors = { debug: ['gray'], info: ['purple' ], warn: [ 'yellow', true ], error: [ 'red', true ] },
+    logger = new Transform();
+
+logger.write = function(name, level, args) {
+  var fn = console.log;
+  if(level != 'debug' && console[level]) {
+    fn = console[level];
+  }
+
+  var subset = [], i = 0;
+  if(level != 'info') {
+    for(; i < args.length; i++) {
+      if(typeof args[i] != 'string') break;
+    }
+    fn.apply(console, [ '%c'+name +' '+ args.slice(0, i).join(' '), color.apply(color, colors[level]) ].concat(args.slice(i)));
+  } else {
+    fn.apply(console, [ '%c'+name, color.apply(color, colors[level]) ].concat(args));
+  }
+};
+
+// NOP, because piping the formatted logs can only cause trouble.
+logger.pipe = function() { };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ 680:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_102287__) => {
+
+module.exports = __nested_webpack_require_102287__(14)("UklGRiYAAABXQVZFZm10IBAAAAABAAEAIlYAAESsAAACABAAZGF0YQIAAAAAAA==")
+
+/***/ }),
+
+/***/ 692:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_102488__) => {
+
+var Transform = __nested_webpack_require_102488__(408),
+    cache = [ ];
+
+var logger = new Transform();
+
+logger.write = function(name, level, args) {
+  cache.push([ name, level, args ]);
+};
+
+// utility functions
+logger.get = function() { return cache; };
+logger.empty = function() { cache = []; };
+
+module.exports = logger;
+
+
+/***/ }),
+
+/***/ 740:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_102891__) => {
+
+var Transform = __nested_webpack_require_102891__(408);
 
 var cid = new Date().valueOf().toString(36);
 
@@ -53956,24 +51055,834 @@ module.exports = AjaxLogger;
 
 /***/ }),
 
-/***/ 113:
-/***/ ((module, __unused_webpack_exports, __nested_webpack_require_131260__) => {
+/***/ 767:
+/***/ (function(__unused_webpack_module, __unused_webpack_exports, __nested_webpack_require_105214__) {
 
-var Transform = __nested_webpack_require_131260__(408),
-    cache = false;
+"use strict";
+(function(r){function x(){}function y(){}var z=String.fromCharCode,v={}.toString,A=v.call(r.SharedArrayBuffer),B=v(),q=r.Uint8Array,t=q||Array,w=q?ArrayBuffer:t,C=w.isView||function(g){return g&&"length"in g},D=v.call(w.prototype);w=y.prototype;var E=r.TextEncoder,a=new (q?Uint16Array:t)(32);x.prototype.decode=function(g){if(!C(g)){var l=v.call(g);if(l!==D&&l!==A&&l!==B)throw TypeError("Failed to execute 'decode' on 'TextDecoder': The provided value is not of type '(ArrayBuffer or ArrayBufferView)'");
+g=q?new t(g):g||[]}for(var f=l="",b=0,c=g.length|0,u=c-32|0,e,d,h=0,p=0,m,k=0,n=-1;b<c;){for(e=b<=u?32:c-b|0;k<e;b=b+1|0,k=k+1|0){d=g[b]&255;switch(d>>4){case 15:m=g[b=b+1|0]&255;if(2!==m>>6||247<d){b=b-1|0;break}h=(d&7)<<6|m&63;p=5;d=256;case 14:m=g[b=b+1|0]&255,h<<=6,h|=(d&15)<<6|m&63,p=2===m>>6?p+4|0:24,d=d+256&768;case 13:case 12:m=g[b=b+1|0]&255,h<<=6,h|=(d&31)<<6|m&63,p=p+7|0,b<c&&2===m>>6&&h>>p&&1114112>h?(d=h,h=h-65536|0,0<=h&&(n=(h>>10)+55296|0,d=(h&1023)+56320|0,31>k?(a[k]=n,k=k+1|0,n=-1):
+(m=n,n=d,d=m))):(d>>=8,b=b-d-1|0,d=65533),h=p=0,e=b<=u?32:c-b|0;default:a[k]=d;continue;case 11:case 10:case 9:case 8:}a[k]=65533}f+=z(a[0],a[1],a[2],a[3],a[4],a[5],a[6],a[7],a[8],a[9],a[10],a[11],a[12],a[13],a[14],a[15],a[16],a[17],a[18],a[19],a[20],a[21],a[22],a[23],a[24],a[25],a[26],a[27],a[28],a[29],a[30],a[31]);32>k&&(f=f.slice(0,k-32|0));if(b<c){if(a[0]=n,k=~n>>>31,n=-1,f.length<l.length)continue}else-1!==n&&(f+=z(n));l+=f;f=""}return l};w.encode=function(g){g=void 0===g?"":""+g;var l=g.length|
+0,f=new t((l<<1)+8|0),b,c=0,u=!q;for(b=0;b<l;b=b+1|0,c=c+1|0){var e=g.charCodeAt(b)|0;if(127>=e)f[c]=e;else{if(2047>=e)f[c]=192|e>>6;else{a:{if(55296<=e)if(56319>=e){var d=g.charCodeAt(b=b+1|0)|0;if(56320<=d&&57343>=d){e=(e<<10)+d-56613888|0;if(65535<e){f[c]=240|e>>18;f[c=c+1|0]=128|e>>12&63;f[c=c+1|0]=128|e>>6&63;f[c=c+1|0]=128|e&63;continue}break a}e=65533}else 57343>=e&&(e=65533);!u&&b<<1<c&&b<<1<(c-7|0)&&(u=!0,d=new t(3*l),d.set(f),f=d)}f[c]=224|e>>12;f[c=c+1|0]=128|e>>6&63}f[c=c+1|0]=128|e&63}}return q?
+f.subarray(0,c):f.slice(0,c)};E||(r.TextDecoder=x,r.TextEncoder=y)})(""+void 0==typeof __nested_webpack_require_105214__.g?""+void 0==typeof self?this:self:__nested_webpack_require_105214__.g);//AnonyCo
+//# sourceMappingURL=https://cdn.jsdelivr.net/gh/AnonyCo/FastestSmallestTextEncoderDecoder/EncoderDecoderTogether.min.js.map
 
-var logger = new Transform();
 
-logger.write = function(name, level, args) {
-  if(typeof window == 'undefined' || typeof JSON == 'undefined' || !JSON.stringify || !JSON.parse) return;
+/***/ }),
+
+/***/ 914:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_107650__) => {
+
+module.exports = __nested_webpack_require_107650__(14)("PD94bWwgdmVyc2lvbj0iMS4wIj8+Cjxzdmcgd2lkdGg9IjEyOCIgaGVpZ2h0PSIxMjgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c3ZnPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiA8Zz4KICA8cmVjdCBmaWxsPSIjQ0NDIiBoZWlnaHQ9IjEyOCIgd2lkdGg9IjEyOCIvPgogIDx0ZXh0IGZpbGw9ImJsYWNrIiB5PSIxMDciIHg9IjM1LjUiIGZvbnQtc2l6ZT0iMTI4Ij4/PC90ZXh0PgogPC9nPgo8L3N2Zz4K")
+
+/***/ }),
+
+/***/ 945:
+/***/ ((module, exports, __nested_webpack_require_108110__) => {
+
+// Save global object in a variable
+var __global__ =
+(typeof globalThis !== 'undefined' && globalThis) ||
+(typeof self !== 'undefined' && self) ||
+(typeof __nested_webpack_require_108110__.g !== 'undefined' && __nested_webpack_require_108110__.g);
+// Create an object that extends from __global__ without the fetch function
+var __globalThis__ = (function () {
+function F() {
+this.fetch = false;
+this.DOMException = __global__.DOMException
+}
+F.prototype = __global__; // Needed for feature detection on whatwg-fetch's code
+return new F();
+})();
+// Wraps whatwg-fetch with a function scope to hijack the global object
+// "globalThis" that's going to be patched
+(function(globalThis) {
+
+var irrelevant = (function (exports) {
+
+  /* eslint-disable no-prototype-builtins */
+  var g =
+    (typeof globalThis !== 'undefined' && globalThis) ||
+    (typeof self !== 'undefined' && self) ||
+    // eslint-disable-next-line no-undef
+    (typeof __nested_webpack_require_108110__.g !== 'undefined' && __nested_webpack_require_108110__.g) ||
+    {};
+
+  var support = {
+    searchParams: 'URLSearchParams' in g,
+    iterable: 'Symbol' in g && 'iterator' in Symbol,
+    blob:
+      'FileReader' in g &&
+      'Blob' in g &&
+      (function() {
+        try {
+          new Blob();
+          return true
+        } catch (e) {
+          return false
+        }
+      })(),
+    formData: 'FormData' in g,
+    arrayBuffer: 'ArrayBuffer' in g
+  };
+
+  function isDataView(obj) {
+    return obj && DataView.prototype.isPrototypeOf(obj)
+  }
+
+  if (support.arrayBuffer) {
+    var viewClasses = [
+      '[object Int8Array]',
+      '[object Uint8Array]',
+      '[object Uint8ClampedArray]',
+      '[object Int16Array]',
+      '[object Uint16Array]',
+      '[object Int32Array]',
+      '[object Uint32Array]',
+      '[object Float32Array]',
+      '[object Float64Array]'
+    ];
+
+    var isArrayBufferView =
+      ArrayBuffer.isView ||
+      function(obj) {
+        return obj && viewClasses.indexOf(Object.prototype.toString.call(obj)) > -1
+      };
+  }
+
+  function normalizeName(name) {
+    if (typeof name !== 'string') {
+      name = String(name);
+    }
+    if (/[^a-z0-9\-#$%&'*+.^_`|~!]/i.test(name) || name === '') {
+      throw new TypeError('Invalid character in header field name: "' + name + '"')
+    }
+    return name.toLowerCase()
+  }
+
+  function normalizeValue(value) {
+    if (typeof value !== 'string') {
+      value = String(value);
+    }
+    return value
+  }
+
+  // Build a destructive iterator for the value list
+  function iteratorFor(items) {
+    var iterator = {
+      next: function() {
+        var value = items.shift();
+        return {done: value === undefined, value: value}
+      }
+    };
+
+    if (support.iterable) {
+      iterator[Symbol.iterator] = function() {
+        return iterator
+      };
+    }
+
+    return iterator
+  }
+
+  function Headers(headers) {
+    this.map = {};
+
+    if (headers instanceof Headers) {
+      headers.forEach(function(value, name) {
+        this.append(name, value);
+      }, this);
+    } else if (Array.isArray(headers)) {
+      headers.forEach(function(header) {
+        if (header.length != 2) {
+          throw new TypeError('Headers constructor: expected name/value pair to be length 2, found' + header.length)
+        }
+        this.append(header[0], header[1]);
+      }, this);
+    } else if (headers) {
+      Object.getOwnPropertyNames(headers).forEach(function(name) {
+        this.append(name, headers[name]);
+      }, this);
+    }
+  }
+
+  Headers.prototype.append = function(name, value) {
+    name = normalizeName(name);
+    value = normalizeValue(value);
+    var oldValue = this.map[name];
+    this.map[name] = oldValue ? oldValue + ', ' + value : value;
+  };
+
+  Headers.prototype['delete'] = function(name) {
+    delete this.map[normalizeName(name)];
+  };
+
+  Headers.prototype.get = function(name) {
+    name = normalizeName(name);
+    return this.has(name) ? this.map[name] : null
+  };
+
+  Headers.prototype.has = function(name) {
+    return this.map.hasOwnProperty(normalizeName(name))
+  };
+
+  Headers.prototype.set = function(name, value) {
+    this.map[normalizeName(name)] = normalizeValue(value);
+  };
+
+  Headers.prototype.forEach = function(callback, thisArg) {
+    for (var name in this.map) {
+      if (this.map.hasOwnProperty(name)) {
+        callback.call(thisArg, this.map[name], name, this);
+      }
+    }
+  };
+
+  Headers.prototype.keys = function() {
+    var items = [];
+    this.forEach(function(value, name) {
+      items.push(name);
+    });
+    return iteratorFor(items)
+  };
+
+  Headers.prototype.values = function() {
+    var items = [];
+    this.forEach(function(value) {
+      items.push(value);
+    });
+    return iteratorFor(items)
+  };
+
+  Headers.prototype.entries = function() {
+    var items = [];
+    this.forEach(function(value, name) {
+      items.push([name, value]);
+    });
+    return iteratorFor(items)
+  };
+
+  if (support.iterable) {
+    Headers.prototype[Symbol.iterator] = Headers.prototype.entries;
+  }
+
+  function consumed(body) {
+    if (body._noBody) return
+    if (body.bodyUsed) {
+      return Promise.reject(new TypeError('Already read'))
+    }
+    body.bodyUsed = true;
+  }
+
+  function fileReaderReady(reader) {
+    return new Promise(function(resolve, reject) {
+      reader.onload = function() {
+        resolve(reader.result);
+      };
+      reader.onerror = function() {
+        reject(reader.error);
+      };
+    })
+  }
+
+  function readBlobAsArrayBuffer(blob) {
+    var reader = new FileReader();
+    var promise = fileReaderReady(reader);
+    reader.readAsArrayBuffer(blob);
+    return promise
+  }
+
+  function readBlobAsText(blob) {
+    var reader = new FileReader();
+    var promise = fileReaderReady(reader);
+    var match = /charset=([A-Za-z0-9_-]+)/.exec(blob.type);
+    var encoding = match ? match[1] : 'utf-8';
+    reader.readAsText(blob, encoding);
+    return promise
+  }
+
+  function readArrayBufferAsText(buf) {
+    var view = new Uint8Array(buf);
+    var chars = new Array(view.length);
+
+    for (var i = 0; i < view.length; i++) {
+      chars[i] = String.fromCharCode(view[i]);
+    }
+    return chars.join('')
+  }
+
+  function bufferClone(buf) {
+    if (buf.slice) {
+      return buf.slice(0)
+    } else {
+      var view = new Uint8Array(buf.byteLength);
+      view.set(new Uint8Array(buf));
+      return view.buffer
+    }
+  }
+
+  function Body() {
+    this.bodyUsed = false;
+
+    this._initBody = function(body) {
+      /*
+        fetch-mock wraps the Response object in an ES6 Proxy to
+        provide useful test harness features such as flush. However, on
+        ES5 browsers without fetch or Proxy support pollyfills must be used;
+        the proxy-pollyfill is unable to proxy an attribute unless it exists
+        on the object before the Proxy is created. This change ensures
+        Response.bodyUsed exists on the instance, while maintaining the
+        semantic of setting Request.bodyUsed in the constructor before
+        _initBody is called.
+      */
+      // eslint-disable-next-line no-self-assign
+      this.bodyUsed = this.bodyUsed;
+      this._bodyInit = body;
+      if (!body) {
+        this._noBody = true;
+        this._bodyText = '';
+      } else if (typeof body === 'string') {
+        this._bodyText = body;
+      } else if (support.blob && Blob.prototype.isPrototypeOf(body)) {
+        this._bodyBlob = body;
+      } else if (support.formData && FormData.prototype.isPrototypeOf(body)) {
+        this._bodyFormData = body;
+      } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+        this._bodyText = body.toString();
+      } else if (support.arrayBuffer && support.blob && isDataView(body)) {
+        this._bodyArrayBuffer = bufferClone(body.buffer);
+        // IE 10-11 can't handle a DataView body.
+        this._bodyInit = new Blob([this._bodyArrayBuffer]);
+      } else if (support.arrayBuffer && (ArrayBuffer.prototype.isPrototypeOf(body) || isArrayBufferView(body))) {
+        this._bodyArrayBuffer = bufferClone(body);
+      } else {
+        this._bodyText = body = Object.prototype.toString.call(body);
+      }
+
+      if (!this.headers.get('content-type')) {
+        if (typeof body === 'string') {
+          this.headers.set('content-type', 'text/plain;charset=UTF-8');
+        } else if (this._bodyBlob && this._bodyBlob.type) {
+          this.headers.set('content-type', this._bodyBlob.type);
+        } else if (support.searchParams && URLSearchParams.prototype.isPrototypeOf(body)) {
+          this.headers.set('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+        }
+      }
+    };
+
+    if (support.blob) {
+      this.blob = function() {
+        var rejected = consumed(this);
+        if (rejected) {
+          return rejected
+        }
+
+        if (this._bodyBlob) {
+          return Promise.resolve(this._bodyBlob)
+        } else if (this._bodyArrayBuffer) {
+          return Promise.resolve(new Blob([this._bodyArrayBuffer]))
+        } else if (this._bodyFormData) {
+          throw new Error('could not read FormData body as blob')
+        } else {
+          return Promise.resolve(new Blob([this._bodyText]))
+        }
+      };
+    }
+
+    this.arrayBuffer = function() {
+      if (this._bodyArrayBuffer) {
+        var isConsumed = consumed(this);
+        if (isConsumed) {
+          return isConsumed
+        } else if (ArrayBuffer.isView(this._bodyArrayBuffer)) {
+          return Promise.resolve(
+            this._bodyArrayBuffer.buffer.slice(
+              this._bodyArrayBuffer.byteOffset,
+              this._bodyArrayBuffer.byteOffset + this._bodyArrayBuffer.byteLength
+            )
+          )
+        } else {
+          return Promise.resolve(this._bodyArrayBuffer)
+        }
+      } else if (support.blob) {
+        return this.blob().then(readBlobAsArrayBuffer)
+      } else {
+        throw new Error('could not read as ArrayBuffer')
+      }
+    };
+
+    this.text = function() {
+      var rejected = consumed(this);
+      if (rejected) {
+        return rejected
+      }
+
+      if (this._bodyBlob) {
+        return readBlobAsText(this._bodyBlob)
+      } else if (this._bodyArrayBuffer) {
+        return Promise.resolve(readArrayBufferAsText(this._bodyArrayBuffer))
+      } else if (this._bodyFormData) {
+        throw new Error('could not read FormData body as text')
+      } else {
+        return Promise.resolve(this._bodyText)
+      }
+    };
+
+    if (support.formData) {
+      this.formData = function() {
+        return this.text().then(decode)
+      };
+    }
+
+    this.json = function() {
+      return this.text().then(JSON.parse)
+    };
+
+    return this
+  }
+
+  // HTTP methods whose capitalization should be normalized
+  var methods = ['CONNECT', 'DELETE', 'GET', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT', 'TRACE'];
+
+  function normalizeMethod(method) {
+    var upcased = method.toUpperCase();
+    return methods.indexOf(upcased) > -1 ? upcased : method
+  }
+
+  function Request(input, options) {
+    if (!(this instanceof Request)) {
+      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+    }
+
+    options = options || {};
+    var body = options.body;
+
+    if (input instanceof Request) {
+      if (input.bodyUsed) {
+        throw new TypeError('Already read')
+      }
+      this.url = input.url;
+      this.credentials = input.credentials;
+      if (!options.headers) {
+        this.headers = new Headers(input.headers);
+      }
+      this.method = input.method;
+      this.mode = input.mode;
+      this.signal = input.signal;
+      if (!body && input._bodyInit != null) {
+        body = input._bodyInit;
+        input.bodyUsed = true;
+      }
+    } else {
+      this.url = String(input);
+    }
+
+    this.credentials = options.credentials || this.credentials || 'same-origin';
+    if (options.headers || !this.headers) {
+      this.headers = new Headers(options.headers);
+    }
+    this.method = normalizeMethod(options.method || this.method || 'GET');
+    this.mode = options.mode || this.mode || null;
+    this.signal = options.signal || this.signal || (function () {
+      if ('AbortController' in g) {
+        var ctrl = new AbortController();
+        return ctrl.signal;
+      }
+    }());
+    this.referrer = null;
+
+    if ((this.method === 'GET' || this.method === 'HEAD') && body) {
+      throw new TypeError('Body not allowed for GET or HEAD requests')
+    }
+    this._initBody(body);
+
+    if (this.method === 'GET' || this.method === 'HEAD') {
+      if (options.cache === 'no-store' || options.cache === 'no-cache') {
+        // Search for a '_' parameter in the query string
+        var reParamSearch = /([?&])_=[^&]*/;
+        if (reParamSearch.test(this.url)) {
+          // If it already exists then set the value with the current time
+          this.url = this.url.replace(reParamSearch, '$1_=' + new Date().getTime());
+        } else {
+          // Otherwise add a new '_' parameter to the end with the current time
+          var reQueryString = /\?/;
+          this.url += (reQueryString.test(this.url) ? '&' : '?') + '_=' + new Date().getTime();
+        }
+      }
+    }
+  }
+
+  Request.prototype.clone = function() {
+    return new Request(this, {body: this._bodyInit})
+  };
+
+  function decode(body) {
+    var form = new FormData();
+    body
+      .trim()
+      .split('&')
+      .forEach(function(bytes) {
+        if (bytes) {
+          var split = bytes.split('=');
+          var name = split.shift().replace(/\+/g, ' ');
+          var value = split.join('=').replace(/\+/g, ' ');
+          form.append(decodeURIComponent(name), decodeURIComponent(value));
+        }
+      });
+    return form
+  }
+
+  function parseHeaders(rawHeaders) {
+    var headers = new Headers();
+    // Replace instances of \r\n and \n followed by at least one space or horizontal tab with a space
+    // https://tools.ietf.org/html/rfc7230#section-3.2
+    var preProcessedHeaders = rawHeaders.replace(/\r?\n[\t ]+/g, ' ');
+    // Avoiding split via regex to work around a common IE11 bug with the core-js 3.6.0 regex polyfill
+    // https://github.com/github/fetch/issues/748
+    // https://github.com/zloirock/core-js/issues/751
+    preProcessedHeaders
+      .split('\r')
+      .map(function(header) {
+        return header.indexOf('\n') === 0 ? header.substr(1, header.length) : header
+      })
+      .forEach(function(line) {
+        var parts = line.split(':');
+        var key = parts.shift().trim();
+        if (key) {
+          var value = parts.join(':').trim();
+          try {
+            headers.append(key, value);
+          } catch (error) {
+            console.warn('Response ' + error.message);
+          }
+        }
+      });
+    return headers
+  }
+
+  Body.call(Request.prototype);
+
+  function Response(bodyInit, options) {
+    if (!(this instanceof Response)) {
+      throw new TypeError('Please use the "new" operator, this DOM object constructor cannot be called as a function.')
+    }
+    if (!options) {
+      options = {};
+    }
+
+    this.type = 'default';
+    this.status = options.status === undefined ? 200 : options.status;
+    if (this.status < 200 || this.status > 599) {
+      throw new RangeError("Failed to construct 'Response': The status provided (0) is outside the range [200, 599].")
+    }
+    this.ok = this.status >= 200 && this.status < 300;
+    this.statusText = options.statusText === undefined ? '' : '' + options.statusText;
+    this.headers = new Headers(options.headers);
+    this.url = options.url || '';
+    this._initBody(bodyInit);
+  }
+
+  Body.call(Response.prototype);
+
+  Response.prototype.clone = function() {
+    return new Response(this._bodyInit, {
+      status: this.status,
+      statusText: this.statusText,
+      headers: new Headers(this.headers),
+      url: this.url
+    })
+  };
+
+  Response.error = function() {
+    var response = new Response(null, {status: 200, statusText: ''});
+    response.ok = false;
+    response.status = 0;
+    response.type = 'error';
+    return response
+  };
+
+  var redirectStatuses = [301, 302, 303, 307, 308];
+
+  Response.redirect = function(url, status) {
+    if (redirectStatuses.indexOf(status) === -1) {
+      throw new RangeError('Invalid status code')
+    }
+
+    return new Response(null, {status: status, headers: {location: url}})
+  };
+
+  exports.DOMException = g.DOMException;
   try {
-    if(!cache) { cache = (window.localStorage.minilog ? JSON.parse(window.localStorage.minilog) : []); }
-    cache.push([ new Date().toString(), name, level, args ]);
-    window.localStorage.minilog = JSON.stringify(cache);
-  } catch(e) {}
+    new exports.DOMException();
+  } catch (err) {
+    exports.DOMException = function(message, name) {
+      this.message = message;
+      this.name = name;
+      var error = Error(message);
+      this.stack = error.stack;
+    };
+    exports.DOMException.prototype = Object.create(Error.prototype);
+    exports.DOMException.prototype.constructor = exports.DOMException;
+  }
+
+  function fetch(input, init) {
+    return new Promise(function(resolve, reject) {
+      var request = new Request(input, init);
+
+      if (request.signal && request.signal.aborted) {
+        return reject(new exports.DOMException('Aborted', 'AbortError'))
+      }
+
+      var xhr = new XMLHttpRequest();
+
+      function abortXhr() {
+        xhr.abort();
+      }
+
+      xhr.onload = function() {
+        var options = {
+          statusText: xhr.statusText,
+          headers: parseHeaders(xhr.getAllResponseHeaders() || '')
+        };
+        // This check if specifically for when a user fetches a file locally from the file system
+        // Only if the status is out of a normal range
+        if (request.url.indexOf('file://') === 0 && (xhr.status < 200 || xhr.status > 599)) {
+          options.status = 200;
+        } else {
+          options.status = xhr.status;
+        }
+        options.url = 'responseURL' in xhr ? xhr.responseURL : options.headers.get('X-Request-URL');
+        var body = 'response' in xhr ? xhr.response : xhr.responseText;
+        setTimeout(function() {
+          resolve(new Response(body, options));
+        }, 0);
+      };
+
+      xhr.onerror = function() {
+        setTimeout(function() {
+          reject(new TypeError('Network request failed'));
+        }, 0);
+      };
+
+      xhr.ontimeout = function() {
+        setTimeout(function() {
+          reject(new TypeError('Network request timed out'));
+        }, 0);
+      };
+
+      xhr.onabort = function() {
+        setTimeout(function() {
+          reject(new exports.DOMException('Aborted', 'AbortError'));
+        }, 0);
+      };
+
+      function fixUrl(url) {
+        try {
+          return url === '' && g.location.href ? g.location.href : url
+        } catch (e) {
+          return url
+        }
+      }
+
+      xhr.open(request.method, fixUrl(request.url), true);
+
+      if (request.credentials === 'include') {
+        xhr.withCredentials = true;
+      } else if (request.credentials === 'omit') {
+        xhr.withCredentials = false;
+      }
+
+      if ('responseType' in xhr) {
+        if (support.blob) {
+          xhr.responseType = 'blob';
+        } else if (
+          support.arrayBuffer
+        ) {
+          xhr.responseType = 'arraybuffer';
+        }
+      }
+
+      if (init && typeof init.headers === 'object' && !(init.headers instanceof Headers || (g.Headers && init.headers instanceof g.Headers))) {
+        var names = [];
+        Object.getOwnPropertyNames(init.headers).forEach(function(name) {
+          names.push(normalizeName(name));
+          xhr.setRequestHeader(name, normalizeValue(init.headers[name]));
+        });
+        request.headers.forEach(function(value, name) {
+          if (names.indexOf(name) === -1) {
+            xhr.setRequestHeader(name, value);
+          }
+        });
+      } else {
+        request.headers.forEach(function(value, name) {
+          xhr.setRequestHeader(name, value);
+        });
+      }
+
+      if (request.signal) {
+        request.signal.addEventListener('abort', abortXhr);
+
+        xhr.onreadystatechange = function() {
+          // DONE (success or failure)
+          if (xhr.readyState === 4) {
+            request.signal.removeEventListener('abort', abortXhr);
+          }
+        };
+      }
+
+      xhr.send(typeof request._bodyInit === 'undefined' ? null : request._bodyInit);
+    })
+  }
+
+  fetch.polyfill = true;
+
+  if (!g.fetch) {
+    g.fetch = fetch;
+    g.Headers = Headers;
+    g.Request = Request;
+    g.Response = Response;
+  }
+
+  exports.Headers = Headers;
+  exports.Request = Request;
+  exports.Response = Response;
+  exports.fetch = fetch;
+
+  return exports;
+
+})({});
+})(__globalThis__);
+// This is a ponyfill, so...
+__globalThis__.fetch.ponyfill = true;
+delete __globalThis__.fetch.polyfill;
+// Choose between native implementation (__global__) or custom implementation (__globalThis__)
+var ctx = __global__.fetch ? __global__ : __globalThis__;
+exports = ctx.fetch // To enable: import fetch from 'cross-fetch'
+exports["default"] = ctx.fetch // For TypeScript consumers without esModuleInterop.
+exports.fetch = ctx.fetch // To enable: import {fetch} from 'cross-fetch'
+exports.Headers = ctx.Headers
+exports.Request = ctx.Request
+exports.Response = ctx.Response
+module.exports = exports
+
+
+/***/ }),
+
+/***/ 953:
+/***/ ((module, __unused_webpack_exports, __nested_webpack_require_129041__) => {
+
+const crossFetch = __nested_webpack_require_129041__(945);
+
+/**
+ * Metadata header names
+ * @enum {string} The enum value is the name of the associated header.
+ * @readonly
+ */
+const RequestMetadata = {
+  /** The ID of the project associated with this request */
+  ProjectId: 'X-Project-ID',
+  /** The ID of the project run associated with this request */
+  RunId: 'X-Run-ID'
 };
 
-module.exports = logger;
+/**
+ * Metadata headers for requests
+ * @type {Headers}
+ */
+const metadata = new crossFetch.Headers();
+
+/**
+ * Check if there is any metadata to apply.
+ * @returns {boolean} true if `metadata` has contents, or false if it is empty.
+ */
+const hasMetadata = () => {
+  /* global self */
+  const searchParams = typeof self !== 'undefined' && self && self.location && self.location.search && self.location.search.split(/[?&]/) || [];
+  if (!searchParams.includes('scratchMetadata=1')) {
+    // for now, disable this feature unless scratchMetadata=1
+    // TODO: remove this check once we're sure the feature works correctly in production
+    return false;
+  }
+  for (const _ of metadata) {
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Non-destructively merge any metadata state (if any) with the provided options object (if any).
+ * If there is metadata state but no options object is provided, make a new object.
+ * If there is no metadata state, return the provided options parameter without modification.
+ * If there is metadata and an options object is provided, modify a copy and return it.
+ * Headers in the provided options object may override headers generated from metadata state.
+ * @param {RequestInit} [options] The initial request options. May be null or undefined.
+ * @returns {RequestInit|undefined} the provided options parameter without modification, or a new options object.
+ */
+const applyMetadata = options => {
+  if (hasMetadata()) {
+    const augmentedOptions = Object.assign({}, options);
+    augmentedOptions.headers = new crossFetch.Headers(metadata);
+    if (options && options.headers) {
+      // the Fetch spec says options.headers could be:
+      // "A Headers object, an object literal, or an array of two-item arrays to set request's headers."
+      // turn it into a Headers object to be sure of how to interact with it
+      const overrideHeaders = options.headers instanceof crossFetch.Headers ? options.headers : new crossFetch.Headers(options.headers);
+      for (const [name, value] of overrideHeaders.entries()) {
+        augmentedOptions.headers.set(name, value);
+      }
+    }
+    return augmentedOptions;
+  }
+  return options;
+};
+
+/**
+ * Make a network request.
+ * This is a wrapper for the global fetch method, adding some Scratch-specific functionality.
+ * @param {RequestInfo|URL} resource The resource to fetch.
+ * @param {RequestInit} options Optional object containing custom settings for this request.
+ * @see {@link https://developer.mozilla.org/docs/Web/API/fetch} for more about the fetch API.
+ * @returns {Promise<Response>} A promise for the response to the request.
+ */
+const scratchFetch = (resource, options) => {
+  const augmentedOptions = applyMetadata(options);
+  return crossFetch(resource, augmentedOptions);
+};
+
+/**
+ * Set the value of a named request metadata item.
+ * Setting the value to `null` or `undefined` will NOT remove the item.
+ * Use `unsetMetadata` for that.
+ * @param {RequestMetadata} name The name of the metadata item to set.
+ * @param {any} value The value to set (will be converted to a string).
+ */
+const setMetadata = (name, value) => {
+  metadata.set(name, value);
+};
+
+/**
+ * Remove a named request metadata item.
+ * @param {RequestMetadata} name The name of the metadata item to remove.
+ */
+const unsetMetadata = name => {
+  metadata.delete(name);
+};
+
+/**
+ * Retrieve a named request metadata item.
+ * Only for use in tests. At the time of writing, used in scratch-vm tests.
+ * @param {RequestMetadata} name The name of the metadata item to retrieve.
+ * @returns {any} value The value of the metadata item, or `undefined` if it was not found.
+ */
+const getMetadata = name => metadata.get(name);
+module.exports = {
+  Headers: crossFetch.Headers,
+  RequestMetadata,
+  applyMetadata,
+  scratchFetch,
+  setMetadata,
+  unsetMetadata,
+  getMetadata
+};
 
 /***/ })
 
@@ -53983,7 +51892,7 @@ module.exports = logger;
 /******/ 	var __webpack_module_cache__ = {};
 /******/ 	
 /******/ 	// The require function
-/******/ 	function __nested_webpack_require_132039__(moduleId) {
+/******/ 	function __nested_webpack_require_133493__(moduleId) {
 /******/ 		// Check if module is in cache
 /******/ 		var cachedModule = __webpack_module_cache__[moduleId];
 /******/ 		if (cachedModule !== undefined) {
@@ -53997,29 +51906,29 @@ module.exports = logger;
 /******/ 		};
 /******/ 	
 /******/ 		// Execute the module function
-/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nested_webpack_require_132039__);
+/******/ 		__webpack_modules__[moduleId].call(module.exports, module, module.exports, __nested_webpack_require_133493__);
 /******/ 	
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
 /******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__nested_webpack_require_132039__.m = __webpack_modules__;
+/******/ 	__nested_webpack_require_133493__.m = __webpack_modules__;
 /******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/amd options */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_132039__.amdO = {};
+/******/ 		__nested_webpack_require_133493__.amdO = {};
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/compat get default export */
 /******/ 	(() => {
 /******/ 		// getDefaultExport function for compatibility with non-harmony modules
-/******/ 		__nested_webpack_require_132039__.n = (module) => {
+/******/ 		__nested_webpack_require_133493__.n = (module) => {
 /******/ 			var getter = module && module.__esModule ?
 /******/ 				() => (module['default']) :
 /******/ 				() => (module);
-/******/ 			__nested_webpack_require_132039__.d(getter, { a: getter });
+/******/ 			__nested_webpack_require_133493__.d(getter, { a: getter });
 /******/ 			return getter;
 /******/ 		};
 /******/ 	})();
@@ -54027,9 +51936,9 @@ module.exports = logger;
 /******/ 	/* webpack/runtime/define property getters */
 /******/ 	(() => {
 /******/ 		// define getter functions for harmony exports
-/******/ 		__nested_webpack_require_132039__.d = (exports, definition) => {
+/******/ 		__nested_webpack_require_133493__.d = (exports, definition) => {
 /******/ 			for(var key in definition) {
-/******/ 				if(__nested_webpack_require_132039__.o(definition, key) && !__nested_webpack_require_132039__.o(exports, key)) {
+/******/ 				if(__nested_webpack_require_133493__.o(definition, key) && !__nested_webpack_require_133493__.o(exports, key)) {
 /******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
 /******/ 				}
 /******/ 			}
@@ -54039,15 +51948,15 @@ module.exports = logger;
 /******/ 	/* webpack/runtime/get javascript chunk filename */
 /******/ 	(() => {
 /******/ 		// This function allow to reference async chunks
-/******/ 		__nested_webpack_require_132039__.u = (chunkId) => {
+/******/ 		__nested_webpack_require_133493__.u = (chunkId) => {
 /******/ 			// return url for filenames based on template
-/******/ 			return "chunks/" + "fetch-worker" + "." + "cd3a909d7b876aabf94a" + ".js";
+/******/ 			return "chunks/" + "fetch-worker" + "." + "7a0adc94df277ffeb963" + ".js";
 /******/ 		};
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/global */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_132039__.g = (function() {
+/******/ 		__nested_webpack_require_133493__.g = (function() {
 /******/ 			if (typeof globalThis === 'object') return globalThis;
 /******/ 			try {
 /******/ 				return this || new Function('return this')();
@@ -54059,13 +51968,13 @@ module.exports = logger;
 /******/ 	
 /******/ 	/* webpack/runtime/hasOwnProperty shorthand */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_132039__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 		__nested_webpack_require_133493__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/make namespace object */
 /******/ 	(() => {
 /******/ 		// define __esModule on exports
-/******/ 		__nested_webpack_require_132039__.r = (exports) => {
+/******/ 		__nested_webpack_require_133493__.r = (exports) => {
 /******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
 /******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
 /******/ 			}
@@ -54075,12 +51984,12 @@ module.exports = logger;
 /******/ 	
 /******/ 	/* webpack/runtime/publicPath */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_132039__.p = "/";
+/******/ 		__nested_webpack_require_133493__.p = "/";
 /******/ 	})();
 /******/ 	
 /******/ 	/* webpack/runtime/jsonp chunk loading */
 /******/ 	(() => {
-/******/ 		__nested_webpack_require_132039__.b = document.baseURI || self.location.href;
+/******/ 		__nested_webpack_require_133493__.b = document.baseURI || self.location.href;
 /******/ 		
 /******/ 		// object to store loaded and loading chunks
 /******/ 		// undefined = chunk not loaded, null = chunk preloaded/prefetched
@@ -54110,10 +52019,10 @@ var __nested_webpack_exports__ = {};
 (() => {
 "use strict";
 // ESM COMPAT FLAG
-__nested_webpack_require_132039__.r(__nested_webpack_exports__);
+__nested_webpack_require_133493__.r(__nested_webpack_exports__);
 
 // EXPORTS
-__nested_webpack_require_132039__.d(__nested_webpack_exports__, {
+__nested_webpack_require_133493__.d(__nested_webpack_exports__, {
   Asset: () => (/* reexport */ Asset),
   AssetType: () => (/* reexport */ AssetType),
   DataFormat: () => (/* reexport */ DataFormat),
@@ -54122,15 +52031,15 @@ __nested_webpack_require_132039__.d(__nested_webpack_exports__, {
 });
 
 // EXTERNAL MODULE: ./node_modules/minilog/lib/web/index.js
-var web = __nested_webpack_require_132039__(557);
-var web_default = /*#__PURE__*/__nested_webpack_require_132039__.n(web);
+var web = __nested_webpack_require_133493__(557);
+var web_default = /*#__PURE__*/__nested_webpack_require_133493__.n(web);
 ;// ./src/log.ts
 
 web_default().enable();
 /* harmony default export */ const log = (web_default()('storage'));
 // EXTERNAL MODULE: ./node_modules/js-md5/src/md5.js
-var md5 = __nested_webpack_require_132039__(386);
-var md5_default = /*#__PURE__*/__nested_webpack_require_132039__.n(md5);
+var md5 = __nested_webpack_require_133493__(386);
+var md5_default = /*#__PURE__*/__nested_webpack_require_133493__.n(md5);
 ;// ./src/memoizedToString.ts
 // Use JS implemented TextDecoder and TextEncoder if it is not provided by the
 // browser.
@@ -54139,7 +52048,7 @@ let _TextEncoder;
 if (typeof TextDecoder === 'undefined' || typeof TextEncoder === 'undefined') {
   // Wait to require the text encoding polyfill until we know it's needed.
   // eslint-disable-next-line global-require
-  const encoding = __nested_webpack_require_132039__(767);
+  const encoding = __nested_webpack_require_133493__(767);
   _TextDecoder = encoding.TextDecoder;
   _TextEncoder = encoding.TextEncoder;
 } else {
@@ -54167,7 +52076,7 @@ const memoizedToString = function () {
       if (typeof btoa === 'undefined') {
         // Use a library that does not need btoa to run.
         /* eslint-disable-next-line global-require */
-        const base64js = __nested_webpack_require_132039__(526);
+        const base64js = __nested_webpack_require_133493__(526);
         strings[assetId] = base64js.fromByteArray(data);
       } else {
         // Native btoa is faster than javascript translation. Use js to
@@ -54361,16 +52270,16 @@ class Helper {
   }
 }
 // EXTERNAL MODULE: ./src/builtins/defaultBitmap.png?arrayBuffer
-var defaultBitmaparrayBuffer = __nested_webpack_require_132039__(9);
-var defaultBitmaparrayBuffer_default = /*#__PURE__*/__nested_webpack_require_132039__.n(defaultBitmaparrayBuffer);
+var defaultBitmaparrayBuffer = __nested_webpack_require_133493__(9);
+var defaultBitmaparrayBuffer_default = /*#__PURE__*/__nested_webpack_require_133493__.n(defaultBitmaparrayBuffer);
 // EXTERNAL MODULE: ./src/builtins/defaultSound.wav?arrayBuffer
-var defaultSoundarrayBuffer = __nested_webpack_require_132039__(680);
-var defaultSoundarrayBuffer_default = /*#__PURE__*/__nested_webpack_require_132039__.n(defaultSoundarrayBuffer);
+var defaultSoundarrayBuffer = __nested_webpack_require_133493__(680);
+var defaultSoundarrayBuffer_default = /*#__PURE__*/__nested_webpack_require_133493__.n(defaultSoundarrayBuffer);
 // EXTERNAL MODULE: ./src/builtins/defaultVector.svg?arrayBuffer
-var defaultVectorarrayBuffer = __nested_webpack_require_132039__(914);
-var defaultVectorarrayBuffer_default = /*#__PURE__*/__nested_webpack_require_132039__.n(defaultVectorarrayBuffer);
+var defaultVectorarrayBuffer = __nested_webpack_require_133493__(914);
+var defaultVectorarrayBuffer_default = /*#__PURE__*/__nested_webpack_require_133493__.n(defaultVectorarrayBuffer);
 // EXTERNAL MODULE: ./node_modules/buffer/index.js
-var buffer = __nested_webpack_require_132039__(287);
+var buffer = __nested_webpack_require_133493__(287);
 ;// ./src/BuiltinHelper.ts
 function BuiltinHelper_defineProperty(e, r, t) { return (r = BuiltinHelper_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function BuiltinHelper_toPropertyKey(t) { var i = BuiltinHelper_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
@@ -54514,12 +52423,12 @@ class BuiltinHelper extends Helper {
   }
 }
 // EXTERNAL MODULE: ./src/scratchFetch.js
-var scratchFetch = __nested_webpack_require_132039__(953);
-var scratchFetch_default = /*#__PURE__*/__nested_webpack_require_132039__.n(scratchFetch);
+var scratchFetch = __nested_webpack_require_133493__(953);
+var scratchFetch_default = /*#__PURE__*/__nested_webpack_require_133493__.n(scratchFetch);
 ;// ./src/FetchWorkerTool.ts
 const _excluded = ["url"];
-function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var s = Object.getOwnPropertySymbols(e); for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (e.includes(n)) continue; t[n] = r[n]; } return t; }
+function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function FetchWorkerTool_defineProperty(e, r, t) { return (r = FetchWorkerTool_toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
 function FetchWorkerTool_toPropertyKey(t) { var i = FetchWorkerTool_toPrimitive(t, "string"); return "symbol" == typeof i ? i : i + ""; }
 function FetchWorkerTool_toPrimitive(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
@@ -54561,7 +52470,7 @@ class PrivateFetchWorkerTool {
         // but `isGetSupported` checks for the presence of Worker and uses it only if present.
         // Also see https://webpack.js.org/guides/web-workers/
         // eslint-disable-next-line no-undef
-        const worker = new Worker(/* webpackChunkName: "fetch-worker" */new URL(/* worker import */ __nested_webpack_require_132039__.p + __nested_webpack_require_132039__.u(836), __nested_webpack_require_132039__.b));
+        const worker = new Worker(/* webpackChunkName: "fetch-worker" */new URL(/* worker import */ __nested_webpack_require_133493__.p + __nested_webpack_require_133493__.u(836), __nested_webpack_require_133493__.b));
         worker.addEventListener('message', _ref => {
           let {
             data
@@ -54713,8 +52622,8 @@ class PublicFetchWorkerTool {
 ;// ./src/FetchTool.ts
 const FetchTool_excluded = ["url"],
   _excluded2 = ["url", "withCredentials"];
-function FetchTool_objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = FetchTool_objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var s = Object.getOwnPropertySymbols(e); for (r = 0; r < s.length; r++) o = s[r], t.includes(o) || {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function FetchTool_objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (e.includes(n)) continue; t[n] = r[n]; } return t; }
+function FetchTool_objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = FetchTool_objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function FetchTool_objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 
 /**
  * @typedef {Request & {withCredentials: boolean}} ScratchSendRequest
@@ -55278,174 +53187,13 @@ class ScratchStorage {
 
 /***/ }),
 
-/***/ "./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js":
-/*!***************************************************************************!*\
-  !*** ./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js ***!
-  \***************************************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function getLens (b64) {
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
-}
-
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
-}
-
-
-/***/ }),
-
 /***/ "./node_modules/scratch-svg-renderer/src/bitmap-adapter.js":
 /*!*****************************************************************!*\
   !*** ./node_modules/scratch-svg-renderer/src/bitmap-adapter.js ***!
   \*****************************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const base64js = __webpack_require__(/*! base64-js */ "./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js");
+const base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
 
 /**
  * Adapts Scratch 2.0 bitmaps for use in scratch 3.0
@@ -57196,7 +54944,7 @@ module.exports = minilog('scratch-svg-render');
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"menuMap":{"cs":[{"code":"am","name":"amharština"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabština"},{"code":"az","name":"ázerbájdžánština"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharština"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradiční)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánština"},{"code":"et","name":"estonština"},{"code":"fi","name":"finština"},{"code":"fr","name":"francouzština"},{"code":"gl","name":"galicijština"},{"code":"he","name":"hebrejština"},{"code":"nl","name":"holandština"},{"code":"hr","name":"chorvatština"},{"code":"id","name":"indonéština"},{"code":"ga","name":"irština"},{"code":"is","name":"islandština"},{"code":"it","name":"italština"},{"code":"ja","name":"japonština"},{"code":"ca","name":"katalánština"},{"code":"ko","name":"korejština"},{"code":"ckb","name":"kurdština (sorání)"},{"code":"lt","name":"litevština"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarština"},{"code":"mi","name":"maorština"},{"code":"de","name":"němčina"},{"code":"nb","name":"norština"},{"code":"fa","name":"perština"},{"code":"pl","name":"polština"},{"code":"pt","name":"portugalština"},{"code":"ro","name":"rumunština"},{"code":"ru","name":"ruština"},{"code":"el","name":"řečtina"},{"code":"gd","name":"skotská gaelština"},{"code":"sk","name":"slovenština"},{"code":"sl","name":"slovinština"},{"code":"sr","name":"srbština"},{"code":"es","name":"španělština"},{"code":"sv","name":"švédština"},{"code":"th","name":"thajština"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinština"},{"code":"cy","name":"velština"},{"code":"vi","name":"vietnamština"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejština"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"de":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Aserbaidschanisch"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgarisch"},{"code":"zh-tw","name":"Chinesisch (traditionell)"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"},{"code":"da","name":"Dänisch"},{"code":"de","name":"Deutsch"},{"code":"en","name":"Englisch"},{"code":"et","name":"Estnisch"},{"code":"fi","name":"Finnisch"},{"code":"fr","name":"Französisch"},{"code":"gl","name":"Galizisch"},{"code":"el","name":"Griechisch"},{"code":"he","name":"Hebräisch"},{"code":"id","name":"Indonesisch"},{"code":"ga","name":"Irisch"},{"code":"is","name":"Isländisch"},{"code":"it","name":"Italienisch"},{"code":"ja","name":"Japanisch"},{"code":"ca","name":"Katalanisch"},{"code":"ko","name":"Koreanisch"},{"code":"hr","name":"Kroatisch"},{"code":"ckb","name":"Kurdisch (Sorani)"},{"code":"lv","name":"Lettisch"},{"code":"lt","name":"Litauisch"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Niederländisch"},{"code":"nb","name":"Norwegisch"},{"code":"fa","name":"Persisch"},{"code":"pl","name":"Polnisch"},{"code":"pt","name":"Portugiesisch"},{"code":"ro","name":"Rumänisch"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schottisch-Gälisch"},{"code":"sv","name":"Schwedisch"},{"code":"sr","name":"Serbisch"},{"code":"sk","name":"Slowakisch"},{"code":"sl","name":"Slowenisch"},{"code":"es","name":"Spanisch"},{"code":"th","name":"Thailändisch"},{"code":"cs","name":"Tschechisch"},{"code":"tr","name":"Türkisch"},{"code":"uk","name":"Ukrainisch"},{"code":"hu","name":"Ungarisch"},{"code":"vi","name":"Vietnamesisch"},{"code":"cy","name":"Walisisch"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebräisch"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"}],"et":[{"code":"am","name":"amhaari"},{"code":"ar","name":"araabia"},{"code":"az","name":"aserbaidžaani"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaaria"},{"code":"et","name":"eesti"},{"code":"gl","name":"galeegi"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"},{"code":"zh-tw","name":"hiina (traditsiooniline)"},{"code":"es","name":"hispaania"},{"code":"nl","name":"hollandi"},{"code":"hr","name":"horvaadi"},{"code":"ga","name":"iiri"},{"code":"id","name":"indoneesia"},{"code":"en","name":"inglise"},{"code":"is","name":"islandi"},{"code":"it","name":"itaalia"},{"code":"ja","name":"jaapani"},{"code":"ca","name":"katalaani"},{"code":"ko","name":"korea"},{"code":"el","name":"kreeka"},{"code":"ckb","name":"kurdi (sorani)"},{"code":"lt","name":"leedu"},{"code":"lv","name":"läti"},{"code":"mi","name":"maoori"},{"code":"nb","name":"norra"},{"code":"pl","name":"poola"},{"code":"pt","name":"portugali"},{"code":"fr","name":"prantsuse"},{"code":"fa","name":"pärsia"},{"code":"sv","name":"rootsi"},{"code":"ro","name":"rumeenia"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"sk","name":"slovaki"},{"code":"sl","name":"sloveeni"},{"code":"fi","name":"soome"},{"code":"zu","name":"suulu"},{"code":"gd","name":"šoti"},{"code":"da","name":"taani"},{"code":"th","name":"tai"},{"code":"cs","name":"tšehhi"},{"code":"tr","name":"türgi"},{"code":"cy","name":"uelsi"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"ungari"},{"code":"ru","name":"vene"},{"code":"vi","name":"vietnami"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"}],"ko":[{"code":"gl","name":"갈리시아어"},{"code":"el","name":"그리스어"},{"code":"nl","name":"네덜란드어"},{"code":"nb","name":"노르웨이어"},{"code":"da","name":"덴마크어"},{"code":"de","name":"독일어"},{"code":"lv","name":"라트비아어"},{"code":"ru","name":"러시아어"},{"code":"ro","name":"루마니아어"},{"code":"lt","name":"리투아니아어"},{"code":"mi","name":"마오리어"},{"code":"eu","name":"바스크어"},{"code":"vi","name":"베트남어"},{"code":"bg","name":"불가리아어"},{"code":"sr","name":"세르비아어"},{"code":"sv","name":"스웨덴어"},{"code":"gd","name":"스코틀랜드 게일어"},{"code":"es","name":"스페인어"},{"code":"sk","name":"슬로바키아어"},{"code":"sl","name":"슬로베니아어"},{"code":"ar","name":"아랍어"},{"code":"is","name":"아이슬란드어"},{"code":"ga","name":"아일랜드어"},{"code":"az","name":"아제르바이잔어"},{"code":"am","name":"암하라어"},{"code":"et","name":"에스토니아어"},{"code":"en","name":"영어"},{"code":"uk","name":"우크라이나어"},{"code":"cy","name":"웨일즈어"},{"code":"it","name":"이탈리아어"},{"code":"id","name":"인도네시아어"},{"code":"ja","name":"일본어"},{"code":"zu","name":"줄루어"},{"code":"zh-cn","name":"중국어(간체)"},{"code":"zh-tw","name":"중국어(번체)"},{"code":"cs","name":"체코어"},{"code":"ca","name":"카탈로니아어"},{"code":"ckb","name":"쿠르드어(소라니)"},{"code":"hr","name":"크로아티아어"},{"code":"th","name":"태국어"},{"code":"tr","name":"터키어"},{"code":"fa","name":"페르시아어"},{"code":"pt","name":"포르투갈어"},{"code":"pl","name":"폴란드어"},{"code":"fr","name":"프랑스어"},{"code":"fi","name":"핀란드어"},{"code":"ko","name":"한국어"},{"code":"hu","name":"헝가리어"},{"code":"he","name":"히브리어"},{"code":"he","name":"히브리어"},{"code":"zh-cn","name":"중국어(간체)"}],"az":[{"code":"de","name":"Alman"},{"code":"am","name":"Amarik"},{"code":"az","name":"Azərbaycan dili"},{"code":"eu","name":"Bask"},{"code":"bg","name":"Bolqar"},{"code":"cs","name":"Çex"},{"code":"zh-tw","name":"Çin (Ən\'ənəvi)"},{"code":"zh-cn","name":"Çin dili (Sadələşdirilmiş)"},{"code":"da","name":"Danimarka"},{"code":"et","name":"Eston"},{"code":"ar","name":"Ərəb"},{"code":"fa","name":"Fars Dili"},{"code":"fi","name":"Fin"},{"code":"fr","name":"Fransız"},{"code":"nl","name":"Holland"},{"code":"hr","name":"Xorvat"},{"code":"en","name":"Ingilis"},{"code":"es","name":"Ispan"},{"code":"id","name":"İndoneziya"},{"code":"ga","name":"İrland"},{"code":"is","name":"İsland"},{"code":"sv","name":"İsveç"},{"code":"it","name":"İtalyan"},{"code":"he","name":"İvrit"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Koreya"},{"code":"ckb","name":"Kürd dili (Sorani)"},{"code":"gl","name":"Qalisian"},{"code":"lv","name":"Latış"},{"code":"lt","name":"Litva"},{"code":"hu","name":"Macar"},{"code":"mi","name":"Maoricə"},{"code":"nb","name":"Norveç"},{"code":"pl","name":"Polyak"},{"code":"pt","name":"Portuqal"},{"code":"ro","name":"Rumın"},{"code":"ru","name":"Rus"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Sloven"},{"code":"gd","name":"Şotland (Kelt)"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türk"},{"code":"cy","name":"Uels"},{"code":"uk","name":"Ukrayna"},{"code":"vi","name":"Vyetnam"},{"code":"ja","name":"Yapon"},{"code":"el","name":"Yunan"},{"code":"zu","name":"Zulu dili"},{"code":"he","name":"İvrit"},{"code":"zh-cn","name":"Çin dili (Sadələşdirilmiş)"}],"eu":[{"code":"de","name":"alemana"},{"code":"am","name":"amharera"},{"code":"ar","name":"arabiera"},{"code":"az","name":"azerbaijanera"},{"code":"bg","name":"bulgariera"},{"code":"da","name":"daniera"},{"code":"ro","name":"errumaniera"},{"code":"ru","name":"errusiera"},{"code":"gd","name":"Eskoziako gaelikoa"},{"code":"sk","name":"eslovakiera"},{"code":"sl","name":"esloveniera"},{"code":"et","name":"estoniera"},{"code":"eu","name":"euskara"},{"code":"fi","name":"finlandiera"},{"code":"fr","name":"frantsesa"},{"code":"cy","name":"galesa"},{"code":"gl","name":"galiziera"},{"code":"es","name":"gaztelania"},{"code":"el","name":"greziera"},{"code":"he","name":"hebreera"},{"code":"hu","name":"hungariera"},{"code":"id","name":"indonesiera"},{"code":"en","name":"ingelesa"},{"code":"ga","name":"irlandera"},{"code":"is","name":"islandiera"},{"code":"it","name":"italiera"},{"code":"ja","name":"japoniera"},{"code":"ca","name":"katalana"},{"code":"ko","name":"koreera"},{"code":"hr","name":"kroaziera"},{"code":"ckb","name":"kurduera (sorania)"},{"code":"lv","name":"letoniera"},{"code":"lt","name":"lituaniera"},{"code":"mi","name":"maoriera"},{"code":"nl","name":"nederlandera"},{"code":"nb","name":"norvegiera"},{"code":"fa","name":"persiera"},{"code":"pl","name":"poloniera"},{"code":"pt","name":"portugesa"},{"code":"sr","name":"serbiera"},{"code":"sv","name":"suediera"},{"code":"th","name":"thailandiera"},{"code":"tr","name":"turkiera"},{"code":"cs","name":"txekiera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"},{"code":"zh-tw","name":"txinera (tradizionala)"},{"code":"uk","name":"ukrainera"},{"code":"vi","name":"vietnamera"},{"code":"zu","name":"zuluera"},{"code":"he","name":"hebreera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"}],"da":[{"code":"am","name":"Amharisk"},{"code":"ar","name":"Arabisk"},{"code":"az","name":"Aserbajdsjansk"},{"code":"eu","name":"Baskisk"},{"code":"bg","name":"Bulgarsk"},{"code":"da","name":"Dansk"},{"code":"en","name":"Engelsk"},{"code":"et","name":"Estisk"},{"code":"fi","name":"Finsk"},{"code":"fr","name":"Fransk"},{"code":"gl","name":"Galicisk"},{"code":"el","name":"Græsk"},{"code":"he","name":"Hebraisk"},{"code":"id","name":"Indonesisk"},{"code":"ga","name":"Irsk"},{"code":"is","name":"Islandsk"},{"code":"it","name":"Italiensk"},{"code":"ja","name":"Japansk"},{"code":"ca","name":"Katalansk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"},{"code":"zh-tw","name":"Kinesisk (traditionelt)"},{"code":"ko","name":"Koreansk"},{"code":"hr","name":"Kroatisk"},{"code":"ckb","name":"Kurdisk (sorani)"},{"code":"lv","name":"Lettisk"},{"code":"lt","name":"Litauisk"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlandsk"},{"code":"nb","name":"Norsk"},{"code":"fa","name":"Persisk"},{"code":"pl","name":"Polsk"},{"code":"pt","name":"Portugisisk"},{"code":"ro","name":"Rumænsk"},{"code":"ru","name":"Russisk"},{"code":"sr","name":"Serbisk"},{"code":"gd","name":"Skotsk gælisk"},{"code":"sk","name":"Slovakisk"},{"code":"sl","name":"Slovensk"},{"code":"es","name":"Spansk"},{"code":"sv","name":"Svensk"},{"code":"th","name":"Thailandsk"},{"code":"cs","name":"Tjekkisk"},{"code":"tr","name":"Tyrkisk"},{"code":"de","name":"Tysk"},{"code":"uk","name":"Ukrainsk"},{"code":"hu","name":"Ungarsk"},{"code":"vi","name":"Vietnamesisk"},{"code":"cy","name":"Walisisk"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraisk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"}],"it":[{"code":"am","name":"Amarico"},{"code":"ar","name":"Arabo"},{"code":"az","name":"Azero"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Bulgaro"},{"code":"ca","name":"Catalano"},{"code":"cs","name":"Ceco"},{"code":"zh-cn","name":"Cinese (semplificato)"},{"code":"zh-tw","name":"Cinese (tradizionale)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croato"},{"code":"ckb","name":"Curdo (Sorani)"},{"code":"da","name":"Danese"},{"code":"he","name":"Ebraico"},{"code":"et","name":"Estone"},{"code":"fi","name":"Finlandese"},{"code":"fr","name":"Francese"},{"code":"gd","name":"Gaelico scozzese"},{"code":"gl","name":"Galiziano"},{"code":"cy","name":"Gallese"},{"code":"ja","name":"Giapponese"},{"code":"el","name":"Greco"},{"code":"id","name":"Indonesiano"},{"code":"en","name":"Inglese"},{"code":"ga","name":"Irlandese"},{"code":"is","name":"Islandese"},{"code":"it","name":"Italiano"},{"code":"lv","name":"Lettone"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norvegese"},{"code":"nl","name":"Olandese"},{"code":"fa","name":"Persiano"},{"code":"pl","name":"Polacco"},{"code":"pt","name":"Portoghese"},{"code":"ro","name":"Rumeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Serbo"},{"code":"sk","name":"Slovacco"},{"code":"sl","name":"Sloveno"},{"code":"es","name":"Spagnolo"},{"code":"sv","name":"Svedese"},{"code":"de","name":"Tedesco"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraino"},{"code":"hu","name":"Ungherese"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraico"},{"code":"zh-cn","name":"Cinese (semplificato)"}],"fi":[{"code":"am","name":"amhara"},{"code":"ar","name":"arabia"},{"code":"az","name":"azeri"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaria"},{"code":"en","name":"englanti"},{"code":"es","name":"espanja"},{"code":"gl","name":"galicia"},{"code":"he","name":"heprea"},{"code":"nl","name":"hollanti"},{"code":"ga","name":"iiri"},{"code":"id","name":"indonesia"},{"code":"is","name":"islanti"},{"code":"it","name":"italia"},{"code":"ja","name":"japani"},{"code":"ca","name":"katalaani"},{"code":"zh-tw","name":"kiina (perinteinen)"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"},{"code":"ko","name":"korea"},{"code":"el","name":"kreikka"},{"code":"hr","name":"kroatia"},{"code":"ckb","name":"kurdi (soranî)"},{"code":"cy","name":"kymri"},{"code":"lv","name":"latvia"},{"code":"lt","name":"liettua"},{"code":"mi","name":"maori"},{"code":"nb","name":"norja"},{"code":"fa","name":"persia"},{"code":"pt","name":"portugali"},{"code":"pl","name":"puola"},{"code":"fr","name":"ranska"},{"code":"ro","name":"romania"},{"code":"sv","name":"ruotsi"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"gd","name":"skottigaeli"},{"code":"sk","name":"slovakia"},{"code":"sl","name":"slovenia"},{"code":"fi","name":"suomi"},{"code":"da","name":"tanska"},{"code":"th","name":"thai"},{"code":"cs","name":"tsekki"},{"code":"tr","name":"turkki"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"unkari"},{"code":"ru","name":"venäjä"},{"code":"vi","name":"vietnam"},{"code":"et","name":"viro"},{"code":"zu","name":"zulu"},{"code":"he","name":"heprea"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"}],"ja":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"ja-hira":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"nl":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Azerbeidzjaans"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgaars"},{"code":"ca","name":"Catalaans"},{"code":"zh-tw","name":"Chinees (traditioneel)"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"},{"code":"da","name":"Deens"},{"code":"de","name":"Duits"},{"code":"en","name":"Engels"},{"code":"et","name":"Ests"},{"code":"fi","name":"Fins"},{"code":"fr","name":"Frans"},{"code":"gl","name":"Galicisch"},{"code":"el","name":"Grieks"},{"code":"he","name":"Hebreeuws"},{"code":"hu","name":"Hongaars"},{"code":"ga","name":"Iers"},{"code":"is","name":"IJslands"},{"code":"id","name":"Indonesisch"},{"code":"it","name":"Italiaans"},{"code":"ja","name":"Japans"},{"code":"ckb","name":"Koerdisch (Sorani)"},{"code":"ko","name":"Koreaans"},{"code":"hr","name":"Kroatisch"},{"code":"lv","name":"Lets"},{"code":"lt","name":"Litouws"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlands"},{"code":"nb","name":"Noors"},{"code":"uk","name":"Oekraïens"},{"code":"fa","name":"Perzisch"},{"code":"pl","name":"Pools"},{"code":"pt","name":"Portugees"},{"code":"ro","name":"Roemeens"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schots Keltisch"},{"code":"sr","name":"Servisch"},{"code":"sk","name":"Slovaaks"},{"code":"sl","name":"Sloveens"},{"code":"es","name":"Spaans"},{"code":"th","name":"Thai"},{"code":"cs","name":"Tsjechisch"},{"code":"tr","name":"Turks"},{"code":"vi","name":"Vietnamees"},{"code":"cy","name":"Wels"},{"code":"zu","name":"Zoeloe"},{"code":"sv","name":"Zweeds"},{"code":"he","name":"Hebreeuws"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"}],"zh-tw":[{"code":"tr","name":"土耳其文"},{"code":"zh-tw","name":"中文 (繁體)"},{"code":"zh-cn","name":"中文 (簡體)"},{"code":"da","name":"丹麥文"},{"code":"eu","name":"巴斯克文"},{"code":"ja","name":"日文"},{"code":"mi","name":"毛利文"},{"code":"gl","name":"加里西亞文"},{"code":"ca","name":"加泰羅尼亞文"},{"code":"lt","name":"立陶宛文"},{"code":"is","name":"冰島文"},{"code":"hu","name":"匈牙利文"},{"code":"id","name":"印尼文"},{"code":"es","name":"西班牙文"},{"code":"hr","name":"克羅埃西亞文"},{"code":"he","name":"希伯來文"},{"code":"el","name":"希臘文"},{"code":"az","name":"亞塞拜然文"},{"code":"lv","name":"拉脫維亞文"},{"code":"fr","name":"法文"},{"code":"fa","name":"波斯文"},{"code":"pl","name":"波蘭文"},{"code":"fi","name":"芬蘭文"},{"code":"am","name":"阿姆哈拉文"},{"code":"ar","name":"阿拉伯文"},{"code":"ru","name":"俄文"},{"code":"bg","name":"保加利亞文"},{"code":"zu","name":"南非祖魯文"},{"code":"cy","name":"威爾斯文"},{"code":"en","name":"英文"},{"code":"ckb","name":"庫德文 (索拉尼文)"},{"code":"nb","name":"挪威文"},{"code":"th","name":"泰文"},{"code":"uk","name":"烏克蘭文"},{"code":"cs","name":"捷克文"},{"code":"nl","name":"荷蘭文"},{"code":"sk","name":"斯洛伐克文"},{"code":"sl","name":"斯洛維尼亞文"},{"code":"vi","name":"越南文"},{"code":"sr","name":"塞爾維亞文"},{"code":"et","name":"愛沙尼亞文"},{"code":"ga","name":"愛爾蘭文"},{"code":"sv","name":"瑞典文"},{"code":"it","name":"義大利文"},{"code":"pt","name":"葡萄牙文"},{"code":"de","name":"德文"},{"code":"ko","name":"韓文"},{"code":"ro","name":"羅馬尼亞文"},{"code":"gd","name":"蘇格蘭的蓋爾文"},{"code":"he","name":"希伯來文"},{"code":"zh-cn","name":"中文 (簡體)"}],"he":[{"code":"uk","name":"אוקראינית"},{"code":"az","name":"אזרית"},{"code":"it","name":"איטלקית"},{"code":"id","name":"אינדונזית"},{"code":"is","name":"איסלנדית"},{"code":"ga","name":"אירית"},{"code":"am","name":"אמהרית"},{"code":"en","name":"אנגלית"},{"code":"et","name":"אסטונית"},{"code":"eu","name":"באסקית"},{"code":"bg","name":"בולגרית"},{"code":"gl","name":"גליציאנית"},{"code":"de","name":"גרמנית"},{"code":"da","name":"דנית"},{"code":"nl","name":"הולנדית"},{"code":"hu","name":"הונגרית"},{"code":"cy","name":"וולשית"},{"code":"vi","name":"וייטנאמית"},{"code":"zu","name":"זולו"},{"code":"tr","name":"טורקית"},{"code":"el","name":"יוונית"},{"code":"ja","name":"יפנית"},{"code":"ckb","name":"כורדית (סורנית)"},{"code":"lv","name":"לטבית"},{"code":"lt","name":"ליטאית"},{"code":"mi","name":"מאורית"},{"code":"nb","name":"נורווגית"},{"code":"zh-tw","name":"סינית (מסורתית)"},{"code":"zh-cn","name":"‏סינית (פשוטה)"},{"code":"sl","name":"סלובנית"},{"code":"sk","name":"סלובקית"},{"code":"es","name":"ספרדית"},{"code":"gd","name":"סקוטית גאלית"},{"code":"sr","name":"סרבית"},{"code":"he","name":"עברית"},{"code":"ar","name":"ערבית"},{"code":"pl","name":"פולנית"},{"code":"pt","name":"פורטוגזית"},{"code":"fi","name":"פינית"},{"code":"fa","name":"פרסית"},{"code":"cs","name":"צ\'כית"},{"code":"fr","name":"צרפתית"},{"code":"ko","name":"קוריאנית"},{"code":"ca","name":"קטלאנית"},{"code":"hr","name":"קרואטית"},{"code":"ro","name":"רומנית"},{"code":"ru","name":"רוסית"},{"code":"sv","name":"שוודית"},{"code":"th","name":"תאית"},{"code":"he","name":"עברית"},{"code":"zh-cn","name":"‏סינית (פשוטה)"}],"cy":[{"code":"de","name":"Almaeneg"},{"code":"am","name":"Amhareg"},{"code":"ar","name":"Arabeg"},{"code":"az","name":"Aserbaijaneg"},{"code":"eu","name":"Basgeg"},{"code":"bg","name":"Bwlgareg"},{"code":"ca","name":"Catalaneg"},{"code":"hr","name":"Croateg"},{"code":"ckb","name":"Cwrdeg (Sorani)"},{"code":"cy","name":"Cymraeg"},{"code":"da","name":"Daneg"},{"code":"it","name":"Eidaleg"},{"code":"et","name":"Estoneg"},{"code":"vi","name":"Fietnameg"},{"code":"fi","name":"Ffineg"},{"code":"nl","name":"Fflemeg"},{"code":"fr","name":"Ffrangeg"},{"code":"gd","name":"Gaeleg yr Alban"},{"code":"gl","name":"Galiseg"},{"code":"el","name":"Groeg"},{"code":"ga","name":"Gwyddeleg"},{"code":"he","name":"Hebraeg"},{"code":"hu","name":"Hwngareg"},{"code":"ko","name":"Iaith Corea"},{"code":"id","name":"Indonesieg"},{"code":"is","name":"Islandeg"},{"code":"ja","name":"Japaneg"},{"code":"lv","name":"Latfieg"},{"code":"lt","name":"Lithwaneg"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwyeg"},{"code":"fa","name":"Perseg"},{"code":"pt","name":"Portiwgaleg"},{"code":"pl","name":"Pwyleg"},{"code":"ro","name":"Rwmaneg"},{"code":"ru","name":"Rwsieg"},{"code":"en","name":"Saesneg"},{"code":"es","name":"Sbaeneg"},{"code":"sr","name":"Serbeg"},{"code":"sk","name":"Slofaceg"},{"code":"sl","name":"Slofeneg"},{"code":"sv","name":"Swedeg"},{"code":"zu","name":"Swlw"},{"code":"th","name":"Tai"},{"code":"cs","name":"Tsieceg"},{"code":"zh-tw","name":"Tsieineeg (Traddodiadol)"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"},{"code":"tr","name":"Twrceg"},{"code":"uk","name":"Wcreineg"},{"code":"he","name":"Hebraeg"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"}],"hu":[{"code":"am","name":"amhara"},{"code":"en","name":"angol"},{"code":"ar","name":"arab"},{"code":"az","name":"azeri"},{"code":"eu","name":"baszk"},{"code":"bg","name":"bolgár"},{"code":"cs","name":"cseh"},{"code":"da","name":"dán"},{"code":"et","name":"észt"},{"code":"fi","name":"finn"},{"code":"fr","name":"francia"},{"code":"gl","name":"galíciai"},{"code":"el","name":"görög"},{"code":"he","name":"héber"},{"code":"nl","name":"holland"},{"code":"hr","name":"horvát"},{"code":"id","name":"indonéz"},{"code":"ga","name":"ír"},{"code":"is","name":"izlandi"},{"code":"ja","name":"japán"},{"code":"ca","name":"katalán"},{"code":"zh-cn","name":"kínai (egyszerűsített)"},{"code":"zh-tw","name":"kínai (hagyományos)"},{"code":"ko","name":"koreai"},{"code":"ckb","name":"kurd (szoráni)"},{"code":"pl","name":"lengyel"},{"code":"lv","name":"lett"},{"code":"lt","name":"litván"},{"code":"hu","name":"magyar"},{"code":"mi","name":"maori"},{"code":"de","name":"német"},{"code":"nb","name":"norvég"},{"code":"it","name":"olasz"},{"code":"ru","name":"orosz"},{"code":"fa","name":"perzsa"},{"code":"pt","name":"portugál"},{"code":"ro","name":"román"},{"code":"gd","name":"skót-gael"},{"code":"es","name":"spanyol"},{"code":"sv","name":"svéd"},{"code":"sr","name":"szerb"},{"code":"sk","name":"szlovák"},{"code":"sl","name":"szlovén"},{"code":"th","name":"thai"},{"code":"tr","name":"török"},{"code":"uk","name":"ukrán"},{"code":"vi","name":"vietnami"},{"code":"cy","name":"walesi"},{"code":"zu","name":"zulu"},{"code":"he","name":"héber"},{"code":"zh-cn","name":"kínai (egyszerűsített)"}],"tr":[{"code":"de","name":"Almanca"},{"code":"ar","name":"Arapça"},{"code":"az","name":"Azerbaycan dili"},{"code":"eu","name":"Baskça"},{"code":"bg","name":"Bulgarca"},{"code":"cs","name":"Çekçe"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"},{"code":"zh-tw","name":"Çince (Geleneksel)"},{"code":"da","name":"Danca"},{"code":"id","name":"Endonezce"},{"code":"et","name":"Estonyaca"},{"code":"fa","name":"Farsça"},{"code":"nl","name":"Felemenkçe"},{"code":"fi","name":"Fince"},{"code":"fr","name":"Fransızca"},{"code":"cy","name":"Galce"},{"code":"gl","name":"Galiçyaca"},{"code":"am","name":"Habeşçe"},{"code":"hr","name":"Hırvatça"},{"code":"he","name":"İbranice"},{"code":"en","name":"İngilizce"},{"code":"ga","name":"İrlandaca"},{"code":"gd","name":"İskoç Gaelcesi"},{"code":"es","name":"İspanyolca"},{"code":"sv","name":"İsveççe"},{"code":"it","name":"İtalyanca"},{"code":"is","name":"İzlandaca"},{"code":"ja","name":"Japonca"},{"code":"ca","name":"Katalanca"},{"code":"ko","name":"Korece"},{"code":"ckb","name":"Kürtçe (Sorani)"},{"code":"pl","name":"Lehçe"},{"code":"lv","name":"Letonca"},{"code":"lt","name":"Litvanca"},{"code":"hu","name":"Macarca"},{"code":"mi","name":"Maori dili"},{"code":"nb","name":"Norveççe"},{"code":"pt","name":"Portekizce"},{"code":"ro","name":"Romence"},{"code":"ru","name":"Rusça"},{"code":"sr","name":"Sırpça"},{"code":"sk","name":"Slovakça"},{"code":"sl","name":"Slovence"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türkçe"},{"code":"uk","name":"Ukraynaca"},{"code":"vi","name":"Vietnamca"},{"code":"el","name":"Yunanca"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İbranice"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"}],"ar":[{"code":"is","name":"الآيسلندية"},{"code":"az","name":"الأذرية"},{"code":"es","name":"الإسبانية"},{"code":"et","name":"الإستونية"},{"code":"de","name":"الألمانية"},{"code":"am","name":"الأمهرية"},{"code":"en","name":"الإنجليزية"},{"code":"id","name":"الإندونيسية"},{"code":"uk","name":"الأوكرانية"},{"code":"ga","name":"الأيرلندية"},{"code":"it","name":"الإيطالية"},{"code":"eu","name":"الباسكية"},{"code":"pt","name":"البرتغالية"},{"code":"bg","name":"البلغارية"},{"code":"pl","name":"البولندية"},{"code":"th","name":"التايلاندية"},{"code":"tr","name":"التركية"},{"code":"cs","name":"التشيكية"},{"code":"gl","name":"الجاليكية"},{"code":"da","name":"الدانمركية"},{"code":"ru","name":"الروسية"},{"code":"ro","name":"الرومانية"},{"code":"zu","name":"الزولو"},{"code":"sk","name":"السلوفاكية"},{"code":"sl","name":"السلوفينية"},{"code":"sv","name":"السويدية"},{"code":"sr","name":"الصربية"},{"code":"zh-tw","name":"الصينية (التقليدية)"},{"code":"zh-cn","name":"الصينية (المبسطة)"},{"code":"he","name":"العبرية"},{"code":"ar","name":"العربية"},{"code":"gd","name":"الغيلية الأسكتلندية"},{"code":"fa","name":"الفارسية"},{"code":"fr","name":"الفرنسية"},{"code":"fi","name":"الفنلندية"},{"code":"vi","name":"الفيتنامية"},{"code":"ca","name":"القطلونية"},{"code":"ckb","name":"الكردية (السورانية)"},{"code":"hr","name":"الكرواتية"},{"code":"ko","name":"الكورية"},{"code":"lv","name":"اللاتفية"},{"code":"lt","name":"الليتوانية"},{"code":"mi","name":"الماورية"},{"code":"nb","name":"النرويجية"},{"code":"hu","name":"الهنغارية"},{"code":"nl","name":"الهولندية"},{"code":"cy","name":"الويلزية"},{"code":"ja","name":"اليابانية"},{"code":"el","name":"اليونانية"},{"code":"he","name":"العبرية"},{"code":"zh-cn","name":"الصينية (المبسطة)"}],"nb":[{"code":"am","name":"amharisk"},{"code":"ar","name":"arabisk"},{"code":"az","name":"aserbajdsjansk"},{"code":"eu","name":"baskisk"},{"code":"bg","name":"bulgarsk"},{"code":"da","name":"dansk"},{"code":"en","name":"engelsk"},{"code":"et","name":"estisk"},{"code":"fa","name":"farsi"},{"code":"fi","name":"finsk"},{"code":"fr","name":"fransk"},{"code":"gl","name":"galisisk"},{"code":"el","name":"gresk"},{"code":"he","name":"hebraisk"},{"code":"id","name":"indonesisk"},{"code":"ga","name":"irsk"},{"code":"is","name":"islandsk"},{"code":"it","name":"italiensk"},{"code":"ja","name":"japansk"},{"code":"ca","name":"katalansk"},{"code":"zh-cn","name":"kinesisk (forenklet)"},{"code":"zh-tw","name":"kinesisk (tradisjonell)"},{"code":"ko","name":"koreansk"},{"code":"hr","name":"kroatisk"},{"code":"ckb","name":"kurdisk (sorani)"},{"code":"lv","name":"latvisk"},{"code":"lt","name":"litauisk"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederlandsk"},{"code":"nb","name":"norsk"},{"code":"pl","name":"polsk"},{"code":"pt","name":"portugisisk"},{"code":"ro","name":"rumensk"},{"code":"ru","name":"russisk"},{"code":"sr","name":"serbisk"},{"code":"gd","name":"skotsk gælisk"},{"code":"sk","name":"slovakisk"},{"code":"sl","name":"slovensk"},{"code":"es","name":"spansk"},{"code":"sv","name":"svensk"},{"code":"th","name":"thai"},{"code":"cs","name":"tsjekkisk"},{"code":"tr","name":"tyrkisk"},{"code":"de","name":"tysk"},{"code":"uk","name":"ukrainsk"},{"code":"hu","name":"ungarsk"},{"code":"vi","name":"vietnamesisk"},{"code":"cy","name":"walisisk"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebraisk"},{"code":"zh-cn","name":"kinesisk (forenklet)"}],"mi":[{"code":"az","name":"Ahepaitani"},{"code":"ga","name":"Airihi"},{"code":"am","name":"Amariki"},{"code":"ar","name":"Arapi"},{"code":"et","name":"Etōnia"},{"code":"zh-tw","name":"Haina (Onamata)"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"},{"code":"hu","name":"Hanekeria"},{"code":"ja","name":"Hapanihi"},{"code":"sr","name":"Herepia"},{"code":"fi","name":"Hinerangi"},{"code":"he","name":"Hiperu"},{"code":"sk","name":"Horowākia"},{"code":"sl","name":"Horowinia"},{"code":"sv","name":"Huitene"},{"code":"zu","name":"Huru"},{"code":"en","name":"Ingarihi"},{"code":"id","name":"Initonīhia"},{"code":"it","name":"Itāriana"},{"code":"gl","name":"Karihia"},{"code":"ca","name":"Katarāna"},{"code":"el","name":"Kiriki"},{"code":"ko","name":"Kōreana"},{"code":"hr","name":"Koroātiana"},{"code":"tr","name":"Korukoru"},{"code":"ckb","name":"Kūrihi (Horani)"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nōwei"},{"code":"eu","name":"Pākihi"},{"code":"es","name":"Pāniora"},{"code":"fa","name":"Perēhia"},{"code":"pl","name":"Pōrana"},{"code":"pt","name":"Potukīhi"},{"code":"bg","name":"Purukāriana"},{"code":"lv","name":"Rāwhiana"},{"code":"lt","name":"Rituānia"},{"code":"ro","name":"Romānia"},{"code":"ru","name":"Rūhia"},{"code":"th","name":"Tai"},{"code":"nl","name":"Tati"},{"code":"da","name":"Tenemāka"},{"code":"de","name":"Tiamana"},{"code":"cs","name":"Tieke"},{"code":"is","name":"Tiorangi"},{"code":"gd","name":"Tuauri Kotarangi"},{"code":"uk","name":"Ūkareiana"},{"code":"cy","name":"Wēra"},{"code":"vi","name":"Whitināmu"},{"code":"fr","name":"Wīwī"},{"code":"he","name":"Hiperu"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"}],"vi":[{"code":"ar","name":"Ả Rập"},{"code":"am","name":"Amharic"},{"code":"en","name":"Anh"},{"code":"az","name":"Azerbaijan"},{"code":"pl","name":"Ba Lan"},{"code":"fa","name":"Ba Tư"},{"code":"eu","name":"Basque"},{"code":"pt","name":"Bồ Đào Nha"},{"code":"bg","name":"Bulgaria"},{"code":"ca","name":"Catalan"},{"code":"hr","name":"Croatia"},{"code":"he","name":"Do Thái"},{"code":"da","name":"Đan Mạch"},{"code":"de","name":"Đức"},{"code":"et","name":"Estonia"},{"code":"gd","name":"Gael Scotland"},{"code":"gl","name":"Galicia"},{"code":"nl","name":"Hà Lan"},{"code":"ko","name":"Hàn"},{"code":"hu","name":"Hungary"},{"code":"el","name":"Hy Lạp"},{"code":"is","name":"Iceland"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Ireland"},{"code":"ckb","name":"Kurd (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Litva"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Na Uy"},{"code":"ru","name":"Nga"},{"code":"ja","name":"Nhật"},{"code":"fr","name":"Pháp"},{"code":"fi","name":"Phần Lan"},{"code":"ro","name":"Rumani"},{"code":"cs","name":"Séc"},{"code":"sr","name":"Serbia"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Tây Ban Nha"},{"code":"th","name":"Thái"},{"code":"tr","name":"Thổ Nhĩ Kỳ"},{"code":"sv","name":"Thụy Điển"},{"code":"zh-cn","name":"Trung (Giản thể)"},{"code":"zh-tw","name":"Trung (Phồn thể)"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Việt"},{"code":"cy","name":"Xứ Wales"},{"code":"it","name":"Ý"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Do Thái"},{"code":"zh-cn","name":"Trung (Giản thể)"}],"fa":[{"code":"az","name":"آذرباﻳﺠﺎﻧﻰ"},{"code":"de","name":"آلمانی"},{"code":"es","name":"اسپانیایی"},{"code":"et","name":"استونيايی"},{"code":"sk","name":"اسلواکی"},{"code":"sl","name":"اسلونیایی"},{"code":"uk","name":"اکراينی"},{"code":"am","name":"امهری"},{"code":"id","name":"اندونزيايی"},{"code":"en","name":"انگلیسی"},{"code":"it","name":"ایتالیایی"},{"code":"ga","name":"ایرلندی"},{"code":"is","name":"ايسلندی"},{"code":"eu","name":"باسکی"},{"code":"bg","name":"بلغاری"},{"code":"pt","name":"پرتغالی"},{"code":"th","name":"تايلندی"},{"code":"tr","name":"ترکی استانبولی"},{"code":"cs","name":"چک"},{"code":"zh-cn","name":"چینی (ساده‌شده)"},{"code":"zh-tw","name":"چینی (سنتی)"},{"code":"da","name":"دانمارکی"},{"code":"ru","name":"روسی"},{"code":"ro","name":"رومانيايی"},{"code":"zu","name":"زولو"},{"code":"ja","name":"ژاپنی"},{"code":"sv","name":"سوئدی"},{"code":"sr","name":"صربی"},{"code":"he","name":"عبری"},{"code":"ar","name":"عربی"},{"code":"fa","name":"فارسی"},{"code":"fr","name":"فرانسوی"},{"code":"fi","name":"فنلاندی"},{"code":"ca","name":"کاتالان"},{"code":"ckb","name":"کردی (سورانی)"},{"code":"hr","name":"کرواتی"},{"code":"ko","name":"کره‌ای"},{"code":"gl","name":"گالیسی"},{"code":"gd","name":"گاليک اسکاتلندی"},{"code":"lv","name":"لتونيايی"},{"code":"pl","name":"لهستانی"},{"code":"lt","name":"ليتوانيايی"},{"code":"mi","name":"مائوری"},{"code":"hu","name":"مجاری"},{"code":"nb","name":"نروژی"},{"code":"cy","name":"ولزی"},{"code":"vi","name":"ويتنامی"},{"code":"nl","name":"هلندی"},{"code":"el","name":"يونانی"},{"code":"he","name":"عبری"},{"code":"zh-cn","name":"چینی (ساده‌شده)"}],"lt":[{"code":"ga","name":"airių"},{"code":"am","name":"amharų"},{"code":"en","name":"anglų"},{"code":"ar","name":"arabų"},{"code":"az","name":"azerbaidžaniečių"},{"code":"eu","name":"baskų"},{"code":"bg","name":"bulgarų"},{"code":"cs","name":"čekų"},{"code":"da","name":"danų"},{"code":"et","name":"estų"},{"code":"gl","name":"galisų"},{"code":"el","name":"graikų"},{"code":"he","name":"hebrajų"},{"code":"id","name":"indoneziečių"},{"code":"is","name":"islandų"},{"code":"es","name":"ispanų"},{"code":"it","name":"italų"},{"code":"ja","name":"japonų"},{"code":"ca","name":"kataloniečių"},{"code":"zh-cn","name":"kinų (supaprastinta)"},{"code":"zh-tw","name":"kinų (tradicinė)"},{"code":"ko","name":"korėjiečių"},{"code":"hr","name":"kroatų"},{"code":"ckb","name":"kurdų (soranių)"},{"code":"lv","name":"latvių"},{"code":"pl","name":"lenkų"},{"code":"lt","name":"lietuvių"},{"code":"mi","name":"maorių"},{"code":"nb","name":"norvegų"},{"code":"nl","name":"olandų"},{"code":"fa","name":"persų"},{"code":"pt","name":"portugalų"},{"code":"fr","name":"prancūzų"},{"code":"ro","name":"rumunų"},{"code":"ru","name":"rusų"},{"code":"sr","name":"serbų"},{"code":"sk","name":"slovakų"},{"code":"sl","name":"slovėnų"},{"code":"fi","name":"suomių"},{"code":"gd","name":"škotų"},{"code":"sv","name":"švedų"},{"code":"th","name":"tajų"},{"code":"tr","name":"turkų"},{"code":"uk","name":"ukrainiečių"},{"code":"cy","name":"valų"},{"code":"hu","name":"vengrų"},{"code":"vi","name":"vietnamiečių"},{"code":"de","name":"vokiečių"},{"code":"zu","name":"zulusų"},{"code":"he","name":"hebrajų"},{"code":"zh-cn","name":"kinų (supaprastinta)"}],"zh-cn":[{"code":"ar","name":"阿拉伯语"},{"code":"am","name":"阿姆哈拉语"},{"code":"az","name":"阿塞拜疆语"},{"code":"ga","name":"爱尔兰语"},{"code":"et","name":"爱沙尼亚语"},{"code":"eu","name":"巴斯克语"},{"code":"bg","name":"保加利亚语"},{"code":"is","name":"冰岛语"},{"code":"pl","name":"波兰语"},{"code":"fa","name":"波斯语"},{"code":"da","name":"丹麦语"},{"code":"de","name":"德语"},{"code":"ru","name":"俄语"},{"code":"fr","name":"法语"},{"code":"fi","name":"芬兰语"},{"code":"ko","name":"韩语"},{"code":"nl","name":"荷兰语"},{"code":"gl","name":"加利西亚语"},{"code":"ca","name":"加泰罗尼亚语"},{"code":"cs","name":"捷克语"},{"code":"hr","name":"克罗地亚语"},{"code":"ckb","name":"库尔德语（索拉尼）"},{"code":"lv","name":"拉脱维亚语"},{"code":"lt","name":"立陶宛语"},{"code":"ro","name":"罗马尼亚语"},{"code":"mi","name":"毛利语"},{"code":"zu","name":"南非祖鲁语"},{"code":"nb","name":"挪威语"},{"code":"pt","name":"葡萄牙语"},{"code":"ja","name":"日语"},{"code":"sv","name":"瑞典语"},{"code":"sr","name":"塞尔维亚语"},{"code":"sk","name":"斯洛伐克语"},{"code":"sl","name":"斯洛文尼亚语"},{"code":"gd","name":"苏格兰盖尔语"},{"code":"th","name":"泰语"},{"code":"tr","name":"土耳其语"},{"code":"cy","name":"威尔士语"},{"code":"uk","name":"乌克兰语"},{"code":"es","name":"西班牙语"},{"code":"he","name":"希伯来语"},{"code":"el","name":"希腊语"},{"code":"hu","name":"匈牙利语"},{"code":"it","name":"意大利语"},{"code":"id","name":"印尼语"},{"code":"en","name":"英语"},{"code":"vi","name":"越南语"},{"code":"zh-tw","name":"中文（繁体）"},{"code":"zh-cn","name":"中文（简体）"},{"code":"he","name":"希伯来语"},{"code":"zh-cn","name":"中文（简体）"}],"ga":[{"code":"am","name":"Amárais"},{"code":"ar","name":"Araibis"},{"code":"az","name":"Asarbaiseáinis"},{"code":"eu","name":"Bascais"},{"code":"en","name":"Béarla"},{"code":"cy","name":"Breatnais"},{"code":"bg","name":"Bulgáiris"},{"code":"ca","name":"Catalóinis"},{"code":"ckb","name":"Coirdis (Sorani)"},{"code":"ko","name":"Cóiréis"},{"code":"hr","name":"Cróitis"},{"code":"da","name":"Danmhairgis"},{"code":"he","name":"Eabhrais"},{"code":"et","name":"Eastóinis"},{"code":"fi","name":"Fionlainnis"},{"code":"fr","name":"Fraincis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gaeilge na hAlban"},{"code":"gl","name":"Gailísis"},{"code":"de","name":"Gearmáinis"},{"code":"el","name":"Gréigis"},{"code":"id","name":"Indinéisis"},{"code":"it","name":"Iodáilis"},{"code":"nb","name":"Ioruais"},{"code":"is","name":"Íoslainnis"},{"code":"lv","name":"Laitvis"},{"code":"lt","name":"Liotuáinis"},{"code":"mi","name":"Maorais"},{"code":"nl","name":"Ollainnis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Polainnis"},{"code":"pt","name":"Portaingéilis"},{"code":"ro","name":"Rómáinis"},{"code":"ru","name":"Rúisis"},{"code":"ja","name":"Seapáinis"},{"code":"cs","name":"Seicis"},{"code":"sr","name":"Seirbis"},{"code":"zh-cn","name":"Sínis (Simplithe)"},{"code":"zh-tw","name":"Sínis (Traidisiúnta)"},{"code":"sl","name":"Slóivéinis"},{"code":"sk","name":"Slóvaicis"},{"code":"es","name":"Spáinnis"},{"code":"sv","name":"Sualainnis"},{"code":"zu","name":"Súlúis"},{"code":"th","name":"Téalainnis"},{"code":"tr","name":"Tuircis"},{"code":"uk","name":"Úcráinis"},{"code":"hu","name":"Ungáiris"},{"code":"vi","name":"Vítneaimis"},{"code":"he","name":"Eabhrais"},{"code":"zh-cn","name":"Sínis (Simplithe)"}],"gl":[{"code":"az","name":"acerbaixano"},{"code":"de","name":"alemán"},{"code":"am","name":"amárico"},{"code":"ar","name":"árabe"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chinés (simplificado)"},{"code":"zh-tw","name":"chinés (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"dinamarqués"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estoniano"},{"code":"eu","name":"éuscaro"},{"code":"fi","name":"finés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"gl","name":"galego"},{"code":"cy","name":"galés"},{"code":"el","name":"grego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruegués"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"romanés"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraíno"},{"code":"vi","name":"vietnamita"},{"code":"ja","name":"xaponés"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chinés (simplificado)"}],"sr":[{"code":"az","name":"азербејџански"},{"code":"am","name":"амхарски"},{"code":"ar","name":"арапски"},{"code":"eu","name":"баскијски"},{"code":"bg","name":"бугарски"},{"code":"cy","name":"велшки"},{"code":"vi","name":"вијетнамски"},{"code":"gl","name":"галски"},{"code":"el","name":"грчки"},{"code":"da","name":"дански"},{"code":"en","name":"енглески"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"id","name":"индонежански"},{"code":"ga","name":"ирски"},{"code":"is","name":"исландски"},{"code":"it","name":"италијански"},{"code":"ja","name":"јапански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"кинески (поједностављени)"},{"code":"zh-tw","name":"кинески (традиционални)"},{"code":"ko","name":"корејски"},{"code":"ckb","name":"курдски (сорани)"},{"code":"lv","name":"летонски"},{"code":"lt","name":"литвански"},{"code":"hu","name":"мађарски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немачки"},{"code":"nb","name":"норвешки"},{"code":"fa","name":"персијски"},{"code":"pl","name":"пољски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румунски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словачки"},{"code":"sl","name":"словеначки"},{"code":"sr","name":"српски"},{"code":"th","name":"тајски"},{"code":"tr","name":"турски"},{"code":"uk","name":"украјински"},{"code":"fi","name":"фински"},{"code":"fr","name":"француски"},{"code":"he","name":"хебрејски"},{"code":"nl","name":"холандски"},{"code":"hr","name":"хрватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шкотски галски"},{"code":"es","name":"шпански"},{"code":"he","name":"хебрејски"},{"code":"zh-cn","name":"кинески (поједностављени)"}],"pl":[{"code":"am","name":"amharski"},{"code":"en","name":"angielski"},{"code":"ar","name":"arabski"},{"code":"az","name":"azerski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bułgarski"},{"code":"zh-tw","name":"chiński (tradycyjny)"},{"code":"zh-cn","name":"chiński (uproszczony)"},{"code":"hr","name":"chorwacki"},{"code":"cs","name":"czeski"},{"code":"da","name":"duński"},{"code":"et","name":"estoński"},{"code":"fi","name":"fiński"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galicyjski"},{"code":"el","name":"grecki"},{"code":"he","name":"hebrajski"},{"code":"es","name":"hiszpański"},{"code":"id","name":"indonezyjski"},{"code":"ga","name":"irlandzki"},{"code":"is","name":"islandzki"},{"code":"ja","name":"japoński"},{"code":"ca","name":"kataloński"},{"code":"ko","name":"koreański"},{"code":"ckb","name":"kurdyjski (sorani)"},{"code":"lt","name":"litewski"},{"code":"lv","name":"łotewski"},{"code":"mi","name":"maori"},{"code":"nl","name":"niderlandzki"},{"code":"de","name":"niemiecki"},{"code":"nb","name":"norweski"},{"code":"fa","name":"perski"},{"code":"pl","name":"polski"},{"code":"pt","name":"portugalski"},{"code":"ru","name":"rosyjski"},{"code":"ro","name":"rumuński"},{"code":"sr","name":"serbski"},{"code":"sk","name":"słowacki"},{"code":"sl","name":"słoweński"},{"code":"gd","name":"szkocki gaelicki"},{"code":"sv","name":"szwedzki"},{"code":"th","name":"tajski"},{"code":"tr","name":"turecki"},{"code":"uk","name":"ukraiński"},{"code":"cy","name":"walijski"},{"code":"hu","name":"węgierski"},{"code":"vi","name":"wietnamski"},{"code":"it","name":"włoski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrajski"},{"code":"zh-cn","name":"chiński (uproszczony)"}],"hr":[{"code":"am","name":"amharik"},{"code":"ar","name":"arapski"},{"code":"az","name":"azerbajdžanski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bugarski"},{"code":"cs","name":"češki"},{"code":"da","name":"danski"},{"code":"en","name":"engleski"},{"code":"et","name":"estonski"},{"code":"fi","name":"finski"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galski"},{"code":"el","name":"grčki"},{"code":"he","name":"hebrejski"},{"code":"hr","name":"hrvatski"},{"code":"id","name":"indonezijski"},{"code":"ga","name":"irski"},{"code":"is","name":"islandski"},{"code":"ja","name":"japanski"},{"code":"ca","name":"katalonski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"},{"code":"zh-tw","name":"kineski (tradicionalni)"},{"code":"ko","name":"korejski"},{"code":"ckb","name":"kurdski (soranski)"},{"code":"lv","name":"latvijski/letonski"},{"code":"lt","name":"litvanski"},{"code":"hu","name":"mađarski"},{"code":"mi","name":"maori"},{"code":"nl","name":"nizozemski"},{"code":"nb","name":"norveški"},{"code":"de","name":"njemački"},{"code":"fa","name":"perzijski"},{"code":"pl","name":"poljski"},{"code":"pt","name":"portugalski"},{"code":"ro","name":"rumunjski"},{"code":"ru","name":"ruski"},{"code":"sk","name":"slovački"},{"code":"sl","name":"slovenski"},{"code":"sr","name":"srpski"},{"code":"gd","name":"škotski keltski"},{"code":"es","name":"španjolski"},{"code":"sv","name":"švedski"},{"code":"th","name":"tajlandski"},{"code":"it","name":"talijanski"},{"code":"tr","name":"turski"},{"code":"uk","name":"ukrajinski"},{"code":"cy","name":"velški"},{"code":"vi","name":"vijetnamski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"}],"zu":[{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"ca","name":"Catalan"},{"code":"zh-tw","name":"Chinese (Esenziwe lula)"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Irish"},{"code":"am","name":"isi-Amharic"},{"code":"eu","name":"isi-Basque"},{"code":"bg","name":"isi-Bulgarian"},{"code":"nl","name":"isi-Dutch"},{"code":"en","name":"isi-English"},{"code":"et","name":"isi-Estonian"},{"code":"gl","name":"isi-Galician"},{"code":"de","name":"isi-German"},{"code":"is","name":"isi-Icelandic"},{"code":"it","name":"isi-Italian"},{"code":"ja","name":"isi-Japanese"},{"code":"lv","name":"isi-Latvian"},{"code":"lt","name":"isi-Lithuanian"},{"code":"pl","name":"isi-Polish"},{"code":"pt","name":"isi-Portuguese"},{"code":"ru","name":"isi-Russian"},{"code":"gd","name":"isi-Scots Gaelic"},{"code":"es","name":"isi-Spanish"},{"code":"sv","name":"isi-Swedish"},{"code":"cy","name":"isi-Welsh"},{"code":"zu","name":"isiZulu"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"ro","name":"Romanian"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"am":[{"code":"hu","name":"ሀንጋሪኛ"},{"code":"lt","name":"ሊትዌንኛ"},{"code":"lv","name":"ላትቪያኛ"},{"code":"mi","name":"ማዮሪኛ"},{"code":"ru","name":"ራሽያኛ"},{"code":"ro","name":"ሮማኒያንኛ"},{"code":"sr","name":"ሰርቢያኛ"},{"code":"sk","name":"ስሎቫክኛ"},{"code":"sl","name":"ስሎቬንያኛ"},{"code":"sv","name":"ስዊድንኛ"},{"code":"es","name":"ስፓኒሽኛ"},{"code":"bg","name":"ቡልጋሪያኛ"},{"code":"eu","name":"ባስክኛ"},{"code":"vi","name":"ቪትናምኛ"},{"code":"tr","name":"ቱርክኛ"},{"code":"th","name":"ታይኛ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"},{"code":"zh-tw","name":"ቻይንኛ (ባሕላዊው)"},{"code":"cs","name":"ቼክኛ"},{"code":"nb","name":"ኖርዌጅያንኛ"},{"code":"am","name":"አማርኛ"},{"code":"az","name":"አዜርባይጃንኛ"},{"code":"ga","name":"አይሪሽ"},{"code":"is","name":"አይስላንድኛ"},{"code":"et","name":"ኤስቶኒያኛ"},{"code":"id","name":"እንዶኔዢያኛ"},{"code":"en","name":"እንግሊዝኛ"},{"code":"ckb","name":"ኩርድሽኛ (ሶራኒ)"},{"code":"ca","name":"ካታላንኛ"},{"code":"hr","name":"ክሮኤሽያኛ"},{"code":"ko","name":"ኮሪያኛ"},{"code":"cy","name":"ዌልሽ"},{"code":"ar","name":"ዐረብኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zu","name":"ዙሉኛ"},{"code":"gd","name":"የስኮት ጌልክኛ"},{"code":"uk","name":"ዩክሬንኛ"},{"code":"nl","name":"ደችኛ"},{"code":"da","name":"ዴንሽኛ"},{"code":"de","name":"ጀርመንኛ"},{"code":"ja","name":"ጃፓንኛ"},{"code":"gl","name":"ጋሊሺያኛ"},{"code":"el","name":"ግሪክኛ"},{"code":"it","name":"ጣሊያንኛ"},{"code":"fr","name":"ፈረንሳይኛ"},{"code":"fi","name":"ፊኒሽኛ"},{"code":"fa","name":"ፐርሺያኛ"},{"code":"pl","name":"ፖሊሽኛ"},{"code":"pt","name":"ፖርቱጋሊኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"}],"is":[{"code":"am","name":"amharíska"},{"code":"ar","name":"arabíska"},{"code":"az","name":"aserska"},{"code":"eu","name":"baskneska"},{"code":"bg","name":"búlgarska"},{"code":"da","name":"danska"},{"code":"et","name":"eistneska"},{"code":"en","name":"enska"},{"code":"fi","name":"finnska"},{"code":"fr","name":"franska"},{"code":"gl","name":"galisíska"},{"code":"el","name":"gríska"},{"code":"he","name":"hebreska"},{"code":"nl","name":"hollenska"},{"code":"id","name":"indónesíska"},{"code":"ga","name":"írska"},{"code":"is","name":"íslenska"},{"code":"it","name":"ítalska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalónska"},{"code":"zh-cn","name":"kínverska (einfölduð)"},{"code":"zh-tw","name":"kínverska (hefðbundin)"},{"code":"ko","name":"kóreska"},{"code":"hr","name":"króatíska"},{"code":"ckb","name":"kúrdíska (soraní)"},{"code":"lv","name":"lettneska"},{"code":"lt","name":"litháíska"},{"code":"mi","name":"maoríska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persneska"},{"code":"pt","name":"portúgalska"},{"code":"pl","name":"pólska"},{"code":"ro","name":"rúmenska"},{"code":"ru","name":"rússneska"},{"code":"sr","name":"serbneska"},{"code":"gd","name":"skosk-gelíska"},{"code":"sk","name":"slóvakíska"},{"code":"sl","name":"slóvenska"},{"code":"es","name":"spænska"},{"code":"zu","name":"súlú"},{"code":"sv","name":"sænska"},{"code":"th","name":"taílenska"},{"code":"cs","name":"tékkneska"},{"code":"tr","name":"tyrkneska"},{"code":"hu","name":"ungverska"},{"code":"uk","name":"úkraínska"},{"code":"cy","name":"velska"},{"code":"vi","name":"víetnamska"},{"code":"de","name":"þýska"},{"code":"he","name":"hebreska"},{"code":"zh-cn","name":"kínverska (einfölduð)"}],"lv":[{"code":"am","name":"amharu"},{"code":"en","name":"angļu"},{"code":"ar","name":"arābu"},{"code":"az","name":"azerbaidžāņu"},{"code":"eu","name":"basku"},{"code":"bg","name":"bulgāru"},{"code":"cs","name":"čehu"},{"code":"da","name":"dāņu"},{"code":"fr","name":"franču"},{"code":"gl","name":"galisiešu"},{"code":"el","name":"grieķu"},{"code":"nl","name":"holandiešu"},{"code":"hr","name":"horvātu"},{"code":"et","name":"igauņu"},{"code":"id","name":"indonēziešu"},{"code":"ga","name":"īru"},{"code":"is","name":"īslandiešu"},{"code":"it","name":"itāļu"},{"code":"he","name":"ivrits"},{"code":"ja","name":"japāņu"},{"code":"ca","name":"katalāņu"},{"code":"ko","name":"korejiešu"},{"code":"ru","name":"krievu"},{"code":"ckb","name":"kurdu (sorani)"},{"code":"zh-tw","name":"ķīniešu (tradicionālā)"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"},{"code":"lv","name":"latviešu"},{"code":"lt","name":"lietuviešu"},{"code":"mi","name":"maori"},{"code":"nb","name":"norvēģu"},{"code":"fa","name":"persiešu"},{"code":"pl","name":"poļu"},{"code":"pt","name":"portugāļu"},{"code":"ro","name":"rumāņu"},{"code":"sr","name":"serbu"},{"code":"gd","name":"skotu gēlu"},{"code":"sk","name":"slovāku"},{"code":"sl","name":"slovēņu"},{"code":"fi","name":"somu"},{"code":"es","name":"spāņu"},{"code":"th","name":"taju"},{"code":"tr","name":"turku"},{"code":"uk","name":"ukraiņu"},{"code":"hu","name":"ungāru"},{"code":"de","name":"vācu"},{"code":"cy","name":"velsiešu"},{"code":"vi","name":"vjetnamiešu"},{"code":"zu","name":"zulu"},{"code":"sv","name":"zviedru"},{"code":"he","name":"ivrits"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"}],"en":[{"code":"am","name":"Amharic"},{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgarian"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"zh-tw","name":"Chinese (Traditional)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"nl","name":"Dutch"},{"code":"en","name":"English"},{"code":"et","name":"Estonian"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"gl","name":"Galician"},{"code":"de","name":"German"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"is","name":"Icelandic"},{"code":"id","name":"Indonesian"},{"code":"ga","name":"Irish Gaelic"},{"code":"it","name":"Italian"},{"code":"ja","name":"Japanese"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"lv","name":"Latvian"},{"code":"lt","name":"Lithuanian"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"pl","name":"Polish"},{"code":"pt","name":"Portuguese"},{"code":"ro","name":"Romanian"},{"code":"ru","name":"Russian"},{"code":"gd","name":"Scots Gaelic"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"es","name":"Spanish"},{"code":"sv","name":"Swedish"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"bg":[{"code":"az","name":"азербайджански"},{"code":"am","name":"амхарски"},{"code":"en","name":"английски"},{"code":"ar","name":"арабски"},{"code":"eu","name":"баски"},{"code":"bg","name":"български"},{"code":"vi","name":"виетнамски"},{"code":"gl","name":"галисийски"},{"code":"el","name":"гръцки"},{"code":"da","name":"датски"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийски"},{"code":"ga","name":"ирландски"},{"code":"is","name":"исландски"},{"code":"es","name":"испански"},{"code":"it","name":"италиански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"китайски (опростен)"},{"code":"zh-tw","name":"китайски (традиционен)"},{"code":"ko","name":"корейски"},{"code":"ckb","name":"кюрдски (сорани)"},{"code":"lv","name":"латвийски"},{"code":"lt","name":"литовски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немски"},{"code":"nl","name":"нидерландски"},{"code":"nb","name":"норвежки"},{"code":"fa","name":"персийски"},{"code":"pl","name":"полски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румънски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словашки"},{"code":"sl","name":"словенски"},{"code":"sr","name":"сръбски"},{"code":"th","name":"тайландски"},{"code":"tr","name":"турски"},{"code":"cy","name":"уелски"},{"code":"uk","name":"украински"},{"code":"hu","name":"унгарски"},{"code":"fi","name":"финландски"},{"code":"fr","name":"френски"},{"code":"hr","name":"хърватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шотландски келтски"},{"code":"ja","name":"японски"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайски (опростен)"}],"pt-br":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"ru":[{"code":"az","name":"азербайджанский"},{"code":"am","name":"амхарский"},{"code":"en","name":"английский"},{"code":"ar","name":"арабский"},{"code":"eu","name":"баскский"},{"code":"bg","name":"болгарский"},{"code":"cy","name":"валлийский"},{"code":"hu","name":"венгерский"},{"code":"vi","name":"вьетнамский"},{"code":"gl","name":"галисийский"},{"code":"el","name":"греческий"},{"code":"da","name":"датский"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийский"},{"code":"ga","name":"ирландский"},{"code":"is","name":"исландский"},{"code":"es","name":"испанский"},{"code":"it","name":"итальянский"},{"code":"ca","name":"каталанский"},{"code":"zh-tw","name":"китайский (традиционный)"},{"code":"zh-cn","name":"китайский (упрощенный)"},{"code":"ko","name":"корейский"},{"code":"ckb","name":"курдский (сорани)"},{"code":"lv","name":"латышский"},{"code":"lt","name":"литовский"},{"code":"mi","name":"маори"},{"code":"de","name":"немецкий"},{"code":"nl","name":"нидерландский"},{"code":"nb","name":"норвежский"},{"code":"fa","name":"персидский"},{"code":"pl","name":"польский"},{"code":"pt","name":"португальский"},{"code":"ro","name":"румынский"},{"code":"ru","name":"русский"},{"code":"sr","name":"сербский"},{"code":"sk","name":"словацкий"},{"code":"sl","name":"словенский"},{"code":"th","name":"тайский"},{"code":"tr","name":"турецкий"},{"code":"uk","name":"украинский"},{"code":"fi","name":"финский"},{"code":"fr","name":"французский"},{"code":"hr","name":"хорватский"},{"code":"cs","name":"чешский"},{"code":"sv","name":"шведский"},{"code":"gd","name":"шотландский (гэльский)"},{"code":"et","name":"эстонский"},{"code":"ja","name":"японский"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайский (упрощенный)"}],"sv":[{"code":"am","name":"amhariska"},{"code":"ar","name":"arabiska"},{"code":"az","name":"azerbajdzjanska"},{"code":"eu","name":"baskiska"},{"code":"bg","name":"bulgariska"},{"code":"da","name":"danska"},{"code":"en","name":"engelska"},{"code":"et","name":"estniska"},{"code":"fi","name":"finska"},{"code":"fr","name":"franska"},{"code":"gd","name":"gaeliska"},{"code":"gl","name":"galiciska"},{"code":"el","name":"grekiska"},{"code":"he","name":"hebreiska"},{"code":"id","name":"indonesiska"},{"code":"ga","name":"irländska"},{"code":"is","name":"isländska"},{"code":"it","name":"italienska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalanska"},{"code":"zh-cn","name":"kinesiska (förenklad)"},{"code":"zh-tw","name":"kinesiska (traditionell)"},{"code":"ko","name":"koreanska"},{"code":"hr","name":"kroatiska"},{"code":"ckb","name":"kurdiska (sorani)"},{"code":"lv","name":"lettiska"},{"code":"lt","name":"litauiska"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederländska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persiska"},{"code":"pl","name":"polska"},{"code":"pt","name":"portugisiska"},{"code":"ro","name":"rumänska"},{"code":"ru","name":"ryska"},{"code":"sr","name":"serbiska"},{"code":"sk","name":"slovakiska"},{"code":"sl","name":"slovenska"},{"code":"es","name":"spanska"},{"code":"sv","name":"svenska"},{"code":"th","name":"thailändska"},{"code":"cs","name":"tjeckiska"},{"code":"tr","name":"turkiska"},{"code":"de","name":"tyska"},{"code":"uk","name":"ukrainska"},{"code":"hu","name":"ungerska"},{"code":"vi","name":"vietnamesiska"},{"code":"cy","name":"walesiska"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebreiska"},{"code":"zh-cn","name":"kinesiska (förenklad)"}],"el":[{"code":"en","name":"Αγγλικά"},{"code":"az","name":"Αζερμπαϊτζανικά"},{"code":"am","name":"Αμχαρικά"},{"code":"ar","name":"Αραβικά"},{"code":"eu","name":"Βασκικά"},{"code":"vi","name":"Βιετναμεζικά"},{"code":"bg","name":"Βουλγαρικά"},{"code":"gd","name":"Γαελικά Σκοτίας"},{"code":"gl","name":"Γαλικιακά"},{"code":"fr","name":"Γαλλικά"},{"code":"de","name":"Γερμανικά"},{"code":"da","name":"Δανικά"},{"code":"he","name":"Εβραϊκά"},{"code":"el","name":"Ελληνικά"},{"code":"et","name":"Εσθονικά"},{"code":"zu","name":"Ζουλού"},{"code":"ja","name":"Ιαπωνικά"},{"code":"id","name":"Ινδονησιακά"},{"code":"ga","name":"Ιρλανδικά"},{"code":"is","name":"Ισλανδικά"},{"code":"es","name":"Ισπανικά"},{"code":"it","name":"Ιταλικά"},{"code":"ca","name":"Καταλανικά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"},{"code":"zh-tw","name":"Κινεζικά (Παραδοσιακά)"},{"code":"ko","name":"Κορεατικά"},{"code":"ckb","name":"Κουρδικά (Σορανί)"},{"code":"hr","name":"Κροατικά"},{"code":"lv","name":"Λετονικά"},{"code":"lt","name":"Λιθουανικά"},{"code":"mi","name":"Μαορί"},{"code":"nb","name":"Νορβηγικά"},{"code":"nl","name":"Ολλανδικά"},{"code":"cy","name":"Ουαλικά"},{"code":"hu","name":"Ουγγρικά"},{"code":"uk","name":"Ουκρανικά"},{"code":"fa","name":"Περσικά"},{"code":"pl","name":"Πολωνικά"},{"code":"pt","name":"Πορτογαλικά"},{"code":"ro","name":"Ρουμανικά"},{"code":"ru","name":"Ρωσικά"},{"code":"sr","name":"Σερβικά"},{"code":"sk","name":"Σλοβακικά"},{"code":"sl","name":"Σλοβενικά"},{"code":"sv","name":"Σουηδικά"},{"code":"th","name":"Ταϊλανδεζικά"},{"code":"tr","name":"Τουρκικά"},{"code":"cs","name":"Τσεχικά"},{"code":"fi","name":"Φινλανδικά"},{"code":"he","name":"Εβραϊκά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"}],"sl":[{"code":"am","name":"amharščina"},{"code":"en","name":"angleščina"},{"code":"ar","name":"arabščina"},{"code":"az","name":"azerbajdžanščina"},{"code":"eu","name":"baskovščina"},{"code":"bg","name":"bolgarščina"},{"code":"cs","name":"češčina"},{"code":"da","name":"danščina"},{"code":"et","name":"estonščina"},{"code":"fi","name":"finščina"},{"code":"fr","name":"francoščina"},{"code":"gl","name":"galicijščina"},{"code":"el","name":"grščina"},{"code":"he","name":"hebrejščina"},{"code":"hr","name":"hrvaščina"},{"code":"id","name":"indonezijščina"},{"code":"ga","name":"irščina"},{"code":"is","name":"islandščina"},{"code":"it","name":"italijanščina"},{"code":"ja","name":"japonščina"},{"code":"ca","name":"katalonščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"},{"code":"zh-tw","name":"kitajščina (tradicionalna)"},{"code":"ko","name":"korejščina"},{"code":"ckb","name":"kurdščina (soranščina)"},{"code":"lv","name":"latvijščina"},{"code":"lt","name":"litovščina"},{"code":"hu","name":"madžarščina"},{"code":"mi","name":"maorščina"},{"code":"de","name":"nemščina"},{"code":"nl","name":"nizozemščina"},{"code":"nb","name":"norveščina"},{"code":"fa","name":"perzijščina"},{"code":"pl","name":"poljščina"},{"code":"pt","name":"portugalščina"},{"code":"ro","name":"romunščina"},{"code":"ru","name":"ruščina"},{"code":"sk","name":"slovaščina"},{"code":"sl","name":"slovenščina"},{"code":"sr","name":"srbščina"},{"code":"gd","name":"škotska gelščina"},{"code":"es","name":"španščina"},{"code":"sv","name":"švedščina"},{"code":"th","name":"tajščina"},{"code":"tr","name":"turščina"},{"code":"uk","name":"ukrajinščina"},{"code":"cy","name":"valižanščina"},{"code":"vi","name":"vietnamščina"},{"code":"zu","name":"zulujščina"},{"code":"he","name":"hebrejščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"}],"id":[{"code":"am","name":"Amhara"},{"code":"ar","name":"Arab"},{"code":"az","name":"Azerbaijan"},{"code":"eu","name":"Basque"},{"code":"nl","name":"Belanda"},{"code":"bg","name":"Bulgaria"},{"code":"cs","name":"Ceko"},{"code":"zh-cn","name":"China (Aks. Sederhana)"},{"code":"zh-tw","name":"China (Aks. Tradisional)"},{"code":"da","name":"Denmark"},{"code":"et","name":"Estonia"},{"code":"fa","name":"Farsi"},{"code":"fi","name":"Finlandia"},{"code":"ga","name":"Gaelig"},{"code":"gd","name":"Gaelik Skotlandia"},{"code":"gl","name":"Galisia"},{"code":"he","name":"Ibrani"},{"code":"id","name":"Indonesia"},{"code":"en","name":"Inggris"},{"code":"is","name":"Islan"},{"code":"it","name":"Italia"},{"code":"ja","name":"Jepang"},{"code":"de","name":"Jerman"},{"code":"ca","name":"Katala"},{"code":"ko","name":"Korea"},{"code":"hr","name":"Kroat"},{"code":"ckb","name":"Kurdi (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Lituania"},{"code":"hu","name":"Magyar"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norsk"},{"code":"pl","name":"Polandia"},{"code":"pt","name":"Portugis"},{"code":"fr","name":"Prancis"},{"code":"ro","name":"Rumania"},{"code":"ru","name":"Rusia"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovakia"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Spanyol"},{"code":"sv","name":"Swensk"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turki"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Vietnam"},{"code":"cy","name":"Wales"},{"code":"el","name":"Yunani"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ibrani"},{"code":"zh-cn","name":"China (Aks. Sederhana)"}],"th":[{"code":"el","name":"กรีก"},{"code":"gl","name":"กาลิเชียน"},{"code":"gd","name":"เกลิกสกอต"},{"code":"ko","name":"เกาหลี"},{"code":"ca","name":"คาตาลัน"},{"code":"ckb","name":"เคิร์ด (โซรานี)"},{"code":"hr","name":"โครเอเชีย"},{"code":"zh-tw","name":"จีน (ตัวเต็ม)"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"},{"code":"cs","name":"เช็ก"},{"code":"zu","name":"ซูลู"},{"code":"sr","name":"เซอร์เบียน"},{"code":"ja","name":"ญี่ปุ่น"},{"code":"nl","name":"ดัตช์"},{"code":"da","name":"เดนมาร์ก"},{"code":"tr","name":"ตุรกี"},{"code":"th","name":"ไทย"},{"code":"nb","name":"นอร์เวย์"},{"code":"bg","name":"บัลแกเรีย"},{"code":"eu","name":"บาสก์"},{"code":"fa","name":"เปอร์เซีย"},{"code":"pt","name":"โปรตุเกส"},{"code":"pl","name":"โปแลนด์"},{"code":"fr","name":"ฝรั่งเศส"},{"code":"fi","name":"ฟินแลนด์"},{"code":"mi","name":"เมารี"},{"code":"uk","name":"ยูเครน"},{"code":"de","name":"เยอรมัน"},{"code":"ru","name":"รัสเซีย"},{"code":"ro","name":"โรมาเนีย"},{"code":"lv","name":"ลัตเวีย"},{"code":"lt","name":"ลิทัวเนีย"},{"code":"cy","name":"เวลส์"},{"code":"vi","name":"เวียดนาม"},{"code":"es","name":"สเปน"},{"code":"sk","name":"สโลวัก"},{"code":"sl","name":"สโลวีเนีย"},{"code":"sv","name":"สวีเดน"},{"code":"en","name":"อังกฤษ"},{"code":"am","name":"อัมฮาริก"},{"code":"az","name":"อาร์เซอร์ไบจัน"},{"code":"ar","name":"อาหรับ"},{"code":"it","name":"อิตาลี"},{"code":"id","name":"อินโดนีเซีย"},{"code":"et","name":"เอสโทเนีย"},{"code":"is","name":"ไอซ์แลนด์"},{"code":"ga","name":"ไอร์แลนด์"},{"code":"hu","name":"ฮังการี"},{"code":"he","name":"ฮีบรู"},{"code":"he","name":"ฮีบรู"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"}],"gd":[{"code":"am","name":"Amtharais"},{"code":"ar","name":"Arabais"},{"code":"az","name":"Asarbaideànais"},{"code":"eu","name":"Basgais"},{"code":"en","name":"Beurla"},{"code":"vi","name":"Bhiet-Namais"},{"code":"bg","name":"Bulgarais"},{"code":"th","name":"Cànan nan Tàidh"},{"code":"ca","name":"Catalanais"},{"code":"ko","name":"Coirèanais"},{"code":"hr","name":"Cròthaisis"},{"code":"cy","name":"Cuimris"},{"code":"ckb","name":"Cùrdais (Sorani)"},{"code":"da","name":"Danmhairgis"},{"code":"nl","name":"Duitsis"},{"code":"he","name":"Eabhra"},{"code":"it","name":"Eadailtis"},{"code":"et","name":"Eastoinis"},{"code":"fi","name":"Fionnlannais"},{"code":"fr","name":"Fraingis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gàidhlig"},{"code":"gl","name":"Gailìsis"},{"code":"de","name":"Gearmailtis"},{"code":"el","name":"Grèigis"},{"code":"id","name":"Innd-Innsis"},{"code":"is","name":"Innis-Tìlis"},{"code":"lv","name":"Laitbheis"},{"code":"lt","name":"Liotuainis"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nirribhis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Pòlainnis"},{"code":"pt","name":"Portagailis"},{"code":"ro","name":"Romàinis"},{"code":"ru","name":"Ruisis"},{"code":"cs","name":"Seacais"},{"code":"ja","name":"Seapanais"},{"code":"sr","name":"Sèirbis"},{"code":"zh-tw","name":"Sìonais (seann-nòsach)"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"},{"code":"sk","name":"Slòbhacais"},{"code":"sl","name":"Slòbhainis"},{"code":"es","name":"Spàinntis"},{"code":"sv","name":"Suainis"},{"code":"tr","name":"Turcais"},{"code":"uk","name":"Ucràinis"},{"code":"hu","name":"Ungairis"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Eabhra"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"}],"pt":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"uk":[{"code":"az","name":"азербайджанська"},{"code":"am","name":"амхарська"},{"code":"en","name":"англійська"},{"code":"ar","name":"арабська"},{"code":"eu","name":"баскська"},{"code":"bg","name":"болгарська"},{"code":"vi","name":"в’єтнамська"},{"code":"cy","name":"валлійська"},{"code":"el","name":"грецька"},{"code":"gl","name":"ґалісійська"},{"code":"da","name":"данська"},{"code":"et","name":"естонська"},{"code":"zu","name":"зулу"},{"code":"he","name":"іврит"},{"code":"id","name":"індонезійська"},{"code":"ga","name":"ірландська"},{"code":"is","name":"ісландська"},{"code":"es","name":"іспанська"},{"code":"it","name":"італійська"},{"code":"ca","name":"каталанська"},{"code":"zh-cn","name":"китайська (спрощена)"},{"code":"zh-tw","name":"китайська (традиційна)"},{"code":"ko","name":"корейська"},{"code":"ckb","name":"курдська (сорані)"},{"code":"lv","name":"латиська"},{"code":"lt","name":"литовська"},{"code":"mi","name":"маорі"},{"code":"nl","name":"нідерландська"},{"code":"de","name":"німецька"},{"code":"nb","name":"норвезька"},{"code":"fa","name":"перська"},{"code":"pl","name":"польська"},{"code":"pt","name":"португальська"},{"code":"ru","name":"російська"},{"code":"ro","name":"румунська"},{"code":"sr","name":"сербська"},{"code":"sk","name":"словацька"},{"code":"sl","name":"словенська"},{"code":"th","name":"тайська"},{"code":"tr","name":"турецька"},{"code":"hu","name":"угорська"},{"code":"uk","name":"українська"},{"code":"fi","name":"фінська"},{"code":"fr","name":"французька"},{"code":"hr","name":"хорватська"},{"code":"cs","name":"чеська"},{"code":"sv","name":"шведська"},{"code":"gd","name":"шотландська (ґельська)"},{"code":"ja","name":"японська"},{"code":"he","name":"іврит"},{"code":"zh-cn","name":"китайська (спрощена)"}],"ca":[{"code":"de","name":"alemany"},{"code":"am","name":"amhàric"},{"code":"en","name":"anglès"},{"code":"ar","name":"àrab"},{"code":"az","name":"àzeri"},{"code":"eu","name":"basc"},{"code":"bg","name":"búlgar"},{"code":"es","name":"castellà"},{"code":"ca","name":"català"},{"code":"ko","name":"coreà"},{"code":"hr","name":"croat"},{"code":"da","name":"danès"},{"code":"sk","name":"eslovac"},{"code":"sl","name":"eslovè"},{"code":"et","name":"estonià"},{"code":"fi","name":"finès"},{"code":"fr","name":"francès"},{"code":"gd","name":"gaèlic escocès"},{"code":"gl","name":"gallec"},{"code":"cy","name":"gal·lès"},{"code":"el","name":"grec"},{"code":"he","name":"hebreu"},{"code":"hu","name":"hongarès"},{"code":"id","name":"indonesi"},{"code":"ga","name":"irlandès"},{"code":"is","name":"islandès"},{"code":"it","name":"italià"},{"code":"ja","name":"japonès"},{"code":"ckb","name":"kurd (sorani)"},{"code":"lv","name":"letó"},{"code":"lt","name":"lituà"},{"code":"mi","name":"maori"},{"code":"nl","name":"neerlandès"},{"code":"nb","name":"noruec"},{"code":"fa","name":"persa"},{"code":"pl","name":"polonès"},{"code":"pt","name":"portuguès"},{"code":"ro","name":"romanès"},{"code":"ru","name":"rus"},{"code":"sr","name":"serbi"},{"code":"sv","name":"suec"},{"code":"th","name":"tai"},{"code":"tr","name":"turc"},{"code":"cs","name":"txec"},{"code":"uk","name":"ucraïnès"},{"code":"vi","name":"vietnamita"},{"code":"zh-cn","name":"xinès (simplificat)"},{"code":"zh-tw","name":"xinès (tradicional)"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreu"},{"code":"zh-cn","name":"xinès (simplificat)"}],"es":[{"code":"de","name":"alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"azerí"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chino (simplificado)"},{"code":"zh-tw","name":"chino (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"japonés"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraniano"},{"code":"vi","name":"vietnamita"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chino (simplificado)"}],"es-419":[{"code":"de","name":"alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"azerí"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chino (simplificado)"},{"code":"zh-tw","name":"chino (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"japonés"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraniano"},{"code":"vi","name":"vietnamita"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chino (simplificado)"}],"fr":[{"code":"de","name":"Allemand"},{"code":"am","name":"Amharique"},{"code":"en","name":"Anglais"},{"code":"ar","name":"Arabe"},{"code":"az","name":"Azéri"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgare"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinois (simplifié)"},{"code":"zh-tw","name":"Chinois (traditionnel)"},{"code":"ko","name":"Coréen"},{"code":"hr","name":"Croate"},{"code":"da","name":"Danois"},{"code":"es","name":"Espagnol"},{"code":"et","name":"Estonien"},{"code":"fi","name":"Finnois"},{"code":"fr","name":"Français"},{"code":"gd","name":"Gaélique (Écosse)"},{"code":"gl","name":"Galicien"},{"code":"cy","name":"Gallois"},{"code":"el","name":"Grec"},{"code":"he","name":"Hébreu"},{"code":"hu","name":"Hongrois"},{"code":"id","name":"Indonésien"},{"code":"ga","name":"Irlandais"},{"code":"is","name":"Islandais"},{"code":"it","name":"Italien"},{"code":"ja","name":"Japonais"},{"code":"ckb","name":"Kurde (Sorani)"},{"code":"lv","name":"Letton"},{"code":"lt","name":"Lituanien"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Néerlandais"},{"code":"nb","name":"Norvégien"},{"code":"fa","name":"Persan"},{"code":"pl","name":"Polonais"},{"code":"pt","name":"Portugais"},{"code":"ro","name":"Roumain"},{"code":"ru","name":"Russe"},{"code":"sr","name":"Serbe"},{"code":"sk","name":"Slovaque"},{"code":"sl","name":"Slovène"},{"code":"sv","name":"Suédois"},{"code":"cs","name":"Tchèque"},{"code":"th","name":"Thaï"},{"code":"tr","name":"Turc"},{"code":"uk","name":"Ukrainien"},{"code":"vi","name":"Vietnamien"},{"code":"zu","name":"Zoulou"},{"code":"he","name":"Hébreu"},{"code":"zh-cn","name":"Chinois (simplifié)"}],"ro":[{"code":"am","name":"Amharică"},{"code":"ar","name":"Arabă"},{"code":"az","name":"Azerbaidjană"},{"code":"eu","name":"Bască"},{"code":"bg","name":"Bulgară"},{"code":"ca","name":"Catalană"},{"code":"cs","name":"Cehă"},{"code":"zh-cn","name":"Chineză (Simplificată)"},{"code":"zh-tw","name":"Chineză (Tradițională)"},{"code":"ko","name":"Coreeană"},{"code":"hr","name":"Croată"},{"code":"da","name":"Daneză"},{"code":"he","name":"Ebraică"},{"code":"en","name":"Engleză"},{"code":"et","name":"Estonă"},{"code":"fi","name":"Finlandeză"},{"code":"fr","name":"Franceză"},{"code":"cy","name":"Galeză"},{"code":"gd","name":"Galica scoțiană"},{"code":"gl","name":"Galiciană"},{"code":"de","name":"Germană"},{"code":"el","name":"Greacă"},{"code":"id","name":"Indoneziană"},{"code":"ga","name":"Irlandeză"},{"code":"is","name":"Islandeză"},{"code":"it","name":"Italiană"},{"code":"ja","name":"Japoneză"},{"code":"ckb","name":"Kurdă (Sorani)"},{"code":"lv","name":"Letonă"},{"code":"lt","name":"Lituaniană"},{"code":"hu","name":"Maghiară"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Neerlandeză"},{"code":"nb","name":"Norvegiană"},{"code":"fa","name":"Persană"},{"code":"pl","name":"Poloneză"},{"code":"pt","name":"Portugheză"},{"code":"ro","name":"Română"},{"code":"ru","name":"Rusă"},{"code":"sr","name":"Sârbă"},{"code":"sk","name":"Slovacă"},{"code":"sl","name":"Slovenă"},{"code":"es","name":"Spaniolă"},{"code":"sv","name":"Suedeză"},{"code":"th","name":"Thailandeză"},{"code":"tr","name":"Turcă"},{"code":"uk","name":"Ucraineană"},{"code":"vi","name":"Vietnameză"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraică"},{"code":"zh-cn","name":"Chineză (Simplificată)"}],"sk":[{"code":"am","name":"amharčina"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabčina"},{"code":"az","name":"azerbajdžančina"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharčina"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradičná)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánčina"},{"code":"et","name":"estónčina"},{"code":"fi","name":"fínčina"},{"code":"fr","name":"francúzština"},{"code":"gl","name":"galícijčina"},{"code":"el","name":"gréčtina"},{"code":"he","name":"hebrejčina"},{"code":"nl","name":"holandčina"},{"code":"hr","name":"chorvátčina"},{"code":"id","name":"indonézština"},{"code":"ga","name":"írčina"},{"code":"is","name":"islandčina"},{"code":"ja","name":"japončina"},{"code":"ca","name":"katalánčina"},{"code":"ko","name":"kórejčina"},{"code":"ckb","name":"kurdčina (sorání)"},{"code":"lt","name":"litovčina"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarčina"},{"code":"mi","name":"maorijčina"},{"code":"de","name":"nemčina"},{"code":"nb","name":"nórčina"},{"code":"fa","name":"perzština"},{"code":"pl","name":"poľština"},{"code":"pt","name":"portugalčina"},{"code":"ro","name":"rumunčina"},{"code":"ru","name":"ruština"},{"code":"sk","name":"slovenčina"},{"code":"sl","name":"slovinčina"},{"code":"sr","name":"srbčina"},{"code":"gd","name":"škótska gaelčina"},{"code":"es","name":"španielčina"},{"code":"sv","name":"švédčina"},{"code":"it","name":"taliančina"},{"code":"th","name":"thajčina"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinčina"},{"code":"vi","name":"vietnamčina"},{"code":"cy","name":"waleština"},{"code":"zu","name":"zuluština"},{"code":"he","name":"hebrejčina"},{"code":"zh-cn","name":"čínština (zjednodušená)"}]},"nameMap":{"albánština":"sq","amharština":"am","angličtina":"en","arabština":"ar","arménština":"hy","ázerbájdžánština":"az","barmština":"my","baskičtina":"eu","běloruština":"be","bulharština":"bg","čeština":"cs","čínština (tradiční)":"zh-tw","čínština (zjednodušená)":"zh-cn","dánština":"da","esperanto":"eo","estonština":"et","finština":"fi","francouzština":"fr","galicijština":"gl","haitská kreolština":"ht","hebrejština":"he","hindština":"hi","holandština":"nl","chorvatština":"hr","indonéština":"id","irština":"ga","islandština":"is","italština":"it","japonština":"ja","kannadština":"kn","katalánština":"ca","korejština":"ko","kurdština":"ku","kurdština (sorání)":"ckb","latina":"la","litevština":"lt","lotyština":"lv","maďarština":"hu","makedonština":"mk","malajálamština":"ml","malajština":"ms","maltština":"mt","maorština":"mi","marátština":"mr","mongolština":"mn","němčina":"de","norština":"nb","perština":"fa","polština":"pl","portugalština":"pt","rumunština":"ro","ruština":"ru","řečtina":"el","skotská gaelština":"gd","slovenština":"sk","slovinština":"sl","srbština":"sr","španělština":"es","švédština":"sv","telužština":"te","thajština":"th","turečtina":"tr","ukrajinština":"uk","uzbečtina":"uz","velština":"cy","vietnamština":"vi","zulu":"zu","albanisch":"sq","amharisch":"am","arabisch":"ar","armenisch":"hy","aserbaidschanisch":"az","baskisch":"eu","belarussisch":"be","birmanisch":"my","bulgarisch":"bg","chinesisch (traditionell)":"zh-tw","chinesisch (vereinfacht)":"zh-cn","dänisch":"da","deutsch":"de","englisch":"en","estnisch":"et","finnisch":"fi","französisch":"fr","galizisch":"gl","griechisch":"el","haitianisch":"ht","hebräisch":"he","hindi":"hi","indonesisch":"id","irisch":"ga","isländisch":"is","italienisch":"it","japanisch":"ja","kannada":"kn","katalanisch":"ca","koreanisch":"ko","kroatisch":"hr","kurdisch (kurmandschi)":"ku","kurdisch (sorani)":"ckb","latein":"la","lettisch":"lv","litauisch":"lt","malayalam":"ml","malaysisch":"ms","maltesisch":"mt","maori":"mi","marathi":"mr","mazedonisch":"mk","mongolisch":"mn","niederländisch":"nl","norwegisch":"nb","persisch":"fa","polnisch":"pl","portugiesisch":"pt","rumänisch":"ro","russisch":"ru","schottisch-gälisch":"gd","schwedisch":"sv","serbisch":"sr","slowakisch":"sk","slowenisch":"sl","spanisch":"es","telugu":"te","thailändisch":"th","tschechisch":"cs","türkisch":"tr","ukrainisch":"uk","ungarisch":"hu","usbekisch":"uz","vietnamesisch":"vi","walisisch":"cy","albaania":"sq","amhaari":"am","araabia":"ar","armeenia":"hy","aserbaidžaani":"az","baski":"eu","birma":"my","bulgaaria":"bg","eesti":"et","galeegi":"gl","haitikreooli":"ht","heebrea":"he","hiina (lihtsustatud)":"zh-cn","hiina (traditsiooniline)":"zh-tw","hispaania":"es","hollandi":"nl","horvaadi":"hr","iiri":"ga","indoneesia":"id","inglise":"en","islandi":"is","itaalia":"it","jaapani":"ja","katalaani":"ca","korea":"ko","kreeka":"el","kurdi (kurmandži)":"ku","kurdi (sorani)":"ckb","ladina":"la","leedu":"lt","läti":"lv","makedoonia":"mk","malai":"ms","malajalaami":"ml","malta":"mt","maoori":"mi","marati":"mr","mongoli":"mn","norra":"nb","poola":"pl","portugali":"pt","prantsuse":"fr","pärsia":"fa","rootsi":"sv","rumeenia":"ro","saksa":"de","serbia":"sr","slovaki":"sk","sloveeni":"sl","soome":"fi","suulu":"zu","šoti":"gd","taani":"da","tai":"th","tšehhi":"cs","türgi":"tr","uelsi":"cy","ukraina":"uk","ungari":"hu","usbeki":"uz","valgevene":"be","vene":"ru","vietnami":"vi","albanian":"sq","amharic":"am","arabic":"ar","armenian":"hy","azerbaijani":"az","basque":"eu","belarusian":"be","bulgarian":"bg","catalan":"ca","chinese (simplified)":"zh-cn","chinese (traditional)":"zh-tw","croatian":"hr","czech":"cs","danish":"da","dutch":"nl","english":"en","estonian":"et","finnish":"fi","french":"fr","galician":"gl","german":"de","greek":"el","haitian creole":"ht","hebrew":"he","hungarian":"hu","icelandic":"is","indonesian":"id","irish gaelic":"ga","italian":"it","japanese":"ja","korean":"ko","kurdish (kurmanji)":"ku","kurdish (sorani)":"ckb","latin":"la","latvian":"lv","lithuanian":"lt","macedonian":"mk","malay":"ms","maltese":"mt","mongolian":"mn","myanmar (burmese)":"my","norwegian":"nb","persian":"fa","polish":"pl","portuguese":"pt","romanian":"ro","russian":"ru","scots gaelic":"gd","serbian":"sr","slovak":"sk","slovenian":"sl","spanish":"es","swedish":"sv","thai":"th","turkish":"tr","ukrainian":"uk","uzbek":"uz","vietnamese":"vi","welsh":"cy","갈리시아어":"gl","그리스어":"el","네덜란드어":"nl","노르웨이어":"nb","덴마크어":"da","독일어":"de","라트비아어":"lv","라틴어":"la","러시아어":"ru","루마니아어":"ro","리투아니아어":"lt","마라티어":"mr","마오리어":"mi","마케도니아어":"mk","말라얄람어":"ml","말레이어":"ms","몰타어":"mt","몽골어":"mn","미얀마어(버마어)":"my","바스크어":"eu","베트남어":"vi","벨라루스어":"be","불가리아어":"bg","세르비아어":"sr","스웨덴어":"sv","스코틀랜드 게일어":"gd","스페인어":"es","슬로바키아어":"sk","슬로베니아어":"sl","아랍어":"ar","아르메니아어":"hy","아이슬란드어":"is","아이티 크리올어":"ht","아일랜드어":"ga","아제르바이잔어":"az","알바니아어":"sq","암하라어":"am","에스토니아어":"et","에스페란토어":"eo","영어":"en","우즈베크어":"uz","우크라이나어":"uk","웨일즈어":"cy","이탈리아어":"it","인도네시아어":"id","일본어":"ja","줄루어":"zu","중국어(간체)":"zh-cn","중국어(번체)":"zh-tw","체코어":"cs","카탈로니아어":"ca","칸나다어":"kn","쿠르드어(소라니)":"ckb","쿠르드어(쿠르만지)":"ku","크로아티아어":"hr","태국어":"th","터키어":"tr","텔루구어":"te","페르시아어":"fa","포르투갈어":"pt","폴란드어":"pl","프랑스어":"fr","핀란드어":"fi","한국어":"ko","헝가리어":"hu","히브리어":"he","힌디어":"hi","alban":"sq","alman":"de","amarik":"am","azərbaycan dili":"az","bask":"eu","belarusca":"be","bolqar":"bg","çex":"cs","çin (ən\'ənəvi)":"zh-tw","çin dili (sadələşdirilmiş)":"zh-cn","danimarka":"da","erməni":"hy","eston":"et","ərəb":"ar","fars dili":"fa","fin":"fi","fransız":"fr","haiti kreol dili":"ht","hind":"hi","holland":"nl","xorvat":"hr","ingilis":"en","ispan":"es","i̇ndoneziya":"id","i̇rland":"ga","i̇sland":"is","i̇sveç":"sv","i̇talyan":"it","i̇vrit":"he","katalan":"ca","koreya":"ko","kürd dili (kurmanci)":"ku","kürd dili (sorani)":"ckb","qalisian":"gl","latın":"la","latış":"lv","litva":"lt","macar":"hu","makedoniya":"mk","maoricə":"mi","monqolca":"mn","myanma (birma) dili":"my","norveç":"nb","özbək":"uz","polyak":"pl","portuqal":"pt","rumın":"ro","rus":"ru","serb":"sr","sloven":"sl","şotland (kelt)":"gd","tayca":"th","teluqu":"te","türk":"tr","uels":"cy","ukrayna":"uk","vyetnam":"vi","yapon":"ja","yunan":"el","zulu dili":"zu","albaniera":"sq","alemana":"de","amharera":"am","arabiera":"ar","armeniera":"hy","azerbaijanera":"az","bielorrusiera":"be","birmaniera":"my","bulgariera":"bg","daniera":"da","errumaniera":"ro","errusiera":"ru","eskoziako gaelikoa":"gd","eslovakiera":"sk","esloveniera":"sl","esperantoa":"eo","estoniera":"et","euskara":"eu","finlandiera":"fi","frantsesa":"fr","galesa":"cy","galiziera":"gl","gaztelania":"es","greziera":"el","hebreera":"he","hindia":"hi","hungariera":"hu","indonesiera":"id","ingelesa":"en","irlandera":"ga","islandiera":"is","italiera":"it","japoniera":"ja","katalana":"ca","koreera":"ko","kreolera (haiti)":"ht","kroaziera":"hr","kurduera (kurmanji)":"ku","kurduera (sorania)":"ckb","letoniera":"lv","lituaniera":"lt","malabarera":"ml","malaysiera":"ms","maltera":"mt","maoriera":"mi","marathera":"mr","mazedoniera":"mk","mongoliera":"mn","nederlandera":"nl","norvegiera":"nb","persiera":"fa","poloniera":"pl","portugesa":"pt","serbiera":"sr","suediera":"sv","telugua":"te","thailandiera":"th","turkiera":"tr","txekiera":"cs","txinera (sinplifikatua)":"zh-cn","txinera (tradizionala)":"zh-tw","ukrainera":"uk","uzbekera":"uz","vietnamera":"vi","zuluera":"zu","albansk":"sq","amharisk":"am","arabisk":"ar","armensk":"hy","aserbajdsjansk":"az","baskisk":"eu","bulgarsk":"bg","burmesisk":"my","dansk":"da","engelsk":"en","estisk":"et","finsk":"fi","fransk":"fr","galicisk":"gl","græsk":"el","haitisk kreolsk":"ht","hebraisk":"he","hviderussisk":"be","indonesisk":"id","irsk":"ga","islandsk":"is","italiensk":"it","japansk":"ja","katalansk":"ca","kinesisk (forenklet)":"zh-cn","kinesisk (traditionelt)":"zh-tw","koreansk":"ko","kroatisk":"hr","kurdisk (kurmanji)":"ku","kurdisk (sorani)":"ckb","lettisk":"lv","litauisk":"lt","makedonsk":"mk","malajisk":"ms","maltesisk":"mt","mongolsk":"mn","nederlandsk":"nl","norsk":"nb","persisk":"fa","polsk":"pl","portugisisk":"pt","rumænsk":"ro","russisk":"ru","serbisk":"sr","skotsk gælisk":"gd","slovakisk":"sk","slovensk":"sl","spansk":"es","svensk":"sv","thailandsk":"th","tjekkisk":"cs","tyrkisk":"tr","tysk":"de","ukrainsk":"uk","ungarsk":"hu","usbekisk":"uz","vietnamesisk":"vi","walisisk":"cy","albanese":"sq","amarico":"am","arabo":"ar","armeno":"hy","azero":"az","basco":"eu","bielorusso":"be","birmano":"my","bulgaro":"bg","catalano":"ca","ceco":"cs","cinese (semplificato)":"zh-cn","cinese (tradizionale)":"zh-tw","coreano":"ko","creolo haitiano":"ht","croato":"hr","curdo (kurmanji)":"ku","curdo (sorani)":"ckb","danese":"da","ebraico":"he","estone":"et","finlandese":"fi","francese":"fr","gaelico scozzese":"gd","galiziano":"gl","gallese":"cy","giapponese":"ja","greco":"el","indonesiano":"id","inglese":"en","irlandese":"ga","islandese":"is","italiano":"it","latino":"la","lettone":"lv","lituano":"lt","macedone":"mk","malese":"ms","mongolo":"mn","norvegese":"nb","olandese":"nl","persiano":"fa","polacco":"pl","portoghese":"pt","rumeno":"ro","russo":"ru","serbo":"sr","slovacco":"sk","sloveno":"sl","spagnolo":"es","svedese":"sv","tedesco":"de","turco":"tr","ucraino":"uk","ungherese":"hu","uzbeco":"uz","vietnamita":"vi","albania":"sq","amhara":"am","arabia":"ar","armenia":"hy","azeri":"az","bulgaria":"bg","burma":"my","englanti":"en","espanja":"es","galicia":"gl","haitinkreoli":"ht","heprea":"he","hollanti":"nl","indonesia":"id","islanti":"is","italia":"it","japani":"ja","kiina (perinteinen)":"zh-tw","kiina (yksinkertaistettu)":"zh-cn","kreikka":"el","kroatia":"hr","kurdi (soranî)":"ckb","kymri":"cy","latvia":"lv","liettua":"lt","makedonia":"mk","malaiji":"ms","mongolia":"mn","norja":"nb","persia":"fa","puola":"pl","ranska":"fr","romania":"ro","ruotsi":"sv","skottigaeli":"gd","slovakia":"sk","slovenia":"sl","suomi":"fi","tanska":"da","tsekki":"cs","turkki":"tr","unkari":"hu","uzbekki":"uz","valkovenäjä":"be","venäjä":"ru","vietnam":"vi","viro":"et","アイスランド語":"is","アイルランド語":"ga","アゼルバイジャン語":"az","アムハラ語":"am","アラビア語":"ar","アルバニア語":"sq","アルメニア語":"hy","イタリア語":"it","インドネシア語":"id","ウェールズ語":"cy","ウクライナ語":"uk","ウズベク語":"uz","エストニア語":"et","エスペラント語":"eo","オランダ語":"nl","カタルーニャ語":"ca","ガリシア語":"gl","カンナダ語":"kn","ギリシャ語":"el","クルド語（クルマンジー）":"ku","クルド語（ソラニー）":"ckb","クロアチア語":"hr","スウェーデン語":"sv","ズールー語":"zu","スコットランド ゲール語":"gd","スペイン語":"es","スロバキア語":"sk","スロベニア語":"sl","セルビア語":"sr","タイ語":"th","チェコ語":"cs","テルグ語":"te","デンマーク語":"da","ドイツ語":"de","トルコ語":"tr","ノルウェー語":"nb","ハイチ語":"ht","バスク語":"eu","ハンガリー語":"hu","ヒンディー語":"hi","フィンランド語":"fi","フランス語":"fr","ブルガリア語":"bg","ベトナム語":"vi","ヘブライ語":"he","ベラルーシ語":"be","ペルシャ語":"fa","ポーランド語":"pl","ポルトガル語":"pt","マオリ語":"mi","マケドニア語":"mk","マラーティー語":"mr","マラヤーラム語":"ml","マルタ語":"mt","マレー語":"ms","ミャンマー語（ビルマ語）":"my","モンゴル語":"mn","ラテン語":"la","ラトビア語":"lv","リトアニア語":"lt","ルーマニア語":"ro","ロシア語":"ru","英語":"en","韓国語":"ko","中国語（簡体）":"zh-cn","中国語（繁体）":"zh-tw","日本語":"ja","albanees":"sq","armeens":"hy","azerbeidzjaans":"az","birmaans":"my","bulgaars":"bg","catalaans":"ca","chinees (traditioneel)":"zh-tw","chinees (vereenvoudigd)":"zh-cn","deens":"da","duits":"de","engels":"en","ests":"et","fins":"fi","frans":"fr","galicisch":"gl","grieks":"el","haïtiaans creools":"ht","hebreeuws":"he","hongaars":"hu","iers":"ga","ijslands":"is","italiaans":"it","japans":"ja","koerdisch (kurmanji)":"ku","koerdisch (sorani)":"ckb","koreaans":"ko","latijn":"la","lets":"lv","litouws":"lt","macedonisch":"mk","maleis":"ms","maltees":"mt","mongools":"mn","nederlands":"nl","noors":"nb","oekraïens":"uk","oezbeeks":"uz","perzisch":"fa","pools":"pl","portugees":"pt","roemeens":"ro","schots keltisch":"gd","servisch":"sr","slovaaks":"sk","sloveens":"sl","spaans":"es","tsjechisch":"cs","turks":"tr","vietnamees":"vi","wels":"cy","zoeloe":"zu","zweeds":"sv","土耳其文":"tr","中文 (繁體)":"zh-tw","中文 (簡體)":"zh-cn","丹麥文":"da","巴斯克文":"eu","日文":"ja","毛利文":"mi","世界語":"eo","加里西亞文":"gl","加泰羅尼亞文":"ca","卡納達文":"kn","白俄羅斯文":"be","立陶宛文":"lt","冰島文":"is","匈牙利文":"hu","印尼文":"id","印度文":"hi","西班牙文":"es","克羅埃西亞文":"hr","希伯來文":"he","希臘文":"el","亞美尼亞文":"hy","亞塞拜然文":"az","拉丁文":"la","拉脫維亞文":"lv","法文":"fr","波斯文":"fa","波蘭文":"pl","芬蘭文":"fi","阿姆哈拉文":"am","阿拉伯文":"ar","阿爾巴尼亞文":"sq","俄文":"ru","保加利亞文":"bg","南非祖魯文":"zu","威爾斯文":"cy","英文":"en","庫德文 (庫爾曼吉文)":"ku","庫德文 (索拉尼文)":"ckb","挪威文":"nb","泰文":"th","泰盧固文":"te","海地克里奧文":"ht","烏克蘭文":"uk","烏茲別克文":"uz","馬耳他文":"mt","馬來文":"ms","馬其頓文":"mk","馬拉地文":"mr","馬拉雅拉姆文":"ml","捷克文":"cs","荷蘭文":"nl","斯洛伐克文":"sk","斯洛維尼亞文":"sl","越南文":"vi","塞爾維亞文":"sr","愛沙尼亞文":"et","愛爾蘭文":"ga","瑞典文":"sv","義大利文":"it","葡萄牙文":"pt","蒙古文":"mn","德文":"de","緬甸文":"my","韓文":"ko","羅馬尼亞文":"ro","蘇格蘭的蓋爾文":"gd","אוזבקית":"uz","אוקראינית":"uk","אזרית":"az","איטלקית":"it","אינדונזית":"id","איסלנדית":"is","אירית":"ga","אלבנית":"sq","אמהרית":"am","אנגלית":"en","אסטונית":"et","אספרנטו":"eo","ארמנית":"hy","באסקית":"eu","בולגרית":"bg","בורמזית":"my","בלארוסית":"be","גליציאנית":"gl","גרמנית":"de","דנית":"da","הולנדית":"nl","הונגרית":"hu","הינדי":"hi","וולשית":"cy","וייטנאמית":"vi","זולו":"zu","טורקית":"tr","טלוגו":"te","יוונית":"el","יפנית":"ja","כורדית (כורמנג\'ית)":"ku","כורדית (סורנית)":"ckb","לטבית":"lv","לטינית":"la","ליטאית":"lt","מאורית":"mi","מונגולית":"mn","מלאיאלאם":"ml","מלאית":"ms","מלטית":"mt","מקדונית":"mk","מראטהית":"mr","נורווגית":"nb","סינית (מסורתית)":"zh-tw","‏סינית (פשוטה)":"zh-cn","סלובנית":"sl","סלובקית":"sk","ספרדית":"es","סקוטית גאלית":"gd","סרבית":"sr","עברית":"he","ערבית":"ar","פולנית":"pl","פורטוגזית":"pt","פינית":"fi","פרסית":"fa","צ\'כית":"cs","צרפתית":"fr","קאנאדה":"kn","קוריאנית":"ko","קטלאנית":"ca","קרואטית":"hr","קריאולית האיטית":"ht","רומנית":"ro","רוסית":"ru","שוודית":"sv","תאית":"th","ကနာဒါ":"kn","ကိုရီးယား":"ko","ကက်တလန်":"ca","ကဒ် (ကာမန်ဂျီ)":"ku","ကဒ် (ဆိုရာနီ)":"ckb","ခရိုအေးရှား":"hr","ချက်":"cs","ဂရိ":"el","ဂယ်လိရှ":"gl","ဂျပန်":"ja","ဂျာမန်":"de","စကော့ ဂေးလစ်":"gd","စပိန်":"es","ဆလိုဗေးနီးယား":"sl","ဆလိုဗက်":"sk","ဆားဘီးယား":"sr","ဆွီဒင်":"sv","ဇူးလူး":"zu","တရုတ် (ရိုးရာ)":"zh-tw","တရုတ် (ရိုးရှင်း)":"zh-cn","တူ​ရ​ကီ":"tr","တယ်လူဂူ":"te","ထိုင်း":"th","ဒတ်ချ်":"nl","ဒိန်းမတ်":"da","နော်ဝေး":"nb","ပါရှန်":"fa","ပေါ်တူဂီ":"pt","ပိုလန်":"pl","ပြင်သစ်":"fr","ဖင်လန်":"fi","ဗီယက်နမ်":"vi","ဘီလာရစ်":"be","ဘူဂေးရီးယား":"bg","ဘာစ်ခ်":"eu","မလေယာလမ်":"ml","မလေး":"ms","မာရာသီ":"mr","မော်ရီ":"mi","မော်လတာ":"mt","မက်ဆီဒိုးနီးယား":"mk","မြန်မာ":"my","မွန်ဂိုလီးယား":"mn","ယူ​က​ရိန်း​":"uk","ရုရှား":"ru","ရိုမေးနီးယား":"ro","လက်တင်":"la","လစ်သူဝေးနီးယား":"lt","လတ်ဗီယာ":"lv","ဝေလ":"cy","ဟီဘရူး":"he","ဟေတီ ခရီအိုး":"ht","ဟန်ဂေရီ":"hu","ဟိန္ဒူ":"hi","အဇာဘိုင်ဂျန်":"az","အာမေးနီးယား":"hy","အာရေဗျ":"ar","အီတလီ":"it","ဥဇဘက်":"uz","အက်စတိုးနီးယား":"et","အက်စ်ပဲရန်တို":"eo","အိုက်စလန်":"is","အင်္ဂလိပ်":"en","အင်ဒိုနီးရှား":"id","အိုင်းရစ်ရှ်":"ga","အမ်ဟဲရစ်ခ်":"am","အယ်လ်ဘေးနီးယား":"sq","అజర్‌బైజాని":"az","అర్మేనియన్":"hy","అల్బేనియన్":"sq","ఆంగ్లము":"en","ఆమ్హారిక్":"am","ఆరబిక్":"ar","ఇండొనేసియన్":"id","ఇటాలియన్":"it","ఉజ్బెక్":"uz","ఎస్పెరాంటో":"eo","ఏస్టోనియన్":"et","ఐరిష్":"ga","ఐస్ లాండిక్":"is","కన్నడ":"kn","కుర్దిష్ (కుర్మాంజి)":"ku","కుర్దిష్ (సొరని)":"ckb","కొరియన్":"ko","క్యాటలాన్":"ca","క్రొయేషియన్":"hr","గాలిసియన్":"gl","గ్రీక్":"el","చెక్":"cs","చైనీస్ (సరళమైన)":"zh-cn","చైనీస్ (సాంప్రదాయమైన)":"zh-tw","జపనీస్":"ja","జర్మన్":"de","జులు":"zu","టర్కిష్":"tr","డచ్":"nl","డానిష్":"da","తెలుగు":"te","థాయ్":"th","నార్విజియన్":"nb","పర్షియన్":"fa","పోర్చుగీస్":"pt","పోలిష్":"pl","ఫిన్నిష్":"fi","ఫ్రెంచ్":"fr","బర్మీస్":"my","బల్గేరియన్":"bg","బాస్క్":"eu","బెలారష్యన్":"be","మంగోలియన్":"mn","మయోరి":"mi","మరాఠీ":"mr","మలయాళం":"ml","మాలై":"ms","మాల్టీస్":"mt","మాసిడోనియన్":"mk","యుక్రేనియన్":"uk","రష్యన్":"ru","రొమేనియన్":"ro","లాటిన్":"la","లాట్వియన్":"lv","లిథువేనియన్":"lt","వియత్నామీస్":"vi","వెల్ష్":"cy","సెర్బియన్":"sr","స్కాట్స్ గేలిక్":"gd","స్పానిష్":"es","స్లోవాక్":"sk","స్లోవేనియన్":"sl","స్వీడిష్":"sv","హంగేరియన్":"hu","హిందీ":"hi","హీబ్రూ":"he","హైయేటియన్ క్రియోల్":"ht","азербайжан":"az","албани":"sq","амхарик":"am","англи":"en","араб":"ar","армени":"hy","баск":"eu","беларусь":"be","бирм":"my","болгар":"bg","вьетнам":"vi","галик":"gl","гаэл":"gd","герман":"de","голланд":"nl","грек":"el","дани":"da","зулу":"zu","индонез":"id","ирланд":"ga","исланд":"is","испани":"es","итали":"it","каннада":"kn","каталан":"ca","кипр":"he","курд (курманжи)":"ku","курд (сорани)":"ckb","латви":"lv","латин":"la","литва":"lt","македон":"mk","малай":"ms","малайлам":"ml","малти":"mt","маори":"mi","марати":"mr","монгол":"mn","норвег":"nb","орос":"ru","перс":"fa","польш":"pl","португаль":"pt","румын":"ro","серби":"sr","словак":"sk","словени":"sl","солонгос":"ko","тай":"th","турк":"tr","тэлүгү":"te","узбек":"uz","украин":"uk","унгар":"hu","уэльс":"cy","финланд":"fi","франц":"fr","хаити креол":"ht","хинди":"hi","хорват":"hr","хятад (уламжлалт)":"zh-tw","хятад хэл (хялбаршуулсан)":"zh-cn","чех":"cs","швед":"sv","эсперанто":"eo","эстони":"et","япон":"ja","albaneg":"sq","almaeneg":"de","amhareg":"am","arabeg":"ar","armeneg":"hy","aserbaijaneg":"az","basgeg":"eu","belarwseg":"be","bwlgareg":"bg","catalaneg":"ca","creol haiti":"ht","croateg":"hr","cwrdeg (kurmandji)":"ku","cwrdeg (sorani)":"ckb","cymraeg":"cy","daneg":"da","eidaleg":"it","estoneg":"et","fietnameg":"vi","ffineg":"fi","fflemeg":"nl","ffrangeg":"fr","gaeleg yr alban":"gd","galiseg":"gl","groeg":"el","gwyddeleg":"ga","hebraeg":"he","hwngareg":"hu","iaith corea":"ko","indonesieg":"id","islandeg":"is","japaneg":"ja","latfieg":"lv","lithwaneg":"lt","lladin":"la","macedoneg":"mk","malteseg":"mt","mongoleg":"mn","myanmar (byrma)":"my","norwyeg":"nb","perseg":"fa","portiwgaleg":"pt","pwyleg":"pl","rwmaneg":"ro","rwsieg":"ru","saesneg":"en","sbaeneg":"es","serbeg":"sr","slofaceg":"sk","slofeneg":"sl","swedeg":"sv","swlw":"zu","telwgw":"te","tsieceg":"cs","tsieineeg (traddodiadol)":"zh-tw","tsieineeg (wedi symleiddio)":"zh-cn","twrceg":"tr","usbec":"uz","wcreineg":"uk","albán":"sq","angol":"en","arab":"ar","baszk":"eu","belorusz":"be","bolgár":"bg","burmai":"my","cseh":"cs","dán":"da","eszperantó":"eo","észt":"et","finn":"fi","francia":"fr","galíciai":"gl","görög":"el","haiti kreol":"ht","héber":"he","horvát":"hr","indonéz":"id","ír":"ga","izlandi":"is","japán":"ja","katalán":"ca","kínai (egyszerűsített)":"zh-cn","kínai (hagyományos)":"zh-tw","koreai":"ko","kurd (kurmanji)":"ku","kurd (szoráni)":"ckb","lengyel":"pl","lett":"lv","litván":"lt","macedón":"mk","magyar":"hu","maláj":"ms","malajálam":"ml","máltai":"mt","maráthi":"mr","mongol":"mn","német":"de","norvég":"nb","olasz":"it","orosz":"ru","örmény":"hy","perzsa":"fa","portugál":"pt","román":"ro","skót-gael":"gd","spanyol":"es","svéd":"sv","szerb":"sr","szlovák":"sk","szlovén":"sl","török":"tr","ukrán":"uk","üzbég":"uz","walesi":"cy","almanca":"de","arapça":"ar","arnavutça":"sq","azerbaycan dili":"az","baskça":"eu","belarusça":"be","bulgarca":"bg","burmaca":"my","çekçe":"cs","çince (basitleştirilmiş)":"zh-cn","çince (geleneksel)":"zh-tw","danca":"da","endonezce":"id","ermenice":"hy","estonyaca":"et","farsça":"fa","felemenkçe":"nl","fince":"fi","fransızca":"fr","galce":"cy","galiçyaca":"gl","habeşçe":"am","haiti kreyolu":"ht","hırvatça":"hr","hintçe":"hi","i̇branice":"he","i̇ngilizce":"en","i̇rlandaca":"ga","i̇skoç gaelcesi":"gd","i̇spanyolca":"es","i̇sveççe":"sv","i̇talyanca":"it","i̇zlandaca":"is","japonca":"ja","katalanca":"ca","korece":"ko","kürtçe (kurmançça)":"ku","kürtçe (sorani)":"ckb","latince":"la","lehçe":"pl","letonca":"lv","litvanca":"lt","macarca":"hu","makedonca":"mk","malayca":"ms","maltaca":"mt","maori dili":"mi","moğolca":"mn","norveççe":"nb","özbekçe":"uz","portekizce":"pt","romence":"ro","rusça":"ru","sırpça":"sr","slovakça":"sk","slovence":"sl","telugu dili":"te","türkçe":"tr","ukraynaca":"uk","vietnamca":"vi","yunanca":"el","अझरबैजानी":"az","अम्हारिक":"am","अरबी":"ar","अर्मेनियन":"hy","अल्बानियन":"sq","आइसलँडिक":"is","आयरिश":"ga","इंग्रजी":"en","इंडोनेशियन":"id","इटालियन":"it","उझ्बेक":"uz","एस्टोनियन":"et","एस्परँटो":"eo","कन्नड":"kn","कुर्दिश (कुर्मांजी)":"ku","कुर्दिश (सोरानी)":"ckb","कॅटलान":"ca","कोरियन":"ko","क्रोएशियन":"hr","गॅलिशियन":"gl","ग्रीक":"el","चीनी (पारंपारिक)":"zh-tw","चीनी (सरलीकृत)":"zh-cn","जपानी":"ja","जर्मन":"de","झुलु":"zu","झेक":"cs","डच":"nl","डॅनिश":"da","तुर्की":"tr","तेलुगु":"te","थाई":"th","नॉर्वेजियन":"nb","पोर्तुगीज":"pt","पोलिश":"pl","फारसी":"fa","फिन्निश":"fi","फ्रेंच":"fr","बल्गेरियन":"bg","बास्क":"eu","बेलारुशियन":"be","मंगोलियन":"mn","मराठी":"mr","मलय":"ms","मल्याळम":"ml","माओरी":"mi","माल्टीज":"mt","मॅसेडोनियन":"mk","म्यानमार (बर्मीज)":"my","युक्रेनियन":"uk","रशियन":"ru","रोमानियन":"ro","लाट्वियन":"lv","लिथुआनियन":"lt","लॅटिन":"la","वेल्श":"cy","व्हिएतनामी":"vi","सर्बियन":"sr","स्कॉट्स गेलिक":"gd","स्पॅनिश":"es","स्लोव्हाक":"sk","स्लोव्हेनियन":"sl","स्वीडिश":"sv","हंगेरियन":"hu","हिन्दी":"hi","हिब्रू":"he","हैतीयन क्रेओल":"ht","albanyen":"sq","amenyen":"hy","amharik":"am","anglè":"en","azèbajani":"az","belarisyen":"be","bilgaryen":"bg","chinwa (senp)":"zh-cn","chinwa (tradisyonèl)":"zh-tw","danwa":"da","ebre":"he","endonezyen":"id","endou":"hi","estonyen":"et","fenlandè":"fi","franse":"fr","gaelik ekosè":"gd","galisyen":"gl","grèk":"el","ikrenyen":"uk","ilandè":"ga","islandè":"is","italyen":"it","izbèk":"uz","japonè":"ja","kanada":"kn","koreyen":"ko","kreyòl ayisyen":"ht","kurd (kurmandji)":"ku","kurd (sorani)":"ckb","kwoasyen":"hr","laten":"la","letonyen":"lv","lityanyen":"lt","malè":"ms","malt":"mt","masedonyen":"mk","mongolyen":"mn","myanma (burmese)":"my","nòvejyen":"nb","olandè, neyèlandè":"nl","onngaryen":"hu","panyòl":"es","pèsyen":"fa","polonè":"pl","pòtigè":"pt","ris":"ru","romanyen":"ro","sèb":"sr","slovenyen":"sl","syedwa":"sv","tay":"th","tuk":"tr","tyèk":"cs","vyetnamyen":"vi","zoulou":"zu","albaniż":"sq","amħari":"am","armen":"hy","ażerbajġani":"az","belarussu":"be","bulgaru":"bg","ċek":"cs","ċiniż (simplifikat)":"zh-cn","ċiniż (tradizzjonali)":"zh-tw","creole haiti":"ht","daniż":"da","ebrajk":"he","estonjan":"et","finlandiż":"fi","franċiż":"fr","ġappuniż":"ja","ġermaniż":"de","gaelic tal-iskoċċiżi":"gd","galizjan":"gl","grieg":"el","għarbi":"ar","ħindi":"hi","indoneżjan":"id","ingliż":"en","irlandiż":"ga","islandiż":"is","kroat":"hr","latvjan":"lv","litwen":"lt","maċedonjan":"mk","malajalam":"ml","malasjan":"ms","malti":"mt","mjanmar (burma)":"my","mongoljan":"mn","norveġiż":"nb","olandiż":"nl","persjan":"fa","pollakk":"pl","portugiż":"pt","rumen":"ro","russu":"ru","slovakk":"sk","spanjol":"es","svediż":"sv","tajlandiż":"th","taljan":"it","tork":"tr","ukren":"uk","ungeriż":"hu","użbek":"uz","vjetnamiż":"vi","żulu":"zu","الآيسلندية":"is","الأذرية":"az","الأرمنية":"hy","الإسبانية":"es","الإسبرانتو":"eo","الإستونية":"et","الألبانية":"sq","الألمانية":"de","الأمهرية":"am","الإنجليزية":"en","الإندونيسية":"id","الأوزبكية":"uz","الأوكرانية":"uk","الأيرلندية":"ga","الإيطالية":"it","الباسكية":"eu","البرتغالية":"pt","البلغارية":"bg","البورمية":"my","البولندية":"pl","البيلاروسية":"be","التايلاندية":"th","التركية":"tr","التشيكية":"cs","التيلوغوية":"te","الجاليكية":"gl","الدانمركية":"da","الروسية":"ru","الرومانية":"ro","الزولو":"zu","السلوفاكية":"sk","السلوفينية":"sl","السويدية":"sv","الصربية":"sr","الصينية (التقليدية)":"zh-tw","الصينية (المبسطة)":"zh-cn","العبرية":"he","العربية":"ar","الغيلية الأسكتلندية":"gd","الفارسية":"fa","الفرنسية":"fr","الفنلندية":"fi","الفيتنامية":"vi","القطلونية":"ca","الكردية (السورانية)":"ckb","الكردية (الكرمانجية)":"ku","الكرواتية":"hr","الكنادية":"kn","الكورية":"ko","اللاتفية":"lv","اللاتينية":"la","اللغة الكريولية الهايتية":"ht","الليتوانية":"lt","الماراثية":"mr","المالايالامية":"ml","المالطيّة":"mt","الماورية":"mi","المقدونية":"mk","الملايو":"ms","المنغولية":"mn","النرويجية":"nb","الهندية":"hi","الهنغارية":"hu","الهولندية":"nl","الويلزية":"cy","اليابانية":"ja","اليونانية":"el","farsi":"fa","galisisk":"gl","gresk":"el","hviterussisk":"be","kinesisk (tradisjonell)":"zh-tw","kreol (haiti)":"ht","latvisk":"lv","malayisk":"ms","rumensk":"ro","tsjekkisk":"cs","ahepaitani":"az","airihi":"ga","amariki":"am","amēniana":"hy","arapeinia":"sq","arapi":"ar","eperānato":"eo","etōnia":"et","haina (onamata)":"zh-tw","hainamana (kua whakamāmātia)":"zh-cn","hanekeria":"hu","hapanihi":"ja","herepia":"sr","hinerangi":"fi","hīni":"hi","hiperu":"he","horowākia":"sk","horowinia":"sl","huitene":"sv","huru":"zu","ingarihi":"en","initonīhia":"id","itāriana":"it","karihia":"gl","katarāna":"ca","kereore haiti":"ht","kiriki":"el","kōreana":"ko","koroātiana":"hr","korukoru":"tr","kūrihi (horani)":"ckb","kūrihi (kurumanihi)":"ku","makerōnia":"mk","māori":"mi","māratihi":"mt","marei":"ms","mareiarama":"ml","mongōriana":"mn","nōwei":"nb","pākihi":"eu","pāniora":"es","pēma (purumīhi)":"my","peraruhia":"be","perēhia":"fa","pōrana":"pl","potukīhi":"pt","purukāriana":"bg","rātini":"la","rāwhiana":"lv","rituānia":"lt","romānia":"ro","rūhia":"ru","tati":"nl","tenemāka":"da","teruku":"te","tiamana":"de","tieke":"cs","tiorangi":"is","tuauri kotarangi":"gd","uhipeke":"uz","ūkareiana":"uk","wēra":"cy","whitināmu":"vi","wīwī":"fr","azerbaijan":"az","bahasa melayu":"ms","belanda":"nl","belarus":"be","cina (mudah)":"zh-cn","cina (tradisional)":"zh-tw","croatia":"hr","denmark":"da","estonia":"et","finland":"fi","gaelic scotland":"gd","hungary":"hu","ibrani":"he","iceland":"is","inggeris":"en","ireland":"ga","itali":"it","jepun":"ja","jerman":"de","kreol haiti":"ht","kurdistan (kurmanji)":"ku","kurdistan (sorani)":"ckb","lithuania":"lt","macedonia":"mk","myanmar (burma)":"my","norway":"nb","parsi":"fa","perancis":"fr","poland":"pl","portugis":"pt","rusia":"ru","sepanyol":"es","sweden":"sv","turki":"tr","ukraine":"uk","wales":"cy","ả rập":"ar","anh":"en","ba lan":"pl","ba tư":"fa","bồ đào nha":"pt","creole (haiti)":"ht","do thái":"he","đan mạch":"da","đức":"de","gael scotland":"gd","hà lan":"nl","hàn":"ko","hy lạp":"el","latinh":"la","mã lai":"ms","mông cổ":"mn","myanmar":"my","na uy":"nb","nga":"ru","nhật":"ja","pháp":"fr","phần lan":"fi","quốc tế ngữ":"eo","rumani":"ro","séc":"cs","tây ban nha":"es","thái":"th","thổ nhĩ kỳ":"tr","thụy điển":"sv","trung (giản thể)":"zh-cn","trung (phồn thể)":"zh-tw","việt":"vi","xứ wales":"cy","ý":"it","آذرباﻳﺠﺎﻧﻰ":"az","آلبانیایی":"sq","آلمانی":"de","ارمنی":"hy","ازبکی":"uz","اسپانیایی":"es","اسپرانتو":"eo","استونيايی":"et","اسلواکی":"sk","اسلونیایی":"sl","اکراينی":"uk","امهری":"am","اندونزيايی":"id","انگلیسی":"en","ایتالیایی":"it","ایرلندی":"ga","ايسلندی":"is","باسکی":"eu","برمه‌ای":"my","بلاروسی":"be","بلغاری":"bg","پرتغالی":"pt","تايلندی":"th","ترکی استانبولی":"tr","تلوگو":"te","چک":"cs","چینی (ساده‌شده)":"zh-cn","چینی (سنتی)":"zh-tw","دانمارکی":"da","روسی":"ru","رومانيايی":"ro","زولو":"zu","ژاپنی":"ja","سوئدی":"sv","صربی":"sr","عبری":"he","عربی":"ar","فارسی":"fa","فرانسوی":"fr","فنلاندی":"fi","کاتالان":"ca","کرئول هائیتی":"ht","کردی (سورانی)":"ckb","کردی (کرمانجی)":"ku","کرواتی":"hr","کره‌ای":"ko","کنادا":"kn","گالیسی":"gl","گاليک اسکاتلندی":"gd","لاتين":"la","لتونيايی":"lv","لهستانی":"pl","ليتوانيايی":"lt","مائوری":"mi","مالایالمی":"ml","مالايی":"ms","مالتی":"mt","مجاری":"hu","مراتی":"mr","مغولی":"mn","مقدونيه‌ای":"mk","نروژی":"nb","ولزی":"cy","ويتنامی":"vi","هلندی":"nl","هندی":"hi","يونانی":"el","airių":"ga","albanų":"sq","amharų":"am","anglų":"en","arabų":"ar","armėnų":"hy","azerbaidžaniečių":"az","baltarusių":"be","baskų":"eu","birmiečių":"my","bulgarų":"bg","čekų":"cs","danų":"da","estų":"et","galisų":"gl","graikų":"el","haičio kreolų":"ht","hebrajų":"he","indoneziečių":"id","islandų":"is","ispanų":"es","italų":"it","japonų":"ja","kanadų":"kn","kataloniečių":"ca","kinų (supaprastinta)":"zh-cn","kinų (tradicinė)":"zh-tw","korėjiečių":"ko","kroatų":"hr","kurdų (kurmandžių)":"ku","kurdų (soranių)":"ckb","latvių":"lv","lenkų":"pl","lietuvių":"lt","lotynų":"la","makedoniečių":"mk","malajalių":"ml","malajiečių":"ms","maltiečių":"mt","maorių":"mi","maratų":"mr","mongolų":"mn","norvegų":"nb","olandų":"nl","persų":"fa","portugalų":"pt","prancūzų":"fr","rumunų":"ro","rusų":"ru","serbų":"sr","slovakų":"sk","slovėnų":"sl","suomių":"fi","škotų":"gd","švedų":"sv","tajų":"th","telugų":"te","turkų":"tr","ukrainiečių":"uk","uzbekų":"uz","valų":"cy","vengrų":"hu","vietnamiečių":"vi","vokiečių":"de","zulusų":"zu","阿尔巴尼亚语":"sq","阿拉伯语":"ar","阿姆哈拉语":"am","阿塞拜疆语":"az","爱尔兰语":"ga","爱沙尼亚语":"et","巴斯克语":"eu","白俄罗斯语":"be","保加利亚语":"bg","冰岛语":"is","波兰语":"pl","波斯语":"fa","丹麦语":"da","德语":"de","俄语":"ru","法语":"fr","芬兰语":"fi","海地克里奥尔语":"ht","韩语":"ko","荷兰语":"nl","加利西亚语":"gl","加泰罗尼亚语":"ca","捷克语":"cs","卡纳达语":"kn","克罗地亚语":"hr","库尔德语（库尔曼吉语）":"ku","库尔德语（索拉尼）":"ckb","拉丁语":"la","拉脱维亚语":"lv","立陶宛语":"lt","罗马尼亚语":"ro","马耳他语":"mt","马拉地语":"mr","马拉雅拉姆语":"ml","马来语":"ms","马其顿语":"mk","毛利语":"mi","蒙古语":"mn","缅甸语":"my","南非祖鲁语":"zu","挪威语":"nb","葡萄牙语":"pt","日语":"ja","瑞典语":"sv","塞尔维亚语":"sr","世界语":"eo","斯洛伐克语":"sk","斯洛文尼亚语":"sl","苏格兰盖尔语":"gd","泰卢固语":"te","泰语":"th","土耳其语":"tr","威尔士语":"cy","乌克兰语":"uk","乌兹别克语":"uz","西班牙语":"es","希伯来语":"he","希腊语":"el","匈牙利语":"hu","亚美尼亚语":"hy","意大利语":"it","印地语":"hi","印尼语":"id","英语":"en","越南语":"vi","中文（繁体）":"zh-tw","中文（简体）":"zh-cn","airméinis":"hy","albáinis":"sq","amárais":"am","araibis":"ar","asarbaiseáinis":"az","bascais":"eu","bealarúisis":"be","béarla":"en","breatnais":"cy","bulgáiris":"bg","cannadais":"kn","catalóinis":"ca","coirdis (curmainsis)":"ku","coirdis (sorani)":"ckb","cóiréis":"ko","criól háítí":"ht","cróitis":"hr","danmhairgis":"da","eabhrais":"he","eastóinis":"et","fionlainnis":"fi","fraincis":"fr","gaeilge":"ga","gaeilge na halban":"gd","gailísis":"gl","gearmáinis":"de","gréigis":"el","hiondúis":"hi","indinéisis":"id","iodáilis":"it","ioruais":"nb","íoslainnis":"is","laidin":"la","laitvis":"lv","liotuáinis":"lt","macadóinis":"mk","maenmar (burmais)":"my","mailéalaimis":"ml","malaeis":"ms","máltais":"mt","maorais":"mi","maraitis":"mr","mongóilis":"mn","ollainnis":"nl","peirsis":"fa","polainnis":"pl","portaingéilis":"pt","rómáinis":"ro","rúisis":"ru","seapáinis":"ja","seicis":"cs","seirbis":"sr","sínis (simplithe)":"zh-cn","sínis (traidisiúnta)":"zh-tw","slóivéinis":"sl","slóvaicis":"sk","spáinnis":"es","sualainnis":"sv","súlúis":"zu","téalainnis":"th","teileagúis":"te","tuircis":"tr","úcráinis":"uk","úisbéiceastáinis":"uz","ungáiris":"hu","vítneaimis":"vi","acerbaixano":"az","albanés":"sq","alemán":"de","amárico":"am","árabe":"ar","armenio":"hy","bielorruso":"be","búlgaro":"bg","canarés":"kn","catalán":"ca","checo":"cs","chinés (simplificado)":"zh-cn","chinés (tradicional)":"zh-tw","crioulo haitiano":"ht","croata":"hr","dinamarqués":"da","eslovaco":"sk","esloveno":"sl","español":"es","estoniano":"et","éuscaro":"eu","finés":"fi","francés":"fr","gaélico escocés":"gd","galego":"gl","galés":"cy","grego":"el","hebreo":"he","húngaro":"hu","indonesio":"id","inglés":"en","irlandés":"ga","islandés":"is","kurdo (kurmanji)":"ku","kurdo (sorani)":"ckb","latín":"la","letón":"lv","macedonio":"mk","malabar":"ml","malaio":"ms","maltés":"mt","maorí":"mi","neerlandés":"nl","noruegués":"nb","persa":"fa","polaco":"pl","portugués":"pt","romanés":"ro","ruso":"ru","serbio":"sr","sueco":"sv","tailandés":"th","telugú":"te","ucraíno":"uk","uzbeko":"uz","xaponés":"ja","zulú":"zu","азербејџански":"az","албански":"sq","амхарски":"am","арапски":"ar","баскијски":"eu","белоруски":"be","бугарски":"bg","бурмански":"my","велшки":"cy","вијетнамски":"vi","галски":"gl","грчки":"el","дански":"da","енглески":"en","есперанто":"eo","естонски":"et","индонежански":"id","ирски":"ga","исландски":"is","италијански":"it","јапански":"ja","јерменски":"hy","канада":"kn","каталонски":"ca","кинески (поједностављени)":"zh-cn","кинески (традиционални)":"zh-tw","корејски":"ko","курдски (курмањи)":"ku","курдски (сорани)":"ckb","латински":"la","летонски":"lv","литвански":"lt","мађарски":"hu","македонски":"mk","малајалам":"ml","малајски":"ms","малтешки":"mt","маорски":"mi","монголски":"mn","немачки":"de","норвешки":"nb","персијски":"fa","пољски":"pl","португалски":"pt","румунски":"ro","руски":"ru","словачки":"sk","словеначки":"sl","српски":"sr","тајски":"th","телугу":"te","турски":"tr","узбечки":"uz","украјински":"uk","фински":"fi","француски":"fr","хаићански креолски":"ht","хебрејски":"he","холандски":"nl","хрватски":"hr","чешки":"cs","шведски":"sv","шкотски галски":"gd","шпански":"es","albański":"sq","amharski":"am","angielski":"en","arabski":"ar","azerski":"az","baskijski":"eu","białoruski":"be","birmański":"my","bułgarski":"bg","chiński (tradycyjny)":"zh-tw","chiński (uproszczony)":"zh-cn","chorwacki":"hr","czeski":"cs","duński":"da","estoński":"et","fiński":"fi","francuski":"fr","galicyjski":"gl","grecki":"el","hebrajski":"he","hiszpański":"es","indonezyjski":"id","irlandzki":"ga","islandzki":"is","japoński":"ja","kataloński":"ca","koreański":"ko","kreolski (haiti)":"ht","kurdyjski (kurmandżi)":"ku","kurdyjski (sorani)":"ckb","litewski":"lt","łaciński":"la","łotewski":"lv","macedoński":"mk","malajski":"ms","maltański":"mt","mongolski":"mn","niderlandzki":"nl","niemiecki":"de","norweski":"nb","ormiański":"hy","perski":"fa","polski":"pl","portugalski":"pt","rosyjski":"ru","rumuński":"ro","serbski":"sr","słowacki":"sk","słoweński":"sl","szkocki gaelicki":"gd","szwedzki":"sv","tajski":"th","turecki":"tr","ukraiński":"uk","uzbecki":"uz","walijski":"cy","węgierski":"hu","wietnamski":"vi","włoski":"it","ադրբեջաներեն":"az","ալբաներեն":"sq","ամհարերեն":"am","անգլերեն":"en","արաբերեն":"ar","բասկերեն":"eu","բելառուսերեն":"be","բիրմաներեն":"my","բուլղարերեն":"bg","գալիսերեն":"gl","գելական շոտլանդերեն":"gd","գերմաներեն":"de","դանիերեն":"da","եբրայերեն":"he","զուլուսերեն":"zu","էսպերանտո":"eo","էստոներեն":"et","թայերեն":"th","թուրքերեն":"tr","ինդոնեզերեն":"id","իռլանդերեն":"ga","իսլանդերեն":"is","իսպաներեն":"es","իտալերեն":"it","լատիներեն":"la","լատվիերեն":"lv","լեհերեն":"pl","լիտվերեն":"lt","խորվաթերեն":"hr","կաննադա":"kn","կատալաներեն":"ca","կորեերեն":"ko","հայերեն":"hy","հինդի":"hi","հոլանդերեն":"nl","հունարեն":"el","հունգարերեն":"hu","ճապոներեն":"ja","մալայալամ":"ml","մալայերեն":"ms","մալթայերեն":"mt","մակեդոներեն":"mk","մաորի":"mi","մարաթի":"mr","մոնղոլերեն":"mn","նորվեգերեն":"nb","շվեդերեն":"sv","ուզբեկերեն":"uz","ուկրաիներեն":"uk","չեխերեն":"cs","չինարեն (ավանդական)":"zh-tw","չինարեն (պարզեցված)":"zh-cn","պարսկերեն":"fa","պորտուգալերեն":"pt","ռումիներեն":"ro","ռուսերեն":"ru","սերբերեն":"sr","սլովակերեն":"sk","սլովեներեն":"sl","վալլերեն":"cy","վիետնամերեն":"vi","տելուգու":"te","քրդերեն (սորանի)":"ckb","քրդերեն (քուրմանջի)":"ku","քրեոլերեն (հաիթի)":"ht","ֆիններեն":"fi","ֆրանսերեն":"fr","albanski":"sq","arapski":"ar","armenski":"hy","azerbajdžanski":"az","bjeloruski":"be","bugarski":"bg","burmanski":"my","češki":"cs","danski":"da","engleski":"en","estonski":"et","finski":"fi","galski":"gl","grčki":"el","haićansko-kreolski":"ht","hebrejski":"he","hindu":"hi","hrvatski":"hr","indonezijski":"id","irski":"ga","islandski":"is","japanski":"ja","katalonski":"ca","kineski (pojednostavljeni)":"zh-cn","kineski (tradicionalni)":"zh-tw","korejski":"ko","kurdski (kurmanji)":"ku","kurdski (soranski)":"ckb","latinski":"la","latvijski/letonski":"lv","litvanski":"lt","mađarski":"hu","makedonski":"mk","malezijski":"ms","malteški":"mt","nizozemski":"nl","norveški":"nb","njemački":"de","perzijski":"fa","poljski":"pl","rumunjski":"ro","ruski":"ru","slovački":"sk","slovenski":"sl","srpski":"sr","škotski keltski":"gd","španjolski":"es","švedski":"sv","tajlandski":"th","talijanski":"it","turski":"tr","ukrajinski":"uk","uzbekistanski":"uz","velški":"cy","vijetnamski":"vi","chinese (esenziwe lula)":"zh-tw","irish":"ga","isi-albania":"sq","isi-amharic":"am","isi-basque":"eu","isi-belarusian":"be","isi-bulgarian":"bg","isi-dutch":"nl","isi-english":"en","isi-estonian":"et","isi-galician":"gl","isi-german":"de","isi-icelandic":"is","isi-italian":"it","isi-japanese":"ja","isi-latvian":"lv","isi-lithuanian":"lt","isi-macedonian":"mk","isi-malay":"ms","isi-malayalam":"ml","isi-maltese":"mt","isi-marathi":"mr","isi-mongolian":"mn","isi-polish":"pl","isi-portuguese":"pt","isi-russian":"ru","isi-scots gaelic":"gd","isi-spanish":"es","isi-swedish":"sv","isi-telugu":"te","isi-uzbek":"uz","isi-welsh":"cy","isizulu":"zu","азербайджанская":"az","албанская":"sq","амхарская":"am","англійская":"en","арабская":"ar","армянская":"hy","балгарская":"bg","баскская":"eu","беларуская":"be","бірманская (м\'янма)":"my","в\'етнамская":"vi","валійская":"cy","венгерская":"hu","гаіцянская крэольская":"ht","галандская":"nl","галісійская":"gl","грэчаская":"el","дацкая":"da","інданезійская":"id","ірландская":"ga","ісландская":"is","іспанская":"es","італьянская":"it","іўрыт":"he","карэйская":"ko","каталанская":"ca","кітайская (спрошчаная)":"zh-cn","кітайская (традыцыйная)":"zh-tw","курдская (курманджы)":"ku","курдская (сарані)":"ckb","латышская":"lv","лацінская":"la","літоўская":"lt","маары":"mi","македонская":"mk","малайская":"ms","малаялам":"ml","мальтыйская":"mt","мангольская":"mn","маратхі":"mr","нарвежская":"nb","нямецкая":"de","партугальская":"pt","персідская":"fa","польская":"pl","румынская":"ro","руская":"ru","сербская":"sr","славацкая":"sk","славенская":"sl","тайская":"th","турэцкая":"tr","тэлугу":"te","узбекская":"uz","украінская":"uk","фінская":"fi","французская":"fr","харвацкая":"hr","хіндзі":"hi","чэшская":"cs","шатландская гэльская":"gd","шведская":"sv","эсперанта":"eo","эстонская":"et","японская":"ja","ሀንጋሪኛ":"hu","ህንድኛ":"hi","ሊትዌንኛ":"lt","ላቲንኛ":"la","ላትቪያኛ":"lv","ማላያላምኛ":"ml","ማላይኛ":"ms","ማልቲስኛ":"mt","ማራቲኛ":"mr","ማዮሪኛ":"mi","ሜቄዶኒያኛ":"mk","ሞንጎሊያኛ":"mn","ራሽያኛ":"ru","ሮማኒያንኛ":"ro","ሰርቢያኛ":"sr","ስሎቫክኛ":"sk","ስሎቬንያኛ":"sl","ስዊድንኛ":"sv","ስፓኒሽኛ":"es","በርማኛ":"my","ቡልጋሪያኛ":"bg","ባስክኛ":"eu","ቤላሩስኛ":"be","ቪትናምኛ":"vi","ቱርክኛ":"tr","ታይኛ":"th","ቴሉጉኛ":"te","ቻይንኛ (ቀላሉ)":"zh-cn","ቻይንኛ (ባሕላዊው)":"zh-tw","ቼክኛ":"cs","ኖርዌጅያንኛ":"nb","አልባንያኛ":"sq","አማርኛ":"am","አርመኒያኛ":"hy","አዜርባይጃንኛ":"az","አይሪሽ":"ga","አይስላንድኛ":"is","ኡዝቤክኛ":"uz","ኤስቶኒያኛ":"et","ኤስፐራንቶ":"eo","እንዶኔዢያኛ":"id","እንግሊዝኛ":"en","ኩርድሽኛ (ሶራኒ)":"ckb","ኩርድሽኛ (ኩርማንጂ)":"ku","ካታላንኛ":"ca","ካናዳኛ":"kn","ክሮኤሽያኛ":"hr","ኮሪያኛ":"ko","ዌልሽ":"cy","ዐረብኛ":"ar","ዕብራይስጥ":"he","ዙሉኛ":"zu","የሃይቲ ክረኦሌኛ":"ht","የስኮት ጌልክኛ":"gd","ዩክሬንኛ":"uk","ደችኛ":"nl","ዴንሽኛ":"da","ጀርመንኛ":"de","ጃፓንኛ":"ja","ጋሊሺያኛ":"gl","ግሪክኛ":"el","ጣሊያንኛ":"it","ፈረንሳይኛ":"fr","ፊኒሽኛ":"fi","ፐርሺያኛ":"fa","ፖሊሽኛ":"pl","ፖርቱጋሊኛ":"pt","англиски":"en","баскиски":"eu","виетнамски":"vi","галициски":"gl","германски":"de","ерменски":"hy","индонезиски":"id","јапонски":"ja","кинески (поедноставен)":"zh-cn","кинески (традиционален)":"zh-tw","курдски (курманџи)":"ku","латвиски":"lv","малајалски":"ml","маратхи":"mr","мјанмарски (бурмански)":"my","персиски":"fa","полски":"pl","романски":"ro","словенечки":"sl","тајландски":"th","украински":"uk","унгарски":"hu","хаитски креолски":"ht","albanska":"sq","amharíska":"am","arabíska":"ar","armenska":"hy","aserska":"az","baskneska":"eu","búlgarska":"bg","búrmíska":"my","danska":"da","eistneska":"et","enska":"en","esperantó":"eo","finnska":"fi","franska":"fr","galisíska":"gl","gríska":"el","haítískt kreólamál":"ht","hebreska":"he","hindí":"hi","hollenska":"nl","hvítrússneska":"be","indónesíska":"id","írska":"ga","íslenska":"is","ítalska":"it","japanska":"ja","katalónska":"ca","kínverska (einfölduð)":"zh-cn","kínverska (hefðbundin)":"zh-tw","kóreska":"ko","króatíska":"hr","kúrdíska (kurmanji)":"ku","kúrdíska (soraní)":"ckb","latína":"la","lettneska":"lv","litháíska":"lt","makedónska":"mk","malajíska":"ms","maltneska":"mt","maoríska":"mi","maratí":"mr","mongólska":"mn","norska":"nb","persneska":"fa","portúgalska":"pt","pólska":"pl","rúmenska":"ro","rússneska":"ru","serbneska":"sr","skosk-gelíska":"gd","slóvakíska":"sk","slóvenska":"sl","spænska":"es","súlú":"zu","sænska":"sv","taílenska":"th","tékkneska":"cs","tyrkneska":"tr","ungverska":"hu","úkraínska":"uk","úsbekíska":"uz","velska":"cy","víetnamska":"vi","þýska":"de","albāņu":"sq","amharu":"am","angļu":"en","arābu":"ar","armēņu":"hy","azerbaidžāņu":"az","baltkrievu":"be","basku":"eu","birmiešu":"my","bulgāru":"bg","čehu":"cs","dāņu":"da","franču":"fr","galisiešu":"gl","grieķu":"el","holandiešu":"nl","horvātu":"hr","igauņu":"et","indonēziešu":"id","īru":"ga","īslandiešu":"is","itāļu":"it","ivrits":"he","japāņu":"ja","katalāņu":"ca","korejiešu":"ko","kreolu (haiti)":"ht","krievu":"ru","kurdu (kurmandži)":"ku","kurdu (sorani)":"ckb","ķīniešu (tradicionālā)":"zh-tw","ķīniešu (vienkāršotā)":"zh-cn","latīņu":"la","latviešu":"lv","lietuviešu":"lt","maķedoniešu":"mk","malajalamiešu":"ml","malajiešu":"ms","maltiešu":"mt","maratu":"mr","mongoļu":"mn","norvēģu":"nb","persiešu":"fa","poļu":"pl","portugāļu":"pt","rumāņu":"ro","serbu":"sr","skotu gēlu":"gd","slovāku":"sk","slovēņu":"sl","somu":"fi","spāņu":"es","taju":"th","turku":"tr","ukraiņu":"uk","ungāru":"hu","uzbeku":"uz","vācu":"de","velsiešu":"cy","vjetnamiešu":"vi","zviedru":"sv","азербайджански":"az","английски":"en","арабски":"ar","арменски":"hy","баски":"eu","беларуски":"be","бирмански":"my","български":"bg","галисийски":"gl","гръцки":"el","датски":"da","иврит":"he","индонезийски":"id","ирландски":"ga","испански":"es","италиански":"it","китайски (опростен)":"zh-cn","китайски (традиционен)":"zh-tw","корейски":"ko","кюрдски (курманджи)":"ku","кюрдски (сорани)":"ckb","латвийски":"lv","литовски":"lt","малайски":"ms","малтийски":"mt","немски":"de","нидерландски":"nl","норвежки":"nb","персийски":"fa","румънски":"ro","словашки":"sk","словенски":"sl","сръбски":"sr","тайландски":"th","уелски":"cy","узбекски":"uz","финландски":"fi","френски":"fr","хаитянски креолски":"ht","хърватски":"hr","шотландски келтски":"gd","японски":"ja","albanês":"sq","alemão":"de","armênio":"hy","azerbaijano":"az","bielorrusso":"be","birmanês":"my","canarês":"kn","catalão":"ca","chinês (simplificado)":"zh-cn","chinês (tradicional)":"zh-tw","curdo (sorâni)":"ckb","dinamarquês":"da","espanhol":"es","finlandês":"fi","francês":"fr","gaélico escocês":"gd","galês":"cy","hebraico":"he","holandês":"nl","indonésio":"id","inglês":"en","irlandês":"ga","islandês":"is","japonês":"ja","latim":"la","letão":"lv","macedônio":"mk","malaiala":"ml","maltês":"mt","marata":"mr","norueguês":"nb","polonês":"pl","português":"pt","romeno":"ro","sérvio":"sr","tailandês":"th","tcheco":"cs","telugo":"te","ucraniano":"uk","uzbeque":"uz","азербайджанский":"az","албанский":"sq","амхарский":"am","английский":"en","арабский":"ar","армянский":"hy","баскский":"eu","белорусский":"be","бирманский":"my","болгарский":"bg","валлийский":"cy","венгерский":"hu","вьетнамский":"vi","галисийский":"gl","греческий":"el","датский":"da","индонезийский":"id","ирландский":"ga","исландский":"is","испанский":"es","итальянский":"it","каталанский":"ca","китайский (традиционный)":"zh-tw","китайский (упрощенный)":"zh-cn","корейский":"ko","креольский (гаити)":"ht","курдский (курманджи)":"ku","курдский (сорани)":"ckb","латинский":"la","латышский":"lv","литовский":"lt","македонский":"mk","малайский":"ms","мальтийский":"mt","монгольский":"mn","немецкий":"de","нидерландский":"nl","норвежский":"nb","персидский":"fa","польский":"pl","португальский":"pt","румынский":"ro","русский":"ru","сербский":"sr","словацкий":"sk","словенский":"sl","тайский":"th","турецкий":"tr","узбекский":"uz","украинский":"uk","финский":"fi","французский":"fr","хорватский":"hr","чешский":"cs","шведский":"sv","шотландский (гэльский)":"gd","эстонский":"et","японский":"ja","amhariska":"am","arabiska":"ar","armeniska":"hy","azerbajdzjanska":"az","baskiska":"eu","bulgariska":"bg","burmesiska":"my","engelska":"en","estniska":"et","finska":"fi","gaeliska":"gd","galiciska":"gl","grekiska":"el","haitiska":"ht","hebreiska":"he","indonesiska":"id","irländska":"ga","isländska":"is","italienska":"it","kanaresiska":"kn","katalanska":"ca","kinesiska (förenklad)":"zh-cn","kinesiska (traditionell)":"zh-tw","koreanska":"ko","kroatiska":"hr","kurdiska (kurmanji)":"ku","kurdiska (sorani)":"ckb","lettiska":"lv","litauiska":"lt","makedonska":"mk","malaysiska":"ms","maltesiska":"mt","mongoliska":"mn","nederländska":"nl","persiska":"fa","polska":"pl","portugisiska":"pt","rumänska":"ro","ryska":"ru","serbiska":"sr","slovakiska":"sk","slovenska":"sl","spanska":"es","svenska":"sv","thailändska":"th","tjeckiska":"cs","turkiska":"tr","tyska":"de","ukrainska":"uk","ungerska":"hu","uzbekiska":"uz","vietnamesiska":"vi","vitryska":"be","walesiska":"cy","αγγλικά":"en","αζερμπαϊτζανικά":"az","αλβανικά":"sq","αμχαρικά":"am","αραβικά":"ar","αρμενικά":"hy","βασκικά":"eu","βιετναμεζικά":"vi","βιρμανικά":"my","βουλγαρικά":"bg","γαελικά σκοτίας":"gd","γαλικιακά":"gl","γαλλικά":"fr","γερμανικά":"de","δανικά":"da","εβραϊκά":"he","ελληνικά":"el","εσθονικά":"et","εσπεράντο":"eo","ζουλού":"zu","ιαπωνικά":"ja","ινδονησιακά":"id","ιρλανδικά":"ga","ισλανδικά":"is","ισπανικά":"es","ιταλικά":"it","κανάντα":"kn","καταλανικά":"ca","κινεζικά (απλοποιημένα)":"zh-cn","κινεζικά (παραδοσιακά)":"zh-tw","κορεατικά":"ko","κουρδικά (κουρμαντζί)":"ku","κουρδικά (σορανί)":"ckb","κρεόλ αϊτής":"ht","κροατικά":"hr","λατινικά":"la","λετονικά":"lv","λευκορωσικά":"be","λιθουανικά":"lt","μαλαγιάλαμ":"ml","μαλέι":"ms","μαλτεζικά":"mt","μαορί":"mi","μαραθικά":"mr","μογγολικά":"mn","νορβηγικά":"nb","ολλανδικά":"nl","ουαλικά":"cy","ουγγρικά":"hu","ουζμπεκικά":"uz","ουκρανικά":"uk","περσικά":"fa","πολωνικά":"pl","πορτογαλικά":"pt","ρουμανικά":"ro","ρωσικά":"ru","σερβικά":"sr","σλαβομακεδονικά":"mk","σλοβακικά":"sk","σλοβενικά":"sl","σουηδικά":"sv","ταϊλανδεζικά":"th","τελούγκου":"te","τουρκικά":"tr","τσεχικά":"cs","φινλανδικά":"fi","χίντι":"hi","albanščina":"sq","amharščina":"am","angleščina":"en","arabščina":"ar","armenščina":"hy","azerbajdžanščina":"az","baskovščina":"eu","beloruščina":"be","bolgarščina":"bg","burmanščina":"my","češčina":"cs","danščina":"da","estonščina":"et","finščina":"fi","francoščina":"fr","galicijščina":"gl","grščina":"el","haitijska kreolščina":"ht","hebrejščina":"he","hindijščina":"hi","hrvaščina":"hr","indonezijščina":"id","irščina":"ga","islandščina":"is","italijanščina":"it","japonščina":"ja","kanareščina":"kn","katalonščina":"ca","kitajščina (poenostavljena)":"zh-cn","kitajščina (tradicionalna)":"zh-tw","korejščina":"ko","kurdščina (kurmandži)":"ku","kurdščina (soranščina)":"ckb","latinščina":"la","latvijščina":"lv","litovščina":"lt","madžarščina":"hu","makedonščina":"mk","malajalščina":"ml","malajščina":"ms","malteščina":"mt","maorščina":"mi","maratščina":"mr","mongolščina":"mn","nemščina":"de","nizozemščina":"nl","norveščina":"nb","perzijščina":"fa","poljščina":"pl","portugalščina":"pt","romunščina":"ro","ruščina":"ru","slovaščina":"sk","slovenščina":"sl","srbščina":"sr","škotska gelščina":"gd","španščina":"es","švedščina":"sv","tajščina":"th","teluščina":"te","turščina":"tr","ukrajinščina":"uk","uzbeščina":"uz","valižanščina":"cy","vietnamščina":"vi","zulujščina":"zu","ಅಜರ್ಬೈಜಾನಿ":"az","ಅಮಹಾರಿಕ್":"am","ಅರಬ್ಬಿ":"ar","ಆರ್ಮೇನಿಯನ್":"hy","ಆಲ್ಬೇನಿಯನ್":"sq","ಇಂಗ್ಲಿಷ್‌‌":"en","ಇಂಡೋನೇಷಿಯನ್":"id","ಇಟಾಲಿಯನ್":"it","ಉಜ್ಬೆಕ್":"uz","ಎಸ್ಟೋನಿಯನ್":"et","ಎಸ್ಪೆರಾಂಟೋ":"eo","ಐರಿಷ್":"ga","ಐಸ್‌ಲ್ಯಾಂಡಿಕ್‌":"is","ಕನ್ನಡ":"kn","ಕುರ್ದಿಶ್ (ಕುರ್ಮಾಂಜಿ)":"ku","ಕುರ್ದಿಶ್ (ಸೊರಾನಿ)":"ckb","ಕೊರಿಯನ್":"ko","ಕ್ಯಾಟಲನ್":"ca","ಕ್ರೊಯೇಷಿಯನ್":"hr","ಗ್ಯಾಲೀಷಿಯನ್":"gl","ಗ್ರೀಕ್":"el","ಚೀನಿ (ಸರಳೀಕೃತ)":"zh-cn","ಚೀನಿ (ಸಾಂಪ್ರದಾಯಿಕ)":"zh-tw","ಜಪಾನಿ":"ja","ಜರ್ಮನ್":"de","ಜುಲು":"zu","ಝೆಕ್‌":"cs","ಟರ್ಕಿಷ್":"tr","ಡಚ್":"nl","ಡ್ಯಾನಿಷ್":"da","ತೆಲುಗು":"te","ಥಾಯ್":"th","ನಾರ್ವೇಜಿಯನ್‌":"nb","ಪೋರ್ಚುಗೀಸ್":"pt","ಪೋಲಿಷ್":"pl","ಫಾರ್ಸಿ":"fa","ಫಿನ್ನಿಷ್":"fi","ಫ್ರೆಂಚ್":"fr","ಬರ್ಮೀಸ್":"my","ಬಲ್ಗೇರಿಯನ್":"bg","ಬಾಸ್ಕ್":"eu","ಬೆಲರೂಸಿಯನ್":"be","ಮಂಗೋಲಿಯನ್":"mn","ಮರಾಠಿ":"mr","ಮಲಯ":"ms","ಮಲಯಾಳಂ":"ml","ಮಾಲ್ಟೀಸ್":"mt","ಮಾವೋರಿ":"mi","ಮ್ಯಾಸೆಡೋನಿಯನ್":"mk","ಯುಕ್ರೇನಿಯನ್":"uk","ರಷಿಯನ್":"ru","ರೊಮೇನಿಯನ್":"ro","ಲಿಥುವೇನಿಯನ್":"lt","ಲ್ಯಾಟಿನ್":"la","ಲ್ಯಾಟ್ವಿಯನ್‌":"lv","ವಿಯೆಟ್ನಾಮಿ":"vi","ವೆಲ್ಶ್":"cy","ಸರ್ಬಿಯನ್":"sr","ಸ್ಕಾಟ್ಸ್ ಗ್ಯಾಲಿಕ್":"gd","ಸ್ಪ್ಯಾನಿಷ್":"es","ಸ್ಲೊವಾಕ್":"sk","ಸ್ಲೊವೆನಿಯನ್":"sl","ಸ್ವೀಡಿಷ್":"sv","ಹಂಗೇರಿಯನ್":"hu","ಹಯಥಿಯನ್‌ ಕ್ರಿಯೋಲ್‌":"ht","ಹಿಂದಿ":"hi","ಹೀಬ್ರೂ":"he","belarussia":"be","ceko":"cs","china (aks. sederhana)":"zh-cn","china (aks. tradisional)":"zh-tw","finlandia":"fi","gaelig":"ga","gaelik skotlandia":"gd","galisia":"gl","inggris":"en","islan":"is","jepang":"ja","katala":"ca","kurdi (kurmanji)":"ku","lituania":"lt","melayu":"ms","polandia":"pl","prancis":"fr","rumania":"ro","swensk":"sv","yunani":"el","กรีก":"el","กันนาดา":"kn","กาลิเชียน":"gl","เกลิกสกอต":"gd","เกาหลี":"ko","คาตาลัน":"ca","เคิร์ด (กุรมันชี)":"ku","เคิร์ด (โซรานี)":"ckb","โครเอเชีย":"hr","จีน (ตัวเต็ม)":"zh-tw","จีน (ตัวย่อ)":"zh-cn","เช็ก":"cs","ซูลู":"zu","เซอร์เบียน":"sr","ญี่ปุ่น":"ja","ดัตช์":"nl","เดนมาร์ก":"da","ตุรกี":"tr","เตลูกู":"te","ไทย":"th","นอร์เวย์":"nb","บัลแกเรีย":"bg","บาสก์":"eu","เบลารุส":"be","เปอร์เซีย":"fa","โปรตุเกส":"pt","โปแลนด์":"pl","ฝรั่งเศส":"fr","ฟินแลนด์":"fi","มองโกเลีย":"mn","มัลทีส":"mt","มาซีโดเนีย":"mk","มาราฐี":"mr","มาลายาลัม":"ml","มาเลย์":"ms","เมารี":"mi","เมียนมา (พม่า)":"my","ยูเครน":"uk","เยอรมัน":"de","รัสเซีย":"ru","โรมาเนีย":"ro","ละติน":"la","ลัตเวีย":"lv","ลิทัวเนีย":"lt","เวลส์":"cy","เวียดนาม":"vi","สเปน":"es","สโลวัก":"sk","สโลวีเนีย":"sl","สวีเดน":"sv","อังกฤษ":"en","อัมฮาริก":"am","อาร์เซอร์ไบจัน":"az","อาร์เมเนีย":"hy","อาหรับ":"ar","อิตาลี":"it","อินโดนีเซีย":"id","อุสเบกิสถาน":"uz","เอสโทเนีย":"et","เอสเปอแรนโต":"eo","แอลเบเนีย":"sq","ไอซ์แลนด์":"is","ไอร์แลนด์":"ga","ฮังการี":"hu","ฮินดี":"hi","ฮีบรู":"he","เฮติครีโอล":"ht","airmeinis":"hy","albàinis":"sq","amtharais":"am","arabais":"ar","asarbaideànais":"az","basgais":"eu","bealaruisis":"be","beurla":"en","bhiet-namais":"vi","bulgarais":"bg","cànan nan tàidh":"th","catalanais":"ca","coirèanais":"ko","crìtheol haidhti":"ht","cròthaisis":"hr","cuimris":"cy","cùrdais (kurmanji)":"ku","cùrdais (sorani)":"ckb","duitsis":"nl","eabhra":"he","eadailtis":"it","eastoinis":"et","fionnlannais":"fi","fraingis":"fr","gàidhlig":"gd","gailìsis":"gl","gearmailtis":"de","grèigis":"el","hindis":"hi","innd-innsis":"id","innis-tìlis":"is","laideann":"la","laitbheis":"lv","liotuainis":"lt","malaidhis":"ms","maltais":"mt","masadonais":"mk","miànmar (burmais)":"my","mongolais":"mn","nirribhis":"nb","pòlainnis":"pl","portagailis":"pt","romàinis":"ro","ruisis":"ru","seacais":"cs","seapanais":"ja","sèirbis":"sr","sìonais (seann-nòsach)":"zh-tw","sìonais (sìmplichte)":"zh-cn","slòbhacais":"sk","slòbhainis":"sl","spàinntis":"es","suainis":"sv","turcais":"tr","ucràinis":"uk","ungairis":"hu","usbagais":"uz","азербайджанська":"az","албанська":"sq","амхарська":"am","англійська":"en","арабська":"ar","баскська":"eu","білоруська":"be","бірманська":"my","болгарська":"bg","в’єтнамська":"vi","валлійська":"cy","вірменська":"hy","гаїтянська креольська":"ht","гінді":"hi","грецька":"el","ґалісійська":"gl","данська":"da","естонська":"et","іврит":"he","індонезійська":"id","ірландська":"ga","ісландська":"is","іспанська":"es","італійська":"it","каталанська":"ca","китайська (спрощена)":"zh-cn","китайська (традиційна)":"zh-tw","корейська":"ko","курдська (курманджі)":"ku","курдська (сорані)":"ckb","латинська":"la","латиська":"lv","литовська":"lt","македонська":"mk","малайська":"ms","мальтійська":"mt","маорі":"mi","монгольська":"mn","нідерландська":"nl","німецька":"de","норвезька":"nb","перська":"fa","польська":"pl","португальська":"pt","російська":"ru","румунська":"ro","сербська":"sr","словацька":"sk","словенська":"sl","тайська":"th","телуґу":"te","турецька":"tr","угорська":"hu","узбецька":"uz","українська":"uk","фінська":"fi","французька":"fr","хорватська":"hr","чеська":"cs","шведська":"sv","шотландська (ґельська)":"gd","японська":"ja","albanès":"sq","alemany":"de","amhàric":"am","anglès":"en","àrab":"ar","armeni":"hy","àzeri":"az","basc":"eu","bielorús":"be","birmà":"my","búlgar":"bg","castellà":"es","català":"ca","coreà":"ko","crioll d\'haití":"ht","croat":"hr","danès":"da","eslovac":"sk","eslovè":"sl","estonià":"et","finès":"fi","francès":"fr","gaèlic escocès":"gd","gallec":"gl","gal·lès":"cy","grec":"el","hebreu":"he","hongarès":"hu","indonesi":"id","irlandès":"ga","islandès":"is","italià":"it","japonès":"ja","letó":"lv","lituà":"lt","llatí":"la","macedònic":"mk","malaiàlam":"ml","maltès":"mt","neerlandès":"nl","noruec":"nb","polonès":"pl","portuguès":"pt","romanès":"ro","serbi":"sr","suec":"sv","turc":"tr","txec":"cs","ucraïnès":"uk","xinès (simplificat)":"zh-cn","xinès (tradicional)":"zh-tw","amhárico":"am","azerí":"az","chino (simplificado)":"zh-cn","chino (tradicional)":"zh-tw","criollo haitiano":"ht","danés":"da","estonio":"et","euskera":"eu","finlandés":"fi","gallego":"gl","griego":"el","japonés":"ja","kurdo (kurmanyi)":"ku","malayo":"ms","noruego":"nb","rumano":"ro","അമാറിക്":"am","അർമേനിയൻ":"hy","അൽബേനിയൻ":"sq","അസർബൈജാനി":"az","അറബിക്":"ar","ഇന്തോനേഷ്യൻ":"id","ഇംഗ്ലീഷ്":"en","ഇറ്റാലിയൻ":"it","ഉക്രേനിയൻ":"uk","ഉസ്ബെക്ക്":"uz","എസ്‌പെരന്തോ":"eo","എസ്റ്റോണിയൻ":"et","ഐസ്‌ലാൻഡിക്":"is","ഐറിഷ്":"ga","കന്നട":"kn","കാറ്റലൻ":"ca","കുർദ്ദിഷ് (കുർമാൻജി)":"ku","കുർദ്ദിഷ് (സൊറാനി)":"ckb","കൊറിയൻ":"ko","ക്രൊയേഷ്യൻ":"hr","ഗലീഷ്യൻ":"gl","ഗ്രീക്ക്":"el","ചെക്ക്":"cs","ചൈനീസ് (പരമ്പരാഗതം)":"zh-tw","ചൈനീസ് (ലഘൂകരിച്ചത്)":"zh-cn","ജർമ്മൻ":"de","ജാപ്പനീസ്‌":"ja","ടർക്കിഷ്":"tr","ഡച്ച്":"nl","ഡാനിഷ്":"da","തായ്":"th","തെലുങ്ക്":"te","നോർവീജിയൻ":"nb","പേർഷ്യൻ":"fa","പോർച്ചുഗീസ്":"pt","പോളിഷ്":"pl","ഫിന്നിഷ്":"fi","ഫ്രെഞ്ച്":"fr","ബർമീസ്":"my","ബൾഗേറിയൻ":"bg","ബാസ്ക്":"eu","ബെലാറുഷ്യൻ":"be","മംഗോളിയൻ":"mn","മലയാളം":"ml","മലയ്":"ms","മറാഠി":"mr","മാസഡോണിയൻ":"mk","മാൾട്ടീസ്":"mt","മൗറി":"mi","ലാറ്റിൻ":"la","ലാറ്റ്‌വിയൻ":"lv","ലിത്വേനിയൻ":"lt","വിയറ്റ്നാമീസ്":"vi","വെൽഷ്":"cy","സുളു":"zu","സെർബിയൻ":"sr","സ്കോട്ട്സ് ഗ്യാലിക്":"gd","സ്പാനിഷ്":"es","സ്ലോവാക്":"sk","സ്ലോവേനിയൻ":"sl","സ്വീഡിഷ്":"sv","ഹംഗേറിയൻ":"hu","ഹിന്ദി":"hi","ഹീബ്രു":"he","ഹെയ്തിയൻ ക്രയോൾ":"ht","റഷ്യൻ":"ru","റൊമേനിയൻ":"ro","albanais":"sq","allemand":"de","amharique":"am","anglais":"en","arabe":"ar","arménien":"hy","azéri":"az","biélorusse":"be","birman":"my","bulgare":"bg","chinois (simplifié)":"zh-cn","chinois (traditionnel)":"zh-tw","coréen":"ko","créole haïtien":"ht","croate":"hr","danois":"da","espagnol":"es","espéranto":"eo","estonien":"et","finnois":"fi","français":"fr","gaélique (écosse)":"gd","galicien":"gl","gallois":"cy","hébreu":"he","hongrois":"hu","indonésien":"id","irlandais":"ga","islandais":"is","italien":"it","japonais":"ja","kurde (kurmandji)":"ku","kurde (sorani)":"ckb","letton":"lv","lituanien":"lt","macédonien":"mk","malaisien":"ms","néerlandais":"nl","norvégien":"nb","ouzbek":"uz","persan":"fa","polonais":"pl","portugais":"pt","roumain":"ro","russe":"ru","serbe":"sr","slovaque":"sk","slovène":"sl","suédois":"sv","tchèque":"cs","thaï":"th","ukrainien":"uk","vietnamien":"vi","albaneză":"sq","amharică":"am","arabă":"ar","armeană":"hy","azerbaidjană":"az","bască":"eu","bielorusă":"be","birmană":"my","bulgară":"bg","catalană":"ca","cehă":"cs","chineză (simplificată)":"zh-cn","chineză (tradițională)":"zh-tw","coreeană":"ko","creolă haitiană":"ht","croată":"hr","daneză":"da","ebraică":"he","engleză":"en","estonă":"et","finlandeză":"fi","franceză":"fr","galeză":"cy","galica scoțiană":"gd","galiciană":"gl","germană":"de","greacă":"el","indoneziană":"id","irlandeză":"ga","islandeză":"is","italiană":"it","japoneză":"ja","kurdă (kurmanji)":"ku","kurdă (sorani)":"ckb","latină":"la","letonă":"lv","lituaniană":"lt","macedoneană":"mk","maghiară":"hu","malaeză":"ms","malteză":"mt","mongolă":"mn","neerlandeză":"nl","norvegiană":"nb","persană":"fa","poloneză":"pl","portugheză":"pt","română":"ro","rusă":"ru","sârbă":"sr","slovacă":"sk","slovenă":"sl","spaniolă":"es","suedeză":"sv","thailandeză":"th","turcă":"tr","ucraineană":"uk","uzbecă":"uz","vietnameză":"vi","amarikisht":"am","anglisht":"en","arabisht":"ar","armenisht":"hy","azerisht":"az","baskisht":"eu","birmanisht":"my","bjellorusisht":"be","bullgarisht":"bg","çekisht":"cs","danisht":"da","estonisht":"et","finlandisht":"fi","frëngjisht":"fr","galicianisht":"gl","galishte skoceze":"gd","greqisht":"el","gjermanisht":"de","hebraisht":"he","hindisht":"hi","holandisht":"nl","hungarisht":"hu","indonezisht":"id","irlandisht":"ga","islandisht":"is","italisht":"it","japonisht":"ja","kanadaisht":"kn","katalonisht":"ca","kinezisht (e thjeshtuar)":"zh-cn","kinezisht (tradicionale)":"zh-tw","koreanisht":"ko","kreolishte haitiane":"ht","kroatisht":"hr","kurdisht (kurmanjisht)":"ku","kurdisht (sorani)":"ckb","latinisht":"la","letonisht":"lv","lituanisht":"lt","malajalamisht":"ml","malajzisht":"ms","malteze":"mt","maorisht":"mi","maqedonisht":"mk","maratisht":"mr","mongolisht":"mn","norvegjisht":"nb","persisht":"fa","polonisht":"pl","portugalisht":"pt","rumanisht":"ro","rusisht":"ru","serbisht":"sr","sllovakisht":"sk","sllovenisht":"sl","spanjisht":"es","suedisht":"sv","shqip":"sq","tajlandisht":"th","telugisht":"te","turqisht":"tr","uellsisht":"cy","ukrainisht":"uk","uzbekisht":"uz","vietnamisht":"vi","albánčina":"sq","amharčina":"am","arabčina":"ar","arménčina":"hy","azerbajdžančina":"az","barmčina":"my","bieloruština":"be","bulharčina":"bg","čínština (tradičná)":"zh-tw","dánčina":"da","estónčina":"et","fínčina":"fi","francúzština":"fr","galícijčina":"gl","gréčtina":"el","haitská kreolčina":"ht","hebrejčina":"he","hindčina":"hi","holandčina":"nl","chorvátčina":"hr","indonézština":"id","írčina":"ga","islandčina":"is","japončina":"ja","kannadčina":"kn","katalánčina":"ca","kórejčina":"ko","kurdčina (kurmándží)":"ku","kurdčina (sorání)":"ckb","latinčina":"la","litovčina":"lt","macedónčina":"mk","maďarčina":"hu","malajámčina":"ml","malajčina":"ms","maltčina":"mt","maorijčina":"mi","maratčina":"mr","mongolčina":"mn","nemčina":"de","nórčina":"nb","perzština":"fa","poľština":"pl","portugalčina":"pt","rumunčina":"ro","slovenčina":"sk","slovinčina":"sl","srbčina":"sr","škótska gaelčina":"gd","španielčina":"es","švédčina":"sv","taliančina":"it","telugčina":"te","thajčina":"th","ukrajinčina":"uk","vietnamčina":"vi","waleština":"cy","zuluština":"zu"," دانماركی":"da","almanî":"de","ambarîkî":"am","arnawudî":"sq","azerbaycanî":"az","baskî":"eu","belarûsî":"be","bûlgarî":"bg","çînî (hêsankirî)":"zh-cn","çînî (kevneşopî)":"zh-tw","endonezyayî":"id","erebî":"ar","esperantoyî":"eo","estonî":"et","farsî":"fa","fînlandî":"fi","fransî":"fr","gaêlîkî sikotlandî":"gd","galîsî":"gl","hirwatî":"hr","holendî":"nl","hûngarî (macarî)":"hu","îbranî":"he","îngilîzî":"en","îrlandî":"ga","îspanyolî":"es","îzlandî":"is","japonî":"ja","kannadayî":"kn","katalanî":"ca","koreyî":"ko","kreolê haîtî":"ht","kurdî (kurmancî)":"ku","kurdî (soranî)":"ckb","latînî":"la","letonî":"lv","lîtvanî":"lt","makedonî":"mk","malayalamî":"ml","malayî":"ms","maltayî":"mt","maorîyî":"mi","maratî":"mr","moxolî":"mn","myanmarî (burmese)":"my","norwêcî":"nb","ozbekî":"uz","polandî (lehîstanî)":"pl","portekîzî":"pt","romanî":"ro","rûsî":"ru","sirbî":"sr","slovakî":"sk","slovenyayî":"sl","swêdî":"sv","tayî":"th","teleguyî":"te","tirkî":"tr","vîetnamî":"vi","welşî":"cy","yûnanî":"el","zûlûyî":"zu","ئه رمه نی":"hy","ئۆکرانی":"uk","ئیتالی":"it","چه‌كی":"cs","هیندی":"hi","amxar":"am","arman":"hy","bolgar":"bg","dan":"da","fors":"fa","fransuz":"fr","gaiti-kreol":"ht","galisiy":"gl","golland":"nl","grek":"el","indonez":"id","ingliz":"en","irland":"ga","island":"is","italyan":"it","ivrit":"he","koreys":"ko","kurd (kurmonji)":"ku","latish":"lv","lotin":"la","makedon":"mk","maltiy":"mt","maratxi":"mr","nemis":"de","norveg":"nb","ozarbayjon":"az","portugal":"pt","rumin":"ro","turk":"tr","ukrain":"uk","valliy":"cy","venger":"hu","xitoy (odatiy)":"zh-tw","xitoy (soddalashgan)":"zh-cn","o‘zbek":"uz","shotland-gel":"gd","shved":"sv","chex":"cs","अंग्रेज़ी":"en","अज़रबैजानी":"az","अल्बेनियन":"sq","आइसलैंडिक":"is","आर्मेनियन":"hy","इटैलियन":"it","उज़्बेक":"uz","एस्तोनियन":"et","एस्पेरांटो":"eo","ऐम्हेरिक":"am","कन्नड़":"kn","कैटेलन":"ca","गैलिशियन":"gl","चीनी (पारंपरिक)":"zh-tw","चीनी (सरल)":"zh-cn","चेक":"cs","जापानी":"ja","ज़ुलु":"zu","डैनिश":"da","तुर्क":"tr","पुर्तगाली":"pt","फ़िनिश":"fi","फ़्रेंच":"fr","बर्मी":"my","बुल्गारियन":"bg","बेलारूसीयन":"be","बैस्क":"eu","मलयालम":"ml","माऔरी":"mi","माल्टी":"mt","मेसीडोनियन":"mk","यूक्रेनियन":"uk","रूसी":"ru","रोमेनियन":"ro","लातवियन":"lv","लैटिन":"la","वियतनामी":"vi","सर्बियाई":"sr","स्पैनिश":"es","स्लोवाक":"sk","स्लोवेनियन":"sl","हंगरियन":"hu","हीब्रू":"he","हैतियन क्रिओल":"ht","にほんご":"ja"},"scratchToGoogleMap":{"zh-cn":"zh","nb":"no","he":"iw","es-419":"es","pt-br":"pt","ja-hira":"ja"},"previouslySupported":["ab","ms","be","eo","hy","hi","kn","ht","ku","la","mk","ml","mt","mr","mn","my","nn","sq","te","uz"],"spokenLanguages":{"en":[{"code":"zh-cn","name":"Chinese (Mandarin)"}],"ja":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語 (ブラジル)"},{"code":"es-419","name":"スペイン語 (ラテンアメリカ)"}],"gd":[{"code":"zh-cn","name":"Sìonais (Mandarin)"},{"code":"hi","name":"Indeach"},{"code":"pt-br","name":"Portagailis (Braisil)"},{"code":"es-419","name":"Spàinntis (Ameireagaidh Laidinn)"}],"es":[{"code":"zh-cn","name":"Chino (Mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (latinoamericano)"}],"az":[{"code":"zh-cn","name":"Çin (Mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portuqal (Braziliya)"},{"code":"es-419","name":"İspan (Latın Amerikası)"}],"bg":[{"code":"zh-cn","name":"китайски (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"испански (латиноамерикански)"}],"pl":[{"code":"zh-cn","name":"chiński (mandaryński)"},{"code":"hi","name":"hinduski"},{"code":"pt-br","name":"portugalski (brazylijski)"},{"code":"es-419","name":"Hiszpański (Ameryka Łacińska)"}],"et":[{"code":"zh-cn","name":"hiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasiilia)"},{"code":"es-419","name":"hispaania (Ladina-Ameerika)"}],"tr":[{"code":"zh-cn","name":"Çin (mandalinası)"},{"code":"hi","name":"Hintçe"},{"code":"pt-br","name":"Portekizce (Brezilya)"},{"code":"es-419","name":"İspanyolca (Latin Amerika)"}],"id":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brasil)"},{"code":"es-419","name":"Spanyol (Amerika Latin)"}],"pt-br":[{"code":"zh-cn","name":"Mandarim (chinês)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (Latino-Americano)"}],"mr":[{"code":"zh-cn","name":"चीनी (मंडारीन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पोर्तुगीज (ब्राझिलियन)"},{"code":"es-419","name":"स्पॅनिश (लॅटिन अमेरिकन)"}],"mi":[{"code":"zh-cn","name":"Hainamana (Māriki)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Potiti (Brazilian)"},{"code":"es-419","name":"Paniora (Amerika Raina)"}],"hu":[{"code":"zh-cn","name":"kínai (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugál (brazil)"},{"code":"es-419","name":"spanyol (latin-amerikai)"}],"is":[{"code":"zh-cn","name":"kínverska (mandarín)"},{"code":"hi","name":"hindí"},{"code":"pt-br","name":"Portúgalska (Brasilíska)"},{"code":"es-419","name":"spænska (latínameríska)"}],"ckb":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هیندی"},{"code":"pt-br","name":"زمانی پورتوگالی (بەرازیلی)"},{"code":"es-419","name":"ئیسپانی (ئەمریکی لاتین)"}],"de":[{"code":"zh-cn","name":"Chinesisch (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugiesisch (Brasilianisch)"},{"code":"es-419","name":"Spanisch (Lateinamerikanisch)"}],"th":[{"code":"zh-cn","name":"จีน (กลาง)"},{"code":"hi","name":"ฮินดี"},{"code":"pt-br","name":"โปรตุเกส (บราซิล)"},{"code":"es-419","name":"สเปน (ละตินอเมริกา)"}],"vi":[{"code":"zh-cn","name":"Tiếng Trung (Quan Thoại)"},{"code":"hi","name":"Tiếng Hindi"},{"code":"pt-br","name":"Tiếng Bồ Đào Nha (Brazil)"},{"code":"es-419","name":"Tiếng Tây Ban Nha (Mỹ Latinh)"}],"ru":[{"code":"zh-cn","name":"Китайский (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"Португальский (бразильский)"},{"code":"es-419","name":"Испанский (Латинская Америка)"}],"fr":[{"code":"zh-cn","name":"Mandarin (chinois)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugais (brésilien)"},{"code":"es-419","name":"Espagnol (latino-américain)"}],"zh-cn":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地语"},{"code":"pt-br","name":"葡萄牙语（巴西）"},{"code":"es-419","name":"西班牙语（拉丁美洲）"}],"ar":[{"code":"zh-cn","name":"الصينية (الماندرين)"},{"code":"hi","name":"الهندية"},{"code":"pt-br","name":"البرتغالية (البرازيلية)"},{"code":"es-419","name":"الإسبانية (أمريكا اللاتينية)"}],"kn":[{"code":"zh-cn","name":"ಚೈನೀಸ್ (ಮ್ಯಾಂಡರಿನ್)"},{"code":"hi","name":"ಹಿಂದಿ"},{"code":"pt-br","name":"ಪೋರ್ಚುಗೀಸ್ (ಬ್ರೆಜಿಲಿಯನ್)"},{"code":"es-419","name":"ಸ್ಪ್ಯಾನಿಷ್ (ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್)"}],"zh-tw":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地語"},{"code":"pt-br","name":"葡萄牙語（巴西）"},{"code":"es-419","name":"西班牙語（拉丁美洲）"}],"fi":[{"code":"zh-cn","name":"kiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasilia)"},{"code":"es-419","name":"espanja (latinalainen amerikka)"}],"lt":[{"code":"zh-cn","name":"kinų (mandarinų)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugalų (Brazilijos)"},{"code":"es-419","name":"Ispanų (Lotynų Amerikos)"}],"gl":[{"code":"zh-cn","name":"chinés (mandarín)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugués (brasileiro)"},{"code":"es-419","name":"español (latinoamericano)"}],"hi":[{"code":"zh-cn","name":"चीनी (मंदारिन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पुर्तगाली (ब्राज़ीलियाई)"},{"code":"es-419","name":"स्पैनिश (लैटिन अमेरिकी)"}],"ja-hira":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語 (ブラジル)"},{"code":"es-419","name":"スペイン語 (ラテンアメリカ)"}],"be":[{"code":"zh-cn","name":"кітайская (мандарын)"},{"code":"hi","name":"Хіндзі"},{"code":"pt-br","name":"партугальская (бразільская)"},{"code":"es-419","name":"іспанская (лацінаамерыканская)"}],"sk":[{"code":"zh-cn","name":"čínština (mandarínčina)"},{"code":"hi","name":"hindčina"},{"code":"pt-br","name":"portugalčina (brazílska)"},{"code":"es-419","name":"španielčina (latinskoamerická)"}],"ku":[{"code":"zh-cn","name":"Çînî (Mandarîn)"},{"code":"hi","name":"Hindî"},{"code":"pt-br","name":"Portekîzî (Brazîlya)"},{"code":"es-419","name":"Spanî (Amerîkaya Latîn)"}],"el":[{"code":"zh-cn","name":"κινέζικα (μανταρίνια)"},{"code":"hi","name":"Χίντι"},{"code":"pt-br","name":"Πορτογαλικά (Βραζιλιάνικα)"},{"code":"es-419","name":"Ισπανικά (Λατινικής Αμερικής)"}],"fa":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هندی"},{"code":"pt-br","name":"پرتغالی (برزیلی)"},{"code":"es-419","name":"اسپانیایی (آمریکای لاتین)"}],"hy":[{"code":"zh-cn","name":"չինարեն (մանդարին)"},{"code":"hi","name":"հինդի"},{"code":"pt-br","name":"պորտուգալերեն (բրազիլերեն)"},{"code":"es-419","name":"իսպաներեն (լատինամերիկյան)"}],"mt":[{"code":"zh-cn","name":"Ċiniż (Mandarin)"},{"code":"hi","name":"Ħindi"},{"code":"pt-br","name":"Portugiż (Brażiljan)"},{"code":"es-419","name":"Spanjol (Amerika Latina)"}],"ga":[{"code":"zh-cn","name":"Sínis (Mandairínis)"},{"code":"hi","name":"Hiondúis"},{"code":"pt-br","name":"Portaingéilis (An Bhrasaíl)"},{"code":"es-419","name":"Spáinnis (Mheiriceá Laidineach)"}],"ro":[{"code":"zh-cn","name":"Chineză (mandarină)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugheză (braziliană)"},{"code":"es-419","name":"Spaniolă (America Latină)"}],"nb":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"sv":[{"code":"zh-cn","name":"Kinesiska (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisiska (brasilianska)"},{"code":"es-419","name":"spanska (latinamerikansk)"}],"cy":[{"code":"zh-cn","name":"Tsieinëeg (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portiwgaleg (Brasil)"},{"code":"es-419","name":"Sbaeneg (America Lladin)"}],"nl":[{"code":"zh-cn","name":"Chinees (Mandarijn)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugees (Braziliaans)"},{"code":"es-419","name":"Spaans (Latijns-Amerikaans)"}],"it":[{"code":"zh-cn","name":"Cinese (mandarino)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portoghese (brasiliano)"},{"code":"es-419","name":"Spagnolo (latinoamericano)"}],"ht":[{"code":"zh-cn","name":"Chinwa (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Pòtigè (Brezilyen)"},{"code":"es-419","name":"Panyòl (Ameriken Latin)"}],"mn":[{"code":"zh-cn","name":"Хятад (Мандарин)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"Португали (Бразил)"},{"code":"es-419","name":"Испани (Латин Америк)"}],"uz":[{"code":"zh-cn","name":"Xitoy (mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portugal (Braziliya)"},{"code":"es-419","name":"Ispan (Lotin Amerikasi)"}],"mk":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерикански)"}],"my":[{"code":"zh-cn","name":"တရုတ် (မန်ဒရင်း)"},{"code":"hi","name":"ဟိန္ဒီ"},{"code":"pt-br","name":"ပေါ်တူဂီ (ဘရာဇီး)"},{"code":"es-419","name":"စပိန် (လက်တင်အမေရိက)"}],"he":[{"code":"zh-cn","name":"סינית (מנדרינית)"},{"code":"hi","name":"הינדי"},{"code":"pt-br","name":"פורטוגזית (ברזילאית)"},{"code":"es-419","name":"ספרדית (אמריקה הלטינית)"}],"pt":[{"code":"zh-cn","name":"Mandarim (chinês)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (Latino-Americano)"}],"es-419":[{"code":"zh-cn","name":"Chino (Mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (latinoamericano)"}],"sq":[{"code":"zh-cn","name":"Kinezisht (mandarinisht)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugeze (braziliane)"},{"code":"es-419","name":"Spanjisht (Amerikan Latine)"}],"uk":[{"code":"zh-cn","name":"китайська (мандарин)"},{"code":"hi","name":"Хінді"},{"code":"pt-br","name":"португальська (бразильська)"},{"code":"es-419","name":"Іспанська (Латинська Америка)"}],"te":[{"code":"zh-cn","name":"చైనీస్ (మాండరిన్)"},{"code":"hi","name":"హిందీ"},{"code":"pt-br","name":"పోర్చుగీస్ (బ్రెజిలియన్)"},{"code":"es-419","name":"స్పానిష్ (లాటిన్ అమెరికన్)"}],"sl":[{"code":"zh-cn","name":"kitajščina (mandarinščina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugalščina (brazilščina)"},{"code":"es-419","name":"španščina (latinskoameriška)"}],"ms":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brazil)"},{"code":"es-419","name":"Sepanyol (Amerika Latin)"}],"zu":[{"code":"zh-cn","name":"IsiShayina (Mandarin)"},{"code":"hi","name":"IsiHindi"},{"code":"pt-br","name":"Isi-Portuguese (Brazilian)"},{"code":"es-419","name":"Isi-Spanish (Latin American)"}],"da":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"cs":[{"code":"zh-cn","name":"čínština (mandarínština)"},{"code":"hi","name":"hindština"},{"code":"pt-br","name":"portugalština (brazilská)"},{"code":"es-419","name":"španělština (latinskoamerická)"}],"ko":[{"code":"zh-cn","name":"중국어(북경어)"},{"code":"hi","name":"힌디 어"},{"code":"pt-br","name":"포르투갈어(브라질)"},{"code":"es-419","name":"스페인어(라틴 아메리카)"}],"lv":[{"code":"zh-cn","name":"ķīniešu (mandarīnu)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugāļu (Brazīlijas)"},{"code":"es-419","name":"spāņu (latīņamerikāņu)"}],"ca":[{"code":"zh-cn","name":"Xinès (mandarí)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portuguès (brasiler)"},{"code":"es-419","name":"espanyol (llatinoamericà)"}],"eo":[{"code":"zh-cn","name":"Ĉina (mandarina)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"Portugala (brazila)"},{"code":"es-419","name":"hispana (latin-amerika)"}],"sr":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерички)"}],"am":[{"code":"zh-cn","name":"ቻይንኛ (ማንዳሪን)"},{"code":"hi","name":"ሂንዲ"},{"code":"pt-br","name":"ፖርቱጋልኛ (ብራዚል)"},{"code":"es-419","name":"ስፓኒሽ (ላቲን አሜሪካ)"}],"hr":[{"code":"zh-cn","name":"kineski (mandarinski)"},{"code":"hi","name":"hindski"},{"code":"pt-br","name":"portugalski (brazilski)"},{"code":"es-419","name":"španjolski (latinoamerički)"}],"ml":[{"code":"zh-cn","name":"ചൈനീസ് (മാൻഡറിൻ)"},{"code":"hi","name":"ഹിന്ദി"},{"code":"pt-br","name":"പോർച്ചുഗീസ് (ബ്രസീലിയൻ)"},{"code":"es-419","name":"സ്പാനിഷ് (ലാറ്റിൻ അമേരിക്കൻ)"}],"eu":[{"code":"zh-cn","name":"txinera (mandariarra)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"portugesa (brasildarra)"},{"code":"es-419","name":"Gaztelania (Latinoamerika)"}],"la":[{"code":"zh-cn","name":"Seres (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portuguese (Brazilian)"},{"code":"es-419","name":"Spanish"}]}}');
+module.exports = /*#__PURE__*/JSON.parse('{"menuMap":{"am":[{"code":"hu","name":"ሀንጋሪኛ"},{"code":"lt","name":"ሊትዌንኛ"},{"code":"lv","name":"ላትቪያኛ"},{"code":"mi","name":"ማዮሪኛ"},{"code":"ru","name":"ራሽያኛ"},{"code":"ro","name":"ሮማኒያንኛ"},{"code":"sr","name":"ሰርቢያኛ"},{"code":"sk","name":"ስሎቫክኛ"},{"code":"sl","name":"ስሎቬንያኛ"},{"code":"sv","name":"ስዊድንኛ"},{"code":"es","name":"ስፓኒሽኛ"},{"code":"bg","name":"ቡልጋሪያኛ"},{"code":"eu","name":"ባስክኛ"},{"code":"vi","name":"ቪትናምኛ"},{"code":"tr","name":"ቱርክኛ"},{"code":"th","name":"ታይኛ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"},{"code":"zh-tw","name":"ቻይንኛ (ባሕላዊው)"},{"code":"cs","name":"ቼክኛ"},{"code":"nb","name":"ኖርዌጅያንኛ"},{"code":"am","name":"አማርኛ"},{"code":"az","name":"አዜርባይጃንኛ"},{"code":"ga","name":"አይሪሽ"},{"code":"is","name":"አይስላንድኛ"},{"code":"et","name":"ኤስቶኒያኛ"},{"code":"id","name":"እንዶኔዢያኛ"},{"code":"en","name":"እንግሊዝኛ"},{"code":"ckb","name":"ኩርድሽኛ (ሶራኒ)"},{"code":"ca","name":"ካታላንኛ"},{"code":"hr","name":"ክሮኤሽያኛ"},{"code":"ko","name":"ኮሪያኛ"},{"code":"cy","name":"ዌልሽ"},{"code":"ar","name":"ዐረብኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zu","name":"ዙሉኛ"},{"code":"gd","name":"የስኮት ጌልክኛ"},{"code":"uk","name":"ዩክሬንኛ"},{"code":"nl","name":"ደችኛ"},{"code":"da","name":"ዴንሽኛ"},{"code":"de","name":"ጀርመንኛ"},{"code":"ja","name":"ጃፓንኛ"},{"code":"gl","name":"ጋሊሺያኛ"},{"code":"el","name":"ግሪክኛ"},{"code":"it","name":"ጣሊያንኛ"},{"code":"fr","name":"ፈረንሳይኛ"},{"code":"fi","name":"ፊኒሽኛ"},{"code":"fa","name":"ፐርሺያኛ"},{"code":"pl","name":"ፖሊሽኛ"},{"code":"pt","name":"ፖርቱጋሊኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"}],"ar":[{"code":"is","name":"الآيسلندية"},{"code":"az","name":"الأذرية"},{"code":"es","name":"الإسبانية"},{"code":"et","name":"الإستونية"},{"code":"de","name":"الألمانية"},{"code":"am","name":"الأمهرية"},{"code":"en","name":"الإنجليزية"},{"code":"id","name":"الإندونيسية"},{"code":"uk","name":"الأوكرانية"},{"code":"ga","name":"الأيرلندية"},{"code":"it","name":"الإيطالية"},{"code":"eu","name":"الباسكية"},{"code":"pt","name":"البرتغالية"},{"code":"bg","name":"البلغارية"},{"code":"pl","name":"البولندية"},{"code":"th","name":"التايلاندية"},{"code":"tr","name":"التركية"},{"code":"cs","name":"التشيكية"},{"code":"gl","name":"الجاليكية"},{"code":"da","name":"الدانمركية"},{"code":"ru","name":"الروسية"},{"code":"ro","name":"الرومانية"},{"code":"zu","name":"الزولو"},{"code":"sk","name":"السلوفاكية"},{"code":"sl","name":"السلوفينية"},{"code":"sv","name":"السويدية"},{"code":"sr","name":"الصربية"},{"code":"zh-tw","name":"الصينية (التقليدية)"},{"code":"zh-cn","name":"الصينية (المبسطة)"},{"code":"he","name":"العبرية"},{"code":"ar","name":"العربية"},{"code":"gd","name":"الغيلية الأسكتلندية"},{"code":"fa","name":"الفارسية"},{"code":"fr","name":"الفرنسية"},{"code":"fi","name":"الفنلندية"},{"code":"vi","name":"الفيتنامية"},{"code":"ca","name":"القطلونية"},{"code":"ckb","name":"الكردية (السورانية)"},{"code":"hr","name":"الكرواتية"},{"code":"ko","name":"الكورية"},{"code":"lv","name":"اللاتفية"},{"code":"lt","name":"الليتوانية"},{"code":"mi","name":"الماورية"},{"code":"nb","name":"النرويجية"},{"code":"hu","name":"الهنغارية"},{"code":"nl","name":"الهولندية"},{"code":"cy","name":"الويلزية"},{"code":"ja","name":"اليابانية"},{"code":"el","name":"اليونانية"},{"code":"he","name":"العبرية"},{"code":"zh-cn","name":"الصينية (المبسطة)"}],"el":[{"code":"en","name":"Αγγλικά"},{"code":"az","name":"Αζερμπαϊτζανικά"},{"code":"am","name":"Αμχαρικά"},{"code":"ar","name":"Αραβικά"},{"code":"eu","name":"Βασκικά"},{"code":"vi","name":"Βιετναμεζικά"},{"code":"bg","name":"Βουλγαρικά"},{"code":"gd","name":"Γαελικά Σκοτίας"},{"code":"gl","name":"Γαλικιακά"},{"code":"fr","name":"Γαλλικά"},{"code":"de","name":"Γερμανικά"},{"code":"da","name":"Δανικά"},{"code":"he","name":"Εβραϊκά"},{"code":"el","name":"Ελληνικά"},{"code":"et","name":"Εσθονικά"},{"code":"zu","name":"Ζουλού"},{"code":"ja","name":"Ιαπωνικά"},{"code":"id","name":"Ινδονησιακά"},{"code":"ga","name":"Ιρλανδικά"},{"code":"is","name":"Ισλανδικά"},{"code":"es","name":"Ισπανικά"},{"code":"it","name":"Ιταλικά"},{"code":"ca","name":"Καταλανικά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"},{"code":"zh-tw","name":"Κινεζικά (Παραδοσιακά)"},{"code":"ko","name":"Κορεατικά"},{"code":"ckb","name":"Κουρδικά (Σορανί)"},{"code":"hr","name":"Κροατικά"},{"code":"lv","name":"Λετονικά"},{"code":"lt","name":"Λιθουανικά"},{"code":"mi","name":"Μαορί"},{"code":"nb","name":"Νορβηγικά"},{"code":"nl","name":"Ολλανδικά"},{"code":"cy","name":"Ουαλικά"},{"code":"hu","name":"Ουγγρικά"},{"code":"uk","name":"Ουκρανικά"},{"code":"fa","name":"Περσικά"},{"code":"pl","name":"Πολωνικά"},{"code":"pt","name":"Πορτογαλικά"},{"code":"ro","name":"Ρουμανικά"},{"code":"ru","name":"Ρωσικά"},{"code":"sr","name":"Σερβικά"},{"code":"sk","name":"Σλοβακικά"},{"code":"sl","name":"Σλοβενικά"},{"code":"sv","name":"Σουηδικά"},{"code":"th","name":"Ταϊλανδεζικά"},{"code":"tr","name":"Τουρκικά"},{"code":"cs","name":"Τσεχικά"},{"code":"fi","name":"Φινλανδικά"},{"code":"he","name":"Εβραϊκά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"}],"id":[{"code":"am","name":"Amharik"},{"code":"ar","name":"Arab"},{"code":"az","name":"Azerbaijan"},{"code":"eu","name":"Bask"},{"code":"nl","name":"Belanda"},{"code":"bg","name":"Bulgaria"},{"code":"cs","name":"Ceko"},{"code":"zh-cn","name":"China (Aks. Sederhana)"},{"code":"zh-tw","name":"China (Aks. Tradisional)"},{"code":"da","name":"Denmark"},{"code":"et","name":"Estonia"},{"code":"fa","name":"Farsi"},{"code":"fi","name":"Finlandia"},{"code":"ga","name":"Gaelig"},{"code":"gd","name":"Gaelik Skotlandia"},{"code":"gl","name":"Galisia"},{"code":"hu","name":"Hungaria"},{"code":"he","name":"Ibrani"},{"code":"id","name":"Indonesia"},{"code":"en","name":"Inggris"},{"code":"is","name":"Islandia"},{"code":"it","name":"Italia"},{"code":"ja","name":"Jepang"},{"code":"de","name":"Jerman"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Korea"},{"code":"hr","name":"Kroasia"},{"code":"ckb","name":"Kurdi (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Lituania"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegia"},{"code":"pl","name":"Polandia"},{"code":"pt","name":"Portugis"},{"code":"fr","name":"Prancis"},{"code":"ro","name":"Rumania"},{"code":"ru","name":"Rusia"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovakia"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Spanyol"},{"code":"sv","name":"Swedia"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkiye"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Vietnam"},{"code":"cy","name":"Welsh"},{"code":"el","name":"Yunani"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ibrani"},{"code":"zh-cn","name":"China (Aks. Sederhana)"}],"fa":[{"code":"az","name":"آذرباﻳﺠﺎﻧﻰ"},{"code":"de","name":"آلمانی"},{"code":"es","name":"اسپانیایی"},{"code":"et","name":"استونيايی"},{"code":"sk","name":"اسلواکی"},{"code":"sl","name":"اسلونیایی"},{"code":"uk","name":"اکراينی"},{"code":"am","name":"امهری"},{"code":"id","name":"اندونزيايی"},{"code":"en","name":"انگلیسی"},{"code":"it","name":"ایتالیایی"},{"code":"ga","name":"ایرلندی"},{"code":"is","name":"ايسلندی"},{"code":"eu","name":"باسکی"},{"code":"bg","name":"بلغاری"},{"code":"pt","name":"پرتغالی"},{"code":"th","name":"تايلندی"},{"code":"tr","name":"ترکی استانبولی"},{"code":"cs","name":"چک"},{"code":"zh-cn","name":"چینی (ساده‌شده)"},{"code":"zh-tw","name":"چینی (سنتی)"},{"code":"da","name":"دانمارکی"},{"code":"ru","name":"روسی"},{"code":"ro","name":"رومانيايی"},{"code":"zu","name":"زولو"},{"code":"ja","name":"ژاپنی"},{"code":"sv","name":"سوئدی"},{"code":"sr","name":"صربی"},{"code":"he","name":"عبری"},{"code":"ar","name":"عربی"},{"code":"fa","name":"فارسی"},{"code":"fr","name":"فرانسوی"},{"code":"fi","name":"فنلاندی"},{"code":"ca","name":"کاتالان"},{"code":"ckb","name":"کردی (سورانی)"},{"code":"hr","name":"کرواتی"},{"code":"ko","name":"کره‌ای"},{"code":"gl","name":"گالیسی"},{"code":"gd","name":"گاليک اسکاتلندی"},{"code":"lv","name":"لتونيايی"},{"code":"pl","name":"لهستانی"},{"code":"lt","name":"ليتوانيايی"},{"code":"mi","name":"مائوری"},{"code":"hu","name":"مجاری"},{"code":"nb","name":"نروژی"},{"code":"cy","name":"ولزی"},{"code":"vi","name":"ويتنامی"},{"code":"nl","name":"هلندی"},{"code":"el","name":"يونانی"},{"code":"he","name":"عبری"},{"code":"zh-cn","name":"چینی (ساده‌شده)"}],"pt":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"pt-br":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"nl":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Azerbeidzjaans"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgaars"},{"code":"ca","name":"Catalaans"},{"code":"zh-tw","name":"Chinees (traditioneel)"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"},{"code":"da","name":"Deens"},{"code":"de","name":"Duits"},{"code":"en","name":"Engels"},{"code":"et","name":"Ests"},{"code":"fi","name":"Fins"},{"code":"fr","name":"Frans"},{"code":"gl","name":"Galicisch"},{"code":"el","name":"Grieks"},{"code":"he","name":"Hebreeuws"},{"code":"hu","name":"Hongaars"},{"code":"ga","name":"Iers"},{"code":"is","name":"IJslands"},{"code":"id","name":"Indonesisch"},{"code":"it","name":"Italiaans"},{"code":"ja","name":"Japans"},{"code":"ckb","name":"Koerdisch (Sorani)"},{"code":"ko","name":"Koreaans"},{"code":"hr","name":"Kroatisch"},{"code":"lv","name":"Lets"},{"code":"lt","name":"Litouws"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlands"},{"code":"nb","name":"Noors"},{"code":"uk","name":"Oekraïens"},{"code":"fa","name":"Perzisch"},{"code":"pl","name":"Pools"},{"code":"pt","name":"Portugees"},{"code":"ro","name":"Roemeens"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schots-Gaelisch"},{"code":"sr","name":"Servisch"},{"code":"sk","name":"Slovaaks"},{"code":"sl","name":"Sloveens"},{"code":"es","name":"Spaans"},{"code":"th","name":"Thai"},{"code":"cs","name":"Tsjechisch"},{"code":"tr","name":"Turks"},{"code":"vi","name":"Vietnamees"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zoeloe"},{"code":"sv","name":"Zweeds"},{"code":"he","name":"Hebreeuws"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"}],"es":[{"code":"de","name":"Alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"Azerí"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalán"},{"code":"cs","name":"Checo"},{"code":"zh-cn","name":"Chino (simplificado)"},{"code":"zh-tw","name":"Chino (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"da","name":"Danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"español"},{"code":"et","name":"Estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"Gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"Gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"Islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"Japonés"},{"code":"ckb","name":"Kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"Noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"Portugués"},{"code":"ro","name":"Rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"Serbio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"Chino (simplificado)"}],"es-419":[{"code":"de","name":"Alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"Azerí"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalán"},{"code":"cs","name":"Checo"},{"code":"zh-cn","name":"Chino (simplificado)"},{"code":"zh-tw","name":"Chino (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"da","name":"Danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"español"},{"code":"et","name":"Estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"Gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"Gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"Islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"Japonés"},{"code":"ckb","name":"Kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"Noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"Portugués"},{"code":"ro","name":"Rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"Serbio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"Chino (simplificado)"}],"gd":[{"code":"am","name":"Amtharais"},{"code":"ar","name":"Arabais"},{"code":"az","name":"Asarbaideànais"},{"code":"eu","name":"Basgais"},{"code":"en","name":"Beurla"},{"code":"vi","name":"Bhiet-Namais"},{"code":"bg","name":"Bulgarais"},{"code":"th","name":"Cànan nan Tàidh"},{"code":"ca","name":"Catalanais"},{"code":"ko","name":"Coirèanais"},{"code":"hr","name":"Cròthaisis"},{"code":"cy","name":"Cuimris"},{"code":"ckb","name":"Cùrdais (Sorani)"},{"code":"da","name":"Danmhairgis"},{"code":"nl","name":"Duitsis"},{"code":"he","name":"Eabhra"},{"code":"it","name":"Eadailtis"},{"code":"et","name":"Eastoinis"},{"code":"fi","name":"Fionnlannais"},{"code":"fr","name":"Fraingis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gàidhlig"},{"code":"gl","name":"Gailìsis"},{"code":"de","name":"Gearmailtis"},{"code":"el","name":"Grèigis"},{"code":"id","name":"Innd-Innsis"},{"code":"is","name":"Innis-Tìlis"},{"code":"lv","name":"Laitbheis"},{"code":"lt","name":"Liotuainis"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nirribhis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Pòlainnis"},{"code":"pt","name":"Portagailis"},{"code":"ro","name":"Romàinis"},{"code":"ru","name":"Ruisis"},{"code":"cs","name":"Seacais"},{"code":"ja","name":"Seapanais"},{"code":"sr","name":"Sèirbis"},{"code":"zh-tw","name":"Sìonais (seann-nòsach)"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"},{"code":"sk","name":"Slòbhacais"},{"code":"sl","name":"Slòbhainis"},{"code":"es","name":"Spàinntis"},{"code":"sv","name":"Suainis"},{"code":"tr","name":"Turcais"},{"code":"uk","name":"Ucràinis"},{"code":"hu","name":"Ungairis"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Eabhra"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"}],"pl":[{"code":"am","name":"amharski"},{"code":"en","name":"angielski"},{"code":"ar","name":"arabski"},{"code":"az","name":"azerski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bułgarski"},{"code":"zh-tw","name":"chiński (tradycyjny)"},{"code":"zh-cn","name":"chiński (uproszczony)"},{"code":"hr","name":"chorwacki"},{"code":"cs","name":"czeski"},{"code":"da","name":"duński"},{"code":"et","name":"estoński"},{"code":"fi","name":"fiński"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galicyjski"},{"code":"el","name":"grecki"},{"code":"he","name":"hebrajski"},{"code":"es","name":"hiszpański"},{"code":"id","name":"indonezyjski"},{"code":"ga","name":"irlandzki"},{"code":"is","name":"islandzki"},{"code":"ja","name":"japoński"},{"code":"ca","name":"kataloński"},{"code":"ko","name":"koreański"},{"code":"ckb","name":"kurdyjski (sorani)"},{"code":"lt","name":"litewski"},{"code":"lv","name":"łotewski"},{"code":"mi","name":"maoryski"},{"code":"nl","name":"niderlandzki"},{"code":"de","name":"niemiecki"},{"code":"nb","name":"norweski"},{"code":"fa","name":"perski"},{"code":"pl","name":"polski"},{"code":"pt","name":"portugalski"},{"code":"ru","name":"rosyjski"},{"code":"ro","name":"rumuński"},{"code":"sr","name":"serbski"},{"code":"sk","name":"słowacki"},{"code":"sl","name":"słoweński"},{"code":"gd","name":"szkocki gaelicki"},{"code":"sv","name":"szwedzki"},{"code":"th","name":"tajski"},{"code":"tr","name":"turecki"},{"code":"uk","name":"ukraiński"},{"code":"cy","name":"walijski"},{"code":"hu","name":"węgierski"},{"code":"vi","name":"wietnamski"},{"code":"it","name":"włoski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrajski"},{"code":"zh-cn","name":"chiński (uproszczony)"}],"is":[{"code":"am","name":"amharíska"},{"code":"ar","name":"arabíska"},{"code":"az","name":"aserska"},{"code":"eu","name":"baskneska"},{"code":"bg","name":"búlgarska"},{"code":"da","name":"danska"},{"code":"et","name":"eistneska"},{"code":"en","name":"enska"},{"code":"fi","name":"finnska"},{"code":"fr","name":"franska"},{"code":"gl","name":"galisíska"},{"code":"el","name":"gríska"},{"code":"he","name":"hebreska"},{"code":"nl","name":"hollenska"},{"code":"id","name":"indónesíska"},{"code":"ga","name":"írska"},{"code":"is","name":"íslenska"},{"code":"it","name":"ítalska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalónska"},{"code":"zh-cn","name":"kínverska (einfölduð)"},{"code":"zh-tw","name":"kínverska (hefðbundin)"},{"code":"ko","name":"kóreska"},{"code":"hr","name":"króatíska"},{"code":"ckb","name":"kúrdíska (soraní)"},{"code":"lv","name":"lettneska"},{"code":"lt","name":"litháíska"},{"code":"mi","name":"maoríska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persneska"},{"code":"pt","name":"portúgalska"},{"code":"pl","name":"pólska"},{"code":"ro","name":"rúmenska"},{"code":"ru","name":"rússneska"},{"code":"sr","name":"serbneska"},{"code":"gd","name":"skosk-gelíska"},{"code":"sk","name":"slóvakíska"},{"code":"sl","name":"slóvenska"},{"code":"es","name":"spænska"},{"code":"zu","name":"súlú"},{"code":"sv","name":"sænska"},{"code":"th","name":"taílenska"},{"code":"cs","name":"tékkneska"},{"code":"tr","name":"tyrkneska"},{"code":"hu","name":"ungverska"},{"code":"uk","name":"úkraínska"},{"code":"cy","name":"velska"},{"code":"vi","name":"víetnamska"},{"code":"de","name":"þýska"},{"code":"he","name":"hebreska"},{"code":"zh-cn","name":"kínverska (einfölduð)"}],"hr":[{"code":"am","name":"amharik"},{"code":"ar","name":"arapski"},{"code":"az","name":"azerbajdžanski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bugarski"},{"code":"cs","name":"češki"},{"code":"da","name":"danski"},{"code":"en","name":"engleski"},{"code":"et","name":"estonski"},{"code":"fi","name":"finski"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galješki"},{"code":"el","name":"grčki"},{"code":"he","name":"hebrejski"},{"code":"hr","name":"hrvatski"},{"code":"id","name":"indonezijski"},{"code":"ga","name":"irski"},{"code":"is","name":"islandski"},{"code":"ja","name":"japanski"},{"code":"ca","name":"katalonski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"},{"code":"zh-tw","name":"kineski (tradicionalni)"},{"code":"ko","name":"korejski"},{"code":"ckb","name":"kurdski (soranski)"},{"code":"lv","name":"latvijski/letonski"},{"code":"lt","name":"litvanski"},{"code":"hu","name":"mađarski"},{"code":"mi","name":"maorski"},{"code":"nl","name":"nizozemski"},{"code":"nb","name":"norveški"},{"code":"de","name":"njemački"},{"code":"fa","name":"perzijski"},{"code":"pl","name":"poljski"},{"code":"pt","name":"portugalski"},{"code":"ro","name":"rumunjski"},{"code":"ru","name":"ruski"},{"code":"sk","name":"slovački"},{"code":"sl","name":"slovenski"},{"code":"sr","name":"srpski"},{"code":"gd","name":"škotski gaelski"},{"code":"es","name":"španjolski"},{"code":"sv","name":"švedski"},{"code":"th","name":"tajlandski"},{"code":"it","name":"talijanski"},{"code":"tr","name":"turski"},{"code":"uk","name":"ukrajinski"},{"code":"cy","name":"velški"},{"code":"vi","name":"vijetnamski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"}],"fr":[{"code":"de","name":"Allemand"},{"code":"am","name":"Amharique"},{"code":"en","name":"Anglais"},{"code":"ar","name":"Arabe"},{"code":"az","name":"Azéri"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgare"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinois (simplifié)"},{"code":"zh-tw","name":"Chinois (traditionnel)"},{"code":"ko","name":"Coréen"},{"code":"hr","name":"Croate"},{"code":"da","name":"Danois"},{"code":"es","name":"Espagnol"},{"code":"et","name":"Estonien"},{"code":"fi","name":"Finnois"},{"code":"fr","name":"Français"},{"code":"gd","name":"Gaélique (Écosse)"},{"code":"gl","name":"Galicien"},{"code":"cy","name":"Gallois"},{"code":"el","name":"Grec"},{"code":"he","name":"Hébreu"},{"code":"hu","name":"Hongrois"},{"code":"id","name":"Indonésien"},{"code":"ga","name":"Irlandais"},{"code":"is","name":"Islandais"},{"code":"it","name":"Italien"},{"code":"ja","name":"Japonais"},{"code":"ckb","name":"Kurde (Sorani)"},{"code":"lv","name":"Letton"},{"code":"lt","name":"Lituanien"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Néerlandais"},{"code":"nb","name":"Norvégien"},{"code":"fa","name":"Persan"},{"code":"pl","name":"Polonais"},{"code":"pt","name":"Portugais"},{"code":"ro","name":"Roumain"},{"code":"ru","name":"Russe"},{"code":"sr","name":"Serbe"},{"code":"sk","name":"Slovaque"},{"code":"sl","name":"Slovène"},{"code":"sv","name":"Suédois"},{"code":"cs","name":"Tchèque"},{"code":"th","name":"Thaï"},{"code":"tr","name":"Turc"},{"code":"uk","name":"Ukrainien"},{"code":"vi","name":"Vietnamien"},{"code":"zu","name":"Zoulou"},{"code":"he","name":"Hébreu"},{"code":"zh-cn","name":"Chinois (simplifié)"}],"nb":[{"code":"am","name":"amharisk"},{"code":"ar","name":"arabisk"},{"code":"az","name":"aserbajdsjansk"},{"code":"eu","name":"baskisk"},{"code":"bg","name":"bulgarsk"},{"code":"da","name":"dansk"},{"code":"en","name":"engelsk"},{"code":"et","name":"estisk"},{"code":"fa","name":"farsi"},{"code":"fi","name":"finsk"},{"code":"fr","name":"fransk"},{"code":"gl","name":"galisisk"},{"code":"el","name":"gresk"},{"code":"he","name":"hebraisk"},{"code":"id","name":"indonesisk"},{"code":"ga","name":"irsk"},{"code":"is","name":"islandsk"},{"code":"it","name":"italiensk"},{"code":"ja","name":"japansk"},{"code":"ca","name":"katalansk"},{"code":"zh-cn","name":"kinesisk (forenklet)"},{"code":"zh-tw","name":"kinesisk (tradisjonell)"},{"code":"ko","name":"koreansk"},{"code":"hr","name":"kroatisk"},{"code":"ckb","name":"kurdisk (sorani)"},{"code":"lv","name":"latvisk"},{"code":"lt","name":"litauisk"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederlandsk"},{"code":"nb","name":"norsk"},{"code":"pl","name":"polsk"},{"code":"pt","name":"portugisisk"},{"code":"ro","name":"rumensk"},{"code":"ru","name":"russisk"},{"code":"sr","name":"serbisk"},{"code":"gd","name":"skotsk gælisk"},{"code":"sk","name":"slovakisk"},{"code":"sl","name":"slovensk"},{"code":"es","name":"spansk"},{"code":"sv","name":"svensk"},{"code":"th","name":"thai"},{"code":"cs","name":"tsjekkisk"},{"code":"tr","name":"tyrkisk"},{"code":"de","name":"tysk"},{"code":"uk","name":"ukrainsk"},{"code":"hu","name":"ungarsk"},{"code":"vi","name":"vietnamesisk"},{"code":"cy","name":"walisisk"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebraisk"},{"code":"zh-cn","name":"kinesisk (forenklet)"}],"gl":[{"code":"az","name":"acerbaixano"},{"code":"de","name":"alemán"},{"code":"am","name":"amárico"},{"code":"ar","name":"árabe"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chinés (simplificado)"},{"code":"zh-tw","name":"chinés (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"dinamarqués"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estoniano"},{"code":"eu","name":"éuscaro"},{"code":"fi","name":"finés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"gl","name":"galego"},{"code":"cy","name":"galés"},{"code":"el","name":"grego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruegués"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"romanés"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraíno"},{"code":"vi","name":"vietnamita"},{"code":"ja","name":"xaponés"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chinés (simplificado)"}],"bg":[{"code":"az","name":"азербайджански"},{"code":"am","name":"амхарски"},{"code":"en","name":"английски"},{"code":"ar","name":"арабски"},{"code":"eu","name":"баски"},{"code":"bg","name":"български"},{"code":"vi","name":"виетнамски"},{"code":"gl","name":"галисийски"},{"code":"el","name":"гръцки"},{"code":"da","name":"датски"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийски"},{"code":"ga","name":"ирландски"},{"code":"is","name":"исландски"},{"code":"es","name":"испански"},{"code":"it","name":"италиански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"китайски (опростен)"},{"code":"zh-tw","name":"китайски (традиционен)"},{"code":"ko","name":"корейски"},{"code":"ckb","name":"кюрдски (сорани)"},{"code":"lv","name":"латвийски"},{"code":"lt","name":"литовски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немски"},{"code":"nl","name":"нидерландски"},{"code":"nb","name":"норвежки"},{"code":"fa","name":"персийски"},{"code":"pl","name":"полски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румънски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словашки"},{"code":"sl","name":"словенски"},{"code":"sr","name":"сръбски"},{"code":"th","name":"тайландски"},{"code":"tr","name":"турски"},{"code":"cy","name":"уелски"},{"code":"uk","name":"украински"},{"code":"hu","name":"унгарски"},{"code":"fi","name":"финландски"},{"code":"fr","name":"френски"},{"code":"hr","name":"хърватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шотландски келтски"},{"code":"ja","name":"японски"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайски (опростен)"}],"lv":[{"code":"am","name":"amharu"},{"code":"en","name":"angļu"},{"code":"ar","name":"arābu"},{"code":"az","name":"azerbaidžāņu"},{"code":"eu","name":"basku"},{"code":"bg","name":"bulgāru"},{"code":"cs","name":"čehu"},{"code":"da","name":"dāņu"},{"code":"fr","name":"franču"},{"code":"gl","name":"galisiešu"},{"code":"el","name":"grieķu"},{"code":"nl","name":"holandiešu"},{"code":"hr","name":"horvātu"},{"code":"et","name":"igauņu"},{"code":"id","name":"indonēziešu"},{"code":"it","name":"itāļu"},{"code":"he","name":"ivrits"},{"code":"ga","name":"īru"},{"code":"is","name":"īslandiešu"},{"code":"ja","name":"japāņu"},{"code":"ca","name":"katalāņu"},{"code":"ko","name":"korejiešu"},{"code":"ru","name":"krievu"},{"code":"ckb","name":"kurdu (sorani)"},{"code":"zh-tw","name":"ķīniešu (tradicionālā)"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"},{"code":"lv","name":"latviešu"},{"code":"lt","name":"lietuviešu"},{"code":"mi","name":"maori"},{"code":"nb","name":"norvēģu"},{"code":"fa","name":"persiešu"},{"code":"pl","name":"poļu"},{"code":"pt","name":"portugāļu"},{"code":"ro","name":"rumāņu"},{"code":"sr","name":"serbu"},{"code":"gd","name":"skotu gēlu"},{"code":"sk","name":"slovāku"},{"code":"sl","name":"slovēņu"},{"code":"fi","name":"somu"},{"code":"es","name":"spāņu"},{"code":"th","name":"taju"},{"code":"tr","name":"turku"},{"code":"uk","name":"ukraiņu"},{"code":"hu","name":"ungāru"},{"code":"de","name":"vācu"},{"code":"cy","name":"velsiešu"},{"code":"vi","name":"vjetnamiešu"},{"code":"zu","name":"zulu"},{"code":"sv","name":"zviedru"},{"code":"he","name":"ivrits"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"}],"ca":[{"code":"de","name":"alemany"},{"code":"am","name":"amhàric"},{"code":"en","name":"anglès"},{"code":"ar","name":"àrab"},{"code":"az","name":"àzeri"},{"code":"eu","name":"basc"},{"code":"bg","name":"búlgar"},{"code":"es","name":"castellà"},{"code":"ca","name":"català"},{"code":"ko","name":"coreà"},{"code":"hr","name":"croat"},{"code":"da","name":"danès"},{"code":"sk","name":"eslovac"},{"code":"sl","name":"eslovè"},{"code":"et","name":"estonià"},{"code":"fi","name":"finès"},{"code":"fr","name":"francès"},{"code":"gd","name":"gaèlic escocès"},{"code":"gl","name":"gallec"},{"code":"cy","name":"gal·lès"},{"code":"el","name":"grec"},{"code":"he","name":"hebreu"},{"code":"hu","name":"hongarès"},{"code":"id","name":"indonesi"},{"code":"ga","name":"irlandès"},{"code":"is","name":"islandès"},{"code":"it","name":"italià"},{"code":"ja","name":"japonès"},{"code":"ckb","name":"kurd (sorani)"},{"code":"lv","name":"letó"},{"code":"lt","name":"lituà"},{"code":"mi","name":"maori"},{"code":"nl","name":"neerlandès"},{"code":"nb","name":"noruec"},{"code":"fa","name":"persa"},{"code":"pl","name":"polonès"},{"code":"pt","name":"portuguès"},{"code":"ro","name":"romanès"},{"code":"ru","name":"rus"},{"code":"sr","name":"serbi"},{"code":"sv","name":"suec"},{"code":"th","name":"tai"},{"code":"tr","name":"turc"},{"code":"cs","name":"txec"},{"code":"uk","name":"ucraïnès"},{"code":"vi","name":"vietnamita"},{"code":"zh-cn","name":"xinès (simplificat)"},{"code":"zh-tw","name":"xinès (tradicional)"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreu"},{"code":"zh-cn","name":"xinès (simplificat)"}],"zu":[{"code":"am","name":"Isi-Amharic"},{"code":"ar","name":"Isi-Arabic"},{"code":"az","name":"Isi-Azerbaijani"},{"code":"nl","name":"Isi-Dutch"},{"code":"et","name":"Isi-Estonia"},{"code":"is","name":"Isi-Icelandic"},{"code":"id","name":"Isi-Indonesia"},{"code":"ga","name":"Isi-Irish"},{"code":"uk","name":"Isi-Ukraine"},{"code":"eu","name":"IsiBasque"},{"code":"bg","name":"IsiBulgaria"},{"code":"ca","name":"IsiCatalan"},{"code":"zh-cn","name":"IsiChina (Esilulana)"},{"code":"hr","name":"IsiCroatia"},{"code":"cs","name":"IsiCzech"},{"code":"da","name":"IsiDanish"},{"code":"fi","name":"IsiFinnish"},{"code":"fr","name":"IsiFrentshi"},{"code":"gl","name":"IsiGalicia"},{"code":"el","name":"IsiGrikhi"},{"code":"he","name":"IsiHebheru"},{"code":"hu","name":"IsiHungary"},{"code":"de","name":"IsiJalimani"},{"code":"ja","name":"IsiJaphani"},{"code":"ko","name":"IsiKorean"},{"code":"ckb","name":"IsiKurdish (saseSorani)"},{"code":"lv","name":"IsiLatvian"},{"code":"lt","name":"IsiLithuania"},{"code":"mi","name":"IsiMaori"},{"code":"en","name":"IsiNgisi"},{"code":"nb","name":"IsiNorwegia"},{"code":"it","name":"IsiNtaliyani"},{"code":"fa","name":"IsiPersian"},{"code":"pl","name":"IsiPolish"},{"code":"pt","name":"IsiPutukezi"},{"code":"ru","name":"IsiRashiya"},{"code":"ro","name":"IsiRomania"},{"code":"gd","name":"IsiScots Gaelic"},{"code":"sr","name":"IsiSerbian"},{"code":"sk","name":"IsiSlovak"},{"code":"sl","name":"IsiSlovenia"},{"code":"sv","name":"IsiSwidi"},{"code":"th","name":"IsiThai"},{"code":"tr","name":"IsiTurkish"},{"code":"vi","name":"IsiVietnam"},{"code":"cy","name":"IsiWelsh"},{"code":"zu","name":"IsiZulu"},{"code":"es","name":"ISpenishi"},{"code":"he","name":"IsiHebheru"},{"code":"zh-cn","name":"IsiChina (Esilulana)"}],"vi":[{"code":"ar","name":"Ả Rập"},{"code":"am","name":"Amharic"},{"code":"en","name":"Anh"},{"code":"az","name":"Azerbaijan"},{"code":"pl","name":"Ba Lan"},{"code":"fa","name":"Ba Tư"},{"code":"eu","name":"Basque"},{"code":"pt","name":"Bồ Đào Nha"},{"code":"bg","name":"Bulgaria"},{"code":"ca","name":"Catalan"},{"code":"hr","name":"Croatia"},{"code":"he","name":"Do Thái"},{"code":"da","name":"Đan Mạch"},{"code":"de","name":"Đức"},{"code":"et","name":"Estonia"},{"code":"gd","name":"Gael Scotland"},{"code":"gl","name":"Galicia"},{"code":"nl","name":"Hà Lan"},{"code":"ko","name":"Hàn"},{"code":"hu","name":"Hungary"},{"code":"el","name":"Hy Lạp"},{"code":"is","name":"Iceland"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Ireland"},{"code":"ckb","name":"Kurd (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Litva"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Na Uy"},{"code":"ru","name":"Nga"},{"code":"ja","name":"Nhật"},{"code":"fr","name":"Pháp"},{"code":"fi","name":"Phần Lan"},{"code":"ro","name":"Rumani"},{"code":"cs","name":"Séc"},{"code":"sr","name":"Serbia"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Tây Ban Nha"},{"code":"th","name":"Thái"},{"code":"tr","name":"Thổ Nhĩ Kỳ"},{"code":"sv","name":"Thụy Điển"},{"code":"zh-cn","name":"Trung (Giản thể)"},{"code":"zh-tw","name":"Trung (Phồn thể)"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Việt"},{"code":"cy","name":"Xứ Wales"},{"code":"it","name":"Ý"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Do Thái"},{"code":"zh-cn","name":"Trung (Giản thể)"}],"hu":[{"code":"am","name":"amhara"},{"code":"en","name":"angol"},{"code":"ar","name":"arab"},{"code":"az","name":"azeri"},{"code":"eu","name":"baszk"},{"code":"bg","name":"bolgár"},{"code":"cs","name":"cseh"},{"code":"da","name":"dán"},{"code":"et","name":"észt"},{"code":"fi","name":"finn"},{"code":"fr","name":"francia"},{"code":"gl","name":"galíciai"},{"code":"el","name":"görög"},{"code":"he","name":"héber"},{"code":"nl","name":"holland"},{"code":"hr","name":"horvát"},{"code":"id","name":"indonéz"},{"code":"ga","name":"ír"},{"code":"is","name":"izlandi"},{"code":"ja","name":"japán"},{"code":"ca","name":"katalán"},{"code":"zh-cn","name":"kínai (egyszerűsített)"},{"code":"zh-tw","name":"kínai (hagyományos)"},{"code":"ko","name":"koreai"},{"code":"ckb","name":"kurd (szoráni)"},{"code":"pl","name":"lengyel"},{"code":"lv","name":"lett"},{"code":"lt","name":"litván"},{"code":"hu","name":"magyar"},{"code":"mi","name":"maori"},{"code":"de","name":"német"},{"code":"nb","name":"norvég"},{"code":"it","name":"olasz"},{"code":"ru","name":"orosz"},{"code":"fa","name":"perzsa"},{"code":"pt","name":"portugál"},{"code":"ro","name":"román"},{"code":"gd","name":"skót gael"},{"code":"es","name":"spanyol"},{"code":"sv","name":"svéd"},{"code":"sr","name":"szerb"},{"code":"sk","name":"szlovák"},{"code":"sl","name":"szlovén"},{"code":"th","name":"thai"},{"code":"tr","name":"török"},{"code":"uk","name":"ukrán"},{"code":"vi","name":"vietnámi"},{"code":"cy","name":"walesi"},{"code":"zu","name":"zulu"},{"code":"he","name":"héber"},{"code":"zh-cn","name":"kínai (egyszerűsített)"}],"et":[{"code":"am","name":"amhaari"},{"code":"ar","name":"araabia"},{"code":"az","name":"aserbaidžaani"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaaria"},{"code":"et","name":"eesti"},{"code":"gl","name":"galeegi"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"},{"code":"zh-tw","name":"hiina (traditsiooniline)"},{"code":"es","name":"hispaania"},{"code":"nl","name":"hollandi"},{"code":"hr","name":"horvaadi"},{"code":"ga","name":"iiri"},{"code":"id","name":"indoneesia"},{"code":"en","name":"inglise"},{"code":"is","name":"islandi"},{"code":"it","name":"itaalia"},{"code":"ja","name":"jaapani"},{"code":"ca","name":"katalaani"},{"code":"ko","name":"korea"},{"code":"el","name":"kreeka"},{"code":"ckb","name":"kurdi (sorani)"},{"code":"lt","name":"leedu"},{"code":"lv","name":"läti"},{"code":"mi","name":"maoori"},{"code":"nb","name":"norra"},{"code":"pl","name":"poola"},{"code":"pt","name":"portugali"},{"code":"fr","name":"prantsuse"},{"code":"fa","name":"pärsia"},{"code":"sv","name":"rootsi"},{"code":"ro","name":"rumeenia"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"sk","name":"slovaki"},{"code":"sl","name":"sloveeni"},{"code":"fi","name":"soome"},{"code":"zu","name":"suulu"},{"code":"gd","name":"šoti"},{"code":"da","name":"taani"},{"code":"th","name":"tai"},{"code":"cs","name":"tšehhi"},{"code":"tr","name":"türgi"},{"code":"cy","name":"uelsi"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"ungari"},{"code":"ru","name":"vene"},{"code":"vi","name":"vietnami"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"}],"lt":[{"code":"ga","name":"airių"},{"code":"am","name":"amharų"},{"code":"en","name":"anglų"},{"code":"ar","name":"arabų"},{"code":"az","name":"azerbaidžaniečių"},{"code":"eu","name":"baskų"},{"code":"bg","name":"bulgarų"},{"code":"cs","name":"čekų"},{"code":"da","name":"danų"},{"code":"et","name":"estų"},{"code":"gl","name":"galisų"},{"code":"el","name":"graikų"},{"code":"he","name":"hebrajų"},{"code":"id","name":"indoneziečių"},{"code":"is","name":"islandų"},{"code":"es","name":"ispanų"},{"code":"it","name":"italų"},{"code":"ja","name":"japonų"},{"code":"ca","name":"kataloniečių"},{"code":"zh-cn","name":"kinų (supaprastinta)"},{"code":"zh-tw","name":"kinų (tradicinė)"},{"code":"ko","name":"korėjiečių"},{"code":"hr","name":"kroatų"},{"code":"ckb","name":"kurdų (soranių)"},{"code":"lv","name":"latvių"},{"code":"pl","name":"lenkų"},{"code":"lt","name":"lietuvių"},{"code":"mi","name":"maorių"},{"code":"nb","name":"norvegų"},{"code":"nl","name":"olandų"},{"code":"fa","name":"persų"},{"code":"pt","name":"portugalų"},{"code":"fr","name":"prancūzų"},{"code":"ro","name":"rumunų"},{"code":"ru","name":"rusų"},{"code":"sr","name":"serbų"},{"code":"sk","name":"slovakų"},{"code":"sl","name":"slovėnų"},{"code":"fi","name":"suomių"},{"code":"gd","name":"škotų"},{"code":"sv","name":"švedų"},{"code":"th","name":"tajų"},{"code":"tr","name":"turkų"},{"code":"uk","name":"ukrainiečių"},{"code":"cy","name":"valų"},{"code":"hu","name":"vengrų"},{"code":"vi","name":"vietnamiečių"},{"code":"de","name":"vokiečių"},{"code":"zu","name":"zulusų"},{"code":"he","name":"hebrajų"},{"code":"zh-cn","name":"kinų (supaprastinta)"}],"uk":[{"code":"az","name":"азербайджанська"},{"code":"am","name":"амхарська"},{"code":"en","name":"англійська"},{"code":"ar","name":"арабська"},{"code":"eu","name":"баскська"},{"code":"bg","name":"болгарська"},{"code":"vi","name":"в’єтнамська"},{"code":"cy","name":"валлійська"},{"code":"el","name":"грецька"},{"code":"gl","name":"ґалісійська"},{"code":"da","name":"данська"},{"code":"et","name":"естонська"},{"code":"zu","name":"зулу"},{"code":"he","name":"іврит"},{"code":"id","name":"індонезійська"},{"code":"ga","name":"ірландська"},{"code":"is","name":"ісландська"},{"code":"es","name":"іспанська"},{"code":"it","name":"італійська"},{"code":"ca","name":"каталанська"},{"code":"zh-cn","name":"китайська (спрощена)"},{"code":"zh-tw","name":"китайська (традиційна)"},{"code":"ko","name":"корейська"},{"code":"ckb","name":"курдська (сорані)"},{"code":"lv","name":"латиська"},{"code":"lt","name":"литовська"},{"code":"mi","name":"маорі"},{"code":"nl","name":"нідерландська"},{"code":"de","name":"німецька"},{"code":"nb","name":"норвезька"},{"code":"fa","name":"перська"},{"code":"pl","name":"польська"},{"code":"pt","name":"португальська"},{"code":"ru","name":"російська"},{"code":"ro","name":"румунська"},{"code":"sr","name":"сербська"},{"code":"sk","name":"словацька"},{"code":"sl","name":"словенська"},{"code":"th","name":"тайська"},{"code":"tr","name":"турецька"},{"code":"hu","name":"угорська"},{"code":"uk","name":"українська"},{"code":"fi","name":"фінська"},{"code":"fr","name":"французька"},{"code":"hr","name":"хорватська"},{"code":"cs","name":"чеська"},{"code":"sv","name":"шведська"},{"code":"gd","name":"шотландська (ґельська)"},{"code":"ja","name":"японська"},{"code":"he","name":"іврит"},{"code":"zh-cn","name":"китайська (спрощена)"}],"az":[{"code":"de","name":"Alman"},{"code":"am","name":"Amarik"},{"code":"az","name":"Azərbaycan"},{"code":"eu","name":"Bask"},{"code":"bg","name":"Bolqar"},{"code":"cs","name":"Çex"},{"code":"zh-tw","name":"Çin (Ənənəvi)"},{"code":"zh-cn","name":"Çin (Sadələşdirilmiş)"},{"code":"da","name":"Danimarka"},{"code":"et","name":"Eston"},{"code":"ar","name":"Ərəb"},{"code":"fa","name":"Fars"},{"code":"fi","name":"Fin"},{"code":"fr","name":"Fransız"},{"code":"nl","name":"Holland"},{"code":"hr","name":"Xorvat"},{"code":"en","name":"Ingilis"},{"code":"es","name":"Ispan"},{"code":"id","name":"İndoneziya"},{"code":"ga","name":"İrland"},{"code":"is","name":"İsland"},{"code":"sv","name":"İsveç"},{"code":"it","name":"İtalyan"},{"code":"he","name":"İvrit"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Koreya"},{"code":"ckb","name":"Kürd(Sorani)"},{"code":"gl","name":"Qalisian"},{"code":"lv","name":"Latış"},{"code":"lt","name":"Litva"},{"code":"hu","name":"Macar"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norveç"},{"code":"pl","name":"Polyak"},{"code":"pt","name":"Portuqal"},{"code":"ro","name":"Rumın"},{"code":"ru","name":"Rus"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Sloven"},{"code":"gd","name":"Şotland (Kelt)"},{"code":"th","name":"Tay"},{"code":"tr","name":"Türk"},{"code":"cy","name":"Uels"},{"code":"uk","name":"Ukrayna"},{"code":"vi","name":"Vyetnam"},{"code":"ja","name":"Yapon"},{"code":"el","name":"Yunan"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İvrit"},{"code":"zh-cn","name":"Çin (Sadələşdirilmiş)"}],"zh-tw":[{"code":"tr","name":"土耳其文"},{"code":"zh-tw","name":"中文 (繁體)"},{"code":"zh-cn","name":"中文 (簡體)"},{"code":"da","name":"丹麥文"},{"code":"eu","name":"巴斯克文"},{"code":"ja","name":"日文"},{"code":"mi","name":"毛利文"},{"code":"gl","name":"加里西亞文"},{"code":"ca","name":"加泰隆尼亞文"},{"code":"lt","name":"立陶宛文"},{"code":"is","name":"冰島文"},{"code":"hu","name":"匈牙利文"},{"code":"id","name":"印尼文"},{"code":"es","name":"西班牙文"},{"code":"hr","name":"克羅埃西亞文"},{"code":"he","name":"希伯來文"},{"code":"el","name":"希臘文"},{"code":"az","name":"亞塞拜然文"},{"code":"lv","name":"拉脫維亞文"},{"code":"fr","name":"法文"},{"code":"fa","name":"波斯文"},{"code":"pl","name":"波蘭文"},{"code":"fi","name":"芬蘭文"},{"code":"am","name":"阿姆哈拉文"},{"code":"ar","name":"阿拉伯文"},{"code":"ru","name":"俄文"},{"code":"bg","name":"保加利亞文"},{"code":"zu","name":"南非祖魯文"},{"code":"cy","name":"威爾斯文"},{"code":"en","name":"英文"},{"code":"ckb","name":"庫德文 (索拉尼文)"},{"code":"nb","name":"挪威文"},{"code":"th","name":"泰文"},{"code":"uk","name":"烏克蘭文"},{"code":"cs","name":"捷克文"},{"code":"nl","name":"荷蘭文"},{"code":"sk","name":"斯洛伐克文"},{"code":"sl","name":"斯洛維尼亞文"},{"code":"vi","name":"越南文"},{"code":"sr","name":"塞爾維亞文"},{"code":"et","name":"愛沙尼亞文"},{"code":"ga","name":"愛爾蘭文"},{"code":"sv","name":"瑞典文"},{"code":"it","name":"義大利文"},{"code":"pt","name":"葡萄牙文"},{"code":"de","name":"德文"},{"code":"ko","name":"韓文"},{"code":"ro","name":"羅馬尼亞文"},{"code":"gd","name":"蘇格蘭蓋爾文"},{"code":"he","name":"希伯來文"},{"code":"zh-cn","name":"中文 (簡體)"}],"mi":[{"code":"az","name":"Ahepaitani"},{"code":"ga","name":"Airihi"},{"code":"am","name":"Amariki"},{"code":"ar","name":"Arapi"},{"code":"et","name":"Etōnia"},{"code":"zh-tw","name":"Haina (Onamata)"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"},{"code":"hu","name":"Hanekeria"},{"code":"ja","name":"Hapanihi"},{"code":"sr","name":"Herepia"},{"code":"fi","name":"Hinerangi"},{"code":"he","name":"Hiperu"},{"code":"sk","name":"Horowākia"},{"code":"sl","name":"Horowinia"},{"code":"sv","name":"Huitene"},{"code":"zu","name":"Huru"},{"code":"en","name":"Ingarihi"},{"code":"id","name":"Initonīhia"},{"code":"it","name":"Itāriana"},{"code":"gl","name":"Karihia"},{"code":"ca","name":"Katarāna"},{"code":"el","name":"Kiriki"},{"code":"ko","name":"Kōreana"},{"code":"hr","name":"Koroātiana"},{"code":"tr","name":"Korukoru"},{"code":"ckb","name":"Kūrihi (Horani)"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nōwei"},{"code":"eu","name":"Pākihi"},{"code":"es","name":"Pāniora"},{"code":"fa","name":"Perēhia"},{"code":"pl","name":"Pōrana"},{"code":"pt","name":"Potukīhi"},{"code":"bg","name":"Purukāriana"},{"code":"lv","name":"Rāwhiana"},{"code":"lt","name":"Rituānia"},{"code":"ro","name":"Romānia"},{"code":"ru","name":"Rūhia"},{"code":"th","name":"Tai"},{"code":"nl","name":"Tati"},{"code":"da","name":"Tenemāka"},{"code":"de","name":"Tiamana"},{"code":"cs","name":"Tieke"},{"code":"is","name":"Tiorangi"},{"code":"gd","name":"Tuauri Kotarangi"},{"code":"uk","name":"Ūkareiana"},{"code":"cy","name":"Wēra"},{"code":"vi","name":"Whitināmu"},{"code":"fr","name":"Wīwī"},{"code":"he","name":"Hiperu"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"}],"th":[{"code":"el","name":"กรีก"},{"code":"gl","name":"กาลิเชียน"},{"code":"gd","name":"เกลิกสกอต"},{"code":"ko","name":"เกาหลี"},{"code":"ca","name":"คาตาลัน"},{"code":"ckb","name":"เคิร์ด (โซรานี)"},{"code":"hr","name":"โครเอเชีย"},{"code":"zh-tw","name":"จีน (ตัวเต็ม)"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"},{"code":"cs","name":"เช็ก"},{"code":"zu","name":"ซูลู"},{"code":"sr","name":"เซอร์เบียน"},{"code":"ja","name":"ญี่ปุ่น"},{"code":"nl","name":"ดัตช์"},{"code":"da","name":"เดนมาร์ก"},{"code":"tr","name":"ตุรกี"},{"code":"th","name":"ไทย"},{"code":"nb","name":"นอร์เวย์"},{"code":"bg","name":"บัลแกเรีย"},{"code":"eu","name":"บาสก์"},{"code":"fa","name":"เปอร์เซีย"},{"code":"pt","name":"โปรตุเกส"},{"code":"pl","name":"โปแลนด์"},{"code":"fr","name":"ฝรั่งเศส"},{"code":"fi","name":"ฟินแลนด์"},{"code":"mi","name":"เมารี"},{"code":"uk","name":"ยูเครน"},{"code":"de","name":"เยอรมัน"},{"code":"ru","name":"รัสเซีย"},{"code":"ro","name":"โรมาเนีย"},{"code":"lv","name":"ลัตเวีย"},{"code":"lt","name":"ลิทัวเนีย"},{"code":"cy","name":"เวลส์"},{"code":"vi","name":"เวียดนาม"},{"code":"es","name":"สเปน"},{"code":"sk","name":"สโลวัก"},{"code":"sl","name":"สโลวีเนีย"},{"code":"sv","name":"สวีเดน"},{"code":"en","name":"อังกฤษ"},{"code":"am","name":"อัมฮาริก"},{"code":"az","name":"อาร์เซอร์ไบจัน"},{"code":"ar","name":"อาหรับ"},{"code":"it","name":"อิตาลี"},{"code":"id","name":"อินโดนีเซีย"},{"code":"et","name":"เอสโทเนีย"},{"code":"is","name":"ไอซ์แลนด์"},{"code":"ga","name":"ไอร์แลนด์"},{"code":"hu","name":"ฮังการี"},{"code":"he","name":"ฮีบรู"},{"code":"he","name":"ฮีบรู"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"}],"eu":[{"code":"de","name":"alemana"},{"code":"am","name":"amharera"},{"code":"ar","name":"arabiera"},{"code":"az","name":"azerbaijanera"},{"code":"bg","name":"bulgariera"},{"code":"da","name":"daniera"},{"code":"ro","name":"errumaniera"},{"code":"ru","name":"errusiera"},{"code":"gd","name":"Eskoziako gaelikoa"},{"code":"sk","name":"eslovakiera"},{"code":"sl","name":"esloveniera"},{"code":"et","name":"estoniera"},{"code":"eu","name":"euskara"},{"code":"fi","name":"finlandiera"},{"code":"fr","name":"frantsesa"},{"code":"cy","name":"galesa"},{"code":"gl","name":"galiziera"},{"code":"es","name":"gaztelania"},{"code":"el","name":"greziera"},{"code":"he","name":"hebreera"},{"code":"hu","name":"hungariera"},{"code":"id","name":"indonesiera"},{"code":"en","name":"ingelesa"},{"code":"ga","name":"irlandera"},{"code":"is","name":"islandiera"},{"code":"it","name":"italiera"},{"code":"ja","name":"japoniera"},{"code":"ca","name":"katalana"},{"code":"ko","name":"koreera"},{"code":"hr","name":"kroaziera"},{"code":"ckb","name":"kurduera (sorania)"},{"code":"lv","name":"letoniera"},{"code":"lt","name":"lituaniera"},{"code":"mi","name":"maoriera"},{"code":"nl","name":"nederlandera"},{"code":"nb","name":"norvegiera"},{"code":"fa","name":"persiera"},{"code":"pl","name":"poloniera"},{"code":"pt","name":"portugesa"},{"code":"sr","name":"serbiera"},{"code":"sv","name":"suediera"},{"code":"th","name":"thailandiera"},{"code":"tr","name":"turkiera"},{"code":"cs","name":"txekiera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"},{"code":"zh-tw","name":"txinera (tradizionala)"},{"code":"uk","name":"ukrainera"},{"code":"vi","name":"vietnamera"},{"code":"zu","name":"zuluera"},{"code":"he","name":"hebreera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"}],"it":[{"code":"am","name":"Amarico"},{"code":"ar","name":"Arabo"},{"code":"az","name":"Azero"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Bulgaro"},{"code":"ca","name":"Catalano"},{"code":"cs","name":"Ceco"},{"code":"zh-cn","name":"Cinese (semplificato)"},{"code":"zh-tw","name":"Cinese (tradizionale)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croato"},{"code":"ckb","name":"Curdo (Sorani)"},{"code":"da","name":"Danese"},{"code":"he","name":"Ebraico"},{"code":"et","name":"Estone"},{"code":"fi","name":"Finlandese"},{"code":"fr","name":"Francese"},{"code":"gd","name":"Gaelico scozzese"},{"code":"gl","name":"Galiziano"},{"code":"cy","name":"Gallese"},{"code":"ja","name":"Giapponese"},{"code":"el","name":"Greco"},{"code":"id","name":"Indonesiano"},{"code":"en","name":"Inglese"},{"code":"ga","name":"Irlandese"},{"code":"is","name":"Islandese"},{"code":"it","name":"Italiano"},{"code":"lv","name":"Lettone"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norvegese"},{"code":"nl","name":"Olandese"},{"code":"fa","name":"Persiano"},{"code":"pl","name":"Polacco"},{"code":"pt","name":"Portoghese"},{"code":"ro","name":"Rumeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Serbo"},{"code":"sk","name":"Slovacco"},{"code":"sl","name":"Sloveno"},{"code":"es","name":"Spagnolo"},{"code":"sv","name":"Svedese"},{"code":"de","name":"Tedesco"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraino"},{"code":"hu","name":"Ungherese"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraico"},{"code":"zh-cn","name":"Cinese (semplificato)"}],"fi":[{"code":"am","name":"amhara"},{"code":"ar","name":"arabia"},{"code":"az","name":"azeri"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaria"},{"code":"en","name":"englanti"},{"code":"es","name":"espanja"},{"code":"gl","name":"galicia"},{"code":"he","name":"heprea"},{"code":"nl","name":"hollanti"},{"code":"ga","name":"iiri"},{"code":"id","name":"indonesia"},{"code":"is","name":"islanti"},{"code":"it","name":"italia"},{"code":"ja","name":"japani"},{"code":"ca","name":"katalaani"},{"code":"zh-tw","name":"kiina (perinteinen)"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"},{"code":"ko","name":"korea"},{"code":"el","name":"kreikka"},{"code":"hr","name":"kroatia"},{"code":"ckb","name":"kurdi (soranî)"},{"code":"cy","name":"kymri"},{"code":"lv","name":"latvia"},{"code":"lt","name":"liettua"},{"code":"mi","name":"maori"},{"code":"nb","name":"norja"},{"code":"fa","name":"persia"},{"code":"pt","name":"portugali"},{"code":"pl","name":"puola"},{"code":"fr","name":"ranska"},{"code":"ro","name":"romania"},{"code":"sv","name":"ruotsi"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"gd","name":"skottigaeli"},{"code":"sk","name":"slovakia"},{"code":"sl","name":"slovenia"},{"code":"fi","name":"suomi"},{"code":"da","name":"tanska"},{"code":"th","name":"thai"},{"code":"cs","name":"tsekki"},{"code":"tr","name":"turkki"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"unkari"},{"code":"ru","name":"venäjä"},{"code":"vi","name":"vietnam"},{"code":"et","name":"viro"},{"code":"zu","name":"zulu"},{"code":"he","name":"heprea"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"}],"en":[{"code":"am","name":"Amharic"},{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgarian"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"zh-tw","name":"Chinese (Traditional)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"nl","name":"Dutch"},{"code":"en","name":"English"},{"code":"et","name":"Estonian"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"gl","name":"Galician"},{"code":"de","name":"German"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"is","name":"Icelandic"},{"code":"id","name":"Indonesian"},{"code":"ga","name":"Irish Gaelic"},{"code":"it","name":"Italian"},{"code":"ja","name":"Japanese"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"lv","name":"Latvian"},{"code":"lt","name":"Lithuanian"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"pl","name":"Polish"},{"code":"pt","name":"Portuguese"},{"code":"ro","name":"Romanian"},{"code":"ru","name":"Russian"},{"code":"gd","name":"Scots Gaelic"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"es","name":"Spanish"},{"code":"sv","name":"Swedish"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"tr":[{"code":"de","name":"Almanca"},{"code":"ar","name":"Arapça"},{"code":"az","name":"Azerbaycan dili"},{"code":"eu","name":"Baskça"},{"code":"bg","name":"Bulgarca"},{"code":"cs","name":"Çekçe"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"},{"code":"zh-tw","name":"Çince (Geleneksel)"},{"code":"da","name":"Danca"},{"code":"id","name":"Endonezce"},{"code":"et","name":"Estonyaca"},{"code":"fa","name":"Farsça"},{"code":"nl","name":"Felemenkçe"},{"code":"fi","name":"Fince"},{"code":"fr","name":"Fransızca"},{"code":"cy","name":"Galce"},{"code":"gl","name":"Galiçyaca"},{"code":"am","name":"Habeşçe"},{"code":"hr","name":"Hırvatça"},{"code":"he","name":"İbranice"},{"code":"en","name":"İngilizce"},{"code":"ga","name":"İrlandaca"},{"code":"gd","name":"İskoç Gaelcesi"},{"code":"es","name":"İspanyolca"},{"code":"sv","name":"İsveççe"},{"code":"it","name":"İtalyanca"},{"code":"is","name":"İzlandaca"},{"code":"ja","name":"Japonca"},{"code":"ca","name":"Katalanca"},{"code":"ko","name":"Korece"},{"code":"ckb","name":"Kürtçe (Sorani)"},{"code":"pl","name":"Lehçe"},{"code":"lv","name":"Letonca"},{"code":"lt","name":"Litvanca"},{"code":"hu","name":"Macarca"},{"code":"mi","name":"Maori dili"},{"code":"nb","name":"Norveççe"},{"code":"pt","name":"Portekizce"},{"code":"ro","name":"Romence"},{"code":"ru","name":"Rusça"},{"code":"sr","name":"Sırpça"},{"code":"sk","name":"Slovakça"},{"code":"sl","name":"Slovence"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türkçe"},{"code":"uk","name":"Ukraynaca"},{"code":"vi","name":"Vietnamca"},{"code":"el","name":"Yunanca"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İbranice"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"}],"ro":[{"code":"am","name":"Amharică"},{"code":"ar","name":"Arabă"},{"code":"az","name":"Azerbaidjană"},{"code":"eu","name":"Bască"},{"code":"bg","name":"Bulgară"},{"code":"ca","name":"Catalană"},{"code":"cs","name":"Cehă"},{"code":"zh-cn","name":"Chineză (Simplificată)"},{"code":"zh-tw","name":"Chineză (Tradițională)"},{"code":"ko","name":"Coreeană"},{"code":"hr","name":"Croată"},{"code":"da","name":"Daneză"},{"code":"he","name":"Ebraică"},{"code":"en","name":"Engleză"},{"code":"et","name":"Estonă"},{"code":"fi","name":"Finlandeză"},{"code":"fr","name":"Franceză"},{"code":"cy","name":"Galeză"},{"code":"gd","name":"Galica scoțiană"},{"code":"gl","name":"Galiciană"},{"code":"de","name":"Germană"},{"code":"el","name":"Greacă"},{"code":"id","name":"Indoneziană"},{"code":"ga","name":"Irlandeză"},{"code":"is","name":"Islandeză"},{"code":"it","name":"Italiană"},{"code":"ja","name":"Japoneză"},{"code":"ckb","name":"Kurdă (Sorani)"},{"code":"lv","name":"Letonă"},{"code":"lt","name":"Lituaniană"},{"code":"hu","name":"Maghiară"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Neerlandeză"},{"code":"nb","name":"Norvegiană"},{"code":"fa","name":"Persană"},{"code":"pl","name":"Poloneză"},{"code":"pt","name":"Portugheză"},{"code":"ro","name":"Română"},{"code":"ru","name":"Rusă"},{"code":"sr","name":"Sârbă"},{"code":"sk","name":"Slovacă"},{"code":"sl","name":"Slovenă"},{"code":"es","name":"Spaniolă"},{"code":"sv","name":"Suedeză"},{"code":"th","name":"Thailandeză"},{"code":"tr","name":"Turcă"},{"code":"uk","name":"Ucraineană"},{"code":"vi","name":"Vietnameză"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraică"},{"code":"zh-cn","name":"Chineză (Simplificată)"}],"zh-cn":[{"code":"ar","name":"阿拉伯语"},{"code":"am","name":"阿姆哈拉语"},{"code":"az","name":"阿塞拜疆语"},{"code":"ga","name":"爱尔兰语"},{"code":"et","name":"爱沙尼亚语"},{"code":"eu","name":"巴斯克语"},{"code":"bg","name":"保加利亚语"},{"code":"is","name":"冰岛语"},{"code":"pl","name":"波兰语"},{"code":"fa","name":"波斯语"},{"code":"da","name":"丹麦语"},{"code":"de","name":"德语"},{"code":"ru","name":"俄语"},{"code":"fr","name":"法语"},{"code":"fi","name":"芬兰语"},{"code":"ko","name":"韩语"},{"code":"nl","name":"荷兰语"},{"code":"gl","name":"加利西亚语"},{"code":"ca","name":"加泰罗尼亚语"},{"code":"cs","name":"捷克语"},{"code":"hr","name":"克罗地亚语"},{"code":"ckb","name":"库尔德语（索拉尼）"},{"code":"lv","name":"拉脱维亚语"},{"code":"lt","name":"立陶宛语"},{"code":"ro","name":"罗马尼亚语"},{"code":"mi","name":"毛利语"},{"code":"nb","name":"挪威语"},{"code":"pt","name":"葡萄牙语"},{"code":"ja","name":"日语"},{"code":"sv","name":"瑞典语"},{"code":"sr","name":"塞尔维亚语"},{"code":"sk","name":"斯洛伐克语"},{"code":"sl","name":"斯洛文尼亚语"},{"code":"gd","name":"苏格兰盖尔语"},{"code":"th","name":"泰语"},{"code":"tr","name":"土耳其语"},{"code":"cy","name":"威尔士语"},{"code":"uk","name":"乌克兰语"},{"code":"es","name":"西班牙语"},{"code":"he","name":"希伯来语"},{"code":"el","name":"希腊语"},{"code":"hu","name":"匈牙利语"},{"code":"it","name":"意大利语"},{"code":"id","name":"印尼语"},{"code":"en","name":"英语"},{"code":"vi","name":"越南语"},{"code":"zh-tw","name":"中文（繁体）"},{"code":"zh-cn","name":"中文（简体）"},{"code":"zu","name":"祖鲁语"},{"code":"he","name":"希伯来语"},{"code":"zh-cn","name":"中文（简体）"}],"ko":[{"code":"gl","name":"갈리시아어"},{"code":"el","name":"그리스어"},{"code":"nl","name":"네덜란드어"},{"code":"nb","name":"노르웨이어"},{"code":"da","name":"덴마크어"},{"code":"de","name":"독일어"},{"code":"lv","name":"라트비아어"},{"code":"ru","name":"러시아어"},{"code":"ro","name":"루마니아어"},{"code":"lt","name":"리투아니아어"},{"code":"mi","name":"마오리어"},{"code":"eu","name":"바스크어"},{"code":"vi","name":"베트남어"},{"code":"bg","name":"불가리아어"},{"code":"sr","name":"세르비아어"},{"code":"sv","name":"스웨덴어"},{"code":"gd","name":"스코틀랜드 게일어"},{"code":"es","name":"스페인어"},{"code":"sk","name":"슬로바키아어"},{"code":"sl","name":"슬로베니아어"},{"code":"ar","name":"아랍어"},{"code":"is","name":"아이슬란드어"},{"code":"ga","name":"아일랜드어"},{"code":"az","name":"아제르바이잔어"},{"code":"am","name":"암하라어"},{"code":"et","name":"에스토니아어"},{"code":"en","name":"영어"},{"code":"uk","name":"우크라이나어"},{"code":"cy","name":"웨일즈어"},{"code":"it","name":"이탈리아어"},{"code":"id","name":"인도네시아어"},{"code":"ja","name":"일본어"},{"code":"zu","name":"줄루어"},{"code":"zh-cn","name":"중국어(간체)"},{"code":"zh-tw","name":"중국어(번체)"},{"code":"cs","name":"체코어"},{"code":"ca","name":"카탈로니아어"},{"code":"ckb","name":"쿠르드어(소라니)"},{"code":"hr","name":"크로아티아어"},{"code":"th","name":"태국어"},{"code":"tr","name":"터키어"},{"code":"fa","name":"페르시아어"},{"code":"pt","name":"포르투갈어"},{"code":"pl","name":"폴란드어"},{"code":"fr","name":"프랑스어"},{"code":"fi","name":"핀란드어"},{"code":"ko","name":"한국어"},{"code":"hu","name":"헝가리어"},{"code":"he","name":"히브리어"},{"code":"he","name":"히브리어"},{"code":"zh-cn","name":"중국어(간체)"}],"de":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Aserbaidschanisch"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgarisch"},{"code":"zh-tw","name":"Chinesisch (traditionell)"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"},{"code":"da","name":"Dänisch"},{"code":"de","name":"Deutsch"},{"code":"en","name":"Englisch"},{"code":"et","name":"Estnisch"},{"code":"fi","name":"Finnisch"},{"code":"fr","name":"Französisch"},{"code":"gl","name":"Galizisch"},{"code":"el","name":"Griechisch"},{"code":"he","name":"Hebräisch"},{"code":"id","name":"Indonesisch"},{"code":"ga","name":"Irisch"},{"code":"is","name":"Isländisch"},{"code":"it","name":"Italienisch"},{"code":"ja","name":"Japanisch"},{"code":"ca","name":"Katalanisch"},{"code":"ko","name":"Koreanisch"},{"code":"hr","name":"Kroatisch"},{"code":"ckb","name":"Kurdisch (Sorani)"},{"code":"lv","name":"Lettisch"},{"code":"lt","name":"Litauisch"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Niederländisch"},{"code":"nb","name":"Norwegisch"},{"code":"fa","name":"Persisch"},{"code":"pl","name":"Polnisch"},{"code":"pt","name":"Portugiesisch"},{"code":"ro","name":"Rumänisch"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schottisch-Gälisch"},{"code":"sv","name":"Schwedisch"},{"code":"sr","name":"Serbisch"},{"code":"sk","name":"Slowakisch"},{"code":"sl","name":"Slowenisch"},{"code":"es","name":"Spanisch"},{"code":"th","name":"Thailändisch"},{"code":"cs","name":"Tschechisch"},{"code":"tr","name":"Türkisch"},{"code":"uk","name":"Ukrainisch"},{"code":"hu","name":"Ungarisch"},{"code":"vi","name":"Vietnamesisch"},{"code":"cy","name":"Walisisch"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebräisch"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"}],"cs":[{"code":"am","name":"amharština"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabština"},{"code":"az","name":"ázerbájdžánština"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharština"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradiční)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánština"},{"code":"et","name":"estonština"},{"code":"fi","name":"finština"},{"code":"fr","name":"francouzština"},{"code":"gl","name":"galicijština"},{"code":"he","name":"hebrejština"},{"code":"nl","name":"holandština"},{"code":"hr","name":"chorvatština"},{"code":"id","name":"indonéština"},{"code":"ga","name":"irština"},{"code":"is","name":"islandština"},{"code":"it","name":"italština"},{"code":"ja","name":"japonština"},{"code":"ca","name":"katalánština"},{"code":"ko","name":"korejština"},{"code":"ckb","name":"kurdština (sorání)"},{"code":"lt","name":"litevština"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarština"},{"code":"mi","name":"maorština"},{"code":"de","name":"němčina"},{"code":"nb","name":"norština"},{"code":"fa","name":"perština"},{"code":"pl","name":"polština"},{"code":"pt","name":"portugalština"},{"code":"ro","name":"rumunština"},{"code":"ru","name":"ruština"},{"code":"el","name":"řečtina"},{"code":"gd","name":"skotská gaelština"},{"code":"sk","name":"slovenština"},{"code":"sl","name":"slovinština"},{"code":"sr","name":"srbština"},{"code":"es","name":"španělština"},{"code":"sv","name":"švédština"},{"code":"th","name":"thajština"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinština"},{"code":"cy","name":"velština"},{"code":"vi","name":"vietnamština"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejština"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"he":[{"code":"uk","name":"אוקראינית"},{"code":"az","name":"אזרית"},{"code":"it","name":"איטלקית"},{"code":"id","name":"אינדונזית"},{"code":"is","name":"איסלנדית"},{"code":"ga","name":"אירית"},{"code":"am","name":"אמהרית"},{"code":"en","name":"אנגלית"},{"code":"et","name":"אסטונית"},{"code":"eu","name":"באסקית"},{"code":"bg","name":"בולגרית"},{"code":"gd","name":"גאלית סקוטית"},{"code":"gl","name":"גליציאנית"},{"code":"de","name":"גרמנית"},{"code":"da","name":"דנית"},{"code":"nl","name":"הולנדית"},{"code":"hu","name":"הונגרית"},{"code":"cy","name":"וולשית"},{"code":"vi","name":"וייטנאמית"},{"code":"zu","name":"זולו"},{"code":"tr","name":"טורקית"},{"code":"el","name":"יוונית"},{"code":"ja","name":"יפנית"},{"code":"ckb","name":"כורדית (סורנית)"},{"code":"lv","name":"לטבית"},{"code":"lt","name":"ליטאית"},{"code":"mi","name":"מאורית"},{"code":"nb","name":"נורווגית"},{"code":"zh-tw","name":"סינית (מסורתית)"},{"code":"zh-cn","name":"‏סינית (פשוטה)"},{"code":"sl","name":"סלובנית"},{"code":"sk","name":"סלובקית"},{"code":"es","name":"ספרדית"},{"code":"sr","name":"סרבית"},{"code":"he","name":"עברית"},{"code":"ar","name":"ערבית"},{"code":"pl","name":"פולנית"},{"code":"pt","name":"פורטוגזית"},{"code":"fi","name":"פינית"},{"code":"fa","name":"פרסית"},{"code":"cs","name":"צ\'כית"},{"code":"fr","name":"צרפתית"},{"code":"ko","name":"קוריאנית"},{"code":"ca","name":"קטלאנית"},{"code":"hr","name":"קרואטית"},{"code":"ro","name":"רומנית"},{"code":"ru","name":"רוסית"},{"code":"sv","name":"שוודית"},{"code":"th","name":"תאית"},{"code":"he","name":"עברית"},{"code":"zh-cn","name":"‏סינית (פשוטה)"}],"cy":[{"code":"de","name":"Almaeneg"},{"code":"am","name":"Amhareg"},{"code":"ar","name":"Arabeg"},{"code":"az","name":"Aserbaijaneg"},{"code":"eu","name":"Basgeg"},{"code":"bg","name":"Bwlgareg"},{"code":"ca","name":"Catalaneg"},{"code":"hr","name":"Croateg"},{"code":"ckb","name":"Cwrdeg (Sorani)"},{"code":"cy","name":"Cymraeg"},{"code":"da","name":"Daneg"},{"code":"it","name":"Eidaleg"},{"code":"et","name":"Estoneg"},{"code":"vi","name":"Fietnameg"},{"code":"fi","name":"Ffineg"},{"code":"nl","name":"Fflemeg"},{"code":"fr","name":"Ffrangeg"},{"code":"gd","name":"Gaeleg yr Alban"},{"code":"gl","name":"Galiseg"},{"code":"el","name":"Groeg"},{"code":"ga","name":"Gwyddeleg"},{"code":"he","name":"Hebraeg"},{"code":"hu","name":"Hwngareg"},{"code":"ko","name":"Iaith Corea"},{"code":"id","name":"Indonesieg"},{"code":"is","name":"Islandeg"},{"code":"ja","name":"Japaneg"},{"code":"lv","name":"Latfieg"},{"code":"lt","name":"Lithwaneg"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwyeg"},{"code":"fa","name":"Perseg"},{"code":"pt","name":"Portiwgaleg"},{"code":"pl","name":"Pwyleg"},{"code":"ro","name":"Rwmaneg"},{"code":"ru","name":"Rwsieg"},{"code":"en","name":"Saesneg"},{"code":"es","name":"Sbaeneg"},{"code":"sr","name":"Serbeg"},{"code":"sk","name":"Slofaceg"},{"code":"sl","name":"Slofeneg"},{"code":"sv","name":"Swedeg"},{"code":"zu","name":"Swlw"},{"code":"th","name":"Tai"},{"code":"cs","name":"Tsieceg"},{"code":"zh-tw","name":"Tsieineeg (Traddodiadol)"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"},{"code":"tr","name":"Twrceg"},{"code":"uk","name":"Wcreineg"},{"code":"he","name":"Hebraeg"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"}],"sv":[{"code":"am","name":"amhariska"},{"code":"ar","name":"arabiska"},{"code":"az","name":"azerbajdzjanska"},{"code":"eu","name":"baskiska"},{"code":"bg","name":"bulgariska"},{"code":"da","name":"danska"},{"code":"en","name":"engelska"},{"code":"et","name":"estniska"},{"code":"fi","name":"finska"},{"code":"fr","name":"franska"},{"code":"gd","name":"gaeliska"},{"code":"gl","name":"galiciska"},{"code":"el","name":"grekiska"},{"code":"he","name":"hebreiska"},{"code":"id","name":"indonesiska"},{"code":"ga","name":"irländska"},{"code":"is","name":"isländska"},{"code":"it","name":"italienska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalanska"},{"code":"zh-cn","name":"kinesiska (förenklad)"},{"code":"zh-tw","name":"kinesiska (traditionell)"},{"code":"ko","name":"koreanska"},{"code":"hr","name":"kroatiska"},{"code":"ckb","name":"kurdiska (sorani)"},{"code":"lv","name":"lettiska"},{"code":"lt","name":"litauiska"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederländska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persiska"},{"code":"pl","name":"polska"},{"code":"pt","name":"portugisiska"},{"code":"ro","name":"rumänska"},{"code":"ru","name":"ryska"},{"code":"sr","name":"serbiska"},{"code":"sk","name":"slovakiska"},{"code":"sl","name":"slovenska"},{"code":"es","name":"spanska"},{"code":"sv","name":"svenska"},{"code":"th","name":"thailändska"},{"code":"cs","name":"tjeckiska"},{"code":"tr","name":"turkiska"},{"code":"de","name":"tyska"},{"code":"uk","name":"ukrainska"},{"code":"hu","name":"ungerska"},{"code":"vi","name":"vietnamesiska"},{"code":"cy","name":"walesiska"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebreiska"},{"code":"zh-cn","name":"kinesiska (förenklad)"}],"ga":[{"code":"am","name":"Amáiris"},{"code":"ar","name":"Araibis"},{"code":"az","name":"Asarbaiseáinis"},{"code":"eu","name":"Bascais"},{"code":"en","name":"Béarla"},{"code":"cy","name":"Breatnais"},{"code":"bg","name":"Bulgáiris"},{"code":"ca","name":"Catalóinis"},{"code":"ckb","name":"Coirdis (Sóráinis)"},{"code":"ko","name":"Cóiréis"},{"code":"hr","name":"Cróitis"},{"code":"da","name":"Danmhairgis"},{"code":"he","name":"Eabhrais"},{"code":"et","name":"Eastóinis"},{"code":"fi","name":"Fionlainnis"},{"code":"fr","name":"Fraincis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gaeilge na hAlban"},{"code":"gl","name":"Gailísis"},{"code":"de","name":"Gearmáinis"},{"code":"el","name":"Gréigis"},{"code":"id","name":"Indinéisis"},{"code":"it","name":"Iodáilis"},{"code":"nb","name":"Ioruais"},{"code":"is","name":"Íoslainnis"},{"code":"lv","name":"Laitvis"},{"code":"lt","name":"Liotuáinis"},{"code":"mi","name":"Maorais"},{"code":"nl","name":"Ollainnis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Polainnis"},{"code":"pt","name":"Portaingéilis"},{"code":"ro","name":"Rómáinis"},{"code":"ru","name":"Rúisis"},{"code":"ja","name":"Seapáinis"},{"code":"cs","name":"Seicis"},{"code":"sr","name":"Seirbis"},{"code":"zh-cn","name":"Sínis (Simplithe)"},{"code":"zh-tw","name":"Sínis (Traidisiúnta)"},{"code":"sl","name":"Slóivéinis"},{"code":"sk","name":"Slóvaicis"},{"code":"es","name":"Spáinnis"},{"code":"sv","name":"Sualainnis"},{"code":"zu","name":"Súlúis"},{"code":"th","name":"Téalainnis"},{"code":"tr","name":"Tuircis"},{"code":"uk","name":"Úcráinis"},{"code":"hu","name":"Ungáiris"},{"code":"vi","name":"Vítneaimis"},{"code":"he","name":"Eabhrais"},{"code":"zh-cn","name":"Sínis (Simplithe)"}],"ja":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"ja-hira":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"sk":[{"code":"am","name":"amharčina"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabčina"},{"code":"az","name":"azerbajdžančina"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharčina"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradičná)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánčina"},{"code":"et","name":"estónčina"},{"code":"fi","name":"fínčina"},{"code":"fr","name":"francúzština"},{"code":"gl","name":"galícijčina"},{"code":"el","name":"gréčtina"},{"code":"he","name":"hebrejčina"},{"code":"nl","name":"holandčina"},{"code":"hr","name":"chorvátčina"},{"code":"id","name":"indonézština"},{"code":"ga","name":"írčina"},{"code":"is","name":"islandčina"},{"code":"ja","name":"japončina"},{"code":"ca","name":"katalánčina"},{"code":"ko","name":"kórejčina"},{"code":"ckb","name":"kurdčina (sorání)"},{"code":"lt","name":"litovčina"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarčina"},{"code":"mi","name":"maorijčina"},{"code":"de","name":"nemčina"},{"code":"nb","name":"nórčina"},{"code":"fa","name":"perzština"},{"code":"pl","name":"poľština"},{"code":"pt","name":"portugalčina"},{"code":"ro","name":"rumunčina"},{"code":"ru","name":"ruština"},{"code":"sk","name":"slovenčina"},{"code":"sl","name":"slovinčina"},{"code":"sr","name":"srbčina"},{"code":"gd","name":"škótska gaelčina"},{"code":"es","name":"španielčina"},{"code":"sv","name":"švédčina"},{"code":"it","name":"taliančina"},{"code":"th","name":"thajčina"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinčina"},{"code":"vi","name":"vietnamčina"},{"code":"cy","name":"waleština"},{"code":"zu","name":"zuluština"},{"code":"he","name":"hebrejčina"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"da":[{"code":"am","name":"Amharisk"},{"code":"ar","name":"Arabisk"},{"code":"az","name":"Aserbajdsjansk"},{"code":"eu","name":"Baskisk"},{"code":"bg","name":"Bulgarsk"},{"code":"da","name":"Dansk"},{"code":"en","name":"Engelsk"},{"code":"et","name":"Estisk"},{"code":"fi","name":"Finsk"},{"code":"fr","name":"Fransk"},{"code":"gl","name":"Galicisk"},{"code":"el","name":"Græsk"},{"code":"he","name":"Hebraisk"},{"code":"id","name":"Indonesisk"},{"code":"ga","name":"Irsk"},{"code":"is","name":"Islandsk"},{"code":"it","name":"Italiensk"},{"code":"ja","name":"Japansk"},{"code":"ca","name":"Katalansk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"},{"code":"zh-tw","name":"Kinesisk (traditionelt)"},{"code":"ko","name":"Koreansk"},{"code":"hr","name":"Kroatisk"},{"code":"ckb","name":"Kurdisk (sorani)"},{"code":"lv","name":"Lettisk"},{"code":"lt","name":"Litauisk"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlandsk"},{"code":"nb","name":"Norsk"},{"code":"fa","name":"Persisk"},{"code":"pl","name":"Polsk"},{"code":"pt","name":"Portugisisk"},{"code":"ro","name":"Rumænsk"},{"code":"ru","name":"Russisk"},{"code":"sr","name":"Serbisk"},{"code":"gd","name":"Skotsk gælisk"},{"code":"sk","name":"Slovakisk"},{"code":"sl","name":"Slovensk"},{"code":"es","name":"Spansk"},{"code":"sv","name":"Svensk"},{"code":"th","name":"Thailandsk"},{"code":"cs","name":"Tjekkisk"},{"code":"tr","name":"Tyrkisk"},{"code":"de","name":"Tysk"},{"code":"uk","name":"Ukrainsk"},{"code":"hu","name":"Ungarsk"},{"code":"vi","name":"Vietnamesisk"},{"code":"cy","name":"Walisisk"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraisk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"}],"sl":[{"code":"am","name":"amharščina"},{"code":"en","name":"angleščina"},{"code":"ar","name":"arabščina"},{"code":"az","name":"azerbajdžanščina"},{"code":"eu","name":"baskovščina"},{"code":"bg","name":"bolgarščina"},{"code":"cs","name":"češčina"},{"code":"da","name":"danščina"},{"code":"et","name":"estonščina"},{"code":"fi","name":"finščina"},{"code":"fr","name":"francoščina"},{"code":"gl","name":"galicijščina"},{"code":"el","name":"grščina"},{"code":"he","name":"hebrejščina"},{"code":"hr","name":"hrvaščina"},{"code":"id","name":"indonezijščina"},{"code":"ga","name":"irščina"},{"code":"is","name":"islandščina"},{"code":"it","name":"italijanščina"},{"code":"ja","name":"japonščina"},{"code":"ca","name":"katalonščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"},{"code":"zh-tw","name":"kitajščina (tradicionalna)"},{"code":"ko","name":"korejščina"},{"code":"ckb","name":"kurdščina (soranščina)"},{"code":"lv","name":"latvijščina"},{"code":"lt","name":"litovščina"},{"code":"hu","name":"madžarščina"},{"code":"mi","name":"maorščina"},{"code":"de","name":"nemščina"},{"code":"nl","name":"nizozemščina"},{"code":"nb","name":"norveščina"},{"code":"fa","name":"perzijščina"},{"code":"pl","name":"poljščina"},{"code":"pt","name":"portugalščina"},{"code":"ro","name":"romunščina"},{"code":"ru","name":"ruščina"},{"code":"sk","name":"slovaščina"},{"code":"sl","name":"slovenščina"},{"code":"sr","name":"srbščina"},{"code":"gd","name":"škotska gelščina"},{"code":"es","name":"španščina"},{"code":"sv","name":"švedščina"},{"code":"th","name":"tajščina"},{"code":"tr","name":"turščina"},{"code":"uk","name":"ukrajinščina"},{"code":"cy","name":"valižanščina"},{"code":"vi","name":"vietnamščina"},{"code":"zu","name":"zulujščina"},{"code":"he","name":"hebrejščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"}],"sr":[{"code":"az","name":"азербејџански"},{"code":"am","name":"амхарски"},{"code":"ar","name":"арапски"},{"code":"eu","name":"баскијски"},{"code":"bg","name":"бугарски"},{"code":"cy","name":"велшки"},{"code":"vi","name":"вијетнамски"},{"code":"gl","name":"галски"},{"code":"el","name":"грчки"},{"code":"da","name":"дански"},{"code":"en","name":"енглески"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"id","name":"индонежански"},{"code":"ga","name":"ирски"},{"code":"is","name":"исландски"},{"code":"it","name":"италијански"},{"code":"ja","name":"јапански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"кинески (поједностављени)"},{"code":"zh-tw","name":"кинески (традиционални)"},{"code":"ko","name":"корејски"},{"code":"ckb","name":"курдски (сорани)"},{"code":"lv","name":"летонски"},{"code":"lt","name":"литвански"},{"code":"hu","name":"мађарски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немачки"},{"code":"nb","name":"норвешки"},{"code":"fa","name":"персијски"},{"code":"pl","name":"пољски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румунски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словачки"},{"code":"sl","name":"словеначки"},{"code":"sr","name":"српски"},{"code":"th","name":"тајски"},{"code":"tr","name":"турски"},{"code":"uk","name":"украјински"},{"code":"fi","name":"фински"},{"code":"fr","name":"француски"},{"code":"he","name":"хебрејски"},{"code":"nl","name":"холандски"},{"code":"hr","name":"хрватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шкотски галски"},{"code":"es","name":"шпански"},{"code":"he","name":"хебрејски"},{"code":"zh-cn","name":"кинески (поједностављени)"}],"ru":[{"code":"az","name":"азербайджанский"},{"code":"am","name":"амхарский"},{"code":"en","name":"английский"},{"code":"ar","name":"арабский"},{"code":"eu","name":"баскский"},{"code":"bg","name":"болгарский"},{"code":"cy","name":"валлийский"},{"code":"hu","name":"венгерский"},{"code":"vi","name":"вьетнамский"},{"code":"gl","name":"галисийский"},{"code":"el","name":"греческий"},{"code":"da","name":"датский"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийский"},{"code":"ga","name":"ирландский"},{"code":"is","name":"исландский"},{"code":"es","name":"испанский"},{"code":"it","name":"итальянский"},{"code":"ca","name":"каталанский"},{"code":"zh-tw","name":"китайский (традиционный)"},{"code":"zh-cn","name":"китайский (упрощенный)"},{"code":"ko","name":"корейский"},{"code":"ckb","name":"курдский (сорани)"},{"code":"lv","name":"латышский"},{"code":"lt","name":"литовский"},{"code":"mi","name":"маори"},{"code":"de","name":"немецкий"},{"code":"nl","name":"нидерландский"},{"code":"nb","name":"норвежский"},{"code":"pl","name":"польский"},{"code":"pt","name":"португальский"},{"code":"ro","name":"румынский"},{"code":"ru","name":"русский"},{"code":"sr","name":"сербский"},{"code":"sk","name":"словацкий"},{"code":"sl","name":"словенский"},{"code":"th","name":"тайский"},{"code":"tr","name":"турецкий"},{"code":"uk","name":"украинский"},{"code":"fa","name":"фарси"},{"code":"fi","name":"финский"},{"code":"fr","name":"французский"},{"code":"hr","name":"хорватский"},{"code":"cs","name":"чешский"},{"code":"sv","name":"шведский"},{"code":"gd","name":"шотландский (гэльский)"},{"code":"et","name":"эстонский"},{"code":"ja","name":"японский"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайский (упрощенный)"}]},"nameMap":{"abkhaz":"ab","albanian":"sq","amharic":"am","arabic":"ar","armenian":"hy","azerbaijani":"az","basque":"eu","belarusian":"be","bulgarian":"bg","catalan":"ca","chinese (simplified)":"zh-cn","chinese (traditional)":"zh-tw","croatian":"hr","czech":"cs","danish":"da","dutch":"nl","english":"en","esperanto":"eo","estonian":"et","finnish":"fi","french":"fr","galician":"gl","german":"de","greek":"el","haitian creole":"ht","hebrew":"he","hindi":"hi","hungarian":"hu","icelandic":"is","indonesian":"id","irish gaelic":"ga","italian":"it","japanese":"ja","kannada":"kn","korean":"ko","kurdish (kurmanji)":"ku","kurdish (sorani)":"ckb","latin":"la","latvian":"lv","lithuanian":"lt","macedonian":"mk","malay":"ms","malayalam":"ml","maltese":"mt","maori":"mi","marathi":"mr","mongolian":"mn","myanmar (burmese)":"my","norwegian":"nb","persian":"fa","polish":"pl","portuguese":"pt","romanian":"ro","russian":"ru","scots gaelic":"gd","serbian":"sr","slovak":"sk","slovenian":"sl","spanish":"es","swedish":"sv","telugu":"te","thai":"th","turkish":"tr","ukrainian":"uk","uzbek":"uz","vietnamese":"vi","welsh":"cy","zulu":"zu","ሀንጋሪኛ":"hu","ህንድኛ":"hi","ሊትዌንኛ":"lt","ላቲንኛ":"la","ላትቪያኛ":"lv","ማላያላምኛ":"ml","ማላይኛ":"ms","ማልቲስኛ":"mt","ማራቲኛ":"mr","ማዮሪኛ":"mi","ሜቄዶኒያኛ":"mk","ሞንጎሊያኛ":"mn","ራሽያኛ":"ru","ሮማኒያንኛ":"ro","ሰርቢያኛ":"sr","ስሎቫክኛ":"sk","ስሎቬንያኛ":"sl","ስዊድንኛ":"sv","ስፓኒሽኛ":"es","በርማኛ":"my","ቡልጋሪያኛ":"bg","ባስክኛ":"eu","ቤላሩስኛ":"be","ቪትናምኛ":"vi","ቱርክኛ":"tr","ታይኛ":"th","ቴሉጉኛ":"te","ቻይንኛ (ቀላሉ)":"zh-cn","ቻይንኛ (ባሕላዊው)":"zh-tw","ቼክኛ":"cs","ኖርዌጅያንኛ":"nb","አልባንያኛ":"sq","አማርኛ":"am","አርመኒያኛ":"hy","አብካዝኛ":"ab","አዜርባይጃንኛ":"az","አይሪሽ":"ga","አይስላንድኛ":"is","ኡዝቤክኛ":"uz","ኤስቶኒያኛ":"et","ኤስፐራንቶኛ":"eo","እንዶኔዢያኛ":"id","እንግሊዝኛ":"en","ኩርድሽኛ (ሶራኒ)":"ckb","ኩርድሽኛ (ኩርማንጂ)":"ku","ካታላንኛ":"ca","ካናዳኛ":"kn","ክሮኤሽያኛ":"hr","ኮሪያኛ":"ko","ዌልሽ":"cy","ዐረብኛ":"ar","ዕብራይስጥ":"he","ዙሉኛ":"zu","የሃይቲ ክረኦሌኛ":"ht","የስኮት ጌልክኛ":"gd","ዩክሬንኛ":"uk","ደችኛ":"nl","ዴንሽኛ":"da","ጀርመንኛ":"de","ጃፓንኛ":"ja","ጋሊሺያኛ":"gl","ግሪክኛ":"el","ጣሊያንኛ":"it","ፈረንሳይኛ":"fr","ፊኒሽኛ":"fi","ፐርሺያኛ":"fa","ፖሊሽኛ":"pl","ፖርቱጋሊኛ":"pt","الآيسلندية":"is","الأبخازية":"ab","الأذرية":"az","الأرمنية":"hy","الإسبانية":"es","الإسبرانتو":"eo","الإستونية":"et","الألبانية":"sq","الألمانية":"de","الأمهرية":"am","الإنجليزية":"en","الإندونيسية":"id","الأوزبكية":"uz","الأوكرانية":"uk","الأيرلندية":"ga","الإيطالية":"it","الباسكية":"eu","البرتغالية":"pt","البلغارية":"bg","البورمية":"my","البولندية":"pl","البيلاروسية":"be","التايلاندية":"th","التركية":"tr","التشيكية":"cs","التيلوغوية":"te","الجاليكية":"gl","الدانمركية":"da","الروسية":"ru","الرومانية":"ro","الزولو":"zu","السلوفاكية":"sk","السلوفينية":"sl","السويدية":"sv","الصربية":"sr","الصينية (التقليدية)":"zh-tw","الصينية (المبسطة)":"zh-cn","العبرية":"he","العربية":"ar","الغيلية الأسكتلندية":"gd","الفارسية":"fa","الفرنسية":"fr","الفنلندية":"fi","الفيتنامية":"vi","القطلونية":"ca","الكردية (السورانية)":"ckb","الكردية (الكرمانجية)":"ku","الكرواتية":"hr","الكريولية الهايتية":"ht","الكنادية":"kn","الكورية":"ko","اللاتفية":"lv","اللاتينية":"la","الليتوانية":"lt","الماراثية":"mr","المالايالامية":"ml","المالطيّة":"mt","الماورية":"mi","المقدونية":"mk","الملايو":"ms","المنغولية":"mn","النرويجية":"nb","الهندية":"hi","الهنغارية":"hu","الهولندية":"nl","الويلزية":"cy","اليابانية":"ja","اليونانية":"el","αγγλικά":"en","αζερμπαϊτζανικά":"az","αλβανικά":"sq","αμπχαζικά":"ab","αμχαρικά":"am","αραβικά":"ar","αρμενικά":"hy","βασκικά":"eu","βιετναμεζικά":"vi","βιρμανικά":"my","βουλγαρικά":"bg","γαελικά σκοτίας":"gd","γαλικιακά":"gl","γαλλικά":"fr","γερμανικά":"de","δανικά":"da","εβραϊκά":"he","ελληνικά":"el","εσθονικά":"et","εσπεράντο":"eo","ζουλού":"zu","ιαπωνικά":"ja","ινδονησιακά":"id","ιρλανδικά":"ga","ισλανδικά":"is","ισπανικά":"es","ιταλικά":"it","κανάντα":"kn","καταλανικά":"ca","κινεζικά (απλοποιημένα)":"zh-cn","κινεζικά (παραδοσιακά)":"zh-tw","κορεατικά":"ko","κουρδικά (κουρμαντζί)":"ku","κουρδικά (σορανί)":"ckb","κρεόλ αϊτής":"ht","κροατικά":"hr","λατινικά":"la","λετονικά":"lv","λευκορωσικά":"be","λιθουανικά":"lt","μαλαγιάλαμ":"ml","μαλέι":"ms","μαλτεζικά":"mt","μαορί":"mi","μαραθικά":"mr","μογγολικά":"mn","νορβηγικά":"nb","ολλανδικά":"nl","ουαλικά":"cy","ουγγρικά":"hu","ουζμπεκικά":"uz","ουκρανικά":"uk","περσικά":"fa","πολωνικά":"pl","πορτογαλικά":"pt","ρουμανικά":"ro","ρωσικά":"ru","σερβικά":"sr","σλαβομακεδονικά":"mk","σλοβακικά":"sk","σλοβενικά":"sl","σουηδικά":"sv","ταϊλανδεζικά":"th","τελούγκου":"te","τουρκικά":"tr","τσεχικά":"cs","φινλανδικά":"fi","χίντι":"hi","albania":"sq","amharik":"am","arab":"ar","armenia":"hy","azerbaijan":"az","bask":"eu","belanda":"nl","belarussia":"be","bulgaria":"bg","ceko":"cs","china (aks. sederhana)":"zh-cn","china (aks. tradisional)":"zh-tw","denmark":"da","estonia":"et","farsi":"fa","finlandia":"fi","gaelig":"ga","gaelik skotlandia":"gd","galisia":"gl","hungaria":"hu","ibrani":"he","indonesia":"id","inggris":"en","islandia":"is","italia":"it","jepang":"ja","jerman":"de","katalan":"ca","korea":"ko","kreol haiti":"ht","kroasia":"hr","kurdi (kurmanji)":"ku","kurdi (sorani)":"ckb","latvia":"lv","lituania":"lt","makedonia":"mk","malta":"mt","melayu":"ms","mongolia":"mn","myanmar":"my","norwegia":"nb","polandia":"pl","portugis":"pt","prancis":"fr","rumania":"ro","rusia":"ru","serb":"sr","slovakia":"sk","slovenia":"sl","spanyol":"es","swedia":"sv","turkiye":"tr","ukraina":"uk","vietnam":"vi","yunani":"el","آبخازی":"ab","آذرباﻳﺠﺎﻧﻰ":"az","آلبانیایی":"sq","آلمانی":"de","ارمنی":"hy","ازبکی":"uz","اسپانیایی":"es","اسپرانتو":"eo","استونيايی":"et","اسلواکی":"sk","اسلونیایی":"sl","اکراينی":"uk","امهری":"am","اندونزيايی":"id","انگلیسی":"en","ایتالیایی":"it","ایرلندی":"ga","ايسلندی":"is","باسکی":"eu","برمه‌ای":"my","بلاروسی":"be","بلغاری":"bg","پرتغالی":"pt","تايلندی":"th","ترکی استانبولی":"tr","تلوگو":"te","چک":"cs","چینی (ساده‌شده)":"zh-cn","چینی (سنتی)":"zh-tw","دانمارکی":"da","روسی":"ru","رومانيايی":"ro","زولو":"zu","ژاپنی":"ja","سوئدی":"sv","صربی":"sr","عبری":"he","عربی":"ar","فارسی":"fa","فرانسوی":"fr","فنلاندی":"fi","کاتالان":"ca","کرئول هائیتی":"ht","کردی (سورانی)":"ckb","کردی (کرمانجی)":"ku","کرواتی":"hr","کره‌ای":"ko","کنادا":"kn","گالیسی":"gl","گاليک اسکاتلندی":"gd","لاتين":"la","لتونيايی":"lv","لهستانی":"pl","ليتوانيايی":"lt","مائوری":"mi","مالایالمی":"ml","مالايی":"ms","مالتی":"mt","مجاری":"hu","مراتی":"mr","مغولی":"mn","مقدونيه‌ای":"mk","نروژی":"nb","ولزی":"cy","ويتنامی":"vi","هلندی":"nl","هندی":"hi","يونانی":"el","abecásio":"ab","albanês":"sq","alemão":"de","amárico":"am","árabe":"ar","armênio":"hy","azerbaijano":"az","basco":"eu","bielorrusso":"be","birmanês":"my","búlgaro":"bg","canarês":"kn","catalão":"ca","chinês (simplificado)":"zh-cn","chinês (tradicional)":"zh-tw","coreano":"ko","crioulo haitiano":"ht","croata":"hr","curdo (kurmanji)":"ku","curdo (sorâni)":"ckb","dinamarquês":"da","eslovaco":"sk","esloveno":"sl","espanhol":"es","estoniano":"et","finlandês":"fi","francês":"fr","gaélico escocês":"gd","galego":"gl","galês":"cy","grego":"el","hebraico":"he","holandês":"nl","húngaro":"hu","indonésio":"id","inglês":"en","irlandês":"ga","islandês":"is","italiano":"it","japonês":"ja","latim":"la","letão":"lv","lituano":"lt","macedônio":"mk","malaiala":"ml","malaio":"ms","maltês":"mt","marata":"mr","mongol":"mn","norueguês":"nb","persa":"fa","polonês":"pl","português":"pt","romeno":"ro","russo":"ru","sérvio":"sr","sueco":"sv","tailandês":"th","tcheco":"cs","telugo":"te","turco":"tr","ucraniano":"uk","uzbeque":"uz","vietnamita":"vi","abchazisch":"ab","albanees":"sq","amharisch":"am","arabisch":"ar","armeens":"hy","azerbeidzjaans":"az","baskisch":"eu","belarussisch":"be","birmaans":"my","bulgaars":"bg","catalaans":"ca","chinees (traditioneel)":"zh-tw","chinees (vereenvoudigd)":"zh-cn","deens":"da","duits":"de","engels":"en","ests":"et","fins":"fi","frans":"fr","galicisch":"gl","grieks":"el","haïtiaans creools":"ht","hebreeuws":"he","hongaars":"hu","iers":"ga","ijslands":"is","indonesisch":"id","italiaans":"it","japans":"ja","koerdisch (kurmanji)":"ku","koerdisch (sorani)":"ckb","koreaans":"ko","kroatisch":"hr","latijn":"la","lets":"lv","litouws":"lt","macedonisch":"mk","maleis":"ms","maltees":"mt","mongools":"mn","nederlands":"nl","noors":"nb","oekraïens":"uk","oezbeeks":"uz","perzisch":"fa","pools":"pl","portugees":"pt","roemeens":"ro","russisch":"ru","schots-gaelisch":"gd","servisch":"sr","slovaaks":"sk","sloveens":"sl","spaans":"es","tsjechisch":"cs","turks":"tr","vietnamees":"vi","zoeloe":"zu","zweeds":"sv","abjasio":"ab","albanés":"sq","alemán":"de","amhárico":"am","armenio":"hy","azerí":"az","bielorruso":"be","birmano":"my","canarés":"kn","catalán":"ca","checo":"cs","chino (simplificado)":"zh-cn","chino (tradicional)":"zh-tw","criollo haitiano":"ht","danés":"da","español":"es","estonio":"et","euskera":"eu","finlandés":"fi","francés":"fr","gaélico escocés":"gd","galés":"cy","gallego":"gl","griego":"el","hebreo":"he","indonesio":"id","inglés":"en","irlandés":"ga","islandés":"is","japonés":"ja","kurdo (kurmanyi)":"ku","kurdo (sorani)":"ckb","latín":"la","letón":"lv","macedonio":"mk","malayo":"ms","maltés":"mt","maorí":"mi","maratí":"mr","neerlandés":"nl","noruego":"nb","polaco":"pl","portugués":"pt","rumano":"ro","ruso":"ru","serbio":"sr","tailandés":"th","uzbeco":"uz","zulú":"zu","abchasais":"ab","airmeinis":"hy","albàinis":"sq","amtharais":"am","arabais":"ar","asarbaideànais":"az","basgais":"eu","bealaruisis":"be","beurla":"en","bhiet-namais":"vi","bulgarais":"bg","cànan nan tàidh":"th","catalanais":"ca","coirèanais":"ko","crìtheol haidhti":"ht","cròthaisis":"hr","cuimris":"cy","cùrdais (kurmanji)":"ku","cùrdais (sorani)":"ckb","danmhairgis":"da","duitsis":"nl","eabhra":"he","eadailtis":"it","eastoinis":"et","fionnlannais":"fi","fraingis":"fr","gaeilge":"ga","gàidhlig":"gd","gailìsis":"gl","gearmailtis":"de","grèigis":"el","hindis":"hi","innd-innsis":"id","innis-tìlis":"is","laideann":"la","laitbheis":"lv","liotuainis":"lt","malaidhis":"ms","maltais":"mt","māori":"mi","masadonais":"mk","miànmar (burmais)":"my","mongolais":"mn","nirribhis":"nb","peirsis":"fa","pòlainnis":"pl","portagailis":"pt","romàinis":"ro","ruisis":"ru","seacais":"cs","seapanais":"ja","sèirbis":"sr","sìonais (seann-nòsach)":"zh-tw","sìonais (sìmplichte)":"zh-cn","slòbhacais":"sk","slòbhainis":"sl","spàinntis":"es","suainis":"sv","turcais":"tr","ucràinis":"uk","ungairis":"hu","usbagais":"uz","abchaski":"ab","albański":"sq","amharski":"am","angielski":"en","arabski":"ar","azerski":"az","baskijski":"eu","białoruski":"be","birmański":"my","bułgarski":"bg","chiński (tradycyjny)":"zh-tw","chiński (uproszczony)":"zh-cn","chorwacki":"hr","czeski":"cs","duński":"da","estoński":"et","fiński":"fi","francuski":"fr","galicyjski":"gl","grecki":"el","hebrajski":"he","hiszpański":"es","indonezyjski":"id","irlandzki":"ga","islandzki":"is","japoński":"ja","kataloński":"ca","koreański":"ko","kreolski (haiti)":"ht","kurdyjski (kurmandżi)":"ku","kurdyjski (sorani)":"ckb","litewski":"lt","łaciński":"la","łotewski":"lv","macedoński":"mk","malajalam":"ml","malajski":"ms","maltański":"mt","maoryski":"mi","mongolski":"mn","niderlandzki":"nl","niemiecki":"de","norweski":"nb","ormiański":"hy","perski":"fa","polski":"pl","portugalski":"pt","rosyjski":"ru","rumuński":"ro","serbski":"sr","słowacki":"sk","słoweński":"sl","szkocki gaelicki":"gd","szwedzki":"sv","tajski":"th","turecki":"tr","ukraiński":"uk","uzbecki":"uz","walijski":"cy","węgierski":"hu","wietnamski":"vi","włoski":"it","abkasíska":"ab","albanska":"sq","amharíska":"am","arabíska":"ar","armenska":"hy","aserska":"az","baskneska":"eu","búlgarska":"bg","búrmíska":"my","danska":"da","eistneska":"et","enska":"en","esperantó":"eo","finnska":"fi","franska":"fr","galisíska":"gl","gríska":"el","haítískt kreólamál":"ht","hebreska":"he","hindí":"hi","hollenska":"nl","hvítrússneska":"be","indónesíska":"id","írska":"ga","íslenska":"is","ítalska":"it","japanska":"ja","katalónska":"ca","kínverska (einfölduð)":"zh-cn","kínverska (hefðbundin)":"zh-tw","kóreska":"ko","króatíska":"hr","kúrdíska (kurmanji)":"ku","kúrdíska (soraní)":"ckb","latína":"la","lettneska":"lv","litháíska":"lt","makedónska":"mk","malajíska":"ms","maltneska":"mt","maoríska":"mi","mongólska":"mn","norska":"nb","persneska":"fa","portúgalska":"pt","pólska":"pl","rúmenska":"ro","rússneska":"ru","serbneska":"sr","skosk-gelíska":"gd","slóvakíska":"sk","slóvenska":"sl","spænska":"es","súlú":"zu","sænska":"sv","taílenska":"th","tékkneska":"cs","tyrkneska":"tr","ungverska":"hu","úkraínska":"uk","úsbekíska":"uz","velska":"cy","víetnamska":"vi","þýska":"de","abhaski":"ab","albanski":"sq","arapski":"ar","armenski":"hy","azerbajdžanski":"az","bjeloruski":"be","bugarski":"bg","burmanski":"my","češki":"cs","danski":"da","engleski":"en","estonski":"et","finski":"fi","galješki":"gl","grčki":"el","haićanski kreolski":"ht","hebrejski":"he","hindu":"hi","hrvatski":"hr","indonezijski":"id","irski":"ga","islandski":"is","japanski":"ja","katalonski":"ca","kineski (pojednostavljeni)":"zh-cn","kineski (tradicionalni)":"zh-tw","korejski":"ko","kurdski (kurmanji)":"ku","kurdski (soranski)":"ckb","latinski":"la","latvijski/letonski":"lv","litvanski":"lt","mađarski":"hu","makedonski":"mk","malajalamski":"ml","malezijski":"ms","malteški":"mt","maorski":"mi","marati":"mr","nizozemski":"nl","norveški":"nb","njemački":"de","perzijski":"fa","poljski":"pl","rumunjski":"ro","ruski":"ru","slovački":"sk","slovenski":"sl","srpski":"sr","škotski gaelski":"gd","španjolski":"es","švedski":"sv","tajlandski":"th","talijanski":"it","turski":"tr","ukrajinski":"uk","uzbekistanski":"uz","velški":"cy","vijetnamski":"vi","abkhaze":"ab","albanais":"sq","allemand":"de","amharique":"am","anglais":"en","arabe":"ar","arménien":"hy","azéri":"az","biélorusse":"be","birman":"my","bulgare":"bg","chinois (simplifié)":"zh-cn","chinois (traditionnel)":"zh-tw","coréen":"ko","créole haïtien":"ht","croate":"hr","danois":"da","espagnol":"es","espéranto":"eo","estonien":"et","finnois":"fi","français":"fr","gaélique (écosse)":"gd","galicien":"gl","gallois":"cy","grec":"el","hébreu":"he","hongrois":"hu","indonésien":"id","irlandais":"ga","islandais":"is","italien":"it","japonais":"ja","kurde (kurmandji)":"ku","kurde (sorani)":"ckb","letton":"lv","lituanien":"lt","macédonien":"mk","malaisien":"ms","néerlandais":"nl","norvégien":"nb","ouzbek":"uz","persan":"fa","polonais":"pl","portugais":"pt","roumain":"ro","russe":"ru","serbe":"sr","slovaque":"sk","slovène":"sl","suédois":"sv","tchèque":"cs","thaï":"th","turc":"tr","ukrainien":"uk","vietnamien":"vi","zoulou":"zu","abkhasisk":"ab","albansk":"sq","amharisk":"am","arabisk":"ar","armensk":"hy","aserbajdsjansk":"az","baskisk":"eu","bulgarsk":"bg","burmesisk":"my","dansk":"da","engelsk":"en","estisk":"et","finsk":"fi","fransk":"fr","galisisk":"gl","gresk":"el","hebraisk":"he","hviterussisk":"be","indonesisk":"id","irsk":"ga","islandsk":"is","italiensk":"it","japansk":"ja","katalansk":"ca","kinesisk (forenklet)":"zh-cn","kinesisk (tradisjonell)":"zh-tw","koreansk":"ko","kreol (haiti)":"ht","kroatisk":"hr","kurdisk (kurmanji)":"ku","kurdisk (sorani)":"ckb","latvisk":"lv","litauisk":"lt","makedonsk":"mk","malayisk":"ms","maltesisk":"mt","mongolsk":"mn","nederlandsk":"nl","norsk":"nb","polsk":"pl","portugisisk":"pt","rumensk":"ro","russisk":"ru","serbisk":"sr","skotsk gælisk":"gd","slovakisk":"sk","slovensk":"sl","spansk":"es","svensk":"sv","tsjekkisk":"cs","tyrkisk":"tr","tysk":"de","ukrainsk":"uk","ungarsk":"hu","usbekisk":"uz","vietnamesisk":"vi","walisisk":"cy","abkhazo":"ab","acerbaixano":"az","chinés (simplificado)":"zh-cn","chinés (tradicional)":"zh-tw","dinamarqués":"da","éuscaro":"eu","finés":"fi","kurdo (kurmanji)":"ku","malabar":"ml","noruegués":"nb","romanés":"ro","telugú":"te","ucraíno":"uk","uzbeko":"uz","xaponés":"ja","абхазки":"ab","азербайджански":"az","албански":"sq","амхарски":"am","английски":"en","арабски":"ar","арменски":"hy","баски":"eu","беларуски":"be","бирмански":"my","български":"bg","виетнамски":"vi","галисийски":"gl","гръцки":"el","датски":"da","есперанто":"eo","естонски":"et","зулу":"zu","иврит":"he","индонезийски":"id","ирландски":"ga","исландски":"is","испански":"es","италиански":"it","каннада":"kn","каталонски":"ca","китайски (опростен)":"zh-cn","китайски (традиционен)":"zh-tw","корейски":"ko","кюрдски (курманджи)":"ku","кюрдски (сорани)":"ckb","латвийски":"lv","латински":"la","литовски":"lt","македонски":"mk","малайски":"ms","малаялам":"ml","малтийски":"mt","маорски":"mi","маратхи":"mr","монголски":"mn","немски":"de","нидерландски":"nl","норвежки":"nb","персийски":"fa","полски":"pl","португалски":"pt","румънски":"ro","руски":"ru","словашки":"sk","словенски":"sl","сръбски":"sr","тайландски":"th","телугу":"te","турски":"tr","уелски":"cy","узбекски":"uz","украински":"uk","унгарски":"hu","финландски":"fi","френски":"fr","хаитянски креолски":"ht","хинди":"hi","хърватски":"hr","чешки":"cs","шведски":"sv","шотландски келтски":"gd","японски":"ja","азербејџански":"az","англиски":"en","апхаски":"ab","арапски":"ar","баскиски":"eu","белоруски":"be","бугарски":"bg","велшки":"cy","галициски":"gl","германски":"de","грчки":"el","дански":"da","ерменски":"hy","индонезиски":"id","ирски":"ga","италијански":"it","јапонски":"ja","канада":"kn","кинески (поедноставен)":"zh-cn","кинески (традиционален)":"zh-tw","корејски":"ko","курдски (курманџи)":"ku","курдски (сорани)":"ckb","латвиски":"lv","литвански":"lt","малајалски":"ml","малајски":"ms","малтешки":"mt","мјанмарски (бурмански)":"my","норвешки":"nb","персиски":"fa","романски":"ro","словачки":"sk","словенечки":"sl","српски":"sr","тајландски":"th","узбечки":"uz","фински":"fi","француски":"fr","хаитски креолски":"ht","хебрејски":"he","холандски":"nl","хрватски":"hr","шкотски галски":"gd","шпански":"es","աբխազերեն":"ab","ադրբեջաներեն":"az","ալբաներեն":"sq","ամհարերեն":"am","անգլերեն":"en","արաբերեն":"ar","բասկերեն":"eu","բելառուսերեն":"be","բիրմաներեն":"my","բուլղարերեն":"bg","գալիսերեն":"gl","գելական շոտլանդերեն":"gd","գերմաներեն":"de","դանիերեն":"da","եբրայերեն":"he","զուլուսերեն":"zu","էսպերանտո":"eo","էստոներեն":"et","թայերեն":"th","թուրքերեն":"tr","ինդոնեզերեն":"id","իռլանդերեն":"ga","իսլանդերեն":"is","իսպաներեն":"es","իտալերեն":"it","լատիներեն":"la","լատվիերեն":"lv","լեհերեն":"pl","լիտվերեն":"lt","խորվաթերեն":"hr","կաննադա":"kn","կատալաներեն":"ca","կորեերեն":"ko","կրեոլերեն (հաիթի)":"ht","հայերեն":"hy","հինդի":"hi","հոլանդերեն":"nl","հունարեն":"el","հունգարերեն":"hu","ճապոներեն":"ja","մալայալամ":"ml","մալայերեն":"ms","մալթայերեն":"mt","մակեդոներեն":"mk","մաորի":"mi","մարաթի":"mr","մոնղոլերեն":"mn","նորվեգերեն":"nb","շվեդերեն":"sv","ուզբեկերեն":"uz","ուկրաիներեն":"uk","չեխերեն":"cs","չինարեն (ավանդական)":"zh-tw","չինարեն (պարզեցված)":"zh-cn","պարսկերեն":"fa","պորտուգալերեն":"pt","ռումիներեն":"ro","ռուսերեն":"ru","սերբերեն":"sr","սլովակերեն":"sk","սլովեներեն":"sl","վալլերեն":"cy","վիետնամերեն":"vi","տելուգու":"te","քրդերեն (սորանի)":"ckb","քրդերեն (քուրմանջի)":"ku","ֆիններեն":"fi","ֆրանսերեն":"fr","abhāzu":"ab","albāņu":"sq","amharu":"am","angļu":"en","arābu":"ar","armēņu":"hy","azerbaidžāņu":"az","baltkrievu":"be","basku":"eu","birmiešu":"my","bulgāru":"bg","čehu":"cs","dāņu":"da","franču":"fr","galisiešu":"gl","grieķu":"el","haitiešu":"ht","holandiešu":"nl","horvātu":"hr","igauņu":"et","indonēziešu":"id","itāļu":"it","ivrits":"he","īru":"ga","īslandiešu":"is","japāņu":"ja","katalāņu":"ca","korejiešu":"ko","krievu":"ru","kurdu (kurmandži)":"ku","kurdu (sorani)":"ckb","ķīniešu (tradicionālā)":"zh-tw","ķīniešu (vienkāršotā)":"zh-cn","latīņu":"la","latviešu":"lv","lietuviešu":"lt","maķedoniešu":"mk","malajalamiešu":"ml","malajiešu":"ms","maltiešu":"mt","maratu":"mr","mongoļu":"mn","norvēģu":"nb","persiešu":"fa","poļu":"pl","portugāļu":"pt","rumāņu":"ro","serbu":"sr","skotu gēlu":"gd","slovāku":"sk","slovēņu":"sl","somu":"fi","spāņu":"es","taju":"th","turku":"tr","ukraiņu":"uk","ungāru":"hu","uzbeku":"uz","vācu":"de","velsiešu":"cy","vjetnamiešu":"vi","zviedru":"sv","albanès":"sq","alemany":"de","amhàric":"am","anglès":"en","àrab":"ar","armeni":"hy","àzeri":"az","basc":"eu","bielorús":"be","birmà":"my","búlgar":"bg","castellà":"es","català":"ca","coreà":"ko","crioll d\'haití":"ht","croat":"hr","danès":"da","eslovac":"sk","eslovè":"sl","estonià":"et","finès":"fi","francès":"fr","gaèlic escocès":"gd","gallec":"gl","gal·lès":"cy","hebreu":"he","hongarès":"hu","indonesi":"id","irlandès":"ga","islandès":"is","italià":"it","japonès":"ja","kurd (kurmanji)":"ku","kurd (sorani)":"ckb","letó":"lv","lituà":"lt","llatí":"la","macedònic":"mk","malai":"ms","malaiàlam":"ml","maltès":"mt","neerlandès":"nl","noruec":"nb","polonès":"pl","portuguès":"pt","romanès":"ro","rus":"ru","serbi":"sr","suec":"sv","tai":"th","txec":"cs","ucraïnès":"uk","xinès (simplificat)":"zh-cn","xinès (tradicional)":"zh-tw","isi-abkhaz":"ab","isi-albania":"sq","isi-amharic":"am","isi-arabic":"ar","isi-armenian":"hy","isi-azerbaijani":"az","isi-dutch":"nl","isi-esperanto":"eo","isi-estonia":"et","isi-icelandic":"is","isi-indonesia":"id","isi-irish":"ga","isi-ukraine":"uk","isi-uzbek":"uz","isibasque":"eu","isibelarus":"be","isibulgaria":"bg","isicatalan":"ca","isichina (esilulana)":"zh-cn","isicreole sasehaiti":"ht","isicroatia":"hr","isiczech":"cs","isidanish":"da","isifinnish":"fi","isifrentshi":"fr","isigalicia":"gl","isigrikhi":"el","isihebheru":"he","isihindi":"hi","isihungary":"hu","isijalimani":"de","isijaphani":"ja","isikannada":"kn","isikorean":"ko","isikurdish (sasekurmanji)":"ku","isikurdish (sasesorani)":"ckb","isilathini":"la","isilatvian":"lv","isilithuania":"lt","isimacedonian":"mk","isimalay":"ms","isimalayalam":"ml","isimaltese":"mt","isimaori":"mi","isimarathi":"mr","isimongolia":"mn","isimyanmar (saseburmese)":"my","isingisi":"en","isinorwegia":"nb","isintaliyani":"it","isipersian":"fa","isipolish":"pl","isiputukezi":"pt","isirashiya":"ru","isiromania":"ro","isiscots gaelic":"gd","isiserbian":"sr","isislovak":"sk","isislovenia":"sl","isiswidi":"sv","isitelugu":"te","isithai":"th","isiturkish":"tr","isivietnam":"vi","isiwelsh":"cy","isizulu":"zu","ispenishi":"es","अंग्रेज़ी":"en","अज़रबैजानी":"az","अबखाज़":"ab","अरबी":"ar","अल्बेनियन":"sq","आइसलैंडिक":"is","आयरिश":"ga","आर्मीनियन":"hy","इंडोनेशियन":"id","इटैलियन":"it","उज़्बेक":"uz","एस्टोनियन":"et","एस्पेरांटो":"eo","ऐम्हेरिक":"am","कन्नड़":"kn","कुर्दिश (कुर्मांजी)":"ku","कुर्दिश (सोरानी)":"ckb","कैटेलन":"ca","कोरियन":"ko","क्रोएशियन":"hr","गैलिशियन":"gl","ग्रीक":"el","चाइनीज़ (ट्रेडिश्नल)":"zh-tw","चाइनीज़ (सिंप्लिफ़ाइड)":"zh-cn","चेक":"cs","जर्मन":"de","ज़ुलु":"zu","जैपनीज़":"ja","डच":"nl","डैनिश":"da","तुर्क":"tr","तेलुगु":"te","थाई":"th","नॉर्वेजियन":"nb","पुर्तगाली":"pt","पोलिश":"pl","फारसी":"fa","फ़िनिश":"fi","फ़्रेंच":"fr","बर्मी":"my","बल्गैरियन":"bg","बेलारशियन":"be","बैस्क":"eu","मंगोलियन":"mn","मराठी":"mr","मलय":"ms","मलयालम":"ml","माऔरी":"mi","माल्टी":"mt","मैसेडोनियन":"mk","यूक्रेनियन":"uk","रूसी":"ru","रोमेनियन":"ro","लातवियन":"lv","लिथुएनियन":"lt","लैटिन":"la","वियतनामी":"vi","वेल्श":"cy","सर्बियाई":"sr","स्कॉट्स गेलिक":"gd","स्पैनिश":"es","स्लोवाक":"sk","स्लोवेनियन":"sl","स्वीडिश":"sv","हंगेरियन":"hu","हिन्दी":"hi","हीब्रू":"he","हैतियन क्रिओल":"ht","ả rập":"ar","anh":"en","ba lan":"pl","ba tư":"fa","belarus":"be","bồ đào nha":"pt","creole (haiti)":"ht","croatia":"hr","do thái":"he","đan mạch":"da","đức":"de","gael scotland":"gd","galicia":"gl","hà lan":"nl","hàn":"ko","hungary":"hu","hy lạp":"el","iceland":"is","ireland":"ga","latinh":"la","litva":"lt","mã lai":"ms","macedonia":"mk","mông cổ":"mn","na uy":"nb","nga":"ru","nhật":"ja","pháp":"fr","phần lan":"fi","quốc tế ngữ":"eo","rumani":"ro","séc":"cs","serbia":"sr","tây ban nha":"es","thái":"th","thổ nhĩ kỳ":"tr","thụy điển":"sv","trung (giản thể)":"zh-cn","trung (phồn thể)":"zh-tw","việt":"vi","xứ wales":"cy","ý":"it","abház":"ab","albán":"sq","amhara":"am","angol":"en","azeri":"az","baszk":"eu","belorusz":"be","bolgár":"bg","burmai":"my","cseh":"cs","dán":"da","eszperantó":"eo","észt":"et","finn":"fi","francia":"fr","galíciai":"gl","görög":"el","haiti kreol":"ht","héber":"he","holland":"nl","horvát":"hr","indonéz":"id","ír":"ga","izlandi":"is","japán":"ja","katalán":"ca","kínai (egyszerűsített)":"zh-cn","kínai (hagyományos)":"zh-tw","koreai":"ko","kurd (kurmandzsi)":"ku","kurd (szoráni)":"ckb","lengyel":"pl","lett":"lv","litván":"lt","macedón":"mk","magyar":"hu","maláj":"ms","malajálam":"ml","máltai":"mt","maráthi":"mr","német":"de","norvég":"nb","olasz":"it","orosz":"ru","örmény":"hy","perzsa":"fa","portugál":"pt","román":"ro","skót gael":"gd","svéd":"sv","szerb":"sr","szlovák":"sk","szlovén":"sl","török":"tr","ukrán":"uk","üzbég":"uz","vietnámi":"vi","walesi":"cy","abhaasi":"ab","albaania":"sq","amhaari":"am","araabia":"ar","armeenia":"hy","aserbaidžaani":"az","baski":"eu","birma":"my","bulgaaria":"bg","eesti":"et","galeegi":"gl","haitikreooli":"ht","heebrea":"he","hiina (lihtsustatud)":"zh-cn","hiina (traditsiooniline)":"zh-tw","hispaania":"es","hollandi":"nl","horvaadi":"hr","iiri":"ga","indoneesia":"id","inglise":"en","islandi":"is","itaalia":"it","jaapani":"ja","katalaani":"ca","kreeka":"el","kurdi (kurmandži)":"ku","ladina":"la","leedu":"lt","läti":"lv","makedoonia":"mk","malajalaami":"ml","maoori":"mi","mongoli":"mn","norra":"nb","poola":"pl","portugali":"pt","prantsuse":"fr","pärsia":"fa","rootsi":"sv","rumeenia":"ro","saksa":"de","slovaki":"sk","sloveeni":"sl","soome":"fi","suulu":"zu","šoti":"gd","taani":"da","tšehhi":"cs","türgi":"tr","uelsi":"cy","ungari":"hu","usbeki":"uz","valgevene":"be","vene":"ru","vietnami":"vi","abchazų":"ab","airių":"ga","albanų":"sq","amharų":"am","anglų":"en","arabų":"ar","armėnų":"hy","azerbaidžaniečių":"az","baltarusių":"be","baskų":"eu","birmiečių":"my","bulgarų":"bg","čekų":"cs","danų":"da","estų":"et","galisų":"gl","graikų":"el","haičio kreolų":"ht","hebrajų":"he","indoneziečių":"id","islandų":"is","ispanų":"es","italų":"it","japonų":"ja","kanadų":"kn","kataloniečių":"ca","kinų (supaprastinta)":"zh-cn","kinų (tradicinė)":"zh-tw","korėjiečių":"ko","kroatų":"hr","kurdų (kurmandžių)":"ku","kurdų (soranių)":"ckb","latvių":"lv","lenkų":"pl","lietuvių":"lt","lotynų":"la","makedoniečių":"mk","malajalių":"ml","malajiečių":"ms","maltiečių":"mt","maorių":"mi","maratų":"mr","mongolų":"mn","norvegų":"nb","olandų":"nl","persų":"fa","portugalų":"pt","prancūzų":"fr","rumunų":"ro","rusų":"ru","serbų":"sr","slovakų":"sk","slovėnų":"sl","suomių":"fi","škotų":"gd","švedų":"sv","tajų":"th","telugų":"te","turkų":"tr","ukrainiečių":"uk","uzbekų":"uz","valų":"cy","vengrų":"hu","vietnamiečių":"vi","vokiečių":"de","zulusų":"zu","абхазька":"ab","азербайджанська":"az","албанська":"sq","амхарська":"am","англійська":"en","арабська":"ar","баскська":"eu","білоруська":"be","бірманська":"my","болгарська":"bg","в’єтнамська":"vi","валлійська":"cy","вірменська":"hy","гаїтянська креольська":"ht","гінді":"hi","грецька":"el","ґалісійська":"gl","данська":"da","естонська":"et","іврит":"he","індонезійська":"id","ірландська":"ga","ісландська":"is","іспанська":"es","італійська":"it","каталанська":"ca","китайська (спрощена)":"zh-cn","китайська (традиційна)":"zh-tw","корейська":"ko","курдська (курманджі)":"ku","курдська (сорані)":"ckb","латинська":"la","латиська":"lv","литовська":"lt","македонська":"mk","малайська":"ms","мальтійська":"mt","маорі":"mi","маратхі":"mr","монгольська":"mn","нідерландська":"nl","німецька":"de","норвезька":"nb","перська":"fa","польська":"pl","португальська":"pt","російська":"ru","румунська":"ro","сербська":"sr","словацька":"sk","словенська":"sl","тайська":"th","телуґу":"te","турецька":"tr","угорська":"hu","узбецька":"uz","українська":"uk","фінська":"fi","французька":"fr","хорватська":"hr","чеська":"cs","шведська":"sv","шотландська (ґельська)":"gd","японська":"ja","अझरबैजानी":"az","अब्काझ":"ab","अम्हारिक":"am","अर्मेनियन":"hy","अल्बानियन":"sq","आइसलँडिक":"is","इंग्रजी":"en","इटालियन":"it","उझ्बेक":"uz","एस्परँटो":"eo","कन्नड":"kn","कॅटलान":"ca","गॅलिशियन":"gl","चीनी (पारंपारिक)":"zh-tw","चीनी (सरलीकृत)":"zh-cn","जपानी":"ja","झुलु":"zu","झेक":"cs","डॅनिश":"da","तुर्की":"tr","पोर्तुगीज":"pt","फिन्निश":"fi","फ्रेंच":"fr","बल्गेरियन":"bg","बास्क":"eu","बेलारुशियन":"be","मल्याळम":"ml","माओरी":"mi","माल्टीज":"mt","मॅसेडोनियन":"mk","म्यानमार (बर्मीज)":"my","युक्रेनियन":"uk","रशियन":"ru","रोमानियन":"ro","लाट्वियन":"lv","लिथुआनियन":"lt","लॅटिन":"la","व्हिएतनामी":"vi","सर्बियन":"sr","स्पॅनिश":"es","स्लोव्हाक":"sk","स्लोव्हेनियन":"sl","हिब्रू":"he","हैतीयन क्रेओल":"ht","abxaz":"ab","alban":"sq","amxar":"am","arman":"hy","bolgar":"bg","dan":"da","eston":"et","fin":"fi","fors":"fa","fransuz":"fr","gaiti-kreol":"ht","galisiy":"gl","golland":"nl","grek":"el","hind":"hi","indonez":"id","ingliz":"en","irland":"ga","island":"is","ispan":"es","italyan":"it","ivrit":"he","koreys":"ko","kurd (kurmonji)":"ku","latish":"lv","lotin":"la","makedon":"mk","maltiy":"mt","maratxi":"mr","nemis":"de","norveg":"nb","ozarbayjon":"az","polyak":"pl","portugal":"pt","rumin":"ro","sloven":"sl","tay":"th","turk":"tr","ukrain":"uk","valliy":"cy","venger":"hu","vyetnam":"vi","xitoy (odatiy)":"zh-tw","xitoy (soddalashgan)":"zh-cn","xorvat":"hr","yapon":"ja","o‘zbek":"uz","shotland-gel":"gd","shved":"sv","chex":"cs","alman":"de","amarik":"am","azərbaycan":"az","bolqar":"bg","çex":"cs","çin (ənənəvi)":"zh-tw","çin (sadələşdirilmiş)":"zh-cn","danimarka":"da","erməni":"hy","ərəb":"ar","fars":"fa","fransız":"fr","ingilis":"en","i̇ndoneziya":"id","i̇rland":"ga","i̇sland":"is","i̇sveç":"sv","i̇talyan":"it","i̇vrit":"he","koreya":"ko","kürd(kurmanci)":"ku","kürd(sorani)":"ckb","qalisian":"gl","latın":"la","latış":"lv","macar":"hu","makedoniya":"mk","monqol":"mn","myanma (birma)":"my","norveç":"nb","özbək":"uz","portuqal":"pt","rumın":"ro","şotland (kelt)":"gd","teluqu":"te","türk":"tr","uels":"cy","ukrayna":"uk","yunan":"el","土耳其文":"tr","中文 (繁體)":"zh-tw","中文 (簡體)":"zh-cn","丹麥文":"da","巴斯克文":"eu","日文":"ja","毛利文":"mi","世界語":"eo","加里西亞文":"gl","加泰隆尼亞文":"ca","卡納達文":"kn","白俄羅斯文":"be","立陶宛文":"lt","冰島文":"is","匈牙利文":"hu","印尼文":"id","印地文":"hi","西班牙文":"es","克羅埃西亞文":"hr","希伯來文":"he","希臘文":"el","亞美尼亞文":"hy","亞塞拜然文":"az","拉丁文":"la","拉脫維亞文":"lv","法文":"fr","波斯文":"fa","波蘭文":"pl","芬蘭文":"fi","阿布哈茲文":"ab","阿姆哈拉文":"am","阿拉伯文":"ar","阿爾巴尼亞文":"sq","俄文":"ru","保加利亞文":"bg","南非祖魯文":"zu","威爾斯文":"cy","英文":"en","庫德文 (庫爾曼吉文)":"ku","庫德文 (索拉尼文)":"ckb","挪威文":"nb","泰文":"th","泰盧固文":"te","海地克里奧文":"ht","烏克蘭文":"uk","烏茲別克文":"uz","馬耳他文":"mt","馬來文":"ms","馬其頓文":"mk","馬拉地文":"mr","馬拉雅拉姆文":"ml","捷克文":"cs","荷蘭文":"nl","斯洛伐克文":"sk","斯洛維尼亞文":"sl","越南文":"vi","塞爾維亞文":"sr","愛沙尼亞文":"et","愛爾蘭文":"ga","瑞典文":"sv","義大利文":"it","葡萄牙文":"pt","蒙古文":"mn","德文":"de","緬甸文":"my","韓文":"ko","羅馬尼亞文":"ro","蘇格蘭蓋爾文":"gd","abkazisht":"ab","amarikisht":"am","anglisht":"en","arabisht":"ar","armenisht":"hy","azerisht":"az","baskisht":"eu","birmanisht":"my","bjellorusisht":"be","bullgarisht":"bg","çekisht":"cs","danisht":"da","estonisht":"et","finlandisht":"fi","frëngjisht":"fr","galicianisht":"gl","galishte skoceze":"gd","greqisht":"el","gjermanisht":"de","hebraisht":"he","hindisht":"hi","holandisht":"nl","hungarisht":"hu","indonezisht":"id","irlandisht":"ga","islandisht":"is","italisht":"it","japonisht":"ja","kanadaisht":"kn","katalonisht":"ca","kinezisht (e thjeshtuar)":"zh-cn","kinezisht (tradicionale)":"zh-tw","koreanisht":"ko","kreolishte haitiane":"ht","kroatisht":"hr","kurdisht (kurmanjisht)":"ku","kurdisht (sorani)":"ckb","latinisht":"la","letonisht":"lv","lituanisht":"lt","malajalamisht":"ml","malajzisht":"ms","maltisht":"mt","maorisht":"mi","maqedonisht":"mk","maratisht":"mr","mongolisht":"mn","norvegjisht":"nb","persisht":"fa","polonisht":"pl","portugalisht":"pt","rumanisht":"ro","rusisht":"ru","serbisht":"sr","sllovakisht":"sk","sllovenisht":"sl","spanjisht":"es","suedisht":"sv","shqip":"sq","tajlandisht":"th","telugisht":"te","turqisht":"tr","uellsisht":"cy","ukrainisht":"uk","uzbekisht":"uz","vietnamisht":"vi","bahasa melayu":"ms","cina (ringkas)":"zh-cn","cina (tradisional)":"zh-tw","finland":"fi","gaelic scotland":"gd","inggeris":"en","itali":"it","jepun":"ja","kurdistan (kurmanji)":"ku","kurdistan (sorani)":"ckb","lithuania":"lt","myanmar (burma)":"my","norway":"nb","parsi":"fa","perancis":"fr","poland":"pl","romania":"ro","sepanyol":"es","sweden":"sv","turki":"tr","ukraine":"uk","wales":"cy","ahepaitani":"az","airihi":"ga","amariki":"am","amēniana":"hy","arapeinia":"sq","arapi":"ar","eperānato":"eo","etōnia":"et","haina (onamata)":"zh-tw","hainamana (kua whakamāmātia)":"zh-cn","hanekeria":"hu","hapanihi":"ja","herepia":"sr","hinerangi":"fi","hīni":"hi","hiperu":"he","horowākia":"sk","horowinia":"sl","huitene":"sv","huru":"zu","ingarihi":"en","initonīhia":"id","itāriana":"it","kanata":"kn","karihia":"gl","katarāna":"ca","kereore haiti":"ht","kiriki":"el","kōreana":"ko","koroātiana":"hr","korukoru":"tr","kūrihi (horani)":"ckb","kūrihi (kurumanihi)":"ku","makerōnia":"mk","māratihi":"mt","marei":"ms","mareiarama":"ml","mongōriana":"mn","nōwei":"nb","pākihi":"eu","pāniora":"es","pēma (purumīhi)":"my","peraruhia":"be","perēhia":"fa","pōrana":"pl","potukīhi":"pt","purukāriana":"bg","rātini":"la","rāwhiana":"lv","rituānia":"lt","romānia":"ro","rūhia":"ru","tati":"nl","tenemāka":"da","teruku":"te","tiamana":"de","tieke":"cs","tiorangi":"is","tuauri kotarangi":"gd","uhipeke":"uz","ūkareiana":"uk","wēra":"cy","whitināmu":"vi","wīwī":"fr","абхазская":"ab","азербайджанская":"az","албанская":"sq","амхарская":"am","англійская":"en","арабская":"ar","армянская":"hy","балгарская":"bg","баскская":"eu","беларуская":"be","бірманская (м’янма)":"my","в’етнамская":"vi","валійская":"cy","венгерская":"hu","гаіцянская крэольская":"ht","галандская":"nl","галісійская":"gl","грэчаская":"el","дацкая":"da","інданезійская":"id","ірландская":"ga","ісландская":"is","іспанская":"es","італьянская":"it","іўрыт":"he","карэйская":"ko","каталанская":"ca","кітайская (спрошчаная)":"zh-cn","кітайская (традыцыйная)":"zh-tw","курдская (курманджы)":"ku","курдская (сарані)":"ckb","латышская":"lv","лацінская":"la","літоўская":"lt","маары":"mi","македонская":"mk","малайская":"ms","мальтыйская":"mt","мангольская":"mn","нарвежская":"nb","нямецкая":"de","партугальская":"pt","персідская":"fa","польская":"pl","румынская":"ro","руская":"ru","сербская":"sr","славацкая":"sk","славенская":"sl","тайская":"th","турэцкая":"tr","тэлугу":"te","узбекская":"uz","украінская":"uk","фінская":"fi","французская":"fr","харвацкая":"hr","хіндзі":"hi","чэшская":"cs","шатландская гэльская":"gd","шведская":"sv","эсперанта":"eo","эстонская":"et","японская":"ja","abkaz":"ab","albanyen":"sq","amenyen":"hy","anglè":"en","azèbajani":"az","belarisyen":"be","bilgaryen":"bg","chinwa (senp)":"zh-cn","chinwa (tradisyonèl)":"zh-tw","danwa":"da","ebre":"he","endonezyen":"id","endou":"hi","estonyen":"et","fenlandè":"fi","franse":"fr","gaelik ekosè":"gd","galisyen":"gl","grèk":"el","ikrenyen":"uk","ilandè":"ga","islandè":"is","italyen":"it","izbèk":"uz","japonè":"ja","kanada":"kn","kid (koumanji)":"ku","kid (sorani)":"ckb","koreyen":"ko","kreyòl ayisyen":"ht","kwoasyen":"hr","laten":"la","letonyen":"lv","lityanyen":"lt","malè":"ms","malt":"mt","masedonyen":"mk","mayori":"mi","mongolyen":"mn","myanma (burmese)":"my","nòvejyen":"nb","olandè, neyèlandè":"nl","onngaryen":"hu","panyòl":"es","pèsyen":"fa","polonè":"pl","pòtigè":"pt","ris":"ru","romanyen":"ro","sèb":"sr","slovenyen":"sl","syedwa":"sv","tuk":"tr","tyèk":"cs","vyetnamyen":"vi","กรีก":"el","กันนาดา":"kn","กาลิเชียน":"gl","เกลิกสกอต":"gd","เกาหลี":"ko","คาตาลัน":"ca","เคิร์ด (กุรมันชี)":"ku","เคิร์ด (โซรานี)":"ckb","โครเอเชีย":"hr","จีน (ตัวเต็ม)":"zh-tw","จีน (ตัวย่อ)":"zh-cn","เช็ก":"cs","ซูลู":"zu","เซอร์เบียน":"sr","ญี่ปุ่น":"ja","ดัตช์":"nl","เดนมาร์ก":"da","ตุรกี":"tr","เตลูกู":"te","ไทย":"th","นอร์เวย์":"nb","บัลแกเรีย":"bg","บาสก์":"eu","เบลารุส":"be","เปอร์เซีย":"fa","โปรตุเกส":"pt","โปแลนด์":"pl","ฝรั่งเศส":"fr","ฟินแลนด์":"fi","มองโกเลีย":"mn","มัลทีส":"mt","มาซีโดเนีย":"mk","มาราฐี":"mr","มาลายาลัม":"ml","มาเลย์":"ms","เมารี":"mi","เมียนมา (พม่า)":"my","ยูเครน":"uk","เยอรมัน":"de","รัสเซีย":"ru","โรมาเนีย":"ro","ละติน":"la","ลัตเวีย":"lv","ลิทัวเนีย":"lt","เวลส์":"cy","เวียดนาม":"vi","สเปน":"es","สโลวัก":"sk","สโลวีเนีย":"sl","สวีเดน":"sv","อังกฤษ":"en","อับคาเซีย":"ab","อัมฮาริก":"am","อาร์เซอร์ไบจัน":"az","อาร์เมเนีย":"hy","อาหรับ":"ar","อิตาลี":"it","อินโดนีเซีย":"id","อุสเบกิสถาน":"uz","เอสโทเนีย":"et","เอสเปอแรนโต":"eo","แอลเบเนีย":"sq","ไอซ์แลนด์":"is","ไอร์แลนด์":"ga","ฮังการี":"hu","ฮินดี":"hi","ฮีบรู":"he","เฮติครีโอล":"ht","abkhaziera":"ab","albaniera":"sq","alemana":"de","amharera":"am","arabiera":"ar","armeniera":"hy","azerbaijanera":"az","bielorrusiera":"be","birmaniera":"my","bulgariera":"bg","daniera":"da","errumaniera":"ro","errusiera":"ru","eskoziako gaelikoa":"gd","eslovakiera":"sk","esloveniera":"sl","esperantoa":"eo","estoniera":"et","euskara":"eu","finlandiera":"fi","frantsesa":"fr","galesa":"cy","galiziera":"gl","gaztelania":"es","greziera":"el","hebreera":"he","hindia":"hi","hungariera":"hu","indonesiera":"id","ingelesa":"en","irlandera":"ga","islandiera":"is","italiera":"it","japoniera":"ja","katalana":"ca","koreera":"ko","kreolera (haiti)":"ht","kroaziera":"hr","kurduera (kurmanji)":"ku","kurduera (sorania)":"ckb","latina":"la","letoniera":"lv","lituaniera":"lt","malabarera":"ml","malaysiera":"ms","maltera":"mt","maoriera":"mi","marathera":"mr","mazedoniera":"mk","mongoliera":"mn","nederlandera":"nl","norvegiera":"nb","persiera":"fa","poloniera":"pl","portugesa":"pt","serbiera":"sr","suediera":"sv","telugua":"te","thailandiera":"th","turkiera":"tr","txekiera":"cs","txinera (sinplifikatua)":"zh-cn","txinera (tradizionala)":"zh-tw","ukrainera":"uk","uzbekera":"uz","vietnamera":"vi","zuluera":"zu","abcaso":"ab","albanese":"sq","amarico":"am","arabo":"ar","armeno":"hy","azero":"az","bielorusso":"be","bulgaro":"bg","catalano":"ca","ceco":"cs","cinese (semplificato)":"zh-cn","cinese (tradizionale)":"zh-tw","creolo haitiano":"ht","croato":"hr","curdo (sorani)":"ckb","danese":"da","ebraico":"he","estone":"et","finlandese":"fi","francese":"fr","gaelico scozzese":"gd","galiziano":"gl","gallese":"cy","giapponese":"ja","greco":"el","indonesiano":"id","inglese":"en","irlandese":"ga","islandese":"is","latino":"la","lettone":"lv","macedone":"mk","malese":"ms","mongolo":"mn","norvegese":"nb","olandese":"nl","persiano":"fa","polacco":"pl","portoghese":"pt","rumeno":"ro","serbo":"sr","slovacco":"sk","sloveno":"sl","spagnolo":"es","svedese":"sv","tedesco":"de","ucraino":"uk","ungherese":"hu","abkaż":"ab","albaniż":"sq","amħari":"am","armen":"hy","ażerbajġani":"az","belarussu":"be","bulgaru":"bg","ċek":"cs","ċiniż (simplifikat)":"zh-cn","ċiniż (tradizzjonali)":"zh-tw","creole haiti":"ht","daniż":"da","ebrajk":"he","estonjan":"et","finlandiż":"fi","franċiż":"fr","ġappuniż":"ja","ġermaniż":"de","gaelic tal-iskoċċiżi":"gd","galizjan":"gl","grieg":"el","għarbi":"ar","ħindi":"hi","indoneżjan":"id","ingliż":"en","irlandiż":"ga","islandiż":"is","kroat":"hr","latvjan":"lv","litwen":"lt","maċedonjan":"mk","malasjan":"ms","malti":"mt","mjanmar (burma)":"my","mongoljan":"mn","norveġiż":"nb","olandiż":"nl","persjan":"fa","pollakk":"pl","portugiż":"pt","rumen":"ro","russu":"ru","slovakk":"sk","spanjol":"es","svediż":"sv","tajlandiż":"th","taljan":"it","tork":"tr","ukren":"uk","ungeriż":"hu","użbek":"uz","vjetnamiż":"vi","żulu":"zu","ಅಜರ್ಬೈಜಾನಿ":"az","ಅಬ್ಖಾಜ್":"ab","ಅಮಹಾರಿಕ್":"am","ಅರಬ್ಬಿ":"ar","ಆರ್ಮೇನಿಯನ್":"hy","ಆಲ್ಬೇನಿಯನ್":"sq","ಇಂಗ್ಲಿಷ್‌‌":"en","ಇಂಡೋನೇಷಿಯನ್":"id","ಇಟಾಲಿಯನ್":"it","ಉಜ್ಬೆಕ್":"uz","ಎಸ್ಟೋನಿಯನ್":"et","ಎಸ್ಪೆರಾಂಟೋ":"eo","ಐರಿಷ್":"ga","ಐಸ್‌ಲ್ಯಾಂಡಿಕ್‌":"is","ಕನ್ನಡ":"kn","ಕುರ್ದಿಶ್ (ಕುರ್ಮಾಂಜಿ)":"ku","ಕುರ್ದಿಶ್ (ಸೊರಾನಿ)":"ckb","ಕೊರಿಯನ್":"ko","ಕ್ಯಾಟಲನ್":"ca","ಕ್ರೊಯೇಷಿಯನ್":"hr","ಗ್ಯಾಲೀಷಿಯನ್":"gl","ಗ್ರೀಕ್":"el","ಚೀನಿ (ಸರಳೀಕೃತ)":"zh-cn","ಚೈನೀಸ್ (ಸಾಂಪ್ರದಾಯಿಕ)":"zh-tw","ಜಪಾನಿ":"ja","ಜರ್ಮನ್":"de","ಜುಲು":"zu","ಝೆಕ್‌":"cs","ಟರ್ಕಿಷ್":"tr","ಡಚ್":"nl","ಡ್ಯಾನಿಷ್":"da","ತೆಲುಗು":"te","ಥಾಯ್":"th","ನಾರ್ವೇಜಿಯನ್‌":"nb","ಪೋರ್ಚುಗೀಸ್":"pt","ಪೋಲಿಷ್":"pl","ಫಾರ್ಸಿ":"fa","ಫಿನ್ನಿಷ್":"fi","ಫ್ರೆಂಚ್":"fr","ಬಲ್ಗೇರಿಯನ್":"bg","ಬಾಸ್ಕ್":"eu","ಬೆಲರೂಸಿಯನ್":"be","ಮಂಗೋಲಿಯನ್":"mn","ಮಯನ್ಮಾರ್ (ಬರ್ಮೀಸ್)":"my","ಮರಾಠಿ":"mr","ಮಲಯ":"ms","ಮಲಯಾಳಂ":"ml","ಮಾಲ್ಟೀಸ್":"mt","ಮಾವೋರಿ":"mi","ಮ್ಯಾಸೆಡೋನಿಯನ್":"mk","ಯುಕ್ರೇನಿಯನ್":"uk","ರಷಿಯನ್":"ru","ರೊಮೇನಿಯನ್":"ro","ಲಿಥುವೇನಿಯನ್":"lt","ಲ್ಯಾಟಿನ್":"la","ಲ್ಯಾಟ್ವಿಯನ್‌":"lv","ವಿಯೆಟ್ನಾಮಿ":"vi","ವೆಲ್ಶ್":"cy","ಸರ್ಬಿಯನ್":"sr","ಸ್ಕಾಟ್ಸ್ ಗ್ಯಾಲಿಕ್":"gd","ಸ್ಪ್ಯಾನಿಷ್":"es","ಸ್ಲೊವಾಕ್":"sk","ಸ್ಲೊವೆನಿಯನ್":"sl","ಸ್ವೀಡಿಷ್":"sv","ಹಂಗೇರಿಯನ್":"hu","ಹಯಥಿಯನ್‌ ಕ್ರಿಯೋಲ್‌":"ht","ಹಿಂದಿ":"hi","ಹೀಬ್ರೂ":"he","arabia":"ar","burma":"my","englanti":"en","espanja":"es","haitinkreoli":"ht","heprea":"he","hollanti":"nl","islanti":"is","japani":"ja","kiina (perinteinen)":"zh-tw","kiina (yksinkertaistettu)":"zh-cn","kreikka":"el","kroatia":"hr","kurdi (soranî)":"ckb","kymri":"cy","liettua":"lt","malaiji":"ms","norja":"nb","persia":"fa","puola":"pl","ranska":"fr","ruotsi":"sv","skottigaeli":"gd","suomi":"fi","tanska":"da","tsekki":"cs","turkki":"tr","unkari":"hu","uzbekki":"uz","valkovenäjä":"be","venäjä":"ru","viro":"et","abhazca":"ab","almanca":"de","arapça":"ar","arnavutça":"sq","azerbaycan dili":"az","baskça":"eu","belarusça":"be","bulgarca":"bg","burmaca":"my","çekçe":"cs","çince (basitleştirilmiş)":"zh-cn","çince (geleneksel)":"zh-tw","danca":"da","endonezce":"id","ermenice":"hy","estonyaca":"et","farsça":"fa","felemenkçe":"nl","fince":"fi","fransızca":"fr","galce":"cy","galiçyaca":"gl","habeşçe":"am","haiti kreyolu":"ht","hırvatça":"hr","hintçe":"hi","i̇branice":"he","i̇ngilizce":"en","i̇rlandaca":"ga","i̇skoç gaelcesi":"gd","i̇spanyolca":"es","i̇sveççe":"sv","i̇talyanca":"it","i̇zlandaca":"is","japonca":"ja","kannada dili":"kn","katalanca":"ca","korece":"ko","kürtçe (kurmançça)":"ku","kürtçe (sorani)":"ckb","latince":"la","lehçe":"pl","letonca":"lv","litvanca":"lt","macarca":"hu","makedonca":"mk","malayalam dili":"ml","malayca":"ms","maltaca":"mt","maori dili":"mi","moğolca":"mn","norveççe":"nb","özbekçe":"uz","portekizce":"pt","romence":"ro","rusça":"ru","sırpça":"sr","slovakça":"sk","slovence":"sl","tayca":"th","telugu dili":"te","türkçe":"tr","ukraynaca":"uk","vietnamca":"vi","yunanca":"el","abhază":"ab","albaneză":"sq","amharică":"am","arabă":"ar","armeană":"hy","azerbaidjană":"az","bască":"eu","bielorusă":"be","birmană":"my","bulgară":"bg","catalană":"ca","cehă":"cs","chineză (simplificată)":"zh-cn","chineză (tradițională)":"zh-tw","coreeană":"ko","creolă haitiană":"ht","croată":"hr","daneză":"da","ebraică":"he","engleză":"en","estonă":"et","finlandeză":"fi","franceză":"fr","galeză":"cy","galica scoțiană":"gd","galiciană":"gl","germană":"de","greacă":"el","indoneziană":"id","irlandeză":"ga","islandeză":"is","italiană":"it","japoneză":"ja","kurdă (kurmanji)":"ku","kurdă (sorani)":"ckb","latină":"la","letonă":"lv","lituaniană":"lt","macedoneană":"mk","maghiară":"hu","malaeză":"ms","malteză":"mt","mongolă":"mn","neerlandeză":"nl","norvegiană":"nb","persană":"fa","poloneză":"pl","portugheză":"pt","română":"ro","rusă":"ru","sârbă":"sr","slovacă":"sk","slovenă":"sl","spaniolă":"es","suedeză":"sv","thailandeză":"th","turcă":"tr","ucraineană":"uk","uzbecă":"uz","vietnameză":"vi","ကနာဒါ":"kn","ကိုရီးယား":"ko","ကက်တလန်":"ca","ကဒ် (ကာမန်ဂျီ)":"ku","ကဒ် (ဆိုရာနီ)":"ckb","ခရိုအေးရှား":"hr","ချက်":"cs","ဂရိ":"el","ဂယ်လိရှ":"gl","ဂျပန်":"ja","ဂျာမန်":"de","စကော့ ဂေးလစ်":"gd","စပိန်":"es","ဆလိုဗေးနီးယား":"sl","ဆလိုဗက်":"sk","ဆားဘီးယား":"sr","ဆွီဒင်":"sv","ဇူးလူး":"zu","တရုတ် (ရိုးရာ)":"zh-tw","တရုတ် (ရိုးရှင်း)":"zh-cn","တူ​ရ​ကီ":"tr","တယ်လူဂူ":"te","ထိုင်း":"th","ဒတ်ချ်":"nl","ဒိန်းမတ်":"da","နော်ဝေး":"nb","ပါရှန်":"fa","ပေါ်တူဂီ":"pt","ပိုလန်":"pl","ပြင်သစ်":"fr","ဖင်လန်":"fi","ဗီယက်နမ်":"vi","ဘီလာရစ်":"be","ဘူဂေးရီးယား":"bg","ဘာစ်ခ်":"eu","မလေယာလမ်":"ml","မလေး":"ms","မာရာသီ":"mr","မော်ရီ":"mi","မော်လတာ":"mt","မက်ဆီဒိုးနီးယား":"mk","မြန်မာ":"my","မွန်ဂိုလီးယား":"mn","ယူ​က​ရိန်း​":"uk","ရုရှား":"ru","ရိုမေးနီးယား":"ro","လက်တင်":"la","လစ်သူဝေးနီးယား":"lt","လတ်ဗီယာ":"lv","ဝေလ":"cy","ဟီဘရူး":"he","ဟေတီ ခရီအိုး":"ht","ဟန်ဂေရီ":"hu","ဟိန္ဒီ":"hi","အဇာဘိုင်ဂျန်":"az","အာမေးနီးယား":"hy","အာရေဗျ":"ar","အီတလီ":"it","ဥဇဘက်":"uz","အက်စတိုးနီးယား":"et","အက်ဘခါ့ဇ်":"ab","အက်စ်ပဲရန်တို":"eo","အိုက်စလန်":"is","အင်္ဂလိပ်":"en","အင်ဒိုနီးရှား":"id","အိုင်းရစ်ရှ်":"ga","အမ်ဟဲရစ်ခ်":"am","အယ်လ်ဘေးနီးယား":"sq","阿布哈兹语":"ab","阿尔巴尼亚语":"sq","阿拉伯语":"ar","阿姆哈拉语":"am","阿塞拜疆语":"az","爱尔兰语":"ga","爱沙尼亚语":"et","巴斯克语":"eu","白俄罗斯语":"be","保加利亚语":"bg","冰岛语":"is","波兰语":"pl","波斯语":"fa","丹麦语":"da","德语":"de","俄语":"ru","法语":"fr","芬兰语":"fi","海地克里奥尔语":"ht","韩语":"ko","荷兰语":"nl","加利西亚语":"gl","加泰罗尼亚语":"ca","捷克语":"cs","卡纳达语":"kn","克罗地亚语":"hr","库尔德语（库尔曼吉语）":"ku","库尔德语（索拉尼）":"ckb","拉丁语":"la","拉脱维亚语":"lv","立陶宛语":"lt","罗马尼亚语":"ro","马耳他语":"mt","马拉地语":"mr","马拉雅拉姆语":"ml","马来语":"ms","马其顿语":"mk","毛利语":"mi","蒙古语":"mn","缅甸语":"my","挪威语":"nb","葡萄牙语":"pt","日语":"ja","瑞典语":"sv","塞尔维亚语":"sr","世界语":"eo","斯洛伐克语":"sk","斯洛文尼亚语":"sl","苏格兰盖尔语":"gd","泰卢固语":"te","泰语":"th","土耳其语":"tr","威尔士语":"cy","乌克兰语":"uk","乌兹别克语":"uz","西班牙语":"es","希伯来语":"he","希腊语":"el","匈牙利语":"hu","亚美尼亚语":"hy","意大利语":"it","印地语":"hi","印尼语":"id","英语":"en","越南语":"vi","中文（繁体）":"zh-tw","中文（简体）":"zh-cn","祖鲁语":"zu","갈리시아어":"gl","그리스어":"el","네덜란드어":"nl","노르웨이어":"nb","덴마크어":"da","독일어":"de","라트비아어":"lv","라틴어":"la","러시아어":"ru","루마니아어":"ro","리투아니아어":"lt","마라티어":"mr","마오리어":"mi","마케도니아어":"mk","말라얄람어":"ml","말레이어":"ms","몰타어":"mt","몽골어":"mn","미얀마어(버마어)":"my","바스크어":"eu","베트남어":"vi","벨라루스어":"be","불가리아어":"bg","세르비아어":"sr","스웨덴어":"sv","스코틀랜드 게일어":"gd","스페인어":"es","슬로바키아어":"sk","슬로베니아어":"sl","아랍어":"ar","아르메니아어":"hy","아이슬란드어":"is","아이티 크리올어":"ht","아일랜드어":"ga","아제르바이잔어":"az","알바니아어":"sq","암하라어":"am","압하지야어":"ab","에스토니아어":"et","에스페란토어":"eo","영어":"en","우즈베크어":"uz","우크라이나어":"uk","웨일즈어":"cy","이탈리아어":"it","인도네시아어":"id","일본어":"ja","줄루어":"zu","중국어(간체)":"zh-cn","중국어(번체)":"zh-tw","체코어":"cs","카탈로니아어":"ca","칸나다어":"kn","쿠르드어(소라니)":"ckb","쿠르드어(쿠르만지)":"ku","크로아티아어":"hr","태국어":"th","터키어":"tr","텔루구어":"te","페르시아어":"fa","포르투갈어":"pt","폴란드어":"pl","프랑스어":"fr","핀란드어":"fi","한국어":"ko","헝가리어":"hu","히브리어":"he","힌디어":"hi","abchasisch":"ab","albanisch":"sq","armenisch":"hy","aserbaidschanisch":"az","birmanisch":"my","bulgarisch":"bg","chinesisch (traditionell)":"zh-tw","chinesisch (vereinfacht)":"zh-cn","dänisch":"da","deutsch":"de","englisch":"en","estnisch":"et","finnisch":"fi","französisch":"fr","galizisch":"gl","griechisch":"el","haitianisch":"ht","hebräisch":"he","irisch":"ga","isländisch":"is","italienisch":"it","japanisch":"ja","katalanisch":"ca","koreanisch":"ko","kurdisch (kurmandschi)":"ku","kurdisch (sorani)":"ckb","latein":"la","lettisch":"lv","litauisch":"lt","malaysisch":"ms","maltesisch":"mt","mazedonisch":"mk","mongolisch":"mn","niederländisch":"nl","norwegisch":"nb","persisch":"fa","polnisch":"pl","portugiesisch":"pt","rumänisch":"ro","schottisch-gälisch":"gd","schwedisch":"sv","serbisch":"sr","slowakisch":"sk","slowenisch":"sl","spanisch":"es","thailändisch":"th","tschechisch":"cs","türkisch":"tr","ukrainisch":"uk","ungarisch":"hu","usbekisch":"uz","vietnamesisch":"vi","walisisch":"cy","abcházština":"ab","albánština":"sq","amharština":"am","angličtina":"en","arabština":"ar","arménština":"hy","ázerbájdžánština":"az","barmština":"my","baskičtina":"eu","běloruština":"be","bulharština":"bg","čeština":"cs","čínština (tradiční)":"zh-tw","čínština (zjednodušená)":"zh-cn","dánština":"da","estonština":"et","finština":"fi","francouzština":"fr","galicijština":"gl","haitská kreolština":"ht","hebrejština":"he","hindština":"hi","holandština":"nl","chorvatština":"hr","indonéština":"id","irština":"ga","islandština":"is","italština":"it","japonština":"ja","kannadština":"kn","katalánština":"ca","korejština":"ko","kurdština":"ku","kurdština (sorání)":"ckb","litevština":"lt","lotyština":"lv","maďarština":"hu","makedonština":"mk","malajálamština":"ml","malajština":"ms","maltština":"mt","maorština":"mi","marátština":"mr","mongolština":"mn","němčina":"de","norština":"nb","perština":"fa","polština":"pl","portugalština":"pt","rumunština":"ro","ruština":"ru","řečtina":"el","skotská gaelština":"gd","slovenština":"sk","slovinština":"sl","srbština":"sr","španělština":"es","švédština":"sv","telužština":"te","thajština":"th","turečtina":"tr","ukrajinština":"uk","uzbečtina":"uz","velština":"cy","vietnamština":"vi","אבחזית":"ab","אוזבקית":"uz","אוקראינית":"uk","אזרית":"az","איטלקית":"it","אינדונזית":"id","איסלנדית":"is","אירית":"ga","אלבנית":"sq","אמהרית":"am","אנגלית":"en","אסטונית":"et","אספרנטו":"eo","ארמנית":"hy","באסקית":"eu","בולגרית":"bg","בורמזית":"my","בלארוסית":"be","גאלית סקוטית":"gd","גליציאנית":"gl","גרמנית":"de","דנית":"da","הולנדית":"nl","הונגרית":"hu","הינדי":"hi","וולשית":"cy","וייטנאמית":"vi","זולו":"zu","טורקית":"tr","טלוגו":"te","יוונית":"el","יפנית":"ja","כורדית (כורמנג\'ית)":"ku","כורדית (סורנית)":"ckb","לטבית":"lv","לטינית":"la","ליטאית":"lt","מאורית":"mi","מונגולית":"mn","מלאית":"ms","מלטית":"mt","מליאלאם":"ml","מקדונית":"mk","מראטהית":"mr","נורווגית":"nb","סינית (מסורתית)":"zh-tw","‏סינית (פשוטה)":"zh-cn","סלובנית":"sl","סלובקית":"sk","ספרדית":"es","סרבית":"sr","עברית":"he","ערבית":"ar","פולנית":"pl","פורטוגזית":"pt","פינית":"fi","פרסית":"fa","צ\'כית":"cs","צרפתית":"fr","קאנאדה":"kn","קוריאנית":"ko","קטלאנית":"ca","קרואטית":"hr","קריאולית האיטית":"ht","רומנית":"ro","רוסית":"ru","שוודית":"sv","תאית":"th","abcaseg":"ab","albaneg":"sq","almaeneg":"de","amhareg":"am","arabeg":"ar","armeneg":"hy","aserbaijaneg":"az","basgeg":"eu","belarwseg":"be","bwlgareg":"bg","catalaneg":"ca","creol haiti":"ht","croateg":"hr","cwrdeg (kurmandji)":"ku","cwrdeg (sorani)":"ckb","cymraeg":"cy","daneg":"da","eidaleg":"it","estoneg":"et","fietnameg":"vi","ffineg":"fi","fflemeg":"nl","ffrangeg":"fr","gaeleg yr alban":"gd","galiseg":"gl","groeg":"el","gwyddeleg":"ga","hebraeg":"he","hwngareg":"hu","iaith corea":"ko","indonesieg":"id","islandeg":"is","japaneg":"ja","latfieg":"lv","lithwaneg":"lt","lladin":"la","macedoneg":"mk","malteseg":"mt","mongoleg":"mn","myanmar (byrma)":"my","norwyeg":"nb","perseg":"fa","portiwgaleg":"pt","pwyleg":"pl","rwmaneg":"ro","rwsieg":"ru","saesneg":"en","sbaeneg":"es","serbeg":"sr","slofaceg":"sk","slofeneg":"sl","swedeg":"sv","swlw":"zu","telwgw":"te","tsieceg":"cs","tsieineeg (traddodiadol)":"zh-tw","tsieineeg (wedi symleiddio)":"zh-cn","twrceg":"tr","usbec":"uz","wcreineg":"uk","abchaziska":"ab","amhariska":"am","arabiska":"ar","armeniska":"hy","azerbajdzjanska":"az","baskiska":"eu","bulgariska":"bg","burmesiska":"my","engelska":"en","estniska":"et","finska":"fi","gaeliska":"gd","galiciska":"gl","grekiska":"el","haitiska":"ht","hebreiska":"he","indonesiska":"id","irländska":"ga","isländska":"is","italienska":"it","kanaresiska":"kn","katalanska":"ca","kinesiska (förenklad)":"zh-cn","kinesiska (traditionell)":"zh-tw","koreanska":"ko","kroatiska":"hr","kurdiska (kurmanji)":"ku","kurdiska (sorani)":"ckb","lettiska":"lv","litauiska":"lt","makedonska":"mk","malaysiska":"ms","maltesiska":"mt","mongoliska":"mn","nederländska":"nl","persiska":"fa","polska":"pl","portugisiska":"pt","rumänska":"ro","ryska":"ru","serbiska":"sr","slovakiska":"sk","slovenska":"sl","spanska":"es","svenska":"sv","thailändska":"th","tjeckiska":"cs","turkiska":"tr","tyska":"de","ukrainska":"uk","ungerska":"hu","uzbekiska":"uz","vietnamesiska":"vi","vitryska":"be","walesiska":"cy","abcáisis":"ab","airméinis":"hy","albáinis":"sq","amáiris":"am","araibis":"ar","asarbaiseáinis":"az","bascais":"eu","bealarúisis":"be","béarla":"en","breatnais":"cy","bulgáiris":"bg","cannadais":"kn","catalóinis":"ca","coirdis (curmainsis)":"ku","coirdis (sóráinis)":"ckb","cóiréis":"ko","criól háítí":"ht","cróitis":"hr","eabhrais":"he","eastóinis":"et","fionlainnis":"fi","fraincis":"fr","gaeilge na halban":"gd","gailísis":"gl","gearmáinis":"de","gréigis":"el","hiondúis":"hi","indinéisis":"id","iodáilis":"it","ioruais":"nb","íoslainnis":"is","laidin":"la","laitvis":"lv","liotuáinis":"lt","macadóinis":"mk","maenmar (burmais)":"my","mailéalaimis":"ml","malaeis":"ms","máltais":"mt","maorais":"mi","maraitis":"mr","mongóilis":"mn","ollainnis":"nl","polainnis":"pl","portaingéilis":"pt","rómáinis":"ro","rúisis":"ru","seapáinis":"ja","seicis":"cs","seirbis":"sr","sínis (simplithe)":"zh-cn","sínis (traidisiúnta)":"zh-tw","slóivéinis":"sl","slóvaicis":"sk","spáinnis":"es","sualainnis":"sv","súlúis":"zu","téalainnis":"th","teileagúis":"te","tuircis":"tr","úcráinis":"uk","úisbéiceastáinis":"uz","ungáiris":"hu","vítneaimis":"vi","アイスランド語":"is","アイルランド語":"ga","アゼルバイジャン語":"az","アブハズ語":"ab","アムハラ語":"am","アラビア語":"ar","アルバニア語":"sq","アルメニア語":"hy","イタリア語":"it","インドネシア語":"id","ウェールズ語":"cy","ウクライナ語":"uk","ウズベク語":"uz","エストニア語":"et","エスペラント語":"eo","オランダ語":"nl","カタルーニャ語":"ca","ガリシア語":"gl","カンナダ語":"kn","ギリシャ語":"el","クルド語（クルマンジー）":"ku","クルド語（ソラニー）":"ckb","クロアチア語":"hr","スウェーデン語":"sv","ズールー語":"zu","スコットランド ゲール語":"gd","スペイン語":"es","スロバキア語":"sk","スロベニア語":"sl","セルビア語":"sr","タイ語":"th","チェコ語":"cs","テルグ語":"te","デンマーク語":"da","ドイツ語":"de","トルコ語":"tr","ノルウェー語":"nb","ハイチ語":"ht","バスク語":"eu","ハンガリー語":"hu","ヒンディー語":"hi","フィンランド語":"fi","フランス語":"fr","ブルガリア語":"bg","ベトナム語":"vi","ヘブライ語":"he","ベラルーシ語":"be","ペルシャ語":"fa","ポーランド語":"pl","ポルトガル語":"pt","マオリ語":"mi","マケドニア語":"mk","マラーティー語":"mr","マラヤーラム語":"ml","マルタ語":"mt","マレー語":"ms","ミャンマー語（ビルマ語）":"my","モンゴル語":"mn","ラテン語":"la","ラトビア語":"lv","リトアニア語":"lt","ルーマニア語":"ro","ロシア語":"ru","英語":"en","韓国語":"ko","中国語（簡体）":"zh-cn","中国語（繁体）":"zh-tw","日本語":"ja","albánčina":"sq","amharčina":"am","arabčina":"ar","arménčina":"hy","azerbajdžančina":"az","barmčina":"my","bieloruština":"be","bulharčina":"bg","čínština (tradičná)":"zh-tw","dánčina":"da","estónčina":"et","fínčina":"fi","francúzština":"fr","galícijčina":"gl","gréčtina":"el","haitská kreolčina":"ht","hebrejčina":"he","hindčina":"hi","holandčina":"nl","chorvátčina":"hr","indonézština":"id","írčina":"ga","islandčina":"is","japončina":"ja","kannadčina":"kn","katalánčina":"ca","kórejčina":"ko","kurdčina (kurmándží)":"ku","kurdčina (sorání)":"ckb","latinčina":"la","litovčina":"lt","macedónčina":"mk","maďarčina":"hu","malajámčina":"ml","malajčina":"ms","maltčina":"mt","maorijčina":"mi","maratčina":"mr","mongolčina":"mn","nemčina":"de","nórčina":"nb","perzština":"fa","poľština":"pl","portugalčina":"pt","rumunčina":"ro","slovenčina":"sk","slovinčina":"sl","srbčina":"sr","škótska gaelčina":"gd","španielčina":"es","švédčina":"sv","taliančina":"it","telugčina":"te","thajčina":"th","ukrajinčina":"uk","vietnamčina":"vi","waleština":"cy","zuluština":"zu","galicisk":"gl","græsk":"el","haitisk kreolsk":"ht","hviderussisk":"be","kinesisk (traditionelt)":"zh-tw","lettisk":"lv","malajisk":"ms","persisk":"fa","rumænsk":"ro","thailandsk":"th","tjekkisk":"cs","అజర్‌బైజాని":"az","అబ్‌ఖాజ్":"ab","అర్మేనియన్":"hy","అల్బేనియన్":"sq","ఆంగ్లము":"en","ఆమ్హారిక్":"am","ఆరబిక్":"ar","ఇండొనేసియన్":"id","ఇటాలియన్":"it","ఉజ్బెక్":"uz","ఎస్పెరాంటో":"eo","ఏస్టోనియన్":"et","ఐరిష్":"ga","ఐస్ లాండిక్":"is","కన్నడ":"kn","కుర్దిష్ (కుర్మాంజి)":"ku","కుర్దిష్ (సొరని)":"ckb","కొరియన్":"ko","క్యాటలాన్":"ca","క్రొయేషియన్":"hr","గాలిసియన్":"gl","గ్రీక్":"el","చెక్":"cs","చైనీస్ (సరళమైన)":"zh-cn","చైనీస్ (సాంప్రదాయమైన)":"zh-tw","జపనీస్":"ja","జర్మన్":"de","జులు":"zu","టర్కిష్":"tr","డచ్":"nl","డానిష్":"da","తెలుగు":"te","థాయ్":"th","నార్విజియన్":"nb","పర్షియన్":"fa","పోర్చుగీస్":"pt","పోలిష్":"pl","ఫిన్నిష్":"fi","ఫ్రెంచ్":"fr","బర్మీస్":"my","బల్గేరియన్":"bg","బాస్క్":"eu","బెలారష్యన్":"be","మంగోలియన్":"mn","మయోరి":"mi","మరాఠీ":"mr","మలయాళం":"ml","మాలై":"ms","మాల్టీస్":"mt","మాసిడోనియన్":"mk","యుక్రేనియన్":"uk","రష్యన్":"ru","రొమేనియన్":"ro","లాటిన్":"la","లాట్వియన్":"lv","లిథువేనియన్":"lt","వియత్నామీస్":"vi","వెల్ష్":"cy","సెర్బియన్":"sr","స్కాట్స్ గేలిక్":"gd","స్పానిష్":"es","స్లోవాక్":"sk","స్లోవేనియన్":"sl","స్వీడిష్":"sv","హంగేరియన్":"hu","హిందీ":"hi","హీబ్రూ":"he","హైయేటియన్ క్రియోల్":"ht","അബ്ഖാസ്":"ab","അമാറിക്":"am","അർമേനിയൻ":"hy","അൽബേനിയൻ":"sq","അസർബൈജാനി":"az","അറബിക്":"ar","ഇന്തോനേഷ്യൻ":"id","ഇംഗ്ലീഷ്":"en","ഇറ്റാലിയൻ":"it","ഉക്രേനിയൻ":"uk","ഉസ്ബെക്ക്":"uz","എസ്‌പെരന്തോ":"eo","എസ്റ്റോണിയൻ":"et","ഐസ്‌ലാൻഡിക്":"is","ഐറിഷ്":"ga","കന്നട":"kn","കാറ്റലൻ":"ca","കുർദ്ദിഷ് (കുർമാൻജി)":"ku","കുർദ്ദിഷ് (സൊറാനി)":"ckb","കൊറിയൻ":"ko","ക്രൊയേഷ്യൻ":"hr","ഗലീഷ്യൻ":"gl","ഗ്രീക്ക്":"el","ചെക്ക്":"cs","ചൈനീസ് (പരമ്പരാഗതം)":"zh-tw","ചൈനീസ് (ലഘൂകരിച്ചത്)":"zh-cn","ജർമ്മൻ":"de","ജാപ്പനീസ്‌":"ja","ടർക്കിഷ്":"tr","ഡച്ച്":"nl","ഡാനിഷ്":"da","തായ്":"th","തെലുങ്ക്":"te","നോർവീജിയൻ":"nb","പേർഷ്യൻ":"fa","പോർച്ചുഗീസ്":"pt","പോളിഷ്":"pl","ഫിന്നിഷ്":"fi","ഫ്രെഞ്ച്":"fr","ബർമീസ്":"my","ബൾഗേറിയൻ":"bg","ബാസ്ക്":"eu","ബെലാറുഷ്യൻ":"be","മംഗോളിയൻ":"mn","മലയാളം":"ml","മലയ്":"ms","മറാഠി":"mr","മാസഡോണിയൻ":"mk","മാൾട്ടീസ്":"mt","മൗറി":"mi","ലാറ്റിൻ":"la","ലാറ്റ്‌വിയൻ":"lv","ലിത്വേനിയൻ":"lt","വിയറ്റ്നാമീസ്":"vi","വെൽഷ്":"cy","സുളു":"zu","സെർബിയൻ":"sr","സ്കോട്ട്സ് ഗ്യാലിക്":"gd","സ്പാനിഷ്":"es","സ്ലോവാക്":"sk","സ്ലോവേനിയൻ":"sl","സ്വീഡിഷ്":"sv","ഹംഗേറിയൻ":"hu","ഹിന്ദി":"hi","ഹീബ്രു":"he","ഹെയ്തിയൻ ക്രയോൾ":"ht","റഷ്യൻ":"ru","റൊമേനിയൻ":"ro","abhaščina":"ab","albanščina":"sq","amharščina":"am","angleščina":"en","arabščina":"ar","armenščina":"hy","azerbajdžanščina":"az","baskovščina":"eu","beloruščina":"be","bolgarščina":"bg","burmanščina":"my","češčina":"cs","danščina":"da","estonščina":"et","finščina":"fi","francoščina":"fr","galicijščina":"gl","grščina":"el","haitijska kreolščina":"ht","hebrejščina":"he","hindijščina":"hi","hrvaščina":"hr","indonezijščina":"id","irščina":"ga","islandščina":"is","italijanščina":"it","japonščina":"ja","kanareščina":"kn","katalonščina":"ca","kitajščina (poenostavljena)":"zh-cn","kitajščina (tradicionalna)":"zh-tw","korejščina":"ko","kurdščina (kurmandži)":"ku","kurdščina (soranščina)":"ckb","latinščina":"la","latvijščina":"lv","litovščina":"lt","madžarščina":"hu","makedonščina":"mk","malajalščina":"ml","malajščina":"ms","malteščina":"mt","maorščina":"mi","maratščina":"mr","mongolščina":"mn","nemščina":"de","nizozemščina":"nl","norveščina":"nb","perzijščina":"fa","poljščina":"pl","portugalščina":"pt","romunščina":"ro","ruščina":"ru","slovaščina":"sk","slovenščina":"sl","srbščina":"sr","škotska gelščina":"gd","španščina":"es","švedščina":"sv","tajščina":"th","teluščina":"te","turščina":"tr","ukrajinščina":"uk","uzbeščina":"uz","valižanščina":"cy","vietnamščina":"vi","zulujščina":"zu","абхаски":"ab","баскијски":"eu","бурмански":"my","вијетнамски":"vi","галски":"gl","енглески":"en","индонежански":"id","јапански":"ja","јерменски":"hy","кинески (поједностављени)":"zh-cn","кинески (традиционални)":"zh-tw","курдски (курмањи)":"ku","летонски":"lv","мађарски":"hu","малајалам":"ml","марати":"mr","немачки":"de","персијски":"fa","пољски":"pl","румунски":"ro","словеначки":"sl","тајски":"th","украјински":"uk","хаићански креолски":"ht"," دانماركی":"da","almanî":"de","ambarîkî":"am","arnawudî":"sq","azerbaycanî":"az","baskî":"eu","belarûsî":"be","bûlgarî":"bg","çînî (hêsankirî)":"zh-cn","çînî (kevneşopî)":"zh-tw","endonezyayî":"id","erebî":"ar","esperantoyî":"eo","estonî":"et","farsî":"fa","fînlandî":"fi","fransî":"fr","gaêlîkî sikotlandî":"gd","galîsî":"gl","hirwatî":"hr","holendî":"nl","hûngarî (macarî)":"hu","îbranî":"he","îngilîzî":"en","îrlandî":"ga","îspanyolî":"es","îzlandî":"is","japonî":"ja","kannadayî":"kn","katalanî":"ca","koreyî":"ko","kreolê haîtî":"ht","kurdî (kurmancî)":"ku","kurdî (soranî)":"ckb","latînî":"la","letonî":"lv","lîtvanî":"lt","makedonî":"mk","malayalamî":"ml","malayî":"ms","maltayî":"mt","maorîyî":"mi","maratî":"mr","moxolî":"mn","myanmarî (burmese)":"my","norwêcî":"nb","ozbekî":"uz","polandî (lehîstanî)":"pl","portekîzî":"pt","romanî":"ro","rûsî":"ru","sirbî":"sr","slovakî":"sk","slovenyayî":"sl","swêdî":"sv","tayî":"th","teleguyî":"te","tirkî":"tr","vîetnamî":"vi","welşî":"cy","yûnanî":"el","zûlûyî":"zu","ئه رمه نی":"hy","ئۆکرانی":"uk","ئیتالی":"it","چه‌كی":"cs","هیندی":"hi","абхаз":"ab","азербайжан":"az","албани":"sq","амхарик":"am","англи":"en","араб":"ar","армени":"hy","баск":"eu","беларусь":"be","бирм":"my","болгар":"bg","вьетнам":"vi","галик":"gl","гаэл":"gd","герман":"de","голланд":"nl","грек":"el","дани":"da","индонез":"id","ирланд":"ga","исланд":"is","испани":"es","итали":"it","каталан":"ca","кипр":"he","курд (курманжи)":"ku","курд (сорани)":"ckb","латви":"lv","латин":"la","литва":"lt","македон":"mk","малай":"ms","малайлам":"ml","малти":"mt","маори":"mi","монгол":"mn","норвег":"nb","орос":"ru","перс":"fa","польш":"pl","португаль":"pt","румын":"ro","серби":"sr","словак":"sk","словени":"sl","солонгос":"ko","тай":"th","турк":"tr","тэлүгү":"te","узбек":"uz","украин":"uk","унгар":"hu","уэльс":"cy","финланд":"fi","франц":"fr","хаитийн креол":"ht","хорват":"hr","хятад (уламжлалт)":"zh-tw","хятад (хялбаршуулсан)":"zh-cn","чех":"cs","швед":"sv","эсперанто":"eo","эстони":"et","япон":"ja","абхазский":"ab","азербайджанский":"az","албанский":"sq","амхарский":"am","английский":"en","арабский":"ar","армянский":"hy","баскский":"eu","белорусский":"be","бирманский":"my","болгарский":"bg","валлийский":"cy","венгерский":"hu","вьетнамский":"vi","гаитянский креольский":"ht","галисийский":"gl","греческий":"el","датский":"da","индонезийский":"id","ирландский":"ga","исландский":"is","испанский":"es","итальянский":"it","каталанский":"ca","китайский (традиционный)":"zh-tw","китайский (упрощенный)":"zh-cn","корейский":"ko","курдский (курманджи)":"ku","курдский (сорани)":"ckb","латинский":"la","латышский":"lv","литовский":"lt","македонский":"mk","малайский":"ms","мальтийский":"mt","монгольский":"mn","немецкий":"de","нидерландский":"nl","норвежский":"nb","польский":"pl","португальский":"pt","румынский":"ro","русский":"ru","сербский":"sr","словацкий":"sk","словенский":"sl","тайский":"th","турецкий":"tr","узбекский":"uz","украинский":"uk","фарси":"fa","финский":"fi","французский":"fr","хорватский":"hr","чешский":"cs","шведский":"sv","шотландский (гэльский)":"gd","эстонский":"et","японский":"ja","にほんご":"ja"},"scratchToGoogleMap":{"zh-cn":"zh","nb":"no","he":"iw","es-419":"es","pt-br":"pt","ja-hira":"ja"},"previouslySupported":["ab","ms","be","eo","hy","hi","kn","ht","ku","la","mk","ml","mt","mr","mn","my","nn","sq","te","uz"],"spokenLanguages":{"en":[{"code":"zh-cn","name":"Chinese (Mandarin)"}],"tr":[{"code":"zh-cn","name":"Çince (Mandarin)"},{"code":"hi","name":"Hintçe"},{"code":"pt-br","name":"Portekizce (Brezilya)"},{"code":"es-419","name":"İspanyolca (Latin Amerika)"}],"ru":[{"code":"zh-cn","name":"Китайский (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"Португальский (бразильский)"},{"code":"es-419","name":"Испанский (Латинская Америка)"}],"pt":[{"code":"zh-cn","name":"Chinês (Mandarim)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (latino-americano)"}],"pl":[{"code":"zh-cn","name":"chiński (mandaryński)"},{"code":"hi","name":"hinduski"},{"code":"pt-br","name":"portugalski (brazylijski)"},{"code":"es-419","name":"hiszpański (Ameryka Łacińska)"}],"vi":[{"code":"zh-cn","name":"Tiếng Trung (Quan Thoại)"},{"code":"hi","name":"Tiếng Hin-ddi"},{"code":"pt-br","name":"Tiếng Bồ Đào Nha (Brazil)"},{"code":"es-419","name":"Tiếng Tây Ban Nha (Mỹ Latinh)"}],"fr":[{"code":"zh-cn","name":"Chinois (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugais (brésilien)"},{"code":"es-419","name":"Espagnol (Amérique latine)"}],"es":[{"code":"zh-cn","name":"Chino (mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (Latinoamérica)"}],"id":[{"code":"zh-cn","name":"Bahasa Mandarin (Cina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brasil)"},{"code":"es-419","name":"Spanyol (Amerika Latin)"}],"ar":[{"code":"zh-cn","name":"الصينية (المندرينية)"},{"code":"hi","name":"الهندية"},{"code":"pt-br","name":"البرتغالية (البرازيلية)"},{"code":"es-419","name":"الإسبانية (أمريكا اللاتينية)"}],"el":[{"code":"zh-cn","name":"κινέζικα (μανταρίνια)"},{"code":"hi","name":"Χίντι"},{"code":"pt-br","name":"Πορτογαλικά (Βραζιλιάνικα)"},{"code":"es-419","name":"Ισπανικά (Λατινικής Αμερικής)"}],"pt-br":[{"code":"zh-cn","name":"Chinês (Mandarim)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (latino-americano)"}],"ko":[{"code":"zh-cn","name":"중국어(만다린)"},{"code":"hi","name":"힌디 어"},{"code":"pt-br","name":"포르투갈어(브라질)"},{"code":"es-419","name":"스페인어(라틴 아메리카)"}],"es-419":[{"code":"zh-cn","name":"Chino (mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (Latinoamérica)"}],"uk":[{"code":"zh-cn","name":"китайська (мандарин)"},{"code":"hi","name":"Хінді"},{"code":"pt-br","name":"португальська (бразильська)"},{"code":"es-419","name":"Іспанська (Латинська Америка)"}],"ca":[{"code":"zh-cn","name":"Xinès (mandarí)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portuguès (brasiler)"},{"code":"es-419","name":"espanyol (llatinoamericà)"}],"te":[{"code":"zh-cn","name":"చైనీస్ (మాండరిన్)"},{"code":"hi","name":"హిందీ"},{"code":"pt-br","name":"పోర్చుగీస్ (బ్రెజిలియన్)"},{"code":"es-419","name":"స్పానిష్ (లాటిన్ అమెరికన్)"}],"mr":[{"code":"zh-cn","name":"चीनी (मंडारीन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पोर्तुगीज (ब्राझिलियन)"},{"code":"es-419","name":"स्पॅनिश (लॅटिन अमेरिकन)"}],"zh-cn":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地语"},{"code":"pt-br","name":"葡萄牙语（巴西）"},{"code":"es-419","name":"西班牙语（拉丁美洲）"}],"sq":[{"code":"zh-cn","name":"Kinezisht (mandarinisht)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugeze (braziliane)"},{"code":"es-419","name":"Spanjisht (Amerikan Latine)"}],"ml":[{"code":"zh-cn","name":"ചൈനീസ് (മാൻഡറിൻ)"},{"code":"hi","name":"ഹിന്ദി"},{"code":"pt-br","name":"പോർച്ചുഗീസ് (ബ്രസീലിയൻ)"},{"code":"es-419","name":"സ്പാനിഷ് (ലാറ്റിൻ അമേരിക്കൻ)"}],"th":[{"code":"zh-cn","name":"ภาษาจีน (แมนดาริน)"},{"code":"hi","name":"ภาษาฮินดี"},{"code":"pt-br","name":"โปรตุเกส (บราซิล)"},{"code":"es-419","name":"สเปน (ลาตินอเมริกา)"}],"hi":[{"code":"zh-cn","name":"चीनी (मंदारिन)"},{"code":"hi","name":"हिन्दी"},{"code":"pt-br","name":"पुर्तगाली (ब्राजील)"},{"code":"es-419","name":"स्पैनिश (लैटिन अमेरिकी)"}],"bg":[{"code":"zh-cn","name":"китайски (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"испански (латиноамерикански)"}],"mn":[{"code":"zh-cn","name":"Хятад (Мандарин)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"Португали (Бразил)"},{"code":"es-419","name":"Испани (Латин Америк)"}],"uz":[{"code":"zh-cn","name":"Xitoy (mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portugal (Braziliya)"},{"code":"es-419","name":"Ispan (Lotin Amerikasi)"}],"mi":[{"code":"zh-cn","name":"Hainamana (Māriki)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Potiti (Brazilian)"},{"code":"es-419","name":"Paniora (Amerika Raina)"}],"da":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"am":[{"code":"zh-cn","name":"ቻይንኛ (ማንዳሪን)"},{"code":"hi","name":"ሂንዲ"},{"code":"pt-br","name":"ፖርቱጋልኛ (ብራዚል)"},{"code":"es-419","name":"ስፓኒሽ (ላቲን አሜሪካ)"}],"ja":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語（ブラジル）"},{"code":"es-419","name":"スペイン語（ラテンアメリカ）"}],"de":[{"code":"zh-cn","name":"Chinesisch (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugiesisch (Brasilianisch)"},{"code":"es-419","name":"Spanisch (Lateinamerika)"}],"hu":[{"code":"zh-cn","name":"kínai (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugál (brazil)"},{"code":"es-419","name":"spanyol (latin-amerikai)"}],"is":[{"code":"zh-cn","name":"kínverska (mandarín)"},{"code":"hi","name":"hindí"},{"code":"pt-br","name":"Portúgalska (Brasilíska)"},{"code":"es-419","name":"Spænska (latínameríska)"}],"sk":[{"code":"zh-cn","name":"čínština (mandarínčina)"},{"code":"hi","name":"hindčina"},{"code":"pt-br","name":"portugalčina (brazílska)"},{"code":"es-419","name":"španielčina (latinskoamerická)"}],"cy":[{"code":"zh-cn","name":"Tsieinëeg (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portiwgaleg (Brasil)"},{"code":"es-419","name":"Sbaeneg (America Lladin)"}],"nl":[{"code":"zh-cn","name":"Chinees (Mandarijn)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugees (Braziliaans)"},{"code":"es-419","name":"Spaans (Latijns-Amerikaans)"}],"gd":[{"code":"zh-cn","name":"Sìonais (Mandarin)"},{"code":"hi","name":"Indeach"},{"code":"pt-br","name":"Portagailis (Braisil)"},{"code":"es-419","name":"Spàinntis (Ameireagaidh Laidinn)"}],"cs":[{"code":"zh-cn","name":"čínština (mandarínština)"},{"code":"hi","name":"hindština"},{"code":"pt-br","name":"portugalština (brazilská)"},{"code":"es-419","name":"španělština (latinskoamerická)"}],"zh-tw":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地語"},{"code":"pt-br","name":"葡萄牙語（巴西）"},{"code":"es-419","name":"西班牙語（拉丁美洲）"}],"ja-hira":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語（ブラジル）"},{"code":"es-419","name":"スペイン語（ラテンアメリカ）"}],"zu":[{"code":"zh-cn","name":"IsiShayina (Mandarin)"},{"code":"hi","name":"IsiHindi"},{"code":"pt-br","name":"Isi-Portuguese (Brazilian)"},{"code":"es-419","name":"Isi-Spanish (Latin American)"}],"my":[{"code":"zh-cn","name":"တရုတ် (မန်ဒရင်း)"},{"code":"hi","name":"ဟိန္ဒီ"},{"code":"pt-br","name":"ပေါ်တူဂီ (ဘရာဇီး)"},{"code":"es-419","name":"စပိန် (လက်တင်အမေရိက)"}],"hy":[{"code":"zh-cn","name":"չինարեն (մանդարին)"},{"code":"hi","name":"հինդի"},{"code":"pt-br","name":"պորտուգալերեն (բրազիլերեն)"},{"code":"es-419","name":"իսպաներեն (լատինամերիկյան)"}],"lv":[{"code":"zh-cn","name":"ķīniešu (mandarīnu)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugāļu (Brazīlijas)"},{"code":"es-419","name":"spāņu (latīņamerikāņu)"}],"sv":[{"code":"zh-cn","name":"kinesiska (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisiska (brasilianska)"},{"code":"es-419","name":"spanska (latinamerikansk)"}],"nb":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"ckb":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هیندی"},{"code":"pt-br","name":"زمانی پورتوگالی (بەرازیلی)"},{"code":"es-419","name":"ئیسپانی (ئەمریکی لاتین)"}],"et":[{"code":"zh-cn","name":"hiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasiilia)"},{"code":"es-419","name":"hispaania (Ladina-Ameerika)"}],"ku":[{"code":"zh-cn","name":"Çînî (Mandarîn)"},{"code":"hi","name":"Hindî"},{"code":"pt-br","name":"Portekîzî (Brazîlya)"},{"code":"es-419","name":"Spanî (Amerîkaya Latîn)"}],"fa":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هندی"},{"code":"pt-br","name":"پرتغالی (برزیلی)"},{"code":"es-419","name":"اسپانیایی (آمریکای لاتین)"}],"fi":[{"code":"zh-cn","name":"kiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasilia)"},{"code":"es-419","name":"espanja (latinalainen Amerikka)"}],"lt":[{"code":"zh-cn","name":"kinų (mandarinų)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugalų (Brazilijos)"},{"code":"es-419","name":"Ispanų (Lotynų Amerikos)"}],"gl":[{"code":"zh-cn","name":"chinés (mandarín)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugués (brasileiro)"},{"code":"es-419","name":"español (latinoamericano)"}],"hr":[{"code":"zh-cn","name":"kineski (mandarinski)"},{"code":"hi","name":"hindski"},{"code":"pt-br","name":"portugalski (brazilski)"},{"code":"es-419","name":"španjolski (latinoamerički)"}],"he":[{"code":"zh-cn","name":"סינית (מנדרינית)"},{"code":"hi","name":"הינדי"},{"code":"pt-br","name":"פורטוגזית (ברזילאית)"},{"code":"es-419","name":"ספרדית (אמריקה הלטינית)"}],"ro":[{"code":"zh-cn","name":"Chineză (mandarina)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugheză (braziliană)"},{"code":"es-419","name":"Spaniolă (America Latină)"}],"mt":[{"code":"zh-cn","name":"Ċiniż (Mandarin)"},{"code":"hi","name":"Ħindi"},{"code":"pt-br","name":"Portugiż (Brażiljan)"},{"code":"es-419","name":"Spanjol (Amerika Latina)"}],"ht":[{"code":"zh-cn","name":"Chinwa (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Pòtigè (Brezilyen)"},{"code":"es-419","name":"Panyòl (Ameriken Latin)"}],"eu":[{"code":"zh-cn","name":"txinera (mandariarra)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"portugesa (brasildarra)"},{"code":"es-419","name":"Gaztelania (Latinoamerika)"}],"ab":[{"code":"zh-cn","name":"Ачинатә (мандарин)"},{"code":"hi","name":"Ахинди"},{"code":"pt-br","name":"Апортугалтә (Бразилиа)"},{"code":"es-419","name":"Испан бызшәа (Латинтәи Америка)"}],"eo":[{"code":"zh-cn","name":"Ĉina (mandarina)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"Portugala (brazila)"},{"code":"es-419","name":"hispana (latin-amerika)"}],"sr":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерички)"}],"be":[{"code":"zh-cn","name":"кітайская (мандарын)"},{"code":"hi","name":"Хіндзі"},{"code":"pt-br","name":"партугальская (бразільская)"},{"code":"es-419","name":"іспанская (лацінаамерыканская)"}],"ga":[{"code":"zh-cn","name":"Sínis (Mandairínis)"},{"code":"hi","name":"Hiondúis"},{"code":"pt-br","name":"Portaingéilis (An Bhrasaíl)"},{"code":"es-419","name":"Spáinnis (Mheiriceá Laidineach)"}],"kn":[{"code":"zh-cn","name":"ಚೈನೀಸ್ (ಮ್ಯಾಂಡರಿನ್)"},{"code":"hi","name":"ಹಿಂದಿ"},{"code":"pt-br","name":"ಪೋರ್ಚುಗೀಸ್ (ಬ್ರೆಜಿಲಿಯನ್)"},{"code":"es-419","name":"ಸ್ಪ್ಯಾನಿಷ್ (ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್)"}],"la":[{"code":"zh-cn","name":"Seres (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portuguese (Brazilian)"},{"code":"es-419","name":"Spanish"}],"ms":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brazil)"},{"code":"es-419","name":"Sepanyol (Amerika Latin)"}],"az":[{"code":"zh-cn","name":"Çin (Mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portuqal (Braziliya)"},{"code":"es-419","name":"İspan (Latın Amerikası)"}],"sl":[{"code":"zh-cn","name":"kitajščina (mandarinščina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugalščina (brazilščina)"},{"code":"es-419","name":"španščina (latinskoameriška)"}],"mk":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерикански)"}],"it":[{"code":"zh-cn","name":"Cinese (mandarino)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portoghese (brasiliano)"},{"code":"es-419","name":"Spagnolo (latinoamericano)"}]}}');
 
 /***/ }),
 
@@ -74597,7 +72345,7 @@ function version(uuid) {
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.299","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git","sha":"af179d8114073ee02ee3315ac5ebebdb58151b47"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.114","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.27.1","@babel/eslint-parser":"7.27.1","@babel/preset-env":"7.27.1","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"1.1.210","scratch-l10n":"5.0.230","scratch-render-fonts":"1.0.190","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.99.7","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.300","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.114","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.27.1","@babel/eslint-parser":"7.27.1","@babel/preset-env":"7.27.1","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"2.0.0-spork.5","scratch-l10n":"5.0.230","scratch-render-fonts":"1.0.190","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.99.7","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
 
 /***/ }),
 
@@ -77514,7 +75262,7 @@ const _domToBlock = function domToBlock(blockDOM, blocks, isTopBlock, parent) {
         }
       case 'comment':
         {
-          block.comment = xmlChild.attribs.id;
+          block.comment = "".concat(block.id, "_comment");
           break;
         }
       case 'value':
@@ -78274,14 +76022,6 @@ class Blocks {
     const stage = this.runtime.getTargetForStage();
     const editingTarget = this.runtime.getEditingTarget();
 
-    // UI event: clicked scripts toggle in the runtime.
-    if (e.element === 'stackclick') {
-      this.runtime.toggleScript(e.blockId, {
-        stackClick: true
-      });
-      return;
-    }
-
     // Block create/update/destroy
     switch (e.type) {
       case 'create':
@@ -78390,10 +76130,11 @@ class Blocks {
           this.emitProjectChanged();
           break;
         }
+      case 'block_comment_create':
       case 'comment_create':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
-          currTarget.createComment(e.commentId, e.blockId, e.text, e.xy.x, e.xy.y, e.width, e.height, e.minimized);
+          currTarget.createComment(e.commentId, e.blockId, '', e.json.x, e.json.y, e.json.width, e.json.height, false);
           if (currTarget.comments[e.commentId].x === null && currTarget.comments[e.commentId].y === null) {
             // Block comments imported from 2.0 projects are imported with their
             // x and y coordinates set to null so that scratch-blocks can
@@ -78401,12 +76142,13 @@ class Blocks {
             // comments, then the auto positioning should have taken place.
             // Update the x and y position of these comments to match the
             // one from the event.
-            currTarget.comments[e.commentId].x = e.xy.x;
-            currTarget.comments[e.commentId].y = e.xy.y;
+            currTarget.comments[e.commentId].x = e.json.x;
+            currTarget.comments[e.commentId].y = e.json.y;
           }
         }
         this.emitProjectChanged();
         break;
+      case 'block_comment_change':
       case 'comment_change':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -78415,20 +76157,11 @@ class Blocks {
             return;
           }
           const comment = currTarget.comments[e.commentId];
-          const change = e.newContents_;
-          if (Object.prototype.hasOwnProperty.call(change, 'minimized')) {
-            comment.minimized = change.minimized;
-          }
-          if (Object.prototype.hasOwnProperty.call(change, 'width') && Object.prototype.hasOwnProperty.call(change, 'height')) {
-            comment.width = change.width;
-            comment.height = change.height;
-          }
-          if (Object.prototype.hasOwnProperty.call(change, 'text')) {
-            comment.text = change.text;
-          }
+          comment.text = e.newContents_;
           this.emitProjectChanged();
         }
         break;
+      case 'block_comment_move':
       case 'comment_move':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -78443,6 +76176,34 @@ class Blocks {
           this.emitProjectChanged();
         }
         break;
+      case 'block_comment_collapse':
+      case 'comment_collapse':
+        if (this.runtime.getEditingTarget()) {
+          const currTarget = this.runtime.getEditingTarget();
+          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+            log.warn("Cannot collapse comment with id ".concat(e.commentId, " because it does not exist."));
+            return;
+          }
+          const comment = currTarget.comments[e.commentId];
+          comment.minimized = e.newCollapsed;
+          this.emitProjectChanged();
+        }
+        break;
+      case 'block_comment_resize':
+      case 'comment_resize':
+        if (this.runtime.getEditingTarget()) {
+          const currTarget = this.runtime.getEditingTarget();
+          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+            log.warn("Cannot resize comment with id ".concat(e.commentId, " because it does not exist."));
+            return;
+          }
+          const comment = currTarget.comments[e.commentId];
+          comment.width = e.newSize.width;
+          comment.height = e.newSize.height;
+          this.emitProjectChanged();
+        }
+        break;
+      case 'block_comment_delete':
       case 'comment_delete':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -78463,6 +76224,14 @@ class Blocks {
             delete block.comment;
           }
           this.emitProjectChanged();
+        }
+        break;
+      case 'click':
+        // UI event: clicked scripts toggle in the runtime.
+        if (e.targetType === 'block') {
+          this.runtime.toggleScript(this.getTopLevelScript(e.blockId), {
+            stackClick: true
+          });
         }
         break;
     }
@@ -78664,19 +76433,32 @@ class Blocks {
     if (typeof e.oldParent !== 'undefined') {
       const oldParent = this._blocks[e.oldParent];
       if (typeof e.oldInput !== 'undefined' && oldParent.inputs[e.oldInput].block === e.id) {
-        // This block was connected to the old parent's input.
-        oldParent.inputs[e.oldInput].block = null;
+        // This block was connected to an input. We either want to
+        // restore the shadow block that previously occupied
+        // this input, or null out the input's block.
+        const shadow = oldParent.inputs[e.oldInput].shadow;
+        if (shadow && e.id !== shadow) {
+          oldParent.inputs[e.oldInput].block = shadow;
+          this._blocks[shadow].parent = oldParent.id;
+        } else {
+          oldParent.inputs[e.oldInput].block = null;
+          if (e.id !== shadow) {
+            this._blocks[e.id].parent = null;
+          }
+        }
       } else if (oldParent.next === e.id) {
         // This block was connected to the old parent's next connection.
         oldParent.next = null;
+        this._blocks[e.id].parent = null;
       }
-      this._blocks[e.id].parent = null;
       didChange = true;
     }
 
     // Is this block a top-level block?
     if (typeof e.newParent === 'undefined') {
-      this._addScript(e.id);
+      if (!this._blocks[e.id].shadow) {
+        this._addScript(e.id);
+      }
     } else {
       // Remove script, if one exists.
       this._deleteScript(e.id);
@@ -79267,7 +77049,7 @@ class Comment {
     this.blockId = null;
   }
   toXML() {
-    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(this.blockId !== null, "\" minimized=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
+    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(!this.minimized, "\" collapsed=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
   }
 
   // TODO choose min and defaults for width and height
@@ -81284,9 +79066,7 @@ class Runtime extends EventEmitter {
         type: menuId,
         inputsInline: true,
         output: 'String',
-        colour: categoryInfo.color1,
-        colourSecondary: categoryInfo.color2,
-        colourTertiary: categoryInfo.color3,
+        style: categoryInfo.id,
         outputShape: menuInfo.acceptReporters ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
         args0: [{
           type: 'field_dropdown',
@@ -81328,9 +79108,7 @@ class Runtime extends EventEmitter {
         message0: '%1',
         inputsInline: true,
         output: output,
-        colour: categoryInfo.color1,
-        colourSecondary: categoryInfo.color2,
-        colourTertiary: categoryInfo.color3,
+        style: categoryInfo.id,
         outputShape: outputShape,
         args0: [{
           name: "field_".concat(fieldName),
@@ -81370,9 +79148,8 @@ class Runtime extends EventEmitter {
       type: extendedOpcode,
       inputsInline: true,
       category: categoryInfo.name,
-      colour: categoryInfo.color1,
-      colourSecondary: categoryInfo.color2,
-      colourTertiary: categoryInfo.color3
+      style: categoryInfo.id,
+      extensions: []
     };
     const context = {
       // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -81391,7 +79168,7 @@ class Runtime extends EventEmitter {
     // the category block icon.
     const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
     if (iconURI) {
-      blockJSON.extensions = ['scratch_extension'];
+      blockJSON.extensions.push('scratch_extension');
       blockJSON.message0 = '%1 %2';
       const iconJSON = {
         type: 'field_image',
@@ -81428,6 +79205,7 @@ class Runtime extends EventEmitter {
         }
         blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
         blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+        blockJSON.extensions.push('shape_hat');
         break;
       case BlockType.CONDITIONAL:
       case BlockType.LOOP:
@@ -81472,7 +79250,7 @@ class Runtime extends EventEmitter {
     }
     if (blockInfo.blockType === BlockType.REPORTER) {
       if (!blockInfo.disableMonitor && context.inputList.length === 0) {
-        blockJSON.checkboxInFlyout = true;
+        blockJSON.extensions.push('monitor_block');
       }
     } else if (blockInfo.blockType === BlockType.LOOP) {
       // Add icon to the bottom right of a loop block
@@ -81699,7 +79477,7 @@ class Runtime extends EventEmitter {
       }
       return {
         id: categoryInfo.id,
-        xml: "<category name=\"".concat(name, "\" id=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
+        xml: "<category name=\"".concat(name, "\" toolboxitemid=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
       };
     });
   }
@@ -102307,6 +100085,13 @@ const deserializeBlocks = function deserializeBlocks(blocks) {
     block.id = blockId; // add id back to block since it wasn't serialized
     block.inputs = deserializeInputs(block.inputs, blockId, blocks);
     block.fields = deserializeFields(block.fields);
+    if (block.comment) {
+      // Pre-Blockly v12 Scratch used arbitrary IDs for block comments.
+      // Newer versions use an ID based on the parent block's ID instead,
+      // so disregard the actual saved value and replace it with the
+      // synthesized one.
+      block.comment = "".concat(block.id, "_comment");
+    }
   }
   return blocks;
 };
@@ -102499,7 +100284,7 @@ const parseScratchObject = function parseScratchObject(object, runtime, extensio
   if (Object.prototype.hasOwnProperty.call(object, 'comments')) {
     for (const commentId in object.comments) {
       const comment = object.comments[commentId];
-      const newComment = new Comment(commentId, comment.text, comment.x, comment.y, comment.width, comment.height, comment.minimized);
+      const newComment = new Comment(comment.blockId ? "".concat(comment.blockId, "_comment") : commentId, comment.text, comment.x, comment.y, comment.width, comment.height, comment.minimized);
       if (comment.blockId) {
         newComment.blockId = comment.blockId;
       }

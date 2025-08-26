@@ -110,6 +110,167 @@ module.exports = function (base64Data) {
 
 /***/ }),
 
+/***/ "./node_modules/base64-js/index.js":
+/*!*****************************************!*\
+  !*** ./node_modules/base64-js/index.js ***!
+  \*****************************************/
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+exports.byteLength = byteLength
+exports.toByteArray = toByteArray
+exports.fromByteArray = fromByteArray
+
+var lookup = []
+var revLookup = []
+var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+for (var i = 0, len = code.length; i < len; ++i) {
+  lookup[i] = code[i]
+  revLookup[code.charCodeAt(i)] = i
+}
+
+// Support decoding URL-safe base64 strings, as Node.js does.
+// See: https://en.wikipedia.org/wiki/Base64#URL_applications
+revLookup['-'.charCodeAt(0)] = 62
+revLookup['_'.charCodeAt(0)] = 63
+
+function getLens (b64) {
+  var len = b64.length
+
+  if (len % 4 > 0) {
+    throw new Error('Invalid string. Length must be a multiple of 4')
+  }
+
+  // Trim off extra bytes after placeholder bytes are found
+  // See: https://github.com/beatgammit/base64-js/issues/42
+  var validLen = b64.indexOf('=')
+  if (validLen === -1) validLen = len
+
+  var placeHoldersLen = validLen === len
+    ? 0
+    : 4 - (validLen % 4)
+
+  return [validLen, placeHoldersLen]
+}
+
+// base64 is 4/3 + up to two characters of the original data
+function byteLength (b64) {
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function _byteLength (b64, validLen, placeHoldersLen) {
+  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+}
+
+function toByteArray (b64) {
+  var tmp
+  var lens = getLens(b64)
+  var validLen = lens[0]
+  var placeHoldersLen = lens[1]
+
+  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+  var curByte = 0
+
+  // if there are placeholders, only get up to the last complete 4 chars
+  var len = placeHoldersLen > 0
+    ? validLen - 4
+    : validLen
+
+  var i
+  for (i = 0; i < len; i += 4) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 18) |
+      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+      revLookup[b64.charCodeAt(i + 3)]
+    arr[curByte++] = (tmp >> 16) & 0xFF
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 2) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 2) |
+      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  if (placeHoldersLen === 1) {
+    tmp =
+      (revLookup[b64.charCodeAt(i)] << 10) |
+      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+    arr[curByte++] = (tmp >> 8) & 0xFF
+    arr[curByte++] = tmp & 0xFF
+  }
+
+  return arr
+}
+
+function tripletToBase64 (num) {
+  return lookup[num >> 18 & 0x3F] +
+    lookup[num >> 12 & 0x3F] +
+    lookup[num >> 6 & 0x3F] +
+    lookup[num & 0x3F]
+}
+
+function encodeChunk (uint8, start, end) {
+  var tmp
+  var output = []
+  for (var i = start; i < end; i += 3) {
+    tmp =
+      ((uint8[i] << 16) & 0xFF0000) +
+      ((uint8[i + 1] << 8) & 0xFF00) +
+      (uint8[i + 2] & 0xFF)
+    output.push(tripletToBase64(tmp))
+  }
+  return output.join('')
+}
+
+function fromByteArray (uint8) {
+  var tmp
+  var len = uint8.length
+  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+  var parts = []
+  var maxChunkLength = 16383 // must be multiple of 3
+
+  // go through the array every three bytes, we'll deal with trailing stuff later
+  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+  }
+
+  // pad the end with zeros, but make sure to not forget the extra bytes
+  if (extraBytes === 1) {
+    tmp = uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 2] +
+      lookup[(tmp << 4) & 0x3F] +
+      '=='
+    )
+  } else if (extraBytes === 2) {
+    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+    parts.push(
+      lookup[tmp >> 10] +
+      lookup[(tmp >> 4) & 0x3F] +
+      lookup[(tmp << 2) & 0x3F] +
+      '='
+    )
+  }
+
+  return parts.join('')
+}
+
+
+/***/ }),
+
 /***/ "./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Grand9K-Pixel.ttf":
 /*!*******************************************************************************************************!*\
   !*** ./node_modules/base64-loader/index.js!./node_modules/scratch-render-fonts/src/Grand9K-Pixel.ttf ***!
@@ -225,7 +386,7 @@ module.exports = "AAEAAAARAQAABAAQRFNJRwAAAAEAAHTYAAAACEZGVE1flIgzAACYwAAAABxHRE
 
 
 
-const base64 = __webpack_require__(/*! base64-js */ "./node_modules/buffer/node_modules/base64-js/index.js")
+const base64 = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js")
 const ieee754 = __webpack_require__(/*! ieee754 */ "./node_modules/ieee754/index.js")
 const customInspectSymbol =
   (typeof Symbol === 'function' && typeof Symbol['for'] === 'function') // eslint-disable-line dot-notation
@@ -2320,167 +2481,6 @@ function defineBigIntMethod (fn) {
 
 function BufferBigIntNotDefined () {
   throw new Error('BigInt not supported')
-}
-
-
-/***/ }),
-
-/***/ "./node_modules/buffer/node_modules/base64-js/index.js":
-/*!*************************************************************!*\
-  !*** ./node_modules/buffer/node_modules/base64-js/index.js ***!
-  \*************************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function getLens (b64) {
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
-}
-
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
 }
 
 
@@ -16405,1573 +16405,1356 @@ Object.keys(domLvl1).forEach(function(key) {
 
 /***/ }),
 
-/***/ "./node_modules/dompurify/dist/purify.js":
-/*!***********************************************!*\
-  !*** ./node_modules/dompurify/dist/purify.js ***!
-  \***********************************************/
-/***/ (function(module) {
+/***/ "./node_modules/dompurify/dist/purify.cjs.js":
+/*!***************************************************!*\
+  !*** ./node_modules/dompurify/dist/purify.cjs.js ***!
+  \***************************************************/
+/***/ ((module) => {
 
-/*! @license DOMPurify 3.1.6 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.1.6/LICENSE */
+"use strict";
+/*! @license DOMPurify 3.2.5 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/3.2.5/LICENSE */
 
-(function (global, factory) {
-   true ? module.exports = factory() :
-  0;
-})(this, (function () { 'use strict';
 
-  const {
-    entries,
-    setPrototypeOf,
-    isFrozen,
-    getPrototypeOf,
-    getOwnPropertyDescriptor
-  } = Object;
-  let {
-    freeze,
-    seal,
-    create
-  } = Object; // eslint-disable-line import/no-mutable-exports
-  let {
-    apply,
-    construct
-  } = typeof Reflect !== 'undefined' && Reflect;
-  if (!freeze) {
-    freeze = function freeze(x) {
-      return x;
-    };
-  }
-  if (!seal) {
-    seal = function seal(x) {
-      return x;
-    };
-  }
-  if (!apply) {
-    apply = function apply(fun, thisValue, args) {
-      return fun.apply(thisValue, args);
-    };
-  }
-  if (!construct) {
-    construct = function construct(Func, args) {
-      return new Func(...args);
-    };
-  }
-  const arrayForEach = unapply(Array.prototype.forEach);
-  const arrayPop = unapply(Array.prototype.pop);
-  const arrayPush = unapply(Array.prototype.push);
-  const stringToLowerCase = unapply(String.prototype.toLowerCase);
-  const stringToString = unapply(String.prototype.toString);
-  const stringMatch = unapply(String.prototype.match);
-  const stringReplace = unapply(String.prototype.replace);
-  const stringIndexOf = unapply(String.prototype.indexOf);
-  const stringTrim = unapply(String.prototype.trim);
-  const objectHasOwnProperty = unapply(Object.prototype.hasOwnProperty);
-  const regExpTest = unapply(RegExp.prototype.test);
-  const typeErrorCreate = unconstruct(TypeError);
 
-  /**
-   * Creates a new function that calls the given function with a specified thisArg and arguments.
-   *
-   * @param {Function} func - The function to be wrapped and called.
-   * @returns {Function} A new function that calls the given function with a specified thisArg and arguments.
-   */
-  function unapply(func) {
-    return function (thisArg) {
-      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-        args[_key - 1] = arguments[_key];
-      }
-      return apply(func, thisArg, args);
-    };
-  }
-
-  /**
-   * Creates a new function that constructs an instance of the given constructor function with the provided arguments.
-   *
-   * @param {Function} func - The constructor function to be wrapped and called.
-   * @returns {Function} A new function that constructs an instance of the given constructor function with the provided arguments.
-   */
-  function unconstruct(func) {
-    return function () {
-      for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
-        args[_key2] = arguments[_key2];
-      }
-      return construct(func, args);
-    };
-  }
-
-  /**
-   * Add properties to a lookup table
-   *
-   * @param {Object} set - The set to which elements will be added.
-   * @param {Array} array - The array containing elements to be added to the set.
-   * @param {Function} transformCaseFunc - An optional function to transform the case of each element before adding to the set.
-   * @returns {Object} The modified set with added elements.
-   */
-  function addToSet(set, array) {
-    let transformCaseFunc = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : stringToLowerCase;
-    if (setPrototypeOf) {
-      // Make 'in' and truthy checks like Boolean(set.constructor)
-      // independent of any properties defined on Object.prototype.
-      // Prevent prototype setters from intercepting set as a this value.
-      setPrototypeOf(set, null);
-    }
-    let l = array.length;
-    while (l--) {
-      let element = array[l];
-      if (typeof element === 'string') {
-        const lcElement = transformCaseFunc(element);
-        if (lcElement !== element) {
-          // Config presets (e.g. tags.js, attrs.js) are immutable.
-          if (!isFrozen(array)) {
-            array[l] = lcElement;
-          }
-          element = lcElement;
-        }
-      }
-      set[element] = true;
-    }
-    return set;
-  }
-
-  /**
-   * Clean up an array to harden against CSPP
-   *
-   * @param {Array} array - The array to be cleaned.
-   * @returns {Array} The cleaned version of the array
-   */
-  function cleanArray(array) {
-    for (let index = 0; index < array.length; index++) {
-      const isPropertyExist = objectHasOwnProperty(array, index);
-      if (!isPropertyExist) {
-        array[index] = null;
-      }
-    }
-    return array;
-  }
-
-  /**
-   * Shallow clone an object
-   *
-   * @param {Object} object - The object to be cloned.
-   * @returns {Object} A new object that copies the original.
-   */
-  function clone(object) {
-    const newObject = create(null);
-    for (const [property, value] of entries(object)) {
-      const isPropertyExist = objectHasOwnProperty(object, property);
-      if (isPropertyExist) {
-        if (Array.isArray(value)) {
-          newObject[property] = cleanArray(value);
-        } else if (value && typeof value === 'object' && value.constructor === Object) {
-          newObject[property] = clone(value);
-        } else {
-          newObject[property] = value;
-        }
-      }
-    }
-    return newObject;
-  }
-
-  /**
-   * This method automatically checks if the prop is function or getter and behaves accordingly.
-   *
-   * @param {Object} object - The object to look up the getter function in its prototype chain.
-   * @param {String} prop - The property name for which to find the getter function.
-   * @returns {Function} The getter function found in the prototype chain or a fallback function.
-   */
-  function lookupGetter(object, prop) {
-    while (object !== null) {
-      const desc = getOwnPropertyDescriptor(object, prop);
-      if (desc) {
-        if (desc.get) {
-          return unapply(desc.get);
-        }
-        if (typeof desc.value === 'function') {
-          return unapply(desc.value);
-        }
-      }
-      object = getPrototypeOf(object);
-    }
-    function fallbackValue() {
-      return null;
-    }
-    return fallbackValue;
-  }
-
-  const html$1 = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
-
-  // SVG
-  const svg$1 = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
-  const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropShadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
-
-  // List of SVG elements that are disallowed by default.
-  // We still need to know them so that we can do namespace
-  // checks properly in case one wants to add them to
-  // allow-list.
-  const svgDisallowed = freeze(['animate', 'color-profile', 'cursor', 'discard', 'font-face', 'font-face-format', 'font-face-name', 'font-face-src', 'font-face-uri', 'foreignobject', 'hatch', 'hatchpath', 'mesh', 'meshgradient', 'meshpatch', 'meshrow', 'missing-glyph', 'script', 'set', 'solidcolor', 'unknown', 'use']);
-  const mathMl$1 = freeze(['math', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'mprescripts']);
-
-  // Similarly to SVG, we want to know all MathML elements,
-  // even those that we disallow by default.
-  const mathMlDisallowed = freeze(['maction', 'maligngroup', 'malignmark', 'mlongdiv', 'mscarries', 'mscarry', 'msgroup', 'mstack', 'msline', 'msrow', 'semantics', 'annotation', 'annotation-xml', 'mprescripts', 'none']);
-  const text = freeze(['#text']);
-
-  const html = freeze(['accept', 'action', 'align', 'alt', 'autocapitalize', 'autocomplete', 'autopictureinpicture', 'autoplay', 'background', 'bgcolor', 'border', 'capture', 'cellpadding', 'cellspacing', 'checked', 'cite', 'class', 'clear', 'color', 'cols', 'colspan', 'controls', 'controlslist', 'coords', 'crossorigin', 'datetime', 'decoding', 'default', 'dir', 'disabled', 'disablepictureinpicture', 'disableremoteplayback', 'download', 'draggable', 'enctype', 'enterkeyhint', 'face', 'for', 'headers', 'height', 'hidden', 'high', 'href', 'hreflang', 'id', 'inputmode', 'integrity', 'ismap', 'kind', 'label', 'lang', 'list', 'loading', 'loop', 'low', 'max', 'maxlength', 'media', 'method', 'min', 'minlength', 'multiple', 'muted', 'name', 'nonce', 'noshade', 'novalidate', 'nowrap', 'open', 'optimum', 'pattern', 'placeholder', 'playsinline', 'popover', 'popovertarget', 'popovertargetaction', 'poster', 'preload', 'pubdate', 'radiogroup', 'readonly', 'rel', 'required', 'rev', 'reversed', 'role', 'rows', 'rowspan', 'spellcheck', 'scope', 'selected', 'shape', 'size', 'sizes', 'span', 'srclang', 'start', 'src', 'srcset', 'step', 'style', 'summary', 'tabindex', 'title', 'translate', 'type', 'usemap', 'valign', 'value', 'width', 'wrap', 'xmlns', 'slot']);
-  const svg = freeze(['accent-height', 'accumulate', 'additive', 'alignment-baseline', 'ascent', 'attributename', 'attributetype', 'azimuth', 'basefrequency', 'baseline-shift', 'begin', 'bias', 'by', 'class', 'clip', 'clippathunits', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'cx', 'cy', 'd', 'dx', 'dy', 'diffuseconstant', 'direction', 'display', 'divisor', 'dur', 'edgemode', 'elevation', 'end', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'filterunits', 'flood-color', 'flood-opacity', 'font-family', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-weight', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 'glyphref', 'gradientunits', 'gradienttransform', 'height', 'href', 'id', 'image-rendering', 'in', 'in2', 'k', 'k1', 'k2', 'k3', 'k4', 'kerning', 'keypoints', 'keysplines', 'keytimes', 'lang', 'lengthadjust', 'letter-spacing', 'kernelmatrix', 'kernelunitlength', 'lighting-color', 'local', 'marker-end', 'marker-mid', 'marker-start', 'markerheight', 'markerunits', 'markerwidth', 'maskcontentunits', 'maskunits', 'max', 'mask', 'media', 'method', 'mode', 'min', 'name', 'numoctaves', 'offset', 'operator', 'opacity', 'order', 'orient', 'orientation', 'origin', 'overflow', 'paint-order', 'path', 'pathlength', 'patterncontentunits', 'patterntransform', 'patternunits', 'points', 'preservealpha', 'preserveaspectratio', 'primitiveunits', 'r', 'rx', 'ry', 'radius', 'refx', 'refy', 'repeatcount', 'repeatdur', 'restart', 'result', 'rotate', 'scale', 'seed', 'shape-rendering', 'specularconstant', 'specularexponent', 'spreadmethod', 'startoffset', 'stddeviation', 'stitchtiles', 'stop-color', 'stop-opacity', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke', 'stroke-width', 'style', 'surfacescale', 'systemlanguage', 'tabindex', 'targetx', 'targety', 'transform', 'transform-origin', 'text-anchor', 'text-decoration', 'text-rendering', 'textlength', 'type', 'u1', 'u2', 'unicode', 'values', 'viewbox', 'visibility', 'version', 'vert-adv-y', 'vert-origin-x', 'vert-origin-y', 'width', 'word-spacing', 'wrap', 'writing-mode', 'xchannelselector', 'ychannelselector', 'x', 'x1', 'x2', 'xmlns', 'y', 'y1', 'y2', 'z', 'zoomandpan']);
-  const mathMl = freeze(['accent', 'accentunder', 'align', 'bevelled', 'close', 'columnsalign', 'columnlines', 'columnspan', 'denomalign', 'depth', 'dir', 'display', 'displaystyle', 'encoding', 'fence', 'frame', 'height', 'href', 'id', 'largeop', 'length', 'linethickness', 'lspace', 'lquote', 'mathbackground', 'mathcolor', 'mathsize', 'mathvariant', 'maxsize', 'minsize', 'movablelimits', 'notation', 'numalign', 'open', 'rowalign', 'rowlines', 'rowspacing', 'rowspan', 'rspace', 'rquote', 'scriptlevel', 'scriptminsize', 'scriptsizemultiplier', 'selection', 'separator', 'separators', 'stretchy', 'subscriptshift', 'supscriptshift', 'symmetric', 'voffset', 'width', 'xmlns']);
-  const xml = freeze(['xlink:href', 'xml:id', 'xlink:title', 'xml:space', 'xmlns:xlink']);
-
-  // eslint-disable-next-line unicorn/better-regex
-  const MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm); // Specify template detection regex for SAFE_FOR_TEMPLATES mode
-  const ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
-  const TMPLIT_EXPR = seal(/\${[\w\W]*}/gm);
-  const DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]/); // eslint-disable-line no-useless-escape
-  const ARIA_ATTR = seal(/^aria-[\-\w]+$/); // eslint-disable-line no-useless-escape
-  const IS_ALLOWED_URI = seal(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i // eslint-disable-line no-useless-escape
-  );
-  const IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
-  const ATTR_WHITESPACE = seal(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g // eslint-disable-line no-control-regex
-  );
-  const DOCTYPE_NAME = seal(/^html$/i);
-  const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
-
-  var EXPRESSIONS = /*#__PURE__*/Object.freeze({
-    __proto__: null,
-    MUSTACHE_EXPR: MUSTACHE_EXPR,
-    ERB_EXPR: ERB_EXPR,
-    TMPLIT_EXPR: TMPLIT_EXPR,
-    DATA_ATTR: DATA_ATTR,
-    ARIA_ATTR: ARIA_ATTR,
-    IS_ALLOWED_URI: IS_ALLOWED_URI,
-    IS_SCRIPT_OR_DATA: IS_SCRIPT_OR_DATA,
-    ATTR_WHITESPACE: ATTR_WHITESPACE,
-    DOCTYPE_NAME: DOCTYPE_NAME,
-    CUSTOM_ELEMENT: CUSTOM_ELEMENT
-  });
-
-  // https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
-  const NODE_TYPE = {
-    element: 1,
-    attribute: 2,
-    text: 3,
-    cdataSection: 4,
-    entityReference: 5,
-    // Deprecated
-    entityNode: 6,
-    // Deprecated
-    progressingInstruction: 7,
-    comment: 8,
-    document: 9,
-    documentType: 10,
-    documentFragment: 11,
-    notation: 12 // Deprecated
+const {
+  entries,
+  setPrototypeOf,
+  isFrozen,
+  getPrototypeOf,
+  getOwnPropertyDescriptor
+} = Object;
+let {
+  freeze,
+  seal,
+  create
+} = Object; // eslint-disable-line import/no-mutable-exports
+let {
+  apply,
+  construct
+} = typeof Reflect !== 'undefined' && Reflect;
+if (!freeze) {
+  freeze = function freeze(x) {
+    return x;
   };
-  const getGlobal = function getGlobal() {
-    return typeof window === 'undefined' ? null : window;
+}
+if (!seal) {
+  seal = function seal(x) {
+    return x;
   };
-
-  /**
-   * Creates a no-op policy for internal use only.
-   * Don't export this function outside this module!
-   * @param {TrustedTypePolicyFactory} trustedTypes The policy factory.
-   * @param {HTMLScriptElement} purifyHostElement The Script element used to load DOMPurify (to determine policy name suffix).
-   * @return {TrustedTypePolicy} The policy created (or null, if Trusted Types
-   * are not supported or creating the policy failed).
-   */
-  const _createTrustedTypesPolicy = function _createTrustedTypesPolicy(trustedTypes, purifyHostElement) {
-    if (typeof trustedTypes !== 'object' || typeof trustedTypes.createPolicy !== 'function') {
-      return null;
+}
+if (!apply) {
+  apply = function apply(fun, thisValue, args) {
+    return fun.apply(thisValue, args);
+  };
+}
+if (!construct) {
+  construct = function construct(Func, args) {
+    return new Func(...args);
+  };
+}
+const arrayForEach = unapply(Array.prototype.forEach);
+const arrayLastIndexOf = unapply(Array.prototype.lastIndexOf);
+const arrayPop = unapply(Array.prototype.pop);
+const arrayPush = unapply(Array.prototype.push);
+const arraySplice = unapply(Array.prototype.splice);
+const stringToLowerCase = unapply(String.prototype.toLowerCase);
+const stringToString = unapply(String.prototype.toString);
+const stringMatch = unapply(String.prototype.match);
+const stringReplace = unapply(String.prototype.replace);
+const stringIndexOf = unapply(String.prototype.indexOf);
+const stringTrim = unapply(String.prototype.trim);
+const objectHasOwnProperty = unapply(Object.prototype.hasOwnProperty);
+const regExpTest = unapply(RegExp.prototype.test);
+const typeErrorCreate = unconstruct(TypeError);
+/**
+ * Creates a new function that calls the given function with a specified thisArg and arguments.
+ *
+ * @param func - The function to be wrapped and called.
+ * @returns A new function that calls the given function with a specified thisArg and arguments.
+ */
+function unapply(func) {
+  return function (thisArg) {
+    if (thisArg instanceof RegExp) {
+      thisArg.lastIndex = 0;
     }
-
-    // Allow the callers to control the unique policy name
-    // by adding a data-tt-policy-suffix to the script element with the DOMPurify.
-    // Policy creation with duplicate names throws in Trusted Types.
-    let suffix = null;
-    const ATTR_NAME = 'data-tt-policy-suffix';
-    if (purifyHostElement && purifyHostElement.hasAttribute(ATTR_NAME)) {
-      suffix = purifyHostElement.getAttribute(ATTR_NAME);
+    for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
     }
-    const policyName = 'dompurify' + (suffix ? '#' + suffix : '');
-    try {
-      return trustedTypes.createPolicy(policyName, {
-        createHTML(html) {
-          return html;
-        },
-        createScriptURL(scriptUrl) {
-          return scriptUrl;
+    return apply(func, thisArg, args);
+  };
+}
+/**
+ * Creates a new function that constructs an instance of the given constructor function with the provided arguments.
+ *
+ * @param func - The constructor function to be wrapped and called.
+ * @returns A new function that constructs an instance of the given constructor function with the provided arguments.
+ */
+function unconstruct(func) {
+  return function () {
+    for (var _len2 = arguments.length, args = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+      args[_key2] = arguments[_key2];
+    }
+    return construct(func, args);
+  };
+}
+/**
+ * Add properties to a lookup table
+ *
+ * @param set - The set to which elements will be added.
+ * @param array - The array containing elements to be added to the set.
+ * @param transformCaseFunc - An optional function to transform the case of each element before adding to the set.
+ * @returns The modified set with added elements.
+ */
+function addToSet(set, array) {
+  let transformCaseFunc = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : stringToLowerCase;
+  if (setPrototypeOf) {
+    // Make 'in' and truthy checks like Boolean(set.constructor)
+    // independent of any properties defined on Object.prototype.
+    // Prevent prototype setters from intercepting set as a this value.
+    setPrototypeOf(set, null);
+  }
+  let l = array.length;
+  while (l--) {
+    let element = array[l];
+    if (typeof element === 'string') {
+      const lcElement = transformCaseFunc(element);
+      if (lcElement !== element) {
+        // Config presets (e.g. tags.js, attrs.js) are immutable.
+        if (!isFrozen(array)) {
+          array[l] = lcElement;
         }
-      });
-    } catch (_) {
-      // Policy creation failed (most likely another DOMPurify script has
-      // already run). Skip creating the policy, as this will only cause errors
-      // if TT are enforced.
-      console.warn('TrustedTypes policy ' + policyName + ' could not be created.');
-      return null;
-    }
-  };
-  function createDOMPurify() {
-    let window = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getGlobal();
-    const DOMPurify = root => createDOMPurify(root);
-
-    /**
-     * Version label, exposed for easier checks
-     * if DOMPurify is up to date or not
-     */
-    DOMPurify.version = '3.1.6';
-
-    /**
-     * Array of elements that DOMPurify removed during sanitation.
-     * Empty if nothing was removed.
-     */
-    DOMPurify.removed = [];
-    if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document) {
-      // Not running in a browser, provide a factory function
-      // so that you can pass your own Window
-      DOMPurify.isSupported = false;
-      return DOMPurify;
-    }
-    let {
-      document
-    } = window;
-    const originalDocument = document;
-    const currentScript = originalDocument.currentScript;
-    const {
-      DocumentFragment,
-      HTMLTemplateElement,
-      Node,
-      Element,
-      NodeFilter,
-      NamedNodeMap = window.NamedNodeMap || window.MozNamedAttrMap,
-      HTMLFormElement,
-      DOMParser,
-      trustedTypes
-    } = window;
-    const ElementPrototype = Element.prototype;
-    const cloneNode = lookupGetter(ElementPrototype, 'cloneNode');
-    const remove = lookupGetter(ElementPrototype, 'remove');
-    const getNextSibling = lookupGetter(ElementPrototype, 'nextSibling');
-    const getChildNodes = lookupGetter(ElementPrototype, 'childNodes');
-    const getParentNode = lookupGetter(ElementPrototype, 'parentNode');
-
-    // As per issue #47, the web-components registry is inherited by a
-    // new document created via createHTMLDocument. As per the spec
-    // (http://w3c.github.io/webcomponents/spec/custom/#creating-and-passing-registries)
-    // a new empty registry is used when creating a template contents owner
-    // document, so we use that as our parent document to ensure nothing
-    // is inherited.
-    if (typeof HTMLTemplateElement === 'function') {
-      const template = document.createElement('template');
-      if (template.content && template.content.ownerDocument) {
-        document = template.content.ownerDocument;
+        element = lcElement;
       }
     }
-    let trustedTypesPolicy;
-    let emptyHTML = '';
-    const {
-      implementation,
-      createNodeIterator,
-      createDocumentFragment,
-      getElementsByTagName
-    } = document;
-    const {
-      importNode
-    } = originalDocument;
-    let hooks = {};
+    set[element] = true;
+  }
+  return set;
+}
+/**
+ * Clean up an array to harden against CSPP
+ *
+ * @param array - The array to be cleaned.
+ * @returns The cleaned version of the array
+ */
+function cleanArray(array) {
+  for (let index = 0; index < array.length; index++) {
+    const isPropertyExist = objectHasOwnProperty(array, index);
+    if (!isPropertyExist) {
+      array[index] = null;
+    }
+  }
+  return array;
+}
+/**
+ * Shallow clone an object
+ *
+ * @param object - The object to be cloned.
+ * @returns A new object that copies the original.
+ */
+function clone(object) {
+  const newObject = create(null);
+  for (const [property, value] of entries(object)) {
+    const isPropertyExist = objectHasOwnProperty(object, property);
+    if (isPropertyExist) {
+      if (Array.isArray(value)) {
+        newObject[property] = cleanArray(value);
+      } else if (value && typeof value === 'object' && value.constructor === Object) {
+        newObject[property] = clone(value);
+      } else {
+        newObject[property] = value;
+      }
+    }
+  }
+  return newObject;
+}
+/**
+ * This method automatically checks if the prop is function or getter and behaves accordingly.
+ *
+ * @param object - The object to look up the getter function in its prototype chain.
+ * @param prop - The property name for which to find the getter function.
+ * @returns The getter function found in the prototype chain or a fallback function.
+ */
+function lookupGetter(object, prop) {
+  while (object !== null) {
+    const desc = getOwnPropertyDescriptor(object, prop);
+    if (desc) {
+      if (desc.get) {
+        return unapply(desc.get);
+      }
+      if (typeof desc.value === 'function') {
+        return unapply(desc.value);
+      }
+    }
+    object = getPrototypeOf(object);
+  }
+  function fallbackValue() {
+    return null;
+  }
+  return fallbackValue;
+}
 
-    /**
-     * Expose whether this browser supports running the full DOMPurify.
-     */
-    DOMPurify.isSupported = typeof entries === 'function' && typeof getParentNode === 'function' && implementation && implementation.createHTMLDocument !== undefined;
-    const {
-      MUSTACHE_EXPR,
-      ERB_EXPR,
-      TMPLIT_EXPR,
-      DATA_ATTR,
-      ARIA_ATTR,
-      IS_SCRIPT_OR_DATA,
-      ATTR_WHITESPACE,
-      CUSTOM_ELEMENT
-    } = EXPRESSIONS;
-    let {
-      IS_ALLOWED_URI: IS_ALLOWED_URI$1
-    } = EXPRESSIONS;
+const html$1 = freeze(['a', 'abbr', 'acronym', 'address', 'area', 'article', 'aside', 'audio', 'b', 'bdi', 'bdo', 'big', 'blink', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'content', 'data', 'datalist', 'dd', 'decorator', 'del', 'details', 'dfn', 'dialog', 'dir', 'div', 'dl', 'dt', 'element', 'em', 'fieldset', 'figcaption', 'figure', 'font', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'main', 'map', 'mark', 'marquee', 'menu', 'menuitem', 'meter', 'nav', 'nobr', 'ol', 'optgroup', 'option', 'output', 'p', 'picture', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'section', 'select', 'shadow', 'small', 'source', 'spacer', 'span', 'strike', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'template', 'textarea', 'tfoot', 'th', 'thead', 'time', 'tr', 'track', 'tt', 'u', 'ul', 'var', 'video', 'wbr']);
+const svg$1 = freeze(['svg', 'a', 'altglyph', 'altglyphdef', 'altglyphitem', 'animatecolor', 'animatemotion', 'animatetransform', 'circle', 'clippath', 'defs', 'desc', 'ellipse', 'filter', 'font', 'g', 'glyph', 'glyphref', 'hkern', 'image', 'line', 'lineargradient', 'marker', 'mask', 'metadata', 'mpath', 'path', 'pattern', 'polygon', 'polyline', 'radialgradient', 'rect', 'stop', 'style', 'switch', 'symbol', 'text', 'textpath', 'title', 'tref', 'tspan', 'view', 'vkern']);
+const svgFilters = freeze(['feBlend', 'feColorMatrix', 'feComponentTransfer', 'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap', 'feDistantLight', 'feDropShadow', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR', 'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology', 'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight', 'feTile', 'feTurbulence']);
+// List of SVG elements that are disallowed by default.
+// We still need to know them so that we can do namespace
+// checks properly in case one wants to add them to
+// allow-list.
+const svgDisallowed = freeze(['animate', 'color-profile', 'cursor', 'discard', 'font-face', 'font-face-format', 'font-face-name', 'font-face-src', 'font-face-uri', 'foreignobject', 'hatch', 'hatchpath', 'mesh', 'meshgradient', 'meshpatch', 'meshrow', 'missing-glyph', 'script', 'set', 'solidcolor', 'unknown', 'use']);
+const mathMl$1 = freeze(['math', 'menclose', 'merror', 'mfenced', 'mfrac', 'mglyph', 'mi', 'mlabeledtr', 'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom', 'mroot', 'mrow', 'ms', 'mspace', 'msqrt', 'mstyle', 'msub', 'msup', 'msubsup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder', 'munderover', 'mprescripts']);
+// Similarly to SVG, we want to know all MathML elements,
+// even those that we disallow by default.
+const mathMlDisallowed = freeze(['maction', 'maligngroup', 'malignmark', 'mlongdiv', 'mscarries', 'mscarry', 'msgroup', 'mstack', 'msline', 'msrow', 'semantics', 'annotation', 'annotation-xml', 'mprescripts', 'none']);
+const text = freeze(['#text']);
 
-    /**
-     * We consider the elements and attributes below to be safe. Ideally
-     * don't add any new ones but feel free to remove unwanted ones.
-     */
+const html = freeze(['accept', 'action', 'align', 'alt', 'autocapitalize', 'autocomplete', 'autopictureinpicture', 'autoplay', 'background', 'bgcolor', 'border', 'capture', 'cellpadding', 'cellspacing', 'checked', 'cite', 'class', 'clear', 'color', 'cols', 'colspan', 'controls', 'controlslist', 'coords', 'crossorigin', 'datetime', 'decoding', 'default', 'dir', 'disabled', 'disablepictureinpicture', 'disableremoteplayback', 'download', 'draggable', 'enctype', 'enterkeyhint', 'face', 'for', 'headers', 'height', 'hidden', 'high', 'href', 'hreflang', 'id', 'inputmode', 'integrity', 'ismap', 'kind', 'label', 'lang', 'list', 'loading', 'loop', 'low', 'max', 'maxlength', 'media', 'method', 'min', 'minlength', 'multiple', 'muted', 'name', 'nonce', 'noshade', 'novalidate', 'nowrap', 'open', 'optimum', 'pattern', 'placeholder', 'playsinline', 'popover', 'popovertarget', 'popovertargetaction', 'poster', 'preload', 'pubdate', 'radiogroup', 'readonly', 'rel', 'required', 'rev', 'reversed', 'role', 'rows', 'rowspan', 'spellcheck', 'scope', 'selected', 'shape', 'size', 'sizes', 'span', 'srclang', 'start', 'src', 'srcset', 'step', 'style', 'summary', 'tabindex', 'title', 'translate', 'type', 'usemap', 'valign', 'value', 'width', 'wrap', 'xmlns', 'slot']);
+const svg = freeze(['accent-height', 'accumulate', 'additive', 'alignment-baseline', 'amplitude', 'ascent', 'attributename', 'attributetype', 'azimuth', 'basefrequency', 'baseline-shift', 'begin', 'bias', 'by', 'class', 'clip', 'clippathunits', 'clip-path', 'clip-rule', 'color', 'color-interpolation', 'color-interpolation-filters', 'color-profile', 'color-rendering', 'cx', 'cy', 'd', 'dx', 'dy', 'diffuseconstant', 'direction', 'display', 'divisor', 'dur', 'edgemode', 'elevation', 'end', 'exponent', 'fill', 'fill-opacity', 'fill-rule', 'filter', 'filterunits', 'flood-color', 'flood-opacity', 'font-family', 'font-size', 'font-size-adjust', 'font-stretch', 'font-style', 'font-variant', 'font-weight', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 'glyphref', 'gradientunits', 'gradienttransform', 'height', 'href', 'id', 'image-rendering', 'in', 'in2', 'intercept', 'k', 'k1', 'k2', 'k3', 'k4', 'kerning', 'keypoints', 'keysplines', 'keytimes', 'lang', 'lengthadjust', 'letter-spacing', 'kernelmatrix', 'kernelunitlength', 'lighting-color', 'local', 'marker-end', 'marker-mid', 'marker-start', 'markerheight', 'markerunits', 'markerwidth', 'maskcontentunits', 'maskunits', 'max', 'mask', 'media', 'method', 'mode', 'min', 'name', 'numoctaves', 'offset', 'operator', 'opacity', 'order', 'orient', 'orientation', 'origin', 'overflow', 'paint-order', 'path', 'pathlength', 'patterncontentunits', 'patterntransform', 'patternunits', 'points', 'preservealpha', 'preserveaspectratio', 'primitiveunits', 'r', 'rx', 'ry', 'radius', 'refx', 'refy', 'repeatcount', 'repeatdur', 'restart', 'result', 'rotate', 'scale', 'seed', 'shape-rendering', 'slope', 'specularconstant', 'specularexponent', 'spreadmethod', 'startoffset', 'stddeviation', 'stitchtiles', 'stop-color', 'stop-opacity', 'stroke-dasharray', 'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin', 'stroke-miterlimit', 'stroke-opacity', 'stroke', 'stroke-width', 'style', 'surfacescale', 'systemlanguage', 'tabindex', 'tablevalues', 'targetx', 'targety', 'transform', 'transform-origin', 'text-anchor', 'text-decoration', 'text-rendering', 'textlength', 'type', 'u1', 'u2', 'unicode', 'values', 'viewbox', 'visibility', 'version', 'vert-adv-y', 'vert-origin-x', 'vert-origin-y', 'width', 'word-spacing', 'wrap', 'writing-mode', 'xchannelselector', 'ychannelselector', 'x', 'x1', 'x2', 'xmlns', 'y', 'y1', 'y2', 'z', 'zoomandpan']);
+const mathMl = freeze(['accent', 'accentunder', 'align', 'bevelled', 'close', 'columnsalign', 'columnlines', 'columnspan', 'denomalign', 'depth', 'dir', 'display', 'displaystyle', 'encoding', 'fence', 'frame', 'height', 'href', 'id', 'largeop', 'length', 'linethickness', 'lspace', 'lquote', 'mathbackground', 'mathcolor', 'mathsize', 'mathvariant', 'maxsize', 'minsize', 'movablelimits', 'notation', 'numalign', 'open', 'rowalign', 'rowlines', 'rowspacing', 'rowspan', 'rspace', 'rquote', 'scriptlevel', 'scriptminsize', 'scriptsizemultiplier', 'selection', 'separator', 'separators', 'stretchy', 'subscriptshift', 'supscriptshift', 'symmetric', 'voffset', 'width', 'xmlns']);
+const xml = freeze(['xlink:href', 'xml:id', 'xlink:title', 'xml:space', 'xmlns:xlink']);
 
-    /* allowed element names */
-    let ALLOWED_TAGS = null;
-    const DEFAULT_ALLOWED_TAGS = addToSet({}, [...html$1, ...svg$1, ...svgFilters, ...mathMl$1, ...text]);
+// eslint-disable-next-line unicorn/better-regex
+const MUSTACHE_EXPR = seal(/\{\{[\w\W]*|[\w\W]*\}\}/gm); // Specify template detection regex for SAFE_FOR_TEMPLATES mode
+const ERB_EXPR = seal(/<%[\w\W]*|[\w\W]*%>/gm);
+const TMPLIT_EXPR = seal(/\$\{[\w\W]*/gm); // eslint-disable-line unicorn/better-regex
+const DATA_ATTR = seal(/^data-[\-\w.\u00B7-\uFFFF]+$/); // eslint-disable-line no-useless-escape
+const ARIA_ATTR = seal(/^aria-[\-\w]+$/); // eslint-disable-line no-useless-escape
+const IS_ALLOWED_URI = seal(/^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i // eslint-disable-line no-useless-escape
+);
+const IS_SCRIPT_OR_DATA = seal(/^(?:\w+script|data):/i);
+const ATTR_WHITESPACE = seal(/[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g // eslint-disable-line no-control-regex
+);
+const DOCTYPE_NAME = seal(/^html$/i);
+const CUSTOM_ELEMENT = seal(/^[a-z][.\w]*(-[.\w]+)+$/i);
 
-    /* Allowed attribute names */
-    let ALLOWED_ATTR = null;
-    const DEFAULT_ALLOWED_ATTR = addToSet({}, [...html, ...svg, ...mathMl, ...xml]);
+var EXPRESSIONS = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  ARIA_ATTR: ARIA_ATTR,
+  ATTR_WHITESPACE: ATTR_WHITESPACE,
+  CUSTOM_ELEMENT: CUSTOM_ELEMENT,
+  DATA_ATTR: DATA_ATTR,
+  DOCTYPE_NAME: DOCTYPE_NAME,
+  ERB_EXPR: ERB_EXPR,
+  IS_ALLOWED_URI: IS_ALLOWED_URI,
+  IS_SCRIPT_OR_DATA: IS_SCRIPT_OR_DATA,
+  MUSTACHE_EXPR: MUSTACHE_EXPR,
+  TMPLIT_EXPR: TMPLIT_EXPR
+});
 
-    /*
-     * Configure how DOMPUrify should handle custom elements and their attributes as well as customized built-in elements.
-     * @property {RegExp|Function|null} tagNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any custom elements)
-     * @property {RegExp|Function|null} attributeNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any attributes not on the allow list)
-     * @property {boolean} allowCustomizedBuiltInElements allow custom elements derived from built-ins if they pass CUSTOM_ELEMENT_HANDLING.tagNameCheck. Default: `false`.
-     */
-    let CUSTOM_ELEMENT_HANDLING = Object.seal(create(null, {
-      tagNameCheck: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: null
+/* eslint-disable @typescript-eslint/indent */
+// https://developer.mozilla.org/en-US/docs/Web/API/Node/nodeType
+const NODE_TYPE = {
+  element: 1,
+  attribute: 2,
+  text: 3,
+  cdataSection: 4,
+  entityReference: 5,
+  // Deprecated
+  entityNode: 6,
+  // Deprecated
+  progressingInstruction: 7,
+  comment: 8,
+  document: 9,
+  documentType: 10,
+  documentFragment: 11,
+  notation: 12 // Deprecated
+};
+const getGlobal = function getGlobal() {
+  return typeof window === 'undefined' ? null : window;
+};
+/**
+ * Creates a no-op policy for internal use only.
+ * Don't export this function outside this module!
+ * @param trustedTypes The policy factory.
+ * @param purifyHostElement The Script element used to load DOMPurify (to determine policy name suffix).
+ * @return The policy created (or null, if Trusted Types
+ * are not supported or creating the policy failed).
+ */
+const _createTrustedTypesPolicy = function _createTrustedTypesPolicy(trustedTypes, purifyHostElement) {
+  if (typeof trustedTypes !== 'object' || typeof trustedTypes.createPolicy !== 'function') {
+    return null;
+  }
+  // Allow the callers to control the unique policy name
+  // by adding a data-tt-policy-suffix to the script element with the DOMPurify.
+  // Policy creation with duplicate names throws in Trusted Types.
+  let suffix = null;
+  const ATTR_NAME = 'data-tt-policy-suffix';
+  if (purifyHostElement && purifyHostElement.hasAttribute(ATTR_NAME)) {
+    suffix = purifyHostElement.getAttribute(ATTR_NAME);
+  }
+  const policyName = 'dompurify' + (suffix ? '#' + suffix : '');
+  try {
+    return trustedTypes.createPolicy(policyName, {
+      createHTML(html) {
+        return html;
       },
-      attributeNameCheck: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: null
-      },
-      allowCustomizedBuiltInElements: {
-        writable: true,
-        configurable: false,
-        enumerable: true,
-        value: false
+      createScriptURL(scriptUrl) {
+        return scriptUrl;
       }
-    }));
-
-    /* Explicitly forbidden tags (overrides ALLOWED_TAGS/ADD_TAGS) */
-    let FORBID_TAGS = null;
-
-    /* Explicitly forbidden attributes (overrides ALLOWED_ATTR/ADD_ATTR) */
-    let FORBID_ATTR = null;
-
-    /* Decide if ARIA attributes are okay */
-    let ALLOW_ARIA_ATTR = true;
-
-    /* Decide if custom data attributes are okay */
-    let ALLOW_DATA_ATTR = true;
-
-    /* Decide if unknown protocols are okay */
-    let ALLOW_UNKNOWN_PROTOCOLS = false;
-
-    /* Decide if self-closing tags in attributes are allowed.
-     * Usually removed due to a mXSS issue in jQuery 3.0 */
-    let ALLOW_SELF_CLOSE_IN_ATTR = true;
-
-    /* Output should be safe for common template engines.
-     * This means, DOMPurify removes data attributes, mustaches and ERB
-     */
-    let SAFE_FOR_TEMPLATES = false;
-
-    /* Output should be safe even for XML used within HTML and alike.
-     * This means, DOMPurify removes comments when containing risky content.
-     */
-    let SAFE_FOR_XML = true;
-
-    /* Decide if document with <html>... should be returned */
-    let WHOLE_DOCUMENT = false;
-
-    /* Track whether config is already set on this instance of DOMPurify. */
-    let SET_CONFIG = false;
-
-    /* Decide if all elements (e.g. style, script) must be children of
-     * document.body. By default, browsers might move them to document.head */
-    let FORCE_BODY = false;
-
-    /* Decide if a DOM `HTMLBodyElement` should be returned, instead of a html
-     * string (or a TrustedHTML object if Trusted Types are supported).
-     * If `WHOLE_DOCUMENT` is enabled a `HTMLHtmlElement` will be returned instead
-     */
-    let RETURN_DOM = false;
-
-    /* Decide if a DOM `DocumentFragment` should be returned, instead of a html
-     * string  (or a TrustedHTML object if Trusted Types are supported) */
-    let RETURN_DOM_FRAGMENT = false;
-
-    /* Try to return a Trusted Type object instead of a string, return a string in
-     * case Trusted Types are not supported  */
-    let RETURN_TRUSTED_TYPE = false;
-
-    /* Output should be free from DOM clobbering attacks?
-     * This sanitizes markups named with colliding, clobberable built-in DOM APIs.
-     */
-    let SANITIZE_DOM = true;
-
-    /* Achieve full DOM Clobbering protection by isolating the namespace of named
-     * properties and JS variables, mitigating attacks that abuse the HTML/DOM spec rules.
-     *
-     * HTML/DOM spec rules that enable DOM Clobbering:
-     *   - Named Access on Window (§7.3.3)
-     *   - DOM Tree Accessors (§3.1.5)
-     *   - Form Element Parent-Child Relations (§4.10.3)
-     *   - Iframe srcdoc / Nested WindowProxies (§4.8.5)
-     *   - HTMLCollection (§4.2.10.2)
-     *
-     * Namespace isolation is implemented by prefixing `id` and `name` attributes
-     * with a constant string, i.e., `user-content-`
-     */
-    let SANITIZE_NAMED_PROPS = false;
-    const SANITIZE_NAMED_PROPS_PREFIX = 'user-content-';
-
-    /* Keep element content when removing element? */
-    let KEEP_CONTENT = true;
-
-    /* If a `Node` is passed to sanitize(), then performs sanitization in-place instead
-     * of importing it into a new Document and returning a sanitized copy */
-    let IN_PLACE = false;
-
-    /* Allow usage of profiles like html, svg and mathMl */
-    let USE_PROFILES = {};
-
-    /* Tags to ignore content of when KEEP_CONTENT is true */
-    let FORBID_CONTENTS = null;
-    const DEFAULT_FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'noscript', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
-
-    /* Tags that are safe for data: URIs */
-    let DATA_URI_TAGS = null;
-    const DEFAULT_DATA_URI_TAGS = addToSet({}, ['audio', 'video', 'img', 'source', 'image', 'track']);
-
-    /* Attributes safe for values like "javascript:" */
-    let URI_SAFE_ATTRIBUTES = null;
-    const DEFAULT_URI_SAFE_ATTRIBUTES = addToSet({}, ['alt', 'class', 'for', 'id', 'label', 'name', 'pattern', 'placeholder', 'role', 'summary', 'title', 'value', 'style', 'xmlns']);
-    const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
-    const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-    const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
-    /* Document namespace */
-    let NAMESPACE = HTML_NAMESPACE;
-    let IS_EMPTY_INPUT = false;
-
-    /* Allowed XHTML+XML namespaces */
-    let ALLOWED_NAMESPACES = null;
-    const DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
-
-    /* Parsing of strict XHTML documents */
-    let PARSER_MEDIA_TYPE = null;
-    const SUPPORTED_PARSER_MEDIA_TYPES = ['application/xhtml+xml', 'text/html'];
-    const DEFAULT_PARSER_MEDIA_TYPE = 'text/html';
-    let transformCaseFunc = null;
-
-    /* Keep a reference to config to pass to hooks */
-    let CONFIG = null;
-
-    /* Ideally, do not touch anything below this line */
-    /* ______________________________________________ */
-
-    const formElement = document.createElement('form');
-    const isRegexOrFunction = function isRegexOrFunction(testValue) {
-      return testValue instanceof RegExp || testValue instanceof Function;
-    };
-
-    /**
-     * _parseConfig
-     *
-     * @param  {Object} cfg optional config literal
-     */
-    // eslint-disable-next-line complexity
-    const _parseConfig = function _parseConfig() {
-      let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      if (CONFIG && CONFIG === cfg) {
-        return;
-      }
-
-      /* Shield configuration object from tampering */
-      if (!cfg || typeof cfg !== 'object') {
-        cfg = {};
-      }
-
-      /* Shield configuration object from prototype pollution */
-      cfg = clone(cfg);
-      PARSER_MEDIA_TYPE =
-      // eslint-disable-next-line unicorn/prefer-includes
-      SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
-
-      // HTML tags and attributes are not case-sensitive, converting to lowercase. Keeping XHTML as is.
-      transformCaseFunc = PARSER_MEDIA_TYPE === 'application/xhtml+xml' ? stringToString : stringToLowerCase;
-
-      /* Set configuration parameters */
-      ALLOWED_TAGS = objectHasOwnProperty(cfg, 'ALLOWED_TAGS') ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
-      ALLOWED_ATTR = objectHasOwnProperty(cfg, 'ALLOWED_ATTR') ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
-      ALLOWED_NAMESPACES = objectHasOwnProperty(cfg, 'ALLOWED_NAMESPACES') ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
-      URI_SAFE_ATTRIBUTES = objectHasOwnProperty(cfg, 'ADD_URI_SAFE_ATTR') ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES),
-      // eslint-disable-line indent
-      cfg.ADD_URI_SAFE_ATTR,
-      // eslint-disable-line indent
-      transformCaseFunc // eslint-disable-line indent
-      ) // eslint-disable-line indent
-      : DEFAULT_URI_SAFE_ATTRIBUTES;
-      DATA_URI_TAGS = objectHasOwnProperty(cfg, 'ADD_DATA_URI_TAGS') ? addToSet(clone(DEFAULT_DATA_URI_TAGS),
-      // eslint-disable-line indent
-      cfg.ADD_DATA_URI_TAGS,
-      // eslint-disable-line indent
-      transformCaseFunc // eslint-disable-line indent
-      ) // eslint-disable-line indent
-      : DEFAULT_DATA_URI_TAGS;
-      FORBID_CONTENTS = objectHasOwnProperty(cfg, 'FORBID_CONTENTS') ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
-      FORBID_TAGS = objectHasOwnProperty(cfg, 'FORBID_TAGS') ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : {};
-      FORBID_ATTR = objectHasOwnProperty(cfg, 'FORBID_ATTR') ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : {};
-      USE_PROFILES = objectHasOwnProperty(cfg, 'USE_PROFILES') ? cfg.USE_PROFILES : false;
-      ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false; // Default true
-      ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false; // Default true
-      ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false; // Default false
-      ALLOW_SELF_CLOSE_IN_ATTR = cfg.ALLOW_SELF_CLOSE_IN_ATTR !== false; // Default true
-      SAFE_FOR_TEMPLATES = cfg.SAFE_FOR_TEMPLATES || false; // Default false
-      SAFE_FOR_XML = cfg.SAFE_FOR_XML !== false; // Default true
-      WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false; // Default false
-      RETURN_DOM = cfg.RETURN_DOM || false; // Default false
-      RETURN_DOM_FRAGMENT = cfg.RETURN_DOM_FRAGMENT || false; // Default false
-      RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false; // Default false
-      FORCE_BODY = cfg.FORCE_BODY || false; // Default false
-      SANITIZE_DOM = cfg.SANITIZE_DOM !== false; // Default true
-      SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false; // Default false
-      KEEP_CONTENT = cfg.KEEP_CONTENT !== false; // Default true
-      IN_PLACE = cfg.IN_PLACE || false; // Default false
-      IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI;
-      NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
-      CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
-      }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)) {
-        CUSTOM_ELEMENT_HANDLING.attributeNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck;
-      }
-      if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === 'boolean') {
-        CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
-      }
-      if (SAFE_FOR_TEMPLATES) {
-        ALLOW_DATA_ATTR = false;
-      }
-      if (RETURN_DOM_FRAGMENT) {
-        RETURN_DOM = true;
-      }
-
-      /* Parse profile info */
-      if (USE_PROFILES) {
-        ALLOWED_TAGS = addToSet({}, text);
-        ALLOWED_ATTR = [];
-        if (USE_PROFILES.html === true) {
-          addToSet(ALLOWED_TAGS, html$1);
-          addToSet(ALLOWED_ATTR, html);
-        }
-        if (USE_PROFILES.svg === true) {
-          addToSet(ALLOWED_TAGS, svg$1);
-          addToSet(ALLOWED_ATTR, svg);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-        if (USE_PROFILES.svgFilters === true) {
-          addToSet(ALLOWED_TAGS, svgFilters);
-          addToSet(ALLOWED_ATTR, svg);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-        if (USE_PROFILES.mathMl === true) {
-          addToSet(ALLOWED_TAGS, mathMl$1);
-          addToSet(ALLOWED_ATTR, mathMl);
-          addToSet(ALLOWED_ATTR, xml);
-        }
-      }
-
-      /* Merge configuration parameters */
-      if (cfg.ADD_TAGS) {
-        if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
-          ALLOWED_TAGS = clone(ALLOWED_TAGS);
-        }
-        addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
-      }
-      if (cfg.ADD_ATTR) {
-        if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
-          ALLOWED_ATTR = clone(ALLOWED_ATTR);
-        }
-        addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
-      }
-      if (cfg.ADD_URI_SAFE_ATTR) {
-        addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
-      }
-      if (cfg.FORBID_CONTENTS) {
-        if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
-          FORBID_CONTENTS = clone(FORBID_CONTENTS);
-        }
-        addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
-      }
-
-      /* Add #text in case KEEP_CONTENT is set to true */
-      if (KEEP_CONTENT) {
-        ALLOWED_TAGS['#text'] = true;
-      }
-
-      /* Add html, head and body to ALLOWED_TAGS in case WHOLE_DOCUMENT is true */
-      if (WHOLE_DOCUMENT) {
-        addToSet(ALLOWED_TAGS, ['html', 'head', 'body']);
-      }
-
-      /* Add tbody to ALLOWED_TAGS in case tables are permitted, see #286, #365 */
-      if (ALLOWED_TAGS.table) {
-        addToSet(ALLOWED_TAGS, ['tbody']);
-        delete FORBID_TAGS.tbody;
-      }
-      if (cfg.TRUSTED_TYPES_POLICY) {
-        if (typeof cfg.TRUSTED_TYPES_POLICY.createHTML !== 'function') {
-          throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');
-        }
-        if (typeof cfg.TRUSTED_TYPES_POLICY.createScriptURL !== 'function') {
-          throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');
-        }
-
-        // Overwrite existing TrustedTypes policy.
-        trustedTypesPolicy = cfg.TRUSTED_TYPES_POLICY;
-
-        // Sign local variables required by `sanitize`.
-        emptyHTML = trustedTypesPolicy.createHTML('');
-      } else {
-        // Uninitialized policy, attempt to initialize the internal dompurify policy.
-        if (trustedTypesPolicy === undefined) {
-          trustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
-        }
-
-        // If creating the internal policy succeeded sign internal variables.
-        if (trustedTypesPolicy !== null && typeof emptyHTML === 'string') {
-          emptyHTML = trustedTypesPolicy.createHTML('');
-        }
-      }
-
-      // Prevent further manipulation of configuration.
-      // Not available in IE8, Safari 5, etc.
-      if (freeze) {
-        freeze(cfg);
-      }
-      CONFIG = cfg;
-    };
-    const MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ['mi', 'mo', 'mn', 'ms', 'mtext']);
-    const HTML_INTEGRATION_POINTS = addToSet({}, ['foreignobject', 'annotation-xml']);
-
-    // Certain elements are allowed in both SVG and HTML
-    // namespace. We need to specify them explicitly
-    // so that they don't get erroneously deleted from
-    // HTML namespace.
-    const COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ['title', 'style', 'font', 'a', 'script']);
-
-    /* Keep track of all possible SVG and MathML tags
-     * so that we can perform the namespace checks
-     * correctly. */
-    const ALL_SVG_TAGS = addToSet({}, [...svg$1, ...svgFilters, ...svgDisallowed]);
-    const ALL_MATHML_TAGS = addToSet({}, [...mathMl$1, ...mathMlDisallowed]);
-
-    /**
-     * @param  {Element} element a DOM element whose namespace is being checked
-     * @returns {boolean} Return false if the element has a
-     *  namespace that a spec-compliant parser would never
-     *  return. Return true otherwise.
-     */
-    const _checkValidNamespace = function _checkValidNamespace(element) {
-      let parent = getParentNode(element);
-
-      // In JSDOM, if we're inside shadow DOM, then parentNode
-      // can be null. We just simulate parent in this case.
-      if (!parent || !parent.tagName) {
-        parent = {
-          namespaceURI: NAMESPACE,
-          tagName: 'template'
-        };
-      }
-      const tagName = stringToLowerCase(element.tagName);
-      const parentTagName = stringToLowerCase(parent.tagName);
-      if (!ALLOWED_NAMESPACES[element.namespaceURI]) {
-        return false;
-      }
-      if (element.namespaceURI === SVG_NAMESPACE) {
-        // The only way to switch from HTML namespace to SVG
-        // is via <svg>. If it happens via any other tag, then
-        // it should be killed.
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === 'svg';
-        }
-
-        // The only way to switch from MathML to SVG is via`
-        // svg if parent is either <annotation-xml> or MathML
-        // text integration points.
-        if (parent.namespaceURI === MATHML_NAMESPACE) {
-          return tagName === 'svg' && (parentTagName === 'annotation-xml' || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
-        }
-
-        // We only allow elements that are defined in SVG
-        // spec. All others are disallowed in SVG namespace.
-        return Boolean(ALL_SVG_TAGS[tagName]);
-      }
-      if (element.namespaceURI === MATHML_NAMESPACE) {
-        // The only way to switch from HTML namespace to MathML
-        // is via <math>. If it happens via any other tag, then
-        // it should be killed.
-        if (parent.namespaceURI === HTML_NAMESPACE) {
-          return tagName === 'math';
-        }
-
-        // The only way to switch from SVG to MathML is via
-        // <math> and HTML integration points
-        if (parent.namespaceURI === SVG_NAMESPACE) {
-          return tagName === 'math' && HTML_INTEGRATION_POINTS[parentTagName];
-        }
-
-        // We only allow elements that are defined in MathML
-        // spec. All others are disallowed in MathML namespace.
-        return Boolean(ALL_MATHML_TAGS[tagName]);
-      }
-      if (element.namespaceURI === HTML_NAMESPACE) {
-        // The only way to switch from SVG to HTML is via
-        // HTML integration points, and from MathML to HTML
-        // is via MathML text integration points
-        if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-        if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
-          return false;
-        }
-
-        // We disallow tags that are specific for MathML
-        // or SVG and should never appear in HTML namespace
-        return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
-      }
-
-      // For XHTML and XML documents that support custom namespaces
-      if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && ALLOWED_NAMESPACES[element.namespaceURI]) {
-        return true;
-      }
-
-      // The code should never reach this place (this means
-      // that the element somehow got namespace that is not
-      // HTML, SVG, MathML or allowed via ALLOWED_NAMESPACES).
-      // Return false just in case.
-      return false;
-    };
-
-    /**
-     * _forceRemove
-     *
-     * @param  {Node} node a DOM node
-     */
-    const _forceRemove = function _forceRemove(node) {
-      arrayPush(DOMPurify.removed, {
-        element: node
-      });
-      try {
-        // eslint-disable-next-line unicorn/prefer-dom-node-remove
-        getParentNode(node).removeChild(node);
-      } catch (_) {
-        remove(node);
-      }
-    };
-
-    /**
-     * _removeAttribute
-     *
-     * @param  {String} name an Attribute name
-     * @param  {Node} node a DOM node
-     */
-    const _removeAttribute = function _removeAttribute(name, node) {
-      try {
-        arrayPush(DOMPurify.removed, {
-          attribute: node.getAttributeNode(name),
-          from: node
-        });
-      } catch (_) {
-        arrayPush(DOMPurify.removed, {
-          attribute: null,
-          from: node
-        });
-      }
-      node.removeAttribute(name);
-
-      // We void attribute values for unremovable "is"" attributes
-      if (name === 'is' && !ALLOWED_ATTR[name]) {
-        if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
-          try {
-            _forceRemove(node);
-          } catch (_) {}
-        } else {
-          try {
-            node.setAttribute(name, '');
-          } catch (_) {}
-        }
-      }
-    };
-
-    /**
-     * _initDocument
-     *
-     * @param  {String} dirty a string of dirty markup
-     * @return {Document} a DOM, filled with the dirty markup
-     */
-    const _initDocument = function _initDocument(dirty) {
-      /* Create a HTML document */
-      let doc = null;
-      let leadingWhitespace = null;
-      if (FORCE_BODY) {
-        dirty = '<remove></remove>' + dirty;
-      } else {
-        /* If FORCE_BODY isn't used, leading whitespace needs to be preserved manually */
-        const matches = stringMatch(dirty, /^[\r\n\t ]+/);
-        leadingWhitespace = matches && matches[0];
-      }
-      if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && NAMESPACE === HTML_NAMESPACE) {
-        // Root of XHTML doc must contain xmlns declaration (see https://www.w3.org/TR/xhtml1/normative.html#strict)
-        dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + '</body></html>';
-      }
-      const dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
-      /*
-       * Use the DOMParser API by default, fallback later if needs be
-       * DOMParser not work for svg when has multiple root element.
-       */
-      if (NAMESPACE === HTML_NAMESPACE) {
-        try {
-          doc = new DOMParser().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
-        } catch (_) {}
-      }
-
-      /* Use createHTMLDocument in case DOMParser is not available */
-      if (!doc || !doc.documentElement) {
-        doc = implementation.createDocument(NAMESPACE, 'template', null);
-        try {
-          doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
-        } catch (_) {
-          // Syntax error if dirtyPayload is invalid xml
-        }
-      }
-      const body = doc.body || doc.documentElement;
-      if (dirty && leadingWhitespace) {
-        body.insertBefore(document.createTextNode(leadingWhitespace), body.childNodes[0] || null);
-      }
-
-      /* Work on whole document or just its body */
-      if (NAMESPACE === HTML_NAMESPACE) {
-        return getElementsByTagName.call(doc, WHOLE_DOCUMENT ? 'html' : 'body')[0];
-      }
-      return WHOLE_DOCUMENT ? doc.documentElement : body;
-    };
-
-    /**
-     * Creates a NodeIterator object that you can use to traverse filtered lists of nodes or elements in a document.
-     *
-     * @param  {Node} root The root element or node to start traversing on.
-     * @return {NodeIterator} The created NodeIterator
-     */
-    const _createNodeIterator = function _createNodeIterator(root) {
-      return createNodeIterator.call(root.ownerDocument || root, root,
-      // eslint-disable-next-line no-bitwise
-      NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
-    };
-
-    /**
-     * _isClobbered
-     *
-     * @param  {Node} elm element to check for clobbering attacks
-     * @return {Boolean} true if clobbered, false if safe
-     */
-    const _isClobbered = function _isClobbered(elm) {
-      return elm instanceof HTMLFormElement && (typeof elm.nodeName !== 'string' || typeof elm.textContent !== 'string' || typeof elm.removeChild !== 'function' || !(elm.attributes instanceof NamedNodeMap) || typeof elm.removeAttribute !== 'function' || typeof elm.setAttribute !== 'function' || typeof elm.namespaceURI !== 'string' || typeof elm.insertBefore !== 'function' || typeof elm.hasChildNodes !== 'function');
-    };
-
-    /**
-     * Checks whether the given object is a DOM node.
-     *
-     * @param  {Node} object object to check whether it's a DOM node
-     * @return {Boolean} true is object is a DOM node
-     */
-    const _isNode = function _isNode(object) {
-      return typeof Node === 'function' && object instanceof Node;
-    };
-
-    /**
-     * _executeHook
-     * Execute user configurable hooks
-     *
-     * @param  {String} entryPoint  Name of the hook's entry point
-     * @param  {Node} currentNode node to work on with the hook
-     * @param  {Object} data additional hook parameters
-     */
-    const _executeHook = function _executeHook(entryPoint, currentNode, data) {
-      if (!hooks[entryPoint]) {
-        return;
-      }
-      arrayForEach(hooks[entryPoint], hook => {
-        hook.call(DOMPurify, currentNode, data, CONFIG);
-      });
-    };
-
-    /**
-     * _sanitizeElements
-     *
-     * @protect nodeName
-     * @protect textContent
-     * @protect removeChild
-     *
-     * @param   {Node} currentNode to check for permission to exist
-     * @return  {Boolean} true if node was killed, false if left alive
-     */
-    const _sanitizeElements = function _sanitizeElements(currentNode) {
-      let content = null;
-
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeElements', currentNode, null);
-
-      /* Check if element is clobbered or can clobber */
-      if (_isClobbered(currentNode)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Now let's check the element's type and name */
-      const tagName = transformCaseFunc(currentNode.nodeName);
-
-      /* Execute a hook if present */
-      _executeHook('uponSanitizeElement', currentNode, {
-        tagName,
-        allowedTags: ALLOWED_TAGS
-      });
-
-      /* Detect mXSS attempts abusing namespace confusion */
-      if (currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(/<[/\w]/g, currentNode.innerHTML) && regExpTest(/<[/\w]/g, currentNode.textContent)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove any occurrence of processing instructions */
-      if (currentNode.nodeType === NODE_TYPE.progressingInstruction) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove any kind of possibly harmful comments */
-      if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(/<[/\w]/g, currentNode.data)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Remove element if anything forbids its presence */
-      if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
-        /* Check if we have a custom element to handle */
-        if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
-            return false;
-          }
-          if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
-            return false;
-          }
-        }
-
-        /* Keep content except for bad-listed elements */
-        if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
-          const parentNode = getParentNode(currentNode) || currentNode.parentNode;
-          const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
-          if (childNodes && parentNode) {
-            const childCount = childNodes.length;
-            for (let i = childCount - 1; i >= 0; --i) {
-              const childClone = cloneNode(childNodes[i], true);
-              childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
-              parentNode.insertBefore(childClone, getNextSibling(currentNode));
-            }
-          }
-        }
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Check whether element has a valid namespace */
-      if (currentNode instanceof Element && !_checkValidNamespace(currentNode)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Make sure that older browsers don't get fallback-tag mXSS */
-      if ((tagName === 'noscript' || tagName === 'noembed' || tagName === 'noframes') && regExpTest(/<\/no(script|embed|frames)/i, currentNode.innerHTML)) {
-        _forceRemove(currentNode);
-        return true;
-      }
-
-      /* Sanitize element content to be template-safe */
-      if (SAFE_FOR_TEMPLATES && currentNode.nodeType === NODE_TYPE.text) {
-        /* Get the element's text content */
-        content = currentNode.textContent;
-        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-          content = stringReplace(content, expr, ' ');
-        });
-        if (currentNode.textContent !== content) {
-          arrayPush(DOMPurify.removed, {
-            element: currentNode.cloneNode()
-          });
-          currentNode.textContent = content;
-        }
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeElements', currentNode, null);
-      return false;
-    };
-
-    /**
-     * _isValidAttribute
-     *
-     * @param  {string} lcTag Lowercase tag name of containing element.
-     * @param  {string} lcName Lowercase attribute name.
-     * @param  {string} value Attribute value.
-     * @return {Boolean} Returns true if `value` is valid, otherwise false.
-     */
-    // eslint-disable-next-line complexity
-    const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
-      /* Make sure attribute cannot clobber */
-      if (SANITIZE_DOM && (lcName === 'id' || lcName === 'name') && (value in document || value in formElement)) {
-        return false;
-      }
-
-      /* Allow valid data-* attributes: At least one character after "-"
-          (https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes)
-          XML-compatible (https://html.spec.whatwg.org/multipage/infrastructure.html#xml-compatible and http://www.w3.org/TR/xml/#d0e804)
-          We don't need to check the value; it's always URI safe. */
-      if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR, lcName)) ; else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR, lcName)) ; else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
-        if (
-        // First condition does a very basic check if a) it's basically a valid custom element tagname AND
-        // b) if the tagName passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-        // and c) if the attribute name passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.attributeNameCheck
-        _isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName)) ||
-        // Alternative, second condition checks if it's an `is`-attribute, AND
-        // the value passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
-        lcName === 'is' && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))) ; else {
-          return false;
-        }
-        /* Check value is safe. First, is attr inert? If so, is safe */
-      } else if (URI_SAFE_ATTRIBUTES[lcName]) ; else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if ((lcName === 'src' || lcName === 'xlink:href' || lcName === 'href') && lcTag !== 'script' && stringIndexOf(value, 'data:') === 0 && DATA_URI_TAGS[lcTag]) ; else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if (value) {
-        return false;
-      } else ;
-      return true;
-    };
-
-    /**
-     * _isBasicCustomElement
-     * checks if at least one dash is included in tagName, and it's not the first char
-     * for more sophisticated checking see https://github.com/sindresorhus/validate-element-name
-     *
-     * @param {string} tagName name of the tag of the node to sanitize
-     * @returns {boolean} Returns true if the tag name meets the basic criteria for a custom element, otherwise false.
-     */
-    const _isBasicCustomElement = function _isBasicCustomElement(tagName) {
-      return tagName !== 'annotation-xml' && stringMatch(tagName, CUSTOM_ELEMENT);
-    };
-
-    /**
-     * _sanitizeAttributes
-     *
-     * @protect attributes
-     * @protect nodeName
-     * @protect removeAttribute
-     * @protect setAttribute
-     *
-     * @param  {Node} currentNode to sanitize
-     */
-    const _sanitizeAttributes = function _sanitizeAttributes(currentNode) {
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeAttributes', currentNode, null);
-      const {
-        attributes
-      } = currentNode;
-
-      /* Check if we have attributes; if not we might have a text node */
-      if (!attributes) {
-        return;
-      }
-      const hookEvent = {
-        attrName: '',
-        attrValue: '',
-        keepAttr: true,
-        allowedAttributes: ALLOWED_ATTR
-      };
-      let l = attributes.length;
-
-      /* Go backwards over all attributes; safely remove bad ones */
-      while (l--) {
-        const attr = attributes[l];
-        const {
-          name,
-          namespaceURI,
-          value: attrValue
-        } = attr;
-        const lcName = transformCaseFunc(name);
-        let value = name === 'value' ? attrValue : stringTrim(attrValue);
-
-        /* Execute a hook if present */
-        hookEvent.attrName = lcName;
-        hookEvent.attrValue = value;
-        hookEvent.keepAttr = true;
-        hookEvent.forceKeepAttr = undefined; // Allows developers to see this is a property they can set
-        _executeHook('uponSanitizeAttribute', currentNode, hookEvent);
-        value = hookEvent.attrValue;
-
-        /* Work around a security issue with comments inside attributes */
-        if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|title)/i, value)) {
-          _removeAttribute(name, currentNode);
-          continue;
-        }
-
-        /* Did the hooks approve of the attribute? */
-        if (hookEvent.forceKeepAttr) {
-          continue;
-        }
-
-        /* Remove attribute */
-        _removeAttribute(name, currentNode);
-
-        /* Did the hooks approve of the attribute? */
-        if (!hookEvent.keepAttr) {
-          continue;
-        }
-
-        /* Work around a security issue in jQuery 3.0 */
-        if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
-          _removeAttribute(name, currentNode);
-          continue;
-        }
-
-        /* Sanitize attribute content to be template-safe */
-        if (SAFE_FOR_TEMPLATES) {
-          arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-            value = stringReplace(value, expr, ' ');
-          });
-        }
-
-        /* Is `value` valid for this attribute? */
-        const lcTag = transformCaseFunc(currentNode.nodeName);
-        if (!_isValidAttribute(lcTag, lcName, value)) {
-          continue;
-        }
-
-        /* Full DOM Clobbering protection via namespace isolation,
-         * Prefix id and name attributes with `user-content-`
-         */
-        if (SANITIZE_NAMED_PROPS && (lcName === 'id' || lcName === 'name')) {
-          // Remove the attribute with this value
-          _removeAttribute(name, currentNode);
-
-          // Prefix the value and later re-create the attribute with the sanitized value
-          value = SANITIZE_NAMED_PROPS_PREFIX + value;
-        }
-
-        /* Handle attributes that require Trusted Types */
-        if (trustedTypesPolicy && typeof trustedTypes === 'object' && typeof trustedTypes.getAttributeType === 'function') {
-          if (namespaceURI) ; else {
-            switch (trustedTypes.getAttributeType(lcTag, lcName)) {
-              case 'TrustedHTML':
-                {
-                  value = trustedTypesPolicy.createHTML(value);
-                  break;
-                }
-              case 'TrustedScriptURL':
-                {
-                  value = trustedTypesPolicy.createScriptURL(value);
-                  break;
-                }
-            }
-          }
-        }
-
-        /* Handle invalid data-* attribute set by try-catching it */
-        try {
-          if (namespaceURI) {
-            currentNode.setAttributeNS(namespaceURI, name, value);
-          } else {
-            /* Fallback to setAttribute() for browser-unrecognized namespaces e.g. "x-schema". */
-            currentNode.setAttribute(name, value);
-          }
-          if (_isClobbered(currentNode)) {
-            _forceRemove(currentNode);
-          } else {
-            arrayPop(DOMPurify.removed);
-          }
-        } catch (_) {}
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeAttributes', currentNode, null);
-    };
-
-    /**
-     * _sanitizeShadowDOM
-     *
-     * @param  {DocumentFragment} fragment to iterate over recursively
-     */
-    const _sanitizeShadowDOM = function _sanitizeShadowDOM(fragment) {
-      let shadowNode = null;
-      const shadowIterator = _createNodeIterator(fragment);
-
-      /* Execute a hook if present */
-      _executeHook('beforeSanitizeShadowDOM', fragment, null);
-      while (shadowNode = shadowIterator.nextNode()) {
-        /* Execute a hook if present */
-        _executeHook('uponSanitizeShadowNode', shadowNode, null);
-
-        /* Sanitize tags and elements */
-        if (_sanitizeElements(shadowNode)) {
-          continue;
-        }
-
-        /* Deep shadow DOM detected */
-        if (shadowNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(shadowNode.content);
-        }
-
-        /* Check attributes, sanitize if necessary */
-        _sanitizeAttributes(shadowNode);
-      }
-
-      /* Execute a hook if present */
-      _executeHook('afterSanitizeShadowDOM', fragment, null);
-    };
-
-    /**
-     * Sanitize
-     * Public method providing core sanitation functionality
-     *
-     * @param {String|Node} dirty string or DOM node
-     * @param {Object} cfg object
-     */
-    // eslint-disable-next-line complexity
-    DOMPurify.sanitize = function (dirty) {
-      let cfg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-      let body = null;
-      let importedNode = null;
-      let currentNode = null;
-      let returnNode = null;
-      /* Make sure we have a string to sanitize.
-        DO NOT return early, as this will return the wrong type if
-        the user has requested a DOM object rather than a string */
-      IS_EMPTY_INPUT = !dirty;
-      if (IS_EMPTY_INPUT) {
-        dirty = '<!-->';
-      }
-
-      /* Stringify, in case dirty is an object */
-      if (typeof dirty !== 'string' && !_isNode(dirty)) {
-        if (typeof dirty.toString === 'function') {
-          dirty = dirty.toString();
-          if (typeof dirty !== 'string') {
-            throw typeErrorCreate('dirty is not a string, aborting');
-          }
-        } else {
-          throw typeErrorCreate('toString is not a function');
-        }
-      }
-
-      /* Return dirty HTML if DOMPurify cannot run */
-      if (!DOMPurify.isSupported) {
-        return dirty;
-      }
-
-      /* Assign config vars */
-      if (!SET_CONFIG) {
-        _parseConfig(cfg);
-      }
-
-      /* Clean up removed elements */
-      DOMPurify.removed = [];
-
-      /* Check if dirty is correctly typed for IN_PLACE */
-      if (typeof dirty === 'string') {
-        IN_PLACE = false;
-      }
-      if (IN_PLACE) {
-        /* Do some early pre-sanitization to avoid unsafe root nodes */
-        if (dirty.nodeName) {
-          const tagName = transformCaseFunc(dirty.nodeName);
-          if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
-            throw typeErrorCreate('root node is forbidden and cannot be sanitized in-place');
-          }
-        }
-      } else if (dirty instanceof Node) {
-        /* If dirty is a DOM element, append to an empty document to avoid
-           elements being stripped by the parser */
-        body = _initDocument('<!---->');
-        importedNode = body.ownerDocument.importNode(dirty, true);
-        if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === 'BODY') {
-          /* Node is already a body, use as is */
-          body = importedNode;
-        } else if (importedNode.nodeName === 'HTML') {
-          body = importedNode;
-        } else {
-          // eslint-disable-next-line unicorn/prefer-dom-node-append
-          body.appendChild(importedNode);
-        }
-      } else {
-        /* Exit directly if we have nothing to do */
-        if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
-        // eslint-disable-next-line unicorn/prefer-includes
-        dirty.indexOf('<') === -1) {
-          return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
-        }
-
-        /* Initialize the document to work on */
-        body = _initDocument(dirty);
-
-        /* Check we have a DOM node from the data */
-        if (!body) {
-          return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : '';
-        }
-      }
-
-      /* Remove first element node (ours) if FORCE_BODY is set */
-      if (body && FORCE_BODY) {
-        _forceRemove(body.firstChild);
-      }
-
-      /* Get node iterator */
-      const nodeIterator = _createNodeIterator(IN_PLACE ? dirty : body);
-
-      /* Now start iterating over the created document */
-      while (currentNode = nodeIterator.nextNode()) {
-        /* Sanitize tags and elements */
-        if (_sanitizeElements(currentNode)) {
-          continue;
-        }
-
-        /* Shadow DOM detected, sanitize it */
-        if (currentNode.content instanceof DocumentFragment) {
-          _sanitizeShadowDOM(currentNode.content);
-        }
-
-        /* Check attributes, sanitize if necessary */
-        _sanitizeAttributes(currentNode);
-      }
-
-      /* If we sanitized `dirty` in-place, return it. */
-      if (IN_PLACE) {
-        return dirty;
-      }
-
-      /* Return sanitized string or DOM */
-      if (RETURN_DOM) {
-        if (RETURN_DOM_FRAGMENT) {
-          returnNode = createDocumentFragment.call(body.ownerDocument);
-          while (body.firstChild) {
-            // eslint-disable-next-line unicorn/prefer-dom-node-append
-            returnNode.appendChild(body.firstChild);
-          }
-        } else {
-          returnNode = body;
-        }
-        if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmode) {
-          /*
-            AdoptNode() is not used because internal state is not reset
-            (e.g. the past names map of a HTMLFormElement), this is safe
-            in theory but we would rather not risk another attack vector.
-            The state that is cloned by importNode() is explicitly defined
-            by the specs.
-          */
-          returnNode = importNode.call(originalDocument, returnNode, true);
-        }
-        return returnNode;
-      }
-      let serializedHTML = WHOLE_DOCUMENT ? body.outerHTML : body.innerHTML;
-
-      /* Serialize doctype if allowed */
-      if (WHOLE_DOCUMENT && ALLOWED_TAGS['!doctype'] && body.ownerDocument && body.ownerDocument.doctype && body.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body.ownerDocument.doctype.name)) {
-        serializedHTML = '<!DOCTYPE ' + body.ownerDocument.doctype.name + '>\n' + serializedHTML;
-      }
-
-      /* Sanitize final string template-safe */
-      if (SAFE_FOR_TEMPLATES) {
-        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
-          serializedHTML = stringReplace(serializedHTML, expr, ' ');
-        });
-      }
-      return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
-    };
-
-    /**
-     * Public method to set the configuration once
-     * setConfig
-     *
-     * @param {Object} cfg configuration object
-     */
-    DOMPurify.setConfig = function () {
-      let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-      _parseConfig(cfg);
-      SET_CONFIG = true;
-    };
-
-    /**
-     * Public method to remove the configuration
-     * clearConfig
-     *
-     */
-    DOMPurify.clearConfig = function () {
-      CONFIG = null;
-      SET_CONFIG = false;
-    };
-
-    /**
-     * Public method to check if an attribute value is valid.
-     * Uses last set config, if any. Otherwise, uses config defaults.
-     * isValidAttribute
-     *
-     * @param  {String} tag Tag name of containing element.
-     * @param  {String} attr Attribute name.
-     * @param  {String} value Attribute value.
-     * @return {Boolean} Returns true if `value` is valid. Otherwise, returns false.
-     */
-    DOMPurify.isValidAttribute = function (tag, attr, value) {
-      /* Initialize shared config vars if necessary. */
-      if (!CONFIG) {
-        _parseConfig({});
-      }
-      const lcTag = transformCaseFunc(tag);
-      const lcName = transformCaseFunc(attr);
-      return _isValidAttribute(lcTag, lcName, value);
-    };
-
-    /**
-     * AddHook
-     * Public method to add DOMPurify hooks
-     *
-     * @param {String} entryPoint entry point for the hook to add
-     * @param {Function} hookFunction function to execute
-     */
-    DOMPurify.addHook = function (entryPoint, hookFunction) {
-      if (typeof hookFunction !== 'function') {
-        return;
-      }
-      hooks[entryPoint] = hooks[entryPoint] || [];
-      arrayPush(hooks[entryPoint], hookFunction);
-    };
-
-    /**
-     * RemoveHook
-     * Public method to remove a DOMPurify hook at a given entryPoint
-     * (pops it from the stack of hooks if more are present)
-     *
-     * @param {String} entryPoint entry point for the hook to remove
-     * @return {Function} removed(popped) hook
-     */
-    DOMPurify.removeHook = function (entryPoint) {
-      if (hooks[entryPoint]) {
-        return arrayPop(hooks[entryPoint]);
-      }
-    };
-
-    /**
-     * RemoveHooks
-     * Public method to remove all DOMPurify hooks at a given entryPoint
-     *
-     * @param  {String} entryPoint entry point for the hooks to remove
-     */
-    DOMPurify.removeHooks = function (entryPoint) {
-      if (hooks[entryPoint]) {
-        hooks[entryPoint] = [];
-      }
-    };
-
-    /**
-     * RemoveAllHooks
-     * Public method to remove all DOMPurify hooks
-     */
-    DOMPurify.removeAllHooks = function () {
-      hooks = {};
-    };
+    });
+  } catch (_) {
+    // Policy creation failed (most likely another DOMPurify script has
+    // already run). Skip creating the policy, as this will only cause errors
+    // if TT are enforced.
+    console.warn('TrustedTypes policy ' + policyName + ' could not be created.');
+    return null;
+  }
+};
+const _createHooksMap = function _createHooksMap() {
+  return {
+    afterSanitizeAttributes: [],
+    afterSanitizeElements: [],
+    afterSanitizeShadowDOM: [],
+    beforeSanitizeAttributes: [],
+    beforeSanitizeElements: [],
+    beforeSanitizeShadowDOM: [],
+    uponSanitizeAttribute: [],
+    uponSanitizeElement: [],
+    uponSanitizeShadowNode: []
+  };
+};
+function createDOMPurify() {
+  let window = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : getGlobal();
+  const DOMPurify = root => createDOMPurify(root);
+  DOMPurify.version = '3.2.5';
+  DOMPurify.removed = [];
+  if (!window || !window.document || window.document.nodeType !== NODE_TYPE.document || !window.Element) {
+    // Not running in a browser, provide a factory function
+    // so that you can pass your own Window
+    DOMPurify.isSupported = false;
     return DOMPurify;
   }
-  var purify = createDOMPurify();
+  let {
+    document
+  } = window;
+  const originalDocument = document;
+  const currentScript = originalDocument.currentScript;
+  const {
+    DocumentFragment,
+    HTMLTemplateElement,
+    Node,
+    Element,
+    NodeFilter,
+    NamedNodeMap = window.NamedNodeMap || window.MozNamedAttrMap,
+    HTMLFormElement,
+    DOMParser,
+    trustedTypes
+  } = window;
+  const ElementPrototype = Element.prototype;
+  const cloneNode = lookupGetter(ElementPrototype, 'cloneNode');
+  const remove = lookupGetter(ElementPrototype, 'remove');
+  const getNextSibling = lookupGetter(ElementPrototype, 'nextSibling');
+  const getChildNodes = lookupGetter(ElementPrototype, 'childNodes');
+  const getParentNode = lookupGetter(ElementPrototype, 'parentNode');
+  // As per issue #47, the web-components registry is inherited by a
+  // new document created via createHTMLDocument. As per the spec
+  // (http://w3c.github.io/webcomponents/spec/custom/#creating-and-passing-registries)
+  // a new empty registry is used when creating a template contents owner
+  // document, so we use that as our parent document to ensure nothing
+  // is inherited.
+  if (typeof HTMLTemplateElement === 'function') {
+    const template = document.createElement('template');
+    if (template.content && template.content.ownerDocument) {
+      document = template.content.ownerDocument;
+    }
+  }
+  let trustedTypesPolicy;
+  let emptyHTML = '';
+  const {
+    implementation,
+    createNodeIterator,
+    createDocumentFragment,
+    getElementsByTagName
+  } = document;
+  const {
+    importNode
+  } = originalDocument;
+  let hooks = _createHooksMap();
+  /**
+   * Expose whether this browser supports running the full DOMPurify.
+   */
+  DOMPurify.isSupported = typeof entries === 'function' && typeof getParentNode === 'function' && implementation && implementation.createHTMLDocument !== undefined;
+  const {
+    MUSTACHE_EXPR,
+    ERB_EXPR,
+    TMPLIT_EXPR,
+    DATA_ATTR,
+    ARIA_ATTR,
+    IS_SCRIPT_OR_DATA,
+    ATTR_WHITESPACE,
+    CUSTOM_ELEMENT
+  } = EXPRESSIONS;
+  let {
+    IS_ALLOWED_URI: IS_ALLOWED_URI$1
+  } = EXPRESSIONS;
+  /**
+   * We consider the elements and attributes below to be safe. Ideally
+   * don't add any new ones but feel free to remove unwanted ones.
+   */
+  /* allowed element names */
+  let ALLOWED_TAGS = null;
+  const DEFAULT_ALLOWED_TAGS = addToSet({}, [...html$1, ...svg$1, ...svgFilters, ...mathMl$1, ...text]);
+  /* Allowed attribute names */
+  let ALLOWED_ATTR = null;
+  const DEFAULT_ALLOWED_ATTR = addToSet({}, [...html, ...svg, ...mathMl, ...xml]);
+  /*
+   * Configure how DOMPurify should handle custom elements and their attributes as well as customized built-in elements.
+   * @property {RegExp|Function|null} tagNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any custom elements)
+   * @property {RegExp|Function|null} attributeNameCheck one of [null, regexPattern, predicate]. Default: `null` (disallow any attributes not on the allow list)
+   * @property {boolean} allowCustomizedBuiltInElements allow custom elements derived from built-ins if they pass CUSTOM_ELEMENT_HANDLING.tagNameCheck. Default: `false`.
+   */
+  let CUSTOM_ELEMENT_HANDLING = Object.seal(create(null, {
+    tagNameCheck: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: null
+    },
+    attributeNameCheck: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: null
+    },
+    allowCustomizedBuiltInElements: {
+      writable: true,
+      configurable: false,
+      enumerable: true,
+      value: false
+    }
+  }));
+  /* Explicitly forbidden tags (overrides ALLOWED_TAGS/ADD_TAGS) */
+  let FORBID_TAGS = null;
+  /* Explicitly forbidden attributes (overrides ALLOWED_ATTR/ADD_ATTR) */
+  let FORBID_ATTR = null;
+  /* Decide if ARIA attributes are okay */
+  let ALLOW_ARIA_ATTR = true;
+  /* Decide if custom data attributes are okay */
+  let ALLOW_DATA_ATTR = true;
+  /* Decide if unknown protocols are okay */
+  let ALLOW_UNKNOWN_PROTOCOLS = false;
+  /* Decide if self-closing tags in attributes are allowed.
+   * Usually removed due to a mXSS issue in jQuery 3.0 */
+  let ALLOW_SELF_CLOSE_IN_ATTR = true;
+  /* Output should be safe for common template engines.
+   * This means, DOMPurify removes data attributes, mustaches and ERB
+   */
+  let SAFE_FOR_TEMPLATES = false;
+  /* Output should be safe even for XML used within HTML and alike.
+   * This means, DOMPurify removes comments when containing risky content.
+   */
+  let SAFE_FOR_XML = true;
+  /* Decide if document with <html>... should be returned */
+  let WHOLE_DOCUMENT = false;
+  /* Track whether config is already set on this instance of DOMPurify. */
+  let SET_CONFIG = false;
+  /* Decide if all elements (e.g. style, script) must be children of
+   * document.body. By default, browsers might move them to document.head */
+  let FORCE_BODY = false;
+  /* Decide if a DOM `HTMLBodyElement` should be returned, instead of a html
+   * string (or a TrustedHTML object if Trusted Types are supported).
+   * If `WHOLE_DOCUMENT` is enabled a `HTMLHtmlElement` will be returned instead
+   */
+  let RETURN_DOM = false;
+  /* Decide if a DOM `DocumentFragment` should be returned, instead of a html
+   * string  (or a TrustedHTML object if Trusted Types are supported) */
+  let RETURN_DOM_FRAGMENT = false;
+  /* Try to return a Trusted Type object instead of a string, return a string in
+   * case Trusted Types are not supported  */
+  let RETURN_TRUSTED_TYPE = false;
+  /* Output should be free from DOM clobbering attacks?
+   * This sanitizes markups named with colliding, clobberable built-in DOM APIs.
+   */
+  let SANITIZE_DOM = true;
+  /* Achieve full DOM Clobbering protection by isolating the namespace of named
+   * properties and JS variables, mitigating attacks that abuse the HTML/DOM spec rules.
+   *
+   * HTML/DOM spec rules that enable DOM Clobbering:
+   *   - Named Access on Window (§7.3.3)
+   *   - DOM Tree Accessors (§3.1.5)
+   *   - Form Element Parent-Child Relations (§4.10.3)
+   *   - Iframe srcdoc / Nested WindowProxies (§4.8.5)
+   *   - HTMLCollection (§4.2.10.2)
+   *
+   * Namespace isolation is implemented by prefixing `id` and `name` attributes
+   * with a constant string, i.e., `user-content-`
+   */
+  let SANITIZE_NAMED_PROPS = false;
+  const SANITIZE_NAMED_PROPS_PREFIX = 'user-content-';
+  /* Keep element content when removing element? */
+  let KEEP_CONTENT = true;
+  /* If a `Node` is passed to sanitize(), then performs sanitization in-place instead
+   * of importing it into a new Document and returning a sanitized copy */
+  let IN_PLACE = false;
+  /* Allow usage of profiles like html, svg and mathMl */
+  let USE_PROFILES = {};
+  /* Tags to ignore content of when KEEP_CONTENT is true */
+  let FORBID_CONTENTS = null;
+  const DEFAULT_FORBID_CONTENTS = addToSet({}, ['annotation-xml', 'audio', 'colgroup', 'desc', 'foreignobject', 'head', 'iframe', 'math', 'mi', 'mn', 'mo', 'ms', 'mtext', 'noembed', 'noframes', 'noscript', 'plaintext', 'script', 'style', 'svg', 'template', 'thead', 'title', 'video', 'xmp']);
+  /* Tags that are safe for data: URIs */
+  let DATA_URI_TAGS = null;
+  const DEFAULT_DATA_URI_TAGS = addToSet({}, ['audio', 'video', 'img', 'source', 'image', 'track']);
+  /* Attributes safe for values like "javascript:" */
+  let URI_SAFE_ATTRIBUTES = null;
+  const DEFAULT_URI_SAFE_ATTRIBUTES = addToSet({}, ['alt', 'class', 'for', 'id', 'label', 'name', 'pattern', 'placeholder', 'role', 'summary', 'title', 'value', 'style', 'xmlns']);
+  const MATHML_NAMESPACE = 'http://www.w3.org/1998/Math/MathML';
+  const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+  const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml';
+  /* Document namespace */
+  let NAMESPACE = HTML_NAMESPACE;
+  let IS_EMPTY_INPUT = false;
+  /* Allowed XHTML+XML namespaces */
+  let ALLOWED_NAMESPACES = null;
+  const DEFAULT_ALLOWED_NAMESPACES = addToSet({}, [MATHML_NAMESPACE, SVG_NAMESPACE, HTML_NAMESPACE], stringToString);
+  let MATHML_TEXT_INTEGRATION_POINTS = addToSet({}, ['mi', 'mo', 'mn', 'ms', 'mtext']);
+  let HTML_INTEGRATION_POINTS = addToSet({}, ['annotation-xml']);
+  // Certain elements are allowed in both SVG and HTML
+  // namespace. We need to specify them explicitly
+  // so that they don't get erroneously deleted from
+  // HTML namespace.
+  const COMMON_SVG_AND_HTML_ELEMENTS = addToSet({}, ['title', 'style', 'font', 'a', 'script']);
+  /* Parsing of strict XHTML documents */
+  let PARSER_MEDIA_TYPE = null;
+  const SUPPORTED_PARSER_MEDIA_TYPES = ['application/xhtml+xml', 'text/html'];
+  const DEFAULT_PARSER_MEDIA_TYPE = 'text/html';
+  let transformCaseFunc = null;
+  /* Keep a reference to config to pass to hooks */
+  let CONFIG = null;
+  /* Ideally, do not touch anything below this line */
+  /* ______________________________________________ */
+  const formElement = document.createElement('form');
+  const isRegexOrFunction = function isRegexOrFunction(testValue) {
+    return testValue instanceof RegExp || testValue instanceof Function;
+  };
+  /**
+   * _parseConfig
+   *
+   * @param cfg optional config literal
+   */
+  // eslint-disable-next-line complexity
+  const _parseConfig = function _parseConfig() {
+    let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    if (CONFIG && CONFIG === cfg) {
+      return;
+    }
+    /* Shield configuration object from tampering */
+    if (!cfg || typeof cfg !== 'object') {
+      cfg = {};
+    }
+    /* Shield configuration object from prototype pollution */
+    cfg = clone(cfg);
+    PARSER_MEDIA_TYPE =
+    // eslint-disable-next-line unicorn/prefer-includes
+    SUPPORTED_PARSER_MEDIA_TYPES.indexOf(cfg.PARSER_MEDIA_TYPE) === -1 ? DEFAULT_PARSER_MEDIA_TYPE : cfg.PARSER_MEDIA_TYPE;
+    // HTML tags and attributes are not case-sensitive, converting to lowercase. Keeping XHTML as is.
+    transformCaseFunc = PARSER_MEDIA_TYPE === 'application/xhtml+xml' ? stringToString : stringToLowerCase;
+    /* Set configuration parameters */
+    ALLOWED_TAGS = objectHasOwnProperty(cfg, 'ALLOWED_TAGS') ? addToSet({}, cfg.ALLOWED_TAGS, transformCaseFunc) : DEFAULT_ALLOWED_TAGS;
+    ALLOWED_ATTR = objectHasOwnProperty(cfg, 'ALLOWED_ATTR') ? addToSet({}, cfg.ALLOWED_ATTR, transformCaseFunc) : DEFAULT_ALLOWED_ATTR;
+    ALLOWED_NAMESPACES = objectHasOwnProperty(cfg, 'ALLOWED_NAMESPACES') ? addToSet({}, cfg.ALLOWED_NAMESPACES, stringToString) : DEFAULT_ALLOWED_NAMESPACES;
+    URI_SAFE_ATTRIBUTES = objectHasOwnProperty(cfg, 'ADD_URI_SAFE_ATTR') ? addToSet(clone(DEFAULT_URI_SAFE_ATTRIBUTES), cfg.ADD_URI_SAFE_ATTR, transformCaseFunc) : DEFAULT_URI_SAFE_ATTRIBUTES;
+    DATA_URI_TAGS = objectHasOwnProperty(cfg, 'ADD_DATA_URI_TAGS') ? addToSet(clone(DEFAULT_DATA_URI_TAGS), cfg.ADD_DATA_URI_TAGS, transformCaseFunc) : DEFAULT_DATA_URI_TAGS;
+    FORBID_CONTENTS = objectHasOwnProperty(cfg, 'FORBID_CONTENTS') ? addToSet({}, cfg.FORBID_CONTENTS, transformCaseFunc) : DEFAULT_FORBID_CONTENTS;
+    FORBID_TAGS = objectHasOwnProperty(cfg, 'FORBID_TAGS') ? addToSet({}, cfg.FORBID_TAGS, transformCaseFunc) : {};
+    FORBID_ATTR = objectHasOwnProperty(cfg, 'FORBID_ATTR') ? addToSet({}, cfg.FORBID_ATTR, transformCaseFunc) : {};
+    USE_PROFILES = objectHasOwnProperty(cfg, 'USE_PROFILES') ? cfg.USE_PROFILES : false;
+    ALLOW_ARIA_ATTR = cfg.ALLOW_ARIA_ATTR !== false; // Default true
+    ALLOW_DATA_ATTR = cfg.ALLOW_DATA_ATTR !== false; // Default true
+    ALLOW_UNKNOWN_PROTOCOLS = cfg.ALLOW_UNKNOWN_PROTOCOLS || false; // Default false
+    ALLOW_SELF_CLOSE_IN_ATTR = cfg.ALLOW_SELF_CLOSE_IN_ATTR !== false; // Default true
+    SAFE_FOR_TEMPLATES = cfg.SAFE_FOR_TEMPLATES || false; // Default false
+    SAFE_FOR_XML = cfg.SAFE_FOR_XML !== false; // Default true
+    WHOLE_DOCUMENT = cfg.WHOLE_DOCUMENT || false; // Default false
+    RETURN_DOM = cfg.RETURN_DOM || false; // Default false
+    RETURN_DOM_FRAGMENT = cfg.RETURN_DOM_FRAGMENT || false; // Default false
+    RETURN_TRUSTED_TYPE = cfg.RETURN_TRUSTED_TYPE || false; // Default false
+    FORCE_BODY = cfg.FORCE_BODY || false; // Default false
+    SANITIZE_DOM = cfg.SANITIZE_DOM !== false; // Default true
+    SANITIZE_NAMED_PROPS = cfg.SANITIZE_NAMED_PROPS || false; // Default false
+    KEEP_CONTENT = cfg.KEEP_CONTENT !== false; // Default true
+    IN_PLACE = cfg.IN_PLACE || false; // Default false
+    IS_ALLOWED_URI$1 = cfg.ALLOWED_URI_REGEXP || IS_ALLOWED_URI;
+    NAMESPACE = cfg.NAMESPACE || HTML_NAMESPACE;
+    MATHML_TEXT_INTEGRATION_POINTS = cfg.MATHML_TEXT_INTEGRATION_POINTS || MATHML_TEXT_INTEGRATION_POINTS;
+    HTML_INTEGRATION_POINTS = cfg.HTML_INTEGRATION_POINTS || HTML_INTEGRATION_POINTS;
+    CUSTOM_ELEMENT_HANDLING = cfg.CUSTOM_ELEMENT_HANDLING || {};
+    if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck)) {
+      CUSTOM_ELEMENT_HANDLING.tagNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.tagNameCheck;
+    }
+    if (cfg.CUSTOM_ELEMENT_HANDLING && isRegexOrFunction(cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck)) {
+      CUSTOM_ELEMENT_HANDLING.attributeNameCheck = cfg.CUSTOM_ELEMENT_HANDLING.attributeNameCheck;
+    }
+    if (cfg.CUSTOM_ELEMENT_HANDLING && typeof cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements === 'boolean') {
+      CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements = cfg.CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements;
+    }
+    if (SAFE_FOR_TEMPLATES) {
+      ALLOW_DATA_ATTR = false;
+    }
+    if (RETURN_DOM_FRAGMENT) {
+      RETURN_DOM = true;
+    }
+    /* Parse profile info */
+    if (USE_PROFILES) {
+      ALLOWED_TAGS = addToSet({}, text);
+      ALLOWED_ATTR = [];
+      if (USE_PROFILES.html === true) {
+        addToSet(ALLOWED_TAGS, html$1);
+        addToSet(ALLOWED_ATTR, html);
+      }
+      if (USE_PROFILES.svg === true) {
+        addToSet(ALLOWED_TAGS, svg$1);
+        addToSet(ALLOWED_ATTR, svg);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+      if (USE_PROFILES.svgFilters === true) {
+        addToSet(ALLOWED_TAGS, svgFilters);
+        addToSet(ALLOWED_ATTR, svg);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+      if (USE_PROFILES.mathMl === true) {
+        addToSet(ALLOWED_TAGS, mathMl$1);
+        addToSet(ALLOWED_ATTR, mathMl);
+        addToSet(ALLOWED_ATTR, xml);
+      }
+    }
+    /* Merge configuration parameters */
+    if (cfg.ADD_TAGS) {
+      if (ALLOWED_TAGS === DEFAULT_ALLOWED_TAGS) {
+        ALLOWED_TAGS = clone(ALLOWED_TAGS);
+      }
+      addToSet(ALLOWED_TAGS, cfg.ADD_TAGS, transformCaseFunc);
+    }
+    if (cfg.ADD_ATTR) {
+      if (ALLOWED_ATTR === DEFAULT_ALLOWED_ATTR) {
+        ALLOWED_ATTR = clone(ALLOWED_ATTR);
+      }
+      addToSet(ALLOWED_ATTR, cfg.ADD_ATTR, transformCaseFunc);
+    }
+    if (cfg.ADD_URI_SAFE_ATTR) {
+      addToSet(URI_SAFE_ATTRIBUTES, cfg.ADD_URI_SAFE_ATTR, transformCaseFunc);
+    }
+    if (cfg.FORBID_CONTENTS) {
+      if (FORBID_CONTENTS === DEFAULT_FORBID_CONTENTS) {
+        FORBID_CONTENTS = clone(FORBID_CONTENTS);
+      }
+      addToSet(FORBID_CONTENTS, cfg.FORBID_CONTENTS, transformCaseFunc);
+    }
+    /* Add #text in case KEEP_CONTENT is set to true */
+    if (KEEP_CONTENT) {
+      ALLOWED_TAGS['#text'] = true;
+    }
+    /* Add html, head and body to ALLOWED_TAGS in case WHOLE_DOCUMENT is true */
+    if (WHOLE_DOCUMENT) {
+      addToSet(ALLOWED_TAGS, ['html', 'head', 'body']);
+    }
+    /* Add tbody to ALLOWED_TAGS in case tables are permitted, see #286, #365 */
+    if (ALLOWED_TAGS.table) {
+      addToSet(ALLOWED_TAGS, ['tbody']);
+      delete FORBID_TAGS.tbody;
+    }
+    if (cfg.TRUSTED_TYPES_POLICY) {
+      if (typeof cfg.TRUSTED_TYPES_POLICY.createHTML !== 'function') {
+        throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createHTML" hook.');
+      }
+      if (typeof cfg.TRUSTED_TYPES_POLICY.createScriptURL !== 'function') {
+        throw typeErrorCreate('TRUSTED_TYPES_POLICY configuration option must provide a "createScriptURL" hook.');
+      }
+      // Overwrite existing TrustedTypes policy.
+      trustedTypesPolicy = cfg.TRUSTED_TYPES_POLICY;
+      // Sign local variables required by `sanitize`.
+      emptyHTML = trustedTypesPolicy.createHTML('');
+    } else {
+      // Uninitialized policy, attempt to initialize the internal dompurify policy.
+      if (trustedTypesPolicy === undefined) {
+        trustedTypesPolicy = _createTrustedTypesPolicy(trustedTypes, currentScript);
+      }
+      // If creating the internal policy succeeded sign internal variables.
+      if (trustedTypesPolicy !== null && typeof emptyHTML === 'string') {
+        emptyHTML = trustedTypesPolicy.createHTML('');
+      }
+    }
+    // Prevent further manipulation of configuration.
+    // Not available in IE8, Safari 5, etc.
+    if (freeze) {
+      freeze(cfg);
+    }
+    CONFIG = cfg;
+  };
+  /* Keep track of all possible SVG and MathML tags
+   * so that we can perform the namespace checks
+   * correctly. */
+  const ALL_SVG_TAGS = addToSet({}, [...svg$1, ...svgFilters, ...svgDisallowed]);
+  const ALL_MATHML_TAGS = addToSet({}, [...mathMl$1, ...mathMlDisallowed]);
+  /**
+   * @param element a DOM element whose namespace is being checked
+   * @returns Return false if the element has a
+   *  namespace that a spec-compliant parser would never
+   *  return. Return true otherwise.
+   */
+  const _checkValidNamespace = function _checkValidNamespace(element) {
+    let parent = getParentNode(element);
+    // In JSDOM, if we're inside shadow DOM, then parentNode
+    // can be null. We just simulate parent in this case.
+    if (!parent || !parent.tagName) {
+      parent = {
+        namespaceURI: NAMESPACE,
+        tagName: 'template'
+      };
+    }
+    const tagName = stringToLowerCase(element.tagName);
+    const parentTagName = stringToLowerCase(parent.tagName);
+    if (!ALLOWED_NAMESPACES[element.namespaceURI]) {
+      return false;
+    }
+    if (element.namespaceURI === SVG_NAMESPACE) {
+      // The only way to switch from HTML namespace to SVG
+      // is via <svg>. If it happens via any other tag, then
+      // it should be killed.
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === 'svg';
+      }
+      // The only way to switch from MathML to SVG is via`
+      // svg if parent is either <annotation-xml> or MathML
+      // text integration points.
+      if (parent.namespaceURI === MATHML_NAMESPACE) {
+        return tagName === 'svg' && (parentTagName === 'annotation-xml' || MATHML_TEXT_INTEGRATION_POINTS[parentTagName]);
+      }
+      // We only allow elements that are defined in SVG
+      // spec. All others are disallowed in SVG namespace.
+      return Boolean(ALL_SVG_TAGS[tagName]);
+    }
+    if (element.namespaceURI === MATHML_NAMESPACE) {
+      // The only way to switch from HTML namespace to MathML
+      // is via <math>. If it happens via any other tag, then
+      // it should be killed.
+      if (parent.namespaceURI === HTML_NAMESPACE) {
+        return tagName === 'math';
+      }
+      // The only way to switch from SVG to MathML is via
+      // <math> and HTML integration points
+      if (parent.namespaceURI === SVG_NAMESPACE) {
+        return tagName === 'math' && HTML_INTEGRATION_POINTS[parentTagName];
+      }
+      // We only allow elements that are defined in MathML
+      // spec. All others are disallowed in MathML namespace.
+      return Boolean(ALL_MATHML_TAGS[tagName]);
+    }
+    if (element.namespaceURI === HTML_NAMESPACE) {
+      // The only way to switch from SVG to HTML is via
+      // HTML integration points, and from MathML to HTML
+      // is via MathML text integration points
+      if (parent.namespaceURI === SVG_NAMESPACE && !HTML_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      if (parent.namespaceURI === MATHML_NAMESPACE && !MATHML_TEXT_INTEGRATION_POINTS[parentTagName]) {
+        return false;
+      }
+      // We disallow tags that are specific for MathML
+      // or SVG and should never appear in HTML namespace
+      return !ALL_MATHML_TAGS[tagName] && (COMMON_SVG_AND_HTML_ELEMENTS[tagName] || !ALL_SVG_TAGS[tagName]);
+    }
+    // For XHTML and XML documents that support custom namespaces
+    if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && ALLOWED_NAMESPACES[element.namespaceURI]) {
+      return true;
+    }
+    // The code should never reach this place (this means
+    // that the element somehow got namespace that is not
+    // HTML, SVG, MathML or allowed via ALLOWED_NAMESPACES).
+    // Return false just in case.
+    return false;
+  };
+  /**
+   * _forceRemove
+   *
+   * @param node a DOM node
+   */
+  const _forceRemove = function _forceRemove(node) {
+    arrayPush(DOMPurify.removed, {
+      element: node
+    });
+    try {
+      // eslint-disable-next-line unicorn/prefer-dom-node-remove
+      getParentNode(node).removeChild(node);
+    } catch (_) {
+      remove(node);
+    }
+  };
+  /**
+   * _removeAttribute
+   *
+   * @param name an Attribute name
+   * @param element a DOM node
+   */
+  const _removeAttribute = function _removeAttribute(name, element) {
+    try {
+      arrayPush(DOMPurify.removed, {
+        attribute: element.getAttributeNode(name),
+        from: element
+      });
+    } catch (_) {
+      arrayPush(DOMPurify.removed, {
+        attribute: null,
+        from: element
+      });
+    }
+    element.removeAttribute(name);
+    // We void attribute values for unremovable "is" attributes
+    if (name === 'is') {
+      if (RETURN_DOM || RETURN_DOM_FRAGMENT) {
+        try {
+          _forceRemove(element);
+        } catch (_) {}
+      } else {
+        try {
+          element.setAttribute(name, '');
+        } catch (_) {}
+      }
+    }
+  };
+  /**
+   * _initDocument
+   *
+   * @param dirty - a string of dirty markup
+   * @return a DOM, filled with the dirty markup
+   */
+  const _initDocument = function _initDocument(dirty) {
+    /* Create a HTML document */
+    let doc = null;
+    let leadingWhitespace = null;
+    if (FORCE_BODY) {
+      dirty = '<remove></remove>' + dirty;
+    } else {
+      /* If FORCE_BODY isn't used, leading whitespace needs to be preserved manually */
+      const matches = stringMatch(dirty, /^[\r\n\t ]+/);
+      leadingWhitespace = matches && matches[0];
+    }
+    if (PARSER_MEDIA_TYPE === 'application/xhtml+xml' && NAMESPACE === HTML_NAMESPACE) {
+      // Root of XHTML doc must contain xmlns declaration (see https://www.w3.org/TR/xhtml1/normative.html#strict)
+      dirty = '<html xmlns="http://www.w3.org/1999/xhtml"><head></head><body>' + dirty + '</body></html>';
+    }
+    const dirtyPayload = trustedTypesPolicy ? trustedTypesPolicy.createHTML(dirty) : dirty;
+    /*
+     * Use the DOMParser API by default, fallback later if needs be
+     * DOMParser not work for svg when has multiple root element.
+     */
+    if (NAMESPACE === HTML_NAMESPACE) {
+      try {
+        doc = new DOMParser().parseFromString(dirtyPayload, PARSER_MEDIA_TYPE);
+      } catch (_) {}
+    }
+    /* Use createHTMLDocument in case DOMParser is not available */
+    if (!doc || !doc.documentElement) {
+      doc = implementation.createDocument(NAMESPACE, 'template', null);
+      try {
+        doc.documentElement.innerHTML = IS_EMPTY_INPUT ? emptyHTML : dirtyPayload;
+      } catch (_) {
+        // Syntax error if dirtyPayload is invalid xml
+      }
+    }
+    const body = doc.body || doc.documentElement;
+    if (dirty && leadingWhitespace) {
+      body.insertBefore(document.createTextNode(leadingWhitespace), body.childNodes[0] || null);
+    }
+    /* Work on whole document or just its body */
+    if (NAMESPACE === HTML_NAMESPACE) {
+      return getElementsByTagName.call(doc, WHOLE_DOCUMENT ? 'html' : 'body')[0];
+    }
+    return WHOLE_DOCUMENT ? doc.documentElement : body;
+  };
+  /**
+   * Creates a NodeIterator object that you can use to traverse filtered lists of nodes or elements in a document.
+   *
+   * @param root The root element or node to start traversing on.
+   * @return The created NodeIterator
+   */
+  const _createNodeIterator = function _createNodeIterator(root) {
+    return createNodeIterator.call(root.ownerDocument || root, root,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
+  };
+  /**
+   * _isClobbered
+   *
+   * @param element element to check for clobbering attacks
+   * @return true if clobbered, false if safe
+   */
+  const _isClobbered = function _isClobbered(element) {
+    return element instanceof HTMLFormElement && (typeof element.nodeName !== 'string' || typeof element.textContent !== 'string' || typeof element.removeChild !== 'function' || !(element.attributes instanceof NamedNodeMap) || typeof element.removeAttribute !== 'function' || typeof element.setAttribute !== 'function' || typeof element.namespaceURI !== 'string' || typeof element.insertBefore !== 'function' || typeof element.hasChildNodes !== 'function');
+  };
+  /**
+   * Checks whether the given object is a DOM node.
+   *
+   * @param value object to check whether it's a DOM node
+   * @return true is object is a DOM node
+   */
+  const _isNode = function _isNode(value) {
+    return typeof Node === 'function' && value instanceof Node;
+  };
+  function _executeHooks(hooks, currentNode, data) {
+    arrayForEach(hooks, hook => {
+      hook.call(DOMPurify, currentNode, data, CONFIG);
+    });
+  }
+  /**
+   * _sanitizeElements
+   *
+   * @protect nodeName
+   * @protect textContent
+   * @protect removeChild
+   * @param currentNode to check for permission to exist
+   * @return true if node was killed, false if left alive
+   */
+  const _sanitizeElements = function _sanitizeElements(currentNode) {
+    let content = null;
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeElements, currentNode, null);
+    /* Check if element is clobbered or can clobber */
+    if (_isClobbered(currentNode)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Now let's check the element's type and name */
+    const tagName = transformCaseFunc(currentNode.nodeName);
+    /* Execute a hook if present */
+    _executeHooks(hooks.uponSanitizeElement, currentNode, {
+      tagName,
+      allowedTags: ALLOWED_TAGS
+    });
+    /* Detect mXSS attempts abusing namespace confusion */
+    if (currentNode.hasChildNodes() && !_isNode(currentNode.firstElementChild) && regExpTest(/<[/\w!]/g, currentNode.innerHTML) && regExpTest(/<[/\w!]/g, currentNode.textContent)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove any occurrence of processing instructions */
+    if (currentNode.nodeType === NODE_TYPE.progressingInstruction) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove any kind of possibly harmful comments */
+    if (SAFE_FOR_XML && currentNode.nodeType === NODE_TYPE.comment && regExpTest(/<[/\w]/g, currentNode.data)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Remove element if anything forbids its presence */
+    if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
+      /* Check if we have a custom element to handle */
+      if (!FORBID_TAGS[tagName] && _isBasicCustomElement(tagName)) {
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, tagName)) {
+          return false;
+        }
+        if (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(tagName)) {
+          return false;
+        }
+      }
+      /* Keep content except for bad-listed elements */
+      if (KEEP_CONTENT && !FORBID_CONTENTS[tagName]) {
+        const parentNode = getParentNode(currentNode) || currentNode.parentNode;
+        const childNodes = getChildNodes(currentNode) || currentNode.childNodes;
+        if (childNodes && parentNode) {
+          const childCount = childNodes.length;
+          for (let i = childCount - 1; i >= 0; --i) {
+            const childClone = cloneNode(childNodes[i], true);
+            childClone.__removalCount = (currentNode.__removalCount || 0) + 1;
+            parentNode.insertBefore(childClone, getNextSibling(currentNode));
+          }
+        }
+      }
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Check whether element has a valid namespace */
+    if (currentNode instanceof Element && !_checkValidNamespace(currentNode)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Make sure that older browsers don't get fallback-tag mXSS */
+    if ((tagName === 'noscript' || tagName === 'noembed' || tagName === 'noframes') && regExpTest(/<\/no(script|embed|frames)/i, currentNode.innerHTML)) {
+      _forceRemove(currentNode);
+      return true;
+    }
+    /* Sanitize element content to be template-safe */
+    if (SAFE_FOR_TEMPLATES && currentNode.nodeType === NODE_TYPE.text) {
+      /* Get the element's text content */
+      content = currentNode.textContent;
+      arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+        content = stringReplace(content, expr, ' ');
+      });
+      if (currentNode.textContent !== content) {
+        arrayPush(DOMPurify.removed, {
+          element: currentNode.cloneNode()
+        });
+        currentNode.textContent = content;
+      }
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeElements, currentNode, null);
+    return false;
+  };
+  /**
+   * _isValidAttribute
+   *
+   * @param lcTag Lowercase tag name of containing element.
+   * @param lcName Lowercase attribute name.
+   * @param value Attribute value.
+   * @return Returns true if `value` is valid, otherwise false.
+   */
+  // eslint-disable-next-line complexity
+  const _isValidAttribute = function _isValidAttribute(lcTag, lcName, value) {
+    /* Make sure attribute cannot clobber */
+    if (SANITIZE_DOM && (lcName === 'id' || lcName === 'name') && (value in document || value in formElement)) {
+      return false;
+    }
+    /* Allow valid data-* attributes: At least one character after "-"
+        (https://html.spec.whatwg.org/multipage/dom.html#embedding-custom-non-visible-data-with-the-data-*-attributes)
+        XML-compatible (https://html.spec.whatwg.org/multipage/infrastructure.html#xml-compatible and http://www.w3.org/TR/xml/#d0e804)
+        We don't need to check the value; it's always URI safe. */
+    if (ALLOW_DATA_ATTR && !FORBID_ATTR[lcName] && regExpTest(DATA_ATTR, lcName)) ; else if (ALLOW_ARIA_ATTR && regExpTest(ARIA_ATTR, lcName)) ; else if (!ALLOWED_ATTR[lcName] || FORBID_ATTR[lcName]) {
+      if (
+      // First condition does a very basic check if a) it's basically a valid custom element tagname AND
+      // b) if the tagName passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
+      // and c) if the attribute name passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.attributeNameCheck
+      _isBasicCustomElement(lcTag) && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, lcTag) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(lcTag)) && (CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.attributeNameCheck, lcName) || CUSTOM_ELEMENT_HANDLING.attributeNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.attributeNameCheck(lcName)) ||
+      // Alternative, second condition checks if it's an `is`-attribute, AND
+      // the value passes whatever the user has configured for CUSTOM_ELEMENT_HANDLING.tagNameCheck
+      lcName === 'is' && CUSTOM_ELEMENT_HANDLING.allowCustomizedBuiltInElements && (CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof RegExp && regExpTest(CUSTOM_ELEMENT_HANDLING.tagNameCheck, value) || CUSTOM_ELEMENT_HANDLING.tagNameCheck instanceof Function && CUSTOM_ELEMENT_HANDLING.tagNameCheck(value))) ; else {
+        return false;
+      }
+      /* Check value is safe. First, is attr inert? If so, is safe */
+    } else if (URI_SAFE_ATTRIBUTES[lcName]) ; else if (regExpTest(IS_ALLOWED_URI$1, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if ((lcName === 'src' || lcName === 'xlink:href' || lcName === 'href') && lcTag !== 'script' && stringIndexOf(value, 'data:') === 0 && DATA_URI_TAGS[lcTag]) ; else if (ALLOW_UNKNOWN_PROTOCOLS && !regExpTest(IS_SCRIPT_OR_DATA, stringReplace(value, ATTR_WHITESPACE, ''))) ; else if (value) {
+      return false;
+    } else ;
+    return true;
+  };
+  /**
+   * _isBasicCustomElement
+   * checks if at least one dash is included in tagName, and it's not the first char
+   * for more sophisticated checking see https://github.com/sindresorhus/validate-element-name
+   *
+   * @param tagName name of the tag of the node to sanitize
+   * @returns Returns true if the tag name meets the basic criteria for a custom element, otherwise false.
+   */
+  const _isBasicCustomElement = function _isBasicCustomElement(tagName) {
+    return tagName !== 'annotation-xml' && stringMatch(tagName, CUSTOM_ELEMENT);
+  };
+  /**
+   * _sanitizeAttributes
+   *
+   * @protect attributes
+   * @protect nodeName
+   * @protect removeAttribute
+   * @protect setAttribute
+   *
+   * @param currentNode to sanitize
+   */
+  const _sanitizeAttributes = function _sanitizeAttributes(currentNode) {
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeAttributes, currentNode, null);
+    const {
+      attributes
+    } = currentNode;
+    /* Check if we have attributes; if not we might have a text node */
+    if (!attributes || _isClobbered(currentNode)) {
+      return;
+    }
+    const hookEvent = {
+      attrName: '',
+      attrValue: '',
+      keepAttr: true,
+      allowedAttributes: ALLOWED_ATTR,
+      forceKeepAttr: undefined
+    };
+    let l = attributes.length;
+    /* Go backwards over all attributes; safely remove bad ones */
+    while (l--) {
+      const attr = attributes[l];
+      const {
+        name,
+        namespaceURI,
+        value: attrValue
+      } = attr;
+      const lcName = transformCaseFunc(name);
+      let value = name === 'value' ? attrValue : stringTrim(attrValue);
+      /* Execute a hook if present */
+      hookEvent.attrName = lcName;
+      hookEvent.attrValue = value;
+      hookEvent.keepAttr = true;
+      hookEvent.forceKeepAttr = undefined; // Allows developers to see this is a property they can set
+      _executeHooks(hooks.uponSanitizeAttribute, currentNode, hookEvent);
+      value = hookEvent.attrValue;
+      /* Full DOM Clobbering protection via namespace isolation,
+       * Prefix id and name attributes with `user-content-`
+       */
+      if (SANITIZE_NAMED_PROPS && (lcName === 'id' || lcName === 'name')) {
+        // Remove the attribute with this value
+        _removeAttribute(name, currentNode);
+        // Prefix the value and later re-create the attribute with the sanitized value
+        value = SANITIZE_NAMED_PROPS_PREFIX + value;
+      }
+      /* Work around a security issue with comments inside attributes */
+      if (SAFE_FOR_XML && regExpTest(/((--!?|])>)|<\/(style|title)/i, value)) {
+        _removeAttribute(name, currentNode);
+        continue;
+      }
+      /* Did the hooks approve of the attribute? */
+      if (hookEvent.forceKeepAttr) {
+        continue;
+      }
+      /* Remove attribute */
+      _removeAttribute(name, currentNode);
+      /* Did the hooks approve of the attribute? */
+      if (!hookEvent.keepAttr) {
+        continue;
+      }
+      /* Work around a security issue in jQuery 3.0 */
+      if (!ALLOW_SELF_CLOSE_IN_ATTR && regExpTest(/\/>/i, value)) {
+        _removeAttribute(name, currentNode);
+        continue;
+      }
+      /* Sanitize attribute content to be template-safe */
+      if (SAFE_FOR_TEMPLATES) {
+        arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+          value = stringReplace(value, expr, ' ');
+        });
+      }
+      /* Is `value` valid for this attribute? */
+      const lcTag = transformCaseFunc(currentNode.nodeName);
+      if (!_isValidAttribute(lcTag, lcName, value)) {
+        continue;
+      }
+      /* Handle attributes that require Trusted Types */
+      if (trustedTypesPolicy && typeof trustedTypes === 'object' && typeof trustedTypes.getAttributeType === 'function') {
+        if (namespaceURI) ; else {
+          switch (trustedTypes.getAttributeType(lcTag, lcName)) {
+            case 'TrustedHTML':
+              {
+                value = trustedTypesPolicy.createHTML(value);
+                break;
+              }
+            case 'TrustedScriptURL':
+              {
+                value = trustedTypesPolicy.createScriptURL(value);
+                break;
+              }
+          }
+        }
+      }
+      /* Handle invalid data-* attribute set by try-catching it */
+      try {
+        if (namespaceURI) {
+          currentNode.setAttributeNS(namespaceURI, name, value);
+        } else {
+          /* Fallback to setAttribute() for browser-unrecognized namespaces e.g. "x-schema". */
+          currentNode.setAttribute(name, value);
+        }
+        if (_isClobbered(currentNode)) {
+          _forceRemove(currentNode);
+        } else {
+          arrayPop(DOMPurify.removed);
+        }
+      } catch (_) {}
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeAttributes, currentNode, null);
+  };
+  /**
+   * _sanitizeShadowDOM
+   *
+   * @param fragment to iterate over recursively
+   */
+  const _sanitizeShadowDOM = function _sanitizeShadowDOM(fragment) {
+    let shadowNode = null;
+    const shadowIterator = _createNodeIterator(fragment);
+    /* Execute a hook if present */
+    _executeHooks(hooks.beforeSanitizeShadowDOM, fragment, null);
+    while (shadowNode = shadowIterator.nextNode()) {
+      /* Execute a hook if present */
+      _executeHooks(hooks.uponSanitizeShadowNode, shadowNode, null);
+      /* Sanitize tags and elements */
+      _sanitizeElements(shadowNode);
+      /* Check attributes next */
+      _sanitizeAttributes(shadowNode);
+      /* Deep shadow DOM detected */
+      if (shadowNode.content instanceof DocumentFragment) {
+        _sanitizeShadowDOM(shadowNode.content);
+      }
+    }
+    /* Execute a hook if present */
+    _executeHooks(hooks.afterSanitizeShadowDOM, fragment, null);
+  };
+  // eslint-disable-next-line complexity
+  DOMPurify.sanitize = function (dirty) {
+    let cfg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+    let body = null;
+    let importedNode = null;
+    let currentNode = null;
+    let returnNode = null;
+    /* Make sure we have a string to sanitize.
+      DO NOT return early, as this will return the wrong type if
+      the user has requested a DOM object rather than a string */
+    IS_EMPTY_INPUT = !dirty;
+    if (IS_EMPTY_INPUT) {
+      dirty = '<!-->';
+    }
+    /* Stringify, in case dirty is an object */
+    if (typeof dirty !== 'string' && !_isNode(dirty)) {
+      if (typeof dirty.toString === 'function') {
+        dirty = dirty.toString();
+        if (typeof dirty !== 'string') {
+          throw typeErrorCreate('dirty is not a string, aborting');
+        }
+      } else {
+        throw typeErrorCreate('toString is not a function');
+      }
+    }
+    /* Return dirty HTML if DOMPurify cannot run */
+    if (!DOMPurify.isSupported) {
+      return dirty;
+    }
+    /* Assign config vars */
+    if (!SET_CONFIG) {
+      _parseConfig(cfg);
+    }
+    /* Clean up removed elements */
+    DOMPurify.removed = [];
+    /* Check if dirty is correctly typed for IN_PLACE */
+    if (typeof dirty === 'string') {
+      IN_PLACE = false;
+    }
+    if (IN_PLACE) {
+      /* Do some early pre-sanitization to avoid unsafe root nodes */
+      if (dirty.nodeName) {
+        const tagName = transformCaseFunc(dirty.nodeName);
+        if (!ALLOWED_TAGS[tagName] || FORBID_TAGS[tagName]) {
+          throw typeErrorCreate('root node is forbidden and cannot be sanitized in-place');
+        }
+      }
+    } else if (dirty instanceof Node) {
+      /* If dirty is a DOM element, append to an empty document to avoid
+         elements being stripped by the parser */
+      body = _initDocument('<!---->');
+      importedNode = body.ownerDocument.importNode(dirty, true);
+      if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === 'BODY') {
+        /* Node is already a body, use as is */
+        body = importedNode;
+      } else if (importedNode.nodeName === 'HTML') {
+        body = importedNode;
+      } else {
+        // eslint-disable-next-line unicorn/prefer-dom-node-append
+        body.appendChild(importedNode);
+      }
+    } else {
+      /* Exit directly if we have nothing to do */
+      if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT &&
+      // eslint-disable-next-line unicorn/prefer-includes
+      dirty.indexOf('<') === -1) {
+        return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(dirty) : dirty;
+      }
+      /* Initialize the document to work on */
+      body = _initDocument(dirty);
+      /* Check we have a DOM node from the data */
+      if (!body) {
+        return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : '';
+      }
+    }
+    /* Remove first element node (ours) if FORCE_BODY is set */
+    if (body && FORCE_BODY) {
+      _forceRemove(body.firstChild);
+    }
+    /* Get node iterator */
+    const nodeIterator = _createNodeIterator(IN_PLACE ? dirty : body);
+    /* Now start iterating over the created document */
+    while (currentNode = nodeIterator.nextNode()) {
+      /* Sanitize tags and elements */
+      _sanitizeElements(currentNode);
+      /* Check attributes next */
+      _sanitizeAttributes(currentNode);
+      /* Shadow DOM detected, sanitize it */
+      if (currentNode.content instanceof DocumentFragment) {
+        _sanitizeShadowDOM(currentNode.content);
+      }
+    }
+    /* If we sanitized `dirty` in-place, return it. */
+    if (IN_PLACE) {
+      return dirty;
+    }
+    /* Return sanitized string or DOM */
+    if (RETURN_DOM) {
+      if (RETURN_DOM_FRAGMENT) {
+        returnNode = createDocumentFragment.call(body.ownerDocument);
+        while (body.firstChild) {
+          // eslint-disable-next-line unicorn/prefer-dom-node-append
+          returnNode.appendChild(body.firstChild);
+        }
+      } else {
+        returnNode = body;
+      }
+      if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmode) {
+        /*
+          AdoptNode() is not used because internal state is not reset
+          (e.g. the past names map of a HTMLFormElement), this is safe
+          in theory but we would rather not risk another attack vector.
+          The state that is cloned by importNode() is explicitly defined
+          by the specs.
+        */
+        returnNode = importNode.call(originalDocument, returnNode, true);
+      }
+      return returnNode;
+    }
+    let serializedHTML = WHOLE_DOCUMENT ? body.outerHTML : body.innerHTML;
+    /* Serialize doctype if allowed */
+    if (WHOLE_DOCUMENT && ALLOWED_TAGS['!doctype'] && body.ownerDocument && body.ownerDocument.doctype && body.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body.ownerDocument.doctype.name)) {
+      serializedHTML = '<!DOCTYPE ' + body.ownerDocument.doctype.name + '>\n' + serializedHTML;
+    }
+    /* Sanitize final string template-safe */
+    if (SAFE_FOR_TEMPLATES) {
+      arrayForEach([MUSTACHE_EXPR, ERB_EXPR, TMPLIT_EXPR], expr => {
+        serializedHTML = stringReplace(serializedHTML, expr, ' ');
+      });
+    }
+    return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? trustedTypesPolicy.createHTML(serializedHTML) : serializedHTML;
+  };
+  DOMPurify.setConfig = function () {
+    let cfg = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    _parseConfig(cfg);
+    SET_CONFIG = true;
+  };
+  DOMPurify.clearConfig = function () {
+    CONFIG = null;
+    SET_CONFIG = false;
+  };
+  DOMPurify.isValidAttribute = function (tag, attr, value) {
+    /* Initialize shared config vars if necessary. */
+    if (!CONFIG) {
+      _parseConfig({});
+    }
+    const lcTag = transformCaseFunc(tag);
+    const lcName = transformCaseFunc(attr);
+    return _isValidAttribute(lcTag, lcName, value);
+  };
+  DOMPurify.addHook = function (entryPoint, hookFunction) {
+    if (typeof hookFunction !== 'function') {
+      return;
+    }
+    arrayPush(hooks[entryPoint], hookFunction);
+  };
+  DOMPurify.removeHook = function (entryPoint, hookFunction) {
+    if (hookFunction !== undefined) {
+      const index = arrayLastIndexOf(hooks[entryPoint], hookFunction);
+      return index === -1 ? undefined : arraySplice(hooks[entryPoint], index, 1)[0];
+    }
+    return arrayPop(hooks[entryPoint]);
+  };
+  DOMPurify.removeHooks = function (entryPoint) {
+    hooks[entryPoint] = [];
+  };
+  DOMPurify.removeAllHooks = function () {
+    hooks = _createHooksMap();
+  };
+  return DOMPurify;
+}
+var purify = createDOMPurify();
 
-  return purify;
-
-}));
-//# sourceMappingURL=purify.js.map
+module.exports = purify;
+//# sourceMappingURL=purify.cjs.js.map
 
 
 /***/ }),
@@ -27844,7 +27627,7 @@ if (typeof Object.create === 'function') {
   \******************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-module.exports = window.DOMPurify || (window.DOMPurify = (__webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.js")["default"]) || __webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.js"));
+module.exports = window.DOMPurify || (window.DOMPurify = (__webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js")["default"]) || __webpack_require__(/*! dompurify */ "./node_modules/dompurify/dist/purify.cjs.js"));
 
 
 /***/ }),
@@ -39492,174 +39275,13 @@ assert.validate = function (test, message) {
 
 /***/ }),
 
-/***/ "./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js":
-/*!***************************************************************************!*\
-  !*** ./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js ***!
-  \***************************************************************************/
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.byteLength = byteLength
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-for (var i = 0, len = code.length; i < len; ++i) {
-  lookup[i] = code[i]
-  revLookup[code.charCodeAt(i)] = i
-}
-
-// Support decoding URL-safe base64 strings, as Node.js does.
-// See: https://en.wikipedia.org/wiki/Base64#URL_applications
-revLookup['-'.charCodeAt(0)] = 62
-revLookup['_'.charCodeAt(0)] = 63
-
-function getLens (b64) {
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // Trim off extra bytes after placeholder bytes are found
-  // See: https://github.com/beatgammit/base64-js/issues/42
-  var validLen = b64.indexOf('=')
-  if (validLen === -1) validLen = len
-
-  var placeHoldersLen = validLen === len
-    ? 0
-    : 4 - (validLen % 4)
-
-  return [validLen, placeHoldersLen]
-}
-
-// base64 is 4/3 + up to two characters of the original data
-function byteLength (b64) {
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function _byteLength (b64, validLen, placeHoldersLen) {
-  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
-}
-
-function toByteArray (b64) {
-  var tmp
-  var lens = getLens(b64)
-  var validLen = lens[0]
-  var placeHoldersLen = lens[1]
-
-  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
-
-  var curByte = 0
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  var len = placeHoldersLen > 0
-    ? validLen - 4
-    : validLen
-
-  var i
-  for (i = 0; i < len; i += 4) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 18) |
-      (revLookup[b64.charCodeAt(i + 1)] << 12) |
-      (revLookup[b64.charCodeAt(i + 2)] << 6) |
-      revLookup[b64.charCodeAt(i + 3)]
-    arr[curByte++] = (tmp >> 16) & 0xFF
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 2) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 2) |
-      (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  if (placeHoldersLen === 1) {
-    tmp =
-      (revLookup[b64.charCodeAt(i)] << 10) |
-      (revLookup[b64.charCodeAt(i + 1)] << 4) |
-      (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[curByte++] = (tmp >> 8) & 0xFF
-    arr[curByte++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] +
-    lookup[num >> 12 & 0x3F] +
-    lookup[num >> 6 & 0x3F] +
-    lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp =
-      ((uint8[i] << 16) & 0xFF0000) +
-      ((uint8[i + 1] << 8) & 0xFF00) +
-      (uint8[i + 2] & 0xFF)
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 2] +
-      lookup[(tmp << 4) & 0x3F] +
-      '=='
-    )
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
-    parts.push(
-      lookup[tmp >> 10] +
-      lookup[(tmp >> 4) & 0x3F] +
-      lookup[(tmp << 2) & 0x3F] +
-      '='
-    )
-  }
-
-  return parts.join('')
-}
-
-
-/***/ }),
-
 /***/ "./node_modules/scratch-svg-renderer/src/bitmap-adapter.js":
 /*!*****************************************************************!*\
   !*** ./node_modules/scratch-svg-renderer/src/bitmap-adapter.js ***!
   \*****************************************************************/
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-const base64js = __webpack_require__(/*! base64-js */ "./node_modules/scratch-svg-renderer/node_modules/base64-js/index.js");
+const base64js = __webpack_require__(/*! base64-js */ "./node_modules/base64-js/index.js");
 
 /**
  * Adapts Scratch 2.0 bitmaps for use in scratch 3.0
@@ -41410,7 +41032,7 @@ module.exports = minilog('scratch-svg-render');
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"menuMap":{"cs":[{"code":"am","name":"amharština"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabština"},{"code":"az","name":"ázerbájdžánština"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharština"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradiční)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánština"},{"code":"et","name":"estonština"},{"code":"fi","name":"finština"},{"code":"fr","name":"francouzština"},{"code":"gl","name":"galicijština"},{"code":"he","name":"hebrejština"},{"code":"nl","name":"holandština"},{"code":"hr","name":"chorvatština"},{"code":"id","name":"indonéština"},{"code":"ga","name":"irština"},{"code":"is","name":"islandština"},{"code":"it","name":"italština"},{"code":"ja","name":"japonština"},{"code":"ca","name":"katalánština"},{"code":"ko","name":"korejština"},{"code":"ckb","name":"kurdština (sorání)"},{"code":"lt","name":"litevština"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarština"},{"code":"mi","name":"maorština"},{"code":"de","name":"němčina"},{"code":"nb","name":"norština"},{"code":"fa","name":"perština"},{"code":"pl","name":"polština"},{"code":"pt","name":"portugalština"},{"code":"ro","name":"rumunština"},{"code":"ru","name":"ruština"},{"code":"el","name":"řečtina"},{"code":"gd","name":"skotská gaelština"},{"code":"sk","name":"slovenština"},{"code":"sl","name":"slovinština"},{"code":"sr","name":"srbština"},{"code":"es","name":"španělština"},{"code":"sv","name":"švédština"},{"code":"th","name":"thajština"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinština"},{"code":"cy","name":"velština"},{"code":"vi","name":"vietnamština"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejština"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"de":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Aserbaidschanisch"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgarisch"},{"code":"zh-tw","name":"Chinesisch (traditionell)"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"},{"code":"da","name":"Dänisch"},{"code":"de","name":"Deutsch"},{"code":"en","name":"Englisch"},{"code":"et","name":"Estnisch"},{"code":"fi","name":"Finnisch"},{"code":"fr","name":"Französisch"},{"code":"gl","name":"Galizisch"},{"code":"el","name":"Griechisch"},{"code":"he","name":"Hebräisch"},{"code":"id","name":"Indonesisch"},{"code":"ga","name":"Irisch"},{"code":"is","name":"Isländisch"},{"code":"it","name":"Italienisch"},{"code":"ja","name":"Japanisch"},{"code":"ca","name":"Katalanisch"},{"code":"ko","name":"Koreanisch"},{"code":"hr","name":"Kroatisch"},{"code":"ckb","name":"Kurdisch (Sorani)"},{"code":"lv","name":"Lettisch"},{"code":"lt","name":"Litauisch"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Niederländisch"},{"code":"nb","name":"Norwegisch"},{"code":"fa","name":"Persisch"},{"code":"pl","name":"Polnisch"},{"code":"pt","name":"Portugiesisch"},{"code":"ro","name":"Rumänisch"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schottisch-Gälisch"},{"code":"sv","name":"Schwedisch"},{"code":"sr","name":"Serbisch"},{"code":"sk","name":"Slowakisch"},{"code":"sl","name":"Slowenisch"},{"code":"es","name":"Spanisch"},{"code":"th","name":"Thailändisch"},{"code":"cs","name":"Tschechisch"},{"code":"tr","name":"Türkisch"},{"code":"uk","name":"Ukrainisch"},{"code":"hu","name":"Ungarisch"},{"code":"vi","name":"Vietnamesisch"},{"code":"cy","name":"Walisisch"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebräisch"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"}],"et":[{"code":"am","name":"amhaari"},{"code":"ar","name":"araabia"},{"code":"az","name":"aserbaidžaani"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaaria"},{"code":"et","name":"eesti"},{"code":"gl","name":"galeegi"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"},{"code":"zh-tw","name":"hiina (traditsiooniline)"},{"code":"es","name":"hispaania"},{"code":"nl","name":"hollandi"},{"code":"hr","name":"horvaadi"},{"code":"ga","name":"iiri"},{"code":"id","name":"indoneesia"},{"code":"en","name":"inglise"},{"code":"is","name":"islandi"},{"code":"it","name":"itaalia"},{"code":"ja","name":"jaapani"},{"code":"ca","name":"katalaani"},{"code":"ko","name":"korea"},{"code":"el","name":"kreeka"},{"code":"ckb","name":"kurdi (sorani)"},{"code":"lt","name":"leedu"},{"code":"lv","name":"läti"},{"code":"mi","name":"maoori"},{"code":"nb","name":"norra"},{"code":"pl","name":"poola"},{"code":"pt","name":"portugali"},{"code":"fr","name":"prantsuse"},{"code":"fa","name":"pärsia"},{"code":"sv","name":"rootsi"},{"code":"ro","name":"rumeenia"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"sk","name":"slovaki"},{"code":"sl","name":"sloveeni"},{"code":"fi","name":"soome"},{"code":"zu","name":"suulu"},{"code":"gd","name":"šoti"},{"code":"da","name":"taani"},{"code":"th","name":"tai"},{"code":"cs","name":"tšehhi"},{"code":"tr","name":"türgi"},{"code":"cy","name":"uelsi"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"ungari"},{"code":"ru","name":"vene"},{"code":"vi","name":"vietnami"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"}],"ko":[{"code":"gl","name":"갈리시아어"},{"code":"el","name":"그리스어"},{"code":"nl","name":"네덜란드어"},{"code":"nb","name":"노르웨이어"},{"code":"da","name":"덴마크어"},{"code":"de","name":"독일어"},{"code":"lv","name":"라트비아어"},{"code":"ru","name":"러시아어"},{"code":"ro","name":"루마니아어"},{"code":"lt","name":"리투아니아어"},{"code":"mi","name":"마오리어"},{"code":"eu","name":"바스크어"},{"code":"vi","name":"베트남어"},{"code":"bg","name":"불가리아어"},{"code":"sr","name":"세르비아어"},{"code":"sv","name":"스웨덴어"},{"code":"gd","name":"스코틀랜드 게일어"},{"code":"es","name":"스페인어"},{"code":"sk","name":"슬로바키아어"},{"code":"sl","name":"슬로베니아어"},{"code":"ar","name":"아랍어"},{"code":"is","name":"아이슬란드어"},{"code":"ga","name":"아일랜드어"},{"code":"az","name":"아제르바이잔어"},{"code":"am","name":"암하라어"},{"code":"et","name":"에스토니아어"},{"code":"en","name":"영어"},{"code":"uk","name":"우크라이나어"},{"code":"cy","name":"웨일즈어"},{"code":"it","name":"이탈리아어"},{"code":"id","name":"인도네시아어"},{"code":"ja","name":"일본어"},{"code":"zu","name":"줄루어"},{"code":"zh-cn","name":"중국어(간체)"},{"code":"zh-tw","name":"중국어(번체)"},{"code":"cs","name":"체코어"},{"code":"ca","name":"카탈로니아어"},{"code":"ckb","name":"쿠르드어(소라니)"},{"code":"hr","name":"크로아티아어"},{"code":"th","name":"태국어"},{"code":"tr","name":"터키어"},{"code":"fa","name":"페르시아어"},{"code":"pt","name":"포르투갈어"},{"code":"pl","name":"폴란드어"},{"code":"fr","name":"프랑스어"},{"code":"fi","name":"핀란드어"},{"code":"ko","name":"한국어"},{"code":"hu","name":"헝가리어"},{"code":"he","name":"히브리어"},{"code":"he","name":"히브리어"},{"code":"zh-cn","name":"중국어(간체)"}],"az":[{"code":"de","name":"Alman"},{"code":"am","name":"Amarik"},{"code":"az","name":"Azərbaycan dili"},{"code":"eu","name":"Bask"},{"code":"bg","name":"Bolqar"},{"code":"cs","name":"Çex"},{"code":"zh-tw","name":"Çin (Ən\'ənəvi)"},{"code":"zh-cn","name":"Çin dili (Sadələşdirilmiş)"},{"code":"da","name":"Danimarka"},{"code":"et","name":"Eston"},{"code":"ar","name":"Ərəb"},{"code":"fa","name":"Fars Dili"},{"code":"fi","name":"Fin"},{"code":"fr","name":"Fransız"},{"code":"nl","name":"Holland"},{"code":"hr","name":"Xorvat"},{"code":"en","name":"Ingilis"},{"code":"es","name":"Ispan"},{"code":"id","name":"İndoneziya"},{"code":"ga","name":"İrland"},{"code":"is","name":"İsland"},{"code":"sv","name":"İsveç"},{"code":"it","name":"İtalyan"},{"code":"he","name":"İvrit"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Koreya"},{"code":"ckb","name":"Kürd dili (Sorani)"},{"code":"gl","name":"Qalisian"},{"code":"lv","name":"Latış"},{"code":"lt","name":"Litva"},{"code":"hu","name":"Macar"},{"code":"mi","name":"Maoricə"},{"code":"nb","name":"Norveç"},{"code":"pl","name":"Polyak"},{"code":"pt","name":"Portuqal"},{"code":"ro","name":"Rumın"},{"code":"ru","name":"Rus"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Sloven"},{"code":"gd","name":"Şotland (Kelt)"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türk"},{"code":"cy","name":"Uels"},{"code":"uk","name":"Ukrayna"},{"code":"vi","name":"Vyetnam"},{"code":"ja","name":"Yapon"},{"code":"el","name":"Yunan"},{"code":"zu","name":"Zulu dili"},{"code":"he","name":"İvrit"},{"code":"zh-cn","name":"Çin dili (Sadələşdirilmiş)"}],"eu":[{"code":"de","name":"alemana"},{"code":"am","name":"amharera"},{"code":"ar","name":"arabiera"},{"code":"az","name":"azerbaijanera"},{"code":"bg","name":"bulgariera"},{"code":"da","name":"daniera"},{"code":"ro","name":"errumaniera"},{"code":"ru","name":"errusiera"},{"code":"gd","name":"Eskoziako gaelikoa"},{"code":"sk","name":"eslovakiera"},{"code":"sl","name":"esloveniera"},{"code":"et","name":"estoniera"},{"code":"eu","name":"euskara"},{"code":"fi","name":"finlandiera"},{"code":"fr","name":"frantsesa"},{"code":"cy","name":"galesa"},{"code":"gl","name":"galiziera"},{"code":"es","name":"gaztelania"},{"code":"el","name":"greziera"},{"code":"he","name":"hebreera"},{"code":"hu","name":"hungariera"},{"code":"id","name":"indonesiera"},{"code":"en","name":"ingelesa"},{"code":"ga","name":"irlandera"},{"code":"is","name":"islandiera"},{"code":"it","name":"italiera"},{"code":"ja","name":"japoniera"},{"code":"ca","name":"katalana"},{"code":"ko","name":"koreera"},{"code":"hr","name":"kroaziera"},{"code":"ckb","name":"kurduera (sorania)"},{"code":"lv","name":"letoniera"},{"code":"lt","name":"lituaniera"},{"code":"mi","name":"maoriera"},{"code":"nl","name":"nederlandera"},{"code":"nb","name":"norvegiera"},{"code":"fa","name":"persiera"},{"code":"pl","name":"poloniera"},{"code":"pt","name":"portugesa"},{"code":"sr","name":"serbiera"},{"code":"sv","name":"suediera"},{"code":"th","name":"thailandiera"},{"code":"tr","name":"turkiera"},{"code":"cs","name":"txekiera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"},{"code":"zh-tw","name":"txinera (tradizionala)"},{"code":"uk","name":"ukrainera"},{"code":"vi","name":"vietnamera"},{"code":"zu","name":"zuluera"},{"code":"he","name":"hebreera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"}],"da":[{"code":"am","name":"Amharisk"},{"code":"ar","name":"Arabisk"},{"code":"az","name":"Aserbajdsjansk"},{"code":"eu","name":"Baskisk"},{"code":"bg","name":"Bulgarsk"},{"code":"da","name":"Dansk"},{"code":"en","name":"Engelsk"},{"code":"et","name":"Estisk"},{"code":"fi","name":"Finsk"},{"code":"fr","name":"Fransk"},{"code":"gl","name":"Galicisk"},{"code":"el","name":"Græsk"},{"code":"he","name":"Hebraisk"},{"code":"id","name":"Indonesisk"},{"code":"ga","name":"Irsk"},{"code":"is","name":"Islandsk"},{"code":"it","name":"Italiensk"},{"code":"ja","name":"Japansk"},{"code":"ca","name":"Katalansk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"},{"code":"zh-tw","name":"Kinesisk (traditionelt)"},{"code":"ko","name":"Koreansk"},{"code":"hr","name":"Kroatisk"},{"code":"ckb","name":"Kurdisk (sorani)"},{"code":"lv","name":"Lettisk"},{"code":"lt","name":"Litauisk"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlandsk"},{"code":"nb","name":"Norsk"},{"code":"fa","name":"Persisk"},{"code":"pl","name":"Polsk"},{"code":"pt","name":"Portugisisk"},{"code":"ro","name":"Rumænsk"},{"code":"ru","name":"Russisk"},{"code":"sr","name":"Serbisk"},{"code":"gd","name":"Skotsk gælisk"},{"code":"sk","name":"Slovakisk"},{"code":"sl","name":"Slovensk"},{"code":"es","name":"Spansk"},{"code":"sv","name":"Svensk"},{"code":"th","name":"Thailandsk"},{"code":"cs","name":"Tjekkisk"},{"code":"tr","name":"Tyrkisk"},{"code":"de","name":"Tysk"},{"code":"uk","name":"Ukrainsk"},{"code":"hu","name":"Ungarsk"},{"code":"vi","name":"Vietnamesisk"},{"code":"cy","name":"Walisisk"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraisk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"}],"it":[{"code":"am","name":"Amarico"},{"code":"ar","name":"Arabo"},{"code":"az","name":"Azero"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Bulgaro"},{"code":"ca","name":"Catalano"},{"code":"cs","name":"Ceco"},{"code":"zh-cn","name":"Cinese (semplificato)"},{"code":"zh-tw","name":"Cinese (tradizionale)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croato"},{"code":"ckb","name":"Curdo (Sorani)"},{"code":"da","name":"Danese"},{"code":"he","name":"Ebraico"},{"code":"et","name":"Estone"},{"code":"fi","name":"Finlandese"},{"code":"fr","name":"Francese"},{"code":"gd","name":"Gaelico scozzese"},{"code":"gl","name":"Galiziano"},{"code":"cy","name":"Gallese"},{"code":"ja","name":"Giapponese"},{"code":"el","name":"Greco"},{"code":"id","name":"Indonesiano"},{"code":"en","name":"Inglese"},{"code":"ga","name":"Irlandese"},{"code":"is","name":"Islandese"},{"code":"it","name":"Italiano"},{"code":"lv","name":"Lettone"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norvegese"},{"code":"nl","name":"Olandese"},{"code":"fa","name":"Persiano"},{"code":"pl","name":"Polacco"},{"code":"pt","name":"Portoghese"},{"code":"ro","name":"Rumeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Serbo"},{"code":"sk","name":"Slovacco"},{"code":"sl","name":"Sloveno"},{"code":"es","name":"Spagnolo"},{"code":"sv","name":"Svedese"},{"code":"de","name":"Tedesco"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraino"},{"code":"hu","name":"Ungherese"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraico"},{"code":"zh-cn","name":"Cinese (semplificato)"}],"fi":[{"code":"am","name":"amhara"},{"code":"ar","name":"arabia"},{"code":"az","name":"azeri"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaria"},{"code":"en","name":"englanti"},{"code":"es","name":"espanja"},{"code":"gl","name":"galicia"},{"code":"he","name":"heprea"},{"code":"nl","name":"hollanti"},{"code":"ga","name":"iiri"},{"code":"id","name":"indonesia"},{"code":"is","name":"islanti"},{"code":"it","name":"italia"},{"code":"ja","name":"japani"},{"code":"ca","name":"katalaani"},{"code":"zh-tw","name":"kiina (perinteinen)"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"},{"code":"ko","name":"korea"},{"code":"el","name":"kreikka"},{"code":"hr","name":"kroatia"},{"code":"ckb","name":"kurdi (soranî)"},{"code":"cy","name":"kymri"},{"code":"lv","name":"latvia"},{"code":"lt","name":"liettua"},{"code":"mi","name":"maori"},{"code":"nb","name":"norja"},{"code":"fa","name":"persia"},{"code":"pt","name":"portugali"},{"code":"pl","name":"puola"},{"code":"fr","name":"ranska"},{"code":"ro","name":"romania"},{"code":"sv","name":"ruotsi"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"gd","name":"skottigaeli"},{"code":"sk","name":"slovakia"},{"code":"sl","name":"slovenia"},{"code":"fi","name":"suomi"},{"code":"da","name":"tanska"},{"code":"th","name":"thai"},{"code":"cs","name":"tsekki"},{"code":"tr","name":"turkki"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"unkari"},{"code":"ru","name":"venäjä"},{"code":"vi","name":"vietnam"},{"code":"et","name":"viro"},{"code":"zu","name":"zulu"},{"code":"he","name":"heprea"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"}],"ja":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"ja-hira":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"nl":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Azerbeidzjaans"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgaars"},{"code":"ca","name":"Catalaans"},{"code":"zh-tw","name":"Chinees (traditioneel)"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"},{"code":"da","name":"Deens"},{"code":"de","name":"Duits"},{"code":"en","name":"Engels"},{"code":"et","name":"Ests"},{"code":"fi","name":"Fins"},{"code":"fr","name":"Frans"},{"code":"gl","name":"Galicisch"},{"code":"el","name":"Grieks"},{"code":"he","name":"Hebreeuws"},{"code":"hu","name":"Hongaars"},{"code":"ga","name":"Iers"},{"code":"is","name":"IJslands"},{"code":"id","name":"Indonesisch"},{"code":"it","name":"Italiaans"},{"code":"ja","name":"Japans"},{"code":"ckb","name":"Koerdisch (Sorani)"},{"code":"ko","name":"Koreaans"},{"code":"hr","name":"Kroatisch"},{"code":"lv","name":"Lets"},{"code":"lt","name":"Litouws"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlands"},{"code":"nb","name":"Noors"},{"code":"uk","name":"Oekraïens"},{"code":"fa","name":"Perzisch"},{"code":"pl","name":"Pools"},{"code":"pt","name":"Portugees"},{"code":"ro","name":"Roemeens"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schots Keltisch"},{"code":"sr","name":"Servisch"},{"code":"sk","name":"Slovaaks"},{"code":"sl","name":"Sloveens"},{"code":"es","name":"Spaans"},{"code":"th","name":"Thai"},{"code":"cs","name":"Tsjechisch"},{"code":"tr","name":"Turks"},{"code":"vi","name":"Vietnamees"},{"code":"cy","name":"Wels"},{"code":"zu","name":"Zoeloe"},{"code":"sv","name":"Zweeds"},{"code":"he","name":"Hebreeuws"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"}],"zh-tw":[{"code":"tr","name":"土耳其文"},{"code":"zh-tw","name":"中文 (繁體)"},{"code":"zh-cn","name":"中文 (簡體)"},{"code":"da","name":"丹麥文"},{"code":"eu","name":"巴斯克文"},{"code":"ja","name":"日文"},{"code":"mi","name":"毛利文"},{"code":"gl","name":"加里西亞文"},{"code":"ca","name":"加泰羅尼亞文"},{"code":"lt","name":"立陶宛文"},{"code":"is","name":"冰島文"},{"code":"hu","name":"匈牙利文"},{"code":"id","name":"印尼文"},{"code":"es","name":"西班牙文"},{"code":"hr","name":"克羅埃西亞文"},{"code":"he","name":"希伯來文"},{"code":"el","name":"希臘文"},{"code":"az","name":"亞塞拜然文"},{"code":"lv","name":"拉脫維亞文"},{"code":"fr","name":"法文"},{"code":"fa","name":"波斯文"},{"code":"pl","name":"波蘭文"},{"code":"fi","name":"芬蘭文"},{"code":"am","name":"阿姆哈拉文"},{"code":"ar","name":"阿拉伯文"},{"code":"ru","name":"俄文"},{"code":"bg","name":"保加利亞文"},{"code":"zu","name":"南非祖魯文"},{"code":"cy","name":"威爾斯文"},{"code":"en","name":"英文"},{"code":"ckb","name":"庫德文 (索拉尼文)"},{"code":"nb","name":"挪威文"},{"code":"th","name":"泰文"},{"code":"uk","name":"烏克蘭文"},{"code":"cs","name":"捷克文"},{"code":"nl","name":"荷蘭文"},{"code":"sk","name":"斯洛伐克文"},{"code":"sl","name":"斯洛維尼亞文"},{"code":"vi","name":"越南文"},{"code":"sr","name":"塞爾維亞文"},{"code":"et","name":"愛沙尼亞文"},{"code":"ga","name":"愛爾蘭文"},{"code":"sv","name":"瑞典文"},{"code":"it","name":"義大利文"},{"code":"pt","name":"葡萄牙文"},{"code":"de","name":"德文"},{"code":"ko","name":"韓文"},{"code":"ro","name":"羅馬尼亞文"},{"code":"gd","name":"蘇格蘭的蓋爾文"},{"code":"he","name":"希伯來文"},{"code":"zh-cn","name":"中文 (簡體)"}],"he":[{"code":"uk","name":"אוקראינית"},{"code":"az","name":"אזרית"},{"code":"it","name":"איטלקית"},{"code":"id","name":"אינדונזית"},{"code":"is","name":"איסלנדית"},{"code":"ga","name":"אירית"},{"code":"am","name":"אמהרית"},{"code":"en","name":"אנגלית"},{"code":"et","name":"אסטונית"},{"code":"eu","name":"באסקית"},{"code":"bg","name":"בולגרית"},{"code":"gl","name":"גליציאנית"},{"code":"de","name":"גרמנית"},{"code":"da","name":"דנית"},{"code":"nl","name":"הולנדית"},{"code":"hu","name":"הונגרית"},{"code":"cy","name":"וולשית"},{"code":"vi","name":"וייטנאמית"},{"code":"zu","name":"זולו"},{"code":"tr","name":"טורקית"},{"code":"el","name":"יוונית"},{"code":"ja","name":"יפנית"},{"code":"ckb","name":"כורדית (סורנית)"},{"code":"lv","name":"לטבית"},{"code":"lt","name":"ליטאית"},{"code":"mi","name":"מאורית"},{"code":"nb","name":"נורווגית"},{"code":"zh-tw","name":"סינית (מסורתית)"},{"code":"zh-cn","name":"‏סינית (פשוטה)"},{"code":"sl","name":"סלובנית"},{"code":"sk","name":"סלובקית"},{"code":"es","name":"ספרדית"},{"code":"gd","name":"סקוטית גאלית"},{"code":"sr","name":"סרבית"},{"code":"he","name":"עברית"},{"code":"ar","name":"ערבית"},{"code":"pl","name":"פולנית"},{"code":"pt","name":"פורטוגזית"},{"code":"fi","name":"פינית"},{"code":"fa","name":"פרסית"},{"code":"cs","name":"צ\'כית"},{"code":"fr","name":"צרפתית"},{"code":"ko","name":"קוריאנית"},{"code":"ca","name":"קטלאנית"},{"code":"hr","name":"קרואטית"},{"code":"ro","name":"רומנית"},{"code":"ru","name":"רוסית"},{"code":"sv","name":"שוודית"},{"code":"th","name":"תאית"},{"code":"he","name":"עברית"},{"code":"zh-cn","name":"‏סינית (פשוטה)"}],"cy":[{"code":"de","name":"Almaeneg"},{"code":"am","name":"Amhareg"},{"code":"ar","name":"Arabeg"},{"code":"az","name":"Aserbaijaneg"},{"code":"eu","name":"Basgeg"},{"code":"bg","name":"Bwlgareg"},{"code":"ca","name":"Catalaneg"},{"code":"hr","name":"Croateg"},{"code":"ckb","name":"Cwrdeg (Sorani)"},{"code":"cy","name":"Cymraeg"},{"code":"da","name":"Daneg"},{"code":"it","name":"Eidaleg"},{"code":"et","name":"Estoneg"},{"code":"vi","name":"Fietnameg"},{"code":"fi","name":"Ffineg"},{"code":"nl","name":"Fflemeg"},{"code":"fr","name":"Ffrangeg"},{"code":"gd","name":"Gaeleg yr Alban"},{"code":"gl","name":"Galiseg"},{"code":"el","name":"Groeg"},{"code":"ga","name":"Gwyddeleg"},{"code":"he","name":"Hebraeg"},{"code":"hu","name":"Hwngareg"},{"code":"ko","name":"Iaith Corea"},{"code":"id","name":"Indonesieg"},{"code":"is","name":"Islandeg"},{"code":"ja","name":"Japaneg"},{"code":"lv","name":"Latfieg"},{"code":"lt","name":"Lithwaneg"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwyeg"},{"code":"fa","name":"Perseg"},{"code":"pt","name":"Portiwgaleg"},{"code":"pl","name":"Pwyleg"},{"code":"ro","name":"Rwmaneg"},{"code":"ru","name":"Rwsieg"},{"code":"en","name":"Saesneg"},{"code":"es","name":"Sbaeneg"},{"code":"sr","name":"Serbeg"},{"code":"sk","name":"Slofaceg"},{"code":"sl","name":"Slofeneg"},{"code":"sv","name":"Swedeg"},{"code":"zu","name":"Swlw"},{"code":"th","name":"Tai"},{"code":"cs","name":"Tsieceg"},{"code":"zh-tw","name":"Tsieineeg (Traddodiadol)"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"},{"code":"tr","name":"Twrceg"},{"code":"uk","name":"Wcreineg"},{"code":"he","name":"Hebraeg"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"}],"hu":[{"code":"am","name":"amhara"},{"code":"en","name":"angol"},{"code":"ar","name":"arab"},{"code":"az","name":"azeri"},{"code":"eu","name":"baszk"},{"code":"bg","name":"bolgár"},{"code":"cs","name":"cseh"},{"code":"da","name":"dán"},{"code":"et","name":"észt"},{"code":"fi","name":"finn"},{"code":"fr","name":"francia"},{"code":"gl","name":"galíciai"},{"code":"el","name":"görög"},{"code":"he","name":"héber"},{"code":"nl","name":"holland"},{"code":"hr","name":"horvát"},{"code":"id","name":"indonéz"},{"code":"ga","name":"ír"},{"code":"is","name":"izlandi"},{"code":"ja","name":"japán"},{"code":"ca","name":"katalán"},{"code":"zh-cn","name":"kínai (egyszerűsített)"},{"code":"zh-tw","name":"kínai (hagyományos)"},{"code":"ko","name":"koreai"},{"code":"ckb","name":"kurd (szoráni)"},{"code":"pl","name":"lengyel"},{"code":"lv","name":"lett"},{"code":"lt","name":"litván"},{"code":"hu","name":"magyar"},{"code":"mi","name":"maori"},{"code":"de","name":"német"},{"code":"nb","name":"norvég"},{"code":"it","name":"olasz"},{"code":"ru","name":"orosz"},{"code":"fa","name":"perzsa"},{"code":"pt","name":"portugál"},{"code":"ro","name":"román"},{"code":"gd","name":"skót-gael"},{"code":"es","name":"spanyol"},{"code":"sv","name":"svéd"},{"code":"sr","name":"szerb"},{"code":"sk","name":"szlovák"},{"code":"sl","name":"szlovén"},{"code":"th","name":"thai"},{"code":"tr","name":"török"},{"code":"uk","name":"ukrán"},{"code":"vi","name":"vietnami"},{"code":"cy","name":"walesi"},{"code":"zu","name":"zulu"},{"code":"he","name":"héber"},{"code":"zh-cn","name":"kínai (egyszerűsített)"}],"tr":[{"code":"de","name":"Almanca"},{"code":"ar","name":"Arapça"},{"code":"az","name":"Azerbaycan dili"},{"code":"eu","name":"Baskça"},{"code":"bg","name":"Bulgarca"},{"code":"cs","name":"Çekçe"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"},{"code":"zh-tw","name":"Çince (Geleneksel)"},{"code":"da","name":"Danca"},{"code":"id","name":"Endonezce"},{"code":"et","name":"Estonyaca"},{"code":"fa","name":"Farsça"},{"code":"nl","name":"Felemenkçe"},{"code":"fi","name":"Fince"},{"code":"fr","name":"Fransızca"},{"code":"cy","name":"Galce"},{"code":"gl","name":"Galiçyaca"},{"code":"am","name":"Habeşçe"},{"code":"hr","name":"Hırvatça"},{"code":"he","name":"İbranice"},{"code":"en","name":"İngilizce"},{"code":"ga","name":"İrlandaca"},{"code":"gd","name":"İskoç Gaelcesi"},{"code":"es","name":"İspanyolca"},{"code":"sv","name":"İsveççe"},{"code":"it","name":"İtalyanca"},{"code":"is","name":"İzlandaca"},{"code":"ja","name":"Japonca"},{"code":"ca","name":"Katalanca"},{"code":"ko","name":"Korece"},{"code":"ckb","name":"Kürtçe (Sorani)"},{"code":"pl","name":"Lehçe"},{"code":"lv","name":"Letonca"},{"code":"lt","name":"Litvanca"},{"code":"hu","name":"Macarca"},{"code":"mi","name":"Maori dili"},{"code":"nb","name":"Norveççe"},{"code":"pt","name":"Portekizce"},{"code":"ro","name":"Romence"},{"code":"ru","name":"Rusça"},{"code":"sr","name":"Sırpça"},{"code":"sk","name":"Slovakça"},{"code":"sl","name":"Slovence"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türkçe"},{"code":"uk","name":"Ukraynaca"},{"code":"vi","name":"Vietnamca"},{"code":"el","name":"Yunanca"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İbranice"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"}],"ar":[{"code":"is","name":"الآيسلندية"},{"code":"az","name":"الأذرية"},{"code":"es","name":"الإسبانية"},{"code":"et","name":"الإستونية"},{"code":"de","name":"الألمانية"},{"code":"am","name":"الأمهرية"},{"code":"en","name":"الإنجليزية"},{"code":"id","name":"الإندونيسية"},{"code":"uk","name":"الأوكرانية"},{"code":"ga","name":"الأيرلندية"},{"code":"it","name":"الإيطالية"},{"code":"eu","name":"الباسكية"},{"code":"pt","name":"البرتغالية"},{"code":"bg","name":"البلغارية"},{"code":"pl","name":"البولندية"},{"code":"th","name":"التايلاندية"},{"code":"tr","name":"التركية"},{"code":"cs","name":"التشيكية"},{"code":"gl","name":"الجاليكية"},{"code":"da","name":"الدانمركية"},{"code":"ru","name":"الروسية"},{"code":"ro","name":"الرومانية"},{"code":"zu","name":"الزولو"},{"code":"sk","name":"السلوفاكية"},{"code":"sl","name":"السلوفينية"},{"code":"sv","name":"السويدية"},{"code":"sr","name":"الصربية"},{"code":"zh-tw","name":"الصينية (التقليدية)"},{"code":"zh-cn","name":"الصينية (المبسطة)"},{"code":"he","name":"العبرية"},{"code":"ar","name":"العربية"},{"code":"gd","name":"الغيلية الأسكتلندية"},{"code":"fa","name":"الفارسية"},{"code":"fr","name":"الفرنسية"},{"code":"fi","name":"الفنلندية"},{"code":"vi","name":"الفيتنامية"},{"code":"ca","name":"القطلونية"},{"code":"ckb","name":"الكردية (السورانية)"},{"code":"hr","name":"الكرواتية"},{"code":"ko","name":"الكورية"},{"code":"lv","name":"اللاتفية"},{"code":"lt","name":"الليتوانية"},{"code":"mi","name":"الماورية"},{"code":"nb","name":"النرويجية"},{"code":"hu","name":"الهنغارية"},{"code":"nl","name":"الهولندية"},{"code":"cy","name":"الويلزية"},{"code":"ja","name":"اليابانية"},{"code":"el","name":"اليونانية"},{"code":"he","name":"العبرية"},{"code":"zh-cn","name":"الصينية (المبسطة)"}],"nb":[{"code":"am","name":"amharisk"},{"code":"ar","name":"arabisk"},{"code":"az","name":"aserbajdsjansk"},{"code":"eu","name":"baskisk"},{"code":"bg","name":"bulgarsk"},{"code":"da","name":"dansk"},{"code":"en","name":"engelsk"},{"code":"et","name":"estisk"},{"code":"fa","name":"farsi"},{"code":"fi","name":"finsk"},{"code":"fr","name":"fransk"},{"code":"gl","name":"galisisk"},{"code":"el","name":"gresk"},{"code":"he","name":"hebraisk"},{"code":"id","name":"indonesisk"},{"code":"ga","name":"irsk"},{"code":"is","name":"islandsk"},{"code":"it","name":"italiensk"},{"code":"ja","name":"japansk"},{"code":"ca","name":"katalansk"},{"code":"zh-cn","name":"kinesisk (forenklet)"},{"code":"zh-tw","name":"kinesisk (tradisjonell)"},{"code":"ko","name":"koreansk"},{"code":"hr","name":"kroatisk"},{"code":"ckb","name":"kurdisk (sorani)"},{"code":"lv","name":"latvisk"},{"code":"lt","name":"litauisk"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederlandsk"},{"code":"nb","name":"norsk"},{"code":"pl","name":"polsk"},{"code":"pt","name":"portugisisk"},{"code":"ro","name":"rumensk"},{"code":"ru","name":"russisk"},{"code":"sr","name":"serbisk"},{"code":"gd","name":"skotsk gælisk"},{"code":"sk","name":"slovakisk"},{"code":"sl","name":"slovensk"},{"code":"es","name":"spansk"},{"code":"sv","name":"svensk"},{"code":"th","name":"thai"},{"code":"cs","name":"tsjekkisk"},{"code":"tr","name":"tyrkisk"},{"code":"de","name":"tysk"},{"code":"uk","name":"ukrainsk"},{"code":"hu","name":"ungarsk"},{"code":"vi","name":"vietnamesisk"},{"code":"cy","name":"walisisk"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebraisk"},{"code":"zh-cn","name":"kinesisk (forenklet)"}],"mi":[{"code":"az","name":"Ahepaitani"},{"code":"ga","name":"Airihi"},{"code":"am","name":"Amariki"},{"code":"ar","name":"Arapi"},{"code":"et","name":"Etōnia"},{"code":"zh-tw","name":"Haina (Onamata)"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"},{"code":"hu","name":"Hanekeria"},{"code":"ja","name":"Hapanihi"},{"code":"sr","name":"Herepia"},{"code":"fi","name":"Hinerangi"},{"code":"he","name":"Hiperu"},{"code":"sk","name":"Horowākia"},{"code":"sl","name":"Horowinia"},{"code":"sv","name":"Huitene"},{"code":"zu","name":"Huru"},{"code":"en","name":"Ingarihi"},{"code":"id","name":"Initonīhia"},{"code":"it","name":"Itāriana"},{"code":"gl","name":"Karihia"},{"code":"ca","name":"Katarāna"},{"code":"el","name":"Kiriki"},{"code":"ko","name":"Kōreana"},{"code":"hr","name":"Koroātiana"},{"code":"tr","name":"Korukoru"},{"code":"ckb","name":"Kūrihi (Horani)"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nōwei"},{"code":"eu","name":"Pākihi"},{"code":"es","name":"Pāniora"},{"code":"fa","name":"Perēhia"},{"code":"pl","name":"Pōrana"},{"code":"pt","name":"Potukīhi"},{"code":"bg","name":"Purukāriana"},{"code":"lv","name":"Rāwhiana"},{"code":"lt","name":"Rituānia"},{"code":"ro","name":"Romānia"},{"code":"ru","name":"Rūhia"},{"code":"th","name":"Tai"},{"code":"nl","name":"Tati"},{"code":"da","name":"Tenemāka"},{"code":"de","name":"Tiamana"},{"code":"cs","name":"Tieke"},{"code":"is","name":"Tiorangi"},{"code":"gd","name":"Tuauri Kotarangi"},{"code":"uk","name":"Ūkareiana"},{"code":"cy","name":"Wēra"},{"code":"vi","name":"Whitināmu"},{"code":"fr","name":"Wīwī"},{"code":"he","name":"Hiperu"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"}],"vi":[{"code":"ar","name":"Ả Rập"},{"code":"am","name":"Amharic"},{"code":"en","name":"Anh"},{"code":"az","name":"Azerbaijan"},{"code":"pl","name":"Ba Lan"},{"code":"fa","name":"Ba Tư"},{"code":"eu","name":"Basque"},{"code":"pt","name":"Bồ Đào Nha"},{"code":"bg","name":"Bulgaria"},{"code":"ca","name":"Catalan"},{"code":"hr","name":"Croatia"},{"code":"he","name":"Do Thái"},{"code":"da","name":"Đan Mạch"},{"code":"de","name":"Đức"},{"code":"et","name":"Estonia"},{"code":"gd","name":"Gael Scotland"},{"code":"gl","name":"Galicia"},{"code":"nl","name":"Hà Lan"},{"code":"ko","name":"Hàn"},{"code":"hu","name":"Hungary"},{"code":"el","name":"Hy Lạp"},{"code":"is","name":"Iceland"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Ireland"},{"code":"ckb","name":"Kurd (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Litva"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Na Uy"},{"code":"ru","name":"Nga"},{"code":"ja","name":"Nhật"},{"code":"fr","name":"Pháp"},{"code":"fi","name":"Phần Lan"},{"code":"ro","name":"Rumani"},{"code":"cs","name":"Séc"},{"code":"sr","name":"Serbia"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Tây Ban Nha"},{"code":"th","name":"Thái"},{"code":"tr","name":"Thổ Nhĩ Kỳ"},{"code":"sv","name":"Thụy Điển"},{"code":"zh-cn","name":"Trung (Giản thể)"},{"code":"zh-tw","name":"Trung (Phồn thể)"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Việt"},{"code":"cy","name":"Xứ Wales"},{"code":"it","name":"Ý"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Do Thái"},{"code":"zh-cn","name":"Trung (Giản thể)"}],"fa":[{"code":"az","name":"آذرباﻳﺠﺎﻧﻰ"},{"code":"de","name":"آلمانی"},{"code":"es","name":"اسپانیایی"},{"code":"et","name":"استونيايی"},{"code":"sk","name":"اسلواکی"},{"code":"sl","name":"اسلونیایی"},{"code":"uk","name":"اکراينی"},{"code":"am","name":"امهری"},{"code":"id","name":"اندونزيايی"},{"code":"en","name":"انگلیسی"},{"code":"it","name":"ایتالیایی"},{"code":"ga","name":"ایرلندی"},{"code":"is","name":"ايسلندی"},{"code":"eu","name":"باسکی"},{"code":"bg","name":"بلغاری"},{"code":"pt","name":"پرتغالی"},{"code":"th","name":"تايلندی"},{"code":"tr","name":"ترکی استانبولی"},{"code":"cs","name":"چک"},{"code":"zh-cn","name":"چینی (ساده‌شده)"},{"code":"zh-tw","name":"چینی (سنتی)"},{"code":"da","name":"دانمارکی"},{"code":"ru","name":"روسی"},{"code":"ro","name":"رومانيايی"},{"code":"zu","name":"زولو"},{"code":"ja","name":"ژاپنی"},{"code":"sv","name":"سوئدی"},{"code":"sr","name":"صربی"},{"code":"he","name":"عبری"},{"code":"ar","name":"عربی"},{"code":"fa","name":"فارسی"},{"code":"fr","name":"فرانسوی"},{"code":"fi","name":"فنلاندی"},{"code":"ca","name":"کاتالان"},{"code":"ckb","name":"کردی (سورانی)"},{"code":"hr","name":"کرواتی"},{"code":"ko","name":"کره‌ای"},{"code":"gl","name":"گالیسی"},{"code":"gd","name":"گاليک اسکاتلندی"},{"code":"lv","name":"لتونيايی"},{"code":"pl","name":"لهستانی"},{"code":"lt","name":"ليتوانيايی"},{"code":"mi","name":"مائوری"},{"code":"hu","name":"مجاری"},{"code":"nb","name":"نروژی"},{"code":"cy","name":"ولزی"},{"code":"vi","name":"ويتنامی"},{"code":"nl","name":"هلندی"},{"code":"el","name":"يونانی"},{"code":"he","name":"عبری"},{"code":"zh-cn","name":"چینی (ساده‌شده)"}],"lt":[{"code":"ga","name":"airių"},{"code":"am","name":"amharų"},{"code":"en","name":"anglų"},{"code":"ar","name":"arabų"},{"code":"az","name":"azerbaidžaniečių"},{"code":"eu","name":"baskų"},{"code":"bg","name":"bulgarų"},{"code":"cs","name":"čekų"},{"code":"da","name":"danų"},{"code":"et","name":"estų"},{"code":"gl","name":"galisų"},{"code":"el","name":"graikų"},{"code":"he","name":"hebrajų"},{"code":"id","name":"indoneziečių"},{"code":"is","name":"islandų"},{"code":"es","name":"ispanų"},{"code":"it","name":"italų"},{"code":"ja","name":"japonų"},{"code":"ca","name":"kataloniečių"},{"code":"zh-cn","name":"kinų (supaprastinta)"},{"code":"zh-tw","name":"kinų (tradicinė)"},{"code":"ko","name":"korėjiečių"},{"code":"hr","name":"kroatų"},{"code":"ckb","name":"kurdų (soranių)"},{"code":"lv","name":"latvių"},{"code":"pl","name":"lenkų"},{"code":"lt","name":"lietuvių"},{"code":"mi","name":"maorių"},{"code":"nb","name":"norvegų"},{"code":"nl","name":"olandų"},{"code":"fa","name":"persų"},{"code":"pt","name":"portugalų"},{"code":"fr","name":"prancūzų"},{"code":"ro","name":"rumunų"},{"code":"ru","name":"rusų"},{"code":"sr","name":"serbų"},{"code":"sk","name":"slovakų"},{"code":"sl","name":"slovėnų"},{"code":"fi","name":"suomių"},{"code":"gd","name":"škotų"},{"code":"sv","name":"švedų"},{"code":"th","name":"tajų"},{"code":"tr","name":"turkų"},{"code":"uk","name":"ukrainiečių"},{"code":"cy","name":"valų"},{"code":"hu","name":"vengrų"},{"code":"vi","name":"vietnamiečių"},{"code":"de","name":"vokiečių"},{"code":"zu","name":"zulusų"},{"code":"he","name":"hebrajų"},{"code":"zh-cn","name":"kinų (supaprastinta)"}],"zh-cn":[{"code":"ar","name":"阿拉伯语"},{"code":"am","name":"阿姆哈拉语"},{"code":"az","name":"阿塞拜疆语"},{"code":"ga","name":"爱尔兰语"},{"code":"et","name":"爱沙尼亚语"},{"code":"eu","name":"巴斯克语"},{"code":"bg","name":"保加利亚语"},{"code":"is","name":"冰岛语"},{"code":"pl","name":"波兰语"},{"code":"fa","name":"波斯语"},{"code":"da","name":"丹麦语"},{"code":"de","name":"德语"},{"code":"ru","name":"俄语"},{"code":"fr","name":"法语"},{"code":"fi","name":"芬兰语"},{"code":"ko","name":"韩语"},{"code":"nl","name":"荷兰语"},{"code":"gl","name":"加利西亚语"},{"code":"ca","name":"加泰罗尼亚语"},{"code":"cs","name":"捷克语"},{"code":"hr","name":"克罗地亚语"},{"code":"ckb","name":"库尔德语（索拉尼）"},{"code":"lv","name":"拉脱维亚语"},{"code":"lt","name":"立陶宛语"},{"code":"ro","name":"罗马尼亚语"},{"code":"mi","name":"毛利语"},{"code":"zu","name":"南非祖鲁语"},{"code":"nb","name":"挪威语"},{"code":"pt","name":"葡萄牙语"},{"code":"ja","name":"日语"},{"code":"sv","name":"瑞典语"},{"code":"sr","name":"塞尔维亚语"},{"code":"sk","name":"斯洛伐克语"},{"code":"sl","name":"斯洛文尼亚语"},{"code":"gd","name":"苏格兰盖尔语"},{"code":"th","name":"泰语"},{"code":"tr","name":"土耳其语"},{"code":"cy","name":"威尔士语"},{"code":"uk","name":"乌克兰语"},{"code":"es","name":"西班牙语"},{"code":"he","name":"希伯来语"},{"code":"el","name":"希腊语"},{"code":"hu","name":"匈牙利语"},{"code":"it","name":"意大利语"},{"code":"id","name":"印尼语"},{"code":"en","name":"英语"},{"code":"vi","name":"越南语"},{"code":"zh-tw","name":"中文（繁体）"},{"code":"zh-cn","name":"中文（简体）"},{"code":"he","name":"希伯来语"},{"code":"zh-cn","name":"中文（简体）"}],"ga":[{"code":"am","name":"Amárais"},{"code":"ar","name":"Araibis"},{"code":"az","name":"Asarbaiseáinis"},{"code":"eu","name":"Bascais"},{"code":"en","name":"Béarla"},{"code":"cy","name":"Breatnais"},{"code":"bg","name":"Bulgáiris"},{"code":"ca","name":"Catalóinis"},{"code":"ckb","name":"Coirdis (Sorani)"},{"code":"ko","name":"Cóiréis"},{"code":"hr","name":"Cróitis"},{"code":"da","name":"Danmhairgis"},{"code":"he","name":"Eabhrais"},{"code":"et","name":"Eastóinis"},{"code":"fi","name":"Fionlainnis"},{"code":"fr","name":"Fraincis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gaeilge na hAlban"},{"code":"gl","name":"Gailísis"},{"code":"de","name":"Gearmáinis"},{"code":"el","name":"Gréigis"},{"code":"id","name":"Indinéisis"},{"code":"it","name":"Iodáilis"},{"code":"nb","name":"Ioruais"},{"code":"is","name":"Íoslainnis"},{"code":"lv","name":"Laitvis"},{"code":"lt","name":"Liotuáinis"},{"code":"mi","name":"Maorais"},{"code":"nl","name":"Ollainnis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Polainnis"},{"code":"pt","name":"Portaingéilis"},{"code":"ro","name":"Rómáinis"},{"code":"ru","name":"Rúisis"},{"code":"ja","name":"Seapáinis"},{"code":"cs","name":"Seicis"},{"code":"sr","name":"Seirbis"},{"code":"zh-cn","name":"Sínis (Simplithe)"},{"code":"zh-tw","name":"Sínis (Traidisiúnta)"},{"code":"sl","name":"Slóivéinis"},{"code":"sk","name":"Slóvaicis"},{"code":"es","name":"Spáinnis"},{"code":"sv","name":"Sualainnis"},{"code":"zu","name":"Súlúis"},{"code":"th","name":"Téalainnis"},{"code":"tr","name":"Tuircis"},{"code":"uk","name":"Úcráinis"},{"code":"hu","name":"Ungáiris"},{"code":"vi","name":"Vítneaimis"},{"code":"he","name":"Eabhrais"},{"code":"zh-cn","name":"Sínis (Simplithe)"}],"gl":[{"code":"az","name":"acerbaixano"},{"code":"de","name":"alemán"},{"code":"am","name":"amárico"},{"code":"ar","name":"árabe"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chinés (simplificado)"},{"code":"zh-tw","name":"chinés (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"dinamarqués"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estoniano"},{"code":"eu","name":"éuscaro"},{"code":"fi","name":"finés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"gl","name":"galego"},{"code":"cy","name":"galés"},{"code":"el","name":"grego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruegués"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"romanés"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraíno"},{"code":"vi","name":"vietnamita"},{"code":"ja","name":"xaponés"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chinés (simplificado)"}],"sr":[{"code":"az","name":"азербејџански"},{"code":"am","name":"амхарски"},{"code":"ar","name":"арапски"},{"code":"eu","name":"баскијски"},{"code":"bg","name":"бугарски"},{"code":"cy","name":"велшки"},{"code":"vi","name":"вијетнамски"},{"code":"gl","name":"галски"},{"code":"el","name":"грчки"},{"code":"da","name":"дански"},{"code":"en","name":"енглески"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"id","name":"индонежански"},{"code":"ga","name":"ирски"},{"code":"is","name":"исландски"},{"code":"it","name":"италијански"},{"code":"ja","name":"јапански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"кинески (поједностављени)"},{"code":"zh-tw","name":"кинески (традиционални)"},{"code":"ko","name":"корејски"},{"code":"ckb","name":"курдски (сорани)"},{"code":"lv","name":"летонски"},{"code":"lt","name":"литвански"},{"code":"hu","name":"мађарски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немачки"},{"code":"nb","name":"норвешки"},{"code":"fa","name":"персијски"},{"code":"pl","name":"пољски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румунски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словачки"},{"code":"sl","name":"словеначки"},{"code":"sr","name":"српски"},{"code":"th","name":"тајски"},{"code":"tr","name":"турски"},{"code":"uk","name":"украјински"},{"code":"fi","name":"фински"},{"code":"fr","name":"француски"},{"code":"he","name":"хебрејски"},{"code":"nl","name":"холандски"},{"code":"hr","name":"хрватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шкотски галски"},{"code":"es","name":"шпански"},{"code":"he","name":"хебрејски"},{"code":"zh-cn","name":"кинески (поједностављени)"}],"pl":[{"code":"am","name":"amharski"},{"code":"en","name":"angielski"},{"code":"ar","name":"arabski"},{"code":"az","name":"azerski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bułgarski"},{"code":"zh-tw","name":"chiński (tradycyjny)"},{"code":"zh-cn","name":"chiński (uproszczony)"},{"code":"hr","name":"chorwacki"},{"code":"cs","name":"czeski"},{"code":"da","name":"duński"},{"code":"et","name":"estoński"},{"code":"fi","name":"fiński"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galicyjski"},{"code":"el","name":"grecki"},{"code":"he","name":"hebrajski"},{"code":"es","name":"hiszpański"},{"code":"id","name":"indonezyjski"},{"code":"ga","name":"irlandzki"},{"code":"is","name":"islandzki"},{"code":"ja","name":"japoński"},{"code":"ca","name":"kataloński"},{"code":"ko","name":"koreański"},{"code":"ckb","name":"kurdyjski (sorani)"},{"code":"lt","name":"litewski"},{"code":"lv","name":"łotewski"},{"code":"mi","name":"maori"},{"code":"nl","name":"niderlandzki"},{"code":"de","name":"niemiecki"},{"code":"nb","name":"norweski"},{"code":"fa","name":"perski"},{"code":"pl","name":"polski"},{"code":"pt","name":"portugalski"},{"code":"ru","name":"rosyjski"},{"code":"ro","name":"rumuński"},{"code":"sr","name":"serbski"},{"code":"sk","name":"słowacki"},{"code":"sl","name":"słoweński"},{"code":"gd","name":"szkocki gaelicki"},{"code":"sv","name":"szwedzki"},{"code":"th","name":"tajski"},{"code":"tr","name":"turecki"},{"code":"uk","name":"ukraiński"},{"code":"cy","name":"walijski"},{"code":"hu","name":"węgierski"},{"code":"vi","name":"wietnamski"},{"code":"it","name":"włoski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrajski"},{"code":"zh-cn","name":"chiński (uproszczony)"}],"hr":[{"code":"am","name":"amharik"},{"code":"ar","name":"arapski"},{"code":"az","name":"azerbajdžanski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bugarski"},{"code":"cs","name":"češki"},{"code":"da","name":"danski"},{"code":"en","name":"engleski"},{"code":"et","name":"estonski"},{"code":"fi","name":"finski"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galski"},{"code":"el","name":"grčki"},{"code":"he","name":"hebrejski"},{"code":"hr","name":"hrvatski"},{"code":"id","name":"indonezijski"},{"code":"ga","name":"irski"},{"code":"is","name":"islandski"},{"code":"ja","name":"japanski"},{"code":"ca","name":"katalonski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"},{"code":"zh-tw","name":"kineski (tradicionalni)"},{"code":"ko","name":"korejski"},{"code":"ckb","name":"kurdski (soranski)"},{"code":"lv","name":"latvijski/letonski"},{"code":"lt","name":"litvanski"},{"code":"hu","name":"mađarski"},{"code":"mi","name":"maori"},{"code":"nl","name":"nizozemski"},{"code":"nb","name":"norveški"},{"code":"de","name":"njemački"},{"code":"fa","name":"perzijski"},{"code":"pl","name":"poljski"},{"code":"pt","name":"portugalski"},{"code":"ro","name":"rumunjski"},{"code":"ru","name":"ruski"},{"code":"sk","name":"slovački"},{"code":"sl","name":"slovenski"},{"code":"sr","name":"srpski"},{"code":"gd","name":"škotski keltski"},{"code":"es","name":"španjolski"},{"code":"sv","name":"švedski"},{"code":"th","name":"tajlandski"},{"code":"it","name":"talijanski"},{"code":"tr","name":"turski"},{"code":"uk","name":"ukrajinski"},{"code":"cy","name":"velški"},{"code":"vi","name":"vijetnamski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"}],"zu":[{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"ca","name":"Catalan"},{"code":"zh-tw","name":"Chinese (Esenziwe lula)"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Irish"},{"code":"am","name":"isi-Amharic"},{"code":"eu","name":"isi-Basque"},{"code":"bg","name":"isi-Bulgarian"},{"code":"nl","name":"isi-Dutch"},{"code":"en","name":"isi-English"},{"code":"et","name":"isi-Estonian"},{"code":"gl","name":"isi-Galician"},{"code":"de","name":"isi-German"},{"code":"is","name":"isi-Icelandic"},{"code":"it","name":"isi-Italian"},{"code":"ja","name":"isi-Japanese"},{"code":"lv","name":"isi-Latvian"},{"code":"lt","name":"isi-Lithuanian"},{"code":"pl","name":"isi-Polish"},{"code":"pt","name":"isi-Portuguese"},{"code":"ru","name":"isi-Russian"},{"code":"gd","name":"isi-Scots Gaelic"},{"code":"es","name":"isi-Spanish"},{"code":"sv","name":"isi-Swedish"},{"code":"cy","name":"isi-Welsh"},{"code":"zu","name":"isiZulu"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"ro","name":"Romanian"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"am":[{"code":"hu","name":"ሀንጋሪኛ"},{"code":"lt","name":"ሊትዌንኛ"},{"code":"lv","name":"ላትቪያኛ"},{"code":"mi","name":"ማዮሪኛ"},{"code":"ru","name":"ራሽያኛ"},{"code":"ro","name":"ሮማኒያንኛ"},{"code":"sr","name":"ሰርቢያኛ"},{"code":"sk","name":"ስሎቫክኛ"},{"code":"sl","name":"ስሎቬንያኛ"},{"code":"sv","name":"ስዊድንኛ"},{"code":"es","name":"ስፓኒሽኛ"},{"code":"bg","name":"ቡልጋሪያኛ"},{"code":"eu","name":"ባስክኛ"},{"code":"vi","name":"ቪትናምኛ"},{"code":"tr","name":"ቱርክኛ"},{"code":"th","name":"ታይኛ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"},{"code":"zh-tw","name":"ቻይንኛ (ባሕላዊው)"},{"code":"cs","name":"ቼክኛ"},{"code":"nb","name":"ኖርዌጅያንኛ"},{"code":"am","name":"አማርኛ"},{"code":"az","name":"አዜርባይጃንኛ"},{"code":"ga","name":"አይሪሽ"},{"code":"is","name":"አይስላንድኛ"},{"code":"et","name":"ኤስቶኒያኛ"},{"code":"id","name":"እንዶኔዢያኛ"},{"code":"en","name":"እንግሊዝኛ"},{"code":"ckb","name":"ኩርድሽኛ (ሶራኒ)"},{"code":"ca","name":"ካታላንኛ"},{"code":"hr","name":"ክሮኤሽያኛ"},{"code":"ko","name":"ኮሪያኛ"},{"code":"cy","name":"ዌልሽ"},{"code":"ar","name":"ዐረብኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zu","name":"ዙሉኛ"},{"code":"gd","name":"የስኮት ጌልክኛ"},{"code":"uk","name":"ዩክሬንኛ"},{"code":"nl","name":"ደችኛ"},{"code":"da","name":"ዴንሽኛ"},{"code":"de","name":"ጀርመንኛ"},{"code":"ja","name":"ጃፓንኛ"},{"code":"gl","name":"ጋሊሺያኛ"},{"code":"el","name":"ግሪክኛ"},{"code":"it","name":"ጣሊያንኛ"},{"code":"fr","name":"ፈረንሳይኛ"},{"code":"fi","name":"ፊኒሽኛ"},{"code":"fa","name":"ፐርሺያኛ"},{"code":"pl","name":"ፖሊሽኛ"},{"code":"pt","name":"ፖርቱጋሊኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"}],"is":[{"code":"am","name":"amharíska"},{"code":"ar","name":"arabíska"},{"code":"az","name":"aserska"},{"code":"eu","name":"baskneska"},{"code":"bg","name":"búlgarska"},{"code":"da","name":"danska"},{"code":"et","name":"eistneska"},{"code":"en","name":"enska"},{"code":"fi","name":"finnska"},{"code":"fr","name":"franska"},{"code":"gl","name":"galisíska"},{"code":"el","name":"gríska"},{"code":"he","name":"hebreska"},{"code":"nl","name":"hollenska"},{"code":"id","name":"indónesíska"},{"code":"ga","name":"írska"},{"code":"is","name":"íslenska"},{"code":"it","name":"ítalska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalónska"},{"code":"zh-cn","name":"kínverska (einfölduð)"},{"code":"zh-tw","name":"kínverska (hefðbundin)"},{"code":"ko","name":"kóreska"},{"code":"hr","name":"króatíska"},{"code":"ckb","name":"kúrdíska (soraní)"},{"code":"lv","name":"lettneska"},{"code":"lt","name":"litháíska"},{"code":"mi","name":"maoríska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persneska"},{"code":"pt","name":"portúgalska"},{"code":"pl","name":"pólska"},{"code":"ro","name":"rúmenska"},{"code":"ru","name":"rússneska"},{"code":"sr","name":"serbneska"},{"code":"gd","name":"skosk-gelíska"},{"code":"sk","name":"slóvakíska"},{"code":"sl","name":"slóvenska"},{"code":"es","name":"spænska"},{"code":"zu","name":"súlú"},{"code":"sv","name":"sænska"},{"code":"th","name":"taílenska"},{"code":"cs","name":"tékkneska"},{"code":"tr","name":"tyrkneska"},{"code":"hu","name":"ungverska"},{"code":"uk","name":"úkraínska"},{"code":"cy","name":"velska"},{"code":"vi","name":"víetnamska"},{"code":"de","name":"þýska"},{"code":"he","name":"hebreska"},{"code":"zh-cn","name":"kínverska (einfölduð)"}],"lv":[{"code":"am","name":"amharu"},{"code":"en","name":"angļu"},{"code":"ar","name":"arābu"},{"code":"az","name":"azerbaidžāņu"},{"code":"eu","name":"basku"},{"code":"bg","name":"bulgāru"},{"code":"cs","name":"čehu"},{"code":"da","name":"dāņu"},{"code":"fr","name":"franču"},{"code":"gl","name":"galisiešu"},{"code":"el","name":"grieķu"},{"code":"nl","name":"holandiešu"},{"code":"hr","name":"horvātu"},{"code":"et","name":"igauņu"},{"code":"id","name":"indonēziešu"},{"code":"ga","name":"īru"},{"code":"is","name":"īslandiešu"},{"code":"it","name":"itāļu"},{"code":"he","name":"ivrits"},{"code":"ja","name":"japāņu"},{"code":"ca","name":"katalāņu"},{"code":"ko","name":"korejiešu"},{"code":"ru","name":"krievu"},{"code":"ckb","name":"kurdu (sorani)"},{"code":"zh-tw","name":"ķīniešu (tradicionālā)"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"},{"code":"lv","name":"latviešu"},{"code":"lt","name":"lietuviešu"},{"code":"mi","name":"maori"},{"code":"nb","name":"norvēģu"},{"code":"fa","name":"persiešu"},{"code":"pl","name":"poļu"},{"code":"pt","name":"portugāļu"},{"code":"ro","name":"rumāņu"},{"code":"sr","name":"serbu"},{"code":"gd","name":"skotu gēlu"},{"code":"sk","name":"slovāku"},{"code":"sl","name":"slovēņu"},{"code":"fi","name":"somu"},{"code":"es","name":"spāņu"},{"code":"th","name":"taju"},{"code":"tr","name":"turku"},{"code":"uk","name":"ukraiņu"},{"code":"hu","name":"ungāru"},{"code":"de","name":"vācu"},{"code":"cy","name":"velsiešu"},{"code":"vi","name":"vjetnamiešu"},{"code":"zu","name":"zulu"},{"code":"sv","name":"zviedru"},{"code":"he","name":"ivrits"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"}],"en":[{"code":"am","name":"Amharic"},{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgarian"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"zh-tw","name":"Chinese (Traditional)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"nl","name":"Dutch"},{"code":"en","name":"English"},{"code":"et","name":"Estonian"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"gl","name":"Galician"},{"code":"de","name":"German"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"is","name":"Icelandic"},{"code":"id","name":"Indonesian"},{"code":"ga","name":"Irish Gaelic"},{"code":"it","name":"Italian"},{"code":"ja","name":"Japanese"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"lv","name":"Latvian"},{"code":"lt","name":"Lithuanian"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"pl","name":"Polish"},{"code":"pt","name":"Portuguese"},{"code":"ro","name":"Romanian"},{"code":"ru","name":"Russian"},{"code":"gd","name":"Scots Gaelic"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"es","name":"Spanish"},{"code":"sv","name":"Swedish"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"bg":[{"code":"az","name":"азербайджански"},{"code":"am","name":"амхарски"},{"code":"en","name":"английски"},{"code":"ar","name":"арабски"},{"code":"eu","name":"баски"},{"code":"bg","name":"български"},{"code":"vi","name":"виетнамски"},{"code":"gl","name":"галисийски"},{"code":"el","name":"гръцки"},{"code":"da","name":"датски"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийски"},{"code":"ga","name":"ирландски"},{"code":"is","name":"исландски"},{"code":"es","name":"испански"},{"code":"it","name":"италиански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"китайски (опростен)"},{"code":"zh-tw","name":"китайски (традиционен)"},{"code":"ko","name":"корейски"},{"code":"ckb","name":"кюрдски (сорани)"},{"code":"lv","name":"латвийски"},{"code":"lt","name":"литовски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немски"},{"code":"nl","name":"нидерландски"},{"code":"nb","name":"норвежки"},{"code":"fa","name":"персийски"},{"code":"pl","name":"полски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румънски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словашки"},{"code":"sl","name":"словенски"},{"code":"sr","name":"сръбски"},{"code":"th","name":"тайландски"},{"code":"tr","name":"турски"},{"code":"cy","name":"уелски"},{"code":"uk","name":"украински"},{"code":"hu","name":"унгарски"},{"code":"fi","name":"финландски"},{"code":"fr","name":"френски"},{"code":"hr","name":"хърватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шотландски келтски"},{"code":"ja","name":"японски"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайски (опростен)"}],"pt-br":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"ru":[{"code":"az","name":"азербайджанский"},{"code":"am","name":"амхарский"},{"code":"en","name":"английский"},{"code":"ar","name":"арабский"},{"code":"eu","name":"баскский"},{"code":"bg","name":"болгарский"},{"code":"cy","name":"валлийский"},{"code":"hu","name":"венгерский"},{"code":"vi","name":"вьетнамский"},{"code":"gl","name":"галисийский"},{"code":"el","name":"греческий"},{"code":"da","name":"датский"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийский"},{"code":"ga","name":"ирландский"},{"code":"is","name":"исландский"},{"code":"es","name":"испанский"},{"code":"it","name":"итальянский"},{"code":"ca","name":"каталанский"},{"code":"zh-tw","name":"китайский (традиционный)"},{"code":"zh-cn","name":"китайский (упрощенный)"},{"code":"ko","name":"корейский"},{"code":"ckb","name":"курдский (сорани)"},{"code":"lv","name":"латышский"},{"code":"lt","name":"литовский"},{"code":"mi","name":"маори"},{"code":"de","name":"немецкий"},{"code":"nl","name":"нидерландский"},{"code":"nb","name":"норвежский"},{"code":"fa","name":"персидский"},{"code":"pl","name":"польский"},{"code":"pt","name":"португальский"},{"code":"ro","name":"румынский"},{"code":"ru","name":"русский"},{"code":"sr","name":"сербский"},{"code":"sk","name":"словацкий"},{"code":"sl","name":"словенский"},{"code":"th","name":"тайский"},{"code":"tr","name":"турецкий"},{"code":"uk","name":"украинский"},{"code":"fi","name":"финский"},{"code":"fr","name":"французский"},{"code":"hr","name":"хорватский"},{"code":"cs","name":"чешский"},{"code":"sv","name":"шведский"},{"code":"gd","name":"шотландский (гэльский)"},{"code":"et","name":"эстонский"},{"code":"ja","name":"японский"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайский (упрощенный)"}],"sv":[{"code":"am","name":"amhariska"},{"code":"ar","name":"arabiska"},{"code":"az","name":"azerbajdzjanska"},{"code":"eu","name":"baskiska"},{"code":"bg","name":"bulgariska"},{"code":"da","name":"danska"},{"code":"en","name":"engelska"},{"code":"et","name":"estniska"},{"code":"fi","name":"finska"},{"code":"fr","name":"franska"},{"code":"gd","name":"gaeliska"},{"code":"gl","name":"galiciska"},{"code":"el","name":"grekiska"},{"code":"he","name":"hebreiska"},{"code":"id","name":"indonesiska"},{"code":"ga","name":"irländska"},{"code":"is","name":"isländska"},{"code":"it","name":"italienska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalanska"},{"code":"zh-cn","name":"kinesiska (förenklad)"},{"code":"zh-tw","name":"kinesiska (traditionell)"},{"code":"ko","name":"koreanska"},{"code":"hr","name":"kroatiska"},{"code":"ckb","name":"kurdiska (sorani)"},{"code":"lv","name":"lettiska"},{"code":"lt","name":"litauiska"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederländska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persiska"},{"code":"pl","name":"polska"},{"code":"pt","name":"portugisiska"},{"code":"ro","name":"rumänska"},{"code":"ru","name":"ryska"},{"code":"sr","name":"serbiska"},{"code":"sk","name":"slovakiska"},{"code":"sl","name":"slovenska"},{"code":"es","name":"spanska"},{"code":"sv","name":"svenska"},{"code":"th","name":"thailändska"},{"code":"cs","name":"tjeckiska"},{"code":"tr","name":"turkiska"},{"code":"de","name":"tyska"},{"code":"uk","name":"ukrainska"},{"code":"hu","name":"ungerska"},{"code":"vi","name":"vietnamesiska"},{"code":"cy","name":"walesiska"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebreiska"},{"code":"zh-cn","name":"kinesiska (förenklad)"}],"el":[{"code":"en","name":"Αγγλικά"},{"code":"az","name":"Αζερμπαϊτζανικά"},{"code":"am","name":"Αμχαρικά"},{"code":"ar","name":"Αραβικά"},{"code":"eu","name":"Βασκικά"},{"code":"vi","name":"Βιετναμεζικά"},{"code":"bg","name":"Βουλγαρικά"},{"code":"gd","name":"Γαελικά Σκοτίας"},{"code":"gl","name":"Γαλικιακά"},{"code":"fr","name":"Γαλλικά"},{"code":"de","name":"Γερμανικά"},{"code":"da","name":"Δανικά"},{"code":"he","name":"Εβραϊκά"},{"code":"el","name":"Ελληνικά"},{"code":"et","name":"Εσθονικά"},{"code":"zu","name":"Ζουλού"},{"code":"ja","name":"Ιαπωνικά"},{"code":"id","name":"Ινδονησιακά"},{"code":"ga","name":"Ιρλανδικά"},{"code":"is","name":"Ισλανδικά"},{"code":"es","name":"Ισπανικά"},{"code":"it","name":"Ιταλικά"},{"code":"ca","name":"Καταλανικά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"},{"code":"zh-tw","name":"Κινεζικά (Παραδοσιακά)"},{"code":"ko","name":"Κορεατικά"},{"code":"ckb","name":"Κουρδικά (Σορανί)"},{"code":"hr","name":"Κροατικά"},{"code":"lv","name":"Λετονικά"},{"code":"lt","name":"Λιθουανικά"},{"code":"mi","name":"Μαορί"},{"code":"nb","name":"Νορβηγικά"},{"code":"nl","name":"Ολλανδικά"},{"code":"cy","name":"Ουαλικά"},{"code":"hu","name":"Ουγγρικά"},{"code":"uk","name":"Ουκρανικά"},{"code":"fa","name":"Περσικά"},{"code":"pl","name":"Πολωνικά"},{"code":"pt","name":"Πορτογαλικά"},{"code":"ro","name":"Ρουμανικά"},{"code":"ru","name":"Ρωσικά"},{"code":"sr","name":"Σερβικά"},{"code":"sk","name":"Σλοβακικά"},{"code":"sl","name":"Σλοβενικά"},{"code":"sv","name":"Σουηδικά"},{"code":"th","name":"Ταϊλανδεζικά"},{"code":"tr","name":"Τουρκικά"},{"code":"cs","name":"Τσεχικά"},{"code":"fi","name":"Φινλανδικά"},{"code":"he","name":"Εβραϊκά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"}],"sl":[{"code":"am","name":"amharščina"},{"code":"en","name":"angleščina"},{"code":"ar","name":"arabščina"},{"code":"az","name":"azerbajdžanščina"},{"code":"eu","name":"baskovščina"},{"code":"bg","name":"bolgarščina"},{"code":"cs","name":"češčina"},{"code":"da","name":"danščina"},{"code":"et","name":"estonščina"},{"code":"fi","name":"finščina"},{"code":"fr","name":"francoščina"},{"code":"gl","name":"galicijščina"},{"code":"el","name":"grščina"},{"code":"he","name":"hebrejščina"},{"code":"hr","name":"hrvaščina"},{"code":"id","name":"indonezijščina"},{"code":"ga","name":"irščina"},{"code":"is","name":"islandščina"},{"code":"it","name":"italijanščina"},{"code":"ja","name":"japonščina"},{"code":"ca","name":"katalonščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"},{"code":"zh-tw","name":"kitajščina (tradicionalna)"},{"code":"ko","name":"korejščina"},{"code":"ckb","name":"kurdščina (soranščina)"},{"code":"lv","name":"latvijščina"},{"code":"lt","name":"litovščina"},{"code":"hu","name":"madžarščina"},{"code":"mi","name":"maorščina"},{"code":"de","name":"nemščina"},{"code":"nl","name":"nizozemščina"},{"code":"nb","name":"norveščina"},{"code":"fa","name":"perzijščina"},{"code":"pl","name":"poljščina"},{"code":"pt","name":"portugalščina"},{"code":"ro","name":"romunščina"},{"code":"ru","name":"ruščina"},{"code":"sk","name":"slovaščina"},{"code":"sl","name":"slovenščina"},{"code":"sr","name":"srbščina"},{"code":"gd","name":"škotska gelščina"},{"code":"es","name":"španščina"},{"code":"sv","name":"švedščina"},{"code":"th","name":"tajščina"},{"code":"tr","name":"turščina"},{"code":"uk","name":"ukrajinščina"},{"code":"cy","name":"valižanščina"},{"code":"vi","name":"vietnamščina"},{"code":"zu","name":"zulujščina"},{"code":"he","name":"hebrejščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"}],"id":[{"code":"am","name":"Amhara"},{"code":"ar","name":"Arab"},{"code":"az","name":"Azerbaijan"},{"code":"eu","name":"Basque"},{"code":"nl","name":"Belanda"},{"code":"bg","name":"Bulgaria"},{"code":"cs","name":"Ceko"},{"code":"zh-cn","name":"China (Aks. Sederhana)"},{"code":"zh-tw","name":"China (Aks. Tradisional)"},{"code":"da","name":"Denmark"},{"code":"et","name":"Estonia"},{"code":"fa","name":"Farsi"},{"code":"fi","name":"Finlandia"},{"code":"ga","name":"Gaelig"},{"code":"gd","name":"Gaelik Skotlandia"},{"code":"gl","name":"Galisia"},{"code":"he","name":"Ibrani"},{"code":"id","name":"Indonesia"},{"code":"en","name":"Inggris"},{"code":"is","name":"Islan"},{"code":"it","name":"Italia"},{"code":"ja","name":"Jepang"},{"code":"de","name":"Jerman"},{"code":"ca","name":"Katala"},{"code":"ko","name":"Korea"},{"code":"hr","name":"Kroat"},{"code":"ckb","name":"Kurdi (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Lituania"},{"code":"hu","name":"Magyar"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norsk"},{"code":"pl","name":"Polandia"},{"code":"pt","name":"Portugis"},{"code":"fr","name":"Prancis"},{"code":"ro","name":"Rumania"},{"code":"ru","name":"Rusia"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovakia"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Spanyol"},{"code":"sv","name":"Swensk"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turki"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Vietnam"},{"code":"cy","name":"Wales"},{"code":"el","name":"Yunani"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ibrani"},{"code":"zh-cn","name":"China (Aks. Sederhana)"}],"th":[{"code":"el","name":"กรีก"},{"code":"gl","name":"กาลิเชียน"},{"code":"gd","name":"เกลิกสกอต"},{"code":"ko","name":"เกาหลี"},{"code":"ca","name":"คาตาลัน"},{"code":"ckb","name":"เคิร์ด (โซรานี)"},{"code":"hr","name":"โครเอเชีย"},{"code":"zh-tw","name":"จีน (ตัวเต็ม)"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"},{"code":"cs","name":"เช็ก"},{"code":"zu","name":"ซูลู"},{"code":"sr","name":"เซอร์เบียน"},{"code":"ja","name":"ญี่ปุ่น"},{"code":"nl","name":"ดัตช์"},{"code":"da","name":"เดนมาร์ก"},{"code":"tr","name":"ตุรกี"},{"code":"th","name":"ไทย"},{"code":"nb","name":"นอร์เวย์"},{"code":"bg","name":"บัลแกเรีย"},{"code":"eu","name":"บาสก์"},{"code":"fa","name":"เปอร์เซีย"},{"code":"pt","name":"โปรตุเกส"},{"code":"pl","name":"โปแลนด์"},{"code":"fr","name":"ฝรั่งเศส"},{"code":"fi","name":"ฟินแลนด์"},{"code":"mi","name":"เมารี"},{"code":"uk","name":"ยูเครน"},{"code":"de","name":"เยอรมัน"},{"code":"ru","name":"รัสเซีย"},{"code":"ro","name":"โรมาเนีย"},{"code":"lv","name":"ลัตเวีย"},{"code":"lt","name":"ลิทัวเนีย"},{"code":"cy","name":"เวลส์"},{"code":"vi","name":"เวียดนาม"},{"code":"es","name":"สเปน"},{"code":"sk","name":"สโลวัก"},{"code":"sl","name":"สโลวีเนีย"},{"code":"sv","name":"สวีเดน"},{"code":"en","name":"อังกฤษ"},{"code":"am","name":"อัมฮาริก"},{"code":"az","name":"อาร์เซอร์ไบจัน"},{"code":"ar","name":"อาหรับ"},{"code":"it","name":"อิตาลี"},{"code":"id","name":"อินโดนีเซีย"},{"code":"et","name":"เอสโทเนีย"},{"code":"is","name":"ไอซ์แลนด์"},{"code":"ga","name":"ไอร์แลนด์"},{"code":"hu","name":"ฮังการี"},{"code":"he","name":"ฮีบรู"},{"code":"he","name":"ฮีบรู"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"}],"gd":[{"code":"am","name":"Amtharais"},{"code":"ar","name":"Arabais"},{"code":"az","name":"Asarbaideànais"},{"code":"eu","name":"Basgais"},{"code":"en","name":"Beurla"},{"code":"vi","name":"Bhiet-Namais"},{"code":"bg","name":"Bulgarais"},{"code":"th","name":"Cànan nan Tàidh"},{"code":"ca","name":"Catalanais"},{"code":"ko","name":"Coirèanais"},{"code":"hr","name":"Cròthaisis"},{"code":"cy","name":"Cuimris"},{"code":"ckb","name":"Cùrdais (Sorani)"},{"code":"da","name":"Danmhairgis"},{"code":"nl","name":"Duitsis"},{"code":"he","name":"Eabhra"},{"code":"it","name":"Eadailtis"},{"code":"et","name":"Eastoinis"},{"code":"fi","name":"Fionnlannais"},{"code":"fr","name":"Fraingis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gàidhlig"},{"code":"gl","name":"Gailìsis"},{"code":"de","name":"Gearmailtis"},{"code":"el","name":"Grèigis"},{"code":"id","name":"Innd-Innsis"},{"code":"is","name":"Innis-Tìlis"},{"code":"lv","name":"Laitbheis"},{"code":"lt","name":"Liotuainis"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nirribhis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Pòlainnis"},{"code":"pt","name":"Portagailis"},{"code":"ro","name":"Romàinis"},{"code":"ru","name":"Ruisis"},{"code":"cs","name":"Seacais"},{"code":"ja","name":"Seapanais"},{"code":"sr","name":"Sèirbis"},{"code":"zh-tw","name":"Sìonais (seann-nòsach)"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"},{"code":"sk","name":"Slòbhacais"},{"code":"sl","name":"Slòbhainis"},{"code":"es","name":"Spàinntis"},{"code":"sv","name":"Suainis"},{"code":"tr","name":"Turcais"},{"code":"uk","name":"Ucràinis"},{"code":"hu","name":"Ungairis"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Eabhra"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"}],"pt":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"uk":[{"code":"az","name":"азербайджанська"},{"code":"am","name":"амхарська"},{"code":"en","name":"англійська"},{"code":"ar","name":"арабська"},{"code":"eu","name":"баскська"},{"code":"bg","name":"болгарська"},{"code":"vi","name":"в’єтнамська"},{"code":"cy","name":"валлійська"},{"code":"el","name":"грецька"},{"code":"gl","name":"ґалісійська"},{"code":"da","name":"данська"},{"code":"et","name":"естонська"},{"code":"zu","name":"зулу"},{"code":"he","name":"іврит"},{"code":"id","name":"індонезійська"},{"code":"ga","name":"ірландська"},{"code":"is","name":"ісландська"},{"code":"es","name":"іспанська"},{"code":"it","name":"італійська"},{"code":"ca","name":"каталанська"},{"code":"zh-cn","name":"китайська (спрощена)"},{"code":"zh-tw","name":"китайська (традиційна)"},{"code":"ko","name":"корейська"},{"code":"ckb","name":"курдська (сорані)"},{"code":"lv","name":"латиська"},{"code":"lt","name":"литовська"},{"code":"mi","name":"маорі"},{"code":"nl","name":"нідерландська"},{"code":"de","name":"німецька"},{"code":"nb","name":"норвезька"},{"code":"fa","name":"перська"},{"code":"pl","name":"польська"},{"code":"pt","name":"португальська"},{"code":"ru","name":"російська"},{"code":"ro","name":"румунська"},{"code":"sr","name":"сербська"},{"code":"sk","name":"словацька"},{"code":"sl","name":"словенська"},{"code":"th","name":"тайська"},{"code":"tr","name":"турецька"},{"code":"hu","name":"угорська"},{"code":"uk","name":"українська"},{"code":"fi","name":"фінська"},{"code":"fr","name":"французька"},{"code":"hr","name":"хорватська"},{"code":"cs","name":"чеська"},{"code":"sv","name":"шведська"},{"code":"gd","name":"шотландська (ґельська)"},{"code":"ja","name":"японська"},{"code":"he","name":"іврит"},{"code":"zh-cn","name":"китайська (спрощена)"}],"ca":[{"code":"de","name":"alemany"},{"code":"am","name":"amhàric"},{"code":"en","name":"anglès"},{"code":"ar","name":"àrab"},{"code":"az","name":"àzeri"},{"code":"eu","name":"basc"},{"code":"bg","name":"búlgar"},{"code":"es","name":"castellà"},{"code":"ca","name":"català"},{"code":"ko","name":"coreà"},{"code":"hr","name":"croat"},{"code":"da","name":"danès"},{"code":"sk","name":"eslovac"},{"code":"sl","name":"eslovè"},{"code":"et","name":"estonià"},{"code":"fi","name":"finès"},{"code":"fr","name":"francès"},{"code":"gd","name":"gaèlic escocès"},{"code":"gl","name":"gallec"},{"code":"cy","name":"gal·lès"},{"code":"el","name":"grec"},{"code":"he","name":"hebreu"},{"code":"hu","name":"hongarès"},{"code":"id","name":"indonesi"},{"code":"ga","name":"irlandès"},{"code":"is","name":"islandès"},{"code":"it","name":"italià"},{"code":"ja","name":"japonès"},{"code":"ckb","name":"kurd (sorani)"},{"code":"lv","name":"letó"},{"code":"lt","name":"lituà"},{"code":"mi","name":"maori"},{"code":"nl","name":"neerlandès"},{"code":"nb","name":"noruec"},{"code":"fa","name":"persa"},{"code":"pl","name":"polonès"},{"code":"pt","name":"portuguès"},{"code":"ro","name":"romanès"},{"code":"ru","name":"rus"},{"code":"sr","name":"serbi"},{"code":"sv","name":"suec"},{"code":"th","name":"tai"},{"code":"tr","name":"turc"},{"code":"cs","name":"txec"},{"code":"uk","name":"ucraïnès"},{"code":"vi","name":"vietnamita"},{"code":"zh-cn","name":"xinès (simplificat)"},{"code":"zh-tw","name":"xinès (tradicional)"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreu"},{"code":"zh-cn","name":"xinès (simplificat)"}],"es":[{"code":"de","name":"alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"azerí"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chino (simplificado)"},{"code":"zh-tw","name":"chino (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"japonés"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraniano"},{"code":"vi","name":"vietnamita"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chino (simplificado)"}],"es-419":[{"code":"de","name":"alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"azerí"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chino (simplificado)"},{"code":"zh-tw","name":"chino (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"japonés"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraniano"},{"code":"vi","name":"vietnamita"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chino (simplificado)"}],"fr":[{"code":"de","name":"Allemand"},{"code":"am","name":"Amharique"},{"code":"en","name":"Anglais"},{"code":"ar","name":"Arabe"},{"code":"az","name":"Azéri"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgare"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinois (simplifié)"},{"code":"zh-tw","name":"Chinois (traditionnel)"},{"code":"ko","name":"Coréen"},{"code":"hr","name":"Croate"},{"code":"da","name":"Danois"},{"code":"es","name":"Espagnol"},{"code":"et","name":"Estonien"},{"code":"fi","name":"Finnois"},{"code":"fr","name":"Français"},{"code":"gd","name":"Gaélique (Écosse)"},{"code":"gl","name":"Galicien"},{"code":"cy","name":"Gallois"},{"code":"el","name":"Grec"},{"code":"he","name":"Hébreu"},{"code":"hu","name":"Hongrois"},{"code":"id","name":"Indonésien"},{"code":"ga","name":"Irlandais"},{"code":"is","name":"Islandais"},{"code":"it","name":"Italien"},{"code":"ja","name":"Japonais"},{"code":"ckb","name":"Kurde (Sorani)"},{"code":"lv","name":"Letton"},{"code":"lt","name":"Lituanien"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Néerlandais"},{"code":"nb","name":"Norvégien"},{"code":"fa","name":"Persan"},{"code":"pl","name":"Polonais"},{"code":"pt","name":"Portugais"},{"code":"ro","name":"Roumain"},{"code":"ru","name":"Russe"},{"code":"sr","name":"Serbe"},{"code":"sk","name":"Slovaque"},{"code":"sl","name":"Slovène"},{"code":"sv","name":"Suédois"},{"code":"cs","name":"Tchèque"},{"code":"th","name":"Thaï"},{"code":"tr","name":"Turc"},{"code":"uk","name":"Ukrainien"},{"code":"vi","name":"Vietnamien"},{"code":"zu","name":"Zoulou"},{"code":"he","name":"Hébreu"},{"code":"zh-cn","name":"Chinois (simplifié)"}],"ro":[{"code":"am","name":"Amharică"},{"code":"ar","name":"Arabă"},{"code":"az","name":"Azerbaidjană"},{"code":"eu","name":"Bască"},{"code":"bg","name":"Bulgară"},{"code":"ca","name":"Catalană"},{"code":"cs","name":"Cehă"},{"code":"zh-cn","name":"Chineză (Simplificată)"},{"code":"zh-tw","name":"Chineză (Tradițională)"},{"code":"ko","name":"Coreeană"},{"code":"hr","name":"Croată"},{"code":"da","name":"Daneză"},{"code":"he","name":"Ebraică"},{"code":"en","name":"Engleză"},{"code":"et","name":"Estonă"},{"code":"fi","name":"Finlandeză"},{"code":"fr","name":"Franceză"},{"code":"cy","name":"Galeză"},{"code":"gd","name":"Galica scoțiană"},{"code":"gl","name":"Galiciană"},{"code":"de","name":"Germană"},{"code":"el","name":"Greacă"},{"code":"id","name":"Indoneziană"},{"code":"ga","name":"Irlandeză"},{"code":"is","name":"Islandeză"},{"code":"it","name":"Italiană"},{"code":"ja","name":"Japoneză"},{"code":"ckb","name":"Kurdă (Sorani)"},{"code":"lv","name":"Letonă"},{"code":"lt","name":"Lituaniană"},{"code":"hu","name":"Maghiară"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Neerlandeză"},{"code":"nb","name":"Norvegiană"},{"code":"fa","name":"Persană"},{"code":"pl","name":"Poloneză"},{"code":"pt","name":"Portugheză"},{"code":"ro","name":"Română"},{"code":"ru","name":"Rusă"},{"code":"sr","name":"Sârbă"},{"code":"sk","name":"Slovacă"},{"code":"sl","name":"Slovenă"},{"code":"es","name":"Spaniolă"},{"code":"sv","name":"Suedeză"},{"code":"th","name":"Thailandeză"},{"code":"tr","name":"Turcă"},{"code":"uk","name":"Ucraineană"},{"code":"vi","name":"Vietnameză"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraică"},{"code":"zh-cn","name":"Chineză (Simplificată)"}],"sk":[{"code":"am","name":"amharčina"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabčina"},{"code":"az","name":"azerbajdžančina"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharčina"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradičná)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánčina"},{"code":"et","name":"estónčina"},{"code":"fi","name":"fínčina"},{"code":"fr","name":"francúzština"},{"code":"gl","name":"galícijčina"},{"code":"el","name":"gréčtina"},{"code":"he","name":"hebrejčina"},{"code":"nl","name":"holandčina"},{"code":"hr","name":"chorvátčina"},{"code":"id","name":"indonézština"},{"code":"ga","name":"írčina"},{"code":"is","name":"islandčina"},{"code":"ja","name":"japončina"},{"code":"ca","name":"katalánčina"},{"code":"ko","name":"kórejčina"},{"code":"ckb","name":"kurdčina (sorání)"},{"code":"lt","name":"litovčina"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarčina"},{"code":"mi","name":"maorijčina"},{"code":"de","name":"nemčina"},{"code":"nb","name":"nórčina"},{"code":"fa","name":"perzština"},{"code":"pl","name":"poľština"},{"code":"pt","name":"portugalčina"},{"code":"ro","name":"rumunčina"},{"code":"ru","name":"ruština"},{"code":"sk","name":"slovenčina"},{"code":"sl","name":"slovinčina"},{"code":"sr","name":"srbčina"},{"code":"gd","name":"škótska gaelčina"},{"code":"es","name":"španielčina"},{"code":"sv","name":"švédčina"},{"code":"it","name":"taliančina"},{"code":"th","name":"thajčina"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinčina"},{"code":"vi","name":"vietnamčina"},{"code":"cy","name":"waleština"},{"code":"zu","name":"zuluština"},{"code":"he","name":"hebrejčina"},{"code":"zh-cn","name":"čínština (zjednodušená)"}]},"nameMap":{"albánština":"sq","amharština":"am","angličtina":"en","arabština":"ar","arménština":"hy","ázerbájdžánština":"az","barmština":"my","baskičtina":"eu","běloruština":"be","bulharština":"bg","čeština":"cs","čínština (tradiční)":"zh-tw","čínština (zjednodušená)":"zh-cn","dánština":"da","esperanto":"eo","estonština":"et","finština":"fi","francouzština":"fr","galicijština":"gl","haitská kreolština":"ht","hebrejština":"he","hindština":"hi","holandština":"nl","chorvatština":"hr","indonéština":"id","irština":"ga","islandština":"is","italština":"it","japonština":"ja","kannadština":"kn","katalánština":"ca","korejština":"ko","kurdština":"ku","kurdština (sorání)":"ckb","latina":"la","litevština":"lt","lotyština":"lv","maďarština":"hu","makedonština":"mk","malajálamština":"ml","malajština":"ms","maltština":"mt","maorština":"mi","marátština":"mr","mongolština":"mn","němčina":"de","norština":"nb","perština":"fa","polština":"pl","portugalština":"pt","rumunština":"ro","ruština":"ru","řečtina":"el","skotská gaelština":"gd","slovenština":"sk","slovinština":"sl","srbština":"sr","španělština":"es","švédština":"sv","telužština":"te","thajština":"th","turečtina":"tr","ukrajinština":"uk","uzbečtina":"uz","velština":"cy","vietnamština":"vi","zulu":"zu","albanisch":"sq","amharisch":"am","arabisch":"ar","armenisch":"hy","aserbaidschanisch":"az","baskisch":"eu","belarussisch":"be","birmanisch":"my","bulgarisch":"bg","chinesisch (traditionell)":"zh-tw","chinesisch (vereinfacht)":"zh-cn","dänisch":"da","deutsch":"de","englisch":"en","estnisch":"et","finnisch":"fi","französisch":"fr","galizisch":"gl","griechisch":"el","haitianisch":"ht","hebräisch":"he","hindi":"hi","indonesisch":"id","irisch":"ga","isländisch":"is","italienisch":"it","japanisch":"ja","kannada":"kn","katalanisch":"ca","koreanisch":"ko","kroatisch":"hr","kurdisch (kurmandschi)":"ku","kurdisch (sorani)":"ckb","latein":"la","lettisch":"lv","litauisch":"lt","malayalam":"ml","malaysisch":"ms","maltesisch":"mt","maori":"mi","marathi":"mr","mazedonisch":"mk","mongolisch":"mn","niederländisch":"nl","norwegisch":"nb","persisch":"fa","polnisch":"pl","portugiesisch":"pt","rumänisch":"ro","russisch":"ru","schottisch-gälisch":"gd","schwedisch":"sv","serbisch":"sr","slowakisch":"sk","slowenisch":"sl","spanisch":"es","telugu":"te","thailändisch":"th","tschechisch":"cs","türkisch":"tr","ukrainisch":"uk","ungarisch":"hu","usbekisch":"uz","vietnamesisch":"vi","walisisch":"cy","albaania":"sq","amhaari":"am","araabia":"ar","armeenia":"hy","aserbaidžaani":"az","baski":"eu","birma":"my","bulgaaria":"bg","eesti":"et","galeegi":"gl","haitikreooli":"ht","heebrea":"he","hiina (lihtsustatud)":"zh-cn","hiina (traditsiooniline)":"zh-tw","hispaania":"es","hollandi":"nl","horvaadi":"hr","iiri":"ga","indoneesia":"id","inglise":"en","islandi":"is","itaalia":"it","jaapani":"ja","katalaani":"ca","korea":"ko","kreeka":"el","kurdi (kurmandži)":"ku","kurdi (sorani)":"ckb","ladina":"la","leedu":"lt","läti":"lv","makedoonia":"mk","malai":"ms","malajalaami":"ml","malta":"mt","maoori":"mi","marati":"mr","mongoli":"mn","norra":"nb","poola":"pl","portugali":"pt","prantsuse":"fr","pärsia":"fa","rootsi":"sv","rumeenia":"ro","saksa":"de","serbia":"sr","slovaki":"sk","sloveeni":"sl","soome":"fi","suulu":"zu","šoti":"gd","taani":"da","tai":"th","tšehhi":"cs","türgi":"tr","uelsi":"cy","ukraina":"uk","ungari":"hu","usbeki":"uz","valgevene":"be","vene":"ru","vietnami":"vi","albanian":"sq","amharic":"am","arabic":"ar","armenian":"hy","azerbaijani":"az","basque":"eu","belarusian":"be","bulgarian":"bg","catalan":"ca","chinese (simplified)":"zh-cn","chinese (traditional)":"zh-tw","croatian":"hr","czech":"cs","danish":"da","dutch":"nl","english":"en","estonian":"et","finnish":"fi","french":"fr","galician":"gl","german":"de","greek":"el","haitian creole":"ht","hebrew":"he","hungarian":"hu","icelandic":"is","indonesian":"id","irish gaelic":"ga","italian":"it","japanese":"ja","korean":"ko","kurdish (kurmanji)":"ku","kurdish (sorani)":"ckb","latin":"la","latvian":"lv","lithuanian":"lt","macedonian":"mk","malay":"ms","maltese":"mt","mongolian":"mn","myanmar (burmese)":"my","norwegian":"nb","persian":"fa","polish":"pl","portuguese":"pt","romanian":"ro","russian":"ru","scots gaelic":"gd","serbian":"sr","slovak":"sk","slovenian":"sl","spanish":"es","swedish":"sv","thai":"th","turkish":"tr","ukrainian":"uk","uzbek":"uz","vietnamese":"vi","welsh":"cy","갈리시아어":"gl","그리스어":"el","네덜란드어":"nl","노르웨이어":"nb","덴마크어":"da","독일어":"de","라트비아어":"lv","라틴어":"la","러시아어":"ru","루마니아어":"ro","리투아니아어":"lt","마라티어":"mr","마오리어":"mi","마케도니아어":"mk","말라얄람어":"ml","말레이어":"ms","몰타어":"mt","몽골어":"mn","미얀마어(버마어)":"my","바스크어":"eu","베트남어":"vi","벨라루스어":"be","불가리아어":"bg","세르비아어":"sr","스웨덴어":"sv","스코틀랜드 게일어":"gd","스페인어":"es","슬로바키아어":"sk","슬로베니아어":"sl","아랍어":"ar","아르메니아어":"hy","아이슬란드어":"is","아이티 크리올어":"ht","아일랜드어":"ga","아제르바이잔어":"az","알바니아어":"sq","암하라어":"am","에스토니아어":"et","에스페란토어":"eo","영어":"en","우즈베크어":"uz","우크라이나어":"uk","웨일즈어":"cy","이탈리아어":"it","인도네시아어":"id","일본어":"ja","줄루어":"zu","중국어(간체)":"zh-cn","중국어(번체)":"zh-tw","체코어":"cs","카탈로니아어":"ca","칸나다어":"kn","쿠르드어(소라니)":"ckb","쿠르드어(쿠르만지)":"ku","크로아티아어":"hr","태국어":"th","터키어":"tr","텔루구어":"te","페르시아어":"fa","포르투갈어":"pt","폴란드어":"pl","프랑스어":"fr","핀란드어":"fi","한국어":"ko","헝가리어":"hu","히브리어":"he","힌디어":"hi","alban":"sq","alman":"de","amarik":"am","azərbaycan dili":"az","bask":"eu","belarusca":"be","bolqar":"bg","çex":"cs","çin (ən\'ənəvi)":"zh-tw","çin dili (sadələşdirilmiş)":"zh-cn","danimarka":"da","erməni":"hy","eston":"et","ərəb":"ar","fars dili":"fa","fin":"fi","fransız":"fr","haiti kreol dili":"ht","hind":"hi","holland":"nl","xorvat":"hr","ingilis":"en","ispan":"es","i̇ndoneziya":"id","i̇rland":"ga","i̇sland":"is","i̇sveç":"sv","i̇talyan":"it","i̇vrit":"he","katalan":"ca","koreya":"ko","kürd dili (kurmanci)":"ku","kürd dili (sorani)":"ckb","qalisian":"gl","latın":"la","latış":"lv","litva":"lt","macar":"hu","makedoniya":"mk","maoricə":"mi","monqolca":"mn","myanma (birma) dili":"my","norveç":"nb","özbək":"uz","polyak":"pl","portuqal":"pt","rumın":"ro","rus":"ru","serb":"sr","sloven":"sl","şotland (kelt)":"gd","tayca":"th","teluqu":"te","türk":"tr","uels":"cy","ukrayna":"uk","vyetnam":"vi","yapon":"ja","yunan":"el","zulu dili":"zu","albaniera":"sq","alemana":"de","amharera":"am","arabiera":"ar","armeniera":"hy","azerbaijanera":"az","bielorrusiera":"be","birmaniera":"my","bulgariera":"bg","daniera":"da","errumaniera":"ro","errusiera":"ru","eskoziako gaelikoa":"gd","eslovakiera":"sk","esloveniera":"sl","esperantoa":"eo","estoniera":"et","euskara":"eu","finlandiera":"fi","frantsesa":"fr","galesa":"cy","galiziera":"gl","gaztelania":"es","greziera":"el","hebreera":"he","hindia":"hi","hungariera":"hu","indonesiera":"id","ingelesa":"en","irlandera":"ga","islandiera":"is","italiera":"it","japoniera":"ja","katalana":"ca","koreera":"ko","kreolera (haiti)":"ht","kroaziera":"hr","kurduera (kurmanji)":"ku","kurduera (sorania)":"ckb","letoniera":"lv","lituaniera":"lt","malabarera":"ml","malaysiera":"ms","maltera":"mt","maoriera":"mi","marathera":"mr","mazedoniera":"mk","mongoliera":"mn","nederlandera":"nl","norvegiera":"nb","persiera":"fa","poloniera":"pl","portugesa":"pt","serbiera":"sr","suediera":"sv","telugua":"te","thailandiera":"th","turkiera":"tr","txekiera":"cs","txinera (sinplifikatua)":"zh-cn","txinera (tradizionala)":"zh-tw","ukrainera":"uk","uzbekera":"uz","vietnamera":"vi","zuluera":"zu","albansk":"sq","amharisk":"am","arabisk":"ar","armensk":"hy","aserbajdsjansk":"az","baskisk":"eu","bulgarsk":"bg","burmesisk":"my","dansk":"da","engelsk":"en","estisk":"et","finsk":"fi","fransk":"fr","galicisk":"gl","græsk":"el","haitisk kreolsk":"ht","hebraisk":"he","hviderussisk":"be","indonesisk":"id","irsk":"ga","islandsk":"is","italiensk":"it","japansk":"ja","katalansk":"ca","kinesisk (forenklet)":"zh-cn","kinesisk (traditionelt)":"zh-tw","koreansk":"ko","kroatisk":"hr","kurdisk (kurmanji)":"ku","kurdisk (sorani)":"ckb","lettisk":"lv","litauisk":"lt","makedonsk":"mk","malajisk":"ms","maltesisk":"mt","mongolsk":"mn","nederlandsk":"nl","norsk":"nb","persisk":"fa","polsk":"pl","portugisisk":"pt","rumænsk":"ro","russisk":"ru","serbisk":"sr","skotsk gælisk":"gd","slovakisk":"sk","slovensk":"sl","spansk":"es","svensk":"sv","thailandsk":"th","tjekkisk":"cs","tyrkisk":"tr","tysk":"de","ukrainsk":"uk","ungarsk":"hu","usbekisk":"uz","vietnamesisk":"vi","walisisk":"cy","albanese":"sq","amarico":"am","arabo":"ar","armeno":"hy","azero":"az","basco":"eu","bielorusso":"be","birmano":"my","bulgaro":"bg","catalano":"ca","ceco":"cs","cinese (semplificato)":"zh-cn","cinese (tradizionale)":"zh-tw","coreano":"ko","creolo haitiano":"ht","croato":"hr","curdo (kurmanji)":"ku","curdo (sorani)":"ckb","danese":"da","ebraico":"he","estone":"et","finlandese":"fi","francese":"fr","gaelico scozzese":"gd","galiziano":"gl","gallese":"cy","giapponese":"ja","greco":"el","indonesiano":"id","inglese":"en","irlandese":"ga","islandese":"is","italiano":"it","latino":"la","lettone":"lv","lituano":"lt","macedone":"mk","malese":"ms","mongolo":"mn","norvegese":"nb","olandese":"nl","persiano":"fa","polacco":"pl","portoghese":"pt","rumeno":"ro","russo":"ru","serbo":"sr","slovacco":"sk","sloveno":"sl","spagnolo":"es","svedese":"sv","tedesco":"de","turco":"tr","ucraino":"uk","ungherese":"hu","uzbeco":"uz","vietnamita":"vi","albania":"sq","amhara":"am","arabia":"ar","armenia":"hy","azeri":"az","bulgaria":"bg","burma":"my","englanti":"en","espanja":"es","galicia":"gl","haitinkreoli":"ht","heprea":"he","hollanti":"nl","indonesia":"id","islanti":"is","italia":"it","japani":"ja","kiina (perinteinen)":"zh-tw","kiina (yksinkertaistettu)":"zh-cn","kreikka":"el","kroatia":"hr","kurdi (soranî)":"ckb","kymri":"cy","latvia":"lv","liettua":"lt","makedonia":"mk","malaiji":"ms","mongolia":"mn","norja":"nb","persia":"fa","puola":"pl","ranska":"fr","romania":"ro","ruotsi":"sv","skottigaeli":"gd","slovakia":"sk","slovenia":"sl","suomi":"fi","tanska":"da","tsekki":"cs","turkki":"tr","unkari":"hu","uzbekki":"uz","valkovenäjä":"be","venäjä":"ru","vietnam":"vi","viro":"et","アイスランド語":"is","アイルランド語":"ga","アゼルバイジャン語":"az","アムハラ語":"am","アラビア語":"ar","アルバニア語":"sq","アルメニア語":"hy","イタリア語":"it","インドネシア語":"id","ウェールズ語":"cy","ウクライナ語":"uk","ウズベク語":"uz","エストニア語":"et","エスペラント語":"eo","オランダ語":"nl","カタルーニャ語":"ca","ガリシア語":"gl","カンナダ語":"kn","ギリシャ語":"el","クルド語（クルマンジー）":"ku","クルド語（ソラニー）":"ckb","クロアチア語":"hr","スウェーデン語":"sv","ズールー語":"zu","スコットランド ゲール語":"gd","スペイン語":"es","スロバキア語":"sk","スロベニア語":"sl","セルビア語":"sr","タイ語":"th","チェコ語":"cs","テルグ語":"te","デンマーク語":"da","ドイツ語":"de","トルコ語":"tr","ノルウェー語":"nb","ハイチ語":"ht","バスク語":"eu","ハンガリー語":"hu","ヒンディー語":"hi","フィンランド語":"fi","フランス語":"fr","ブルガリア語":"bg","ベトナム語":"vi","ヘブライ語":"he","ベラルーシ語":"be","ペルシャ語":"fa","ポーランド語":"pl","ポルトガル語":"pt","マオリ語":"mi","マケドニア語":"mk","マラーティー語":"mr","マラヤーラム語":"ml","マルタ語":"mt","マレー語":"ms","ミャンマー語（ビルマ語）":"my","モンゴル語":"mn","ラテン語":"la","ラトビア語":"lv","リトアニア語":"lt","ルーマニア語":"ro","ロシア語":"ru","英語":"en","韓国語":"ko","中国語（簡体）":"zh-cn","中国語（繁体）":"zh-tw","日本語":"ja","albanees":"sq","armeens":"hy","azerbeidzjaans":"az","birmaans":"my","bulgaars":"bg","catalaans":"ca","chinees (traditioneel)":"zh-tw","chinees (vereenvoudigd)":"zh-cn","deens":"da","duits":"de","engels":"en","ests":"et","fins":"fi","frans":"fr","galicisch":"gl","grieks":"el","haïtiaans creools":"ht","hebreeuws":"he","hongaars":"hu","iers":"ga","ijslands":"is","italiaans":"it","japans":"ja","koerdisch (kurmanji)":"ku","koerdisch (sorani)":"ckb","koreaans":"ko","latijn":"la","lets":"lv","litouws":"lt","macedonisch":"mk","maleis":"ms","maltees":"mt","mongools":"mn","nederlands":"nl","noors":"nb","oekraïens":"uk","oezbeeks":"uz","perzisch":"fa","pools":"pl","portugees":"pt","roemeens":"ro","schots keltisch":"gd","servisch":"sr","slovaaks":"sk","sloveens":"sl","spaans":"es","tsjechisch":"cs","turks":"tr","vietnamees":"vi","wels":"cy","zoeloe":"zu","zweeds":"sv","土耳其文":"tr","中文 (繁體)":"zh-tw","中文 (簡體)":"zh-cn","丹麥文":"da","巴斯克文":"eu","日文":"ja","毛利文":"mi","世界語":"eo","加里西亞文":"gl","加泰羅尼亞文":"ca","卡納達文":"kn","白俄羅斯文":"be","立陶宛文":"lt","冰島文":"is","匈牙利文":"hu","印尼文":"id","印度文":"hi","西班牙文":"es","克羅埃西亞文":"hr","希伯來文":"he","希臘文":"el","亞美尼亞文":"hy","亞塞拜然文":"az","拉丁文":"la","拉脫維亞文":"lv","法文":"fr","波斯文":"fa","波蘭文":"pl","芬蘭文":"fi","阿姆哈拉文":"am","阿拉伯文":"ar","阿爾巴尼亞文":"sq","俄文":"ru","保加利亞文":"bg","南非祖魯文":"zu","威爾斯文":"cy","英文":"en","庫德文 (庫爾曼吉文)":"ku","庫德文 (索拉尼文)":"ckb","挪威文":"nb","泰文":"th","泰盧固文":"te","海地克里奧文":"ht","烏克蘭文":"uk","烏茲別克文":"uz","馬耳他文":"mt","馬來文":"ms","馬其頓文":"mk","馬拉地文":"mr","馬拉雅拉姆文":"ml","捷克文":"cs","荷蘭文":"nl","斯洛伐克文":"sk","斯洛維尼亞文":"sl","越南文":"vi","塞爾維亞文":"sr","愛沙尼亞文":"et","愛爾蘭文":"ga","瑞典文":"sv","義大利文":"it","葡萄牙文":"pt","蒙古文":"mn","德文":"de","緬甸文":"my","韓文":"ko","羅馬尼亞文":"ro","蘇格蘭的蓋爾文":"gd","אוזבקית":"uz","אוקראינית":"uk","אזרית":"az","איטלקית":"it","אינדונזית":"id","איסלנדית":"is","אירית":"ga","אלבנית":"sq","אמהרית":"am","אנגלית":"en","אסטונית":"et","אספרנטו":"eo","ארמנית":"hy","באסקית":"eu","בולגרית":"bg","בורמזית":"my","בלארוסית":"be","גליציאנית":"gl","גרמנית":"de","דנית":"da","הולנדית":"nl","הונגרית":"hu","הינדי":"hi","וולשית":"cy","וייטנאמית":"vi","זולו":"zu","טורקית":"tr","טלוגו":"te","יוונית":"el","יפנית":"ja","כורדית (כורמנג\'ית)":"ku","כורדית (סורנית)":"ckb","לטבית":"lv","לטינית":"la","ליטאית":"lt","מאורית":"mi","מונגולית":"mn","מלאיאלאם":"ml","מלאית":"ms","מלטית":"mt","מקדונית":"mk","מראטהית":"mr","נורווגית":"nb","סינית (מסורתית)":"zh-tw","‏סינית (פשוטה)":"zh-cn","סלובנית":"sl","סלובקית":"sk","ספרדית":"es","סקוטית גאלית":"gd","סרבית":"sr","עברית":"he","ערבית":"ar","פולנית":"pl","פורטוגזית":"pt","פינית":"fi","פרסית":"fa","צ\'כית":"cs","צרפתית":"fr","קאנאדה":"kn","קוריאנית":"ko","קטלאנית":"ca","קרואטית":"hr","קריאולית האיטית":"ht","רומנית":"ro","רוסית":"ru","שוודית":"sv","תאית":"th","ကနာဒါ":"kn","ကိုရီးယား":"ko","ကက်တလန်":"ca","ကဒ် (ကာမန်ဂျီ)":"ku","ကဒ် (ဆိုရာနီ)":"ckb","ခရိုအေးရှား":"hr","ချက်":"cs","ဂရိ":"el","ဂယ်လိရှ":"gl","ဂျပန်":"ja","ဂျာမန်":"de","စကော့ ဂေးလစ်":"gd","စပိန်":"es","ဆလိုဗေးနီးယား":"sl","ဆလိုဗက်":"sk","ဆားဘီးယား":"sr","ဆွီဒင်":"sv","ဇူးလူး":"zu","တရုတ် (ရိုးရာ)":"zh-tw","တရုတ် (ရိုးရှင်း)":"zh-cn","တူ​ရ​ကီ":"tr","တယ်လူဂူ":"te","ထိုင်း":"th","ဒတ်ချ်":"nl","ဒိန်းမတ်":"da","နော်ဝေး":"nb","ပါရှန်":"fa","ပေါ်တူဂီ":"pt","ပိုလန်":"pl","ပြင်သစ်":"fr","ဖင်လန်":"fi","ဗီယက်နမ်":"vi","ဘီလာရစ်":"be","ဘူဂေးရီးယား":"bg","ဘာစ်ခ်":"eu","မလေယာလမ်":"ml","မလေး":"ms","မာရာသီ":"mr","မော်ရီ":"mi","မော်လတာ":"mt","မက်ဆီဒိုးနီးယား":"mk","မြန်မာ":"my","မွန်ဂိုလီးယား":"mn","ယူ​က​ရိန်း​":"uk","ရုရှား":"ru","ရိုမေးနီးယား":"ro","လက်တင်":"la","လစ်သူဝေးနီးယား":"lt","လတ်ဗီယာ":"lv","ဝေလ":"cy","ဟီဘရူး":"he","ဟေတီ ခရီအိုး":"ht","ဟန်ဂေရီ":"hu","ဟိန္ဒူ":"hi","အဇာဘိုင်ဂျန်":"az","အာမေးနီးယား":"hy","အာရေဗျ":"ar","အီတလီ":"it","ဥဇဘက်":"uz","အက်စတိုးနီးယား":"et","အက်စ်ပဲရန်တို":"eo","အိုက်စလန်":"is","အင်္ဂလိပ်":"en","အင်ဒိုနီးရှား":"id","အိုင်းရစ်ရှ်":"ga","အမ်ဟဲရစ်ခ်":"am","အယ်လ်ဘေးနီးယား":"sq","అజర్‌బైజాని":"az","అర్మేనియన్":"hy","అల్బేనియన్":"sq","ఆంగ్లము":"en","ఆమ్హారిక్":"am","ఆరబిక్":"ar","ఇండొనేసియన్":"id","ఇటాలియన్":"it","ఉజ్బెక్":"uz","ఎస్పెరాంటో":"eo","ఏస్టోనియన్":"et","ఐరిష్":"ga","ఐస్ లాండిక్":"is","కన్నడ":"kn","కుర్దిష్ (కుర్మాంజి)":"ku","కుర్దిష్ (సొరని)":"ckb","కొరియన్":"ko","క్యాటలాన్":"ca","క్రొయేషియన్":"hr","గాలిసియన్":"gl","గ్రీక్":"el","చెక్":"cs","చైనీస్ (సరళమైన)":"zh-cn","చైనీస్ (సాంప్రదాయమైన)":"zh-tw","జపనీస్":"ja","జర్మన్":"de","జులు":"zu","టర్కిష్":"tr","డచ్":"nl","డానిష్":"da","తెలుగు":"te","థాయ్":"th","నార్విజియన్":"nb","పర్షియన్":"fa","పోర్చుగీస్":"pt","పోలిష్":"pl","ఫిన్నిష్":"fi","ఫ్రెంచ్":"fr","బర్మీస్":"my","బల్గేరియన్":"bg","బాస్క్":"eu","బెలారష్యన్":"be","మంగోలియన్":"mn","మయోరి":"mi","మరాఠీ":"mr","మలయాళం":"ml","మాలై":"ms","మాల్టీస్":"mt","మాసిడోనియన్":"mk","యుక్రేనియన్":"uk","రష్యన్":"ru","రొమేనియన్":"ro","లాటిన్":"la","లాట్వియన్":"lv","లిథువేనియన్":"lt","వియత్నామీస్":"vi","వెల్ష్":"cy","సెర్బియన్":"sr","స్కాట్స్ గేలిక్":"gd","స్పానిష్":"es","స్లోవాక్":"sk","స్లోవేనియన్":"sl","స్వీడిష్":"sv","హంగేరియన్":"hu","హిందీ":"hi","హీబ్రూ":"he","హైయేటియన్ క్రియోల్":"ht","азербайжан":"az","албани":"sq","амхарик":"am","англи":"en","араб":"ar","армени":"hy","баск":"eu","беларусь":"be","бирм":"my","болгар":"bg","вьетнам":"vi","галик":"gl","гаэл":"gd","герман":"de","голланд":"nl","грек":"el","дани":"da","зулу":"zu","индонез":"id","ирланд":"ga","исланд":"is","испани":"es","итали":"it","каннада":"kn","каталан":"ca","кипр":"he","курд (курманжи)":"ku","курд (сорани)":"ckb","латви":"lv","латин":"la","литва":"lt","македон":"mk","малай":"ms","малайлам":"ml","малти":"mt","маори":"mi","марати":"mr","монгол":"mn","норвег":"nb","орос":"ru","перс":"fa","польш":"pl","португаль":"pt","румын":"ro","серби":"sr","словак":"sk","словени":"sl","солонгос":"ko","тай":"th","турк":"tr","тэлүгү":"te","узбек":"uz","украин":"uk","унгар":"hu","уэльс":"cy","финланд":"fi","франц":"fr","хаити креол":"ht","хинди":"hi","хорват":"hr","хятад (уламжлалт)":"zh-tw","хятад хэл (хялбаршуулсан)":"zh-cn","чех":"cs","швед":"sv","эсперанто":"eo","эстони":"et","япон":"ja","albaneg":"sq","almaeneg":"de","amhareg":"am","arabeg":"ar","armeneg":"hy","aserbaijaneg":"az","basgeg":"eu","belarwseg":"be","bwlgareg":"bg","catalaneg":"ca","creol haiti":"ht","croateg":"hr","cwrdeg (kurmandji)":"ku","cwrdeg (sorani)":"ckb","cymraeg":"cy","daneg":"da","eidaleg":"it","estoneg":"et","fietnameg":"vi","ffineg":"fi","fflemeg":"nl","ffrangeg":"fr","gaeleg yr alban":"gd","galiseg":"gl","groeg":"el","gwyddeleg":"ga","hebraeg":"he","hwngareg":"hu","iaith corea":"ko","indonesieg":"id","islandeg":"is","japaneg":"ja","latfieg":"lv","lithwaneg":"lt","lladin":"la","macedoneg":"mk","malteseg":"mt","mongoleg":"mn","myanmar (byrma)":"my","norwyeg":"nb","perseg":"fa","portiwgaleg":"pt","pwyleg":"pl","rwmaneg":"ro","rwsieg":"ru","saesneg":"en","sbaeneg":"es","serbeg":"sr","slofaceg":"sk","slofeneg":"sl","swedeg":"sv","swlw":"zu","telwgw":"te","tsieceg":"cs","tsieineeg (traddodiadol)":"zh-tw","tsieineeg (wedi symleiddio)":"zh-cn","twrceg":"tr","usbec":"uz","wcreineg":"uk","albán":"sq","angol":"en","arab":"ar","baszk":"eu","belorusz":"be","bolgár":"bg","burmai":"my","cseh":"cs","dán":"da","eszperantó":"eo","észt":"et","finn":"fi","francia":"fr","galíciai":"gl","görög":"el","haiti kreol":"ht","héber":"he","horvát":"hr","indonéz":"id","ír":"ga","izlandi":"is","japán":"ja","katalán":"ca","kínai (egyszerűsített)":"zh-cn","kínai (hagyományos)":"zh-tw","koreai":"ko","kurd (kurmanji)":"ku","kurd (szoráni)":"ckb","lengyel":"pl","lett":"lv","litván":"lt","macedón":"mk","magyar":"hu","maláj":"ms","malajálam":"ml","máltai":"mt","maráthi":"mr","mongol":"mn","német":"de","norvég":"nb","olasz":"it","orosz":"ru","örmény":"hy","perzsa":"fa","portugál":"pt","román":"ro","skót-gael":"gd","spanyol":"es","svéd":"sv","szerb":"sr","szlovák":"sk","szlovén":"sl","török":"tr","ukrán":"uk","üzbég":"uz","walesi":"cy","almanca":"de","arapça":"ar","arnavutça":"sq","azerbaycan dili":"az","baskça":"eu","belarusça":"be","bulgarca":"bg","burmaca":"my","çekçe":"cs","çince (basitleştirilmiş)":"zh-cn","çince (geleneksel)":"zh-tw","danca":"da","endonezce":"id","ermenice":"hy","estonyaca":"et","farsça":"fa","felemenkçe":"nl","fince":"fi","fransızca":"fr","galce":"cy","galiçyaca":"gl","habeşçe":"am","haiti kreyolu":"ht","hırvatça":"hr","hintçe":"hi","i̇branice":"he","i̇ngilizce":"en","i̇rlandaca":"ga","i̇skoç gaelcesi":"gd","i̇spanyolca":"es","i̇sveççe":"sv","i̇talyanca":"it","i̇zlandaca":"is","japonca":"ja","katalanca":"ca","korece":"ko","kürtçe (kurmançça)":"ku","kürtçe (sorani)":"ckb","latince":"la","lehçe":"pl","letonca":"lv","litvanca":"lt","macarca":"hu","makedonca":"mk","malayca":"ms","maltaca":"mt","maori dili":"mi","moğolca":"mn","norveççe":"nb","özbekçe":"uz","portekizce":"pt","romence":"ro","rusça":"ru","sırpça":"sr","slovakça":"sk","slovence":"sl","telugu dili":"te","türkçe":"tr","ukraynaca":"uk","vietnamca":"vi","yunanca":"el","अझरबैजानी":"az","अम्हारिक":"am","अरबी":"ar","अर्मेनियन":"hy","अल्बानियन":"sq","आइसलँडिक":"is","आयरिश":"ga","इंग्रजी":"en","इंडोनेशियन":"id","इटालियन":"it","उझ्बेक":"uz","एस्टोनियन":"et","एस्परँटो":"eo","कन्नड":"kn","कुर्दिश (कुर्मांजी)":"ku","कुर्दिश (सोरानी)":"ckb","कॅटलान":"ca","कोरियन":"ko","क्रोएशियन":"hr","गॅलिशियन":"gl","ग्रीक":"el","चीनी (पारंपारिक)":"zh-tw","चीनी (सरलीकृत)":"zh-cn","जपानी":"ja","जर्मन":"de","झुलु":"zu","झेक":"cs","डच":"nl","डॅनिश":"da","तुर्की":"tr","तेलुगु":"te","थाई":"th","नॉर्वेजियन":"nb","पोर्तुगीज":"pt","पोलिश":"pl","फारसी":"fa","फिन्निश":"fi","फ्रेंच":"fr","बल्गेरियन":"bg","बास्क":"eu","बेलारुशियन":"be","मंगोलियन":"mn","मराठी":"mr","मलय":"ms","मल्याळम":"ml","माओरी":"mi","माल्टीज":"mt","मॅसेडोनियन":"mk","म्यानमार (बर्मीज)":"my","युक्रेनियन":"uk","रशियन":"ru","रोमानियन":"ro","लाट्वियन":"lv","लिथुआनियन":"lt","लॅटिन":"la","वेल्श":"cy","व्हिएतनामी":"vi","सर्बियन":"sr","स्कॉट्स गेलिक":"gd","स्पॅनिश":"es","स्लोव्हाक":"sk","स्लोव्हेनियन":"sl","स्वीडिश":"sv","हंगेरियन":"hu","हिन्दी":"hi","हिब्रू":"he","हैतीयन क्रेओल":"ht","albanyen":"sq","amenyen":"hy","amharik":"am","anglè":"en","azèbajani":"az","belarisyen":"be","bilgaryen":"bg","chinwa (senp)":"zh-cn","chinwa (tradisyonèl)":"zh-tw","danwa":"da","ebre":"he","endonezyen":"id","endou":"hi","estonyen":"et","fenlandè":"fi","franse":"fr","gaelik ekosè":"gd","galisyen":"gl","grèk":"el","ikrenyen":"uk","ilandè":"ga","islandè":"is","italyen":"it","izbèk":"uz","japonè":"ja","kanada":"kn","koreyen":"ko","kreyòl ayisyen":"ht","kurd (kurmandji)":"ku","kurd (sorani)":"ckb","kwoasyen":"hr","laten":"la","letonyen":"lv","lityanyen":"lt","malè":"ms","malt":"mt","masedonyen":"mk","mongolyen":"mn","myanma (burmese)":"my","nòvejyen":"nb","olandè, neyèlandè":"nl","onngaryen":"hu","panyòl":"es","pèsyen":"fa","polonè":"pl","pòtigè":"pt","ris":"ru","romanyen":"ro","sèb":"sr","slovenyen":"sl","syedwa":"sv","tay":"th","tuk":"tr","tyèk":"cs","vyetnamyen":"vi","zoulou":"zu","albaniż":"sq","amħari":"am","armen":"hy","ażerbajġani":"az","belarussu":"be","bulgaru":"bg","ċek":"cs","ċiniż (simplifikat)":"zh-cn","ċiniż (tradizzjonali)":"zh-tw","creole haiti":"ht","daniż":"da","ebrajk":"he","estonjan":"et","finlandiż":"fi","franċiż":"fr","ġappuniż":"ja","ġermaniż":"de","gaelic tal-iskoċċiżi":"gd","galizjan":"gl","grieg":"el","għarbi":"ar","ħindi":"hi","indoneżjan":"id","ingliż":"en","irlandiż":"ga","islandiż":"is","kroat":"hr","latvjan":"lv","litwen":"lt","maċedonjan":"mk","malajalam":"ml","malasjan":"ms","malti":"mt","mjanmar (burma)":"my","mongoljan":"mn","norveġiż":"nb","olandiż":"nl","persjan":"fa","pollakk":"pl","portugiż":"pt","rumen":"ro","russu":"ru","slovakk":"sk","spanjol":"es","svediż":"sv","tajlandiż":"th","taljan":"it","tork":"tr","ukren":"uk","ungeriż":"hu","użbek":"uz","vjetnamiż":"vi","żulu":"zu","الآيسلندية":"is","الأذرية":"az","الأرمنية":"hy","الإسبانية":"es","الإسبرانتو":"eo","الإستونية":"et","الألبانية":"sq","الألمانية":"de","الأمهرية":"am","الإنجليزية":"en","الإندونيسية":"id","الأوزبكية":"uz","الأوكرانية":"uk","الأيرلندية":"ga","الإيطالية":"it","الباسكية":"eu","البرتغالية":"pt","البلغارية":"bg","البورمية":"my","البولندية":"pl","البيلاروسية":"be","التايلاندية":"th","التركية":"tr","التشيكية":"cs","التيلوغوية":"te","الجاليكية":"gl","الدانمركية":"da","الروسية":"ru","الرومانية":"ro","الزولو":"zu","السلوفاكية":"sk","السلوفينية":"sl","السويدية":"sv","الصربية":"sr","الصينية (التقليدية)":"zh-tw","الصينية (المبسطة)":"zh-cn","العبرية":"he","العربية":"ar","الغيلية الأسكتلندية":"gd","الفارسية":"fa","الفرنسية":"fr","الفنلندية":"fi","الفيتنامية":"vi","القطلونية":"ca","الكردية (السورانية)":"ckb","الكردية (الكرمانجية)":"ku","الكرواتية":"hr","الكنادية":"kn","الكورية":"ko","اللاتفية":"lv","اللاتينية":"la","اللغة الكريولية الهايتية":"ht","الليتوانية":"lt","الماراثية":"mr","المالايالامية":"ml","المالطيّة":"mt","الماورية":"mi","المقدونية":"mk","الملايو":"ms","المنغولية":"mn","النرويجية":"nb","الهندية":"hi","الهنغارية":"hu","الهولندية":"nl","الويلزية":"cy","اليابانية":"ja","اليونانية":"el","farsi":"fa","galisisk":"gl","gresk":"el","hviterussisk":"be","kinesisk (tradisjonell)":"zh-tw","kreol (haiti)":"ht","latvisk":"lv","malayisk":"ms","rumensk":"ro","tsjekkisk":"cs","ahepaitani":"az","airihi":"ga","amariki":"am","amēniana":"hy","arapeinia":"sq","arapi":"ar","eperānato":"eo","etōnia":"et","haina (onamata)":"zh-tw","hainamana (kua whakamāmātia)":"zh-cn","hanekeria":"hu","hapanihi":"ja","herepia":"sr","hinerangi":"fi","hīni":"hi","hiperu":"he","horowākia":"sk","horowinia":"sl","huitene":"sv","huru":"zu","ingarihi":"en","initonīhia":"id","itāriana":"it","karihia":"gl","katarāna":"ca","kereore haiti":"ht","kiriki":"el","kōreana":"ko","koroātiana":"hr","korukoru":"tr","kūrihi (horani)":"ckb","kūrihi (kurumanihi)":"ku","makerōnia":"mk","māori":"mi","māratihi":"mt","marei":"ms","mareiarama":"ml","mongōriana":"mn","nōwei":"nb","pākihi":"eu","pāniora":"es","pēma (purumīhi)":"my","peraruhia":"be","perēhia":"fa","pōrana":"pl","potukīhi":"pt","purukāriana":"bg","rātini":"la","rāwhiana":"lv","rituānia":"lt","romānia":"ro","rūhia":"ru","tati":"nl","tenemāka":"da","teruku":"te","tiamana":"de","tieke":"cs","tiorangi":"is","tuauri kotarangi":"gd","uhipeke":"uz","ūkareiana":"uk","wēra":"cy","whitināmu":"vi","wīwī":"fr","azerbaijan":"az","bahasa melayu":"ms","belanda":"nl","belarus":"be","cina (mudah)":"zh-cn","cina (tradisional)":"zh-tw","croatia":"hr","denmark":"da","estonia":"et","finland":"fi","gaelic scotland":"gd","hungary":"hu","ibrani":"he","iceland":"is","inggeris":"en","ireland":"ga","itali":"it","jepun":"ja","jerman":"de","kreol haiti":"ht","kurdistan (kurmanji)":"ku","kurdistan (sorani)":"ckb","lithuania":"lt","macedonia":"mk","myanmar (burma)":"my","norway":"nb","parsi":"fa","perancis":"fr","poland":"pl","portugis":"pt","rusia":"ru","sepanyol":"es","sweden":"sv","turki":"tr","ukraine":"uk","wales":"cy","ả rập":"ar","anh":"en","ba lan":"pl","ba tư":"fa","bồ đào nha":"pt","creole (haiti)":"ht","do thái":"he","đan mạch":"da","đức":"de","gael scotland":"gd","hà lan":"nl","hàn":"ko","hy lạp":"el","latinh":"la","mã lai":"ms","mông cổ":"mn","myanmar":"my","na uy":"nb","nga":"ru","nhật":"ja","pháp":"fr","phần lan":"fi","quốc tế ngữ":"eo","rumani":"ro","séc":"cs","tây ban nha":"es","thái":"th","thổ nhĩ kỳ":"tr","thụy điển":"sv","trung (giản thể)":"zh-cn","trung (phồn thể)":"zh-tw","việt":"vi","xứ wales":"cy","ý":"it","آذرباﻳﺠﺎﻧﻰ":"az","آلبانیایی":"sq","آلمانی":"de","ارمنی":"hy","ازبکی":"uz","اسپانیایی":"es","اسپرانتو":"eo","استونيايی":"et","اسلواکی":"sk","اسلونیایی":"sl","اکراينی":"uk","امهری":"am","اندونزيايی":"id","انگلیسی":"en","ایتالیایی":"it","ایرلندی":"ga","ايسلندی":"is","باسکی":"eu","برمه‌ای":"my","بلاروسی":"be","بلغاری":"bg","پرتغالی":"pt","تايلندی":"th","ترکی استانبولی":"tr","تلوگو":"te","چک":"cs","چینی (ساده‌شده)":"zh-cn","چینی (سنتی)":"zh-tw","دانمارکی":"da","روسی":"ru","رومانيايی":"ro","زولو":"zu","ژاپنی":"ja","سوئدی":"sv","صربی":"sr","عبری":"he","عربی":"ar","فارسی":"fa","فرانسوی":"fr","فنلاندی":"fi","کاتالان":"ca","کرئول هائیتی":"ht","کردی (سورانی)":"ckb","کردی (کرمانجی)":"ku","کرواتی":"hr","کره‌ای":"ko","کنادا":"kn","گالیسی":"gl","گاليک اسکاتلندی":"gd","لاتين":"la","لتونيايی":"lv","لهستانی":"pl","ليتوانيايی":"lt","مائوری":"mi","مالایالمی":"ml","مالايی":"ms","مالتی":"mt","مجاری":"hu","مراتی":"mr","مغولی":"mn","مقدونيه‌ای":"mk","نروژی":"nb","ولزی":"cy","ويتنامی":"vi","هلندی":"nl","هندی":"hi","يونانی":"el","airių":"ga","albanų":"sq","amharų":"am","anglų":"en","arabų":"ar","armėnų":"hy","azerbaidžaniečių":"az","baltarusių":"be","baskų":"eu","birmiečių":"my","bulgarų":"bg","čekų":"cs","danų":"da","estų":"et","galisų":"gl","graikų":"el","haičio kreolų":"ht","hebrajų":"he","indoneziečių":"id","islandų":"is","ispanų":"es","italų":"it","japonų":"ja","kanadų":"kn","kataloniečių":"ca","kinų (supaprastinta)":"zh-cn","kinų (tradicinė)":"zh-tw","korėjiečių":"ko","kroatų":"hr","kurdų (kurmandžių)":"ku","kurdų (soranių)":"ckb","latvių":"lv","lenkų":"pl","lietuvių":"lt","lotynų":"la","makedoniečių":"mk","malajalių":"ml","malajiečių":"ms","maltiečių":"mt","maorių":"mi","maratų":"mr","mongolų":"mn","norvegų":"nb","olandų":"nl","persų":"fa","portugalų":"pt","prancūzų":"fr","rumunų":"ro","rusų":"ru","serbų":"sr","slovakų":"sk","slovėnų":"sl","suomių":"fi","škotų":"gd","švedų":"sv","tajų":"th","telugų":"te","turkų":"tr","ukrainiečių":"uk","uzbekų":"uz","valų":"cy","vengrų":"hu","vietnamiečių":"vi","vokiečių":"de","zulusų":"zu","阿尔巴尼亚语":"sq","阿拉伯语":"ar","阿姆哈拉语":"am","阿塞拜疆语":"az","爱尔兰语":"ga","爱沙尼亚语":"et","巴斯克语":"eu","白俄罗斯语":"be","保加利亚语":"bg","冰岛语":"is","波兰语":"pl","波斯语":"fa","丹麦语":"da","德语":"de","俄语":"ru","法语":"fr","芬兰语":"fi","海地克里奥尔语":"ht","韩语":"ko","荷兰语":"nl","加利西亚语":"gl","加泰罗尼亚语":"ca","捷克语":"cs","卡纳达语":"kn","克罗地亚语":"hr","库尔德语（库尔曼吉语）":"ku","库尔德语（索拉尼）":"ckb","拉丁语":"la","拉脱维亚语":"lv","立陶宛语":"lt","罗马尼亚语":"ro","马耳他语":"mt","马拉地语":"mr","马拉雅拉姆语":"ml","马来语":"ms","马其顿语":"mk","毛利语":"mi","蒙古语":"mn","缅甸语":"my","南非祖鲁语":"zu","挪威语":"nb","葡萄牙语":"pt","日语":"ja","瑞典语":"sv","塞尔维亚语":"sr","世界语":"eo","斯洛伐克语":"sk","斯洛文尼亚语":"sl","苏格兰盖尔语":"gd","泰卢固语":"te","泰语":"th","土耳其语":"tr","威尔士语":"cy","乌克兰语":"uk","乌兹别克语":"uz","西班牙语":"es","希伯来语":"he","希腊语":"el","匈牙利语":"hu","亚美尼亚语":"hy","意大利语":"it","印地语":"hi","印尼语":"id","英语":"en","越南语":"vi","中文（繁体）":"zh-tw","中文（简体）":"zh-cn","airméinis":"hy","albáinis":"sq","amárais":"am","araibis":"ar","asarbaiseáinis":"az","bascais":"eu","bealarúisis":"be","béarla":"en","breatnais":"cy","bulgáiris":"bg","cannadais":"kn","catalóinis":"ca","coirdis (curmainsis)":"ku","coirdis (sorani)":"ckb","cóiréis":"ko","criól háítí":"ht","cróitis":"hr","danmhairgis":"da","eabhrais":"he","eastóinis":"et","fionlainnis":"fi","fraincis":"fr","gaeilge":"ga","gaeilge na halban":"gd","gailísis":"gl","gearmáinis":"de","gréigis":"el","hiondúis":"hi","indinéisis":"id","iodáilis":"it","ioruais":"nb","íoslainnis":"is","laidin":"la","laitvis":"lv","liotuáinis":"lt","macadóinis":"mk","maenmar (burmais)":"my","mailéalaimis":"ml","malaeis":"ms","máltais":"mt","maorais":"mi","maraitis":"mr","mongóilis":"mn","ollainnis":"nl","peirsis":"fa","polainnis":"pl","portaingéilis":"pt","rómáinis":"ro","rúisis":"ru","seapáinis":"ja","seicis":"cs","seirbis":"sr","sínis (simplithe)":"zh-cn","sínis (traidisiúnta)":"zh-tw","slóivéinis":"sl","slóvaicis":"sk","spáinnis":"es","sualainnis":"sv","súlúis":"zu","téalainnis":"th","teileagúis":"te","tuircis":"tr","úcráinis":"uk","úisbéiceastáinis":"uz","ungáiris":"hu","vítneaimis":"vi","acerbaixano":"az","albanés":"sq","alemán":"de","amárico":"am","árabe":"ar","armenio":"hy","bielorruso":"be","búlgaro":"bg","canarés":"kn","catalán":"ca","checo":"cs","chinés (simplificado)":"zh-cn","chinés (tradicional)":"zh-tw","crioulo haitiano":"ht","croata":"hr","dinamarqués":"da","eslovaco":"sk","esloveno":"sl","español":"es","estoniano":"et","éuscaro":"eu","finés":"fi","francés":"fr","gaélico escocés":"gd","galego":"gl","galés":"cy","grego":"el","hebreo":"he","húngaro":"hu","indonesio":"id","inglés":"en","irlandés":"ga","islandés":"is","kurdo (kurmanji)":"ku","kurdo (sorani)":"ckb","latín":"la","letón":"lv","macedonio":"mk","malabar":"ml","malaio":"ms","maltés":"mt","maorí":"mi","neerlandés":"nl","noruegués":"nb","persa":"fa","polaco":"pl","portugués":"pt","romanés":"ro","ruso":"ru","serbio":"sr","sueco":"sv","tailandés":"th","telugú":"te","ucraíno":"uk","uzbeko":"uz","xaponés":"ja","zulú":"zu","азербејџански":"az","албански":"sq","амхарски":"am","арапски":"ar","баскијски":"eu","белоруски":"be","бугарски":"bg","бурмански":"my","велшки":"cy","вијетнамски":"vi","галски":"gl","грчки":"el","дански":"da","енглески":"en","есперанто":"eo","естонски":"et","индонежански":"id","ирски":"ga","исландски":"is","италијански":"it","јапански":"ja","јерменски":"hy","канада":"kn","каталонски":"ca","кинески (поједностављени)":"zh-cn","кинески (традиционални)":"zh-tw","корејски":"ko","курдски (курмањи)":"ku","курдски (сорани)":"ckb","латински":"la","летонски":"lv","литвански":"lt","мађарски":"hu","македонски":"mk","малајалам":"ml","малајски":"ms","малтешки":"mt","маорски":"mi","монголски":"mn","немачки":"de","норвешки":"nb","персијски":"fa","пољски":"pl","португалски":"pt","румунски":"ro","руски":"ru","словачки":"sk","словеначки":"sl","српски":"sr","тајски":"th","телугу":"te","турски":"tr","узбечки":"uz","украјински":"uk","фински":"fi","француски":"fr","хаићански креолски":"ht","хебрејски":"he","холандски":"nl","хрватски":"hr","чешки":"cs","шведски":"sv","шкотски галски":"gd","шпански":"es","albański":"sq","amharski":"am","angielski":"en","arabski":"ar","azerski":"az","baskijski":"eu","białoruski":"be","birmański":"my","bułgarski":"bg","chiński (tradycyjny)":"zh-tw","chiński (uproszczony)":"zh-cn","chorwacki":"hr","czeski":"cs","duński":"da","estoński":"et","fiński":"fi","francuski":"fr","galicyjski":"gl","grecki":"el","hebrajski":"he","hiszpański":"es","indonezyjski":"id","irlandzki":"ga","islandzki":"is","japoński":"ja","kataloński":"ca","koreański":"ko","kreolski (haiti)":"ht","kurdyjski (kurmandżi)":"ku","kurdyjski (sorani)":"ckb","litewski":"lt","łaciński":"la","łotewski":"lv","macedoński":"mk","malajski":"ms","maltański":"mt","mongolski":"mn","niderlandzki":"nl","niemiecki":"de","norweski":"nb","ormiański":"hy","perski":"fa","polski":"pl","portugalski":"pt","rosyjski":"ru","rumuński":"ro","serbski":"sr","słowacki":"sk","słoweński":"sl","szkocki gaelicki":"gd","szwedzki":"sv","tajski":"th","turecki":"tr","ukraiński":"uk","uzbecki":"uz","walijski":"cy","węgierski":"hu","wietnamski":"vi","włoski":"it","ադրբեջաներեն":"az","ալբաներեն":"sq","ամհարերեն":"am","անգլերեն":"en","արաբերեն":"ar","բասկերեն":"eu","բելառուսերեն":"be","բիրմաներեն":"my","բուլղարերեն":"bg","գալիսերեն":"gl","գելական շոտլանդերեն":"gd","գերմաներեն":"de","դանիերեն":"da","եբրայերեն":"he","զուլուսերեն":"zu","էսպերանտո":"eo","էստոներեն":"et","թայերեն":"th","թուրքերեն":"tr","ինդոնեզերեն":"id","իռլանդերեն":"ga","իսլանդերեն":"is","իսպաներեն":"es","իտալերեն":"it","լատիներեն":"la","լատվիերեն":"lv","լեհերեն":"pl","լիտվերեն":"lt","խորվաթերեն":"hr","կաննադա":"kn","կատալաներեն":"ca","կորեերեն":"ko","հայերեն":"hy","հինդի":"hi","հոլանդերեն":"nl","հունարեն":"el","հունգարերեն":"hu","ճապոներեն":"ja","մալայալամ":"ml","մալայերեն":"ms","մալթայերեն":"mt","մակեդոներեն":"mk","մաորի":"mi","մարաթի":"mr","մոնղոլերեն":"mn","նորվեգերեն":"nb","շվեդերեն":"sv","ուզբեկերեն":"uz","ուկրաիներեն":"uk","չեխերեն":"cs","չինարեն (ավանդական)":"zh-tw","չինարեն (պարզեցված)":"zh-cn","պարսկերեն":"fa","պորտուգալերեն":"pt","ռումիներեն":"ro","ռուսերեն":"ru","սերբերեն":"sr","սլովակերեն":"sk","սլովեներեն":"sl","վալլերեն":"cy","վիետնամերեն":"vi","տելուգու":"te","քրդերեն (սորանի)":"ckb","քրդերեն (քուրմանջի)":"ku","քրեոլերեն (հաիթի)":"ht","ֆիններեն":"fi","ֆրանսերեն":"fr","albanski":"sq","arapski":"ar","armenski":"hy","azerbajdžanski":"az","bjeloruski":"be","bugarski":"bg","burmanski":"my","češki":"cs","danski":"da","engleski":"en","estonski":"et","finski":"fi","galski":"gl","grčki":"el","haićansko-kreolski":"ht","hebrejski":"he","hindu":"hi","hrvatski":"hr","indonezijski":"id","irski":"ga","islandski":"is","japanski":"ja","katalonski":"ca","kineski (pojednostavljeni)":"zh-cn","kineski (tradicionalni)":"zh-tw","korejski":"ko","kurdski (kurmanji)":"ku","kurdski (soranski)":"ckb","latinski":"la","latvijski/letonski":"lv","litvanski":"lt","mađarski":"hu","makedonski":"mk","malezijski":"ms","malteški":"mt","nizozemski":"nl","norveški":"nb","njemački":"de","perzijski":"fa","poljski":"pl","rumunjski":"ro","ruski":"ru","slovački":"sk","slovenski":"sl","srpski":"sr","škotski keltski":"gd","španjolski":"es","švedski":"sv","tajlandski":"th","talijanski":"it","turski":"tr","ukrajinski":"uk","uzbekistanski":"uz","velški":"cy","vijetnamski":"vi","chinese (esenziwe lula)":"zh-tw","irish":"ga","isi-albania":"sq","isi-amharic":"am","isi-basque":"eu","isi-belarusian":"be","isi-bulgarian":"bg","isi-dutch":"nl","isi-english":"en","isi-estonian":"et","isi-galician":"gl","isi-german":"de","isi-icelandic":"is","isi-italian":"it","isi-japanese":"ja","isi-latvian":"lv","isi-lithuanian":"lt","isi-macedonian":"mk","isi-malay":"ms","isi-malayalam":"ml","isi-maltese":"mt","isi-marathi":"mr","isi-mongolian":"mn","isi-polish":"pl","isi-portuguese":"pt","isi-russian":"ru","isi-scots gaelic":"gd","isi-spanish":"es","isi-swedish":"sv","isi-telugu":"te","isi-uzbek":"uz","isi-welsh":"cy","isizulu":"zu","азербайджанская":"az","албанская":"sq","амхарская":"am","англійская":"en","арабская":"ar","армянская":"hy","балгарская":"bg","баскская":"eu","беларуская":"be","бірманская (м\'янма)":"my","в\'етнамская":"vi","валійская":"cy","венгерская":"hu","гаіцянская крэольская":"ht","галандская":"nl","галісійская":"gl","грэчаская":"el","дацкая":"da","інданезійская":"id","ірландская":"ga","ісландская":"is","іспанская":"es","італьянская":"it","іўрыт":"he","карэйская":"ko","каталанская":"ca","кітайская (спрошчаная)":"zh-cn","кітайская (традыцыйная)":"zh-tw","курдская (курманджы)":"ku","курдская (сарані)":"ckb","латышская":"lv","лацінская":"la","літоўская":"lt","маары":"mi","македонская":"mk","малайская":"ms","малаялам":"ml","мальтыйская":"mt","мангольская":"mn","маратхі":"mr","нарвежская":"nb","нямецкая":"de","партугальская":"pt","персідская":"fa","польская":"pl","румынская":"ro","руская":"ru","сербская":"sr","славацкая":"sk","славенская":"sl","тайская":"th","турэцкая":"tr","тэлугу":"te","узбекская":"uz","украінская":"uk","фінская":"fi","французская":"fr","харвацкая":"hr","хіндзі":"hi","чэшская":"cs","шатландская гэльская":"gd","шведская":"sv","эсперанта":"eo","эстонская":"et","японская":"ja","ሀንጋሪኛ":"hu","ህንድኛ":"hi","ሊትዌንኛ":"lt","ላቲንኛ":"la","ላትቪያኛ":"lv","ማላያላምኛ":"ml","ማላይኛ":"ms","ማልቲስኛ":"mt","ማራቲኛ":"mr","ማዮሪኛ":"mi","ሜቄዶኒያኛ":"mk","ሞንጎሊያኛ":"mn","ራሽያኛ":"ru","ሮማኒያንኛ":"ro","ሰርቢያኛ":"sr","ስሎቫክኛ":"sk","ስሎቬንያኛ":"sl","ስዊድንኛ":"sv","ስፓኒሽኛ":"es","በርማኛ":"my","ቡልጋሪያኛ":"bg","ባስክኛ":"eu","ቤላሩስኛ":"be","ቪትናምኛ":"vi","ቱርክኛ":"tr","ታይኛ":"th","ቴሉጉኛ":"te","ቻይንኛ (ቀላሉ)":"zh-cn","ቻይንኛ (ባሕላዊው)":"zh-tw","ቼክኛ":"cs","ኖርዌጅያንኛ":"nb","አልባንያኛ":"sq","አማርኛ":"am","አርመኒያኛ":"hy","አዜርባይጃንኛ":"az","አይሪሽ":"ga","አይስላንድኛ":"is","ኡዝቤክኛ":"uz","ኤስቶኒያኛ":"et","ኤስፐራንቶ":"eo","እንዶኔዢያኛ":"id","እንግሊዝኛ":"en","ኩርድሽኛ (ሶራኒ)":"ckb","ኩርድሽኛ (ኩርማንጂ)":"ku","ካታላንኛ":"ca","ካናዳኛ":"kn","ክሮኤሽያኛ":"hr","ኮሪያኛ":"ko","ዌልሽ":"cy","ዐረብኛ":"ar","ዕብራይስጥ":"he","ዙሉኛ":"zu","የሃይቲ ክረኦሌኛ":"ht","የስኮት ጌልክኛ":"gd","ዩክሬንኛ":"uk","ደችኛ":"nl","ዴንሽኛ":"da","ጀርመንኛ":"de","ጃፓንኛ":"ja","ጋሊሺያኛ":"gl","ግሪክኛ":"el","ጣሊያንኛ":"it","ፈረንሳይኛ":"fr","ፊኒሽኛ":"fi","ፐርሺያኛ":"fa","ፖሊሽኛ":"pl","ፖርቱጋሊኛ":"pt","англиски":"en","баскиски":"eu","виетнамски":"vi","галициски":"gl","германски":"de","ерменски":"hy","индонезиски":"id","јапонски":"ja","кинески (поедноставен)":"zh-cn","кинески (традиционален)":"zh-tw","курдски (курманџи)":"ku","латвиски":"lv","малајалски":"ml","маратхи":"mr","мјанмарски (бурмански)":"my","персиски":"fa","полски":"pl","романски":"ro","словенечки":"sl","тајландски":"th","украински":"uk","унгарски":"hu","хаитски креолски":"ht","albanska":"sq","amharíska":"am","arabíska":"ar","armenska":"hy","aserska":"az","baskneska":"eu","búlgarska":"bg","búrmíska":"my","danska":"da","eistneska":"et","enska":"en","esperantó":"eo","finnska":"fi","franska":"fr","galisíska":"gl","gríska":"el","haítískt kreólamál":"ht","hebreska":"he","hindí":"hi","hollenska":"nl","hvítrússneska":"be","indónesíska":"id","írska":"ga","íslenska":"is","ítalska":"it","japanska":"ja","katalónska":"ca","kínverska (einfölduð)":"zh-cn","kínverska (hefðbundin)":"zh-tw","kóreska":"ko","króatíska":"hr","kúrdíska (kurmanji)":"ku","kúrdíska (soraní)":"ckb","latína":"la","lettneska":"lv","litháíska":"lt","makedónska":"mk","malajíska":"ms","maltneska":"mt","maoríska":"mi","maratí":"mr","mongólska":"mn","norska":"nb","persneska":"fa","portúgalska":"pt","pólska":"pl","rúmenska":"ro","rússneska":"ru","serbneska":"sr","skosk-gelíska":"gd","slóvakíska":"sk","slóvenska":"sl","spænska":"es","súlú":"zu","sænska":"sv","taílenska":"th","tékkneska":"cs","tyrkneska":"tr","ungverska":"hu","úkraínska":"uk","úsbekíska":"uz","velska":"cy","víetnamska":"vi","þýska":"de","albāņu":"sq","amharu":"am","angļu":"en","arābu":"ar","armēņu":"hy","azerbaidžāņu":"az","baltkrievu":"be","basku":"eu","birmiešu":"my","bulgāru":"bg","čehu":"cs","dāņu":"da","franču":"fr","galisiešu":"gl","grieķu":"el","holandiešu":"nl","horvātu":"hr","igauņu":"et","indonēziešu":"id","īru":"ga","īslandiešu":"is","itāļu":"it","ivrits":"he","japāņu":"ja","katalāņu":"ca","korejiešu":"ko","kreolu (haiti)":"ht","krievu":"ru","kurdu (kurmandži)":"ku","kurdu (sorani)":"ckb","ķīniešu (tradicionālā)":"zh-tw","ķīniešu (vienkāršotā)":"zh-cn","latīņu":"la","latviešu":"lv","lietuviešu":"lt","maķedoniešu":"mk","malajalamiešu":"ml","malajiešu":"ms","maltiešu":"mt","maratu":"mr","mongoļu":"mn","norvēģu":"nb","persiešu":"fa","poļu":"pl","portugāļu":"pt","rumāņu":"ro","serbu":"sr","skotu gēlu":"gd","slovāku":"sk","slovēņu":"sl","somu":"fi","spāņu":"es","taju":"th","turku":"tr","ukraiņu":"uk","ungāru":"hu","uzbeku":"uz","vācu":"de","velsiešu":"cy","vjetnamiešu":"vi","zviedru":"sv","азербайджански":"az","английски":"en","арабски":"ar","арменски":"hy","баски":"eu","беларуски":"be","бирмански":"my","български":"bg","галисийски":"gl","гръцки":"el","датски":"da","иврит":"he","индонезийски":"id","ирландски":"ga","испански":"es","италиански":"it","китайски (опростен)":"zh-cn","китайски (традиционен)":"zh-tw","корейски":"ko","кюрдски (курманджи)":"ku","кюрдски (сорани)":"ckb","латвийски":"lv","литовски":"lt","малайски":"ms","малтийски":"mt","немски":"de","нидерландски":"nl","норвежки":"nb","персийски":"fa","румънски":"ro","словашки":"sk","словенски":"sl","сръбски":"sr","тайландски":"th","уелски":"cy","узбекски":"uz","финландски":"fi","френски":"fr","хаитянски креолски":"ht","хърватски":"hr","шотландски келтски":"gd","японски":"ja","albanês":"sq","alemão":"de","armênio":"hy","azerbaijano":"az","bielorrusso":"be","birmanês":"my","canarês":"kn","catalão":"ca","chinês (simplificado)":"zh-cn","chinês (tradicional)":"zh-tw","curdo (sorâni)":"ckb","dinamarquês":"da","espanhol":"es","finlandês":"fi","francês":"fr","gaélico escocês":"gd","galês":"cy","hebraico":"he","holandês":"nl","indonésio":"id","inglês":"en","irlandês":"ga","islandês":"is","japonês":"ja","latim":"la","letão":"lv","macedônio":"mk","malaiala":"ml","maltês":"mt","marata":"mr","norueguês":"nb","polonês":"pl","português":"pt","romeno":"ro","sérvio":"sr","tailandês":"th","tcheco":"cs","telugo":"te","ucraniano":"uk","uzbeque":"uz","азербайджанский":"az","албанский":"sq","амхарский":"am","английский":"en","арабский":"ar","армянский":"hy","баскский":"eu","белорусский":"be","бирманский":"my","болгарский":"bg","валлийский":"cy","венгерский":"hu","вьетнамский":"vi","галисийский":"gl","греческий":"el","датский":"da","индонезийский":"id","ирландский":"ga","исландский":"is","испанский":"es","итальянский":"it","каталанский":"ca","китайский (традиционный)":"zh-tw","китайский (упрощенный)":"zh-cn","корейский":"ko","креольский (гаити)":"ht","курдский (курманджи)":"ku","курдский (сорани)":"ckb","латинский":"la","латышский":"lv","литовский":"lt","македонский":"mk","малайский":"ms","мальтийский":"mt","монгольский":"mn","немецкий":"de","нидерландский":"nl","норвежский":"nb","персидский":"fa","польский":"pl","португальский":"pt","румынский":"ro","русский":"ru","сербский":"sr","словацкий":"sk","словенский":"sl","тайский":"th","турецкий":"tr","узбекский":"uz","украинский":"uk","финский":"fi","французский":"fr","хорватский":"hr","чешский":"cs","шведский":"sv","шотландский (гэльский)":"gd","эстонский":"et","японский":"ja","amhariska":"am","arabiska":"ar","armeniska":"hy","azerbajdzjanska":"az","baskiska":"eu","bulgariska":"bg","burmesiska":"my","engelska":"en","estniska":"et","finska":"fi","gaeliska":"gd","galiciska":"gl","grekiska":"el","haitiska":"ht","hebreiska":"he","indonesiska":"id","irländska":"ga","isländska":"is","italienska":"it","kanaresiska":"kn","katalanska":"ca","kinesiska (förenklad)":"zh-cn","kinesiska (traditionell)":"zh-tw","koreanska":"ko","kroatiska":"hr","kurdiska (kurmanji)":"ku","kurdiska (sorani)":"ckb","lettiska":"lv","litauiska":"lt","makedonska":"mk","malaysiska":"ms","maltesiska":"mt","mongoliska":"mn","nederländska":"nl","persiska":"fa","polska":"pl","portugisiska":"pt","rumänska":"ro","ryska":"ru","serbiska":"sr","slovakiska":"sk","slovenska":"sl","spanska":"es","svenska":"sv","thailändska":"th","tjeckiska":"cs","turkiska":"tr","tyska":"de","ukrainska":"uk","ungerska":"hu","uzbekiska":"uz","vietnamesiska":"vi","vitryska":"be","walesiska":"cy","αγγλικά":"en","αζερμπαϊτζανικά":"az","αλβανικά":"sq","αμχαρικά":"am","αραβικά":"ar","αρμενικά":"hy","βασκικά":"eu","βιετναμεζικά":"vi","βιρμανικά":"my","βουλγαρικά":"bg","γαελικά σκοτίας":"gd","γαλικιακά":"gl","γαλλικά":"fr","γερμανικά":"de","δανικά":"da","εβραϊκά":"he","ελληνικά":"el","εσθονικά":"et","εσπεράντο":"eo","ζουλού":"zu","ιαπωνικά":"ja","ινδονησιακά":"id","ιρλανδικά":"ga","ισλανδικά":"is","ισπανικά":"es","ιταλικά":"it","κανάντα":"kn","καταλανικά":"ca","κινεζικά (απλοποιημένα)":"zh-cn","κινεζικά (παραδοσιακά)":"zh-tw","κορεατικά":"ko","κουρδικά (κουρμαντζί)":"ku","κουρδικά (σορανί)":"ckb","κρεόλ αϊτής":"ht","κροατικά":"hr","λατινικά":"la","λετονικά":"lv","λευκορωσικά":"be","λιθουανικά":"lt","μαλαγιάλαμ":"ml","μαλέι":"ms","μαλτεζικά":"mt","μαορί":"mi","μαραθικά":"mr","μογγολικά":"mn","νορβηγικά":"nb","ολλανδικά":"nl","ουαλικά":"cy","ουγγρικά":"hu","ουζμπεκικά":"uz","ουκρανικά":"uk","περσικά":"fa","πολωνικά":"pl","πορτογαλικά":"pt","ρουμανικά":"ro","ρωσικά":"ru","σερβικά":"sr","σλαβομακεδονικά":"mk","σλοβακικά":"sk","σλοβενικά":"sl","σουηδικά":"sv","ταϊλανδεζικά":"th","τελούγκου":"te","τουρκικά":"tr","τσεχικά":"cs","φινλανδικά":"fi","χίντι":"hi","albanščina":"sq","amharščina":"am","angleščina":"en","arabščina":"ar","armenščina":"hy","azerbajdžanščina":"az","baskovščina":"eu","beloruščina":"be","bolgarščina":"bg","burmanščina":"my","češčina":"cs","danščina":"da","estonščina":"et","finščina":"fi","francoščina":"fr","galicijščina":"gl","grščina":"el","haitijska kreolščina":"ht","hebrejščina":"he","hindijščina":"hi","hrvaščina":"hr","indonezijščina":"id","irščina":"ga","islandščina":"is","italijanščina":"it","japonščina":"ja","kanareščina":"kn","katalonščina":"ca","kitajščina (poenostavljena)":"zh-cn","kitajščina (tradicionalna)":"zh-tw","korejščina":"ko","kurdščina (kurmandži)":"ku","kurdščina (soranščina)":"ckb","latinščina":"la","latvijščina":"lv","litovščina":"lt","madžarščina":"hu","makedonščina":"mk","malajalščina":"ml","malajščina":"ms","malteščina":"mt","maorščina":"mi","maratščina":"mr","mongolščina":"mn","nemščina":"de","nizozemščina":"nl","norveščina":"nb","perzijščina":"fa","poljščina":"pl","portugalščina":"pt","romunščina":"ro","ruščina":"ru","slovaščina":"sk","slovenščina":"sl","srbščina":"sr","škotska gelščina":"gd","španščina":"es","švedščina":"sv","tajščina":"th","teluščina":"te","turščina":"tr","ukrajinščina":"uk","uzbeščina":"uz","valižanščina":"cy","vietnamščina":"vi","zulujščina":"zu","ಅಜರ್ಬೈಜಾನಿ":"az","ಅಮಹಾರಿಕ್":"am","ಅರಬ್ಬಿ":"ar","ಆರ್ಮೇನಿಯನ್":"hy","ಆಲ್ಬೇನಿಯನ್":"sq","ಇಂಗ್ಲಿಷ್‌‌":"en","ಇಂಡೋನೇಷಿಯನ್":"id","ಇಟಾಲಿಯನ್":"it","ಉಜ್ಬೆಕ್":"uz","ಎಸ್ಟೋನಿಯನ್":"et","ಎಸ್ಪೆರಾಂಟೋ":"eo","ಐರಿಷ್":"ga","ಐಸ್‌ಲ್ಯಾಂಡಿಕ್‌":"is","ಕನ್ನಡ":"kn","ಕುರ್ದಿಶ್ (ಕುರ್ಮಾಂಜಿ)":"ku","ಕುರ್ದಿಶ್ (ಸೊರಾನಿ)":"ckb","ಕೊರಿಯನ್":"ko","ಕ್ಯಾಟಲನ್":"ca","ಕ್ರೊಯೇಷಿಯನ್":"hr","ಗ್ಯಾಲೀಷಿಯನ್":"gl","ಗ್ರೀಕ್":"el","ಚೀನಿ (ಸರಳೀಕೃತ)":"zh-cn","ಚೀನಿ (ಸಾಂಪ್ರದಾಯಿಕ)":"zh-tw","ಜಪಾನಿ":"ja","ಜರ್ಮನ್":"de","ಜುಲು":"zu","ಝೆಕ್‌":"cs","ಟರ್ಕಿಷ್":"tr","ಡಚ್":"nl","ಡ್ಯಾನಿಷ್":"da","ತೆಲುಗು":"te","ಥಾಯ್":"th","ನಾರ್ವೇಜಿಯನ್‌":"nb","ಪೋರ್ಚುಗೀಸ್":"pt","ಪೋಲಿಷ್":"pl","ಫಾರ್ಸಿ":"fa","ಫಿನ್ನಿಷ್":"fi","ಫ್ರೆಂಚ್":"fr","ಬರ್ಮೀಸ್":"my","ಬಲ್ಗೇರಿಯನ್":"bg","ಬಾಸ್ಕ್":"eu","ಬೆಲರೂಸಿಯನ್":"be","ಮಂಗೋಲಿಯನ್":"mn","ಮರಾಠಿ":"mr","ಮಲಯ":"ms","ಮಲಯಾಳಂ":"ml","ಮಾಲ್ಟೀಸ್":"mt","ಮಾವೋರಿ":"mi","ಮ್ಯಾಸೆಡೋನಿಯನ್":"mk","ಯುಕ್ರೇನಿಯನ್":"uk","ರಷಿಯನ್":"ru","ರೊಮೇನಿಯನ್":"ro","ಲಿಥುವೇನಿಯನ್":"lt","ಲ್ಯಾಟಿನ್":"la","ಲ್ಯಾಟ್ವಿಯನ್‌":"lv","ವಿಯೆಟ್ನಾಮಿ":"vi","ವೆಲ್ಶ್":"cy","ಸರ್ಬಿಯನ್":"sr","ಸ್ಕಾಟ್ಸ್ ಗ್ಯಾಲಿಕ್":"gd","ಸ್ಪ್ಯಾನಿಷ್":"es","ಸ್ಲೊವಾಕ್":"sk","ಸ್ಲೊವೆನಿಯನ್":"sl","ಸ್ವೀಡಿಷ್":"sv","ಹಂಗೇರಿಯನ್":"hu","ಹಯಥಿಯನ್‌ ಕ್ರಿಯೋಲ್‌":"ht","ಹಿಂದಿ":"hi","ಹೀಬ್ರೂ":"he","belarussia":"be","ceko":"cs","china (aks. sederhana)":"zh-cn","china (aks. tradisional)":"zh-tw","finlandia":"fi","gaelig":"ga","gaelik skotlandia":"gd","galisia":"gl","inggris":"en","islan":"is","jepang":"ja","katala":"ca","kurdi (kurmanji)":"ku","lituania":"lt","melayu":"ms","polandia":"pl","prancis":"fr","rumania":"ro","swensk":"sv","yunani":"el","กรีก":"el","กันนาดา":"kn","กาลิเชียน":"gl","เกลิกสกอต":"gd","เกาหลี":"ko","คาตาลัน":"ca","เคิร์ด (กุรมันชี)":"ku","เคิร์ด (โซรานี)":"ckb","โครเอเชีย":"hr","จีน (ตัวเต็ม)":"zh-tw","จีน (ตัวย่อ)":"zh-cn","เช็ก":"cs","ซูลู":"zu","เซอร์เบียน":"sr","ญี่ปุ่น":"ja","ดัตช์":"nl","เดนมาร์ก":"da","ตุรกี":"tr","เตลูกู":"te","ไทย":"th","นอร์เวย์":"nb","บัลแกเรีย":"bg","บาสก์":"eu","เบลารุส":"be","เปอร์เซีย":"fa","โปรตุเกส":"pt","โปแลนด์":"pl","ฝรั่งเศส":"fr","ฟินแลนด์":"fi","มองโกเลีย":"mn","มัลทีส":"mt","มาซีโดเนีย":"mk","มาราฐี":"mr","มาลายาลัม":"ml","มาเลย์":"ms","เมารี":"mi","เมียนมา (พม่า)":"my","ยูเครน":"uk","เยอรมัน":"de","รัสเซีย":"ru","โรมาเนีย":"ro","ละติน":"la","ลัตเวีย":"lv","ลิทัวเนีย":"lt","เวลส์":"cy","เวียดนาม":"vi","สเปน":"es","สโลวัก":"sk","สโลวีเนีย":"sl","สวีเดน":"sv","อังกฤษ":"en","อัมฮาริก":"am","อาร์เซอร์ไบจัน":"az","อาร์เมเนีย":"hy","อาหรับ":"ar","อิตาลี":"it","อินโดนีเซีย":"id","อุสเบกิสถาน":"uz","เอสโทเนีย":"et","เอสเปอแรนโต":"eo","แอลเบเนีย":"sq","ไอซ์แลนด์":"is","ไอร์แลนด์":"ga","ฮังการี":"hu","ฮินดี":"hi","ฮีบรู":"he","เฮติครีโอล":"ht","airmeinis":"hy","albàinis":"sq","amtharais":"am","arabais":"ar","asarbaideànais":"az","basgais":"eu","bealaruisis":"be","beurla":"en","bhiet-namais":"vi","bulgarais":"bg","cànan nan tàidh":"th","catalanais":"ca","coirèanais":"ko","crìtheol haidhti":"ht","cròthaisis":"hr","cuimris":"cy","cùrdais (kurmanji)":"ku","cùrdais (sorani)":"ckb","duitsis":"nl","eabhra":"he","eadailtis":"it","eastoinis":"et","fionnlannais":"fi","fraingis":"fr","gàidhlig":"gd","gailìsis":"gl","gearmailtis":"de","grèigis":"el","hindis":"hi","innd-innsis":"id","innis-tìlis":"is","laideann":"la","laitbheis":"lv","liotuainis":"lt","malaidhis":"ms","maltais":"mt","masadonais":"mk","miànmar (burmais)":"my","mongolais":"mn","nirribhis":"nb","pòlainnis":"pl","portagailis":"pt","romàinis":"ro","ruisis":"ru","seacais":"cs","seapanais":"ja","sèirbis":"sr","sìonais (seann-nòsach)":"zh-tw","sìonais (sìmplichte)":"zh-cn","slòbhacais":"sk","slòbhainis":"sl","spàinntis":"es","suainis":"sv","turcais":"tr","ucràinis":"uk","ungairis":"hu","usbagais":"uz","азербайджанська":"az","албанська":"sq","амхарська":"am","англійська":"en","арабська":"ar","баскська":"eu","білоруська":"be","бірманська":"my","болгарська":"bg","в’єтнамська":"vi","валлійська":"cy","вірменська":"hy","гаїтянська креольська":"ht","гінді":"hi","грецька":"el","ґалісійська":"gl","данська":"da","естонська":"et","іврит":"he","індонезійська":"id","ірландська":"ga","ісландська":"is","іспанська":"es","італійська":"it","каталанська":"ca","китайська (спрощена)":"zh-cn","китайська (традиційна)":"zh-tw","корейська":"ko","курдська (курманджі)":"ku","курдська (сорані)":"ckb","латинська":"la","латиська":"lv","литовська":"lt","македонська":"mk","малайська":"ms","мальтійська":"mt","маорі":"mi","монгольська":"mn","нідерландська":"nl","німецька":"de","норвезька":"nb","перська":"fa","польська":"pl","португальська":"pt","російська":"ru","румунська":"ro","сербська":"sr","словацька":"sk","словенська":"sl","тайська":"th","телуґу":"te","турецька":"tr","угорська":"hu","узбецька":"uz","українська":"uk","фінська":"fi","французька":"fr","хорватська":"hr","чеська":"cs","шведська":"sv","шотландська (ґельська)":"gd","японська":"ja","albanès":"sq","alemany":"de","amhàric":"am","anglès":"en","àrab":"ar","armeni":"hy","àzeri":"az","basc":"eu","bielorús":"be","birmà":"my","búlgar":"bg","castellà":"es","català":"ca","coreà":"ko","crioll d\'haití":"ht","croat":"hr","danès":"da","eslovac":"sk","eslovè":"sl","estonià":"et","finès":"fi","francès":"fr","gaèlic escocès":"gd","gallec":"gl","gal·lès":"cy","grec":"el","hebreu":"he","hongarès":"hu","indonesi":"id","irlandès":"ga","islandès":"is","italià":"it","japonès":"ja","letó":"lv","lituà":"lt","llatí":"la","macedònic":"mk","malaiàlam":"ml","maltès":"mt","neerlandès":"nl","noruec":"nb","polonès":"pl","portuguès":"pt","romanès":"ro","serbi":"sr","suec":"sv","turc":"tr","txec":"cs","ucraïnès":"uk","xinès (simplificat)":"zh-cn","xinès (tradicional)":"zh-tw","amhárico":"am","azerí":"az","chino (simplificado)":"zh-cn","chino (tradicional)":"zh-tw","criollo haitiano":"ht","danés":"da","estonio":"et","euskera":"eu","finlandés":"fi","gallego":"gl","griego":"el","japonés":"ja","kurdo (kurmanyi)":"ku","malayo":"ms","noruego":"nb","rumano":"ro","അമാറിക്":"am","അർമേനിയൻ":"hy","അൽബേനിയൻ":"sq","അസർബൈജാനി":"az","അറബിക്":"ar","ഇന്തോനേഷ്യൻ":"id","ഇംഗ്ലീഷ്":"en","ഇറ്റാലിയൻ":"it","ഉക്രേനിയൻ":"uk","ഉസ്ബെക്ക്":"uz","എസ്‌പെരന്തോ":"eo","എസ്റ്റോണിയൻ":"et","ഐസ്‌ലാൻഡിക്":"is","ഐറിഷ്":"ga","കന്നട":"kn","കാറ്റലൻ":"ca","കുർദ്ദിഷ് (കുർമാൻജി)":"ku","കുർദ്ദിഷ് (സൊറാനി)":"ckb","കൊറിയൻ":"ko","ക്രൊയേഷ്യൻ":"hr","ഗലീഷ്യൻ":"gl","ഗ്രീക്ക്":"el","ചെക്ക്":"cs","ചൈനീസ് (പരമ്പരാഗതം)":"zh-tw","ചൈനീസ് (ലഘൂകരിച്ചത്)":"zh-cn","ജർമ്മൻ":"de","ജാപ്പനീസ്‌":"ja","ടർക്കിഷ്":"tr","ഡച്ച്":"nl","ഡാനിഷ്":"da","തായ്":"th","തെലുങ്ക്":"te","നോർവീജിയൻ":"nb","പേർഷ്യൻ":"fa","പോർച്ചുഗീസ്":"pt","പോളിഷ്":"pl","ഫിന്നിഷ്":"fi","ഫ്രെഞ്ച്":"fr","ബർമീസ്":"my","ബൾഗേറിയൻ":"bg","ബാസ്ക്":"eu","ബെലാറുഷ്യൻ":"be","മംഗോളിയൻ":"mn","മലയാളം":"ml","മലയ്":"ms","മറാഠി":"mr","മാസഡോണിയൻ":"mk","മാൾട്ടീസ്":"mt","മൗറി":"mi","ലാറ്റിൻ":"la","ലാറ്റ്‌വിയൻ":"lv","ലിത്വേനിയൻ":"lt","വിയറ്റ്നാമീസ്":"vi","വെൽഷ്":"cy","സുളു":"zu","സെർബിയൻ":"sr","സ്കോട്ട്സ് ഗ്യാലിക്":"gd","സ്പാനിഷ്":"es","സ്ലോവാക്":"sk","സ്ലോവേനിയൻ":"sl","സ്വീഡിഷ്":"sv","ഹംഗേറിയൻ":"hu","ഹിന്ദി":"hi","ഹീബ്രു":"he","ഹെയ്തിയൻ ക്രയോൾ":"ht","റഷ്യൻ":"ru","റൊമേനിയൻ":"ro","albanais":"sq","allemand":"de","amharique":"am","anglais":"en","arabe":"ar","arménien":"hy","azéri":"az","biélorusse":"be","birman":"my","bulgare":"bg","chinois (simplifié)":"zh-cn","chinois (traditionnel)":"zh-tw","coréen":"ko","créole haïtien":"ht","croate":"hr","danois":"da","espagnol":"es","espéranto":"eo","estonien":"et","finnois":"fi","français":"fr","gaélique (écosse)":"gd","galicien":"gl","gallois":"cy","hébreu":"he","hongrois":"hu","indonésien":"id","irlandais":"ga","islandais":"is","italien":"it","japonais":"ja","kurde (kurmandji)":"ku","kurde (sorani)":"ckb","letton":"lv","lituanien":"lt","macédonien":"mk","malaisien":"ms","néerlandais":"nl","norvégien":"nb","ouzbek":"uz","persan":"fa","polonais":"pl","portugais":"pt","roumain":"ro","russe":"ru","serbe":"sr","slovaque":"sk","slovène":"sl","suédois":"sv","tchèque":"cs","thaï":"th","ukrainien":"uk","vietnamien":"vi","albaneză":"sq","amharică":"am","arabă":"ar","armeană":"hy","azerbaidjană":"az","bască":"eu","bielorusă":"be","birmană":"my","bulgară":"bg","catalană":"ca","cehă":"cs","chineză (simplificată)":"zh-cn","chineză (tradițională)":"zh-tw","coreeană":"ko","creolă haitiană":"ht","croată":"hr","daneză":"da","ebraică":"he","engleză":"en","estonă":"et","finlandeză":"fi","franceză":"fr","galeză":"cy","galica scoțiană":"gd","galiciană":"gl","germană":"de","greacă":"el","indoneziană":"id","irlandeză":"ga","islandeză":"is","italiană":"it","japoneză":"ja","kurdă (kurmanji)":"ku","kurdă (sorani)":"ckb","latină":"la","letonă":"lv","lituaniană":"lt","macedoneană":"mk","maghiară":"hu","malaeză":"ms","malteză":"mt","mongolă":"mn","neerlandeză":"nl","norvegiană":"nb","persană":"fa","poloneză":"pl","portugheză":"pt","română":"ro","rusă":"ru","sârbă":"sr","slovacă":"sk","slovenă":"sl","spaniolă":"es","suedeză":"sv","thailandeză":"th","turcă":"tr","ucraineană":"uk","uzbecă":"uz","vietnameză":"vi","amarikisht":"am","anglisht":"en","arabisht":"ar","armenisht":"hy","azerisht":"az","baskisht":"eu","birmanisht":"my","bjellorusisht":"be","bullgarisht":"bg","çekisht":"cs","danisht":"da","estonisht":"et","finlandisht":"fi","frëngjisht":"fr","galicianisht":"gl","galishte skoceze":"gd","greqisht":"el","gjermanisht":"de","hebraisht":"he","hindisht":"hi","holandisht":"nl","hungarisht":"hu","indonezisht":"id","irlandisht":"ga","islandisht":"is","italisht":"it","japonisht":"ja","kanadaisht":"kn","katalonisht":"ca","kinezisht (e thjeshtuar)":"zh-cn","kinezisht (tradicionale)":"zh-tw","koreanisht":"ko","kreolishte haitiane":"ht","kroatisht":"hr","kurdisht (kurmanjisht)":"ku","kurdisht (sorani)":"ckb","latinisht":"la","letonisht":"lv","lituanisht":"lt","malajalamisht":"ml","malajzisht":"ms","malteze":"mt","maorisht":"mi","maqedonisht":"mk","maratisht":"mr","mongolisht":"mn","norvegjisht":"nb","persisht":"fa","polonisht":"pl","portugalisht":"pt","rumanisht":"ro","rusisht":"ru","serbisht":"sr","sllovakisht":"sk","sllovenisht":"sl","spanjisht":"es","suedisht":"sv","shqip":"sq","tajlandisht":"th","telugisht":"te","turqisht":"tr","uellsisht":"cy","ukrainisht":"uk","uzbekisht":"uz","vietnamisht":"vi","albánčina":"sq","amharčina":"am","arabčina":"ar","arménčina":"hy","azerbajdžančina":"az","barmčina":"my","bieloruština":"be","bulharčina":"bg","čínština (tradičná)":"zh-tw","dánčina":"da","estónčina":"et","fínčina":"fi","francúzština":"fr","galícijčina":"gl","gréčtina":"el","haitská kreolčina":"ht","hebrejčina":"he","hindčina":"hi","holandčina":"nl","chorvátčina":"hr","indonézština":"id","írčina":"ga","islandčina":"is","japončina":"ja","kannadčina":"kn","katalánčina":"ca","kórejčina":"ko","kurdčina (kurmándží)":"ku","kurdčina (sorání)":"ckb","latinčina":"la","litovčina":"lt","macedónčina":"mk","maďarčina":"hu","malajámčina":"ml","malajčina":"ms","maltčina":"mt","maorijčina":"mi","maratčina":"mr","mongolčina":"mn","nemčina":"de","nórčina":"nb","perzština":"fa","poľština":"pl","portugalčina":"pt","rumunčina":"ro","slovenčina":"sk","slovinčina":"sl","srbčina":"sr","škótska gaelčina":"gd","španielčina":"es","švédčina":"sv","taliančina":"it","telugčina":"te","thajčina":"th","ukrajinčina":"uk","vietnamčina":"vi","waleština":"cy","zuluština":"zu"," دانماركی":"da","almanî":"de","ambarîkî":"am","arnawudî":"sq","azerbaycanî":"az","baskî":"eu","belarûsî":"be","bûlgarî":"bg","çînî (hêsankirî)":"zh-cn","çînî (kevneşopî)":"zh-tw","endonezyayî":"id","erebî":"ar","esperantoyî":"eo","estonî":"et","farsî":"fa","fînlandî":"fi","fransî":"fr","gaêlîkî sikotlandî":"gd","galîsî":"gl","hirwatî":"hr","holendî":"nl","hûngarî (macarî)":"hu","îbranî":"he","îngilîzî":"en","îrlandî":"ga","îspanyolî":"es","îzlandî":"is","japonî":"ja","kannadayî":"kn","katalanî":"ca","koreyî":"ko","kreolê haîtî":"ht","kurdî (kurmancî)":"ku","kurdî (soranî)":"ckb","latînî":"la","letonî":"lv","lîtvanî":"lt","makedonî":"mk","malayalamî":"ml","malayî":"ms","maltayî":"mt","maorîyî":"mi","maratî":"mr","moxolî":"mn","myanmarî (burmese)":"my","norwêcî":"nb","ozbekî":"uz","polandî (lehîstanî)":"pl","portekîzî":"pt","romanî":"ro","rûsî":"ru","sirbî":"sr","slovakî":"sk","slovenyayî":"sl","swêdî":"sv","tayî":"th","teleguyî":"te","tirkî":"tr","vîetnamî":"vi","welşî":"cy","yûnanî":"el","zûlûyî":"zu","ئه رمه نی":"hy","ئۆکرانی":"uk","ئیتالی":"it","چه‌كی":"cs","هیندی":"hi","amxar":"am","arman":"hy","bolgar":"bg","dan":"da","fors":"fa","fransuz":"fr","gaiti-kreol":"ht","galisiy":"gl","golland":"nl","grek":"el","indonez":"id","ingliz":"en","irland":"ga","island":"is","italyan":"it","ivrit":"he","koreys":"ko","kurd (kurmonji)":"ku","latish":"lv","lotin":"la","makedon":"mk","maltiy":"mt","maratxi":"mr","nemis":"de","norveg":"nb","ozarbayjon":"az","portugal":"pt","rumin":"ro","turk":"tr","ukrain":"uk","valliy":"cy","venger":"hu","xitoy (odatiy)":"zh-tw","xitoy (soddalashgan)":"zh-cn","o‘zbek":"uz","shotland-gel":"gd","shved":"sv","chex":"cs","अंग्रेज़ी":"en","अज़रबैजानी":"az","अल्बेनियन":"sq","आइसलैंडिक":"is","आर्मेनियन":"hy","इटैलियन":"it","उज़्बेक":"uz","एस्तोनियन":"et","एस्पेरांटो":"eo","ऐम्हेरिक":"am","कन्नड़":"kn","कैटेलन":"ca","गैलिशियन":"gl","चीनी (पारंपरिक)":"zh-tw","चीनी (सरल)":"zh-cn","चेक":"cs","जापानी":"ja","ज़ुलु":"zu","डैनिश":"da","तुर्क":"tr","पुर्तगाली":"pt","फ़िनिश":"fi","फ़्रेंच":"fr","बर्मी":"my","बुल्गारियन":"bg","बेलारूसीयन":"be","बैस्क":"eu","मलयालम":"ml","माऔरी":"mi","माल्टी":"mt","मेसीडोनियन":"mk","यूक्रेनियन":"uk","रूसी":"ru","रोमेनियन":"ro","लातवियन":"lv","लैटिन":"la","वियतनामी":"vi","सर्बियाई":"sr","स्पैनिश":"es","स्लोवाक":"sk","स्लोवेनियन":"sl","हंगरियन":"hu","हीब्रू":"he","हैतियन क्रिओल":"ht","にほんご":"ja"},"scratchToGoogleMap":{"zh-cn":"zh","nb":"no","he":"iw","es-419":"es","pt-br":"pt","ja-hira":"ja"},"previouslySupported":["ab","ms","be","eo","hy","hi","kn","ht","ku","la","mk","ml","mt","mr","mn","my","nn","sq","te","uz"],"spokenLanguages":{"en":[{"code":"zh-cn","name":"Chinese (Mandarin)"}],"ja":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語 (ブラジル)"},{"code":"es-419","name":"スペイン語 (ラテンアメリカ)"}],"gd":[{"code":"zh-cn","name":"Sìonais (Mandarin)"},{"code":"hi","name":"Indeach"},{"code":"pt-br","name":"Portagailis (Braisil)"},{"code":"es-419","name":"Spàinntis (Ameireagaidh Laidinn)"}],"es":[{"code":"zh-cn","name":"Chino (Mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (latinoamericano)"}],"az":[{"code":"zh-cn","name":"Çin (Mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portuqal (Braziliya)"},{"code":"es-419","name":"İspan (Latın Amerikası)"}],"bg":[{"code":"zh-cn","name":"китайски (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"испански (латиноамерикански)"}],"pl":[{"code":"zh-cn","name":"chiński (mandaryński)"},{"code":"hi","name":"hinduski"},{"code":"pt-br","name":"portugalski (brazylijski)"},{"code":"es-419","name":"Hiszpański (Ameryka Łacińska)"}],"et":[{"code":"zh-cn","name":"hiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasiilia)"},{"code":"es-419","name":"hispaania (Ladina-Ameerika)"}],"tr":[{"code":"zh-cn","name":"Çin (mandalinası)"},{"code":"hi","name":"Hintçe"},{"code":"pt-br","name":"Portekizce (Brezilya)"},{"code":"es-419","name":"İspanyolca (Latin Amerika)"}],"id":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brasil)"},{"code":"es-419","name":"Spanyol (Amerika Latin)"}],"pt-br":[{"code":"zh-cn","name":"Mandarim (chinês)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (Latino-Americano)"}],"mr":[{"code":"zh-cn","name":"चीनी (मंडारीन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पोर्तुगीज (ब्राझिलियन)"},{"code":"es-419","name":"स्पॅनिश (लॅटिन अमेरिकन)"}],"mi":[{"code":"zh-cn","name":"Hainamana (Māriki)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Potiti (Brazilian)"},{"code":"es-419","name":"Paniora (Amerika Raina)"}],"hu":[{"code":"zh-cn","name":"kínai (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugál (brazil)"},{"code":"es-419","name":"spanyol (latin-amerikai)"}],"is":[{"code":"zh-cn","name":"kínverska (mandarín)"},{"code":"hi","name":"hindí"},{"code":"pt-br","name":"Portúgalska (Brasilíska)"},{"code":"es-419","name":"spænska (latínameríska)"}],"ckb":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هیندی"},{"code":"pt-br","name":"زمانی پورتوگالی (بەرازیلی)"},{"code":"es-419","name":"ئیسپانی (ئەمریکی لاتین)"}],"de":[{"code":"zh-cn","name":"Chinesisch (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugiesisch (Brasilianisch)"},{"code":"es-419","name":"Spanisch (Lateinamerikanisch)"}],"th":[{"code":"zh-cn","name":"จีน (กลาง)"},{"code":"hi","name":"ฮินดี"},{"code":"pt-br","name":"โปรตุเกส (บราซิล)"},{"code":"es-419","name":"สเปน (ละตินอเมริกา)"}],"vi":[{"code":"zh-cn","name":"Tiếng Trung (Quan Thoại)"},{"code":"hi","name":"Tiếng Hindi"},{"code":"pt-br","name":"Tiếng Bồ Đào Nha (Brazil)"},{"code":"es-419","name":"Tiếng Tây Ban Nha (Mỹ Latinh)"}],"ru":[{"code":"zh-cn","name":"Китайский (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"Португальский (бразильский)"},{"code":"es-419","name":"Испанский (Латинская Америка)"}],"fr":[{"code":"zh-cn","name":"Mandarin (chinois)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugais (brésilien)"},{"code":"es-419","name":"Espagnol (latino-américain)"}],"zh-cn":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地语"},{"code":"pt-br","name":"葡萄牙语（巴西）"},{"code":"es-419","name":"西班牙语（拉丁美洲）"}],"ar":[{"code":"zh-cn","name":"الصينية (الماندرين)"},{"code":"hi","name":"الهندية"},{"code":"pt-br","name":"البرتغالية (البرازيلية)"},{"code":"es-419","name":"الإسبانية (أمريكا اللاتينية)"}],"kn":[{"code":"zh-cn","name":"ಚೈನೀಸ್ (ಮ್ಯಾಂಡರಿನ್)"},{"code":"hi","name":"ಹಿಂದಿ"},{"code":"pt-br","name":"ಪೋರ್ಚುಗೀಸ್ (ಬ್ರೆಜಿಲಿಯನ್)"},{"code":"es-419","name":"ಸ್ಪ್ಯಾನಿಷ್ (ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್)"}],"zh-tw":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地語"},{"code":"pt-br","name":"葡萄牙語（巴西）"},{"code":"es-419","name":"西班牙語（拉丁美洲）"}],"fi":[{"code":"zh-cn","name":"kiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasilia)"},{"code":"es-419","name":"espanja (latinalainen amerikka)"}],"lt":[{"code":"zh-cn","name":"kinų (mandarinų)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugalų (Brazilijos)"},{"code":"es-419","name":"Ispanų (Lotynų Amerikos)"}],"gl":[{"code":"zh-cn","name":"chinés (mandarín)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugués (brasileiro)"},{"code":"es-419","name":"español (latinoamericano)"}],"hi":[{"code":"zh-cn","name":"चीनी (मंदारिन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पुर्तगाली (ब्राज़ीलियाई)"},{"code":"es-419","name":"स्पैनिश (लैटिन अमेरिकी)"}],"ja-hira":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語 (ブラジル)"},{"code":"es-419","name":"スペイン語 (ラテンアメリカ)"}],"be":[{"code":"zh-cn","name":"кітайская (мандарын)"},{"code":"hi","name":"Хіндзі"},{"code":"pt-br","name":"партугальская (бразільская)"},{"code":"es-419","name":"іспанская (лацінаамерыканская)"}],"sk":[{"code":"zh-cn","name":"čínština (mandarínčina)"},{"code":"hi","name":"hindčina"},{"code":"pt-br","name":"portugalčina (brazílska)"},{"code":"es-419","name":"španielčina (latinskoamerická)"}],"ku":[{"code":"zh-cn","name":"Çînî (Mandarîn)"},{"code":"hi","name":"Hindî"},{"code":"pt-br","name":"Portekîzî (Brazîlya)"},{"code":"es-419","name":"Spanî (Amerîkaya Latîn)"}],"el":[{"code":"zh-cn","name":"κινέζικα (μανταρίνια)"},{"code":"hi","name":"Χίντι"},{"code":"pt-br","name":"Πορτογαλικά (Βραζιλιάνικα)"},{"code":"es-419","name":"Ισπανικά (Λατινικής Αμερικής)"}],"fa":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هندی"},{"code":"pt-br","name":"پرتغالی (برزیلی)"},{"code":"es-419","name":"اسپانیایی (آمریکای لاتین)"}],"hy":[{"code":"zh-cn","name":"չինարեն (մանդարին)"},{"code":"hi","name":"հինդի"},{"code":"pt-br","name":"պորտուգալերեն (բրազիլերեն)"},{"code":"es-419","name":"իսպաներեն (լատինամերիկյան)"}],"mt":[{"code":"zh-cn","name":"Ċiniż (Mandarin)"},{"code":"hi","name":"Ħindi"},{"code":"pt-br","name":"Portugiż (Brażiljan)"},{"code":"es-419","name":"Spanjol (Amerika Latina)"}],"ga":[{"code":"zh-cn","name":"Sínis (Mandairínis)"},{"code":"hi","name":"Hiondúis"},{"code":"pt-br","name":"Portaingéilis (An Bhrasaíl)"},{"code":"es-419","name":"Spáinnis (Mheiriceá Laidineach)"}],"ro":[{"code":"zh-cn","name":"Chineză (mandarină)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugheză (braziliană)"},{"code":"es-419","name":"Spaniolă (America Latină)"}],"nb":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"sv":[{"code":"zh-cn","name":"Kinesiska (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisiska (brasilianska)"},{"code":"es-419","name":"spanska (latinamerikansk)"}],"cy":[{"code":"zh-cn","name":"Tsieinëeg (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portiwgaleg (Brasil)"},{"code":"es-419","name":"Sbaeneg (America Lladin)"}],"nl":[{"code":"zh-cn","name":"Chinees (Mandarijn)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugees (Braziliaans)"},{"code":"es-419","name":"Spaans (Latijns-Amerikaans)"}],"it":[{"code":"zh-cn","name":"Cinese (mandarino)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portoghese (brasiliano)"},{"code":"es-419","name":"Spagnolo (latinoamericano)"}],"ht":[{"code":"zh-cn","name":"Chinwa (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Pòtigè (Brezilyen)"},{"code":"es-419","name":"Panyòl (Ameriken Latin)"}],"mn":[{"code":"zh-cn","name":"Хятад (Мандарин)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"Португали (Бразил)"},{"code":"es-419","name":"Испани (Латин Америк)"}],"uz":[{"code":"zh-cn","name":"Xitoy (mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portugal (Braziliya)"},{"code":"es-419","name":"Ispan (Lotin Amerikasi)"}],"mk":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерикански)"}],"my":[{"code":"zh-cn","name":"တရုတ် (မန်ဒရင်း)"},{"code":"hi","name":"ဟိန္ဒီ"},{"code":"pt-br","name":"ပေါ်တူဂီ (ဘရာဇီး)"},{"code":"es-419","name":"စပိန် (လက်တင်အမေရိက)"}],"he":[{"code":"zh-cn","name":"סינית (מנדרינית)"},{"code":"hi","name":"הינדי"},{"code":"pt-br","name":"פורטוגזית (ברזילאית)"},{"code":"es-419","name":"ספרדית (אמריקה הלטינית)"}],"pt":[{"code":"zh-cn","name":"Mandarim (chinês)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (Latino-Americano)"}],"es-419":[{"code":"zh-cn","name":"Chino (Mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (latinoamericano)"}],"sq":[{"code":"zh-cn","name":"Kinezisht (mandarinisht)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugeze (braziliane)"},{"code":"es-419","name":"Spanjisht (Amerikan Latine)"}],"uk":[{"code":"zh-cn","name":"китайська (мандарин)"},{"code":"hi","name":"Хінді"},{"code":"pt-br","name":"португальська (бразильська)"},{"code":"es-419","name":"Іспанська (Латинська Америка)"}],"te":[{"code":"zh-cn","name":"చైనీస్ (మాండరిన్)"},{"code":"hi","name":"హిందీ"},{"code":"pt-br","name":"పోర్చుగీస్ (బ్రెజిలియన్)"},{"code":"es-419","name":"స్పానిష్ (లాటిన్ అమెరికన్)"}],"sl":[{"code":"zh-cn","name":"kitajščina (mandarinščina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugalščina (brazilščina)"},{"code":"es-419","name":"španščina (latinskoameriška)"}],"ms":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brazil)"},{"code":"es-419","name":"Sepanyol (Amerika Latin)"}],"zu":[{"code":"zh-cn","name":"IsiShayina (Mandarin)"},{"code":"hi","name":"IsiHindi"},{"code":"pt-br","name":"Isi-Portuguese (Brazilian)"},{"code":"es-419","name":"Isi-Spanish (Latin American)"}],"da":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"cs":[{"code":"zh-cn","name":"čínština (mandarínština)"},{"code":"hi","name":"hindština"},{"code":"pt-br","name":"portugalština (brazilská)"},{"code":"es-419","name":"španělština (latinskoamerická)"}],"ko":[{"code":"zh-cn","name":"중국어(북경어)"},{"code":"hi","name":"힌디 어"},{"code":"pt-br","name":"포르투갈어(브라질)"},{"code":"es-419","name":"스페인어(라틴 아메리카)"}],"lv":[{"code":"zh-cn","name":"ķīniešu (mandarīnu)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugāļu (Brazīlijas)"},{"code":"es-419","name":"spāņu (latīņamerikāņu)"}],"ca":[{"code":"zh-cn","name":"Xinès (mandarí)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portuguès (brasiler)"},{"code":"es-419","name":"espanyol (llatinoamericà)"}],"eo":[{"code":"zh-cn","name":"Ĉina (mandarina)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"Portugala (brazila)"},{"code":"es-419","name":"hispana (latin-amerika)"}],"sr":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерички)"}],"am":[{"code":"zh-cn","name":"ቻይንኛ (ማንዳሪን)"},{"code":"hi","name":"ሂንዲ"},{"code":"pt-br","name":"ፖርቱጋልኛ (ብራዚል)"},{"code":"es-419","name":"ስፓኒሽ (ላቲን አሜሪካ)"}],"hr":[{"code":"zh-cn","name":"kineski (mandarinski)"},{"code":"hi","name":"hindski"},{"code":"pt-br","name":"portugalski (brazilski)"},{"code":"es-419","name":"španjolski (latinoamerički)"}],"ml":[{"code":"zh-cn","name":"ചൈനീസ് (മാൻഡറിൻ)"},{"code":"hi","name":"ഹിന്ദി"},{"code":"pt-br","name":"പോർച്ചുഗീസ് (ബ്രസീലിയൻ)"},{"code":"es-419","name":"സ്പാനിഷ് (ലാറ്റിൻ അമേരിക്കൻ)"}],"eu":[{"code":"zh-cn","name":"txinera (mandariarra)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"portugesa (brasildarra)"},{"code":"es-419","name":"Gaztelania (Latinoamerika)"}],"la":[{"code":"zh-cn","name":"Seres (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portuguese (Brazilian)"},{"code":"es-419","name":"Spanish"}]}}');
+module.exports = /*#__PURE__*/JSON.parse('{"menuMap":{"am":[{"code":"hu","name":"ሀንጋሪኛ"},{"code":"lt","name":"ሊትዌንኛ"},{"code":"lv","name":"ላትቪያኛ"},{"code":"mi","name":"ማዮሪኛ"},{"code":"ru","name":"ራሽያኛ"},{"code":"ro","name":"ሮማኒያንኛ"},{"code":"sr","name":"ሰርቢያኛ"},{"code":"sk","name":"ስሎቫክኛ"},{"code":"sl","name":"ስሎቬንያኛ"},{"code":"sv","name":"ስዊድንኛ"},{"code":"es","name":"ስፓኒሽኛ"},{"code":"bg","name":"ቡልጋሪያኛ"},{"code":"eu","name":"ባስክኛ"},{"code":"vi","name":"ቪትናምኛ"},{"code":"tr","name":"ቱርክኛ"},{"code":"th","name":"ታይኛ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"},{"code":"zh-tw","name":"ቻይንኛ (ባሕላዊው)"},{"code":"cs","name":"ቼክኛ"},{"code":"nb","name":"ኖርዌጅያንኛ"},{"code":"am","name":"አማርኛ"},{"code":"az","name":"አዜርባይጃንኛ"},{"code":"ga","name":"አይሪሽ"},{"code":"is","name":"አይስላንድኛ"},{"code":"et","name":"ኤስቶኒያኛ"},{"code":"id","name":"እንዶኔዢያኛ"},{"code":"en","name":"እንግሊዝኛ"},{"code":"ckb","name":"ኩርድሽኛ (ሶራኒ)"},{"code":"ca","name":"ካታላንኛ"},{"code":"hr","name":"ክሮኤሽያኛ"},{"code":"ko","name":"ኮሪያኛ"},{"code":"cy","name":"ዌልሽ"},{"code":"ar","name":"ዐረብኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zu","name":"ዙሉኛ"},{"code":"gd","name":"የስኮት ጌልክኛ"},{"code":"uk","name":"ዩክሬንኛ"},{"code":"nl","name":"ደችኛ"},{"code":"da","name":"ዴንሽኛ"},{"code":"de","name":"ጀርመንኛ"},{"code":"ja","name":"ጃፓንኛ"},{"code":"gl","name":"ጋሊሺያኛ"},{"code":"el","name":"ግሪክኛ"},{"code":"it","name":"ጣሊያንኛ"},{"code":"fr","name":"ፈረንሳይኛ"},{"code":"fi","name":"ፊኒሽኛ"},{"code":"fa","name":"ፐርሺያኛ"},{"code":"pl","name":"ፖሊሽኛ"},{"code":"pt","name":"ፖርቱጋሊኛ"},{"code":"he","name":"ዕብራይስጥ"},{"code":"zh-cn","name":"ቻይንኛ (ቀላሉ)"}],"ar":[{"code":"is","name":"الآيسلندية"},{"code":"az","name":"الأذرية"},{"code":"es","name":"الإسبانية"},{"code":"et","name":"الإستونية"},{"code":"de","name":"الألمانية"},{"code":"am","name":"الأمهرية"},{"code":"en","name":"الإنجليزية"},{"code":"id","name":"الإندونيسية"},{"code":"uk","name":"الأوكرانية"},{"code":"ga","name":"الأيرلندية"},{"code":"it","name":"الإيطالية"},{"code":"eu","name":"الباسكية"},{"code":"pt","name":"البرتغالية"},{"code":"bg","name":"البلغارية"},{"code":"pl","name":"البولندية"},{"code":"th","name":"التايلاندية"},{"code":"tr","name":"التركية"},{"code":"cs","name":"التشيكية"},{"code":"gl","name":"الجاليكية"},{"code":"da","name":"الدانمركية"},{"code":"ru","name":"الروسية"},{"code":"ro","name":"الرومانية"},{"code":"zu","name":"الزولو"},{"code":"sk","name":"السلوفاكية"},{"code":"sl","name":"السلوفينية"},{"code":"sv","name":"السويدية"},{"code":"sr","name":"الصربية"},{"code":"zh-tw","name":"الصينية (التقليدية)"},{"code":"zh-cn","name":"الصينية (المبسطة)"},{"code":"he","name":"العبرية"},{"code":"ar","name":"العربية"},{"code":"gd","name":"الغيلية الأسكتلندية"},{"code":"fa","name":"الفارسية"},{"code":"fr","name":"الفرنسية"},{"code":"fi","name":"الفنلندية"},{"code":"vi","name":"الفيتنامية"},{"code":"ca","name":"القطلونية"},{"code":"ckb","name":"الكردية (السورانية)"},{"code":"hr","name":"الكرواتية"},{"code":"ko","name":"الكورية"},{"code":"lv","name":"اللاتفية"},{"code":"lt","name":"الليتوانية"},{"code":"mi","name":"الماورية"},{"code":"nb","name":"النرويجية"},{"code":"hu","name":"الهنغارية"},{"code":"nl","name":"الهولندية"},{"code":"cy","name":"الويلزية"},{"code":"ja","name":"اليابانية"},{"code":"el","name":"اليونانية"},{"code":"he","name":"العبرية"},{"code":"zh-cn","name":"الصينية (المبسطة)"}],"el":[{"code":"en","name":"Αγγλικά"},{"code":"az","name":"Αζερμπαϊτζανικά"},{"code":"am","name":"Αμχαρικά"},{"code":"ar","name":"Αραβικά"},{"code":"eu","name":"Βασκικά"},{"code":"vi","name":"Βιετναμεζικά"},{"code":"bg","name":"Βουλγαρικά"},{"code":"gd","name":"Γαελικά Σκοτίας"},{"code":"gl","name":"Γαλικιακά"},{"code":"fr","name":"Γαλλικά"},{"code":"de","name":"Γερμανικά"},{"code":"da","name":"Δανικά"},{"code":"he","name":"Εβραϊκά"},{"code":"el","name":"Ελληνικά"},{"code":"et","name":"Εσθονικά"},{"code":"zu","name":"Ζουλού"},{"code":"ja","name":"Ιαπωνικά"},{"code":"id","name":"Ινδονησιακά"},{"code":"ga","name":"Ιρλανδικά"},{"code":"is","name":"Ισλανδικά"},{"code":"es","name":"Ισπανικά"},{"code":"it","name":"Ιταλικά"},{"code":"ca","name":"Καταλανικά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"},{"code":"zh-tw","name":"Κινεζικά (Παραδοσιακά)"},{"code":"ko","name":"Κορεατικά"},{"code":"ckb","name":"Κουρδικά (Σορανί)"},{"code":"hr","name":"Κροατικά"},{"code":"lv","name":"Λετονικά"},{"code":"lt","name":"Λιθουανικά"},{"code":"mi","name":"Μαορί"},{"code":"nb","name":"Νορβηγικά"},{"code":"nl","name":"Ολλανδικά"},{"code":"cy","name":"Ουαλικά"},{"code":"hu","name":"Ουγγρικά"},{"code":"uk","name":"Ουκρανικά"},{"code":"fa","name":"Περσικά"},{"code":"pl","name":"Πολωνικά"},{"code":"pt","name":"Πορτογαλικά"},{"code":"ro","name":"Ρουμανικά"},{"code":"ru","name":"Ρωσικά"},{"code":"sr","name":"Σερβικά"},{"code":"sk","name":"Σλοβακικά"},{"code":"sl","name":"Σλοβενικά"},{"code":"sv","name":"Σουηδικά"},{"code":"th","name":"Ταϊλανδεζικά"},{"code":"tr","name":"Τουρκικά"},{"code":"cs","name":"Τσεχικά"},{"code":"fi","name":"Φινλανδικά"},{"code":"he","name":"Εβραϊκά"},{"code":"zh-cn","name":"Κινεζικά (Απλοποιημένα)"}],"id":[{"code":"am","name":"Amharik"},{"code":"ar","name":"Arab"},{"code":"az","name":"Azerbaijan"},{"code":"eu","name":"Bask"},{"code":"nl","name":"Belanda"},{"code":"bg","name":"Bulgaria"},{"code":"cs","name":"Ceko"},{"code":"zh-cn","name":"China (Aks. Sederhana)"},{"code":"zh-tw","name":"China (Aks. Tradisional)"},{"code":"da","name":"Denmark"},{"code":"et","name":"Estonia"},{"code":"fa","name":"Farsi"},{"code":"fi","name":"Finlandia"},{"code":"ga","name":"Gaelig"},{"code":"gd","name":"Gaelik Skotlandia"},{"code":"gl","name":"Galisia"},{"code":"hu","name":"Hungaria"},{"code":"he","name":"Ibrani"},{"code":"id","name":"Indonesia"},{"code":"en","name":"Inggris"},{"code":"is","name":"Islandia"},{"code":"it","name":"Italia"},{"code":"ja","name":"Jepang"},{"code":"de","name":"Jerman"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Korea"},{"code":"hr","name":"Kroasia"},{"code":"ckb","name":"Kurdi (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Lituania"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegia"},{"code":"pl","name":"Polandia"},{"code":"pt","name":"Portugis"},{"code":"fr","name":"Prancis"},{"code":"ro","name":"Rumania"},{"code":"ru","name":"Rusia"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovakia"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Spanyol"},{"code":"sv","name":"Swedia"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkiye"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Vietnam"},{"code":"cy","name":"Welsh"},{"code":"el","name":"Yunani"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ibrani"},{"code":"zh-cn","name":"China (Aks. Sederhana)"}],"fa":[{"code":"az","name":"آذرباﻳﺠﺎﻧﻰ"},{"code":"de","name":"آلمانی"},{"code":"es","name":"اسپانیایی"},{"code":"et","name":"استونيايی"},{"code":"sk","name":"اسلواکی"},{"code":"sl","name":"اسلونیایی"},{"code":"uk","name":"اکراينی"},{"code":"am","name":"امهری"},{"code":"id","name":"اندونزيايی"},{"code":"en","name":"انگلیسی"},{"code":"it","name":"ایتالیایی"},{"code":"ga","name":"ایرلندی"},{"code":"is","name":"ايسلندی"},{"code":"eu","name":"باسکی"},{"code":"bg","name":"بلغاری"},{"code":"pt","name":"پرتغالی"},{"code":"th","name":"تايلندی"},{"code":"tr","name":"ترکی استانبولی"},{"code":"cs","name":"چک"},{"code":"zh-cn","name":"چینی (ساده‌شده)"},{"code":"zh-tw","name":"چینی (سنتی)"},{"code":"da","name":"دانمارکی"},{"code":"ru","name":"روسی"},{"code":"ro","name":"رومانيايی"},{"code":"zu","name":"زولو"},{"code":"ja","name":"ژاپنی"},{"code":"sv","name":"سوئدی"},{"code":"sr","name":"صربی"},{"code":"he","name":"عبری"},{"code":"ar","name":"عربی"},{"code":"fa","name":"فارسی"},{"code":"fr","name":"فرانسوی"},{"code":"fi","name":"فنلاندی"},{"code":"ca","name":"کاتالان"},{"code":"ckb","name":"کردی (سورانی)"},{"code":"hr","name":"کرواتی"},{"code":"ko","name":"کره‌ای"},{"code":"gl","name":"گالیسی"},{"code":"gd","name":"گاليک اسکاتلندی"},{"code":"lv","name":"لتونيايی"},{"code":"pl","name":"لهستانی"},{"code":"lt","name":"ليتوانيايی"},{"code":"mi","name":"مائوری"},{"code":"hu","name":"مجاری"},{"code":"nb","name":"نروژی"},{"code":"cy","name":"ولزی"},{"code":"vi","name":"ويتنامی"},{"code":"nl","name":"هلندی"},{"code":"el","name":"يونانی"},{"code":"he","name":"عبری"},{"code":"zh-cn","name":"چینی (ساده‌شده)"}],"pt":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"pt-br":[{"code":"de","name":"Alemão"},{"code":"am","name":"Amárico"},{"code":"ar","name":"Árabe"},{"code":"az","name":"Azerbaijano"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalão"},{"code":"zh-cn","name":"Chinês (simplificado)"},{"code":"zh-tw","name":"Chinês (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"ckb","name":"Curdo (sorâni)"},{"code":"da","name":"Dinamarquês"},{"code":"sk","name":"Eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"Espanhol"},{"code":"et","name":"Estoniano"},{"code":"fi","name":"Finlandês"},{"code":"fr","name":"Francês"},{"code":"gd","name":"Gaélico escocês"},{"code":"gl","name":"Galego"},{"code":"cy","name":"Galês"},{"code":"el","name":"Grego"},{"code":"he","name":"Hebraico"},{"code":"nl","name":"Holandês"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonésio"},{"code":"en","name":"Inglês"},{"code":"ga","name":"Irlandês"},{"code":"is","name":"Islandês"},{"code":"it","name":"Italiano"},{"code":"ja","name":"Japonês"},{"code":"lv","name":"Letão"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norueguês"},{"code":"fa","name":"Persa"},{"code":"pl","name":"Polonês"},{"code":"pt","name":"Português"},{"code":"ro","name":"Romeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Sérvio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"Tailandês"},{"code":"cs","name":"Tcheco"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraico"},{"code":"zh-cn","name":"Chinês (simplificado)"}],"nl":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Azerbeidzjaans"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgaars"},{"code":"ca","name":"Catalaans"},{"code":"zh-tw","name":"Chinees (traditioneel)"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"},{"code":"da","name":"Deens"},{"code":"de","name":"Duits"},{"code":"en","name":"Engels"},{"code":"et","name":"Ests"},{"code":"fi","name":"Fins"},{"code":"fr","name":"Frans"},{"code":"gl","name":"Galicisch"},{"code":"el","name":"Grieks"},{"code":"he","name":"Hebreeuws"},{"code":"hu","name":"Hongaars"},{"code":"ga","name":"Iers"},{"code":"is","name":"IJslands"},{"code":"id","name":"Indonesisch"},{"code":"it","name":"Italiaans"},{"code":"ja","name":"Japans"},{"code":"ckb","name":"Koerdisch (Sorani)"},{"code":"ko","name":"Koreaans"},{"code":"hr","name":"Kroatisch"},{"code":"lv","name":"Lets"},{"code":"lt","name":"Litouws"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlands"},{"code":"nb","name":"Noors"},{"code":"uk","name":"Oekraïens"},{"code":"fa","name":"Perzisch"},{"code":"pl","name":"Pools"},{"code":"pt","name":"Portugees"},{"code":"ro","name":"Roemeens"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schots-Gaelisch"},{"code":"sr","name":"Servisch"},{"code":"sk","name":"Slovaaks"},{"code":"sl","name":"Sloveens"},{"code":"es","name":"Spaans"},{"code":"th","name":"Thai"},{"code":"cs","name":"Tsjechisch"},{"code":"tr","name":"Turks"},{"code":"vi","name":"Vietnamees"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zoeloe"},{"code":"sv","name":"Zweeds"},{"code":"he","name":"Hebreeuws"},{"code":"zh-cn","name":"Chinees (vereenvoudigd)"}],"es":[{"code":"de","name":"Alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"Azerí"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalán"},{"code":"cs","name":"Checo"},{"code":"zh-cn","name":"Chino (simplificado)"},{"code":"zh-tw","name":"Chino (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"da","name":"Danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"español"},{"code":"et","name":"Estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"Gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"Gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"Islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"Japonés"},{"code":"ckb","name":"Kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"Noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"Portugués"},{"code":"ro","name":"Rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"Serbio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"Chino (simplificado)"}],"es-419":[{"code":"de","name":"Alemán"},{"code":"am","name":"amhárico"},{"code":"ar","name":"árabe"},{"code":"az","name":"Azerí"},{"code":"bg","name":"Búlgaro"},{"code":"ca","name":"Catalán"},{"code":"cs","name":"Checo"},{"code":"zh-cn","name":"Chino (simplificado)"},{"code":"zh-tw","name":"Chino (tradicional)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croata"},{"code":"da","name":"Danés"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"Esloveno"},{"code":"es","name":"español"},{"code":"et","name":"Estonio"},{"code":"eu","name":"euskera"},{"code":"fi","name":"finlandés"},{"code":"fr","name":"francés"},{"code":"gd","name":"Gaélico escocés"},{"code":"cy","name":"galés"},{"code":"gl","name":"Gallego"},{"code":"el","name":"griego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"Húngaro"},{"code":"id","name":"Indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"Islandés"},{"code":"it","name":"italiano"},{"code":"ja","name":"Japonés"},{"code":"ckb","name":"Kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"Noruego"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"Portugués"},{"code":"ro","name":"Rumano"},{"code":"ru","name":"ruso"},{"code":"sr","name":"Serbio"},{"code":"sv","name":"Sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"Ucraniano"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"Chino (simplificado)"}],"gd":[{"code":"am","name":"Amtharais"},{"code":"ar","name":"Arabais"},{"code":"az","name":"Asarbaideànais"},{"code":"eu","name":"Basgais"},{"code":"en","name":"Beurla"},{"code":"vi","name":"Bhiet-Namais"},{"code":"bg","name":"Bulgarais"},{"code":"th","name":"Cànan nan Tàidh"},{"code":"ca","name":"Catalanais"},{"code":"ko","name":"Coirèanais"},{"code":"hr","name":"Cròthaisis"},{"code":"cy","name":"Cuimris"},{"code":"ckb","name":"Cùrdais (Sorani)"},{"code":"da","name":"Danmhairgis"},{"code":"nl","name":"Duitsis"},{"code":"he","name":"Eabhra"},{"code":"it","name":"Eadailtis"},{"code":"et","name":"Eastoinis"},{"code":"fi","name":"Fionnlannais"},{"code":"fr","name":"Fraingis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gàidhlig"},{"code":"gl","name":"Gailìsis"},{"code":"de","name":"Gearmailtis"},{"code":"el","name":"Grèigis"},{"code":"id","name":"Innd-Innsis"},{"code":"is","name":"Innis-Tìlis"},{"code":"lv","name":"Laitbheis"},{"code":"lt","name":"Liotuainis"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nirribhis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Pòlainnis"},{"code":"pt","name":"Portagailis"},{"code":"ro","name":"Romàinis"},{"code":"ru","name":"Ruisis"},{"code":"cs","name":"Seacais"},{"code":"ja","name":"Seapanais"},{"code":"sr","name":"Sèirbis"},{"code":"zh-tw","name":"Sìonais (seann-nòsach)"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"},{"code":"sk","name":"Slòbhacais"},{"code":"sl","name":"Slòbhainis"},{"code":"es","name":"Spàinntis"},{"code":"sv","name":"Suainis"},{"code":"tr","name":"Turcais"},{"code":"uk","name":"Ucràinis"},{"code":"hu","name":"Ungairis"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Eabhra"},{"code":"zh-cn","name":"Sìonais (sìmplichte)"}],"pl":[{"code":"am","name":"amharski"},{"code":"en","name":"angielski"},{"code":"ar","name":"arabski"},{"code":"az","name":"azerski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bułgarski"},{"code":"zh-tw","name":"chiński (tradycyjny)"},{"code":"zh-cn","name":"chiński (uproszczony)"},{"code":"hr","name":"chorwacki"},{"code":"cs","name":"czeski"},{"code":"da","name":"duński"},{"code":"et","name":"estoński"},{"code":"fi","name":"fiński"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galicyjski"},{"code":"el","name":"grecki"},{"code":"he","name":"hebrajski"},{"code":"es","name":"hiszpański"},{"code":"id","name":"indonezyjski"},{"code":"ga","name":"irlandzki"},{"code":"is","name":"islandzki"},{"code":"ja","name":"japoński"},{"code":"ca","name":"kataloński"},{"code":"ko","name":"koreański"},{"code":"ckb","name":"kurdyjski (sorani)"},{"code":"lt","name":"litewski"},{"code":"lv","name":"łotewski"},{"code":"mi","name":"maoryski"},{"code":"nl","name":"niderlandzki"},{"code":"de","name":"niemiecki"},{"code":"nb","name":"norweski"},{"code":"fa","name":"perski"},{"code":"pl","name":"polski"},{"code":"pt","name":"portugalski"},{"code":"ru","name":"rosyjski"},{"code":"ro","name":"rumuński"},{"code":"sr","name":"serbski"},{"code":"sk","name":"słowacki"},{"code":"sl","name":"słoweński"},{"code":"gd","name":"szkocki gaelicki"},{"code":"sv","name":"szwedzki"},{"code":"th","name":"tajski"},{"code":"tr","name":"turecki"},{"code":"uk","name":"ukraiński"},{"code":"cy","name":"walijski"},{"code":"hu","name":"węgierski"},{"code":"vi","name":"wietnamski"},{"code":"it","name":"włoski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrajski"},{"code":"zh-cn","name":"chiński (uproszczony)"}],"is":[{"code":"am","name":"amharíska"},{"code":"ar","name":"arabíska"},{"code":"az","name":"aserska"},{"code":"eu","name":"baskneska"},{"code":"bg","name":"búlgarska"},{"code":"da","name":"danska"},{"code":"et","name":"eistneska"},{"code":"en","name":"enska"},{"code":"fi","name":"finnska"},{"code":"fr","name":"franska"},{"code":"gl","name":"galisíska"},{"code":"el","name":"gríska"},{"code":"he","name":"hebreska"},{"code":"nl","name":"hollenska"},{"code":"id","name":"indónesíska"},{"code":"ga","name":"írska"},{"code":"is","name":"íslenska"},{"code":"it","name":"ítalska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalónska"},{"code":"zh-cn","name":"kínverska (einfölduð)"},{"code":"zh-tw","name":"kínverska (hefðbundin)"},{"code":"ko","name":"kóreska"},{"code":"hr","name":"króatíska"},{"code":"ckb","name":"kúrdíska (soraní)"},{"code":"lv","name":"lettneska"},{"code":"lt","name":"litháíska"},{"code":"mi","name":"maoríska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persneska"},{"code":"pt","name":"portúgalska"},{"code":"pl","name":"pólska"},{"code":"ro","name":"rúmenska"},{"code":"ru","name":"rússneska"},{"code":"sr","name":"serbneska"},{"code":"gd","name":"skosk-gelíska"},{"code":"sk","name":"slóvakíska"},{"code":"sl","name":"slóvenska"},{"code":"es","name":"spænska"},{"code":"zu","name":"súlú"},{"code":"sv","name":"sænska"},{"code":"th","name":"taílenska"},{"code":"cs","name":"tékkneska"},{"code":"tr","name":"tyrkneska"},{"code":"hu","name":"ungverska"},{"code":"uk","name":"úkraínska"},{"code":"cy","name":"velska"},{"code":"vi","name":"víetnamska"},{"code":"de","name":"þýska"},{"code":"he","name":"hebreska"},{"code":"zh-cn","name":"kínverska (einfölduð)"}],"hr":[{"code":"am","name":"amharik"},{"code":"ar","name":"arapski"},{"code":"az","name":"azerbajdžanski"},{"code":"eu","name":"baskijski"},{"code":"bg","name":"bugarski"},{"code":"cs","name":"češki"},{"code":"da","name":"danski"},{"code":"en","name":"engleski"},{"code":"et","name":"estonski"},{"code":"fi","name":"finski"},{"code":"fr","name":"francuski"},{"code":"gl","name":"galješki"},{"code":"el","name":"grčki"},{"code":"he","name":"hebrejski"},{"code":"hr","name":"hrvatski"},{"code":"id","name":"indonezijski"},{"code":"ga","name":"irski"},{"code":"is","name":"islandski"},{"code":"ja","name":"japanski"},{"code":"ca","name":"katalonski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"},{"code":"zh-tw","name":"kineski (tradicionalni)"},{"code":"ko","name":"korejski"},{"code":"ckb","name":"kurdski (soranski)"},{"code":"lv","name":"latvijski/letonski"},{"code":"lt","name":"litvanski"},{"code":"hu","name":"mađarski"},{"code":"mi","name":"maorski"},{"code":"nl","name":"nizozemski"},{"code":"nb","name":"norveški"},{"code":"de","name":"njemački"},{"code":"fa","name":"perzijski"},{"code":"pl","name":"poljski"},{"code":"pt","name":"portugalski"},{"code":"ro","name":"rumunjski"},{"code":"ru","name":"ruski"},{"code":"sk","name":"slovački"},{"code":"sl","name":"slovenski"},{"code":"sr","name":"srpski"},{"code":"gd","name":"škotski gaelski"},{"code":"es","name":"španjolski"},{"code":"sv","name":"švedski"},{"code":"th","name":"tajlandski"},{"code":"it","name":"talijanski"},{"code":"tr","name":"turski"},{"code":"uk","name":"ukrajinski"},{"code":"cy","name":"velški"},{"code":"vi","name":"vijetnamski"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejski"},{"code":"zh-cn","name":"kineski (pojednostavljeni)"}],"fr":[{"code":"de","name":"Allemand"},{"code":"am","name":"Amharique"},{"code":"en","name":"Anglais"},{"code":"ar","name":"Arabe"},{"code":"az","name":"Azéri"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgare"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinois (simplifié)"},{"code":"zh-tw","name":"Chinois (traditionnel)"},{"code":"ko","name":"Coréen"},{"code":"hr","name":"Croate"},{"code":"da","name":"Danois"},{"code":"es","name":"Espagnol"},{"code":"et","name":"Estonien"},{"code":"fi","name":"Finnois"},{"code":"fr","name":"Français"},{"code":"gd","name":"Gaélique (Écosse)"},{"code":"gl","name":"Galicien"},{"code":"cy","name":"Gallois"},{"code":"el","name":"Grec"},{"code":"he","name":"Hébreu"},{"code":"hu","name":"Hongrois"},{"code":"id","name":"Indonésien"},{"code":"ga","name":"Irlandais"},{"code":"is","name":"Islandais"},{"code":"it","name":"Italien"},{"code":"ja","name":"Japonais"},{"code":"ckb","name":"Kurde (Sorani)"},{"code":"lv","name":"Letton"},{"code":"lt","name":"Lituanien"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Néerlandais"},{"code":"nb","name":"Norvégien"},{"code":"fa","name":"Persan"},{"code":"pl","name":"Polonais"},{"code":"pt","name":"Portugais"},{"code":"ro","name":"Roumain"},{"code":"ru","name":"Russe"},{"code":"sr","name":"Serbe"},{"code":"sk","name":"Slovaque"},{"code":"sl","name":"Slovène"},{"code":"sv","name":"Suédois"},{"code":"cs","name":"Tchèque"},{"code":"th","name":"Thaï"},{"code":"tr","name":"Turc"},{"code":"uk","name":"Ukrainien"},{"code":"vi","name":"Vietnamien"},{"code":"zu","name":"Zoulou"},{"code":"he","name":"Hébreu"},{"code":"zh-cn","name":"Chinois (simplifié)"}],"nb":[{"code":"am","name":"amharisk"},{"code":"ar","name":"arabisk"},{"code":"az","name":"aserbajdsjansk"},{"code":"eu","name":"baskisk"},{"code":"bg","name":"bulgarsk"},{"code":"da","name":"dansk"},{"code":"en","name":"engelsk"},{"code":"et","name":"estisk"},{"code":"fa","name":"farsi"},{"code":"fi","name":"finsk"},{"code":"fr","name":"fransk"},{"code":"gl","name":"galisisk"},{"code":"el","name":"gresk"},{"code":"he","name":"hebraisk"},{"code":"id","name":"indonesisk"},{"code":"ga","name":"irsk"},{"code":"is","name":"islandsk"},{"code":"it","name":"italiensk"},{"code":"ja","name":"japansk"},{"code":"ca","name":"katalansk"},{"code":"zh-cn","name":"kinesisk (forenklet)"},{"code":"zh-tw","name":"kinesisk (tradisjonell)"},{"code":"ko","name":"koreansk"},{"code":"hr","name":"kroatisk"},{"code":"ckb","name":"kurdisk (sorani)"},{"code":"lv","name":"latvisk"},{"code":"lt","name":"litauisk"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederlandsk"},{"code":"nb","name":"norsk"},{"code":"pl","name":"polsk"},{"code":"pt","name":"portugisisk"},{"code":"ro","name":"rumensk"},{"code":"ru","name":"russisk"},{"code":"sr","name":"serbisk"},{"code":"gd","name":"skotsk gælisk"},{"code":"sk","name":"slovakisk"},{"code":"sl","name":"slovensk"},{"code":"es","name":"spansk"},{"code":"sv","name":"svensk"},{"code":"th","name":"thai"},{"code":"cs","name":"tsjekkisk"},{"code":"tr","name":"tyrkisk"},{"code":"de","name":"tysk"},{"code":"uk","name":"ukrainsk"},{"code":"hu","name":"ungarsk"},{"code":"vi","name":"vietnamesisk"},{"code":"cy","name":"walisisk"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebraisk"},{"code":"zh-cn","name":"kinesisk (forenklet)"}],"gl":[{"code":"az","name":"acerbaixano"},{"code":"de","name":"alemán"},{"code":"am","name":"amárico"},{"code":"ar","name":"árabe"},{"code":"bg","name":"búlgaro"},{"code":"ca","name":"catalán"},{"code":"cs","name":"checo"},{"code":"zh-cn","name":"chinés (simplificado)"},{"code":"zh-tw","name":"chinés (tradicional)"},{"code":"ko","name":"coreano"},{"code":"hr","name":"croata"},{"code":"da","name":"dinamarqués"},{"code":"sk","name":"eslovaco"},{"code":"sl","name":"esloveno"},{"code":"es","name":"español"},{"code":"et","name":"estoniano"},{"code":"eu","name":"éuscaro"},{"code":"fi","name":"finés"},{"code":"fr","name":"francés"},{"code":"gd","name":"gaélico escocés"},{"code":"gl","name":"galego"},{"code":"cy","name":"galés"},{"code":"el","name":"grego"},{"code":"he","name":"hebreo"},{"code":"hu","name":"húngaro"},{"code":"id","name":"indonesio"},{"code":"en","name":"inglés"},{"code":"ga","name":"irlandés"},{"code":"is","name":"islandés"},{"code":"it","name":"italiano"},{"code":"ckb","name":"kurdo (sorani)"},{"code":"lv","name":"letón"},{"code":"lt","name":"lituano"},{"code":"mi","name":"maorí"},{"code":"nl","name":"neerlandés"},{"code":"nb","name":"noruegués"},{"code":"fa","name":"persa"},{"code":"pl","name":"polaco"},{"code":"pt","name":"portugués"},{"code":"ro","name":"romanés"},{"code":"ru","name":"ruso"},{"code":"sr","name":"serbio"},{"code":"sv","name":"sueco"},{"code":"th","name":"tailandés"},{"code":"tr","name":"turco"},{"code":"uk","name":"ucraíno"},{"code":"vi","name":"vietnamita"},{"code":"ja","name":"xaponés"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreo"},{"code":"zh-cn","name":"chinés (simplificado)"}],"bg":[{"code":"az","name":"азербайджански"},{"code":"am","name":"амхарски"},{"code":"en","name":"английски"},{"code":"ar","name":"арабски"},{"code":"eu","name":"баски"},{"code":"bg","name":"български"},{"code":"vi","name":"виетнамски"},{"code":"gl","name":"галисийски"},{"code":"el","name":"гръцки"},{"code":"da","name":"датски"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийски"},{"code":"ga","name":"ирландски"},{"code":"is","name":"исландски"},{"code":"es","name":"испански"},{"code":"it","name":"италиански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"китайски (опростен)"},{"code":"zh-tw","name":"китайски (традиционен)"},{"code":"ko","name":"корейски"},{"code":"ckb","name":"кюрдски (сорани)"},{"code":"lv","name":"латвийски"},{"code":"lt","name":"литовски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немски"},{"code":"nl","name":"нидерландски"},{"code":"nb","name":"норвежки"},{"code":"fa","name":"персийски"},{"code":"pl","name":"полски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румънски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словашки"},{"code":"sl","name":"словенски"},{"code":"sr","name":"сръбски"},{"code":"th","name":"тайландски"},{"code":"tr","name":"турски"},{"code":"cy","name":"уелски"},{"code":"uk","name":"украински"},{"code":"hu","name":"унгарски"},{"code":"fi","name":"финландски"},{"code":"fr","name":"френски"},{"code":"hr","name":"хърватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шотландски келтски"},{"code":"ja","name":"японски"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайски (опростен)"}],"lv":[{"code":"am","name":"amharu"},{"code":"en","name":"angļu"},{"code":"ar","name":"arābu"},{"code":"az","name":"azerbaidžāņu"},{"code":"eu","name":"basku"},{"code":"bg","name":"bulgāru"},{"code":"cs","name":"čehu"},{"code":"da","name":"dāņu"},{"code":"fr","name":"franču"},{"code":"gl","name":"galisiešu"},{"code":"el","name":"grieķu"},{"code":"nl","name":"holandiešu"},{"code":"hr","name":"horvātu"},{"code":"et","name":"igauņu"},{"code":"id","name":"indonēziešu"},{"code":"it","name":"itāļu"},{"code":"he","name":"ivrits"},{"code":"ga","name":"īru"},{"code":"is","name":"īslandiešu"},{"code":"ja","name":"japāņu"},{"code":"ca","name":"katalāņu"},{"code":"ko","name":"korejiešu"},{"code":"ru","name":"krievu"},{"code":"ckb","name":"kurdu (sorani)"},{"code":"zh-tw","name":"ķīniešu (tradicionālā)"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"},{"code":"lv","name":"latviešu"},{"code":"lt","name":"lietuviešu"},{"code":"mi","name":"maori"},{"code":"nb","name":"norvēģu"},{"code":"fa","name":"persiešu"},{"code":"pl","name":"poļu"},{"code":"pt","name":"portugāļu"},{"code":"ro","name":"rumāņu"},{"code":"sr","name":"serbu"},{"code":"gd","name":"skotu gēlu"},{"code":"sk","name":"slovāku"},{"code":"sl","name":"slovēņu"},{"code":"fi","name":"somu"},{"code":"es","name":"spāņu"},{"code":"th","name":"taju"},{"code":"tr","name":"turku"},{"code":"uk","name":"ukraiņu"},{"code":"hu","name":"ungāru"},{"code":"de","name":"vācu"},{"code":"cy","name":"velsiešu"},{"code":"vi","name":"vjetnamiešu"},{"code":"zu","name":"zulu"},{"code":"sv","name":"zviedru"},{"code":"he","name":"ivrits"},{"code":"zh-cn","name":"ķīniešu (vienkāršotā)"}],"ca":[{"code":"de","name":"alemany"},{"code":"am","name":"amhàric"},{"code":"en","name":"anglès"},{"code":"ar","name":"àrab"},{"code":"az","name":"àzeri"},{"code":"eu","name":"basc"},{"code":"bg","name":"búlgar"},{"code":"es","name":"castellà"},{"code":"ca","name":"català"},{"code":"ko","name":"coreà"},{"code":"hr","name":"croat"},{"code":"da","name":"danès"},{"code":"sk","name":"eslovac"},{"code":"sl","name":"eslovè"},{"code":"et","name":"estonià"},{"code":"fi","name":"finès"},{"code":"fr","name":"francès"},{"code":"gd","name":"gaèlic escocès"},{"code":"gl","name":"gallec"},{"code":"cy","name":"gal·lès"},{"code":"el","name":"grec"},{"code":"he","name":"hebreu"},{"code":"hu","name":"hongarès"},{"code":"id","name":"indonesi"},{"code":"ga","name":"irlandès"},{"code":"is","name":"islandès"},{"code":"it","name":"italià"},{"code":"ja","name":"japonès"},{"code":"ckb","name":"kurd (sorani)"},{"code":"lv","name":"letó"},{"code":"lt","name":"lituà"},{"code":"mi","name":"maori"},{"code":"nl","name":"neerlandès"},{"code":"nb","name":"noruec"},{"code":"fa","name":"persa"},{"code":"pl","name":"polonès"},{"code":"pt","name":"portuguès"},{"code":"ro","name":"romanès"},{"code":"ru","name":"rus"},{"code":"sr","name":"serbi"},{"code":"sv","name":"suec"},{"code":"th","name":"tai"},{"code":"tr","name":"turc"},{"code":"cs","name":"txec"},{"code":"uk","name":"ucraïnès"},{"code":"vi","name":"vietnamita"},{"code":"zh-cn","name":"xinès (simplificat)"},{"code":"zh-tw","name":"xinès (tradicional)"},{"code":"zu","name":"zulú"},{"code":"he","name":"hebreu"},{"code":"zh-cn","name":"xinès (simplificat)"}],"zu":[{"code":"am","name":"Isi-Amharic"},{"code":"ar","name":"Isi-Arabic"},{"code":"az","name":"Isi-Azerbaijani"},{"code":"nl","name":"Isi-Dutch"},{"code":"et","name":"Isi-Estonia"},{"code":"is","name":"Isi-Icelandic"},{"code":"id","name":"Isi-Indonesia"},{"code":"ga","name":"Isi-Irish"},{"code":"uk","name":"Isi-Ukraine"},{"code":"eu","name":"IsiBasque"},{"code":"bg","name":"IsiBulgaria"},{"code":"ca","name":"IsiCatalan"},{"code":"zh-cn","name":"IsiChina (Esilulana)"},{"code":"hr","name":"IsiCroatia"},{"code":"cs","name":"IsiCzech"},{"code":"da","name":"IsiDanish"},{"code":"fi","name":"IsiFinnish"},{"code":"fr","name":"IsiFrentshi"},{"code":"gl","name":"IsiGalicia"},{"code":"el","name":"IsiGrikhi"},{"code":"he","name":"IsiHebheru"},{"code":"hu","name":"IsiHungary"},{"code":"de","name":"IsiJalimani"},{"code":"ja","name":"IsiJaphani"},{"code":"ko","name":"IsiKorean"},{"code":"ckb","name":"IsiKurdish (saseSorani)"},{"code":"lv","name":"IsiLatvian"},{"code":"lt","name":"IsiLithuania"},{"code":"mi","name":"IsiMaori"},{"code":"en","name":"IsiNgisi"},{"code":"nb","name":"IsiNorwegia"},{"code":"it","name":"IsiNtaliyani"},{"code":"fa","name":"IsiPersian"},{"code":"pl","name":"IsiPolish"},{"code":"pt","name":"IsiPutukezi"},{"code":"ru","name":"IsiRashiya"},{"code":"ro","name":"IsiRomania"},{"code":"gd","name":"IsiScots Gaelic"},{"code":"sr","name":"IsiSerbian"},{"code":"sk","name":"IsiSlovak"},{"code":"sl","name":"IsiSlovenia"},{"code":"sv","name":"IsiSwidi"},{"code":"th","name":"IsiThai"},{"code":"tr","name":"IsiTurkish"},{"code":"vi","name":"IsiVietnam"},{"code":"cy","name":"IsiWelsh"},{"code":"zu","name":"IsiZulu"},{"code":"es","name":"ISpenishi"},{"code":"he","name":"IsiHebheru"},{"code":"zh-cn","name":"IsiChina (Esilulana)"}],"vi":[{"code":"ar","name":"Ả Rập"},{"code":"am","name":"Amharic"},{"code":"en","name":"Anh"},{"code":"az","name":"Azerbaijan"},{"code":"pl","name":"Ba Lan"},{"code":"fa","name":"Ba Tư"},{"code":"eu","name":"Basque"},{"code":"pt","name":"Bồ Đào Nha"},{"code":"bg","name":"Bulgaria"},{"code":"ca","name":"Catalan"},{"code":"hr","name":"Croatia"},{"code":"he","name":"Do Thái"},{"code":"da","name":"Đan Mạch"},{"code":"de","name":"Đức"},{"code":"et","name":"Estonia"},{"code":"gd","name":"Gael Scotland"},{"code":"gl","name":"Galicia"},{"code":"nl","name":"Hà Lan"},{"code":"ko","name":"Hàn"},{"code":"hu","name":"Hungary"},{"code":"el","name":"Hy Lạp"},{"code":"is","name":"Iceland"},{"code":"id","name":"Indonesia"},{"code":"ga","name":"Ireland"},{"code":"ckb","name":"Kurd (Sorani)"},{"code":"lv","name":"Latvia"},{"code":"lt","name":"Litva"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Na Uy"},{"code":"ru","name":"Nga"},{"code":"ja","name":"Nhật"},{"code":"fr","name":"Pháp"},{"code":"fi","name":"Phần Lan"},{"code":"ro","name":"Rumani"},{"code":"cs","name":"Séc"},{"code":"sr","name":"Serbia"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenia"},{"code":"es","name":"Tây Ban Nha"},{"code":"th","name":"Thái"},{"code":"tr","name":"Thổ Nhĩ Kỳ"},{"code":"sv","name":"Thụy Điển"},{"code":"zh-cn","name":"Trung (Giản thể)"},{"code":"zh-tw","name":"Trung (Phồn thể)"},{"code":"uk","name":"Ukraina"},{"code":"vi","name":"Việt"},{"code":"cy","name":"Xứ Wales"},{"code":"it","name":"Ý"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Do Thái"},{"code":"zh-cn","name":"Trung (Giản thể)"}],"hu":[{"code":"am","name":"amhara"},{"code":"en","name":"angol"},{"code":"ar","name":"arab"},{"code":"az","name":"azeri"},{"code":"eu","name":"baszk"},{"code":"bg","name":"bolgár"},{"code":"cs","name":"cseh"},{"code":"da","name":"dán"},{"code":"et","name":"észt"},{"code":"fi","name":"finn"},{"code":"fr","name":"francia"},{"code":"gl","name":"galíciai"},{"code":"el","name":"görög"},{"code":"he","name":"héber"},{"code":"nl","name":"holland"},{"code":"hr","name":"horvát"},{"code":"id","name":"indonéz"},{"code":"ga","name":"ír"},{"code":"is","name":"izlandi"},{"code":"ja","name":"japán"},{"code":"ca","name":"katalán"},{"code":"zh-cn","name":"kínai (egyszerűsített)"},{"code":"zh-tw","name":"kínai (hagyományos)"},{"code":"ko","name":"koreai"},{"code":"ckb","name":"kurd (szoráni)"},{"code":"pl","name":"lengyel"},{"code":"lv","name":"lett"},{"code":"lt","name":"litván"},{"code":"hu","name":"magyar"},{"code":"mi","name":"maori"},{"code":"de","name":"német"},{"code":"nb","name":"norvég"},{"code":"it","name":"olasz"},{"code":"ru","name":"orosz"},{"code":"fa","name":"perzsa"},{"code":"pt","name":"portugál"},{"code":"ro","name":"román"},{"code":"gd","name":"skót gael"},{"code":"es","name":"spanyol"},{"code":"sv","name":"svéd"},{"code":"sr","name":"szerb"},{"code":"sk","name":"szlovák"},{"code":"sl","name":"szlovén"},{"code":"th","name":"thai"},{"code":"tr","name":"török"},{"code":"uk","name":"ukrán"},{"code":"vi","name":"vietnámi"},{"code":"cy","name":"walesi"},{"code":"zu","name":"zulu"},{"code":"he","name":"héber"},{"code":"zh-cn","name":"kínai (egyszerűsített)"}],"et":[{"code":"am","name":"amhaari"},{"code":"ar","name":"araabia"},{"code":"az","name":"aserbaidžaani"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaaria"},{"code":"et","name":"eesti"},{"code":"gl","name":"galeegi"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"},{"code":"zh-tw","name":"hiina (traditsiooniline)"},{"code":"es","name":"hispaania"},{"code":"nl","name":"hollandi"},{"code":"hr","name":"horvaadi"},{"code":"ga","name":"iiri"},{"code":"id","name":"indoneesia"},{"code":"en","name":"inglise"},{"code":"is","name":"islandi"},{"code":"it","name":"itaalia"},{"code":"ja","name":"jaapani"},{"code":"ca","name":"katalaani"},{"code":"ko","name":"korea"},{"code":"el","name":"kreeka"},{"code":"ckb","name":"kurdi (sorani)"},{"code":"lt","name":"leedu"},{"code":"lv","name":"läti"},{"code":"mi","name":"maoori"},{"code":"nb","name":"norra"},{"code":"pl","name":"poola"},{"code":"pt","name":"portugali"},{"code":"fr","name":"prantsuse"},{"code":"fa","name":"pärsia"},{"code":"sv","name":"rootsi"},{"code":"ro","name":"rumeenia"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"sk","name":"slovaki"},{"code":"sl","name":"sloveeni"},{"code":"fi","name":"soome"},{"code":"zu","name":"suulu"},{"code":"gd","name":"šoti"},{"code":"da","name":"taani"},{"code":"th","name":"tai"},{"code":"cs","name":"tšehhi"},{"code":"tr","name":"türgi"},{"code":"cy","name":"uelsi"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"ungari"},{"code":"ru","name":"vene"},{"code":"vi","name":"vietnami"},{"code":"he","name":"heebrea"},{"code":"zh-cn","name":"hiina (lihtsustatud)"}],"lt":[{"code":"ga","name":"airių"},{"code":"am","name":"amharų"},{"code":"en","name":"anglų"},{"code":"ar","name":"arabų"},{"code":"az","name":"azerbaidžaniečių"},{"code":"eu","name":"baskų"},{"code":"bg","name":"bulgarų"},{"code":"cs","name":"čekų"},{"code":"da","name":"danų"},{"code":"et","name":"estų"},{"code":"gl","name":"galisų"},{"code":"el","name":"graikų"},{"code":"he","name":"hebrajų"},{"code":"id","name":"indoneziečių"},{"code":"is","name":"islandų"},{"code":"es","name":"ispanų"},{"code":"it","name":"italų"},{"code":"ja","name":"japonų"},{"code":"ca","name":"kataloniečių"},{"code":"zh-cn","name":"kinų (supaprastinta)"},{"code":"zh-tw","name":"kinų (tradicinė)"},{"code":"ko","name":"korėjiečių"},{"code":"hr","name":"kroatų"},{"code":"ckb","name":"kurdų (soranių)"},{"code":"lv","name":"latvių"},{"code":"pl","name":"lenkų"},{"code":"lt","name":"lietuvių"},{"code":"mi","name":"maorių"},{"code":"nb","name":"norvegų"},{"code":"nl","name":"olandų"},{"code":"fa","name":"persų"},{"code":"pt","name":"portugalų"},{"code":"fr","name":"prancūzų"},{"code":"ro","name":"rumunų"},{"code":"ru","name":"rusų"},{"code":"sr","name":"serbų"},{"code":"sk","name":"slovakų"},{"code":"sl","name":"slovėnų"},{"code":"fi","name":"suomių"},{"code":"gd","name":"škotų"},{"code":"sv","name":"švedų"},{"code":"th","name":"tajų"},{"code":"tr","name":"turkų"},{"code":"uk","name":"ukrainiečių"},{"code":"cy","name":"valų"},{"code":"hu","name":"vengrų"},{"code":"vi","name":"vietnamiečių"},{"code":"de","name":"vokiečių"},{"code":"zu","name":"zulusų"},{"code":"he","name":"hebrajų"},{"code":"zh-cn","name":"kinų (supaprastinta)"}],"uk":[{"code":"az","name":"азербайджанська"},{"code":"am","name":"амхарська"},{"code":"en","name":"англійська"},{"code":"ar","name":"арабська"},{"code":"eu","name":"баскська"},{"code":"bg","name":"болгарська"},{"code":"vi","name":"в’єтнамська"},{"code":"cy","name":"валлійська"},{"code":"el","name":"грецька"},{"code":"gl","name":"ґалісійська"},{"code":"da","name":"данська"},{"code":"et","name":"естонська"},{"code":"zu","name":"зулу"},{"code":"he","name":"іврит"},{"code":"id","name":"індонезійська"},{"code":"ga","name":"ірландська"},{"code":"is","name":"ісландська"},{"code":"es","name":"іспанська"},{"code":"it","name":"італійська"},{"code":"ca","name":"каталанська"},{"code":"zh-cn","name":"китайська (спрощена)"},{"code":"zh-tw","name":"китайська (традиційна)"},{"code":"ko","name":"корейська"},{"code":"ckb","name":"курдська (сорані)"},{"code":"lv","name":"латиська"},{"code":"lt","name":"литовська"},{"code":"mi","name":"маорі"},{"code":"nl","name":"нідерландська"},{"code":"de","name":"німецька"},{"code":"nb","name":"норвезька"},{"code":"fa","name":"перська"},{"code":"pl","name":"польська"},{"code":"pt","name":"португальська"},{"code":"ru","name":"російська"},{"code":"ro","name":"румунська"},{"code":"sr","name":"сербська"},{"code":"sk","name":"словацька"},{"code":"sl","name":"словенська"},{"code":"th","name":"тайська"},{"code":"tr","name":"турецька"},{"code":"hu","name":"угорська"},{"code":"uk","name":"українська"},{"code":"fi","name":"фінська"},{"code":"fr","name":"французька"},{"code":"hr","name":"хорватська"},{"code":"cs","name":"чеська"},{"code":"sv","name":"шведська"},{"code":"gd","name":"шотландська (ґельська)"},{"code":"ja","name":"японська"},{"code":"he","name":"іврит"},{"code":"zh-cn","name":"китайська (спрощена)"}],"az":[{"code":"de","name":"Alman"},{"code":"am","name":"Amarik"},{"code":"az","name":"Azərbaycan"},{"code":"eu","name":"Bask"},{"code":"bg","name":"Bolqar"},{"code":"cs","name":"Çex"},{"code":"zh-tw","name":"Çin (Ənənəvi)"},{"code":"zh-cn","name":"Çin (Sadələşdirilmiş)"},{"code":"da","name":"Danimarka"},{"code":"et","name":"Eston"},{"code":"ar","name":"Ərəb"},{"code":"fa","name":"Fars"},{"code":"fi","name":"Fin"},{"code":"fr","name":"Fransız"},{"code":"nl","name":"Holland"},{"code":"hr","name":"Xorvat"},{"code":"en","name":"Ingilis"},{"code":"es","name":"Ispan"},{"code":"id","name":"İndoneziya"},{"code":"ga","name":"İrland"},{"code":"is","name":"İsland"},{"code":"sv","name":"İsveç"},{"code":"it","name":"İtalyan"},{"code":"he","name":"İvrit"},{"code":"ca","name":"Katalan"},{"code":"ko","name":"Koreya"},{"code":"ckb","name":"Kürd(Sorani)"},{"code":"gl","name":"Qalisian"},{"code":"lv","name":"Latış"},{"code":"lt","name":"Litva"},{"code":"hu","name":"Macar"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norveç"},{"code":"pl","name":"Polyak"},{"code":"pt","name":"Portuqal"},{"code":"ro","name":"Rumın"},{"code":"ru","name":"Rus"},{"code":"sr","name":"Serb"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Sloven"},{"code":"gd","name":"Şotland (Kelt)"},{"code":"th","name":"Tay"},{"code":"tr","name":"Türk"},{"code":"cy","name":"Uels"},{"code":"uk","name":"Ukrayna"},{"code":"vi","name":"Vyetnam"},{"code":"ja","name":"Yapon"},{"code":"el","name":"Yunan"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İvrit"},{"code":"zh-cn","name":"Çin (Sadələşdirilmiş)"}],"zh-tw":[{"code":"tr","name":"土耳其文"},{"code":"zh-tw","name":"中文 (繁體)"},{"code":"zh-cn","name":"中文 (簡體)"},{"code":"da","name":"丹麥文"},{"code":"eu","name":"巴斯克文"},{"code":"ja","name":"日文"},{"code":"mi","name":"毛利文"},{"code":"gl","name":"加里西亞文"},{"code":"ca","name":"加泰隆尼亞文"},{"code":"lt","name":"立陶宛文"},{"code":"is","name":"冰島文"},{"code":"hu","name":"匈牙利文"},{"code":"id","name":"印尼文"},{"code":"es","name":"西班牙文"},{"code":"hr","name":"克羅埃西亞文"},{"code":"he","name":"希伯來文"},{"code":"el","name":"希臘文"},{"code":"az","name":"亞塞拜然文"},{"code":"lv","name":"拉脫維亞文"},{"code":"fr","name":"法文"},{"code":"fa","name":"波斯文"},{"code":"pl","name":"波蘭文"},{"code":"fi","name":"芬蘭文"},{"code":"am","name":"阿姆哈拉文"},{"code":"ar","name":"阿拉伯文"},{"code":"ru","name":"俄文"},{"code":"bg","name":"保加利亞文"},{"code":"zu","name":"南非祖魯文"},{"code":"cy","name":"威爾斯文"},{"code":"en","name":"英文"},{"code":"ckb","name":"庫德文 (索拉尼文)"},{"code":"nb","name":"挪威文"},{"code":"th","name":"泰文"},{"code":"uk","name":"烏克蘭文"},{"code":"cs","name":"捷克文"},{"code":"nl","name":"荷蘭文"},{"code":"sk","name":"斯洛伐克文"},{"code":"sl","name":"斯洛維尼亞文"},{"code":"vi","name":"越南文"},{"code":"sr","name":"塞爾維亞文"},{"code":"et","name":"愛沙尼亞文"},{"code":"ga","name":"愛爾蘭文"},{"code":"sv","name":"瑞典文"},{"code":"it","name":"義大利文"},{"code":"pt","name":"葡萄牙文"},{"code":"de","name":"德文"},{"code":"ko","name":"韓文"},{"code":"ro","name":"羅馬尼亞文"},{"code":"gd","name":"蘇格蘭蓋爾文"},{"code":"he","name":"希伯來文"},{"code":"zh-cn","name":"中文 (簡體)"}],"mi":[{"code":"az","name":"Ahepaitani"},{"code":"ga","name":"Airihi"},{"code":"am","name":"Amariki"},{"code":"ar","name":"Arapi"},{"code":"et","name":"Etōnia"},{"code":"zh-tw","name":"Haina (Onamata)"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"},{"code":"hu","name":"Hanekeria"},{"code":"ja","name":"Hapanihi"},{"code":"sr","name":"Herepia"},{"code":"fi","name":"Hinerangi"},{"code":"he","name":"Hiperu"},{"code":"sk","name":"Horowākia"},{"code":"sl","name":"Horowinia"},{"code":"sv","name":"Huitene"},{"code":"zu","name":"Huru"},{"code":"en","name":"Ingarihi"},{"code":"id","name":"Initonīhia"},{"code":"it","name":"Itāriana"},{"code":"gl","name":"Karihia"},{"code":"ca","name":"Katarāna"},{"code":"el","name":"Kiriki"},{"code":"ko","name":"Kōreana"},{"code":"hr","name":"Koroātiana"},{"code":"tr","name":"Korukoru"},{"code":"ckb","name":"Kūrihi (Horani)"},{"code":"mi","name":"Māori"},{"code":"nb","name":"Nōwei"},{"code":"eu","name":"Pākihi"},{"code":"es","name":"Pāniora"},{"code":"fa","name":"Perēhia"},{"code":"pl","name":"Pōrana"},{"code":"pt","name":"Potukīhi"},{"code":"bg","name":"Purukāriana"},{"code":"lv","name":"Rāwhiana"},{"code":"lt","name":"Rituānia"},{"code":"ro","name":"Romānia"},{"code":"ru","name":"Rūhia"},{"code":"th","name":"Tai"},{"code":"nl","name":"Tati"},{"code":"da","name":"Tenemāka"},{"code":"de","name":"Tiamana"},{"code":"cs","name":"Tieke"},{"code":"is","name":"Tiorangi"},{"code":"gd","name":"Tuauri Kotarangi"},{"code":"uk","name":"Ūkareiana"},{"code":"cy","name":"Wēra"},{"code":"vi","name":"Whitināmu"},{"code":"fr","name":"Wīwī"},{"code":"he","name":"Hiperu"},{"code":"zh-cn","name":"Hainamana (Kua whakamāmātia)"}],"th":[{"code":"el","name":"กรีก"},{"code":"gl","name":"กาลิเชียน"},{"code":"gd","name":"เกลิกสกอต"},{"code":"ko","name":"เกาหลี"},{"code":"ca","name":"คาตาลัน"},{"code":"ckb","name":"เคิร์ด (โซรานี)"},{"code":"hr","name":"โครเอเชีย"},{"code":"zh-tw","name":"จีน (ตัวเต็ม)"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"},{"code":"cs","name":"เช็ก"},{"code":"zu","name":"ซูลู"},{"code":"sr","name":"เซอร์เบียน"},{"code":"ja","name":"ญี่ปุ่น"},{"code":"nl","name":"ดัตช์"},{"code":"da","name":"เดนมาร์ก"},{"code":"tr","name":"ตุรกี"},{"code":"th","name":"ไทย"},{"code":"nb","name":"นอร์เวย์"},{"code":"bg","name":"บัลแกเรีย"},{"code":"eu","name":"บาสก์"},{"code":"fa","name":"เปอร์เซีย"},{"code":"pt","name":"โปรตุเกส"},{"code":"pl","name":"โปแลนด์"},{"code":"fr","name":"ฝรั่งเศส"},{"code":"fi","name":"ฟินแลนด์"},{"code":"mi","name":"เมารี"},{"code":"uk","name":"ยูเครน"},{"code":"de","name":"เยอรมัน"},{"code":"ru","name":"รัสเซีย"},{"code":"ro","name":"โรมาเนีย"},{"code":"lv","name":"ลัตเวีย"},{"code":"lt","name":"ลิทัวเนีย"},{"code":"cy","name":"เวลส์"},{"code":"vi","name":"เวียดนาม"},{"code":"es","name":"สเปน"},{"code":"sk","name":"สโลวัก"},{"code":"sl","name":"สโลวีเนีย"},{"code":"sv","name":"สวีเดน"},{"code":"en","name":"อังกฤษ"},{"code":"am","name":"อัมฮาริก"},{"code":"az","name":"อาร์เซอร์ไบจัน"},{"code":"ar","name":"อาหรับ"},{"code":"it","name":"อิตาลี"},{"code":"id","name":"อินโดนีเซีย"},{"code":"et","name":"เอสโทเนีย"},{"code":"is","name":"ไอซ์แลนด์"},{"code":"ga","name":"ไอร์แลนด์"},{"code":"hu","name":"ฮังการี"},{"code":"he","name":"ฮีบรู"},{"code":"he","name":"ฮีบรู"},{"code":"zh-cn","name":"จีน (ตัวย่อ)"}],"eu":[{"code":"de","name":"alemana"},{"code":"am","name":"amharera"},{"code":"ar","name":"arabiera"},{"code":"az","name":"azerbaijanera"},{"code":"bg","name":"bulgariera"},{"code":"da","name":"daniera"},{"code":"ro","name":"errumaniera"},{"code":"ru","name":"errusiera"},{"code":"gd","name":"Eskoziako gaelikoa"},{"code":"sk","name":"eslovakiera"},{"code":"sl","name":"esloveniera"},{"code":"et","name":"estoniera"},{"code":"eu","name":"euskara"},{"code":"fi","name":"finlandiera"},{"code":"fr","name":"frantsesa"},{"code":"cy","name":"galesa"},{"code":"gl","name":"galiziera"},{"code":"es","name":"gaztelania"},{"code":"el","name":"greziera"},{"code":"he","name":"hebreera"},{"code":"hu","name":"hungariera"},{"code":"id","name":"indonesiera"},{"code":"en","name":"ingelesa"},{"code":"ga","name":"irlandera"},{"code":"is","name":"islandiera"},{"code":"it","name":"italiera"},{"code":"ja","name":"japoniera"},{"code":"ca","name":"katalana"},{"code":"ko","name":"koreera"},{"code":"hr","name":"kroaziera"},{"code":"ckb","name":"kurduera (sorania)"},{"code":"lv","name":"letoniera"},{"code":"lt","name":"lituaniera"},{"code":"mi","name":"maoriera"},{"code":"nl","name":"nederlandera"},{"code":"nb","name":"norvegiera"},{"code":"fa","name":"persiera"},{"code":"pl","name":"poloniera"},{"code":"pt","name":"portugesa"},{"code":"sr","name":"serbiera"},{"code":"sv","name":"suediera"},{"code":"th","name":"thailandiera"},{"code":"tr","name":"turkiera"},{"code":"cs","name":"txekiera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"},{"code":"zh-tw","name":"txinera (tradizionala)"},{"code":"uk","name":"ukrainera"},{"code":"vi","name":"vietnamera"},{"code":"zu","name":"zuluera"},{"code":"he","name":"hebreera"},{"code":"zh-cn","name":"txinera (sinplifikatua)"}],"it":[{"code":"am","name":"Amarico"},{"code":"ar","name":"Arabo"},{"code":"az","name":"Azero"},{"code":"eu","name":"Basco"},{"code":"bg","name":"Bulgaro"},{"code":"ca","name":"Catalano"},{"code":"cs","name":"Ceco"},{"code":"zh-cn","name":"Cinese (semplificato)"},{"code":"zh-tw","name":"Cinese (tradizionale)"},{"code":"ko","name":"Coreano"},{"code":"hr","name":"Croato"},{"code":"ckb","name":"Curdo (Sorani)"},{"code":"da","name":"Danese"},{"code":"he","name":"Ebraico"},{"code":"et","name":"Estone"},{"code":"fi","name":"Finlandese"},{"code":"fr","name":"Francese"},{"code":"gd","name":"Gaelico scozzese"},{"code":"gl","name":"Galiziano"},{"code":"cy","name":"Gallese"},{"code":"ja","name":"Giapponese"},{"code":"el","name":"Greco"},{"code":"id","name":"Indonesiano"},{"code":"en","name":"Inglese"},{"code":"ga","name":"Irlandese"},{"code":"is","name":"Islandese"},{"code":"it","name":"Italiano"},{"code":"lv","name":"Lettone"},{"code":"lt","name":"Lituano"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norvegese"},{"code":"nl","name":"Olandese"},{"code":"fa","name":"Persiano"},{"code":"pl","name":"Polacco"},{"code":"pt","name":"Portoghese"},{"code":"ro","name":"Rumeno"},{"code":"ru","name":"Russo"},{"code":"sr","name":"Serbo"},{"code":"sk","name":"Slovacco"},{"code":"sl","name":"Sloveno"},{"code":"es","name":"Spagnolo"},{"code":"sv","name":"Svedese"},{"code":"de","name":"Tedesco"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turco"},{"code":"uk","name":"Ucraino"},{"code":"hu","name":"Ungherese"},{"code":"vi","name":"Vietnamita"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraico"},{"code":"zh-cn","name":"Cinese (semplificato)"}],"fi":[{"code":"am","name":"amhara"},{"code":"ar","name":"arabia"},{"code":"az","name":"azeri"},{"code":"eu","name":"baski"},{"code":"bg","name":"bulgaria"},{"code":"en","name":"englanti"},{"code":"es","name":"espanja"},{"code":"gl","name":"galicia"},{"code":"he","name":"heprea"},{"code":"nl","name":"hollanti"},{"code":"ga","name":"iiri"},{"code":"id","name":"indonesia"},{"code":"is","name":"islanti"},{"code":"it","name":"italia"},{"code":"ja","name":"japani"},{"code":"ca","name":"katalaani"},{"code":"zh-tw","name":"kiina (perinteinen)"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"},{"code":"ko","name":"korea"},{"code":"el","name":"kreikka"},{"code":"hr","name":"kroatia"},{"code":"ckb","name":"kurdi (soranî)"},{"code":"cy","name":"kymri"},{"code":"lv","name":"latvia"},{"code":"lt","name":"liettua"},{"code":"mi","name":"maori"},{"code":"nb","name":"norja"},{"code":"fa","name":"persia"},{"code":"pt","name":"portugali"},{"code":"pl","name":"puola"},{"code":"fr","name":"ranska"},{"code":"ro","name":"romania"},{"code":"sv","name":"ruotsi"},{"code":"de","name":"saksa"},{"code":"sr","name":"serbia"},{"code":"gd","name":"skottigaeli"},{"code":"sk","name":"slovakia"},{"code":"sl","name":"slovenia"},{"code":"fi","name":"suomi"},{"code":"da","name":"tanska"},{"code":"th","name":"thai"},{"code":"cs","name":"tsekki"},{"code":"tr","name":"turkki"},{"code":"uk","name":"ukraina"},{"code":"hu","name":"unkari"},{"code":"ru","name":"venäjä"},{"code":"vi","name":"vietnam"},{"code":"et","name":"viro"},{"code":"zu","name":"zulu"},{"code":"he","name":"heprea"},{"code":"zh-cn","name":"kiina (yksinkertaistettu)"}],"en":[{"code":"am","name":"Amharic"},{"code":"ar","name":"Arabic"},{"code":"az","name":"Azerbaijani"},{"code":"eu","name":"Basque"},{"code":"bg","name":"Bulgarian"},{"code":"ca","name":"Catalan"},{"code":"zh-cn","name":"Chinese (Simplified)"},{"code":"zh-tw","name":"Chinese (Traditional)"},{"code":"hr","name":"Croatian"},{"code":"cs","name":"Czech"},{"code":"da","name":"Danish"},{"code":"nl","name":"Dutch"},{"code":"en","name":"English"},{"code":"et","name":"Estonian"},{"code":"fi","name":"Finnish"},{"code":"fr","name":"French"},{"code":"gl","name":"Galician"},{"code":"de","name":"German"},{"code":"el","name":"Greek"},{"code":"he","name":"Hebrew"},{"code":"hu","name":"Hungarian"},{"code":"is","name":"Icelandic"},{"code":"id","name":"Indonesian"},{"code":"ga","name":"Irish Gaelic"},{"code":"it","name":"Italian"},{"code":"ja","name":"Japanese"},{"code":"ko","name":"Korean"},{"code":"ckb","name":"Kurdish (Sorani)"},{"code":"lv","name":"Latvian"},{"code":"lt","name":"Lithuanian"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwegian"},{"code":"fa","name":"Persian"},{"code":"pl","name":"Polish"},{"code":"pt","name":"Portuguese"},{"code":"ro","name":"Romanian"},{"code":"ru","name":"Russian"},{"code":"gd","name":"Scots Gaelic"},{"code":"sr","name":"Serbian"},{"code":"sk","name":"Slovak"},{"code":"sl","name":"Slovenian"},{"code":"es","name":"Spanish"},{"code":"sv","name":"Swedish"},{"code":"th","name":"Thai"},{"code":"tr","name":"Turkish"},{"code":"uk","name":"Ukrainian"},{"code":"vi","name":"Vietnamese"},{"code":"cy","name":"Welsh"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebrew"},{"code":"zh-cn","name":"Chinese (Simplified)"}],"tr":[{"code":"de","name":"Almanca"},{"code":"ar","name":"Arapça"},{"code":"az","name":"Azerbaycan dili"},{"code":"eu","name":"Baskça"},{"code":"bg","name":"Bulgarca"},{"code":"cs","name":"Çekçe"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"},{"code":"zh-tw","name":"Çince (Geleneksel)"},{"code":"da","name":"Danca"},{"code":"id","name":"Endonezce"},{"code":"et","name":"Estonyaca"},{"code":"fa","name":"Farsça"},{"code":"nl","name":"Felemenkçe"},{"code":"fi","name":"Fince"},{"code":"fr","name":"Fransızca"},{"code":"cy","name":"Galce"},{"code":"gl","name":"Galiçyaca"},{"code":"am","name":"Habeşçe"},{"code":"hr","name":"Hırvatça"},{"code":"he","name":"İbranice"},{"code":"en","name":"İngilizce"},{"code":"ga","name":"İrlandaca"},{"code":"gd","name":"İskoç Gaelcesi"},{"code":"es","name":"İspanyolca"},{"code":"sv","name":"İsveççe"},{"code":"it","name":"İtalyanca"},{"code":"is","name":"İzlandaca"},{"code":"ja","name":"Japonca"},{"code":"ca","name":"Katalanca"},{"code":"ko","name":"Korece"},{"code":"ckb","name":"Kürtçe (Sorani)"},{"code":"pl","name":"Lehçe"},{"code":"lv","name":"Letonca"},{"code":"lt","name":"Litvanca"},{"code":"hu","name":"Macarca"},{"code":"mi","name":"Maori dili"},{"code":"nb","name":"Norveççe"},{"code":"pt","name":"Portekizce"},{"code":"ro","name":"Romence"},{"code":"ru","name":"Rusça"},{"code":"sr","name":"Sırpça"},{"code":"sk","name":"Slovakça"},{"code":"sl","name":"Slovence"},{"code":"th","name":"Tayca"},{"code":"tr","name":"Türkçe"},{"code":"uk","name":"Ukraynaca"},{"code":"vi","name":"Vietnamca"},{"code":"el","name":"Yunanca"},{"code":"zu","name":"Zulu"},{"code":"he","name":"İbranice"},{"code":"zh-cn","name":"Çince (Basitleştirilmiş)"}],"ro":[{"code":"am","name":"Amharică"},{"code":"ar","name":"Arabă"},{"code":"az","name":"Azerbaidjană"},{"code":"eu","name":"Bască"},{"code":"bg","name":"Bulgară"},{"code":"ca","name":"Catalană"},{"code":"cs","name":"Cehă"},{"code":"zh-cn","name":"Chineză (Simplificată)"},{"code":"zh-tw","name":"Chineză (Tradițională)"},{"code":"ko","name":"Coreeană"},{"code":"hr","name":"Croată"},{"code":"da","name":"Daneză"},{"code":"he","name":"Ebraică"},{"code":"en","name":"Engleză"},{"code":"et","name":"Estonă"},{"code":"fi","name":"Finlandeză"},{"code":"fr","name":"Franceză"},{"code":"cy","name":"Galeză"},{"code":"gd","name":"Galica scoțiană"},{"code":"gl","name":"Galiciană"},{"code":"de","name":"Germană"},{"code":"el","name":"Greacă"},{"code":"id","name":"Indoneziană"},{"code":"ga","name":"Irlandeză"},{"code":"is","name":"Islandeză"},{"code":"it","name":"Italiană"},{"code":"ja","name":"Japoneză"},{"code":"ckb","name":"Kurdă (Sorani)"},{"code":"lv","name":"Letonă"},{"code":"lt","name":"Lituaniană"},{"code":"hu","name":"Maghiară"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Neerlandeză"},{"code":"nb","name":"Norvegiană"},{"code":"fa","name":"Persană"},{"code":"pl","name":"Poloneză"},{"code":"pt","name":"Portugheză"},{"code":"ro","name":"Română"},{"code":"ru","name":"Rusă"},{"code":"sr","name":"Sârbă"},{"code":"sk","name":"Slovacă"},{"code":"sl","name":"Slovenă"},{"code":"es","name":"Spaniolă"},{"code":"sv","name":"Suedeză"},{"code":"th","name":"Thailandeză"},{"code":"tr","name":"Turcă"},{"code":"uk","name":"Ucraineană"},{"code":"vi","name":"Vietnameză"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Ebraică"},{"code":"zh-cn","name":"Chineză (Simplificată)"}],"zh-cn":[{"code":"ar","name":"阿拉伯语"},{"code":"am","name":"阿姆哈拉语"},{"code":"az","name":"阿塞拜疆语"},{"code":"ga","name":"爱尔兰语"},{"code":"et","name":"爱沙尼亚语"},{"code":"eu","name":"巴斯克语"},{"code":"bg","name":"保加利亚语"},{"code":"is","name":"冰岛语"},{"code":"pl","name":"波兰语"},{"code":"fa","name":"波斯语"},{"code":"da","name":"丹麦语"},{"code":"de","name":"德语"},{"code":"ru","name":"俄语"},{"code":"fr","name":"法语"},{"code":"fi","name":"芬兰语"},{"code":"ko","name":"韩语"},{"code":"nl","name":"荷兰语"},{"code":"gl","name":"加利西亚语"},{"code":"ca","name":"加泰罗尼亚语"},{"code":"cs","name":"捷克语"},{"code":"hr","name":"克罗地亚语"},{"code":"ckb","name":"库尔德语（索拉尼）"},{"code":"lv","name":"拉脱维亚语"},{"code":"lt","name":"立陶宛语"},{"code":"ro","name":"罗马尼亚语"},{"code":"mi","name":"毛利语"},{"code":"nb","name":"挪威语"},{"code":"pt","name":"葡萄牙语"},{"code":"ja","name":"日语"},{"code":"sv","name":"瑞典语"},{"code":"sr","name":"塞尔维亚语"},{"code":"sk","name":"斯洛伐克语"},{"code":"sl","name":"斯洛文尼亚语"},{"code":"gd","name":"苏格兰盖尔语"},{"code":"th","name":"泰语"},{"code":"tr","name":"土耳其语"},{"code":"cy","name":"威尔士语"},{"code":"uk","name":"乌克兰语"},{"code":"es","name":"西班牙语"},{"code":"he","name":"希伯来语"},{"code":"el","name":"希腊语"},{"code":"hu","name":"匈牙利语"},{"code":"it","name":"意大利语"},{"code":"id","name":"印尼语"},{"code":"en","name":"英语"},{"code":"vi","name":"越南语"},{"code":"zh-tw","name":"中文（繁体）"},{"code":"zh-cn","name":"中文（简体）"},{"code":"zu","name":"祖鲁语"},{"code":"he","name":"希伯来语"},{"code":"zh-cn","name":"中文（简体）"}],"ko":[{"code":"gl","name":"갈리시아어"},{"code":"el","name":"그리스어"},{"code":"nl","name":"네덜란드어"},{"code":"nb","name":"노르웨이어"},{"code":"da","name":"덴마크어"},{"code":"de","name":"독일어"},{"code":"lv","name":"라트비아어"},{"code":"ru","name":"러시아어"},{"code":"ro","name":"루마니아어"},{"code":"lt","name":"리투아니아어"},{"code":"mi","name":"마오리어"},{"code":"eu","name":"바스크어"},{"code":"vi","name":"베트남어"},{"code":"bg","name":"불가리아어"},{"code":"sr","name":"세르비아어"},{"code":"sv","name":"스웨덴어"},{"code":"gd","name":"스코틀랜드 게일어"},{"code":"es","name":"스페인어"},{"code":"sk","name":"슬로바키아어"},{"code":"sl","name":"슬로베니아어"},{"code":"ar","name":"아랍어"},{"code":"is","name":"아이슬란드어"},{"code":"ga","name":"아일랜드어"},{"code":"az","name":"아제르바이잔어"},{"code":"am","name":"암하라어"},{"code":"et","name":"에스토니아어"},{"code":"en","name":"영어"},{"code":"uk","name":"우크라이나어"},{"code":"cy","name":"웨일즈어"},{"code":"it","name":"이탈리아어"},{"code":"id","name":"인도네시아어"},{"code":"ja","name":"일본어"},{"code":"zu","name":"줄루어"},{"code":"zh-cn","name":"중국어(간체)"},{"code":"zh-tw","name":"중국어(번체)"},{"code":"cs","name":"체코어"},{"code":"ca","name":"카탈로니아어"},{"code":"ckb","name":"쿠르드어(소라니)"},{"code":"hr","name":"크로아티아어"},{"code":"th","name":"태국어"},{"code":"tr","name":"터키어"},{"code":"fa","name":"페르시아어"},{"code":"pt","name":"포르투갈어"},{"code":"pl","name":"폴란드어"},{"code":"fr","name":"프랑스어"},{"code":"fi","name":"핀란드어"},{"code":"ko","name":"한국어"},{"code":"hu","name":"헝가리어"},{"code":"he","name":"히브리어"},{"code":"he","name":"히브리어"},{"code":"zh-cn","name":"중국어(간체)"}],"de":[{"code":"am","name":"Amharisch"},{"code":"ar","name":"Arabisch"},{"code":"az","name":"Aserbaidschanisch"},{"code":"eu","name":"Baskisch"},{"code":"bg","name":"Bulgarisch"},{"code":"zh-tw","name":"Chinesisch (traditionell)"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"},{"code":"da","name":"Dänisch"},{"code":"de","name":"Deutsch"},{"code":"en","name":"Englisch"},{"code":"et","name":"Estnisch"},{"code":"fi","name":"Finnisch"},{"code":"fr","name":"Französisch"},{"code":"gl","name":"Galizisch"},{"code":"el","name":"Griechisch"},{"code":"he","name":"Hebräisch"},{"code":"id","name":"Indonesisch"},{"code":"ga","name":"Irisch"},{"code":"is","name":"Isländisch"},{"code":"it","name":"Italienisch"},{"code":"ja","name":"Japanisch"},{"code":"ca","name":"Katalanisch"},{"code":"ko","name":"Koreanisch"},{"code":"hr","name":"Kroatisch"},{"code":"ckb","name":"Kurdisch (Sorani)"},{"code":"lv","name":"Lettisch"},{"code":"lt","name":"Litauisch"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Niederländisch"},{"code":"nb","name":"Norwegisch"},{"code":"fa","name":"Persisch"},{"code":"pl","name":"Polnisch"},{"code":"pt","name":"Portugiesisch"},{"code":"ro","name":"Rumänisch"},{"code":"ru","name":"Russisch"},{"code":"gd","name":"Schottisch-Gälisch"},{"code":"sv","name":"Schwedisch"},{"code":"sr","name":"Serbisch"},{"code":"sk","name":"Slowakisch"},{"code":"sl","name":"Slowenisch"},{"code":"es","name":"Spanisch"},{"code":"th","name":"Thailändisch"},{"code":"cs","name":"Tschechisch"},{"code":"tr","name":"Türkisch"},{"code":"uk","name":"Ukrainisch"},{"code":"hu","name":"Ungarisch"},{"code":"vi","name":"Vietnamesisch"},{"code":"cy","name":"Walisisch"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebräisch"},{"code":"zh-cn","name":"Chinesisch (vereinfacht)"}],"cs":[{"code":"am","name":"amharština"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabština"},{"code":"az","name":"ázerbájdžánština"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharština"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradiční)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánština"},{"code":"et","name":"estonština"},{"code":"fi","name":"finština"},{"code":"fr","name":"francouzština"},{"code":"gl","name":"galicijština"},{"code":"he","name":"hebrejština"},{"code":"nl","name":"holandština"},{"code":"hr","name":"chorvatština"},{"code":"id","name":"indonéština"},{"code":"ga","name":"irština"},{"code":"is","name":"islandština"},{"code":"it","name":"italština"},{"code":"ja","name":"japonština"},{"code":"ca","name":"katalánština"},{"code":"ko","name":"korejština"},{"code":"ckb","name":"kurdština (sorání)"},{"code":"lt","name":"litevština"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarština"},{"code":"mi","name":"maorština"},{"code":"de","name":"němčina"},{"code":"nb","name":"norština"},{"code":"fa","name":"perština"},{"code":"pl","name":"polština"},{"code":"pt","name":"portugalština"},{"code":"ro","name":"rumunština"},{"code":"ru","name":"ruština"},{"code":"el","name":"řečtina"},{"code":"gd","name":"skotská gaelština"},{"code":"sk","name":"slovenština"},{"code":"sl","name":"slovinština"},{"code":"sr","name":"srbština"},{"code":"es","name":"španělština"},{"code":"sv","name":"švédština"},{"code":"th","name":"thajština"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinština"},{"code":"cy","name":"velština"},{"code":"vi","name":"vietnamština"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebrejština"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"he":[{"code":"uk","name":"אוקראינית"},{"code":"az","name":"אזרית"},{"code":"it","name":"איטלקית"},{"code":"id","name":"אינדונזית"},{"code":"is","name":"איסלנדית"},{"code":"ga","name":"אירית"},{"code":"am","name":"אמהרית"},{"code":"en","name":"אנגלית"},{"code":"et","name":"אסטונית"},{"code":"eu","name":"באסקית"},{"code":"bg","name":"בולגרית"},{"code":"gd","name":"גאלית סקוטית"},{"code":"gl","name":"גליציאנית"},{"code":"de","name":"גרמנית"},{"code":"da","name":"דנית"},{"code":"nl","name":"הולנדית"},{"code":"hu","name":"הונגרית"},{"code":"cy","name":"וולשית"},{"code":"vi","name":"וייטנאמית"},{"code":"zu","name":"זולו"},{"code":"tr","name":"טורקית"},{"code":"el","name":"יוונית"},{"code":"ja","name":"יפנית"},{"code":"ckb","name":"כורדית (סורנית)"},{"code":"lv","name":"לטבית"},{"code":"lt","name":"ליטאית"},{"code":"mi","name":"מאורית"},{"code":"nb","name":"נורווגית"},{"code":"zh-tw","name":"סינית (מסורתית)"},{"code":"zh-cn","name":"‏סינית (פשוטה)"},{"code":"sl","name":"סלובנית"},{"code":"sk","name":"סלובקית"},{"code":"es","name":"ספרדית"},{"code":"sr","name":"סרבית"},{"code":"he","name":"עברית"},{"code":"ar","name":"ערבית"},{"code":"pl","name":"פולנית"},{"code":"pt","name":"פורטוגזית"},{"code":"fi","name":"פינית"},{"code":"fa","name":"פרסית"},{"code":"cs","name":"צ\'כית"},{"code":"fr","name":"צרפתית"},{"code":"ko","name":"קוריאנית"},{"code":"ca","name":"קטלאנית"},{"code":"hr","name":"קרואטית"},{"code":"ro","name":"רומנית"},{"code":"ru","name":"רוסית"},{"code":"sv","name":"שוודית"},{"code":"th","name":"תאית"},{"code":"he","name":"עברית"},{"code":"zh-cn","name":"‏סינית (פשוטה)"}],"cy":[{"code":"de","name":"Almaeneg"},{"code":"am","name":"Amhareg"},{"code":"ar","name":"Arabeg"},{"code":"az","name":"Aserbaijaneg"},{"code":"eu","name":"Basgeg"},{"code":"bg","name":"Bwlgareg"},{"code":"ca","name":"Catalaneg"},{"code":"hr","name":"Croateg"},{"code":"ckb","name":"Cwrdeg (Sorani)"},{"code":"cy","name":"Cymraeg"},{"code":"da","name":"Daneg"},{"code":"it","name":"Eidaleg"},{"code":"et","name":"Estoneg"},{"code":"vi","name":"Fietnameg"},{"code":"fi","name":"Ffineg"},{"code":"nl","name":"Fflemeg"},{"code":"fr","name":"Ffrangeg"},{"code":"gd","name":"Gaeleg yr Alban"},{"code":"gl","name":"Galiseg"},{"code":"el","name":"Groeg"},{"code":"ga","name":"Gwyddeleg"},{"code":"he","name":"Hebraeg"},{"code":"hu","name":"Hwngareg"},{"code":"ko","name":"Iaith Corea"},{"code":"id","name":"Indonesieg"},{"code":"is","name":"Islandeg"},{"code":"ja","name":"Japaneg"},{"code":"lv","name":"Latfieg"},{"code":"lt","name":"Lithwaneg"},{"code":"mi","name":"Maori"},{"code":"nb","name":"Norwyeg"},{"code":"fa","name":"Perseg"},{"code":"pt","name":"Portiwgaleg"},{"code":"pl","name":"Pwyleg"},{"code":"ro","name":"Rwmaneg"},{"code":"ru","name":"Rwsieg"},{"code":"en","name":"Saesneg"},{"code":"es","name":"Sbaeneg"},{"code":"sr","name":"Serbeg"},{"code":"sk","name":"Slofaceg"},{"code":"sl","name":"Slofeneg"},{"code":"sv","name":"Swedeg"},{"code":"zu","name":"Swlw"},{"code":"th","name":"Tai"},{"code":"cs","name":"Tsieceg"},{"code":"zh-tw","name":"Tsieineeg (Traddodiadol)"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"},{"code":"tr","name":"Twrceg"},{"code":"uk","name":"Wcreineg"},{"code":"he","name":"Hebraeg"},{"code":"zh-cn","name":"Tsieineeg (Wedi symleiddio)"}],"sv":[{"code":"am","name":"amhariska"},{"code":"ar","name":"arabiska"},{"code":"az","name":"azerbajdzjanska"},{"code":"eu","name":"baskiska"},{"code":"bg","name":"bulgariska"},{"code":"da","name":"danska"},{"code":"en","name":"engelska"},{"code":"et","name":"estniska"},{"code":"fi","name":"finska"},{"code":"fr","name":"franska"},{"code":"gd","name":"gaeliska"},{"code":"gl","name":"galiciska"},{"code":"el","name":"grekiska"},{"code":"he","name":"hebreiska"},{"code":"id","name":"indonesiska"},{"code":"ga","name":"irländska"},{"code":"is","name":"isländska"},{"code":"it","name":"italienska"},{"code":"ja","name":"japanska"},{"code":"ca","name":"katalanska"},{"code":"zh-cn","name":"kinesiska (förenklad)"},{"code":"zh-tw","name":"kinesiska (traditionell)"},{"code":"ko","name":"koreanska"},{"code":"hr","name":"kroatiska"},{"code":"ckb","name":"kurdiska (sorani)"},{"code":"lv","name":"lettiska"},{"code":"lt","name":"litauiska"},{"code":"mi","name":"maori"},{"code":"nl","name":"nederländska"},{"code":"nb","name":"norska"},{"code":"fa","name":"persiska"},{"code":"pl","name":"polska"},{"code":"pt","name":"portugisiska"},{"code":"ro","name":"rumänska"},{"code":"ru","name":"ryska"},{"code":"sr","name":"serbiska"},{"code":"sk","name":"slovakiska"},{"code":"sl","name":"slovenska"},{"code":"es","name":"spanska"},{"code":"sv","name":"svenska"},{"code":"th","name":"thailändska"},{"code":"cs","name":"tjeckiska"},{"code":"tr","name":"turkiska"},{"code":"de","name":"tyska"},{"code":"uk","name":"ukrainska"},{"code":"hu","name":"ungerska"},{"code":"vi","name":"vietnamesiska"},{"code":"cy","name":"walesiska"},{"code":"zu","name":"zulu"},{"code":"he","name":"hebreiska"},{"code":"zh-cn","name":"kinesiska (förenklad)"}],"ga":[{"code":"am","name":"Amáiris"},{"code":"ar","name":"Araibis"},{"code":"az","name":"Asarbaiseáinis"},{"code":"eu","name":"Bascais"},{"code":"en","name":"Béarla"},{"code":"cy","name":"Breatnais"},{"code":"bg","name":"Bulgáiris"},{"code":"ca","name":"Catalóinis"},{"code":"ckb","name":"Coirdis (Sóráinis)"},{"code":"ko","name":"Cóiréis"},{"code":"hr","name":"Cróitis"},{"code":"da","name":"Danmhairgis"},{"code":"he","name":"Eabhrais"},{"code":"et","name":"Eastóinis"},{"code":"fi","name":"Fionlainnis"},{"code":"fr","name":"Fraincis"},{"code":"ga","name":"Gaeilge"},{"code":"gd","name":"Gaeilge na hAlban"},{"code":"gl","name":"Gailísis"},{"code":"de","name":"Gearmáinis"},{"code":"el","name":"Gréigis"},{"code":"id","name":"Indinéisis"},{"code":"it","name":"Iodáilis"},{"code":"nb","name":"Ioruais"},{"code":"is","name":"Íoslainnis"},{"code":"lv","name":"Laitvis"},{"code":"lt","name":"Liotuáinis"},{"code":"mi","name":"Maorais"},{"code":"nl","name":"Ollainnis"},{"code":"fa","name":"Peirsis"},{"code":"pl","name":"Polainnis"},{"code":"pt","name":"Portaingéilis"},{"code":"ro","name":"Rómáinis"},{"code":"ru","name":"Rúisis"},{"code":"ja","name":"Seapáinis"},{"code":"cs","name":"Seicis"},{"code":"sr","name":"Seirbis"},{"code":"zh-cn","name":"Sínis (Simplithe)"},{"code":"zh-tw","name":"Sínis (Traidisiúnta)"},{"code":"sl","name":"Slóivéinis"},{"code":"sk","name":"Slóvaicis"},{"code":"es","name":"Spáinnis"},{"code":"sv","name":"Sualainnis"},{"code":"zu","name":"Súlúis"},{"code":"th","name":"Téalainnis"},{"code":"tr","name":"Tuircis"},{"code":"uk","name":"Úcráinis"},{"code":"hu","name":"Ungáiris"},{"code":"vi","name":"Vítneaimis"},{"code":"he","name":"Eabhrais"},{"code":"zh-cn","name":"Sínis (Simplithe)"}],"ja":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"ja-hira":[{"code":"is","name":"アイスランド語"},{"code":"ga","name":"アイルランド語"},{"code":"az","name":"アゼルバイジャン語"},{"code":"am","name":"アムハラ語"},{"code":"ar","name":"アラビア語"},{"code":"it","name":"イタリア語"},{"code":"id","name":"インドネシア語"},{"code":"cy","name":"ウェールズ語"},{"code":"uk","name":"ウクライナ語"},{"code":"et","name":"エストニア語"},{"code":"nl","name":"オランダ語"},{"code":"ca","name":"カタルーニャ語"},{"code":"gl","name":"ガリシア語"},{"code":"el","name":"ギリシャ語"},{"code":"ckb","name":"クルド語（ソラニー）"},{"code":"hr","name":"クロアチア語"},{"code":"sv","name":"スウェーデン語"},{"code":"zu","name":"ズールー語"},{"code":"gd","name":"スコットランド ゲール語"},{"code":"es","name":"スペイン語"},{"code":"sk","name":"スロバキア語"},{"code":"sl","name":"スロベニア語"},{"code":"sr","name":"セルビア語"},{"code":"th","name":"タイ語"},{"code":"cs","name":"チェコ語"},{"code":"da","name":"デンマーク語"},{"code":"de","name":"ドイツ語"},{"code":"tr","name":"トルコ語"},{"code":"nb","name":"ノルウェー語"},{"code":"eu","name":"バスク語"},{"code":"hu","name":"ハンガリー語"},{"code":"fi","name":"フィンランド語"},{"code":"fr","name":"フランス語"},{"code":"bg","name":"ブルガリア語"},{"code":"vi","name":"ベトナム語"},{"code":"he","name":"ヘブライ語"},{"code":"fa","name":"ペルシャ語"},{"code":"pl","name":"ポーランド語"},{"code":"pt","name":"ポルトガル語"},{"code":"mi","name":"マオリ語"},{"code":"lv","name":"ラトビア語"},{"code":"lt","name":"リトアニア語"},{"code":"ro","name":"ルーマニア語"},{"code":"ru","name":"ロシア語"},{"code":"en","name":"英語"},{"code":"ko","name":"韓国語"},{"code":"zh-cn","name":"中国語（簡体）"},{"code":"zh-tw","name":"中国語（繁体）"},{"code":"ja","name":"日本語"},{"code":"he","name":"ヘブライ語"},{"code":"zh-cn","name":"中国語（簡体）"}],"sk":[{"code":"am","name":"amharčina"},{"code":"en","name":"angličtina"},{"code":"ar","name":"arabčina"},{"code":"az","name":"azerbajdžančina"},{"code":"eu","name":"baskičtina"},{"code":"bg","name":"bulharčina"},{"code":"cs","name":"čeština"},{"code":"zh-tw","name":"čínština (tradičná)"},{"code":"zh-cn","name":"čínština (zjednodušená)"},{"code":"da","name":"dánčina"},{"code":"et","name":"estónčina"},{"code":"fi","name":"fínčina"},{"code":"fr","name":"francúzština"},{"code":"gl","name":"galícijčina"},{"code":"el","name":"gréčtina"},{"code":"he","name":"hebrejčina"},{"code":"nl","name":"holandčina"},{"code":"hr","name":"chorvátčina"},{"code":"id","name":"indonézština"},{"code":"ga","name":"írčina"},{"code":"is","name":"islandčina"},{"code":"ja","name":"japončina"},{"code":"ca","name":"katalánčina"},{"code":"ko","name":"kórejčina"},{"code":"ckb","name":"kurdčina (sorání)"},{"code":"lt","name":"litovčina"},{"code":"lv","name":"lotyština"},{"code":"hu","name":"maďarčina"},{"code":"mi","name":"maorijčina"},{"code":"de","name":"nemčina"},{"code":"nb","name":"nórčina"},{"code":"fa","name":"perzština"},{"code":"pl","name":"poľština"},{"code":"pt","name":"portugalčina"},{"code":"ro","name":"rumunčina"},{"code":"ru","name":"ruština"},{"code":"sk","name":"slovenčina"},{"code":"sl","name":"slovinčina"},{"code":"sr","name":"srbčina"},{"code":"gd","name":"škótska gaelčina"},{"code":"es","name":"španielčina"},{"code":"sv","name":"švédčina"},{"code":"it","name":"taliančina"},{"code":"th","name":"thajčina"},{"code":"tr","name":"turečtina"},{"code":"uk","name":"ukrajinčina"},{"code":"vi","name":"vietnamčina"},{"code":"cy","name":"waleština"},{"code":"zu","name":"zuluština"},{"code":"he","name":"hebrejčina"},{"code":"zh-cn","name":"čínština (zjednodušená)"}],"da":[{"code":"am","name":"Amharisk"},{"code":"ar","name":"Arabisk"},{"code":"az","name":"Aserbajdsjansk"},{"code":"eu","name":"Baskisk"},{"code":"bg","name":"Bulgarsk"},{"code":"da","name":"Dansk"},{"code":"en","name":"Engelsk"},{"code":"et","name":"Estisk"},{"code":"fi","name":"Finsk"},{"code":"fr","name":"Fransk"},{"code":"gl","name":"Galicisk"},{"code":"el","name":"Græsk"},{"code":"he","name":"Hebraisk"},{"code":"id","name":"Indonesisk"},{"code":"ga","name":"Irsk"},{"code":"is","name":"Islandsk"},{"code":"it","name":"Italiensk"},{"code":"ja","name":"Japansk"},{"code":"ca","name":"Katalansk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"},{"code":"zh-tw","name":"Kinesisk (traditionelt)"},{"code":"ko","name":"Koreansk"},{"code":"hr","name":"Kroatisk"},{"code":"ckb","name":"Kurdisk (sorani)"},{"code":"lv","name":"Lettisk"},{"code":"lt","name":"Litauisk"},{"code":"mi","name":"Maori"},{"code":"nl","name":"Nederlandsk"},{"code":"nb","name":"Norsk"},{"code":"fa","name":"Persisk"},{"code":"pl","name":"Polsk"},{"code":"pt","name":"Portugisisk"},{"code":"ro","name":"Rumænsk"},{"code":"ru","name":"Russisk"},{"code":"sr","name":"Serbisk"},{"code":"gd","name":"Skotsk gælisk"},{"code":"sk","name":"Slovakisk"},{"code":"sl","name":"Slovensk"},{"code":"es","name":"Spansk"},{"code":"sv","name":"Svensk"},{"code":"th","name":"Thailandsk"},{"code":"cs","name":"Tjekkisk"},{"code":"tr","name":"Tyrkisk"},{"code":"de","name":"Tysk"},{"code":"uk","name":"Ukrainsk"},{"code":"hu","name":"Ungarsk"},{"code":"vi","name":"Vietnamesisk"},{"code":"cy","name":"Walisisk"},{"code":"zu","name":"Zulu"},{"code":"he","name":"Hebraisk"},{"code":"zh-cn","name":"Kinesisk (forenklet)"}],"sl":[{"code":"am","name":"amharščina"},{"code":"en","name":"angleščina"},{"code":"ar","name":"arabščina"},{"code":"az","name":"azerbajdžanščina"},{"code":"eu","name":"baskovščina"},{"code":"bg","name":"bolgarščina"},{"code":"cs","name":"češčina"},{"code":"da","name":"danščina"},{"code":"et","name":"estonščina"},{"code":"fi","name":"finščina"},{"code":"fr","name":"francoščina"},{"code":"gl","name":"galicijščina"},{"code":"el","name":"grščina"},{"code":"he","name":"hebrejščina"},{"code":"hr","name":"hrvaščina"},{"code":"id","name":"indonezijščina"},{"code":"ga","name":"irščina"},{"code":"is","name":"islandščina"},{"code":"it","name":"italijanščina"},{"code":"ja","name":"japonščina"},{"code":"ca","name":"katalonščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"},{"code":"zh-tw","name":"kitajščina (tradicionalna)"},{"code":"ko","name":"korejščina"},{"code":"ckb","name":"kurdščina (soranščina)"},{"code":"lv","name":"latvijščina"},{"code":"lt","name":"litovščina"},{"code":"hu","name":"madžarščina"},{"code":"mi","name":"maorščina"},{"code":"de","name":"nemščina"},{"code":"nl","name":"nizozemščina"},{"code":"nb","name":"norveščina"},{"code":"fa","name":"perzijščina"},{"code":"pl","name":"poljščina"},{"code":"pt","name":"portugalščina"},{"code":"ro","name":"romunščina"},{"code":"ru","name":"ruščina"},{"code":"sk","name":"slovaščina"},{"code":"sl","name":"slovenščina"},{"code":"sr","name":"srbščina"},{"code":"gd","name":"škotska gelščina"},{"code":"es","name":"španščina"},{"code":"sv","name":"švedščina"},{"code":"th","name":"tajščina"},{"code":"tr","name":"turščina"},{"code":"uk","name":"ukrajinščina"},{"code":"cy","name":"valižanščina"},{"code":"vi","name":"vietnamščina"},{"code":"zu","name":"zulujščina"},{"code":"he","name":"hebrejščina"},{"code":"zh-cn","name":"kitajščina (poenostavljena)"}],"sr":[{"code":"az","name":"азербејџански"},{"code":"am","name":"амхарски"},{"code":"ar","name":"арапски"},{"code":"eu","name":"баскијски"},{"code":"bg","name":"бугарски"},{"code":"cy","name":"велшки"},{"code":"vi","name":"вијетнамски"},{"code":"gl","name":"галски"},{"code":"el","name":"грчки"},{"code":"da","name":"дански"},{"code":"en","name":"енглески"},{"code":"et","name":"естонски"},{"code":"zu","name":"зулу"},{"code":"id","name":"индонежански"},{"code":"ga","name":"ирски"},{"code":"is","name":"исландски"},{"code":"it","name":"италијански"},{"code":"ja","name":"јапански"},{"code":"ca","name":"каталонски"},{"code":"zh-cn","name":"кинески (поједностављени)"},{"code":"zh-tw","name":"кинески (традиционални)"},{"code":"ko","name":"корејски"},{"code":"ckb","name":"курдски (сорани)"},{"code":"lv","name":"летонски"},{"code":"lt","name":"литвански"},{"code":"hu","name":"мађарски"},{"code":"mi","name":"маорски"},{"code":"de","name":"немачки"},{"code":"nb","name":"норвешки"},{"code":"fa","name":"персијски"},{"code":"pl","name":"пољски"},{"code":"pt","name":"португалски"},{"code":"ro","name":"румунски"},{"code":"ru","name":"руски"},{"code":"sk","name":"словачки"},{"code":"sl","name":"словеначки"},{"code":"sr","name":"српски"},{"code":"th","name":"тајски"},{"code":"tr","name":"турски"},{"code":"uk","name":"украјински"},{"code":"fi","name":"фински"},{"code":"fr","name":"француски"},{"code":"he","name":"хебрејски"},{"code":"nl","name":"холандски"},{"code":"hr","name":"хрватски"},{"code":"cs","name":"чешки"},{"code":"sv","name":"шведски"},{"code":"gd","name":"шкотски галски"},{"code":"es","name":"шпански"},{"code":"he","name":"хебрејски"},{"code":"zh-cn","name":"кинески (поједностављени)"}],"ru":[{"code":"az","name":"азербайджанский"},{"code":"am","name":"амхарский"},{"code":"en","name":"английский"},{"code":"ar","name":"арабский"},{"code":"eu","name":"баскский"},{"code":"bg","name":"болгарский"},{"code":"cy","name":"валлийский"},{"code":"hu","name":"венгерский"},{"code":"vi","name":"вьетнамский"},{"code":"gl","name":"галисийский"},{"code":"el","name":"греческий"},{"code":"da","name":"датский"},{"code":"zu","name":"зулу"},{"code":"he","name":"иврит"},{"code":"id","name":"индонезийский"},{"code":"ga","name":"ирландский"},{"code":"is","name":"исландский"},{"code":"es","name":"испанский"},{"code":"it","name":"итальянский"},{"code":"ca","name":"каталанский"},{"code":"zh-tw","name":"китайский (традиционный)"},{"code":"zh-cn","name":"китайский (упрощенный)"},{"code":"ko","name":"корейский"},{"code":"ckb","name":"курдский (сорани)"},{"code":"lv","name":"латышский"},{"code":"lt","name":"литовский"},{"code":"mi","name":"маори"},{"code":"de","name":"немецкий"},{"code":"nl","name":"нидерландский"},{"code":"nb","name":"норвежский"},{"code":"pl","name":"польский"},{"code":"pt","name":"португальский"},{"code":"ro","name":"румынский"},{"code":"ru","name":"русский"},{"code":"sr","name":"сербский"},{"code":"sk","name":"словацкий"},{"code":"sl","name":"словенский"},{"code":"th","name":"тайский"},{"code":"tr","name":"турецкий"},{"code":"uk","name":"украинский"},{"code":"fa","name":"фарси"},{"code":"fi","name":"финский"},{"code":"fr","name":"французский"},{"code":"hr","name":"хорватский"},{"code":"cs","name":"чешский"},{"code":"sv","name":"шведский"},{"code":"gd","name":"шотландский (гэльский)"},{"code":"et","name":"эстонский"},{"code":"ja","name":"японский"},{"code":"he","name":"иврит"},{"code":"zh-cn","name":"китайский (упрощенный)"}]},"nameMap":{"abkhaz":"ab","albanian":"sq","amharic":"am","arabic":"ar","armenian":"hy","azerbaijani":"az","basque":"eu","belarusian":"be","bulgarian":"bg","catalan":"ca","chinese (simplified)":"zh-cn","chinese (traditional)":"zh-tw","croatian":"hr","czech":"cs","danish":"da","dutch":"nl","english":"en","esperanto":"eo","estonian":"et","finnish":"fi","french":"fr","galician":"gl","german":"de","greek":"el","haitian creole":"ht","hebrew":"he","hindi":"hi","hungarian":"hu","icelandic":"is","indonesian":"id","irish gaelic":"ga","italian":"it","japanese":"ja","kannada":"kn","korean":"ko","kurdish (kurmanji)":"ku","kurdish (sorani)":"ckb","latin":"la","latvian":"lv","lithuanian":"lt","macedonian":"mk","malay":"ms","malayalam":"ml","maltese":"mt","maori":"mi","marathi":"mr","mongolian":"mn","myanmar (burmese)":"my","norwegian":"nb","persian":"fa","polish":"pl","portuguese":"pt","romanian":"ro","russian":"ru","scots gaelic":"gd","serbian":"sr","slovak":"sk","slovenian":"sl","spanish":"es","swedish":"sv","telugu":"te","thai":"th","turkish":"tr","ukrainian":"uk","uzbek":"uz","vietnamese":"vi","welsh":"cy","zulu":"zu","ሀንጋሪኛ":"hu","ህንድኛ":"hi","ሊትዌንኛ":"lt","ላቲንኛ":"la","ላትቪያኛ":"lv","ማላያላምኛ":"ml","ማላይኛ":"ms","ማልቲስኛ":"mt","ማራቲኛ":"mr","ማዮሪኛ":"mi","ሜቄዶኒያኛ":"mk","ሞንጎሊያኛ":"mn","ራሽያኛ":"ru","ሮማኒያንኛ":"ro","ሰርቢያኛ":"sr","ስሎቫክኛ":"sk","ስሎቬንያኛ":"sl","ስዊድንኛ":"sv","ስፓኒሽኛ":"es","በርማኛ":"my","ቡልጋሪያኛ":"bg","ባስክኛ":"eu","ቤላሩስኛ":"be","ቪትናምኛ":"vi","ቱርክኛ":"tr","ታይኛ":"th","ቴሉጉኛ":"te","ቻይንኛ (ቀላሉ)":"zh-cn","ቻይንኛ (ባሕላዊው)":"zh-tw","ቼክኛ":"cs","ኖርዌጅያንኛ":"nb","አልባንያኛ":"sq","አማርኛ":"am","አርመኒያኛ":"hy","አብካዝኛ":"ab","አዜርባይጃንኛ":"az","አይሪሽ":"ga","አይስላንድኛ":"is","ኡዝቤክኛ":"uz","ኤስቶኒያኛ":"et","ኤስፐራንቶኛ":"eo","እንዶኔዢያኛ":"id","እንግሊዝኛ":"en","ኩርድሽኛ (ሶራኒ)":"ckb","ኩርድሽኛ (ኩርማንጂ)":"ku","ካታላንኛ":"ca","ካናዳኛ":"kn","ክሮኤሽያኛ":"hr","ኮሪያኛ":"ko","ዌልሽ":"cy","ዐረብኛ":"ar","ዕብራይስጥ":"he","ዙሉኛ":"zu","የሃይቲ ክረኦሌኛ":"ht","የስኮት ጌልክኛ":"gd","ዩክሬንኛ":"uk","ደችኛ":"nl","ዴንሽኛ":"da","ጀርመንኛ":"de","ጃፓንኛ":"ja","ጋሊሺያኛ":"gl","ግሪክኛ":"el","ጣሊያንኛ":"it","ፈረንሳይኛ":"fr","ፊኒሽኛ":"fi","ፐርሺያኛ":"fa","ፖሊሽኛ":"pl","ፖርቱጋሊኛ":"pt","الآيسلندية":"is","الأبخازية":"ab","الأذرية":"az","الأرمنية":"hy","الإسبانية":"es","الإسبرانتو":"eo","الإستونية":"et","الألبانية":"sq","الألمانية":"de","الأمهرية":"am","الإنجليزية":"en","الإندونيسية":"id","الأوزبكية":"uz","الأوكرانية":"uk","الأيرلندية":"ga","الإيطالية":"it","الباسكية":"eu","البرتغالية":"pt","البلغارية":"bg","البورمية":"my","البولندية":"pl","البيلاروسية":"be","التايلاندية":"th","التركية":"tr","التشيكية":"cs","التيلوغوية":"te","الجاليكية":"gl","الدانمركية":"da","الروسية":"ru","الرومانية":"ro","الزولو":"zu","السلوفاكية":"sk","السلوفينية":"sl","السويدية":"sv","الصربية":"sr","الصينية (التقليدية)":"zh-tw","الصينية (المبسطة)":"zh-cn","العبرية":"he","العربية":"ar","الغيلية الأسكتلندية":"gd","الفارسية":"fa","الفرنسية":"fr","الفنلندية":"fi","الفيتنامية":"vi","القطلونية":"ca","الكردية (السورانية)":"ckb","الكردية (الكرمانجية)":"ku","الكرواتية":"hr","الكريولية الهايتية":"ht","الكنادية":"kn","الكورية":"ko","اللاتفية":"lv","اللاتينية":"la","الليتوانية":"lt","الماراثية":"mr","المالايالامية":"ml","المالطيّة":"mt","الماورية":"mi","المقدونية":"mk","الملايو":"ms","المنغولية":"mn","النرويجية":"nb","الهندية":"hi","الهنغارية":"hu","الهولندية":"nl","الويلزية":"cy","اليابانية":"ja","اليونانية":"el","αγγλικά":"en","αζερμπαϊτζανικά":"az","αλβανικά":"sq","αμπχαζικά":"ab","αμχαρικά":"am","αραβικά":"ar","αρμενικά":"hy","βασκικά":"eu","βιετναμεζικά":"vi","βιρμανικά":"my","βουλγαρικά":"bg","γαελικά σκοτίας":"gd","γαλικιακά":"gl","γαλλικά":"fr","γερμανικά":"de","δανικά":"da","εβραϊκά":"he","ελληνικά":"el","εσθονικά":"et","εσπεράντο":"eo","ζουλού":"zu","ιαπωνικά":"ja","ινδονησιακά":"id","ιρλανδικά":"ga","ισλανδικά":"is","ισπανικά":"es","ιταλικά":"it","κανάντα":"kn","καταλανικά":"ca","κινεζικά (απλοποιημένα)":"zh-cn","κινεζικά (παραδοσιακά)":"zh-tw","κορεατικά":"ko","κουρδικά (κουρμαντζί)":"ku","κουρδικά (σορανί)":"ckb","κρεόλ αϊτής":"ht","κροατικά":"hr","λατινικά":"la","λετονικά":"lv","λευκορωσικά":"be","λιθουανικά":"lt","μαλαγιάλαμ":"ml","μαλέι":"ms","μαλτεζικά":"mt","μαορί":"mi","μαραθικά":"mr","μογγολικά":"mn","νορβηγικά":"nb","ολλανδικά":"nl","ουαλικά":"cy","ουγγρικά":"hu","ουζμπεκικά":"uz","ουκρανικά":"uk","περσικά":"fa","πολωνικά":"pl","πορτογαλικά":"pt","ρουμανικά":"ro","ρωσικά":"ru","σερβικά":"sr","σλαβομακεδονικά":"mk","σλοβακικά":"sk","σλοβενικά":"sl","σουηδικά":"sv","ταϊλανδεζικά":"th","τελούγκου":"te","τουρκικά":"tr","τσεχικά":"cs","φινλανδικά":"fi","χίντι":"hi","albania":"sq","amharik":"am","arab":"ar","armenia":"hy","azerbaijan":"az","bask":"eu","belanda":"nl","belarussia":"be","bulgaria":"bg","ceko":"cs","china (aks. sederhana)":"zh-cn","china (aks. tradisional)":"zh-tw","denmark":"da","estonia":"et","farsi":"fa","finlandia":"fi","gaelig":"ga","gaelik skotlandia":"gd","galisia":"gl","hungaria":"hu","ibrani":"he","indonesia":"id","inggris":"en","islandia":"is","italia":"it","jepang":"ja","jerman":"de","katalan":"ca","korea":"ko","kreol haiti":"ht","kroasia":"hr","kurdi (kurmanji)":"ku","kurdi (sorani)":"ckb","latvia":"lv","lituania":"lt","makedonia":"mk","malta":"mt","melayu":"ms","mongolia":"mn","myanmar":"my","norwegia":"nb","polandia":"pl","portugis":"pt","prancis":"fr","rumania":"ro","rusia":"ru","serb":"sr","slovakia":"sk","slovenia":"sl","spanyol":"es","swedia":"sv","turkiye":"tr","ukraina":"uk","vietnam":"vi","yunani":"el","آبخازی":"ab","آذرباﻳﺠﺎﻧﻰ":"az","آلبانیایی":"sq","آلمانی":"de","ارمنی":"hy","ازبکی":"uz","اسپانیایی":"es","اسپرانتو":"eo","استونيايی":"et","اسلواکی":"sk","اسلونیایی":"sl","اکراينی":"uk","امهری":"am","اندونزيايی":"id","انگلیسی":"en","ایتالیایی":"it","ایرلندی":"ga","ايسلندی":"is","باسکی":"eu","برمه‌ای":"my","بلاروسی":"be","بلغاری":"bg","پرتغالی":"pt","تايلندی":"th","ترکی استانبولی":"tr","تلوگو":"te","چک":"cs","چینی (ساده‌شده)":"zh-cn","چینی (سنتی)":"zh-tw","دانمارکی":"da","روسی":"ru","رومانيايی":"ro","زولو":"zu","ژاپنی":"ja","سوئدی":"sv","صربی":"sr","عبری":"he","عربی":"ar","فارسی":"fa","فرانسوی":"fr","فنلاندی":"fi","کاتالان":"ca","کرئول هائیتی":"ht","کردی (سورانی)":"ckb","کردی (کرمانجی)":"ku","کرواتی":"hr","کره‌ای":"ko","کنادا":"kn","گالیسی":"gl","گاليک اسکاتلندی":"gd","لاتين":"la","لتونيايی":"lv","لهستانی":"pl","ليتوانيايی":"lt","مائوری":"mi","مالایالمی":"ml","مالايی":"ms","مالتی":"mt","مجاری":"hu","مراتی":"mr","مغولی":"mn","مقدونيه‌ای":"mk","نروژی":"nb","ولزی":"cy","ويتنامی":"vi","هلندی":"nl","هندی":"hi","يونانی":"el","abecásio":"ab","albanês":"sq","alemão":"de","amárico":"am","árabe":"ar","armênio":"hy","azerbaijano":"az","basco":"eu","bielorrusso":"be","birmanês":"my","búlgaro":"bg","canarês":"kn","catalão":"ca","chinês (simplificado)":"zh-cn","chinês (tradicional)":"zh-tw","coreano":"ko","crioulo haitiano":"ht","croata":"hr","curdo (kurmanji)":"ku","curdo (sorâni)":"ckb","dinamarquês":"da","eslovaco":"sk","esloveno":"sl","espanhol":"es","estoniano":"et","finlandês":"fi","francês":"fr","gaélico escocês":"gd","galego":"gl","galês":"cy","grego":"el","hebraico":"he","holandês":"nl","húngaro":"hu","indonésio":"id","inglês":"en","irlandês":"ga","islandês":"is","italiano":"it","japonês":"ja","latim":"la","letão":"lv","lituano":"lt","macedônio":"mk","malaiala":"ml","malaio":"ms","maltês":"mt","marata":"mr","mongol":"mn","norueguês":"nb","persa":"fa","polonês":"pl","português":"pt","romeno":"ro","russo":"ru","sérvio":"sr","sueco":"sv","tailandês":"th","tcheco":"cs","telugo":"te","turco":"tr","ucraniano":"uk","uzbeque":"uz","vietnamita":"vi","abchazisch":"ab","albanees":"sq","amharisch":"am","arabisch":"ar","armeens":"hy","azerbeidzjaans":"az","baskisch":"eu","belarussisch":"be","birmaans":"my","bulgaars":"bg","catalaans":"ca","chinees (traditioneel)":"zh-tw","chinees (vereenvoudigd)":"zh-cn","deens":"da","duits":"de","engels":"en","ests":"et","fins":"fi","frans":"fr","galicisch":"gl","grieks":"el","haïtiaans creools":"ht","hebreeuws":"he","hongaars":"hu","iers":"ga","ijslands":"is","indonesisch":"id","italiaans":"it","japans":"ja","koerdisch (kurmanji)":"ku","koerdisch (sorani)":"ckb","koreaans":"ko","kroatisch":"hr","latijn":"la","lets":"lv","litouws":"lt","macedonisch":"mk","maleis":"ms","maltees":"mt","mongools":"mn","nederlands":"nl","noors":"nb","oekraïens":"uk","oezbeeks":"uz","perzisch":"fa","pools":"pl","portugees":"pt","roemeens":"ro","russisch":"ru","schots-gaelisch":"gd","servisch":"sr","slovaaks":"sk","sloveens":"sl","spaans":"es","tsjechisch":"cs","turks":"tr","vietnamees":"vi","zoeloe":"zu","zweeds":"sv","abjasio":"ab","albanés":"sq","alemán":"de","amhárico":"am","armenio":"hy","azerí":"az","bielorruso":"be","birmano":"my","canarés":"kn","catalán":"ca","checo":"cs","chino (simplificado)":"zh-cn","chino (tradicional)":"zh-tw","criollo haitiano":"ht","danés":"da","español":"es","estonio":"et","euskera":"eu","finlandés":"fi","francés":"fr","gaélico escocés":"gd","galés":"cy","gallego":"gl","griego":"el","hebreo":"he","indonesio":"id","inglés":"en","irlandés":"ga","islandés":"is","japonés":"ja","kurdo (kurmanyi)":"ku","kurdo (sorani)":"ckb","latín":"la","letón":"lv","macedonio":"mk","malayo":"ms","maltés":"mt","maorí":"mi","maratí":"mr","neerlandés":"nl","noruego":"nb","polaco":"pl","portugués":"pt","rumano":"ro","ruso":"ru","serbio":"sr","tailandés":"th","uzbeco":"uz","zulú":"zu","abchasais":"ab","airmeinis":"hy","albàinis":"sq","amtharais":"am","arabais":"ar","asarbaideànais":"az","basgais":"eu","bealaruisis":"be","beurla":"en","bhiet-namais":"vi","bulgarais":"bg","cànan nan tàidh":"th","catalanais":"ca","coirèanais":"ko","crìtheol haidhti":"ht","cròthaisis":"hr","cuimris":"cy","cùrdais (kurmanji)":"ku","cùrdais (sorani)":"ckb","danmhairgis":"da","duitsis":"nl","eabhra":"he","eadailtis":"it","eastoinis":"et","fionnlannais":"fi","fraingis":"fr","gaeilge":"ga","gàidhlig":"gd","gailìsis":"gl","gearmailtis":"de","grèigis":"el","hindis":"hi","innd-innsis":"id","innis-tìlis":"is","laideann":"la","laitbheis":"lv","liotuainis":"lt","malaidhis":"ms","maltais":"mt","māori":"mi","masadonais":"mk","miànmar (burmais)":"my","mongolais":"mn","nirribhis":"nb","peirsis":"fa","pòlainnis":"pl","portagailis":"pt","romàinis":"ro","ruisis":"ru","seacais":"cs","seapanais":"ja","sèirbis":"sr","sìonais (seann-nòsach)":"zh-tw","sìonais (sìmplichte)":"zh-cn","slòbhacais":"sk","slòbhainis":"sl","spàinntis":"es","suainis":"sv","turcais":"tr","ucràinis":"uk","ungairis":"hu","usbagais":"uz","abchaski":"ab","albański":"sq","amharski":"am","angielski":"en","arabski":"ar","azerski":"az","baskijski":"eu","białoruski":"be","birmański":"my","bułgarski":"bg","chiński (tradycyjny)":"zh-tw","chiński (uproszczony)":"zh-cn","chorwacki":"hr","czeski":"cs","duński":"da","estoński":"et","fiński":"fi","francuski":"fr","galicyjski":"gl","grecki":"el","hebrajski":"he","hiszpański":"es","indonezyjski":"id","irlandzki":"ga","islandzki":"is","japoński":"ja","kataloński":"ca","koreański":"ko","kreolski (haiti)":"ht","kurdyjski (kurmandżi)":"ku","kurdyjski (sorani)":"ckb","litewski":"lt","łaciński":"la","łotewski":"lv","macedoński":"mk","malajalam":"ml","malajski":"ms","maltański":"mt","maoryski":"mi","mongolski":"mn","niderlandzki":"nl","niemiecki":"de","norweski":"nb","ormiański":"hy","perski":"fa","polski":"pl","portugalski":"pt","rosyjski":"ru","rumuński":"ro","serbski":"sr","słowacki":"sk","słoweński":"sl","szkocki gaelicki":"gd","szwedzki":"sv","tajski":"th","turecki":"tr","ukraiński":"uk","uzbecki":"uz","walijski":"cy","węgierski":"hu","wietnamski":"vi","włoski":"it","abkasíska":"ab","albanska":"sq","amharíska":"am","arabíska":"ar","armenska":"hy","aserska":"az","baskneska":"eu","búlgarska":"bg","búrmíska":"my","danska":"da","eistneska":"et","enska":"en","esperantó":"eo","finnska":"fi","franska":"fr","galisíska":"gl","gríska":"el","haítískt kreólamál":"ht","hebreska":"he","hindí":"hi","hollenska":"nl","hvítrússneska":"be","indónesíska":"id","írska":"ga","íslenska":"is","ítalska":"it","japanska":"ja","katalónska":"ca","kínverska (einfölduð)":"zh-cn","kínverska (hefðbundin)":"zh-tw","kóreska":"ko","króatíska":"hr","kúrdíska (kurmanji)":"ku","kúrdíska (soraní)":"ckb","latína":"la","lettneska":"lv","litháíska":"lt","makedónska":"mk","malajíska":"ms","maltneska":"mt","maoríska":"mi","mongólska":"mn","norska":"nb","persneska":"fa","portúgalska":"pt","pólska":"pl","rúmenska":"ro","rússneska":"ru","serbneska":"sr","skosk-gelíska":"gd","slóvakíska":"sk","slóvenska":"sl","spænska":"es","súlú":"zu","sænska":"sv","taílenska":"th","tékkneska":"cs","tyrkneska":"tr","ungverska":"hu","úkraínska":"uk","úsbekíska":"uz","velska":"cy","víetnamska":"vi","þýska":"de","abhaski":"ab","albanski":"sq","arapski":"ar","armenski":"hy","azerbajdžanski":"az","bjeloruski":"be","bugarski":"bg","burmanski":"my","češki":"cs","danski":"da","engleski":"en","estonski":"et","finski":"fi","galješki":"gl","grčki":"el","haićanski kreolski":"ht","hebrejski":"he","hindu":"hi","hrvatski":"hr","indonezijski":"id","irski":"ga","islandski":"is","japanski":"ja","katalonski":"ca","kineski (pojednostavljeni)":"zh-cn","kineski (tradicionalni)":"zh-tw","korejski":"ko","kurdski (kurmanji)":"ku","kurdski (soranski)":"ckb","latinski":"la","latvijski/letonski":"lv","litvanski":"lt","mađarski":"hu","makedonski":"mk","malajalamski":"ml","malezijski":"ms","malteški":"mt","maorski":"mi","marati":"mr","nizozemski":"nl","norveški":"nb","njemački":"de","perzijski":"fa","poljski":"pl","rumunjski":"ro","ruski":"ru","slovački":"sk","slovenski":"sl","srpski":"sr","škotski gaelski":"gd","španjolski":"es","švedski":"sv","tajlandski":"th","talijanski":"it","turski":"tr","ukrajinski":"uk","uzbekistanski":"uz","velški":"cy","vijetnamski":"vi","abkhaze":"ab","albanais":"sq","allemand":"de","amharique":"am","anglais":"en","arabe":"ar","arménien":"hy","azéri":"az","biélorusse":"be","birman":"my","bulgare":"bg","chinois (simplifié)":"zh-cn","chinois (traditionnel)":"zh-tw","coréen":"ko","créole haïtien":"ht","croate":"hr","danois":"da","espagnol":"es","espéranto":"eo","estonien":"et","finnois":"fi","français":"fr","gaélique (écosse)":"gd","galicien":"gl","gallois":"cy","grec":"el","hébreu":"he","hongrois":"hu","indonésien":"id","irlandais":"ga","islandais":"is","italien":"it","japonais":"ja","kurde (kurmandji)":"ku","kurde (sorani)":"ckb","letton":"lv","lituanien":"lt","macédonien":"mk","malaisien":"ms","néerlandais":"nl","norvégien":"nb","ouzbek":"uz","persan":"fa","polonais":"pl","portugais":"pt","roumain":"ro","russe":"ru","serbe":"sr","slovaque":"sk","slovène":"sl","suédois":"sv","tchèque":"cs","thaï":"th","turc":"tr","ukrainien":"uk","vietnamien":"vi","zoulou":"zu","abkhasisk":"ab","albansk":"sq","amharisk":"am","arabisk":"ar","armensk":"hy","aserbajdsjansk":"az","baskisk":"eu","bulgarsk":"bg","burmesisk":"my","dansk":"da","engelsk":"en","estisk":"et","finsk":"fi","fransk":"fr","galisisk":"gl","gresk":"el","hebraisk":"he","hviterussisk":"be","indonesisk":"id","irsk":"ga","islandsk":"is","italiensk":"it","japansk":"ja","katalansk":"ca","kinesisk (forenklet)":"zh-cn","kinesisk (tradisjonell)":"zh-tw","koreansk":"ko","kreol (haiti)":"ht","kroatisk":"hr","kurdisk (kurmanji)":"ku","kurdisk (sorani)":"ckb","latvisk":"lv","litauisk":"lt","makedonsk":"mk","malayisk":"ms","maltesisk":"mt","mongolsk":"mn","nederlandsk":"nl","norsk":"nb","polsk":"pl","portugisisk":"pt","rumensk":"ro","russisk":"ru","serbisk":"sr","skotsk gælisk":"gd","slovakisk":"sk","slovensk":"sl","spansk":"es","svensk":"sv","tsjekkisk":"cs","tyrkisk":"tr","tysk":"de","ukrainsk":"uk","ungarsk":"hu","usbekisk":"uz","vietnamesisk":"vi","walisisk":"cy","abkhazo":"ab","acerbaixano":"az","chinés (simplificado)":"zh-cn","chinés (tradicional)":"zh-tw","dinamarqués":"da","éuscaro":"eu","finés":"fi","kurdo (kurmanji)":"ku","malabar":"ml","noruegués":"nb","romanés":"ro","telugú":"te","ucraíno":"uk","uzbeko":"uz","xaponés":"ja","абхазки":"ab","азербайджански":"az","албански":"sq","амхарски":"am","английски":"en","арабски":"ar","арменски":"hy","баски":"eu","беларуски":"be","бирмански":"my","български":"bg","виетнамски":"vi","галисийски":"gl","гръцки":"el","датски":"da","есперанто":"eo","естонски":"et","зулу":"zu","иврит":"he","индонезийски":"id","ирландски":"ga","исландски":"is","испански":"es","италиански":"it","каннада":"kn","каталонски":"ca","китайски (опростен)":"zh-cn","китайски (традиционен)":"zh-tw","корейски":"ko","кюрдски (курманджи)":"ku","кюрдски (сорани)":"ckb","латвийски":"lv","латински":"la","литовски":"lt","македонски":"mk","малайски":"ms","малаялам":"ml","малтийски":"mt","маорски":"mi","маратхи":"mr","монголски":"mn","немски":"de","нидерландски":"nl","норвежки":"nb","персийски":"fa","полски":"pl","португалски":"pt","румънски":"ro","руски":"ru","словашки":"sk","словенски":"sl","сръбски":"sr","тайландски":"th","телугу":"te","турски":"tr","уелски":"cy","узбекски":"uz","украински":"uk","унгарски":"hu","финландски":"fi","френски":"fr","хаитянски креолски":"ht","хинди":"hi","хърватски":"hr","чешки":"cs","шведски":"sv","шотландски келтски":"gd","японски":"ja","азербејџански":"az","англиски":"en","апхаски":"ab","арапски":"ar","баскиски":"eu","белоруски":"be","бугарски":"bg","велшки":"cy","галициски":"gl","германски":"de","грчки":"el","дански":"da","ерменски":"hy","индонезиски":"id","ирски":"ga","италијански":"it","јапонски":"ja","канада":"kn","кинески (поедноставен)":"zh-cn","кинески (традиционален)":"zh-tw","корејски":"ko","курдски (курманџи)":"ku","курдски (сорани)":"ckb","латвиски":"lv","литвански":"lt","малајалски":"ml","малајски":"ms","малтешки":"mt","мјанмарски (бурмански)":"my","норвешки":"nb","персиски":"fa","романски":"ro","словачки":"sk","словенечки":"sl","српски":"sr","тајландски":"th","узбечки":"uz","фински":"fi","француски":"fr","хаитски креолски":"ht","хебрејски":"he","холандски":"nl","хрватски":"hr","шкотски галски":"gd","шпански":"es","աբխազերեն":"ab","ադրբեջաներեն":"az","ալբաներեն":"sq","ամհարերեն":"am","անգլերեն":"en","արաբերեն":"ar","բասկերեն":"eu","բելառուսերեն":"be","բիրմաներեն":"my","բուլղարերեն":"bg","գալիսերեն":"gl","գելական շոտլանդերեն":"gd","գերմաներեն":"de","դանիերեն":"da","եբրայերեն":"he","զուլուսերեն":"zu","էսպերանտո":"eo","էստոներեն":"et","թայերեն":"th","թուրքերեն":"tr","ինդոնեզերեն":"id","իռլանդերեն":"ga","իսլանդերեն":"is","իսպաներեն":"es","իտալերեն":"it","լատիներեն":"la","լատվիերեն":"lv","լեհերեն":"pl","լիտվերեն":"lt","խորվաթերեն":"hr","կաննադա":"kn","կատալաներեն":"ca","կորեերեն":"ko","կրեոլերեն (հաիթի)":"ht","հայերեն":"hy","հինդի":"hi","հոլանդերեն":"nl","հունարեն":"el","հունգարերեն":"hu","ճապոներեն":"ja","մալայալամ":"ml","մալայերեն":"ms","մալթայերեն":"mt","մակեդոներեն":"mk","մաորի":"mi","մարաթի":"mr","մոնղոլերեն":"mn","նորվեգերեն":"nb","շվեդերեն":"sv","ուզբեկերեն":"uz","ուկրաիներեն":"uk","չեխերեն":"cs","չինարեն (ավանդական)":"zh-tw","չինարեն (պարզեցված)":"zh-cn","պարսկերեն":"fa","պորտուգալերեն":"pt","ռումիներեն":"ro","ռուսերեն":"ru","սերբերեն":"sr","սլովակերեն":"sk","սլովեներեն":"sl","վալլերեն":"cy","վիետնամերեն":"vi","տելուգու":"te","քրդերեն (սորանի)":"ckb","քրդերեն (քուրմանջի)":"ku","ֆիններեն":"fi","ֆրանսերեն":"fr","abhāzu":"ab","albāņu":"sq","amharu":"am","angļu":"en","arābu":"ar","armēņu":"hy","azerbaidžāņu":"az","baltkrievu":"be","basku":"eu","birmiešu":"my","bulgāru":"bg","čehu":"cs","dāņu":"da","franču":"fr","galisiešu":"gl","grieķu":"el","haitiešu":"ht","holandiešu":"nl","horvātu":"hr","igauņu":"et","indonēziešu":"id","itāļu":"it","ivrits":"he","īru":"ga","īslandiešu":"is","japāņu":"ja","katalāņu":"ca","korejiešu":"ko","krievu":"ru","kurdu (kurmandži)":"ku","kurdu (sorani)":"ckb","ķīniešu (tradicionālā)":"zh-tw","ķīniešu (vienkāršotā)":"zh-cn","latīņu":"la","latviešu":"lv","lietuviešu":"lt","maķedoniešu":"mk","malajalamiešu":"ml","malajiešu":"ms","maltiešu":"mt","maratu":"mr","mongoļu":"mn","norvēģu":"nb","persiešu":"fa","poļu":"pl","portugāļu":"pt","rumāņu":"ro","serbu":"sr","skotu gēlu":"gd","slovāku":"sk","slovēņu":"sl","somu":"fi","spāņu":"es","taju":"th","turku":"tr","ukraiņu":"uk","ungāru":"hu","uzbeku":"uz","vācu":"de","velsiešu":"cy","vjetnamiešu":"vi","zviedru":"sv","albanès":"sq","alemany":"de","amhàric":"am","anglès":"en","àrab":"ar","armeni":"hy","àzeri":"az","basc":"eu","bielorús":"be","birmà":"my","búlgar":"bg","castellà":"es","català":"ca","coreà":"ko","crioll d\'haití":"ht","croat":"hr","danès":"da","eslovac":"sk","eslovè":"sl","estonià":"et","finès":"fi","francès":"fr","gaèlic escocès":"gd","gallec":"gl","gal·lès":"cy","hebreu":"he","hongarès":"hu","indonesi":"id","irlandès":"ga","islandès":"is","italià":"it","japonès":"ja","kurd (kurmanji)":"ku","kurd (sorani)":"ckb","letó":"lv","lituà":"lt","llatí":"la","macedònic":"mk","malai":"ms","malaiàlam":"ml","maltès":"mt","neerlandès":"nl","noruec":"nb","polonès":"pl","portuguès":"pt","romanès":"ro","rus":"ru","serbi":"sr","suec":"sv","tai":"th","txec":"cs","ucraïnès":"uk","xinès (simplificat)":"zh-cn","xinès (tradicional)":"zh-tw","isi-abkhaz":"ab","isi-albania":"sq","isi-amharic":"am","isi-arabic":"ar","isi-armenian":"hy","isi-azerbaijani":"az","isi-dutch":"nl","isi-esperanto":"eo","isi-estonia":"et","isi-icelandic":"is","isi-indonesia":"id","isi-irish":"ga","isi-ukraine":"uk","isi-uzbek":"uz","isibasque":"eu","isibelarus":"be","isibulgaria":"bg","isicatalan":"ca","isichina (esilulana)":"zh-cn","isicreole sasehaiti":"ht","isicroatia":"hr","isiczech":"cs","isidanish":"da","isifinnish":"fi","isifrentshi":"fr","isigalicia":"gl","isigrikhi":"el","isihebheru":"he","isihindi":"hi","isihungary":"hu","isijalimani":"de","isijaphani":"ja","isikannada":"kn","isikorean":"ko","isikurdish (sasekurmanji)":"ku","isikurdish (sasesorani)":"ckb","isilathini":"la","isilatvian":"lv","isilithuania":"lt","isimacedonian":"mk","isimalay":"ms","isimalayalam":"ml","isimaltese":"mt","isimaori":"mi","isimarathi":"mr","isimongolia":"mn","isimyanmar (saseburmese)":"my","isingisi":"en","isinorwegia":"nb","isintaliyani":"it","isipersian":"fa","isipolish":"pl","isiputukezi":"pt","isirashiya":"ru","isiromania":"ro","isiscots gaelic":"gd","isiserbian":"sr","isislovak":"sk","isislovenia":"sl","isiswidi":"sv","isitelugu":"te","isithai":"th","isiturkish":"tr","isivietnam":"vi","isiwelsh":"cy","isizulu":"zu","ispenishi":"es","अंग्रेज़ी":"en","अज़रबैजानी":"az","अबखाज़":"ab","अरबी":"ar","अल्बेनियन":"sq","आइसलैंडिक":"is","आयरिश":"ga","आर्मीनियन":"hy","इंडोनेशियन":"id","इटैलियन":"it","उज़्बेक":"uz","एस्टोनियन":"et","एस्पेरांटो":"eo","ऐम्हेरिक":"am","कन्नड़":"kn","कुर्दिश (कुर्मांजी)":"ku","कुर्दिश (सोरानी)":"ckb","कैटेलन":"ca","कोरियन":"ko","क्रोएशियन":"hr","गैलिशियन":"gl","ग्रीक":"el","चाइनीज़ (ट्रेडिश्नल)":"zh-tw","चाइनीज़ (सिंप्लिफ़ाइड)":"zh-cn","चेक":"cs","जर्मन":"de","ज़ुलु":"zu","जैपनीज़":"ja","डच":"nl","डैनिश":"da","तुर्क":"tr","तेलुगु":"te","थाई":"th","नॉर्वेजियन":"nb","पुर्तगाली":"pt","पोलिश":"pl","फारसी":"fa","फ़िनिश":"fi","फ़्रेंच":"fr","बर्मी":"my","बल्गैरियन":"bg","बेलारशियन":"be","बैस्क":"eu","मंगोलियन":"mn","मराठी":"mr","मलय":"ms","मलयालम":"ml","माऔरी":"mi","माल्टी":"mt","मैसेडोनियन":"mk","यूक्रेनियन":"uk","रूसी":"ru","रोमेनियन":"ro","लातवियन":"lv","लिथुएनियन":"lt","लैटिन":"la","वियतनामी":"vi","वेल्श":"cy","सर्बियाई":"sr","स्कॉट्स गेलिक":"gd","स्पैनिश":"es","स्लोवाक":"sk","स्लोवेनियन":"sl","स्वीडिश":"sv","हंगेरियन":"hu","हिन्दी":"hi","हीब्रू":"he","हैतियन क्रिओल":"ht","ả rập":"ar","anh":"en","ba lan":"pl","ba tư":"fa","belarus":"be","bồ đào nha":"pt","creole (haiti)":"ht","croatia":"hr","do thái":"he","đan mạch":"da","đức":"de","gael scotland":"gd","galicia":"gl","hà lan":"nl","hàn":"ko","hungary":"hu","hy lạp":"el","iceland":"is","ireland":"ga","latinh":"la","litva":"lt","mã lai":"ms","macedonia":"mk","mông cổ":"mn","na uy":"nb","nga":"ru","nhật":"ja","pháp":"fr","phần lan":"fi","quốc tế ngữ":"eo","rumani":"ro","séc":"cs","serbia":"sr","tây ban nha":"es","thái":"th","thổ nhĩ kỳ":"tr","thụy điển":"sv","trung (giản thể)":"zh-cn","trung (phồn thể)":"zh-tw","việt":"vi","xứ wales":"cy","ý":"it","abház":"ab","albán":"sq","amhara":"am","angol":"en","azeri":"az","baszk":"eu","belorusz":"be","bolgár":"bg","burmai":"my","cseh":"cs","dán":"da","eszperantó":"eo","észt":"et","finn":"fi","francia":"fr","galíciai":"gl","görög":"el","haiti kreol":"ht","héber":"he","holland":"nl","horvát":"hr","indonéz":"id","ír":"ga","izlandi":"is","japán":"ja","katalán":"ca","kínai (egyszerűsített)":"zh-cn","kínai (hagyományos)":"zh-tw","koreai":"ko","kurd (kurmandzsi)":"ku","kurd (szoráni)":"ckb","lengyel":"pl","lett":"lv","litván":"lt","macedón":"mk","magyar":"hu","maláj":"ms","malajálam":"ml","máltai":"mt","maráthi":"mr","német":"de","norvég":"nb","olasz":"it","orosz":"ru","örmény":"hy","perzsa":"fa","portugál":"pt","román":"ro","skót gael":"gd","svéd":"sv","szerb":"sr","szlovák":"sk","szlovén":"sl","török":"tr","ukrán":"uk","üzbég":"uz","vietnámi":"vi","walesi":"cy","abhaasi":"ab","albaania":"sq","amhaari":"am","araabia":"ar","armeenia":"hy","aserbaidžaani":"az","baski":"eu","birma":"my","bulgaaria":"bg","eesti":"et","galeegi":"gl","haitikreooli":"ht","heebrea":"he","hiina (lihtsustatud)":"zh-cn","hiina (traditsiooniline)":"zh-tw","hispaania":"es","hollandi":"nl","horvaadi":"hr","iiri":"ga","indoneesia":"id","inglise":"en","islandi":"is","itaalia":"it","jaapani":"ja","katalaani":"ca","kreeka":"el","kurdi (kurmandži)":"ku","ladina":"la","leedu":"lt","läti":"lv","makedoonia":"mk","malajalaami":"ml","maoori":"mi","mongoli":"mn","norra":"nb","poola":"pl","portugali":"pt","prantsuse":"fr","pärsia":"fa","rootsi":"sv","rumeenia":"ro","saksa":"de","slovaki":"sk","sloveeni":"sl","soome":"fi","suulu":"zu","šoti":"gd","taani":"da","tšehhi":"cs","türgi":"tr","uelsi":"cy","ungari":"hu","usbeki":"uz","valgevene":"be","vene":"ru","vietnami":"vi","abchazų":"ab","airių":"ga","albanų":"sq","amharų":"am","anglų":"en","arabų":"ar","armėnų":"hy","azerbaidžaniečių":"az","baltarusių":"be","baskų":"eu","birmiečių":"my","bulgarų":"bg","čekų":"cs","danų":"da","estų":"et","galisų":"gl","graikų":"el","haičio kreolų":"ht","hebrajų":"he","indoneziečių":"id","islandų":"is","ispanų":"es","italų":"it","japonų":"ja","kanadų":"kn","kataloniečių":"ca","kinų (supaprastinta)":"zh-cn","kinų (tradicinė)":"zh-tw","korėjiečių":"ko","kroatų":"hr","kurdų (kurmandžių)":"ku","kurdų (soranių)":"ckb","latvių":"lv","lenkų":"pl","lietuvių":"lt","lotynų":"la","makedoniečių":"mk","malajalių":"ml","malajiečių":"ms","maltiečių":"mt","maorių":"mi","maratų":"mr","mongolų":"mn","norvegų":"nb","olandų":"nl","persų":"fa","portugalų":"pt","prancūzų":"fr","rumunų":"ro","rusų":"ru","serbų":"sr","slovakų":"sk","slovėnų":"sl","suomių":"fi","škotų":"gd","švedų":"sv","tajų":"th","telugų":"te","turkų":"tr","ukrainiečių":"uk","uzbekų":"uz","valų":"cy","vengrų":"hu","vietnamiečių":"vi","vokiečių":"de","zulusų":"zu","абхазька":"ab","азербайджанська":"az","албанська":"sq","амхарська":"am","англійська":"en","арабська":"ar","баскська":"eu","білоруська":"be","бірманська":"my","болгарська":"bg","в’єтнамська":"vi","валлійська":"cy","вірменська":"hy","гаїтянська креольська":"ht","гінді":"hi","грецька":"el","ґалісійська":"gl","данська":"da","естонська":"et","іврит":"he","індонезійська":"id","ірландська":"ga","ісландська":"is","іспанська":"es","італійська":"it","каталанська":"ca","китайська (спрощена)":"zh-cn","китайська (традиційна)":"zh-tw","корейська":"ko","курдська (курманджі)":"ku","курдська (сорані)":"ckb","латинська":"la","латиська":"lv","литовська":"lt","македонська":"mk","малайська":"ms","мальтійська":"mt","маорі":"mi","маратхі":"mr","монгольська":"mn","нідерландська":"nl","німецька":"de","норвезька":"nb","перська":"fa","польська":"pl","португальська":"pt","російська":"ru","румунська":"ro","сербська":"sr","словацька":"sk","словенська":"sl","тайська":"th","телуґу":"te","турецька":"tr","угорська":"hu","узбецька":"uz","українська":"uk","фінська":"fi","французька":"fr","хорватська":"hr","чеська":"cs","шведська":"sv","шотландська (ґельська)":"gd","японська":"ja","अझरबैजानी":"az","अब्काझ":"ab","अम्हारिक":"am","अर्मेनियन":"hy","अल्बानियन":"sq","आइसलँडिक":"is","इंग्रजी":"en","इटालियन":"it","उझ्बेक":"uz","एस्परँटो":"eo","कन्नड":"kn","कॅटलान":"ca","गॅलिशियन":"gl","चीनी (पारंपारिक)":"zh-tw","चीनी (सरलीकृत)":"zh-cn","जपानी":"ja","झुलु":"zu","झेक":"cs","डॅनिश":"da","तुर्की":"tr","पोर्तुगीज":"pt","फिन्निश":"fi","फ्रेंच":"fr","बल्गेरियन":"bg","बास्क":"eu","बेलारुशियन":"be","मल्याळम":"ml","माओरी":"mi","माल्टीज":"mt","मॅसेडोनियन":"mk","म्यानमार (बर्मीज)":"my","युक्रेनियन":"uk","रशियन":"ru","रोमानियन":"ro","लाट्वियन":"lv","लिथुआनियन":"lt","लॅटिन":"la","व्हिएतनामी":"vi","सर्बियन":"sr","स्पॅनिश":"es","स्लोव्हाक":"sk","स्लोव्हेनियन":"sl","हिब्रू":"he","हैतीयन क्रेओल":"ht","abxaz":"ab","alban":"sq","amxar":"am","arman":"hy","bolgar":"bg","dan":"da","eston":"et","fin":"fi","fors":"fa","fransuz":"fr","gaiti-kreol":"ht","galisiy":"gl","golland":"nl","grek":"el","hind":"hi","indonez":"id","ingliz":"en","irland":"ga","island":"is","ispan":"es","italyan":"it","ivrit":"he","koreys":"ko","kurd (kurmonji)":"ku","latish":"lv","lotin":"la","makedon":"mk","maltiy":"mt","maratxi":"mr","nemis":"de","norveg":"nb","ozarbayjon":"az","polyak":"pl","portugal":"pt","rumin":"ro","sloven":"sl","tay":"th","turk":"tr","ukrain":"uk","valliy":"cy","venger":"hu","vyetnam":"vi","xitoy (odatiy)":"zh-tw","xitoy (soddalashgan)":"zh-cn","xorvat":"hr","yapon":"ja","o‘zbek":"uz","shotland-gel":"gd","shved":"sv","chex":"cs","alman":"de","amarik":"am","azərbaycan":"az","bolqar":"bg","çex":"cs","çin (ənənəvi)":"zh-tw","çin (sadələşdirilmiş)":"zh-cn","danimarka":"da","erməni":"hy","ərəb":"ar","fars":"fa","fransız":"fr","ingilis":"en","i̇ndoneziya":"id","i̇rland":"ga","i̇sland":"is","i̇sveç":"sv","i̇talyan":"it","i̇vrit":"he","koreya":"ko","kürd(kurmanci)":"ku","kürd(sorani)":"ckb","qalisian":"gl","latın":"la","latış":"lv","macar":"hu","makedoniya":"mk","monqol":"mn","myanma (birma)":"my","norveç":"nb","özbək":"uz","portuqal":"pt","rumın":"ro","şotland (kelt)":"gd","teluqu":"te","türk":"tr","uels":"cy","ukrayna":"uk","yunan":"el","土耳其文":"tr","中文 (繁體)":"zh-tw","中文 (簡體)":"zh-cn","丹麥文":"da","巴斯克文":"eu","日文":"ja","毛利文":"mi","世界語":"eo","加里西亞文":"gl","加泰隆尼亞文":"ca","卡納達文":"kn","白俄羅斯文":"be","立陶宛文":"lt","冰島文":"is","匈牙利文":"hu","印尼文":"id","印地文":"hi","西班牙文":"es","克羅埃西亞文":"hr","希伯來文":"he","希臘文":"el","亞美尼亞文":"hy","亞塞拜然文":"az","拉丁文":"la","拉脫維亞文":"lv","法文":"fr","波斯文":"fa","波蘭文":"pl","芬蘭文":"fi","阿布哈茲文":"ab","阿姆哈拉文":"am","阿拉伯文":"ar","阿爾巴尼亞文":"sq","俄文":"ru","保加利亞文":"bg","南非祖魯文":"zu","威爾斯文":"cy","英文":"en","庫德文 (庫爾曼吉文)":"ku","庫德文 (索拉尼文)":"ckb","挪威文":"nb","泰文":"th","泰盧固文":"te","海地克里奧文":"ht","烏克蘭文":"uk","烏茲別克文":"uz","馬耳他文":"mt","馬來文":"ms","馬其頓文":"mk","馬拉地文":"mr","馬拉雅拉姆文":"ml","捷克文":"cs","荷蘭文":"nl","斯洛伐克文":"sk","斯洛維尼亞文":"sl","越南文":"vi","塞爾維亞文":"sr","愛沙尼亞文":"et","愛爾蘭文":"ga","瑞典文":"sv","義大利文":"it","葡萄牙文":"pt","蒙古文":"mn","德文":"de","緬甸文":"my","韓文":"ko","羅馬尼亞文":"ro","蘇格蘭蓋爾文":"gd","abkazisht":"ab","amarikisht":"am","anglisht":"en","arabisht":"ar","armenisht":"hy","azerisht":"az","baskisht":"eu","birmanisht":"my","bjellorusisht":"be","bullgarisht":"bg","çekisht":"cs","danisht":"da","estonisht":"et","finlandisht":"fi","frëngjisht":"fr","galicianisht":"gl","galishte skoceze":"gd","greqisht":"el","gjermanisht":"de","hebraisht":"he","hindisht":"hi","holandisht":"nl","hungarisht":"hu","indonezisht":"id","irlandisht":"ga","islandisht":"is","italisht":"it","japonisht":"ja","kanadaisht":"kn","katalonisht":"ca","kinezisht (e thjeshtuar)":"zh-cn","kinezisht (tradicionale)":"zh-tw","koreanisht":"ko","kreolishte haitiane":"ht","kroatisht":"hr","kurdisht (kurmanjisht)":"ku","kurdisht (sorani)":"ckb","latinisht":"la","letonisht":"lv","lituanisht":"lt","malajalamisht":"ml","malajzisht":"ms","maltisht":"mt","maorisht":"mi","maqedonisht":"mk","maratisht":"mr","mongolisht":"mn","norvegjisht":"nb","persisht":"fa","polonisht":"pl","portugalisht":"pt","rumanisht":"ro","rusisht":"ru","serbisht":"sr","sllovakisht":"sk","sllovenisht":"sl","spanjisht":"es","suedisht":"sv","shqip":"sq","tajlandisht":"th","telugisht":"te","turqisht":"tr","uellsisht":"cy","ukrainisht":"uk","uzbekisht":"uz","vietnamisht":"vi","bahasa melayu":"ms","cina (ringkas)":"zh-cn","cina (tradisional)":"zh-tw","finland":"fi","gaelic scotland":"gd","inggeris":"en","itali":"it","jepun":"ja","kurdistan (kurmanji)":"ku","kurdistan (sorani)":"ckb","lithuania":"lt","myanmar (burma)":"my","norway":"nb","parsi":"fa","perancis":"fr","poland":"pl","romania":"ro","sepanyol":"es","sweden":"sv","turki":"tr","ukraine":"uk","wales":"cy","ahepaitani":"az","airihi":"ga","amariki":"am","amēniana":"hy","arapeinia":"sq","arapi":"ar","eperānato":"eo","etōnia":"et","haina (onamata)":"zh-tw","hainamana (kua whakamāmātia)":"zh-cn","hanekeria":"hu","hapanihi":"ja","herepia":"sr","hinerangi":"fi","hīni":"hi","hiperu":"he","horowākia":"sk","horowinia":"sl","huitene":"sv","huru":"zu","ingarihi":"en","initonīhia":"id","itāriana":"it","kanata":"kn","karihia":"gl","katarāna":"ca","kereore haiti":"ht","kiriki":"el","kōreana":"ko","koroātiana":"hr","korukoru":"tr","kūrihi (horani)":"ckb","kūrihi (kurumanihi)":"ku","makerōnia":"mk","māratihi":"mt","marei":"ms","mareiarama":"ml","mongōriana":"mn","nōwei":"nb","pākihi":"eu","pāniora":"es","pēma (purumīhi)":"my","peraruhia":"be","perēhia":"fa","pōrana":"pl","potukīhi":"pt","purukāriana":"bg","rātini":"la","rāwhiana":"lv","rituānia":"lt","romānia":"ro","rūhia":"ru","tati":"nl","tenemāka":"da","teruku":"te","tiamana":"de","tieke":"cs","tiorangi":"is","tuauri kotarangi":"gd","uhipeke":"uz","ūkareiana":"uk","wēra":"cy","whitināmu":"vi","wīwī":"fr","абхазская":"ab","азербайджанская":"az","албанская":"sq","амхарская":"am","англійская":"en","арабская":"ar","армянская":"hy","балгарская":"bg","баскская":"eu","беларуская":"be","бірманская (м’янма)":"my","в’етнамская":"vi","валійская":"cy","венгерская":"hu","гаіцянская крэольская":"ht","галандская":"nl","галісійская":"gl","грэчаская":"el","дацкая":"da","інданезійская":"id","ірландская":"ga","ісландская":"is","іспанская":"es","італьянская":"it","іўрыт":"he","карэйская":"ko","каталанская":"ca","кітайская (спрошчаная)":"zh-cn","кітайская (традыцыйная)":"zh-tw","курдская (курманджы)":"ku","курдская (сарані)":"ckb","латышская":"lv","лацінская":"la","літоўская":"lt","маары":"mi","македонская":"mk","малайская":"ms","мальтыйская":"mt","мангольская":"mn","нарвежская":"nb","нямецкая":"de","партугальская":"pt","персідская":"fa","польская":"pl","румынская":"ro","руская":"ru","сербская":"sr","славацкая":"sk","славенская":"sl","тайская":"th","турэцкая":"tr","тэлугу":"te","узбекская":"uz","украінская":"uk","фінская":"fi","французская":"fr","харвацкая":"hr","хіндзі":"hi","чэшская":"cs","шатландская гэльская":"gd","шведская":"sv","эсперанта":"eo","эстонская":"et","японская":"ja","abkaz":"ab","albanyen":"sq","amenyen":"hy","anglè":"en","azèbajani":"az","belarisyen":"be","bilgaryen":"bg","chinwa (senp)":"zh-cn","chinwa (tradisyonèl)":"zh-tw","danwa":"da","ebre":"he","endonezyen":"id","endou":"hi","estonyen":"et","fenlandè":"fi","franse":"fr","gaelik ekosè":"gd","galisyen":"gl","grèk":"el","ikrenyen":"uk","ilandè":"ga","islandè":"is","italyen":"it","izbèk":"uz","japonè":"ja","kanada":"kn","kid (koumanji)":"ku","kid (sorani)":"ckb","koreyen":"ko","kreyòl ayisyen":"ht","kwoasyen":"hr","laten":"la","letonyen":"lv","lityanyen":"lt","malè":"ms","malt":"mt","masedonyen":"mk","mayori":"mi","mongolyen":"mn","myanma (burmese)":"my","nòvejyen":"nb","olandè, neyèlandè":"nl","onngaryen":"hu","panyòl":"es","pèsyen":"fa","polonè":"pl","pòtigè":"pt","ris":"ru","romanyen":"ro","sèb":"sr","slovenyen":"sl","syedwa":"sv","tuk":"tr","tyèk":"cs","vyetnamyen":"vi","กรีก":"el","กันนาดา":"kn","กาลิเชียน":"gl","เกลิกสกอต":"gd","เกาหลี":"ko","คาตาลัน":"ca","เคิร์ด (กุรมันชี)":"ku","เคิร์ด (โซรานี)":"ckb","โครเอเชีย":"hr","จีน (ตัวเต็ม)":"zh-tw","จีน (ตัวย่อ)":"zh-cn","เช็ก":"cs","ซูลู":"zu","เซอร์เบียน":"sr","ญี่ปุ่น":"ja","ดัตช์":"nl","เดนมาร์ก":"da","ตุรกี":"tr","เตลูกู":"te","ไทย":"th","นอร์เวย์":"nb","บัลแกเรีย":"bg","บาสก์":"eu","เบลารุส":"be","เปอร์เซีย":"fa","โปรตุเกส":"pt","โปแลนด์":"pl","ฝรั่งเศส":"fr","ฟินแลนด์":"fi","มองโกเลีย":"mn","มัลทีส":"mt","มาซีโดเนีย":"mk","มาราฐี":"mr","มาลายาลัม":"ml","มาเลย์":"ms","เมารี":"mi","เมียนมา (พม่า)":"my","ยูเครน":"uk","เยอรมัน":"de","รัสเซีย":"ru","โรมาเนีย":"ro","ละติน":"la","ลัตเวีย":"lv","ลิทัวเนีย":"lt","เวลส์":"cy","เวียดนาม":"vi","สเปน":"es","สโลวัก":"sk","สโลวีเนีย":"sl","สวีเดน":"sv","อังกฤษ":"en","อับคาเซีย":"ab","อัมฮาริก":"am","อาร์เซอร์ไบจัน":"az","อาร์เมเนีย":"hy","อาหรับ":"ar","อิตาลี":"it","อินโดนีเซีย":"id","อุสเบกิสถาน":"uz","เอสโทเนีย":"et","เอสเปอแรนโต":"eo","แอลเบเนีย":"sq","ไอซ์แลนด์":"is","ไอร์แลนด์":"ga","ฮังการี":"hu","ฮินดี":"hi","ฮีบรู":"he","เฮติครีโอล":"ht","abkhaziera":"ab","albaniera":"sq","alemana":"de","amharera":"am","arabiera":"ar","armeniera":"hy","azerbaijanera":"az","bielorrusiera":"be","birmaniera":"my","bulgariera":"bg","daniera":"da","errumaniera":"ro","errusiera":"ru","eskoziako gaelikoa":"gd","eslovakiera":"sk","esloveniera":"sl","esperantoa":"eo","estoniera":"et","euskara":"eu","finlandiera":"fi","frantsesa":"fr","galesa":"cy","galiziera":"gl","gaztelania":"es","greziera":"el","hebreera":"he","hindia":"hi","hungariera":"hu","indonesiera":"id","ingelesa":"en","irlandera":"ga","islandiera":"is","italiera":"it","japoniera":"ja","katalana":"ca","koreera":"ko","kreolera (haiti)":"ht","kroaziera":"hr","kurduera (kurmanji)":"ku","kurduera (sorania)":"ckb","latina":"la","letoniera":"lv","lituaniera":"lt","malabarera":"ml","malaysiera":"ms","maltera":"mt","maoriera":"mi","marathera":"mr","mazedoniera":"mk","mongoliera":"mn","nederlandera":"nl","norvegiera":"nb","persiera":"fa","poloniera":"pl","portugesa":"pt","serbiera":"sr","suediera":"sv","telugua":"te","thailandiera":"th","turkiera":"tr","txekiera":"cs","txinera (sinplifikatua)":"zh-cn","txinera (tradizionala)":"zh-tw","ukrainera":"uk","uzbekera":"uz","vietnamera":"vi","zuluera":"zu","abcaso":"ab","albanese":"sq","amarico":"am","arabo":"ar","armeno":"hy","azero":"az","bielorusso":"be","bulgaro":"bg","catalano":"ca","ceco":"cs","cinese (semplificato)":"zh-cn","cinese (tradizionale)":"zh-tw","creolo haitiano":"ht","croato":"hr","curdo (sorani)":"ckb","danese":"da","ebraico":"he","estone":"et","finlandese":"fi","francese":"fr","gaelico scozzese":"gd","galiziano":"gl","gallese":"cy","giapponese":"ja","greco":"el","indonesiano":"id","inglese":"en","irlandese":"ga","islandese":"is","latino":"la","lettone":"lv","macedone":"mk","malese":"ms","mongolo":"mn","norvegese":"nb","olandese":"nl","persiano":"fa","polacco":"pl","portoghese":"pt","rumeno":"ro","serbo":"sr","slovacco":"sk","sloveno":"sl","spagnolo":"es","svedese":"sv","tedesco":"de","ucraino":"uk","ungherese":"hu","abkaż":"ab","albaniż":"sq","amħari":"am","armen":"hy","ażerbajġani":"az","belarussu":"be","bulgaru":"bg","ċek":"cs","ċiniż (simplifikat)":"zh-cn","ċiniż (tradizzjonali)":"zh-tw","creole haiti":"ht","daniż":"da","ebrajk":"he","estonjan":"et","finlandiż":"fi","franċiż":"fr","ġappuniż":"ja","ġermaniż":"de","gaelic tal-iskoċċiżi":"gd","galizjan":"gl","grieg":"el","għarbi":"ar","ħindi":"hi","indoneżjan":"id","ingliż":"en","irlandiż":"ga","islandiż":"is","kroat":"hr","latvjan":"lv","litwen":"lt","maċedonjan":"mk","malasjan":"ms","malti":"mt","mjanmar (burma)":"my","mongoljan":"mn","norveġiż":"nb","olandiż":"nl","persjan":"fa","pollakk":"pl","portugiż":"pt","rumen":"ro","russu":"ru","slovakk":"sk","spanjol":"es","svediż":"sv","tajlandiż":"th","taljan":"it","tork":"tr","ukren":"uk","ungeriż":"hu","użbek":"uz","vjetnamiż":"vi","żulu":"zu","ಅಜರ್ಬೈಜಾನಿ":"az","ಅಬ್ಖಾಜ್":"ab","ಅಮಹಾರಿಕ್":"am","ಅರಬ್ಬಿ":"ar","ಆರ್ಮೇನಿಯನ್":"hy","ಆಲ್ಬೇನಿಯನ್":"sq","ಇಂಗ್ಲಿಷ್‌‌":"en","ಇಂಡೋನೇಷಿಯನ್":"id","ಇಟಾಲಿಯನ್":"it","ಉಜ್ಬೆಕ್":"uz","ಎಸ್ಟೋನಿಯನ್":"et","ಎಸ್ಪೆರಾಂಟೋ":"eo","ಐರಿಷ್":"ga","ಐಸ್‌ಲ್ಯಾಂಡಿಕ್‌":"is","ಕನ್ನಡ":"kn","ಕುರ್ದಿಶ್ (ಕುರ್ಮಾಂಜಿ)":"ku","ಕುರ್ದಿಶ್ (ಸೊರಾನಿ)":"ckb","ಕೊರಿಯನ್":"ko","ಕ್ಯಾಟಲನ್":"ca","ಕ್ರೊಯೇಷಿಯನ್":"hr","ಗ್ಯಾಲೀಷಿಯನ್":"gl","ಗ್ರೀಕ್":"el","ಚೀನಿ (ಸರಳೀಕೃತ)":"zh-cn","ಚೈನೀಸ್ (ಸಾಂಪ್ರದಾಯಿಕ)":"zh-tw","ಜಪಾನಿ":"ja","ಜರ್ಮನ್":"de","ಜುಲು":"zu","ಝೆಕ್‌":"cs","ಟರ್ಕಿಷ್":"tr","ಡಚ್":"nl","ಡ್ಯಾನಿಷ್":"da","ತೆಲುಗು":"te","ಥಾಯ್":"th","ನಾರ್ವೇಜಿಯನ್‌":"nb","ಪೋರ್ಚುಗೀಸ್":"pt","ಪೋಲಿಷ್":"pl","ಫಾರ್ಸಿ":"fa","ಫಿನ್ನಿಷ್":"fi","ಫ್ರೆಂಚ್":"fr","ಬಲ್ಗೇರಿಯನ್":"bg","ಬಾಸ್ಕ್":"eu","ಬೆಲರೂಸಿಯನ್":"be","ಮಂಗೋಲಿಯನ್":"mn","ಮಯನ್ಮಾರ್ (ಬರ್ಮೀಸ್)":"my","ಮರಾಠಿ":"mr","ಮಲಯ":"ms","ಮಲಯಾಳಂ":"ml","ಮಾಲ್ಟೀಸ್":"mt","ಮಾವೋರಿ":"mi","ಮ್ಯಾಸೆಡೋನಿಯನ್":"mk","ಯುಕ್ರೇನಿಯನ್":"uk","ರಷಿಯನ್":"ru","ರೊಮೇನಿಯನ್":"ro","ಲಿಥುವೇನಿಯನ್":"lt","ಲ್ಯಾಟಿನ್":"la","ಲ್ಯಾಟ್ವಿಯನ್‌":"lv","ವಿಯೆಟ್ನಾಮಿ":"vi","ವೆಲ್ಶ್":"cy","ಸರ್ಬಿಯನ್":"sr","ಸ್ಕಾಟ್ಸ್ ಗ್ಯಾಲಿಕ್":"gd","ಸ್ಪ್ಯಾನಿಷ್":"es","ಸ್ಲೊವಾಕ್":"sk","ಸ್ಲೊವೆನಿಯನ್":"sl","ಸ್ವೀಡಿಷ್":"sv","ಹಂಗೇರಿಯನ್":"hu","ಹಯಥಿಯನ್‌ ಕ್ರಿಯೋಲ್‌":"ht","ಹಿಂದಿ":"hi","ಹೀಬ್ರೂ":"he","arabia":"ar","burma":"my","englanti":"en","espanja":"es","haitinkreoli":"ht","heprea":"he","hollanti":"nl","islanti":"is","japani":"ja","kiina (perinteinen)":"zh-tw","kiina (yksinkertaistettu)":"zh-cn","kreikka":"el","kroatia":"hr","kurdi (soranî)":"ckb","kymri":"cy","liettua":"lt","malaiji":"ms","norja":"nb","persia":"fa","puola":"pl","ranska":"fr","ruotsi":"sv","skottigaeli":"gd","suomi":"fi","tanska":"da","tsekki":"cs","turkki":"tr","unkari":"hu","uzbekki":"uz","valkovenäjä":"be","venäjä":"ru","viro":"et","abhazca":"ab","almanca":"de","arapça":"ar","arnavutça":"sq","azerbaycan dili":"az","baskça":"eu","belarusça":"be","bulgarca":"bg","burmaca":"my","çekçe":"cs","çince (basitleştirilmiş)":"zh-cn","çince (geleneksel)":"zh-tw","danca":"da","endonezce":"id","ermenice":"hy","estonyaca":"et","farsça":"fa","felemenkçe":"nl","fince":"fi","fransızca":"fr","galce":"cy","galiçyaca":"gl","habeşçe":"am","haiti kreyolu":"ht","hırvatça":"hr","hintçe":"hi","i̇branice":"he","i̇ngilizce":"en","i̇rlandaca":"ga","i̇skoç gaelcesi":"gd","i̇spanyolca":"es","i̇sveççe":"sv","i̇talyanca":"it","i̇zlandaca":"is","japonca":"ja","kannada dili":"kn","katalanca":"ca","korece":"ko","kürtçe (kurmançça)":"ku","kürtçe (sorani)":"ckb","latince":"la","lehçe":"pl","letonca":"lv","litvanca":"lt","macarca":"hu","makedonca":"mk","malayalam dili":"ml","malayca":"ms","maltaca":"mt","maori dili":"mi","moğolca":"mn","norveççe":"nb","özbekçe":"uz","portekizce":"pt","romence":"ro","rusça":"ru","sırpça":"sr","slovakça":"sk","slovence":"sl","tayca":"th","telugu dili":"te","türkçe":"tr","ukraynaca":"uk","vietnamca":"vi","yunanca":"el","abhază":"ab","albaneză":"sq","amharică":"am","arabă":"ar","armeană":"hy","azerbaidjană":"az","bască":"eu","bielorusă":"be","birmană":"my","bulgară":"bg","catalană":"ca","cehă":"cs","chineză (simplificată)":"zh-cn","chineză (tradițională)":"zh-tw","coreeană":"ko","creolă haitiană":"ht","croată":"hr","daneză":"da","ebraică":"he","engleză":"en","estonă":"et","finlandeză":"fi","franceză":"fr","galeză":"cy","galica scoțiană":"gd","galiciană":"gl","germană":"de","greacă":"el","indoneziană":"id","irlandeză":"ga","islandeză":"is","italiană":"it","japoneză":"ja","kurdă (kurmanji)":"ku","kurdă (sorani)":"ckb","latină":"la","letonă":"lv","lituaniană":"lt","macedoneană":"mk","maghiară":"hu","malaeză":"ms","malteză":"mt","mongolă":"mn","neerlandeză":"nl","norvegiană":"nb","persană":"fa","poloneză":"pl","portugheză":"pt","română":"ro","rusă":"ru","sârbă":"sr","slovacă":"sk","slovenă":"sl","spaniolă":"es","suedeză":"sv","thailandeză":"th","turcă":"tr","ucraineană":"uk","uzbecă":"uz","vietnameză":"vi","ကနာဒါ":"kn","ကိုရီးယား":"ko","ကက်တလန်":"ca","ကဒ် (ကာမန်ဂျီ)":"ku","ကဒ် (ဆိုရာနီ)":"ckb","ခရိုအေးရှား":"hr","ချက်":"cs","ဂရိ":"el","ဂယ်လိရှ":"gl","ဂျပန်":"ja","ဂျာမန်":"de","စကော့ ဂေးလစ်":"gd","စပိန်":"es","ဆလိုဗေးနီးယား":"sl","ဆလိုဗက်":"sk","ဆားဘီးယား":"sr","ဆွီဒင်":"sv","ဇူးလူး":"zu","တရုတ် (ရိုးရာ)":"zh-tw","တရုတ် (ရိုးရှင်း)":"zh-cn","တူ​ရ​ကီ":"tr","တယ်လူဂူ":"te","ထိုင်း":"th","ဒတ်ချ်":"nl","ဒိန်းမတ်":"da","နော်ဝေး":"nb","ပါရှန်":"fa","ပေါ်တူဂီ":"pt","ပိုလန်":"pl","ပြင်သစ်":"fr","ဖင်လန်":"fi","ဗီယက်နမ်":"vi","ဘီလာရစ်":"be","ဘူဂေးရီးယား":"bg","ဘာစ်ခ်":"eu","မလေယာလမ်":"ml","မလေး":"ms","မာရာသီ":"mr","မော်ရီ":"mi","မော်လတာ":"mt","မက်ဆီဒိုးနီးယား":"mk","မြန်မာ":"my","မွန်ဂိုလီးယား":"mn","ယူ​က​ရိန်း​":"uk","ရုရှား":"ru","ရိုမေးနီးယား":"ro","လက်တင်":"la","လစ်သူဝေးနီးယား":"lt","လတ်ဗီယာ":"lv","ဝေလ":"cy","ဟီဘရူး":"he","ဟေတီ ခရီအိုး":"ht","ဟန်ဂေရီ":"hu","ဟိန္ဒီ":"hi","အဇာဘိုင်ဂျန်":"az","အာမေးနီးယား":"hy","အာရေဗျ":"ar","အီတလီ":"it","ဥဇဘက်":"uz","အက်စတိုးနီးယား":"et","အက်ဘခါ့ဇ်":"ab","အက်စ်ပဲရန်တို":"eo","အိုက်စလန်":"is","အင်္ဂလိပ်":"en","အင်ဒိုနီးရှား":"id","အိုင်းရစ်ရှ်":"ga","အမ်ဟဲရစ်ခ်":"am","အယ်လ်ဘေးနီးယား":"sq","阿布哈兹语":"ab","阿尔巴尼亚语":"sq","阿拉伯语":"ar","阿姆哈拉语":"am","阿塞拜疆语":"az","爱尔兰语":"ga","爱沙尼亚语":"et","巴斯克语":"eu","白俄罗斯语":"be","保加利亚语":"bg","冰岛语":"is","波兰语":"pl","波斯语":"fa","丹麦语":"da","德语":"de","俄语":"ru","法语":"fr","芬兰语":"fi","海地克里奥尔语":"ht","韩语":"ko","荷兰语":"nl","加利西亚语":"gl","加泰罗尼亚语":"ca","捷克语":"cs","卡纳达语":"kn","克罗地亚语":"hr","库尔德语（库尔曼吉语）":"ku","库尔德语（索拉尼）":"ckb","拉丁语":"la","拉脱维亚语":"lv","立陶宛语":"lt","罗马尼亚语":"ro","马耳他语":"mt","马拉地语":"mr","马拉雅拉姆语":"ml","马来语":"ms","马其顿语":"mk","毛利语":"mi","蒙古语":"mn","缅甸语":"my","挪威语":"nb","葡萄牙语":"pt","日语":"ja","瑞典语":"sv","塞尔维亚语":"sr","世界语":"eo","斯洛伐克语":"sk","斯洛文尼亚语":"sl","苏格兰盖尔语":"gd","泰卢固语":"te","泰语":"th","土耳其语":"tr","威尔士语":"cy","乌克兰语":"uk","乌兹别克语":"uz","西班牙语":"es","希伯来语":"he","希腊语":"el","匈牙利语":"hu","亚美尼亚语":"hy","意大利语":"it","印地语":"hi","印尼语":"id","英语":"en","越南语":"vi","中文（繁体）":"zh-tw","中文（简体）":"zh-cn","祖鲁语":"zu","갈리시아어":"gl","그리스어":"el","네덜란드어":"nl","노르웨이어":"nb","덴마크어":"da","독일어":"de","라트비아어":"lv","라틴어":"la","러시아어":"ru","루마니아어":"ro","리투아니아어":"lt","마라티어":"mr","마오리어":"mi","마케도니아어":"mk","말라얄람어":"ml","말레이어":"ms","몰타어":"mt","몽골어":"mn","미얀마어(버마어)":"my","바스크어":"eu","베트남어":"vi","벨라루스어":"be","불가리아어":"bg","세르비아어":"sr","스웨덴어":"sv","스코틀랜드 게일어":"gd","스페인어":"es","슬로바키아어":"sk","슬로베니아어":"sl","아랍어":"ar","아르메니아어":"hy","아이슬란드어":"is","아이티 크리올어":"ht","아일랜드어":"ga","아제르바이잔어":"az","알바니아어":"sq","암하라어":"am","압하지야어":"ab","에스토니아어":"et","에스페란토어":"eo","영어":"en","우즈베크어":"uz","우크라이나어":"uk","웨일즈어":"cy","이탈리아어":"it","인도네시아어":"id","일본어":"ja","줄루어":"zu","중국어(간체)":"zh-cn","중국어(번체)":"zh-tw","체코어":"cs","카탈로니아어":"ca","칸나다어":"kn","쿠르드어(소라니)":"ckb","쿠르드어(쿠르만지)":"ku","크로아티아어":"hr","태국어":"th","터키어":"tr","텔루구어":"te","페르시아어":"fa","포르투갈어":"pt","폴란드어":"pl","프랑스어":"fr","핀란드어":"fi","한국어":"ko","헝가리어":"hu","히브리어":"he","힌디어":"hi","abchasisch":"ab","albanisch":"sq","armenisch":"hy","aserbaidschanisch":"az","birmanisch":"my","bulgarisch":"bg","chinesisch (traditionell)":"zh-tw","chinesisch (vereinfacht)":"zh-cn","dänisch":"da","deutsch":"de","englisch":"en","estnisch":"et","finnisch":"fi","französisch":"fr","galizisch":"gl","griechisch":"el","haitianisch":"ht","hebräisch":"he","irisch":"ga","isländisch":"is","italienisch":"it","japanisch":"ja","katalanisch":"ca","koreanisch":"ko","kurdisch (kurmandschi)":"ku","kurdisch (sorani)":"ckb","latein":"la","lettisch":"lv","litauisch":"lt","malaysisch":"ms","maltesisch":"mt","mazedonisch":"mk","mongolisch":"mn","niederländisch":"nl","norwegisch":"nb","persisch":"fa","polnisch":"pl","portugiesisch":"pt","rumänisch":"ro","schottisch-gälisch":"gd","schwedisch":"sv","serbisch":"sr","slowakisch":"sk","slowenisch":"sl","spanisch":"es","thailändisch":"th","tschechisch":"cs","türkisch":"tr","ukrainisch":"uk","ungarisch":"hu","usbekisch":"uz","vietnamesisch":"vi","walisisch":"cy","abcházština":"ab","albánština":"sq","amharština":"am","angličtina":"en","arabština":"ar","arménština":"hy","ázerbájdžánština":"az","barmština":"my","baskičtina":"eu","běloruština":"be","bulharština":"bg","čeština":"cs","čínština (tradiční)":"zh-tw","čínština (zjednodušená)":"zh-cn","dánština":"da","estonština":"et","finština":"fi","francouzština":"fr","galicijština":"gl","haitská kreolština":"ht","hebrejština":"he","hindština":"hi","holandština":"nl","chorvatština":"hr","indonéština":"id","irština":"ga","islandština":"is","italština":"it","japonština":"ja","kannadština":"kn","katalánština":"ca","korejština":"ko","kurdština":"ku","kurdština (sorání)":"ckb","litevština":"lt","lotyština":"lv","maďarština":"hu","makedonština":"mk","malajálamština":"ml","malajština":"ms","maltština":"mt","maorština":"mi","marátština":"mr","mongolština":"mn","němčina":"de","norština":"nb","perština":"fa","polština":"pl","portugalština":"pt","rumunština":"ro","ruština":"ru","řečtina":"el","skotská gaelština":"gd","slovenština":"sk","slovinština":"sl","srbština":"sr","španělština":"es","švédština":"sv","telužština":"te","thajština":"th","turečtina":"tr","ukrajinština":"uk","uzbečtina":"uz","velština":"cy","vietnamština":"vi","אבחזית":"ab","אוזבקית":"uz","אוקראינית":"uk","אזרית":"az","איטלקית":"it","אינדונזית":"id","איסלנדית":"is","אירית":"ga","אלבנית":"sq","אמהרית":"am","אנגלית":"en","אסטונית":"et","אספרנטו":"eo","ארמנית":"hy","באסקית":"eu","בולגרית":"bg","בורמזית":"my","בלארוסית":"be","גאלית סקוטית":"gd","גליציאנית":"gl","גרמנית":"de","דנית":"da","הולנדית":"nl","הונגרית":"hu","הינדי":"hi","וולשית":"cy","וייטנאמית":"vi","זולו":"zu","טורקית":"tr","טלוגו":"te","יוונית":"el","יפנית":"ja","כורדית (כורמנג\'ית)":"ku","כורדית (סורנית)":"ckb","לטבית":"lv","לטינית":"la","ליטאית":"lt","מאורית":"mi","מונגולית":"mn","מלאית":"ms","מלטית":"mt","מליאלאם":"ml","מקדונית":"mk","מראטהית":"mr","נורווגית":"nb","סינית (מסורתית)":"zh-tw","‏סינית (פשוטה)":"zh-cn","סלובנית":"sl","סלובקית":"sk","ספרדית":"es","סרבית":"sr","עברית":"he","ערבית":"ar","פולנית":"pl","פורטוגזית":"pt","פינית":"fi","פרסית":"fa","צ\'כית":"cs","צרפתית":"fr","קאנאדה":"kn","קוריאנית":"ko","קטלאנית":"ca","קרואטית":"hr","קריאולית האיטית":"ht","רומנית":"ro","רוסית":"ru","שוודית":"sv","תאית":"th","abcaseg":"ab","albaneg":"sq","almaeneg":"de","amhareg":"am","arabeg":"ar","armeneg":"hy","aserbaijaneg":"az","basgeg":"eu","belarwseg":"be","bwlgareg":"bg","catalaneg":"ca","creol haiti":"ht","croateg":"hr","cwrdeg (kurmandji)":"ku","cwrdeg (sorani)":"ckb","cymraeg":"cy","daneg":"da","eidaleg":"it","estoneg":"et","fietnameg":"vi","ffineg":"fi","fflemeg":"nl","ffrangeg":"fr","gaeleg yr alban":"gd","galiseg":"gl","groeg":"el","gwyddeleg":"ga","hebraeg":"he","hwngareg":"hu","iaith corea":"ko","indonesieg":"id","islandeg":"is","japaneg":"ja","latfieg":"lv","lithwaneg":"lt","lladin":"la","macedoneg":"mk","malteseg":"mt","mongoleg":"mn","myanmar (byrma)":"my","norwyeg":"nb","perseg":"fa","portiwgaleg":"pt","pwyleg":"pl","rwmaneg":"ro","rwsieg":"ru","saesneg":"en","sbaeneg":"es","serbeg":"sr","slofaceg":"sk","slofeneg":"sl","swedeg":"sv","swlw":"zu","telwgw":"te","tsieceg":"cs","tsieineeg (traddodiadol)":"zh-tw","tsieineeg (wedi symleiddio)":"zh-cn","twrceg":"tr","usbec":"uz","wcreineg":"uk","abchaziska":"ab","amhariska":"am","arabiska":"ar","armeniska":"hy","azerbajdzjanska":"az","baskiska":"eu","bulgariska":"bg","burmesiska":"my","engelska":"en","estniska":"et","finska":"fi","gaeliska":"gd","galiciska":"gl","grekiska":"el","haitiska":"ht","hebreiska":"he","indonesiska":"id","irländska":"ga","isländska":"is","italienska":"it","kanaresiska":"kn","katalanska":"ca","kinesiska (förenklad)":"zh-cn","kinesiska (traditionell)":"zh-tw","koreanska":"ko","kroatiska":"hr","kurdiska (kurmanji)":"ku","kurdiska (sorani)":"ckb","lettiska":"lv","litauiska":"lt","makedonska":"mk","malaysiska":"ms","maltesiska":"mt","mongoliska":"mn","nederländska":"nl","persiska":"fa","polska":"pl","portugisiska":"pt","rumänska":"ro","ryska":"ru","serbiska":"sr","slovakiska":"sk","slovenska":"sl","spanska":"es","svenska":"sv","thailändska":"th","tjeckiska":"cs","turkiska":"tr","tyska":"de","ukrainska":"uk","ungerska":"hu","uzbekiska":"uz","vietnamesiska":"vi","vitryska":"be","walesiska":"cy","abcáisis":"ab","airméinis":"hy","albáinis":"sq","amáiris":"am","araibis":"ar","asarbaiseáinis":"az","bascais":"eu","bealarúisis":"be","béarla":"en","breatnais":"cy","bulgáiris":"bg","cannadais":"kn","catalóinis":"ca","coirdis (curmainsis)":"ku","coirdis (sóráinis)":"ckb","cóiréis":"ko","criól háítí":"ht","cróitis":"hr","eabhrais":"he","eastóinis":"et","fionlainnis":"fi","fraincis":"fr","gaeilge na halban":"gd","gailísis":"gl","gearmáinis":"de","gréigis":"el","hiondúis":"hi","indinéisis":"id","iodáilis":"it","ioruais":"nb","íoslainnis":"is","laidin":"la","laitvis":"lv","liotuáinis":"lt","macadóinis":"mk","maenmar (burmais)":"my","mailéalaimis":"ml","malaeis":"ms","máltais":"mt","maorais":"mi","maraitis":"mr","mongóilis":"mn","ollainnis":"nl","polainnis":"pl","portaingéilis":"pt","rómáinis":"ro","rúisis":"ru","seapáinis":"ja","seicis":"cs","seirbis":"sr","sínis (simplithe)":"zh-cn","sínis (traidisiúnta)":"zh-tw","slóivéinis":"sl","slóvaicis":"sk","spáinnis":"es","sualainnis":"sv","súlúis":"zu","téalainnis":"th","teileagúis":"te","tuircis":"tr","úcráinis":"uk","úisbéiceastáinis":"uz","ungáiris":"hu","vítneaimis":"vi","アイスランド語":"is","アイルランド語":"ga","アゼルバイジャン語":"az","アブハズ語":"ab","アムハラ語":"am","アラビア語":"ar","アルバニア語":"sq","アルメニア語":"hy","イタリア語":"it","インドネシア語":"id","ウェールズ語":"cy","ウクライナ語":"uk","ウズベク語":"uz","エストニア語":"et","エスペラント語":"eo","オランダ語":"nl","カタルーニャ語":"ca","ガリシア語":"gl","カンナダ語":"kn","ギリシャ語":"el","クルド語（クルマンジー）":"ku","クルド語（ソラニー）":"ckb","クロアチア語":"hr","スウェーデン語":"sv","ズールー語":"zu","スコットランド ゲール語":"gd","スペイン語":"es","スロバキア語":"sk","スロベニア語":"sl","セルビア語":"sr","タイ語":"th","チェコ語":"cs","テルグ語":"te","デンマーク語":"da","ドイツ語":"de","トルコ語":"tr","ノルウェー語":"nb","ハイチ語":"ht","バスク語":"eu","ハンガリー語":"hu","ヒンディー語":"hi","フィンランド語":"fi","フランス語":"fr","ブルガリア語":"bg","ベトナム語":"vi","ヘブライ語":"he","ベラルーシ語":"be","ペルシャ語":"fa","ポーランド語":"pl","ポルトガル語":"pt","マオリ語":"mi","マケドニア語":"mk","マラーティー語":"mr","マラヤーラム語":"ml","マルタ語":"mt","マレー語":"ms","ミャンマー語（ビルマ語）":"my","モンゴル語":"mn","ラテン語":"la","ラトビア語":"lv","リトアニア語":"lt","ルーマニア語":"ro","ロシア語":"ru","英語":"en","韓国語":"ko","中国語（簡体）":"zh-cn","中国語（繁体）":"zh-tw","日本語":"ja","albánčina":"sq","amharčina":"am","arabčina":"ar","arménčina":"hy","azerbajdžančina":"az","barmčina":"my","bieloruština":"be","bulharčina":"bg","čínština (tradičná)":"zh-tw","dánčina":"da","estónčina":"et","fínčina":"fi","francúzština":"fr","galícijčina":"gl","gréčtina":"el","haitská kreolčina":"ht","hebrejčina":"he","hindčina":"hi","holandčina":"nl","chorvátčina":"hr","indonézština":"id","írčina":"ga","islandčina":"is","japončina":"ja","kannadčina":"kn","katalánčina":"ca","kórejčina":"ko","kurdčina (kurmándží)":"ku","kurdčina (sorání)":"ckb","latinčina":"la","litovčina":"lt","macedónčina":"mk","maďarčina":"hu","malajámčina":"ml","malajčina":"ms","maltčina":"mt","maorijčina":"mi","maratčina":"mr","mongolčina":"mn","nemčina":"de","nórčina":"nb","perzština":"fa","poľština":"pl","portugalčina":"pt","rumunčina":"ro","slovenčina":"sk","slovinčina":"sl","srbčina":"sr","škótska gaelčina":"gd","španielčina":"es","švédčina":"sv","taliančina":"it","telugčina":"te","thajčina":"th","ukrajinčina":"uk","vietnamčina":"vi","waleština":"cy","zuluština":"zu","galicisk":"gl","græsk":"el","haitisk kreolsk":"ht","hviderussisk":"be","kinesisk (traditionelt)":"zh-tw","lettisk":"lv","malajisk":"ms","persisk":"fa","rumænsk":"ro","thailandsk":"th","tjekkisk":"cs","అజర్‌బైజాని":"az","అబ్‌ఖాజ్":"ab","అర్మేనియన్":"hy","అల్బేనియన్":"sq","ఆంగ్లము":"en","ఆమ్హారిక్":"am","ఆరబిక్":"ar","ఇండొనేసియన్":"id","ఇటాలియన్":"it","ఉజ్బెక్":"uz","ఎస్పెరాంటో":"eo","ఏస్టోనియన్":"et","ఐరిష్":"ga","ఐస్ లాండిక్":"is","కన్నడ":"kn","కుర్దిష్ (కుర్మాంజి)":"ku","కుర్దిష్ (సొరని)":"ckb","కొరియన్":"ko","క్యాటలాన్":"ca","క్రొయేషియన్":"hr","గాలిసియన్":"gl","గ్రీక్":"el","చెక్":"cs","చైనీస్ (సరళమైన)":"zh-cn","చైనీస్ (సాంప్రదాయమైన)":"zh-tw","జపనీస్":"ja","జర్మన్":"de","జులు":"zu","టర్కిష్":"tr","డచ్":"nl","డానిష్":"da","తెలుగు":"te","థాయ్":"th","నార్విజియన్":"nb","పర్షియన్":"fa","పోర్చుగీస్":"pt","పోలిష్":"pl","ఫిన్నిష్":"fi","ఫ్రెంచ్":"fr","బర్మీస్":"my","బల్గేరియన్":"bg","బాస్క్":"eu","బెలారష్యన్":"be","మంగోలియన్":"mn","మయోరి":"mi","మరాఠీ":"mr","మలయాళం":"ml","మాలై":"ms","మాల్టీస్":"mt","మాసిడోనియన్":"mk","యుక్రేనియన్":"uk","రష్యన్":"ru","రొమేనియన్":"ro","లాటిన్":"la","లాట్వియన్":"lv","లిథువేనియన్":"lt","వియత్నామీస్":"vi","వెల్ష్":"cy","సెర్బియన్":"sr","స్కాట్స్ గేలిక్":"gd","స్పానిష్":"es","స్లోవాక్":"sk","స్లోవేనియన్":"sl","స్వీడిష్":"sv","హంగేరియన్":"hu","హిందీ":"hi","హీబ్రూ":"he","హైయేటియన్ క్రియోల్":"ht","അബ്ഖാസ്":"ab","അമാറിക്":"am","അർമേനിയൻ":"hy","അൽബേനിയൻ":"sq","അസർബൈജാനി":"az","അറബിക്":"ar","ഇന്തോനേഷ്യൻ":"id","ഇംഗ്ലീഷ്":"en","ഇറ്റാലിയൻ":"it","ഉക്രേനിയൻ":"uk","ഉസ്ബെക്ക്":"uz","എസ്‌പെരന്തോ":"eo","എസ്റ്റോണിയൻ":"et","ഐസ്‌ലാൻഡിക്":"is","ഐറിഷ്":"ga","കന്നട":"kn","കാറ്റലൻ":"ca","കുർദ്ദിഷ് (കുർമാൻജി)":"ku","കുർദ്ദിഷ് (സൊറാനി)":"ckb","കൊറിയൻ":"ko","ക്രൊയേഷ്യൻ":"hr","ഗലീഷ്യൻ":"gl","ഗ്രീക്ക്":"el","ചെക്ക്":"cs","ചൈനീസ് (പരമ്പരാഗതം)":"zh-tw","ചൈനീസ് (ലഘൂകരിച്ചത്)":"zh-cn","ജർമ്മൻ":"de","ജാപ്പനീസ്‌":"ja","ടർക്കിഷ്":"tr","ഡച്ച്":"nl","ഡാനിഷ്":"da","തായ്":"th","തെലുങ്ക്":"te","നോർവീജിയൻ":"nb","പേർഷ്യൻ":"fa","പോർച്ചുഗീസ്":"pt","പോളിഷ്":"pl","ഫിന്നിഷ്":"fi","ഫ്രെഞ്ച്":"fr","ബർമീസ്":"my","ബൾഗേറിയൻ":"bg","ബാസ്ക്":"eu","ബെലാറുഷ്യൻ":"be","മംഗോളിയൻ":"mn","മലയാളം":"ml","മലയ്":"ms","മറാഠി":"mr","മാസഡോണിയൻ":"mk","മാൾട്ടീസ്":"mt","മൗറി":"mi","ലാറ്റിൻ":"la","ലാറ്റ്‌വിയൻ":"lv","ലിത്വേനിയൻ":"lt","വിയറ്റ്നാമീസ്":"vi","വെൽഷ്":"cy","സുളു":"zu","സെർബിയൻ":"sr","സ്കോട്ട്സ് ഗ്യാലിക്":"gd","സ്പാനിഷ്":"es","സ്ലോവാക്":"sk","സ്ലോവേനിയൻ":"sl","സ്വീഡിഷ്":"sv","ഹംഗേറിയൻ":"hu","ഹിന്ദി":"hi","ഹീബ്രു":"he","ഹെയ്തിയൻ ക്രയോൾ":"ht","റഷ്യൻ":"ru","റൊമേനിയൻ":"ro","abhaščina":"ab","albanščina":"sq","amharščina":"am","angleščina":"en","arabščina":"ar","armenščina":"hy","azerbajdžanščina":"az","baskovščina":"eu","beloruščina":"be","bolgarščina":"bg","burmanščina":"my","češčina":"cs","danščina":"da","estonščina":"et","finščina":"fi","francoščina":"fr","galicijščina":"gl","grščina":"el","haitijska kreolščina":"ht","hebrejščina":"he","hindijščina":"hi","hrvaščina":"hr","indonezijščina":"id","irščina":"ga","islandščina":"is","italijanščina":"it","japonščina":"ja","kanareščina":"kn","katalonščina":"ca","kitajščina (poenostavljena)":"zh-cn","kitajščina (tradicionalna)":"zh-tw","korejščina":"ko","kurdščina (kurmandži)":"ku","kurdščina (soranščina)":"ckb","latinščina":"la","latvijščina":"lv","litovščina":"lt","madžarščina":"hu","makedonščina":"mk","malajalščina":"ml","malajščina":"ms","malteščina":"mt","maorščina":"mi","maratščina":"mr","mongolščina":"mn","nemščina":"de","nizozemščina":"nl","norveščina":"nb","perzijščina":"fa","poljščina":"pl","portugalščina":"pt","romunščina":"ro","ruščina":"ru","slovaščina":"sk","slovenščina":"sl","srbščina":"sr","škotska gelščina":"gd","španščina":"es","švedščina":"sv","tajščina":"th","teluščina":"te","turščina":"tr","ukrajinščina":"uk","uzbeščina":"uz","valižanščina":"cy","vietnamščina":"vi","zulujščina":"zu","абхаски":"ab","баскијски":"eu","бурмански":"my","вијетнамски":"vi","галски":"gl","енглески":"en","индонежански":"id","јапански":"ja","јерменски":"hy","кинески (поједностављени)":"zh-cn","кинески (традиционални)":"zh-tw","курдски (курмањи)":"ku","летонски":"lv","мађарски":"hu","малајалам":"ml","марати":"mr","немачки":"de","персијски":"fa","пољски":"pl","румунски":"ro","словеначки":"sl","тајски":"th","украјински":"uk","хаићански креолски":"ht"," دانماركی":"da","almanî":"de","ambarîkî":"am","arnawudî":"sq","azerbaycanî":"az","baskî":"eu","belarûsî":"be","bûlgarî":"bg","çînî (hêsankirî)":"zh-cn","çînî (kevneşopî)":"zh-tw","endonezyayî":"id","erebî":"ar","esperantoyî":"eo","estonî":"et","farsî":"fa","fînlandî":"fi","fransî":"fr","gaêlîkî sikotlandî":"gd","galîsî":"gl","hirwatî":"hr","holendî":"nl","hûngarî (macarî)":"hu","îbranî":"he","îngilîzî":"en","îrlandî":"ga","îspanyolî":"es","îzlandî":"is","japonî":"ja","kannadayî":"kn","katalanî":"ca","koreyî":"ko","kreolê haîtî":"ht","kurdî (kurmancî)":"ku","kurdî (soranî)":"ckb","latînî":"la","letonî":"lv","lîtvanî":"lt","makedonî":"mk","malayalamî":"ml","malayî":"ms","maltayî":"mt","maorîyî":"mi","maratî":"mr","moxolî":"mn","myanmarî (burmese)":"my","norwêcî":"nb","ozbekî":"uz","polandî (lehîstanî)":"pl","portekîzî":"pt","romanî":"ro","rûsî":"ru","sirbî":"sr","slovakî":"sk","slovenyayî":"sl","swêdî":"sv","tayî":"th","teleguyî":"te","tirkî":"tr","vîetnamî":"vi","welşî":"cy","yûnanî":"el","zûlûyî":"zu","ئه رمه نی":"hy","ئۆکرانی":"uk","ئیتالی":"it","چه‌كی":"cs","هیندی":"hi","абхаз":"ab","азербайжан":"az","албани":"sq","амхарик":"am","англи":"en","араб":"ar","армени":"hy","баск":"eu","беларусь":"be","бирм":"my","болгар":"bg","вьетнам":"vi","галик":"gl","гаэл":"gd","герман":"de","голланд":"nl","грек":"el","дани":"da","индонез":"id","ирланд":"ga","исланд":"is","испани":"es","итали":"it","каталан":"ca","кипр":"he","курд (курманжи)":"ku","курд (сорани)":"ckb","латви":"lv","латин":"la","литва":"lt","македон":"mk","малай":"ms","малайлам":"ml","малти":"mt","маори":"mi","монгол":"mn","норвег":"nb","орос":"ru","перс":"fa","польш":"pl","португаль":"pt","румын":"ro","серби":"sr","словак":"sk","словени":"sl","солонгос":"ko","тай":"th","турк":"tr","тэлүгү":"te","узбек":"uz","украин":"uk","унгар":"hu","уэльс":"cy","финланд":"fi","франц":"fr","хаитийн креол":"ht","хорват":"hr","хятад (уламжлалт)":"zh-tw","хятад (хялбаршуулсан)":"zh-cn","чех":"cs","швед":"sv","эсперанто":"eo","эстони":"et","япон":"ja","абхазский":"ab","азербайджанский":"az","албанский":"sq","амхарский":"am","английский":"en","арабский":"ar","армянский":"hy","баскский":"eu","белорусский":"be","бирманский":"my","болгарский":"bg","валлийский":"cy","венгерский":"hu","вьетнамский":"vi","гаитянский креольский":"ht","галисийский":"gl","греческий":"el","датский":"da","индонезийский":"id","ирландский":"ga","исландский":"is","испанский":"es","итальянский":"it","каталанский":"ca","китайский (традиционный)":"zh-tw","китайский (упрощенный)":"zh-cn","корейский":"ko","курдский (курманджи)":"ku","курдский (сорани)":"ckb","латинский":"la","латышский":"lv","литовский":"lt","македонский":"mk","малайский":"ms","мальтийский":"mt","монгольский":"mn","немецкий":"de","нидерландский":"nl","норвежский":"nb","польский":"pl","португальский":"pt","румынский":"ro","русский":"ru","сербский":"sr","словацкий":"sk","словенский":"sl","тайский":"th","турецкий":"tr","узбекский":"uz","украинский":"uk","фарси":"fa","финский":"fi","французский":"fr","хорватский":"hr","чешский":"cs","шведский":"sv","шотландский (гэльский)":"gd","эстонский":"et","японский":"ja","にほんご":"ja"},"scratchToGoogleMap":{"zh-cn":"zh","nb":"no","he":"iw","es-419":"es","pt-br":"pt","ja-hira":"ja"},"previouslySupported":["ab","ms","be","eo","hy","hi","kn","ht","ku","la","mk","ml","mt","mr","mn","my","nn","sq","te","uz"],"spokenLanguages":{"en":[{"code":"zh-cn","name":"Chinese (Mandarin)"}],"tr":[{"code":"zh-cn","name":"Çince (Mandarin)"},{"code":"hi","name":"Hintçe"},{"code":"pt-br","name":"Portekizce (Brezilya)"},{"code":"es-419","name":"İspanyolca (Latin Amerika)"}],"ru":[{"code":"zh-cn","name":"Китайский (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"Португальский (бразильский)"},{"code":"es-419","name":"Испанский (Латинская Америка)"}],"pt":[{"code":"zh-cn","name":"Chinês (Mandarim)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (latino-americano)"}],"pl":[{"code":"zh-cn","name":"chiński (mandaryński)"},{"code":"hi","name":"hinduski"},{"code":"pt-br","name":"portugalski (brazylijski)"},{"code":"es-419","name":"hiszpański (Ameryka Łacińska)"}],"vi":[{"code":"zh-cn","name":"Tiếng Trung (Quan Thoại)"},{"code":"hi","name":"Tiếng Hin-ddi"},{"code":"pt-br","name":"Tiếng Bồ Đào Nha (Brazil)"},{"code":"es-419","name":"Tiếng Tây Ban Nha (Mỹ Latinh)"}],"fr":[{"code":"zh-cn","name":"Chinois (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugais (brésilien)"},{"code":"es-419","name":"Espagnol (Amérique latine)"}],"es":[{"code":"zh-cn","name":"Chino (mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (Latinoamérica)"}],"id":[{"code":"zh-cn","name":"Bahasa Mandarin (Cina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brasil)"},{"code":"es-419","name":"Spanyol (Amerika Latin)"}],"ar":[{"code":"zh-cn","name":"الصينية (المندرينية)"},{"code":"hi","name":"الهندية"},{"code":"pt-br","name":"البرتغالية (البرازيلية)"},{"code":"es-419","name":"الإسبانية (أمريكا اللاتينية)"}],"el":[{"code":"zh-cn","name":"κινέζικα (μανταρίνια)"},{"code":"hi","name":"Χίντι"},{"code":"pt-br","name":"Πορτογαλικά (Βραζιλιάνικα)"},{"code":"es-419","name":"Ισπανικά (Λατινικής Αμερικής)"}],"pt-br":[{"code":"zh-cn","name":"Chinês (Mandarim)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Português (Brasileiro)"},{"code":"es-419","name":"Espanhol (latino-americano)"}],"ko":[{"code":"zh-cn","name":"중국어(만다린)"},{"code":"hi","name":"힌디 어"},{"code":"pt-br","name":"포르투갈어(브라질)"},{"code":"es-419","name":"스페인어(라틴 아메리카)"}],"es-419":[{"code":"zh-cn","name":"Chino (mandarín)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"Portugués (brasileño)"},{"code":"es-419","name":"Español (Latinoamérica)"}],"uk":[{"code":"zh-cn","name":"китайська (мандарин)"},{"code":"hi","name":"Хінді"},{"code":"pt-br","name":"португальська (бразильська)"},{"code":"es-419","name":"Іспанська (Латинська Америка)"}],"ca":[{"code":"zh-cn","name":"Xinès (mandarí)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portuguès (brasiler)"},{"code":"es-419","name":"espanyol (llatinoamericà)"}],"te":[{"code":"zh-cn","name":"చైనీస్ (మాండరిన్)"},{"code":"hi","name":"హిందీ"},{"code":"pt-br","name":"పోర్చుగీస్ (బ్రెజిలియన్)"},{"code":"es-419","name":"స్పానిష్ (లాటిన్ అమెరికన్)"}],"mr":[{"code":"zh-cn","name":"चीनी (मंडारीन)"},{"code":"hi","name":"हिंदी"},{"code":"pt-br","name":"पोर्तुगीज (ब्राझिलियन)"},{"code":"es-419","name":"स्पॅनिश (लॅटिन अमेरिकन)"}],"zh-cn":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地语"},{"code":"pt-br","name":"葡萄牙语（巴西）"},{"code":"es-419","name":"西班牙语（拉丁美洲）"}],"sq":[{"code":"zh-cn","name":"Kinezisht (mandarinisht)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugeze (braziliane)"},{"code":"es-419","name":"Spanjisht (Amerikan Latine)"}],"ml":[{"code":"zh-cn","name":"ചൈനീസ് (മാൻഡറിൻ)"},{"code":"hi","name":"ഹിന്ദി"},{"code":"pt-br","name":"പോർച്ചുഗീസ് (ബ്രസീലിയൻ)"},{"code":"es-419","name":"സ്പാനിഷ് (ലാറ്റിൻ അമേരിക്കൻ)"}],"th":[{"code":"zh-cn","name":"ภาษาจีน (แมนดาริน)"},{"code":"hi","name":"ภาษาฮินดี"},{"code":"pt-br","name":"โปรตุเกส (บราซิล)"},{"code":"es-419","name":"สเปน (ลาตินอเมริกา)"}],"hi":[{"code":"zh-cn","name":"चीनी (मंदारिन)"},{"code":"hi","name":"हिन्दी"},{"code":"pt-br","name":"पुर्तगाली (ब्राजील)"},{"code":"es-419","name":"स्पैनिश (लैटिन अमेरिकी)"}],"bg":[{"code":"zh-cn","name":"китайски (мандарин)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"испански (латиноамерикански)"}],"mn":[{"code":"zh-cn","name":"Хятад (Мандарин)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"Португали (Бразил)"},{"code":"es-419","name":"Испани (Латин Америк)"}],"uz":[{"code":"zh-cn","name":"Xitoy (mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portugal (Braziliya)"},{"code":"es-419","name":"Ispan (Lotin Amerikasi)"}],"mi":[{"code":"zh-cn","name":"Hainamana (Māriki)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Potiti (Brazilian)"},{"code":"es-419","name":"Paniora (Amerika Raina)"}],"da":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"am":[{"code":"zh-cn","name":"ቻይንኛ (ማንዳሪን)"},{"code":"hi","name":"ሂንዲ"},{"code":"pt-br","name":"ፖርቱጋልኛ (ብራዚል)"},{"code":"es-419","name":"ስፓኒሽ (ላቲን አሜሪካ)"}],"ja":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語（ブラジル）"},{"code":"es-419","name":"スペイン語（ラテンアメリカ）"}],"de":[{"code":"zh-cn","name":"Chinesisch (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugiesisch (Brasilianisch)"},{"code":"es-419","name":"Spanisch (Lateinamerika)"}],"hu":[{"code":"zh-cn","name":"kínai (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugál (brazil)"},{"code":"es-419","name":"spanyol (latin-amerikai)"}],"is":[{"code":"zh-cn","name":"kínverska (mandarín)"},{"code":"hi","name":"hindí"},{"code":"pt-br","name":"Portúgalska (Brasilíska)"},{"code":"es-419","name":"Spænska (latínameríska)"}],"sk":[{"code":"zh-cn","name":"čínština (mandarínčina)"},{"code":"hi","name":"hindčina"},{"code":"pt-br","name":"portugalčina (brazílska)"},{"code":"es-419","name":"španielčina (latinskoamerická)"}],"cy":[{"code":"zh-cn","name":"Tsieinëeg (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portiwgaleg (Brasil)"},{"code":"es-419","name":"Sbaeneg (America Lladin)"}],"nl":[{"code":"zh-cn","name":"Chinees (Mandarijn)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugees (Braziliaans)"},{"code":"es-419","name":"Spaans (Latijns-Amerikaans)"}],"gd":[{"code":"zh-cn","name":"Sìonais (Mandarin)"},{"code":"hi","name":"Indeach"},{"code":"pt-br","name":"Portagailis (Braisil)"},{"code":"es-419","name":"Spàinntis (Ameireagaidh Laidinn)"}],"cs":[{"code":"zh-cn","name":"čínština (mandarínština)"},{"code":"hi","name":"hindština"},{"code":"pt-br","name":"portugalština (brazilská)"},{"code":"es-419","name":"španělština (latinskoamerická)"}],"zh-tw":[{"code":"zh-cn","name":"中文"},{"code":"hi","name":"印地語"},{"code":"pt-br","name":"葡萄牙語（巴西）"},{"code":"es-419","name":"西班牙語（拉丁美洲）"}],"ja-hira":[{"code":"zh-cn","name":"中国語（北京語）"},{"code":"hi","name":"ヒンディー語"},{"code":"pt-br","name":"ポルトガル語（ブラジル）"},{"code":"es-419","name":"スペイン語（ラテンアメリカ）"}],"zu":[{"code":"zh-cn","name":"IsiShayina (Mandarin)"},{"code":"hi","name":"IsiHindi"},{"code":"pt-br","name":"Isi-Portuguese (Brazilian)"},{"code":"es-419","name":"Isi-Spanish (Latin American)"}],"my":[{"code":"zh-cn","name":"တရုတ် (မန်ဒရင်း)"},{"code":"hi","name":"ဟိန္ဒီ"},{"code":"pt-br","name":"ပေါ်တူဂီ (ဘရာဇီး)"},{"code":"es-419","name":"စပိန် (လက်တင်အမေရိက)"}],"hy":[{"code":"zh-cn","name":"չինարեն (մանդարին)"},{"code":"hi","name":"հինդի"},{"code":"pt-br","name":"պորտուգալերեն (բրազիլերեն)"},{"code":"es-419","name":"իսպաներեն (լատինամերիկյան)"}],"lv":[{"code":"zh-cn","name":"ķīniešu (mandarīnu)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugāļu (Brazīlijas)"},{"code":"es-419","name":"spāņu (latīņamerikāņu)"}],"sv":[{"code":"zh-cn","name":"kinesiska (mandarin)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugisiska (brasilianska)"},{"code":"es-419","name":"spanska (latinamerikansk)"}],"nb":[{"code":"zh-cn","name":"kinesisk (mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugisisk (brasiliansk)"},{"code":"es-419","name":"spansk (latinamerikansk)"}],"ckb":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هیندی"},{"code":"pt-br","name":"زمانی پورتوگالی (بەرازیلی)"},{"code":"es-419","name":"ئیسپانی (ئەمریکی لاتین)"}],"et":[{"code":"zh-cn","name":"hiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasiilia)"},{"code":"es-419","name":"hispaania (Ladina-Ameerika)"}],"ku":[{"code":"zh-cn","name":"Çînî (Mandarîn)"},{"code":"hi","name":"Hindî"},{"code":"pt-br","name":"Portekîzî (Brazîlya)"},{"code":"es-419","name":"Spanî (Amerîkaya Latîn)"}],"fa":[{"code":"zh-cn","name":"چینی (ماندارین)"},{"code":"hi","name":"هندی"},{"code":"pt-br","name":"پرتغالی (برزیلی)"},{"code":"es-419","name":"اسپانیایی (آمریکای لاتین)"}],"fi":[{"code":"zh-cn","name":"kiina (mandariini)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugali (Brasilia)"},{"code":"es-419","name":"espanja (latinalainen Amerikka)"}],"lt":[{"code":"zh-cn","name":"kinų (mandarinų)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugalų (Brazilijos)"},{"code":"es-419","name":"Ispanų (Lotynų Amerikos)"}],"gl":[{"code":"zh-cn","name":"chinés (mandarín)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugués (brasileiro)"},{"code":"es-419","name":"español (latinoamericano)"}],"hr":[{"code":"zh-cn","name":"kineski (mandarinski)"},{"code":"hi","name":"hindski"},{"code":"pt-br","name":"portugalski (brazilski)"},{"code":"es-419","name":"španjolski (latinoamerički)"}],"he":[{"code":"zh-cn","name":"סינית (מנדרינית)"},{"code":"hi","name":"הינדי"},{"code":"pt-br","name":"פורטוגזית (ברזילאית)"},{"code":"es-419","name":"ספרדית (אמריקה הלטינית)"}],"ro":[{"code":"zh-cn","name":"Chineză (mandarina)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portugheză (braziliană)"},{"code":"es-419","name":"Spaniolă (America Latină)"}],"mt":[{"code":"zh-cn","name":"Ċiniż (Mandarin)"},{"code":"hi","name":"Ħindi"},{"code":"pt-br","name":"Portugiż (Brażiljan)"},{"code":"es-419","name":"Spanjol (Amerika Latina)"}],"ht":[{"code":"zh-cn","name":"Chinwa (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Pòtigè (Brezilyen)"},{"code":"es-419","name":"Panyòl (Ameriken Latin)"}],"eu":[{"code":"zh-cn","name":"txinera (mandariarra)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"portugesa (brasildarra)"},{"code":"es-419","name":"Gaztelania (Latinoamerika)"}],"ab":[{"code":"zh-cn","name":"Ачинатә (мандарин)"},{"code":"hi","name":"Ахинди"},{"code":"pt-br","name":"Апортугалтә (Бразилиа)"},{"code":"es-419","name":"Испан бызшәа (Латинтәи Америка)"}],"eo":[{"code":"zh-cn","name":"Ĉina (mandarina)"},{"code":"hi","name":"Hindia"},{"code":"pt-br","name":"Portugala (brazila)"},{"code":"es-419","name":"hispana (latin-amerika)"}],"sr":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"Хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерички)"}],"be":[{"code":"zh-cn","name":"кітайская (мандарын)"},{"code":"hi","name":"Хіндзі"},{"code":"pt-br","name":"партугальская (бразільская)"},{"code":"es-419","name":"іспанская (лацінаамерыканская)"}],"ga":[{"code":"zh-cn","name":"Sínis (Mandairínis)"},{"code":"hi","name":"Hiondúis"},{"code":"pt-br","name":"Portaingéilis (An Bhrasaíl)"},{"code":"es-419","name":"Spáinnis (Mheiriceá Laidineach)"}],"kn":[{"code":"zh-cn","name":"ಚೈನೀಸ್ (ಮ್ಯಾಂಡರಿನ್)"},{"code":"hi","name":"ಹಿಂದಿ"},{"code":"pt-br","name":"ಪೋರ್ಚುಗೀಸ್ (ಬ್ರೆಜಿಲಿಯನ್)"},{"code":"es-419","name":"ಸ್ಪ್ಯಾನಿಷ್ (ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್)"}],"la":[{"code":"zh-cn","name":"Seres (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portuguese (Brazilian)"},{"code":"es-419","name":"Spanish"}],"ms":[{"code":"zh-cn","name":"Cina (Mandarin)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"Portugis (Brazil)"},{"code":"es-419","name":"Sepanyol (Amerika Latin)"}],"az":[{"code":"zh-cn","name":"Çin (Mandarin)"},{"code":"hi","name":"hind"},{"code":"pt-br","name":"Portuqal (Braziliya)"},{"code":"es-419","name":"İspan (Latın Amerikası)"}],"sl":[{"code":"zh-cn","name":"kitajščina (mandarinščina)"},{"code":"hi","name":"Hindi"},{"code":"pt-br","name":"portugalščina (brazilščina)"},{"code":"es-419","name":"španščina (latinskoameriška)"}],"mk":[{"code":"zh-cn","name":"кинески (мандарински)"},{"code":"hi","name":"хинди"},{"code":"pt-br","name":"португалски (бразилски)"},{"code":"es-419","name":"шпански (латиноамерикански)"}],"it":[{"code":"zh-cn","name":"Cinese (mandarino)"},{"code":"hi","name":"hindi"},{"code":"pt-br","name":"portoghese (brasiliano)"},{"code":"es-419","name":"Spagnolo (latinoamericano)"}]}}');
 
 /***/ }),
 
@@ -48144,7 +47766,7 @@ function version(uuid) {
 /***/ ((module) => {
 
 "use strict";
-module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.299","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git","sha":"af179d8114073ee02ee3315ac5ebebdb58151b47"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.114","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.27.1","@babel/eslint-parser":"7.27.1","@babel/preset-env":"7.27.1","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"1.1.210","scratch-l10n":"5.0.230","scratch-render-fonts":"1.0.190","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.99.7","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
+module.exports = /*#__PURE__*/JSON.parse('{"name":"scratch-vm","version":"5.0.300","description":"Virtual Machine for Scratch 3.0","author":"Massachusetts Institute of Technology","license":"AGPL-3.0-only","homepage":"https://github.com/scratchfoundation/scratch-vm#readme","repository":{"type":"git","url":"https://github.com/scratchfoundation/scratch-vm.git"},"main":"./dist/node/scratch-vm.js","browser":"./dist/web/scratch-vm.js","exports":{"webpack":"./src/index.js","browser":"./dist/web/scratch-vm.js","node":"./dist/node/scratch-vm.js","default":"./src/index.js"},"scripts":{"build":"npm run docs && webpack --progress","coverage":"tap ./test/{unit,integration}/*.js --coverage --coverage-report=lcov","docs":"jsdoc -c .jsdoc.json","i18n:src":"mkdirp translations/core && format-message extract --out-file translations/core/en.json src/extensions/**/index.js","i18n:push":"tx-push-src scratch-editor extensions translations/core/en.json","lint":"eslint . && format-message lint src/**/*.js","prepare":"husky install","prepublish":"in-publish && npm run build || not-in-publish","start":"webpack serve","tap":"tap ./test/{unit,integration}/*.js","tap:unit":"tap ./test/unit/*.js","tap:integration":"tap ./test/integration/*.js","test":"npm run lint && npm run tap","watch":"webpack --progress --watch","version":"json -f package.json -I -e \\"this.repository.sha = \'$(git log -n1 --pretty=format:%H)\'\\""},"config":{"commitizen":{"path":"cz-conventional-changelog"}},"browserslist":["Chrome >= 63","Edge >= 15","Firefox >= 57","Safari >= 11"],"tap":{"branches":60,"functions":70,"lines":70,"statements":70},"dependencies":{"@vernier/godirect":"^1.5.0","arraybuffer-loader":"^1.0.6","atob":"^2.1.2","btoa":"^1.2.1","buffer":"^6.0.3","canvas-toBlob":"^1.0.0","decode-html":"^2.0.0","diff-match-patch":"^1.0.4","format-message":"^6.2.1","htmlparser2":"^3.10.0","immutable":"^3.8.1","jszip":"^3.1.5","minilog":"^3.1.0","scratch-audio":"^2.0.0","scratch-parser":"^6.0.0","scratch-render":"^2.0.0","scratch-sb1-converter":"^2.0.0","scratch-storage":"^4.0.0","scratch-svg-renderer":"3.0.114","scratch-translate-extension-languages":"^1.0.0","text-encoding":"^0.7.0","uuid":"^8.3.2","web-worker":"^1.3.0"},"devDependencies":{"@babel/core":"7.27.1","@babel/eslint-parser":"7.27.1","@babel/preset-env":"7.27.1","@commitlint/cli":"17.8.1","@commitlint/config-conventional":"17.8.1","adm-zip":"0.4.11","babel-loader":"9.2.1","callsite":"1.0.0","copy-webpack-plugin":"4.6.0","docdash":"1.2.0","eslint":"8.57.1","eslint-config-scratch":"9.0.9","expose-loader":"1.0.3","file-loader":"6.2.0","format-message-cli":"6.2.4","husky":"8.0.3","in-publish":"2.0.1","js-md5":"0.7.3","jsdoc":"3.6.11","json":"^9.0.4","pngjs":"3.4.0","scratch-blocks":"2.0.0-spork.5","scratch-l10n":"5.0.230","scratch-render-fonts":"1.0.190","scratch-semantic-release-config":"3.0.0","scratch-webpack-configuration":"3.0.0","script-loader":"0.7.2","semantic-release":"19.0.5","stats.js":"0.17.0","tap":"16.3.10","webpack":"5.99.7","webpack-cli":"4.10.0","webpack-dev-server":"3.11.3"}}');
 
 /***/ }),
 
@@ -51061,7 +50683,7 @@ const _domToBlock = function domToBlock(blockDOM, blocks, isTopBlock, parent) {
         }
       case 'comment':
         {
-          block.comment = xmlChild.attribs.id;
+          block.comment = "".concat(block.id, "_comment");
           break;
         }
       case 'value':
@@ -51821,14 +51443,6 @@ class Blocks {
     const stage = this.runtime.getTargetForStage();
     const editingTarget = this.runtime.getEditingTarget();
 
-    // UI event: clicked scripts toggle in the runtime.
-    if (e.element === 'stackclick') {
-      this.runtime.toggleScript(e.blockId, {
-        stackClick: true
-      });
-      return;
-    }
-
     // Block create/update/destroy
     switch (e.type) {
       case 'create':
@@ -51937,10 +51551,11 @@ class Blocks {
           this.emitProjectChanged();
           break;
         }
+      case 'block_comment_create':
       case 'comment_create':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
-          currTarget.createComment(e.commentId, e.blockId, e.text, e.xy.x, e.xy.y, e.width, e.height, e.minimized);
+          currTarget.createComment(e.commentId, e.blockId, '', e.json.x, e.json.y, e.json.width, e.json.height, false);
           if (currTarget.comments[e.commentId].x === null && currTarget.comments[e.commentId].y === null) {
             // Block comments imported from 2.0 projects are imported with their
             // x and y coordinates set to null so that scratch-blocks can
@@ -51948,12 +51563,13 @@ class Blocks {
             // comments, then the auto positioning should have taken place.
             // Update the x and y position of these comments to match the
             // one from the event.
-            currTarget.comments[e.commentId].x = e.xy.x;
-            currTarget.comments[e.commentId].y = e.xy.y;
+            currTarget.comments[e.commentId].x = e.json.x;
+            currTarget.comments[e.commentId].y = e.json.y;
           }
         }
         this.emitProjectChanged();
         break;
+      case 'block_comment_change':
       case 'comment_change':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -51962,20 +51578,11 @@ class Blocks {
             return;
           }
           const comment = currTarget.comments[e.commentId];
-          const change = e.newContents_;
-          if (Object.prototype.hasOwnProperty.call(change, 'minimized')) {
-            comment.minimized = change.minimized;
-          }
-          if (Object.prototype.hasOwnProperty.call(change, 'width') && Object.prototype.hasOwnProperty.call(change, 'height')) {
-            comment.width = change.width;
-            comment.height = change.height;
-          }
-          if (Object.prototype.hasOwnProperty.call(change, 'text')) {
-            comment.text = change.text;
-          }
+          comment.text = e.newContents_;
           this.emitProjectChanged();
         }
         break;
+      case 'block_comment_move':
       case 'comment_move':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -51990,6 +51597,34 @@ class Blocks {
           this.emitProjectChanged();
         }
         break;
+      case 'block_comment_collapse':
+      case 'comment_collapse':
+        if (this.runtime.getEditingTarget()) {
+          const currTarget = this.runtime.getEditingTarget();
+          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+            log.warn("Cannot collapse comment with id ".concat(e.commentId, " because it does not exist."));
+            return;
+          }
+          const comment = currTarget.comments[e.commentId];
+          comment.minimized = e.newCollapsed;
+          this.emitProjectChanged();
+        }
+        break;
+      case 'block_comment_resize':
+      case 'comment_resize':
+        if (this.runtime.getEditingTarget()) {
+          const currTarget = this.runtime.getEditingTarget();
+          if (currTarget && !Object.prototype.hasOwnProperty.call(currTarget.comments, e.commentId)) {
+            log.warn("Cannot resize comment with id ".concat(e.commentId, " because it does not exist."));
+            return;
+          }
+          const comment = currTarget.comments[e.commentId];
+          comment.width = e.newSize.width;
+          comment.height = e.newSize.height;
+          this.emitProjectChanged();
+        }
+        break;
+      case 'block_comment_delete':
       case 'comment_delete':
         if (this.runtime.getEditingTarget()) {
           const currTarget = this.runtime.getEditingTarget();
@@ -52010,6 +51645,14 @@ class Blocks {
             delete block.comment;
           }
           this.emitProjectChanged();
+        }
+        break;
+      case 'click':
+        // UI event: clicked scripts toggle in the runtime.
+        if (e.targetType === 'block') {
+          this.runtime.toggleScript(this.getTopLevelScript(e.blockId), {
+            stackClick: true
+          });
         }
         break;
     }
@@ -52211,19 +51854,32 @@ class Blocks {
     if (typeof e.oldParent !== 'undefined') {
       const oldParent = this._blocks[e.oldParent];
       if (typeof e.oldInput !== 'undefined' && oldParent.inputs[e.oldInput].block === e.id) {
-        // This block was connected to the old parent's input.
-        oldParent.inputs[e.oldInput].block = null;
+        // This block was connected to an input. We either want to
+        // restore the shadow block that previously occupied
+        // this input, or null out the input's block.
+        const shadow = oldParent.inputs[e.oldInput].shadow;
+        if (shadow && e.id !== shadow) {
+          oldParent.inputs[e.oldInput].block = shadow;
+          this._blocks[shadow].parent = oldParent.id;
+        } else {
+          oldParent.inputs[e.oldInput].block = null;
+          if (e.id !== shadow) {
+            this._blocks[e.id].parent = null;
+          }
+        }
       } else if (oldParent.next === e.id) {
         // This block was connected to the old parent's next connection.
         oldParent.next = null;
+        this._blocks[e.id].parent = null;
       }
-      this._blocks[e.id].parent = null;
       didChange = true;
     }
 
     // Is this block a top-level block?
     if (typeof e.newParent === 'undefined') {
-      this._addScript(e.id);
+      if (!this._blocks[e.id].shadow) {
+        this._addScript(e.id);
+      }
     } else {
       // Remove script, if one exists.
       this._deleteScript(e.id);
@@ -52814,7 +52470,7 @@ class Comment {
     this.blockId = null;
   }
   toXML() {
-    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(this.blockId !== null, "\" minimized=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
+    return "<comment id=\"".concat(this.id, "\" x=\"").concat(this.x, "\" y=\"").concat(this.y, "\" w=\"").concat(this.width, "\" h=\"").concat(this.height, "\" pinned=\"").concat(!this.minimized, "\" collapsed=\"").concat(this.minimized, "\">").concat(xmlEscape(this.text), "</comment>");
   }
 
   // TODO choose min and defaults for width and height
@@ -54831,9 +54487,7 @@ class Runtime extends EventEmitter {
         type: menuId,
         inputsInline: true,
         output: 'String',
-        colour: categoryInfo.color1,
-        colourSecondary: categoryInfo.color2,
-        colourTertiary: categoryInfo.color3,
+        style: categoryInfo.id,
         outputShape: menuInfo.acceptReporters ? ScratchBlocksConstants.OUTPUT_SHAPE_ROUND : ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE,
         args0: [{
           type: 'field_dropdown',
@@ -54875,9 +54529,7 @@ class Runtime extends EventEmitter {
         message0: '%1',
         inputsInline: true,
         output: output,
-        colour: categoryInfo.color1,
-        colourSecondary: categoryInfo.color2,
-        colourTertiary: categoryInfo.color3,
+        style: categoryInfo.id,
         outputShape: outputShape,
         args0: [{
           name: "field_".concat(fieldName),
@@ -54917,9 +54569,8 @@ class Runtime extends EventEmitter {
       type: extendedOpcode,
       inputsInline: true,
       category: categoryInfo.name,
-      colour: categoryInfo.color1,
-      colourSecondary: categoryInfo.color2,
-      colourTertiary: categoryInfo.color3
+      style: categoryInfo.id,
+      extensions: []
     };
     const context = {
       // TODO: store this somewhere so that we can map args appropriately after translation.
@@ -54938,7 +54589,7 @@ class Runtime extends EventEmitter {
     // the category block icon.
     const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
     if (iconURI) {
-      blockJSON.extensions = ['scratch_extension'];
+      blockJSON.extensions.push('scratch_extension');
       blockJSON.message0 = '%1 %2';
       const iconJSON = {
         type: 'field_image',
@@ -54975,6 +54626,7 @@ class Runtime extends EventEmitter {
         }
         blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
         blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+        blockJSON.extensions.push('shape_hat');
         break;
       case BlockType.CONDITIONAL:
       case BlockType.LOOP:
@@ -55019,7 +54671,7 @@ class Runtime extends EventEmitter {
     }
     if (blockInfo.blockType === BlockType.REPORTER) {
       if (!blockInfo.disableMonitor && context.inputList.length === 0) {
-        blockJSON.checkboxInFlyout = true;
+        blockJSON.extensions.push('monitor_block');
       }
     } else if (blockInfo.blockType === BlockType.LOOP) {
       // Add icon to the bottom right of a loop block
@@ -55246,7 +54898,7 @@ class Runtime extends EventEmitter {
       }
       return {
         id: categoryInfo.id,
-        xml: "<category name=\"".concat(name, "\" id=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
+        xml: "<category name=\"".concat(name, "\" toolboxitemid=\"").concat(categoryInfo.id, "\" ").concat(statusButtonXML, " ").concat(colorXML, " ").concat(menuIconXML, ">").concat(paletteBlocks.map(block => block.xml).join(''), "</category>")
       };
     });
   }
@@ -75854,6 +75506,13 @@ const deserializeBlocks = function deserializeBlocks(blocks) {
     block.id = blockId; // add id back to block since it wasn't serialized
     block.inputs = deserializeInputs(block.inputs, blockId, blocks);
     block.fields = deserializeFields(block.fields);
+    if (block.comment) {
+      // Pre-Blockly v12 Scratch used arbitrary IDs for block comments.
+      // Newer versions use an ID based on the parent block's ID instead,
+      // so disregard the actual saved value and replace it with the
+      // synthesized one.
+      block.comment = "".concat(block.id, "_comment");
+    }
   }
   return blocks;
 };
@@ -76046,7 +75705,7 @@ const parseScratchObject = function parseScratchObject(object, runtime, extensio
   if (Object.prototype.hasOwnProperty.call(object, 'comments')) {
     for (const commentId in object.comments) {
       const comment = object.comments[commentId];
-      const newComment = new Comment(commentId, comment.text, comment.x, comment.y, comment.width, comment.height, comment.minimized);
+      const newComment = new Comment(comment.blockId ? "".concat(comment.blockId, "_comment") : commentId, comment.text, comment.x, comment.y, comment.width, comment.height, comment.minimized);
       if (comment.blockId) {
         newComment.blockId = comment.blockId;
       }
