@@ -842,6 +842,14 @@ const deserializeBlocks = function (blocks) {
         block.id = blockId; // add id back to block since it wasn't serialized
         block.inputs = deserializeInputs(block.inputs, blockId, blocks);
         block.fields = deserializeFields(block.fields);
+
+        if (block.comment) {
+            // Pre-Blockly v12 Scratch used arbitrary IDs for block comments.
+            // Newer versions use an ID based on the parent block's ID instead,
+            // so disregard the actual saved value and replace it with the
+            // synthesized one.
+            block.comment = `${block.id}_comment`;
+        }
     }
     return blocks;
 };
@@ -1047,7 +1055,7 @@ const parseScratchObject = function (object, runtime, extensions, zip, assets) {
         for (const commentId in object.comments) {
             const comment = object.comments[commentId];
             const newComment = new Comment(
-                commentId,
+                comment.blockId ? `${comment.blockId}_comment` : commentId,
                 comment.text,
                 comment.x,
                 comment.y,
