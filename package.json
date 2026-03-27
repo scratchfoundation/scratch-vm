@@ -110,6 +110,6 @@
     "tap": "16.3.10",
     "webpack": "5.99.7",
     "webpack-cli": "4.10.0",
-    "webpack-dev-server": "3.11.3"
+    "webpack-dev-server": "5.2.3"
   }
 }
