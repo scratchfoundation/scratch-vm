@@ -176,6 +176,9 @@ test('mathop', t => {
     t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 1}), 0.0174550649);
     t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 90}), Infinity);
     t.strictEqual(blocks.mathop({OPERATOR: 'tan', NUM: 180}), 0);
+    // Large angles should be reduced modulo 360 to avoid precision loss (#2199)
+    t.strictEqual(blocks.mathop({OPERATOR: 'sin', NUM: 36000000000090}), 1);
+    t.strictEqual(blocks.mathop({OPERATOR: 'cos', NUM: 36000000000090}), 0);
     t.strictEqual(blocks.mathop({OPERATOR: 'asin', NUM: 1}), 90);
     t.strictEqual(blocks.mathop({OPERATOR: 'acos', NUM: 1}), 0);
     t.strictEqual(blocks.mathop({OPERATOR: 'atan', NUM: 1}), 45);
